@@ -1,59 +1,73 @@
-# OpAutoFront
+# OpAuto
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.0.0.
+OpAuto (Operations Auto) is a web-based application designed to streamline operations for automotive repair shops. It offers an intuitive interface for managing appointments, tracking maintenance logs, handling payments, and more — all tailored to the needs of garage owners and technicians.
 
-## Development server
+---
 
-To start a local development server, run:
+## 🚀 Features
 
-```bash
-ng serve
-```
+### 1. **Authentication & Authorization**
+- **Admin-Only Access:** Secure login system using JWT-based authentication.
+- **Role-Based Access:** Ensure that only authorized users can access specific features.
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+### 2. **Car Management**
+- **Add New Cars:** Register new vehicles with essential details.
+- **Update Car Information:** Modify existing car records as needed.
+- **View Car List:** Access a comprehensive list of all registered vehicles.
 
-## Code scaffolding
+### 3. **Maintenance Logs**
+- **Record Maintenance Activities:** Log details of maintenance performed on each vehicle.
+- **View Maintenance History:** Access a chronological history of all maintenance activities for each car.
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+### 4. **Appointment Scheduling**
+- **Create Appointments:** Schedule maintenance appointments for vehicles.
+- **Update Appointments:** Modify existing appointments as required.
+- **View Appointment Calendar:** Access a calendar view of all upcoming appointments.
 
-```bash
-ng generate component component-name
-```
+### 5. **Notifications**
+- **Appointment Reminders:** Receive notifications for upcoming appointments.
+- **Configurable Preferences:** Set and adjust notification preferences.
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+### 6. **Garage Information & Settings**
+- **Manage Garage Details:** Update information about the garage, such as name, location, and contact details.
+- **Set Operational Hours:** Define working hours and break times.
+- **View Garage Capacity:** Monitor available slots and resources.
 
-```bash
-ng generate --help
-```
+### 7. **Payments & Approvals**
+- **Log Payments:** Record cash payments received for services rendered.
+- **Purchase Approval Workflow:** Submit and approve requests for parts and materials.
 
-## Building
+### 8. **Search & Reporting**
+- **Filter Records:** Search and filter cars, appointments, and maintenance logs.
+- **Export Reports:** Generate and export reports for analysis and record-keeping.
 
-To build the project run:
+---
 
-```bash
-ng build
-```
+## 🛠️ Tech Stack
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+- **Backend:** Spring Boot (Kotlin / JDK 21 LTS)
+- **Frontend:** Angular
+- **Database:** PostgreSQL
+- **Authentication:** JWT (JSON Web Tokens)
+- **Containerization:** Docker & Docker Compose
+- **Database Migrations:** Flyway
 
-## Running unit tests
+---
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+## 🧪 Development Setup
 
-```bash
-ng test
-```
+### Prerequisites
 
-## Running end-to-end tests
+Ensure you have the following installed:
 
-For end-to-end (e2e) testing, run:
+- **Java 21 LTS**: [Download JDK 21](https://www.oracle.com/java/technologies/downloads/)
+- **Node.js**: [Download Node.js](https://nodejs.org/)
+- **Docker & Docker Compose**: [Install Docker](https://www.docker.com/products/docker-desktop)
 
-```bash
-ng e2e
-```
+### Backend Setup
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+1. Clone the repository:
 
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+   ```bash
+   git clone https://github.com/alabenkhlifa/opauto.git
+   cd opauto
