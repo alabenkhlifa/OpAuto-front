@@ -1,0 +1,237 @@
+<!-- Mobile Menu Overlay -->
+<div 
+  *ngIf="isMobileMenuOpen()" 
+  class="fixed inset-0 z-20 bg-black bg-opacity-50 lg:hidden"
+  (click)="toggleMobileMenu()">
+</div>
+
+<!-- Sidebar -->
+<aside 
+  class="sidebar"
+  [class.collapsed]="isCollapsed()"
+  [class.mobile-open]="isMobileMenuOpen()"
+  [class.hovered]="isHovered()"
+  (mouseenter)="onMouseEnter()"
+  (mouseleave)="onMouseLeave()"
+  (click)="onSidebarClick()"
+  [style.cursor]="isCollapsed() && isDesktop() ? 'pointer' : 'default'"
+  [attr.title]="isCollapsed() && isDesktop() ? 'Click to expand sidebar' : null">
+  
+  <!-- Logo Section -->
+  <div class="sidebar-header">
+    <div class="logo-section">
+      <div class="logo-icon">
+        <svg class="w-8 h-8 text-primary-600" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.22.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
+        </svg>
+      </div>
+      <div class="logo-text" [class.hidden]="!shouldShowExpanded()">
+        <h2 class="logo-title">OpAuto</h2>
+        <p class="logo-subtitle">Garage Management</p>
+      </div>
+    </div>
+    
+    <!-- Collapse Button (Desktop Only) -->
+    <button 
+      class="collapse-btn hidden lg:flex"
+      [class.visible-on-hover]="isCollapsed() && !isHovered()"
+      (click)="toggleSidebar(); $event.stopPropagation()"
+      [attr.aria-label]="isCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+      *ngIf="isDesktop()">
+      <svg class="w-3 h-3 transition-colors duration-200" 
+           fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Navigation Menu -->
+  <nav class="sidebar-nav">
+    <!-- Main Navigation -->
+    <div class="nav-section">
+      <h3 class="nav-section-title" 
+          [class.hidden]="!shouldShowExpanded()">Main</h3>
+      <ul class="nav-list">
+        @for (item of navItems; track item.id) {
+          <li class="nav-item">
+            <button 
+              class="nav-link"
+              [class.active]="item.isActive"
+              [class.has-children]="item.children"
+              (click)="item.children ? toggleSubmenu(item, $event) : navigateTo(item.route!); $event.stopPropagation()"
+              [attr.title]="isCollapsed() && !isHovered() ? item.label : null">
+              
+              <!-- Icon -->
+              <span class="nav-icon">
+                @switch (item.icon) {
+                  @case ('dashboard') {
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                  }
+                  @case ('calendar') {
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  }
+                  @case ('car') {
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.22.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
+                    </svg>
+                  }
+                  @case ('wrench') {
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  }
+                  @case ('package') {
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                  }
+                  @case ('receipt') {
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  }
+                  @case ('users') {
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                    </svg>
+                  }
+                  @case ('chart') {
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  }
+                  @case ('check-circle') {
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  }
+                  @default {
+                    <div class="w-5 h-5 bg-gray-300 rounded"></div>
+                  }
+                }
+              </span>
+
+              <!-- Label -->
+              <span class="nav-label" 
+                    [class.hidden]="!shouldShowExpanded()">{{ item.label }}</span>
+
+              <!-- Badge -->
+              @if (item.badge && shouldShowExpanded()) {
+                <span class="nav-badge">{{ item.badge }}</span>
+              }
+
+              <!-- Chevron for submenus -->
+              @if (item.children && shouldShowExpanded()) {
+                <svg class="nav-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              }
+            </button>
+
+            <!-- Submenu -->
+            @if (item.children && shouldShowExpanded()) {
+              <ul class="submenu">
+                @for (child of item.children; track child.id) {
+                  <li>
+                    <button 
+                      class="submenu-link"
+                      [class.active]="child.isActive"
+                      (click)="navigateTo(child.route!)">
+                      <span class="submenu-icon">•</span>
+                      <span class="submenu-label">{{ child.label }}</span>
+                      @if (child.badge) {
+                        <span class="nav-badge">{{ child.badge }}</span>
+                      }
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+          </li>
+        }
+      </ul>
+    </div>
+
+    <!-- Settings Section -->
+    <div class="nav-section">
+      <h3 class="nav-section-title" [class.hidden]="!shouldShowExpanded()">Settings</h3>
+      <ul class="nav-list">
+        @for (item of settingsItems; track item.id) {
+          <li class="nav-item">
+            <button 
+              class="nav-link"
+              [class.active]="item.isActive"
+              (click)="navigateTo(item.route!); $event.stopPropagation()"
+              [attr.title]="isCollapsed() && !isHovered() ? item.label : null">
+              
+              <!-- Icon -->
+              <span class="nav-icon">
+                @switch (item.icon) {
+                  @case ('settings') {
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  }
+                  @case ('team') {
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  }
+                  @case ('user') {
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  }
+                }
+              </span>
+
+              <span class="nav-label" 
+                    [class.hidden]="!shouldShowExpanded()">{{ item.label }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Footer -->
+  <div class="sidebar-footer" [class.collapsed]="isCollapsed()">
+    @if (shouldShowExpanded()) {
+      <div class="footer-content">
+        <p class="footer-text">OpAuto v1.0.0</p>
+        <p class="footer-subtext">Garage Management System</p>
+      </div>
+    }
+  </div>
+</aside>
+
+<!-- Mobile Menu Button -->
+<button 
+  class="mobile-menu-btn lg:hidden"
+  (click)="toggleMobileMenu()"
+  [attr.aria-label]="isMobileMenuOpen() ? 'Close menu' : 'Open menu'">
+  <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path *ngIf="!isMobileMenuOpen()" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+    <path *ngIf="isMobileMenuOpen()" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+  </svg>
+</button>
+
+<!-- Desktop Show Sidebar Button (when collapsed) -->
+<button 
+  *ngIf="isCollapsed() && isDesktop()"
+  class="show-sidebar-btn hidden lg:flex"
+  (click)="toggleSidebar()"
+  [attr.aria-label]="'Show sidebar'">
+  <svg class="w-3 h-3" 
+       fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+  </svg>
+</button>

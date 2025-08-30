@@ -1,0 +1,39 @@
+/* Global styles for OpAuto Garage Management System */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* App Layout with Sidebar */
+.app-container {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Main Content Area */
+.main-content {
+  flex: 1;
+  margin-left: 280px;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: auto;
+  position: relative;
+}
+
+/* When sidebar is collapsed - hide it completely */
+.sidebar-collapsed .main-content {
+  margin-left: 0;
+}
+
+/* Mobile layout */
+@media (max-width: 1023px) {
+  .main-content {
+    margin-left: 0;
+    width: 100%;
+  }
+  
+  .sidebar-collapsed .main-content {
+    margin-left: 0;
+  }
+}
