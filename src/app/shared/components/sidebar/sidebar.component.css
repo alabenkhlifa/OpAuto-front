@@ -44,28 +44,73 @@
 @media (max-width: 1023px) {
   .sidebar {
     width: 100vw;
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
     transform: translateX(-100%);
-    backdrop-filter: none;
     border-right: none;
   }
   
   .sidebar.mobile-open {
     transform: translateX(0);
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
   }
 }
 
 /* Mobile Dark Mode */
 @media (max-width: 1023px) {
   :root.dark .sidebar,
-  .dark .sidebar {
-    background: rgba(15, 23, 42, 0.95) !important;
+  .dark .sidebar,
+  .sidebar.dark-theme {
+    background: rgba(15, 23, 42, 0.98) !important;
+    backdrop-filter: blur(20px);
   }
   
   :root.dark .sidebar.mobile-open,
-  .dark .sidebar.mobile-open {
-    background: rgba(15, 23, 42, 0.95) !important;
+  .dark .sidebar.mobile-open,
+  .sidebar.dark-theme.mobile-open {
+    background: rgba(15, 23, 42, 0.98) !important;
+    backdrop-filter: blur(20px);
+  }
+  
+  /* Ensure text is visible on mobile */
+  .sidebar .nav-link,
+  .sidebar .nav-icon,
+  .sidebar .nav-label,
+  .sidebar .logo-title,
+  .sidebar .logo-subtitle,
+  .sidebar .nav-section-title,
+  .sidebar .footer-text,
+  .sidebar .footer-subtext {
+    color: #1f2937 !important;
+  }
+  
+  /* Mobile dark mode text */
+  :root.dark .sidebar .nav-link,
+  :root.dark .sidebar .nav-icon,
+  :root.dark .sidebar .nav-label,
+  :root.dark .sidebar .logo-title,
+  :root.dark .sidebar .logo-subtitle,
+  :root.dark .sidebar .nav-section-title,
+  :root.dark .sidebar .footer-text,
+  :root.dark .sidebar .footer-subtext,
+  .dark .sidebar .nav-link,
+  .dark .sidebar .nav-icon,
+  .dark .sidebar .nav-label,
+  .dark .sidebar .logo-title,
+  .dark .sidebar .logo-subtitle,
+  .dark .sidebar .nav-section-title,
+  .dark .sidebar .footer-text,
+  .dark .sidebar .footer-subtext,
+  .sidebar.dark-theme .nav-link,
+  .sidebar.dark-theme .nav-icon,
+  .sidebar.dark-theme .nav-label,
+  .sidebar.dark-theme .logo-title,
+  .sidebar.dark-theme .logo-subtitle,
+  .sidebar.dark-theme .nav-section-title,
+  .sidebar.dark-theme .footer-text,
+  .sidebar.dark-theme .footer-subtext {
+    color: #ffffff !important;
   }
 }
 

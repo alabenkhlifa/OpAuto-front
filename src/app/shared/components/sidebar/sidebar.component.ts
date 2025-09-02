@@ -200,9 +200,9 @@ export class SidebarComponent {
   }
 
   shouldShowExpanded(): boolean {
-    // On mobile, don't show expanded content when collapsed
+    // On mobile, show expanded content when menu is open
     if (this.isMobile()) {
-      return false;
+      return this.isMobileMenuOpen();
     }
     return !this.isCollapsed() || this.isHovered();
   }
