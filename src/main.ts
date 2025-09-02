@@ -1,7 +1,10 @@
-import { platformBrowser } from '@angular/platform-browser';
-import { AppModule } from './app/app-module';
+import { bootstrapApplication } from '@angular/platform-browser';
+import { importProvidersFrom } from '@angular/core';
+import { AppRoutingModule } from './app/app-routing-module';
+import { App } from './app/app';
 
-platformBrowser().bootstrapModule(AppModule, {
-  ngZoneEventCoalescing: true,
-})
-  .catch(err => console.error(err));
+bootstrapApplication(App, {
+  providers: [
+    importProvidersFrom(AppRoutingModule)
+  ]
+}).catch(err => console.error(err));

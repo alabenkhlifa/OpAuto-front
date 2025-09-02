@@ -1,0 +1,144 @@
+/* Glassmorphism effects for invoicing */
+.glass-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark .glass-card {
+  background: rgba(31, 41, 55, 0.8);
+  border: 1px solid rgba(75, 85, 99, 0.3);
+}
+
+/* Payment progress bars */
+.payment-progress {
+  transition: width 0.3s ease;
+}
+
+/* Status-specific styling */
+.status-paid {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.status-overdue {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.status-pending {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+/* Invoice card hover effects */
+.invoice-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.dark .invoice-card:hover {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* Revenue highlight effects */
+.revenue-highlight {
+  background: linear-gradient(135deg, #10b981, #059669);
+  background-size: 200% 200%;
+  animation: gradient 3s ease infinite;
+}
+
+@keyframes gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Overdue warning animations */
+.overdue-warning {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+/* Mobile responsive grid adjustments */
+@media (max-width: 767px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .invoices-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .invoice-actions {
+    flex-direction: column;
+  }
+}
+
+/* Payment method icons styling */
+.payment-method-icon {
+  font-size: 1.25rem;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+/* Quick action buttons */
+.quick-action-btn {
+  transition: all 0.2s ease;
+}
+
+.quick-action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Status badges with enhanced styling */
+.status-badge {
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  border-width: 1px;
+  border-style: solid;
+}
+
+/* Invoice number styling */
+.invoice-number {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  letter-spacing: 0.5px;
+}
+
+/* Amount highlighting */
+.amount-highlight {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.025em;
+}
+
+/* Smooth transitions for all interactive elements */
+button, .invoice-card, .filter-input {
+  transition: all 0.2s ease;
+}
+
+/* Focus states for accessibility */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Loading states */
+.loading-shimmer {
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.dark .loading-shimmer {
+  background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+  background-size: 200% 100%;
+}

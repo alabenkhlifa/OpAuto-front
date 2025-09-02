@@ -11,6 +11,7 @@
   [class.collapsed]="isCollapsed()"
   [class.mobile-open]="isMobileMenuOpen()"
   [class.hovered]="isHovered()"
+  [class.dark-theme]="themeService.isDarkMode()"
   (mouseenter)="onMouseEnter()"
   (mouseleave)="onMouseLeave()"
   (click)="onSidebarClick()"
@@ -128,14 +129,16 @@
 
               <!-- Chevron for submenus -->
               @if (item.children && shouldShowExpanded()) {
-                <svg class="nav-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="nav-chevron" 
+                     [class.expanded]="item.isExpanded" 
+                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                 </svg>
               }
             </button>
 
             <!-- Submenu -->
-            @if (item.children && shouldShowExpanded()) {
+            @if (item.children && shouldShowExpanded() && item.isExpanded) {
               <ul class="submenu">
                 @for (child of item.children; track child.id) {
                   <li>

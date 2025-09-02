@@ -1,0 +1,138 @@
+<!-- Cars Main Container -->
+<div class="cars-container p-4 lg:p-8">
+
+  <!-- Header Section -->
+  <header class="cars-header">
+    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+      <div class="flex-1">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-1">All Cars</h1>
+        <p class="text-gray-600 dark:text-gray-300">Manage vehicle fleet and service history</p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <!-- Search -->
+        <div class="relative">
+          <input
+            type="text"
+            placeholder="Search cars..."
+            class="search-input"
+            [value]="searchQuery()"
+            (input)="onSearchChange($event)">
+          <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+
+        <!-- Add Car Button -->
+        <button class="add-btn">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span class="hidden lg:inline">Register Car</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Stats Overview -->
+  <div class="stats-nav">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="text-center">
+        <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ statusCounts().total }}</div>
+        <div class="text-xs text-gray-600 dark:text-gray-400">Total Cars</div>
+      </div>
+      <div class="text-center">
+        <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ statusCounts().upToDate }}</div>
+        <div class="text-xs text-gray-600 dark:text-gray-400">Up to Date</div>
+      </div>
+      <div class="text-center">
+        <div class="text-2xl font-bold text-amber-600 dark:text-amber-400">{{ statusCounts().dueSoon }}</div>
+        <div class="text-xs text-gray-600 dark:text-gray-400">Due Soon</div>
+      </div>
+      <div class="text-center">
+        <div class="text-2xl font-bold text-red-600 dark:text-red-400">{{ statusCounts().overdue }}</div>
+        <div class="text-xs text-gray-600 dark:text-gray-400">Overdue</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Toggle -->
+  <button class="filter-toggle" (click)="toggleMobileFilters()">
+    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
+    </svg>
+    <span>Filters</span>
+  </button>
+
+  <!-- Filters Panel -->
+  <div class="filters-panel" [class.open]="showMobileFilters()">
+    <div class="p-4">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <!-- Make Filter -->
+        <select class="filter-select" [value]="selectedMake()" (change)="onMakeChange($event)">
+          <option value="all">All Makes</option>
+          @for (make of availableMakes(); track make) {
+            <option [value]="make">{{ make }}</option>
+          }
+        </select>
+
+        <!-- Status Filter -->
+        <select class="filter-select" [value]="selectedStatus()" (change)="onStatusChange($event)">
+          <option value="all">All Status</option>
+          <option value="up-to-date">Up to Date</option>
+          <option value="due-soon">Due Soon</option>
+          <option value="overdue">Overdue</option>
+        </select>
+
+        <!-- Clear Filters -->
+        <button class="clear-filters-btn" (click)="clearFilters()">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          Clear Filters
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="cars-main">
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading()" class="flex flex-col items-center justify-center py-12">
+      <div class="loading-spinner"></div>
+      <p class="mt-4 text-gray-600 dark:text-gray-400">Loading cars...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading() && filteredCars().length === 0" class="empty-state">
+      <div class="mb-4">
+        <svg class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.22.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
+        </svg>
+      </div>
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No cars found</h3>
+      <p class="text-gray-600 dark:text-gray-400 mb-6">No cars match your current filters</p>
+      <button class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700" (click)="clearFilters()">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        Clear Filters
+      </button>
+    </div>
+
+    <!-- Cars Grid -->
+    <div *ngIf="!isLoading() && filteredCars().length > 0"
+         class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+      @for (car of filteredCars(); track car.id) {
+        <app-car-card
+          [car]="car"
+          [customerName]="getCustomerName(car.customerId)"
+          (carSelected)="onCarSelect($event)"
+          (scheduleService)="onScheduleService($event)"
+          (viewHistory)="onViewHistory($event)">
+        </app-car-card>
+      }
+    </div>
+  </main>
+</div>

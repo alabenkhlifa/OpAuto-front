@@ -1,9 +1,12 @@
-<div class="app-container" [class.sidebar-collapsed]="sidebarService.isCollapsed()">
+<div class="app-container" [class.sidebar-collapsed]="sidebarService.isCollapsed()" [class.hide-sidebar]="isAuthRoute()">
   <!-- Sidebar Navigation -->
-  <app-sidebar></app-sidebar>
+  @if (!isAuthRoute()) {
+    <app-sidebar></app-sidebar>
+  }
   
   <!-- Main Content Area -->
-  <main class="main-content">
+  <main class="main-content" [class.no-sidebar]="isAuthRoute()">
+    <!-- Page Content -->
     <router-outlet />
   </main>
 </div>

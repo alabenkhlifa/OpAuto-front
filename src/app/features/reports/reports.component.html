@@ -1,0 +1,554 @@
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+  <!-- Header -->
+  <div class="p-4 lg:p-6 border-b border-gray-200 dark:border-gray-700">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div>
+        <h1 class="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">Business Reports</h1>
+        <p class="text-gray-600 dark:text-gray-400 mt-1">Comprehensive analytics and insights for {{ getCurrentDateRangeLabel() }}</p>
+      </div>
+      
+      <!-- Controls -->
+      <div class="flex flex-col sm:flex-row gap-3">
+        <!-- Date Range Selector -->
+        <div class="flex items-center gap-2 bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-lg p-2 border border-gray-200 dark:border-gray-700">
+          <select [(ngModel)]="selectedPreset" 
+                  (ngModelChange)="onPresetChange($event)"
+                  class="bg-transparent text-gray-900 dark:text-white text-sm font-medium focus:outline-none">
+            <option *ngFor="let preset of datePresets" [value]="preset.value">{{ preset.label }}</option>
+          </select>
+        </div>
+
+        <!-- Custom Date Range (shown when custom is selected) -->
+        <div *ngIf="selectedPreset() === 'custom'" class="flex items-center gap-2">
+          <input type="date" 
+                 [(ngModel)]="customStartDate"
+                 (ngModelChange)="onCustomDateChange()"
+                 class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm">
+          <span class="text-gray-500 dark:text-gray-400">to</span>
+          <input type="date" 
+                 [(ngModel)]="customEndDate"
+                 (ngModelChange)="onCustomDateChange()"
+                 class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm">
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-2">
+          <button (click)="onRefreshData()"
+                  class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm">
+            🔄 Refresh
+          </button>
+          <button (click)="onExportReport('pdf')"
+                  class="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm">
+            📊 Export
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- View Toggle -->
+    <div class="mt-4 flex items-center gap-2 bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-lg p-1 border border-gray-200 dark:border-gray-700">
+      <button (click)="onViewChange('dashboard')"
+              [class]="currentView() === 'dashboard' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'"
+              class="px-3 py-2 rounded-md text-sm font-medium transition-all">
+        📊 Dashboard
+      </button>
+      <button (click)="onViewChange('financial')"
+              [class]="currentView() === 'financial' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'"
+              class="px-3 py-2 rounded-md text-sm font-medium transition-all">
+        💰 Financial
+      </button>
+      <button (click)="onViewChange('operational')"
+              [class]="currentView() === 'operational' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'"
+              class="px-3 py-2 rounded-md text-sm font-medium transition-all">
+        🔧 Operations
+      </button>
+      <button (click)="onViewChange('customer')"
+              [class]="currentView() === 'customer' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'"
+              class="px-3 py-2 rounded-md text-sm font-medium transition-all">
+        👥 Customers
+      </button>
+      <button (click)="onViewChange('inventory')"
+              [class]="currentView() === 'inventory' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'"
+              class="px-3 py-2 rounded-md text-sm font-medium transition-all">
+        📦 Inventory
+      </button>
+    </div>
+  </div>
+
+  <!-- Dashboard View -->
+  <div *ngIf="currentView() === 'dashboard'" class="p-4 lg:p-6 space-y-6">
+    
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 lg:gap-6">
+      <div *ngFor="let kpi of kpis()" [class]="getMetricCardClass(kpi.color)">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{{ kpi.label }}</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ formatKpiValue(kpi) }}</p>
+            <div class="flex items-center gap-1 mt-1">
+              <span>{{ getKpiChangeIcon(kpi) }}</span>
+              <span [class]="getKpiChangeClass(kpi)">{{ formatChange(kpi.change) }}</span>
+            </div>
+          </div>
+          <div class="text-2xl">{{ kpi.icon }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      
+      <!-- Revenue Trends Chart -->
+      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Revenue Trends</h3>
+        <div class="h-80">
+          <canvas *ngIf="revenueChartConfig()" 
+                  baseChart
+                  [type]="revenueChartConfig()!.type"
+                  [data]="revenueChartConfig()!.data"
+                  [options]="revenueChartConfig()!.options">
+          </canvas>
+        </div>
+      </div>
+
+      <!-- Service Types Distribution -->
+      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Service Distribution</h3>
+        <div class="h-80">
+          <canvas *ngIf="serviceTypeChartConfig()" 
+                  baseChart
+                  [type]="serviceTypeChartConfig()!.type"
+                  [data]="serviceTypeChartConfig()!.data"
+                  [options]="serviceTypeChartConfig()!.options">
+          </canvas>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Monthly Comparison -->
+    <div *ngIf="monthlyComparison()" class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Monthly Comparison</h3>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        
+        <!-- Revenue Comparison -->
+        <div class="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+          <h4 class="text-sm font-medium text-blue-700 dark:text-blue-300 mb-2">Revenue</h4>
+          <p class="text-xl font-bold text-blue-600 dark:text-blue-400">
+            {{ formatKpiValue({label: '', value: monthlyComparison()!.currentMonth.revenue, change: 0, changeType: 'neutral', format: 'currency', icon: '', color: 'blue'}) }}
+          </p>
+          <div class="flex items-center justify-center gap-1 mt-1">
+            <span class="text-xs" [class]="monthlyComparison()!.growth.revenue >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+              {{ monthlyComparison()!.growth.revenue >= 0 ? '↗️' : '↘️' }} {{ formatChange(monthlyComparison()!.growth.revenue) }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Appointments Comparison -->
+        <div class="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+          <h4 class="text-sm font-medium text-purple-700 dark:text-purple-300 mb-2">Appointments</h4>
+          <p class="text-xl font-bold text-purple-600 dark:text-purple-400">
+            {{ monthlyComparison()!.currentMonth.appointments }}
+          </p>
+          <div class="flex items-center justify-center gap-1 mt-1">
+            <span class="text-xs" [class]="monthlyComparison()!.growth.appointments >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+              {{ monthlyComparison()!.growth.appointments >= 0 ? '↗️' : '↘️' }} {{ formatChange(monthlyComparison()!.growth.appointments) }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Customers Comparison -->
+        <div class="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+          <h4 class="text-sm font-medium text-green-700 dark:text-green-300 mb-2">New Customers</h4>
+          <p class="text-xl font-bold text-green-600 dark:text-green-400">
+            {{ monthlyComparison()!.currentMonth.customers }}
+          </p>
+          <div class="flex items-center justify-center gap-1 mt-1">
+            <span class="text-xs" [class]="monthlyComparison()!.growth.customers >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+              {{ monthlyComparison()!.growth.customers >= 0 ? '↗️' : '↘️' }} {{ formatChange(monthlyComparison()!.growth.customers) }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Parts Comparison -->
+        <div class="text-center p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+          <h4 class="text-sm font-medium text-yellow-700 dark:text-yellow-300 mb-2">Parts Inventory</h4>
+          <p class="text-xl font-bold text-yellow-600 dark:text-yellow-400">
+            {{ monthlyComparison()!.currentMonth.parts }}
+          </p>
+          <div class="flex items-center justify-center gap-1 mt-1">
+            <span class="text-xs" [class]="monthlyComparison()!.growth.parts >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+              {{ monthlyComparison()!.growth.parts >= 0 ? '↗️' : '↘️' }} {{ formatChange(monthlyComparison()!.growth.parts) }}
+            </span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Appointment Status Chart -->
+    <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Appointment Status Overview</h3>
+      <div class="h-80">
+        <canvas *ngIf="appointmentStatusChartConfig()" 
+                baseChart
+                [type]="appointmentStatusChartConfig()!.type"
+                [data]="appointmentStatusChartConfig()!.data"
+                [options]="appointmentStatusChartConfig()!.options">
+        </canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Financial View -->
+  <div *ngIf="currentView() === 'financial'" class="p-4 lg:p-6 space-y-6">
+    
+    <!-- Financial KPIs -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 border-l-4 border-l-green-500">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Revenue</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">
+              {{ formatKpiValue({label: '', value: financialMetrics()?.totalRevenue || 0, change: 0, changeType: 'neutral', format: 'currency', icon: '', color: 'green'}) }}
+            </p>
+          </div>
+          <div class="text-2xl">💰</div>
+        </div>
+      </div>
+
+      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 border-l-4 border-l-blue-500">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Paid Revenue</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">
+              {{ formatKpiValue({label: '', value: financialMetrics()?.paidRevenue || 0, change: 0, changeType: 'neutral', format: 'currency', icon: '', color: 'blue'}) }}
+            </p>
+          </div>
+          <div class="text-2xl">✅</div>
+        </div>
+      </div>
+
+      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 border-l-4 border-l-yellow-500">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Pending Revenue</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">
+              {{ formatKpiValue({label: '', value: financialMetrics()?.pendingRevenue || 0, change: 0, changeType: 'neutral', format: 'currency', icon: '', color: 'yellow'}) }}
+            </p>
+          </div>
+          <div class="text-2xl">⏳</div>
+        </div>
+      </div>
+
+      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 border-l-4 border-l-red-500">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Overdue Revenue</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">
+              {{ formatKpiValue({label: '', value: financialMetrics()?.overdueRevenue || 0, change: 0, changeType: 'neutral', format: 'currency', icon: '', color: 'red'}) }}
+            </p>
+          </div>
+          <div class="text-2xl">🚨</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Financial Details -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      
+      <!-- Revenue Breakdown -->
+      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Revenue Breakdown</h3>
+        <div class="space-y-4">
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600 dark:text-gray-400">Average Invoice Value</span>
+            <span class="font-semibold text-gray-900 dark:text-white">
+              {{ formatKpiValue({label: '', value: financialMetrics()?.averageInvoiceValue || 0, change: 0, changeType: 'neutral', format: 'currency', icon: '', color: 'blue'}) }}
+            </span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600 dark:text-gray-400">Tax Collected (TVA)</span>
+            <span class="font-semibold text-gray-900 dark:text-white">
+              {{ formatKpiValue({label: '', value: financialMetrics()?.taxCollected || 0, change: 0, changeType: 'neutral', format: 'currency', icon: '', color: 'blue'}) }}
+            </span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600 dark:text-gray-400">Discounts Given</span>
+            <span class="font-semibold text-gray-900 dark:text-white">
+              {{ formatKpiValue({label: '', value: financialMetrics()?.discountsGiven || 0, change: 0, changeType: 'neutral', format: 'currency', icon: '', color: 'blue'}) }}
+            </span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600 dark:text-gray-400">Profit Margin</span>
+            <span class="font-semibold text-gray-900 dark:text-white">
+              {{ formatKpiValue({label: '', value: financialMetrics()?.profitMargin || 0, change: 0, changeType: 'neutral', format: 'percentage', icon: '', color: 'blue'}) }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Growth Metrics -->
+      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Growth Analysis</h3>
+        <div class="space-y-4">
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600 dark:text-gray-400">Revenue Growth</span>
+            <div class="flex items-center gap-2">
+              <span [class]="(financialMetrics()?.revenueGrowth || 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+                {{ (financialMetrics()?.revenueGrowth || 0) >= 0 ? '↗️' : '↘️' }}
+              </span>
+              <span class="font-semibold text-gray-900 dark:text-white">
+                {{ formatChange(financialMetrics()?.revenueGrowth || 0) }}
+              </span>
+            </div>
+          </div>
+          
+          <!-- Progress bars for visual representation -->
+          <div class="space-y-3">
+            <div>
+              <div class="flex justify-between text-sm mb-1">
+                <span class="text-gray-600 dark:text-gray-400">This Month</span>
+                <span class="text-gray-900 dark:text-white">
+                  {{ formatKpiValue({label: '', value: monthlyComparison()?.currentMonth?.revenue || 0, change: 0, changeType: 'neutral', format: 'currency', icon: '', color: 'blue'}) }}
+                </span>
+              </div>
+              <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div class="bg-blue-500 h-2 rounded-full" 
+                     [style.width.%]="100"></div>
+              </div>
+            </div>
+            
+            <div>
+              <div class="flex justify-between text-sm mb-1">
+                <span class="text-gray-600 dark:text-gray-400">Last Month</span>
+                <span class="text-gray-900 dark:text-white">
+                  {{ formatKpiValue({label: '', value: monthlyComparison()?.previousMonth?.revenue || 0, change: 0, changeType: 'neutral', format: 'currency', icon: '', color: 'blue'}) }}
+                </span>
+              </div>
+              <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div class="bg-gray-400 h-2 rounded-full" 
+                     [style.width.%]="(monthlyComparison()?.previousMonth?.revenue || 0) / (monthlyComparison()?.currentMonth?.revenue || 1) * 100"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Operational View -->
+  <div *ngIf="currentView() === 'operational'" class="p-4 lg:p-6 space-y-6">
+    
+    <!-- Operational KPIs -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Appointments</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ operationalMetrics()?.totalAppointments || 0 }}</p>
+          </div>
+          <div class="text-2xl">📅</div>
+        </div>
+      </div>
+
+      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Completion Rate</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">
+              {{ formatKpiValue({label: '', value: operationalMetrics()?.onTimeCompletionRate || 0, change: 0, changeType: 'neutral', format: 'percentage', icon: '', color: 'green'}) }}
+            </p>
+          </div>
+          <div class="text-2xl">✅</div>
+        </div>
+      </div>
+
+      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Mechanic Utilization</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">
+              {{ formatKpiValue({label: '', value: operationalMetrics()?.mechanicUtilization || 0, change: 0, changeType: 'neutral', format: 'percentage', icon: '', color: 'blue'}) }}
+            </p>
+          </div>
+          <div class="text-2xl">🔧</div>
+        </div>
+      </div>
+
+      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Garage Capacity</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">
+              {{ formatKpiValue({label: '', value: operationalMetrics()?.garageCapacityUsed || 0, change: 0, changeType: 'neutral', format: 'percentage', icon: '', color: 'purple'}) }}
+            </p>
+          </div>
+          <div class="text-2xl">🏭</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Operational Details -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      
+      <!-- Service Performance -->
+      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Service Performance</h3>
+        <div class="space-y-4">
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600 dark:text-gray-400">Avg Service Time</span>
+            <span class="font-semibold text-gray-900 dark:text-white">{{ (operationalMetrics()?.averageServiceTime || 0).toFixed(0) }} min</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600 dark:text-gray-400">Customer Satisfaction</span>
+            <span class="font-semibold text-gray-900 dark:text-white">{{ (operationalMetrics()?.customerSatisfactionScore || 0).toFixed(1) }}/5.0</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600 dark:text-gray-400">Repeat Customer Rate</span>
+            <span class="font-semibold text-gray-900 dark:text-white">{{ (operationalMetrics()?.repeatCustomerRate || 0).toFixed(1) }}%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Efficiency Metrics -->
+      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Efficiency Metrics</h3>
+        <div class="space-y-4">
+          <div>
+            <div class="flex justify-between text-sm mb-2">
+              <span class="text-gray-600 dark:text-gray-400">Mechanic Utilization</span>
+              <span class="text-gray-900 dark:text-white">{{ (operationalMetrics()?.mechanicUtilization || 0).toFixed(1) }}%</span>
+            </div>
+            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+              <div class="bg-blue-500 h-2 rounded-full transition-all" 
+                   [style.width.%]="operationalMetrics()?.mechanicUtilization || 0"></div>
+            </div>
+          </div>
+          
+          <div>
+            <div class="flex justify-between text-sm mb-2">
+              <span class="text-gray-600 dark:text-gray-400">Garage Capacity Used</span>
+              <span class="text-gray-900 dark:text-white">{{ (operationalMetrics()?.garageCapacityUsed || 0).toFixed(1) }}%</span>
+            </div>
+            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+              <div class="bg-purple-500 h-2 rounded-full transition-all" 
+                   [style.width.%]="operationalMetrics()?.garageCapacityUsed || 0"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Customer View -->
+  <div *ngIf="currentView() === 'customer'" class="p-4 lg:p-6 space-y-6">
+    
+    <!-- Customer KPIs -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Customers</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ customerMetrics()?.totalCustomers || 0 }}</p>
+          </div>
+          <div class="text-2xl">👥</div>
+        </div>
+      </div>
+
+      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">New Customers</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ customerMetrics()?.newCustomers || 0 }}</p>
+          </div>
+          <div class="text-2xl">🆕</div>
+        </div>
+      </div>
+
+      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Avg Customer Value</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">
+              {{ formatKpiValue({label: '', value: customerMetrics()?.averageCustomerValue || 0, change: 0, changeType: 'neutral', format: 'currency', icon: '', color: 'green'}) }}
+            </p>
+          </div>
+          <div class="text-2xl">💎</div>
+        </div>
+      </div>
+
+      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Retention Rate</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">
+              {{ formatKpiValue({label: '', value: customerMetrics()?.customerRetentionRate || 0, change: 0, changeType: 'neutral', format: 'percentage', icon: '', color: 'purple'}) }}
+            </p>
+          </div>
+          <div class="text-2xl">🔄</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inventory View -->
+  <div *ngIf="currentView() === 'inventory'" class="p-4 lg:p-6 space-y-6">
+    
+    <!-- Inventory KPIs -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Parts</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ inventoryMetrics()?.totalParts || 0 }}</p>
+          </div>
+          <div class="text-2xl">📦</div>
+        </div>
+      </div>
+
+      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Stock Value</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">
+              {{ formatKpiValue({label: '', value: inventoryMetrics()?.stockValue || 0, change: 0, changeType: 'neutral', format: 'currency', icon: '', color: 'green'}) }}
+            </p>
+          </div>
+          <div class="text-2xl">💰</div>
+        </div>
+      </div>
+
+      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Low Stock Items</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ inventoryMetrics()?.lowStockItems || 0 }}</p>
+          </div>
+          <div class="text-2xl">⚠️</div>
+        </div>
+      </div>
+
+      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Turnover Rate</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ (inventoryMetrics()?.inventoryTurnover || 0).toFixed(1) }}</p>
+          </div>
+          <div class="text-2xl">🔄</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading()" 
+       class="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 flex items-center gap-3">
+      <div class="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+      <span class="text-gray-900 dark:text-white">Loading reports...</span>
+    </div>
+  </div>
+</div>

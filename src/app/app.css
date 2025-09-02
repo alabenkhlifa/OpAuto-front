@@ -19,11 +19,50 @@
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: auto;
   position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header Bar */
+.header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+:root.dark .header-bar {
+  background: rgba(17, 24, 39, 0.8);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Page Content */
+.page-content {
+  flex: 1;
+  overflow: auto;
+}
+
+/* Utilities */
+.flex-1 {
+  flex: 1;
 }
 
 /* When sidebar is collapsed - hide it completely */
 .sidebar-collapsed .main-content {
   margin-left: 0;
+}
+
+/* No sidebar layout for auth pages */
+.main-content.no-sidebar {
+  margin-left: 0;
+  width: 100%;
 }
 
 /* Mobile layout */

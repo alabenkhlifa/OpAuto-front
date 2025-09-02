@@ -1,6 +1,11 @@
 /* You can add global styles to this file, and also import other style files */
 @import "tailwindcss";
 
+/* Essential utility classes not available in TailwindCSS v4 by default */
+.text-md { font-size: 1rem; line-height: 1.5rem; }
+.w-3 { width: 0.75rem; }
+.h-3 { height: 0.75rem; }
+
 /* OpAuto Theme Variables */
 :root {
   /* Light Theme Colors */

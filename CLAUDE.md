@@ -97,7 +97,7 @@ src/
 ### Supported Languages
 - **English (en)** - Primary language
 - **French (fr)** - Secondary language  
-- **Tunisian (tn)** - Local language support
+- **Arabic (ar)** - Standard Arabic language support (no dialects)
 
 ### Implementation Guidelines
 
@@ -114,7 +114,7 @@ src/
 │   └── i18n/
 │       ├── en.json
 │       ├── fr.json
-│       └── tn.json
+│       └── ar.json
 ```
 
 #### Translation Keys Convention
@@ -161,18 +161,18 @@ src/
 }
 ```
 
-**tn.json:**
+**ar.json:**
 ```json
 {
   "common": {
-    "save": "احفظ",
+    "save": "حفظ",
     "cancel": "إلغاء",
     "delete": "حذف"
   },
   "auth": {
     "login": {
       "title": "تسجيل الدخول",
-      "emailLabel": "البريد الإلكتروني", 
+      "emailLabel": "البريد الإلكتروني",
       "passwordLabel": "كلمة المرور"
     }
   }
@@ -183,7 +183,7 @@ src/
 - Use Angular i18n package (@angular/localize)
 - Implement language switcher component
 - Store language preference in localStorage
-- Support RTL layout for Tunisian
+- Support RTL layout for Arabic
 - Format dates, numbers, and currencies per locale
 - Translate all user-facing text
 - Handle pluralization rules

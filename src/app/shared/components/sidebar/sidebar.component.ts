@@ -12,6 +12,7 @@ interface NavItem {
   badge?: number;
   children?: NavItem[];
   isActive?: boolean;
+  isExpanded?: boolean;
 }
 
 @Component({
@@ -49,6 +50,7 @@ export class SidebarComponent {
       id: 'cars',
       label: 'Car Management',
       icon: 'car',
+      isExpanded: false,
       children: [
         { id: 'cars-list', label: 'All Cars', icon: 'list', route: '/cars' },
         { id: 'cars-add', label: 'Register Car', icon: 'plus', route: '/cars/add' }
@@ -58,6 +60,7 @@ export class SidebarComponent {
       id: 'maintenance',
       label: 'Maintenance',
       icon: 'wrench',
+      isExpanded: false,
       children: [
         { id: 'maintenance-active', label: 'Active Jobs', icon: 'play', route: '/maintenance/active', badge: 5 },
         { id: 'maintenance-history', label: 'History', icon: 'history', route: '/maintenance/history' },
@@ -74,6 +77,7 @@ export class SidebarComponent {
       id: 'invoices',
       label: 'Invoicing',
       icon: 'receipt',
+      isExpanded: false,
       children: [
         { id: 'invoices-list', label: 'All Invoices', icon: 'list', route: '/invoices' },
         { id: 'invoices-create', label: 'Create Invoice', icon: 'plus', route: '/invoices/create' },
@@ -106,7 +110,7 @@ export class SidebarComponent {
       id: 'garage-settings',
       label: 'Garage Settings',
       icon: 'settings',
-      route: '/settings/garage'
+      route: '/settings'
     },
     {
       id: 'employees',
@@ -173,7 +177,7 @@ export class SidebarComponent {
   toggleSubmenu(item: NavItem, event: Event) {
     event.stopPropagation();
     if (item.children) {
-      // Toggle submenu logic here if needed
+      item.isExpanded = !item.isExpanded;
     }
   }
 

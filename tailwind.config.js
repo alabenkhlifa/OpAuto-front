@@ -1,8 +1,8 @@
 export default {
-content: [
+  content: [
     "./src/**/*.{html,ts}",
   ],
-  darkMode: 'media', // Use media-based dark mode strategy
+  darkMode: 'media',
   theme: {
     extend: {
       colors: {

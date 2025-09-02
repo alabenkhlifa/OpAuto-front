@@ -334,7 +334,20 @@
 .progress-fill {
   height: 100%;
   border-radius: 4px;
-  transition: width 0.3s ease;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+/* Progress bar color classes */
+.progress-fill.bg-error-500 {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+.progress-fill.bg-warning-500 {
+  background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+.progress-fill.bg-success-500 {
+  background: linear-gradient(90deg, #10b981, #059669);
 }
 
 .job-footer {

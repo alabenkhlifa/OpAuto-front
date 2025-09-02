@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
+import { LanguageToggleComponent } from '../../shared/components/language-toggle/language-toggle.component';
 
 interface GarageMetrics {
   totalCarsToday: number;
@@ -41,7 +42,7 @@ interface ActiveJob {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, ThemeToggleComponent],
+  imports: [CommonModule, ThemeToggleComponent, LanguageToggleComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
