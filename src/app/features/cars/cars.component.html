@@ -24,7 +24,7 @@
         </div>
 
         <!-- Add Car Button -->
-        <button class="add-btn">
+        <button class="add-btn" (click)="openRegistrationForm()">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
@@ -135,4 +135,12 @@
       }
     </div>
   </main>
+
+  <!-- Car Registration Form Modal -->
+  @if (showRegistrationForm()) {
+    <app-car-registration-form
+      (close)="closeRegistrationForm()"
+      (carRegistered)="onCarRegistered($event)">
+    </app-car-registration-form>
+  }
 </div>

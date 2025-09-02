@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
 import { LanguageToggleComponent } from '../../shared/components/language-toggle/language-toggle.component';
 
@@ -47,6 +48,7 @@ interface ActiveJob {
   styleUrl: './dashboard.component.css'
 })
 export class DashboardComponent implements OnInit {
+  private router = inject(Router);
   metrics: GarageMetrics = {
     totalCarsToday: 12,
     carsInProgress: 5,
@@ -205,5 +207,22 @@ export class DashboardComponent implements OnInit {
   private loadDashboardData(): void {
     // TODO: Replace with actual API call
     // This is placeholder data for the MVP
+  }
+
+  // Quick Action Navigation Methods
+  public navigateToNewCar(): void {
+    this.router.navigate(['/cars']);
+  }
+
+  public navigateToAppointments(): void {
+    this.router.navigate(['/appointments']);
+  }
+
+  public navigateToInvoiceCreate(): void {
+    this.router.navigate(['/invoices/create']);
+  }
+
+  public navigateToMaintenanceActive(): void {
+    this.router.navigate(['/maintenance/active']);
   }
 }

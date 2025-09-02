@@ -5,11 +5,12 @@ import { RouterModule } from '@angular/router';
 import { CarService, CarWithHistory } from './services/car.service';
 import { Customer } from '../../core/models/appointment.model';
 import { CarCardComponent } from './components/car-card.component';
+import { CarRegistrationFormComponent } from './components/car-registration-form.component';
 
 @Component({
   selector: 'app-cars',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, CarCardComponent],
+  imports: [CommonModule, FormsModule, RouterModule, CarCardComponent, CarRegistrationFormComponent],
   templateUrl: './cars.component.html',
   styleUrl: './cars.component.css'
 })
@@ -18,6 +19,7 @@ export class CarsComponent implements OnInit {
   
   cars = signal<CarWithHistory[]>([]);
   isLoading = signal(false);
+  showRegistrationForm = signal(false);
   
   searchQuery = signal('');
   selectedMake = signal('all');
@@ -143,5 +145,18 @@ export class CarsComponent implements OnInit {
   onViewHistory(car: CarWithHistory): void {
     console.log('View history for car:', car);
     // TODO: Navigate to car service history
+  }
+
+  openRegistrationForm(): void {
+    this.showRegistrationForm.set(true);
+  }
+
+  closeRegistrationForm(): void {
+    this.showRegistrationForm.set(false);
+  }
+
+  onCarRegistered(car: CarWithHistory): void {
+    this.loadCars();
+    this.showRegistrationForm.set(false);
   }
 }

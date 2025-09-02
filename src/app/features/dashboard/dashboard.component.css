@@ -465,6 +465,48 @@
   margin: 0;
 }
 
+/* Action Icon Colors */
+.action-icon-primary {
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+}
+
+.action-icon-secondary {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.action-icon-success {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+.action-icon-automotive {
+  background: rgba(113, 113, 122, 0.1);
+  color: #71717a;
+}
+
+/* Dark mode action icons */
+.dark .action-icon-primary {
+  background: rgba(96, 165, 250, 0.2);
+  color: #60a5fa;
+}
+
+.dark .action-icon-secondary {
+  background: rgba(251, 191, 36, 0.2);
+  color: #fbbf24;
+}
+
+.dark .action-icon-success {
+  background: rgba(74, 222, 128, 0.2);
+  color: #4ade80;
+}
+
+.dark .action-icon-automotive {
+  background: rgba(161, 161, 170, 0.2);
+  color: #a1a1aa;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .dashboard-container {
