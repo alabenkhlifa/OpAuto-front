@@ -1,7 +1,7 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { CarService, CarWithHistory } from './services/car.service';
 import { Customer } from '../../core/models/appointment.model';
 import { CarCardComponent } from './components/car-card.component';
@@ -16,6 +16,7 @@ import { CarRegistrationFormComponent } from './components/car-registration-form
 })
 export class CarsComponent implements OnInit {
   private carService = inject(CarService);
+  private router = inject(Router);
   
   cars = signal<CarWithHistory[]>([]);
   isLoading = signal(false);
@@ -138,13 +139,24 @@ export class CarsComponent implements OnInit {
   }
 
   onScheduleService(car: CarWithHistory): void {
-    console.log('Schedule service for car:', car);
-    // TODO: Navigate to appointment booking with pre-filled car
+    this.router.navigate(['/appointments'], { 
+      queryParams: { 
+        carId: car.id,
+        licensePlate: car.licensePlate,
+        make: car.make,
+        model: car.model,
+        customerId: car.customerId
+      }
+    });
   }
 
   onViewHistory(car: CarWithHistory): void {
-    console.log('View history for car:', car);
-    // TODO: Navigate to car service history
+    this.router.navigate(['/maintenance'], { 
+      queryParams: { 
+        carId: car.id,
+        filter: 'history'
+      }
+    });
   }
 
   openRegistrationForm(): void {

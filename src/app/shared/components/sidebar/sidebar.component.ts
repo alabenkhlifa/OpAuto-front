@@ -50,11 +50,7 @@ export class SidebarComponent {
       id: 'cars',
       label: 'Car Management',
       icon: 'car',
-      isExpanded: false,
-      children: [
-        { id: 'cars-list', label: 'All Cars', icon: 'list', route: '/cars' },
-        { id: 'cars-add', label: 'Register Car', icon: 'plus', route: '/cars/add' }
-      ]
+      route: '/cars'
     },
     {
       id: 'maintenance',

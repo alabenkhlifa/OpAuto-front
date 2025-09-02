@@ -6,19 +6,31 @@
 }
 
 .appointments-header {
+  background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(20px);
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
   padding: 1.5rem;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   margin-bottom: 1.5rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  .appointments-header {
-    background: rgba(31, 41, 55, 0.8);
-    border-color: rgba(255, 255, 255, 0.1);
-  }
+.appointments-header:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(31, 38, 135, 0.5);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.dark .appointments-header {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+}
+
+.dark .appointments-header:hover {
+  background: rgba(0, 0, 0, 0.35);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
 }
 
 .add-btn, .mobile-fab {
@@ -51,68 +63,123 @@
 }
 
 .mobile-nav {
+  background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(20px);
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
   padding: 1rem;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   margin-bottom: 1rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  .mobile-nav {
-    background: rgba(31, 41, 55, 0.8);
-    border-color: rgba(255, 255, 255, 0.1);
-  }
+.mobile-nav:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(31, 38, 135, 0.5);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.dark .mobile-nav {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+}
+
+.dark .mobile-nav:hover {
+  background: rgba(0, 0, 0, 0.35);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
 }
 
 .appointment-card {
+  background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(20px);
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 16px;
-  padding: 1rem;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 1.5rem;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   margin-bottom: 1rem;
-  transition: all 0.2s ease;
   cursor: pointer;
 }
 
 .appointment-card:hover {
-  background: rgba(255, 255, 255, 0.9);
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 12px 40px rgba(31, 38, 135, 0.5);
+  background: rgba(255, 255, 255, 0.85);
 }
 
-@media (prefers-color-scheme: dark) {
-  .appointment-card {
-    background: rgba(31, 41, 55, 0.8);
-    border-color: rgba(255, 255, 255, 0.1);
-  }
-  .appointment-card:hover {
-    background: rgba(31, 41, 55, 0.9);
-  }
+.dark .appointment-card {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+}
+
+.dark .appointment-card:hover {
+  background: rgba(0, 0, 0, 0.35);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* Force proper text colors for light mode */
+.appointment-card h3,
+.appointment-card .text-gray-900 {
+  color: #111827 !important;
+}
+
+.appointment-card .text-gray-600,
+.appointment-card .text-sm {
+  color: #4b5563 !important;
+}
+
+.appointment-card .text-gray-500 {
+  color: #6b7280 !important;
+}
+
+/* Dark mode text overrides */
+.dark .appointment-card h3,
+.dark .appointment-card .text-gray-900 {
+  color: #ffffff !important;
+}
+
+.dark .appointment-card .text-gray-600,
+.dark .appointment-card .text-sm {
+  color: #d1d5db !important;
+}
+
+.dark .appointment-card .text-gray-500 {
+  color: #9ca3af !important;
 }
 
 .mobile-filters {
+  background: rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(20px);
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   margin-bottom: 1rem;
   max-height: 0;
   overflow: hidden;
-  transition: all 0.3s ease;
 }
 
 .mobile-filters.open {
   max-height: 200px;
 }
 
-@media (prefers-color-scheme: dark) {
-  .mobile-filters {
-    background: rgba(31, 41, 55, 0.95);
-    border-color: rgba(255, 255, 255, 0.1);
-  }
+.mobile-filters:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(31, 38, 135, 0.5);
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.dark .mobile-filters {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+}
+
+.dark .mobile-filters:hover {
+  background: rgba(0, 0, 0, 0.35);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
 }
 
 .filter-chip {
@@ -157,15 +224,27 @@
 .empty-state {
   text-align: center;
   padding: 3rem 1rem;
+  background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(20px);
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 16px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  .empty-state {
-    background: rgba(31, 41, 55, 0.6);
-    border-color: rgba(255, 255, 255, 0.1);
-  }
+.empty-state:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(31, 38, 135, 0.5);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.dark .empty-state {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+}
+
+.dark .empty-state:hover {
+  background: rgba(0, 0, 0, 0.35);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
 }

@@ -2,6 +2,19 @@
 
 ## UI/UX Issues
 
+### 📱 Appointments Text Visibility
+**Issue**: Text appears white in light mode on appointments screen, making it unreadable
+- **Location**: `src/app/features/appointments/appointments.component.html`
+- **Description**: TailwindCSS dark mode classes not working properly - text shows as white even in light mode
+- **Attempted Fixes**:
+  - Added `[class.dark]="themeService.isDarkMode()"` to appointments container
+  - Applied global dark class binding to app container
+  - Increased background opacity for better text contrast (0.25 → 0.7)
+  - Updated glassmorphism styling to match dashboard
+- **Status**: Unresolved
+- **Priority**: High (affects usability)
+- **Next Steps**: Investigate TailwindCSS dark mode configuration or add explicit CSS text color overrides
+
 ### 🎨 Auth Page Background Elements
 **Issue**: Animated background droplets on login/register page show white square borders around them
 - **Location**: `src/app/features/auth/auth.component.ts` lines 18-20
