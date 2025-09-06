@@ -2,7 +2,7 @@
 <div class="cars-container p-4 lg:p-8">
 
   <!-- Header Section -->
-  <header class="cars-header">
+  <header class="glass-card cars-header">
     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
       <div class="flex-1">
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-1">All Cars</h1>
@@ -35,7 +35,7 @@
   </header>
 
   <!-- Stats Overview -->
-  <div class="stats-nav">
+  <div class="glass-card stats-nav">
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
       <div class="text-center">
         <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ statusCounts().total }}</div>
@@ -98,6 +98,29 @@
   <!-- Main Content -->
   <main class="cars-main">
 
+    <!-- Status Legend -->
+    <div *ngIf="!isLoading() && filteredCars().length > 0" class="glass-card status-legend">
+      <h3 class="legend-title">Status Legend</h3>
+      <div class="legend-items">
+        <div class="legend-item">
+          <span class="legend-badge bg-green-100 text-green-700 border-green-200">Up to Date</span>
+          <span class="legend-text">Maintenance is current</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-badge bg-amber-100 text-amber-700 border-amber-200">Due Soon</span>
+          <span class="legend-text">Service needed within 7 days</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-badge bg-red-100 text-red-700 border-red-200">Overdue</span>
+          <span class="legend-text">Service is past due</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-badge bg-gray-100 text-gray-700 border-gray-200">Unknown</span>
+          <span class="legend-text">Status information unavailable</span>
+        </div>
+      </div>
+    </div>
+
     <!-- Loading State -->
     <div *ngIf="isLoading()" class="flex flex-col items-center justify-center py-12">
       <div class="loading-spinner"></div>
@@ -105,7 +128,7 @@
     </div>
 
     <!-- Empty State -->
-    <div *ngIf="!isLoading() && filteredCars().length === 0" class="empty-state">
+    <div *ngIf="!isLoading() && filteredCars().length === 0" class="glass-card empty-state">
       <div class="mb-4">
         <svg class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 24 24">
           <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.22.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>

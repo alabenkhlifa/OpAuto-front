@@ -67,7 +67,7 @@
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(29, 78, 216, 0.8));
   border: 1px solid rgba(59, 130, 246, 0.3);
   border-radius: 12px;
-  color: white;
+  color: white !important;
   padding: 0.75rem 1rem;
   display: flex;
   align-items: center;
@@ -261,6 +261,28 @@
   background: rgba(59, 130, 246, 0.8) !important;
   border-color: rgba(59, 130, 246, 0.5) !important;
   color: white !important;
+}
+
+/* Filter toggle button styling - matches car management screen */
+.filter-toggle {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: #d1d5db;
+  background: rgba(31, 41, 55, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  margin-bottom: 0.75rem;
+  cursor: pointer;
+}
+
+.filter-toggle:hover {
+  background: rgba(31, 41, 55, 0.8);
 }
 
 /* Filters button text - permanent dark */

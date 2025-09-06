@@ -1,17 +1,31 @@
-/* Cars Component - Permanent Dark Mode Glassmorphism Design */
+/* Cars Component - Permanent Dark Glassmorphism to match appointments */
 
 .cars-container {
   min-height: 100vh;
   background: transparent;
 }
 
-.cars-header {
-  backdrop-filter: blur(20px);
-  background: rgba(31, 41, 55, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
+/* Glass card styling to match appointments */
+.glass-card {
+  background: rgba(17, 24, 39, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(75, 85, 99, 0.6);
+  border-radius: 20px;
   padding: 1.5rem;
-  margin-bottom: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-bottom: 1rem;
+}
+
+.glass-card:hover {
+  background: rgba(31, 41, 55, 0.98);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+  border-color: rgba(59, 130, 246, 0.7);
+  transform: translateY(-2px);
+}
+
+.cars-header {
+  /* Uses glass-card styling */
 }
 
 .cars-header h1 {
@@ -46,7 +60,8 @@
   color: #9ca3af;
 }
 
-.add-btn {
+/* Add button styling to match appointments */
+.add-btn, .mobile-fab {
   backdrop-filter: blur(20px);
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(29, 78, 216, 0.8));
   border: 1px solid rgba(59, 130, 246, 0.3);
@@ -60,18 +75,22 @@
   font-weight: 600;
 }
 
-.add-btn:hover {
+.add-btn:hover, .mobile-fab:hover {
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(29, 78, 216, 0.9));
   transform: translateY(-1px);
 }
 
 .stats-nav {
-  backdrop-filter: blur(20px);
-  background: rgba(31, 41, 55, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 1rem;
-  margin-bottom: 1rem;
+  /* Uses glass-card styling */
+}
+
+/* Fix only the total cars number to be white, keep colored status numbers */
+.stats-nav .text-center:first-child .text-2xl {
+  color: #ffffff !important;
+}
+
+.stats-nav .text-xs {
+  color: #d1d5db !important;
 }
 
 .filter-toggle {
@@ -87,6 +106,7 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   transition: all 0.2s ease;
+  margin-bottom: 0.75rem;
 }
 
 .filter-toggle:hover {
@@ -94,18 +114,25 @@
 }
 
 .filters-panel {
-  backdrop-filter: blur(20px);
-  background: rgba(31, 41, 55, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
+  background: rgba(17, 24, 39, 0.9);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(75, 85, 99, 0.4);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   margin-bottom: 1rem;
   max-height: 0;
   overflow: hidden;
-  transition: all 0.3s ease;
 }
 
 .filters-panel.open {
   max-height: 300px;
+}
+
+.filters-panel:hover {
+  transform: translateY(-2px);
+  background: rgba(31, 41, 55, 0.95);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
 }
 
 .filter-select {
@@ -152,10 +179,82 @@
 .empty-state {
   text-align: center;
   padding: 3rem 1rem;
+  /* Uses glass-card styles for consistency */
+}
+
+/* Empty state text - permanent dark */
+.empty-state h3,
+.empty-state .text-gray-900 {
+  color: #ffffff !important;
+}
+
+.empty-state p,
+.empty-state .text-gray-600,
+.empty-state .text-gray-400 {
+  color: #d1d5db !important;
+}
+
+/* Status Legend Styling */
+.status-legend {
+  background: rgba(17, 24, 39, 0.6) !important;
   backdrop-filter: blur(20px);
-  background: rgba(31, 41, 55, 0.6);
-  border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.status-legend:hover {
+  background: rgba(31, 41, 55, 0.7) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.legend-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0 0 0.75rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.legend-title:before {
+  content: '';
+  width: 4px;
+  height: 1rem;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  border-radius: 2px;
+}
+
+.legend-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.legend-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.legend-text {
+  font-size: 0.875rem;
+  color: #d1d5db;
+  flex: 1;
 }
 
 .loading-spinner {

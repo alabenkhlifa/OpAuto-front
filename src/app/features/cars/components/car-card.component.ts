@@ -81,36 +81,24 @@ import { CarWithHistory } from '../services/car.service';
     </div>
   `,
   styles: [`
+    /* Car Card - Permanent Dark Glassmorphism Design to match appointments */
     .car-card {
-      backdrop-filter: blur(20px);
-      background: rgba(255, 255, 255, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(17, 24, 39, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(75, 85, 99, 0.6);
       border-radius: 20px;
       padding: 1.5rem;
-      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       cursor: pointer;
+      margin-bottom: 1rem;
     }
 
     .car-card:hover {
+      background: rgba(31, 41, 55, 0.98);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+      border-color: rgba(59, 130, 246, 0.7);
       transform: translateY(-2px);
-      box-shadow: 0 12px 40px rgba(31, 38, 135, 0.5);
-      background: rgba(255, 255, 255, 0.75);
-    }
-
-    :root.dark .car-card,
-    .dark .car-card,
-    html.dark .car-card {
-      background: rgba(0, 0, 0, 0.2) !important;
-      border: 1px solid rgba(255, 255, 255, 0.12) !important;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37) !important;
-    }
-    
-    :root.dark .car-card:hover,
-    .dark .car-card:hover,
-    html.dark .car-card:hover {
-      background: rgba(0, 0, 0, 0.3) !important;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5) !important;
     }
 
     .car-header {
@@ -139,27 +127,15 @@ import { CarWithHistory } from '../services/car.service';
     .car-title {
       font-size: 1.125rem;
       font-weight: 600;
-      color: #1f2937;
+      color: #ffffff;
       margin: 0;
       line-height: 1.2;
     }
 
-    :root.dark .car-title,
-    .dark .car-title,
-    html.dark .car-title {
-      color: #ffffff !important;
-    }
-
     .car-year {
       font-size: 0.875rem;
-      color: #6b7280;
+      color: #9ca3af;
       margin: 0;
-    }
-
-    :root.dark .car-year,
-    .dark .car-year,
-    html.dark .car-year {
-      color: #9ca3af !important;
     }
 
     .status-badge {
@@ -187,20 +163,11 @@ import { CarWithHistory } from '../services/car.service';
     .customer-section {
       margin-bottom: 1rem;
       padding-bottom: 1rem;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-    }
-
-    :root.dark .customer-section,
-    .dark .customer-section,
-    html.dark .customer-section {
-      border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
     
-    /* Fix customer name text visibility in dark mode */
-    :root.dark .customer-section span,
-    .dark .customer-section span,
-    html.dark .customer-section span {
-      color: #ffffff !important;
+    .customer-section span {
+      color: #ffffff;
     }
 
     .service-stats {
@@ -216,24 +183,12 @@ import { CarWithHistory } from '../services/car.service';
     }
 
     .stat-label {
-      color: #6b7280;
-    }
-
-    :root.dark .stat-label,
-    .dark .stat-label,
-    html.dark .stat-label {
-      color: #9ca3af !important;
+      color: #9ca3af;
     }
 
     .stat-value {
       font-weight: 600;
-      color: #1f2937;
-    }
-
-    :root.dark .stat-value,
-    .dark .stat-value,
-    html.dark .stat-value {
-      color: #ffffff !important;
+      color: #ffffff;
     }
 
     .card-actions {
@@ -247,46 +202,42 @@ import { CarWithHistory } from '../services/car.service';
       align-items: center;
       justify-content: center;
       gap: 0.5rem;
-      padding: 0.75rem;
+      padding: 0.75rem 1rem;
       border-radius: 12px;
       font-size: 0.875rem;
       font-weight: 600;
-      transition: all 0.2s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid;
+      backdrop-filter: blur(20px);
+      cursor: pointer;
     }
 
+    /* Schedule button - green to match appointment complete button */
     .action-btn.primary {
-      background: rgba(59, 130, 246, 0.8);
+      background: linear-gradient(135deg, #059669, #047857);
+      border-color: #059669;
       color: white;
-      border: 1px solid rgba(59, 130, 246, 0.3);
+      box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
     }
 
     .action-btn.primary:hover {
-      background: rgba(59, 130, 246, 0.9);
+      background: linear-gradient(135deg, #047857, #065f46);
+      box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
       transform: translateY(-1px);
     }
 
+    /* History button - orange to match appointment edit button */
     .action-btn.secondary {
-      background: rgba(156, 163, 175, 0.3);
-      color: #374151;
-      border: 1px solid rgba(156, 163, 175, 0.2);
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      border-color: #f59e0b;
+      color: white;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
     }
 
     .action-btn.secondary:hover {
-      background: rgba(156, 163, 175, 0.4);
-    }
-
-    :root.dark .action-btn.secondary,
-    .dark .action-btn.secondary,
-    html.dark .action-btn.secondary {
-      color: #d1d5db !important;
-      background: rgba(75, 85, 99, 0.3) !important;
-      border-color: rgba(75, 85, 99, 0.2) !important;
-    }
-    
-    :root.dark .action-btn.secondary:hover,
-    .dark .action-btn.secondary:hover,
-    html.dark .action-btn.secondary:hover {
-      background: rgba(75, 85, 99, 0.4) !important;
+      background: linear-gradient(135deg, #d97706, #b45309);
+      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+      transform: translateY(-1px);
     }
   `]
 })

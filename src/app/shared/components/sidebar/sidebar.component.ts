@@ -1,7 +1,8 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { SidebarService } from '../../../core/services/sidebar.service';
+import { filter, Subscription } from 'rxjs';
 
 interface NavItem {
   id: string;
@@ -21,9 +22,10 @@ interface NavItem {
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.css'
 })
-export class SidebarComponent {
+export class SidebarComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private sidebarService = inject(SidebarService);
+  private routerSubscription?: Subscription;
   
   isCollapsed = this.sidebarService.isCollapsed;
   isMobileMenuOpen = signal(false);
@@ -120,6 +122,24 @@ export class SidebarComponent {
     }
   ];
 
+  ngOnInit() {
+    // Set initial active state based on current URL
+    this.updateActiveStates(this.router.url);
+    
+    // Subscribe to router events to update active state when URL changes
+    this.routerSubscription = this.router.events
+      .pipe(filter(event => event instanceof NavigationEnd))
+      .subscribe((event: NavigationEnd) => {
+        this.updateActiveStates(event.url);
+      });
+  }
+
+  ngOnDestroy() {
+    if (this.routerSubscription) {
+      this.routerSubscription.unsubscribe();
+    }
+  }
+
   toggleSidebar() {
     this.sidebarService.toggleSidebar();
   }
@@ -162,8 +182,21 @@ export class SidebarComponent {
       if (item.route === activeRoute) {
         item.isActive = true;
       }
+      
+      // Check children and set parent as active if child is active
       if (item.children) {
         this.setActiveState(item.children, activeRoute);
+        
+        // If any child is active, expand the parent and mark it as having an active child
+        const hasActiveChild = item.children.some(child => child.isActive);
+        if (hasActiveChild) {
+          item.isExpanded = true;
+        }
+        
+        // For partial matches (like /maintenance/active matching /maintenance parent)
+        if (item.route && activeRoute.startsWith(item.route + '/')) {
+          item.isExpanded = true;
+        }
       }
     });
   }

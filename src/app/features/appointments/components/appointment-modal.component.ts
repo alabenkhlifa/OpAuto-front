@@ -1,6 +1,7 @@
 import { Component, inject, signal, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { AppointmentService } from '../services/appointment.service';
 import { Appointment, Car, Customer, Mechanic } from '../../../core/models/appointment.model';
 
@@ -511,6 +512,7 @@ import { Appointment, Car, Customer, Mechanic } from '../../../core/models/appoi
 export class AppointmentModalComponent {
   private fb = inject(FormBuilder);
   private appointmentService = inject(AppointmentService);
+  private router = inject(Router);
 
   // Outputs
   closed = output<void>();
@@ -600,7 +602,8 @@ export class AppointmentModalComponent {
   }
 
   openQuickAddCar(): void {
-    // For now, just show an alert - in a real app this would open a car registration modal
-    alert('Quick Add Car feature - This would open a modal to register a new car and customer.');
+    // Close the appointment modal and navigate to cars management screen
+    this.closeModal();
+    this.router.navigate(['/cars']);
   }
 }
