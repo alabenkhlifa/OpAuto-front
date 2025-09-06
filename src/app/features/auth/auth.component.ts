@@ -15,9 +15,9 @@ import { LoginRequest, RegisterRequest, AuthError, ForgotPasswordRequest } from 
       
       <!-- Background Pattern -->
       <div class="absolute inset-0 overflow-hidden pointer-events-none">
-        <div class="absolute -top-40 -right-40 w-80 h-80 bg-blue-400 dark:bg-blue-600 rounded-full mix-blend-multiply dark:mix-blend-screen blur-xl opacity-20 animate-pulse border-0"></div>
-        <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-400 dark:bg-purple-600 rounded-full mix-blend-multiply dark:mix-blend-screen blur-xl opacity-20 animate-pulse border-0" style="animation-delay: 2s;"></div>
-        <div class="absolute top-40 left-40 w-80 h-80 bg-amber-400 dark:bg-amber-600 rounded-full mix-blend-multiply dark:mix-blend-screen blur-xl opacity-20 animate-pulse border-0" style="animation-delay: 4s;"></div>
+        <div class="absolute -top-20 -right-20 w-40 h-40 bg-blue-400 dark:bg-blue-600 rounded-full opacity-10 blur-2xl"></div>
+        <div class="absolute -bottom-20 -left-20 w-40 h-40 bg-purple-400 dark:bg-purple-600 rounded-full opacity-10 blur-2xl"></div>
+        <div class="absolute top-20 left-20 w-40 h-40 bg-amber-400 dark:bg-amber-600 rounded-full opacity-10 blur-2xl"></div>
       </div>
 
       <!-- Auth Card -->
@@ -535,33 +535,6 @@ import { LoginRequest, RegisterRequest, AuthError, ForgotPasswordRequest } from 
     .backdrop-blur-lg {
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
-    }
-
-    /* Remove any borders from background elements */
-    .blur-xl {
-      filter: blur(20px);
-      border: none !important;
-      outline: none !important;
-      box-shadow: none !important;
-    }
-
-    .border-0 {
-      border: 0 !important;
-      outline: none !important;
-    }
-
-    /* Target background droplets specifically */
-    .absolute.w-80.h-80 {
-      border: none !important;
-      outline: none !important;
-      box-shadow: none !important;
-      background-clip: padding-box !important;
-    }
-
-    /* Remove any potential white borders/outlines */
-    .absolute.w-80.h-80::before,
-    .absolute.w-80.h-80::after {
-      display: none !important;
     }
 
     /* Smooth transitions */

@@ -1,8 +1,10 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
+import { HttpClientModule } from '@angular/common/http';
 import { LanguageToggleComponent } from '../../shared/components/language-toggle/language-toggle.component';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+import { TranslationService } from '../../core/services/translation.service';
 
 interface GarageMetrics {
   totalCarsToday: number;
@@ -43,12 +45,14 @@ interface ActiveJob {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, ThemeToggleComponent, LanguageToggleComponent],
+  imports: [CommonModule, HttpClientModule, LanguageToggleComponent, TranslatePipe],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
 export class DashboardComponent implements OnInit {
   private router = inject(Router);
+  private translationService = inject(TranslationService);
+  
   metrics: GarageMetrics = {
     totalCarsToday: 12,
     carsInProgress: 5,
@@ -102,6 +106,36 @@ export class DashboardComponent implements OnInit {
       serviceType: 'Transmission Service',
       status: 'delayed',
       estimatedDuration: 4
+    },
+    {
+      id: '5',
+      time: '17:30',
+      customerName: 'Sami Gharbi',
+      carModel: 'Hyundai Tucson',
+      licensePlate: '555TUN888',
+      serviceType: 'Tire Replacement',
+      status: 'scheduled',
+      estimatedDuration: 1
+    },
+    {
+      id: '6',
+      time: '18:00',
+      customerName: 'Nadia Khelifi',
+      carModel: 'Kia Sportage',
+      licensePlate: '999TUN111',
+      serviceType: 'Air Conditioning Service',
+      status: 'scheduled',
+      estimatedDuration: 2
+    },
+    {
+      id: '7',
+      time: '19:00',
+      customerName: 'Yasmine Hamdi',
+      carModel: 'Nissan Qashqai',
+      licensePlate: '333TUN777',
+      serviceType: 'Battery Replacement',
+      status: 'scheduled',
+      estimatedDuration: 1
     }
   ];
 
@@ -156,6 +190,7 @@ export class DashboardComponent implements OnInit {
       day: 'numeric'
     });
   }
+
 
   formatCurrency(amount: number): string {
     return new Intl.NumberFormat('fr-TN', {
@@ -218,11 +253,36 @@ export class DashboardComponent implements OnInit {
     this.router.navigate(['/appointments']);
   }
 
-  public navigateToInvoiceCreate(): void {
-    this.router.navigate(['/invoices/create']);
+  public navigateToInvoicing(): void {
+    this.router.navigate(['/invoicing']);
   }
 
-  public navigateToMaintenanceActive(): void {
+  public navigateToQualityCheck(): void {
     this.router.navigate(['/maintenance/active']);
+  }
+
+  // New methods for redesigned components
+  public getTimelineItemClass(status: string): string {
+    return `timeline-item-${status.replace('_', '-')}`;
+  }
+
+  public getTimelineDotClass(status: string): string {
+    const statusMap = {
+      'scheduled': 'scheduled',
+      'in_progress': 'in-progress',
+      'completed': 'completed',
+      'delayed': 'delayed'
+    };
+    return statusMap[status as keyof typeof statusMap] || 'scheduled';
+  }
+
+  public getStatusPillClass(status: string): string {
+    const statusMap = {
+      'scheduled': 'scheduled',
+      'in_progress': 'in-progress',
+      'completed': 'completed',
+      'delayed': 'delayed'
+    };
+    return statusMap[status as keyof typeof statusMap] || 'scheduled';
   }
 }

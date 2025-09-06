@@ -1,36 +1,65 @@
-/* OpAuto Appointments - Compact Glassmorphism */
+/* Navigation button styles */
+.nav-button-active {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover)) !important;
+  border-color: var(--color-primary) !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+}
 
+.nav-button-inactive {
+  background-color: var(--color-bg-primary) !important;
+  border-color: var(--color-border) !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.nav-button-inactive:hover {
+  background-color: var(--color-bg-tertiary) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-text-primary) !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+}
+
+.nav-button-add {
+  background: linear-gradient(135deg, #059669, #047857) !important;
+  border-color: #059669 !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+}
+
+.nav-button-add:hover {
+  background: linear-gradient(135deg, #047857, #065f46) !important;
+  box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
+  transform: translateY(-1px);
+}
+
+/* Theme-aware text classes */
+.text-primary-themed { color: var(--color-text-primary); }
+.text-secondary-themed { color: var(--color-text-secondary); }
+.text-tertiary-themed { color: var(--color-text-tertiary); }
+
+/* OpAuto Appointments - Compact Glassmorphism */
 .appointments-container {
   min-height: 100vh;
   background: transparent;
 }
 
-.appointments-header {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(20px);
+/* Dark mode glassmorphism effects - permanent */
+.glass-card {
+  background: rgba(17, 24, 39, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(75, 85, 99, 0.6);
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
   padding: 1.5rem;
-  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
-.appointments-header:hover {
+.glass-card:hover {
+  background: rgba(31, 41, 55, 0.98);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+  border-color: rgba(59, 130, 246, 0.7);
   transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(31, 38, 135, 0.5);
-  background: rgba(255, 255, 255, 0.85);
-}
-
-.dark .appointments-header {
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
-}
-
-.dark .appointments-header:hover {
-  background: rgba(0, 0, 0, 0.35);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
 }
 
 .add-btn, .mobile-fab {
@@ -62,99 +91,37 @@
   justify-content: center;
 }
 
+/* Mobile nav inherits glass-card styling but can be overridden if needed */
 .mobile-nav {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  padding: 1rem;
-  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  margin-bottom: 1rem;
-}
-
-.mobile-nav:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(31, 38, 135, 0.5);
-  background: rgba(255, 255, 255, 0.85);
-}
-
-.dark .mobile-nav {
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
-}
-
-.dark .mobile-nav:hover {
-  background: rgba(0, 0, 0, 0.35);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  /* Uses .glass-card styles */
 }
 
 .appointment-card {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  padding: 1.5rem;
-  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  margin-bottom: 1rem;
   cursor: pointer;
+  /* Uses .glass-card styles for background and effects */
 }
 
-.appointment-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(31, 38, 135, 0.5);
-  background: rgba(255, 255, 255, 0.85);
-}
-
-.dark .appointment-card {
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
-}
-
-.dark .appointment-card:hover {
-  background: rgba(0, 0, 0, 0.35);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
-}
-
-/* Force proper text colors for light mode */
+/* Dark mode text colors - permanent */
 .appointment-card h3,
 .appointment-card .text-gray-900 {
-  color: #111827 !important;
+  color: #ffffff !important;
 }
 
 .appointment-card .text-gray-600,
 .appointment-card .text-sm {
-  color: #4b5563 !important;
-}
-
-.appointment-card .text-gray-500 {
-  color: #6b7280 !important;
-}
-
-/* Dark mode text overrides */
-.dark .appointment-card h3,
-.dark .appointment-card .text-gray-900 {
-  color: #ffffff !important;
-}
-
-.dark .appointment-card .text-gray-600,
-.dark .appointment-card .text-sm {
   color: #d1d5db !important;
 }
 
-.dark .appointment-card .text-gray-500 {
+.appointment-card .text-gray-500 {
   color: #9ca3af !important;
 }
 
 .mobile-filters {
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(20px);
+  background: rgba(17, 24, 39, 0.9);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(75, 85, 99, 0.4);
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   margin-bottom: 1rem;
   max-height: 0;
@@ -167,19 +134,53 @@
 
 .mobile-filters:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(31, 38, 135, 0.5);
-  background: rgba(255, 255, 255, 0.35);
+  background: rgba(31, 41, 55, 0.95);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
 }
 
-.dark .mobile-filters {
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+/* Mobile navigation and appointment cards use glass-card base styling */
+
+/* Style Complete and Edit buttons to match top navigation buttons */
+.appointment-card button {
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid;
+  backdrop-filter: blur(20px);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
 }
 
-.dark .mobile-filters:hover {
-  background: rgba(0, 0, 0, 0.35);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+/* Complete button - green to match nav-button-add */
+.appointment-card button:first-child {
+  background: linear-gradient(135deg, #059669, #047857) !important;
+  border-color: #059669 !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+}
+
+.appointment-card button:first-child:hover {
+  background: linear-gradient(135deg, #047857, #065f46) !important;
+  box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
+  transform: translateY(-1px);
+}
+
+/* Edit button - orange/amber */
+.appointment-card button:last-child {
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  border-color: #f59e0b !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+}
+
+.appointment-card button:last-child:hover {
+  background: linear-gradient(135deg, #d97706, #b45309) !important;
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+  transform: translateY(-1px);
 }
 
 .filter-chip {
@@ -224,27 +225,76 @@
 .empty-state {
   text-align: center;
   padding: 3rem 1rem;
-  background: rgba(255, 255, 255, 0.7);
+  /* Uses .glass-card styles for consistency */
+}
+
+/* Dark mode text readability - permanent */
+.appointments-header h1,
+.appointments-header .text-gray-900 {
+  color: #ffffff !important;
+}
+
+.appointments-header p,
+.appointments-header .text-gray-600 {
+  color: #d1d5db !important;
+}
+
+/* Date navigation text - permanent dark */
+.mobile-nav h2,
+.mobile-nav .text-gray-900 {
+  color: #ffffff !important;
+}
+
+.mobile-nav .text-gray-600,
+.mobile-nav .text-gray-400 {
+  color: #d1d5db !important;
+}
+
+/* Filter button text - permanent dark */
+.filter-chip {
+  color: #ffffff !important;
+  background: rgba(75, 85, 99, 0.6);
+  border: 1px solid rgba(156, 163, 175, 0.3);
+}
+
+.filter-chip.active {
+  background: rgba(59, 130, 246, 0.8) !important;
+  border-color: rgba(59, 130, 246, 0.5) !important;
+  color: white !important;
+}
+
+/* Filters button text - permanent dark */
+button span,
+.text-gray-700 {
+  color: #d1d5db !important;
+}
+
+/* Empty state text - permanent dark */
+.empty-state h3,
+.empty-state .text-gray-900 {
+  color: #ffffff !important;
+}
+
+.empty-state p,
+.empty-state .text-gray-600,
+.empty-state .text-gray-400 {
+  color: #d1d5db !important;
+}
+
+/* Status Legend Styling */
+.status-legend {
+  background: rgba(17, 24, 39, 0.6) !important;
   backdrop-filter: blur(20px);
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.empty-state:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(31, 38, 135, 0.5);
-  background: rgba(255, 255, 255, 0.85);
-}
-
-.dark .empty-state {
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
-}
-
-.dark .empty-state:hover {
-  background: rgba(0, 0, 0, 0.35);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+.status-legend:hover {
+  background: rgba(31, 41, 55, 0.7) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
 }

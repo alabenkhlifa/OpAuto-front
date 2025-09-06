@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CarWithHistory } from '../services/car.service';
 
@@ -83,28 +83,34 @@ import { CarWithHistory } from '../services/car.service';
   styles: [`
     .car-card {
       backdrop-filter: blur(20px);
-      background: rgba(255, 255, 255, 0.8);
-      border: 1px solid rgba(0, 0, 0, 0.1);
-      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 20px;
       padding: 1.5rem;
-      transition: all 0.2s ease;
+      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       cursor: pointer;
     }
 
     .car-card:hover {
-      background: rgba(255, 255, 255, 0.9);
       transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 12px 40px rgba(31, 38, 135, 0.5);
+      background: rgba(255, 255, 255, 0.75);
     }
 
-    @media (prefers-color-scheme: dark) {
-      .car-card {
-        background: rgba(31, 41, 55, 0.8);
-        border-color: rgba(255, 255, 255, 0.1);
-      }
-      .car-card:hover {
-        background: rgba(31, 41, 55, 0.9);
-      }
+    :root.dark .car-card,
+    .dark .car-card,
+    html.dark .car-card {
+      background: rgba(0, 0, 0, 0.2) !important;
+      border: 1px solid rgba(255, 255, 255, 0.12) !important;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37) !important;
+    }
+    
+    :root.dark .car-card:hover,
+    .dark .car-card:hover,
+    html.dark .car-card:hover {
+      background: rgba(0, 0, 0, 0.3) !important;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5) !important;
     }
 
     .car-header {
@@ -138,10 +144,10 @@ import { CarWithHistory } from '../services/car.service';
       line-height: 1.2;
     }
 
-    @media (prefers-color-scheme: dark) {
-      .car-title {
-        color: #ffffff;
-      }
+    :root.dark .car-title,
+    .dark .car-title,
+    html.dark .car-title {
+      color: #ffffff !important;
     }
 
     .car-year {
@@ -150,10 +156,10 @@ import { CarWithHistory } from '../services/car.service';
       margin: 0;
     }
 
-    @media (prefers-color-scheme: dark) {
-      .car-year {
-        color: #9ca3af;
-      }
+    :root.dark .car-year,
+    .dark .car-year,
+    html.dark .car-year {
+      color: #9ca3af !important;
     }
 
     .status-badge {
@@ -184,10 +190,17 @@ import { CarWithHistory } from '../services/car.service';
       border-bottom: 1px solid rgba(0, 0, 0, 0.1);
     }
 
-    @media (prefers-color-scheme: dark) {
-      .customer-section {
-        border-bottom-color: rgba(255, 255, 255, 0.1);
-      }
+    :root.dark .customer-section,
+    .dark .customer-section,
+    html.dark .customer-section {
+      border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    /* Fix customer name text visibility in dark mode */
+    :root.dark .customer-section span,
+    .dark .customer-section span,
+    html.dark .customer-section span {
+      color: #ffffff !important;
     }
 
     .service-stats {
@@ -206,10 +219,10 @@ import { CarWithHistory } from '../services/car.service';
       color: #6b7280;
     }
 
-    @media (prefers-color-scheme: dark) {
-      .stat-label {
-        color: #9ca3af;
-      }
+    :root.dark .stat-label,
+    .dark .stat-label,
+    html.dark .stat-label {
+      color: #9ca3af !important;
     }
 
     .stat-value {
@@ -217,10 +230,10 @@ import { CarWithHistory } from '../services/car.service';
       color: #1f2937;
     }
 
-    @media (prefers-color-scheme: dark) {
-      .stat-value {
-        color: #ffffff;
-      }
+    :root.dark .stat-value,
+    .dark .stat-value,
+    html.dark .stat-value {
+      color: #ffffff !important;
     }
 
     .card-actions {
@@ -262,19 +275,23 @@ import { CarWithHistory } from '../services/car.service';
       background: rgba(156, 163, 175, 0.4);
     }
 
-    @media (prefers-color-scheme: dark) {
-      .action-btn.secondary {
-        color: #d1d5db;
-        background: rgba(75, 85, 99, 0.3);
-        border-color: rgba(75, 85, 99, 0.2);
-      }
-      .action-btn.secondary:hover {
-        background: rgba(75, 85, 99, 0.4);
-      }
+    :root.dark .action-btn.secondary,
+    .dark .action-btn.secondary,
+    html.dark .action-btn.secondary {
+      color: #d1d5db !important;
+      background: rgba(75, 85, 99, 0.3) !important;
+      border-color: rgba(75, 85, 99, 0.2) !important;
+    }
+    
+    :root.dark .action-btn.secondary:hover,
+    .dark .action-btn.secondary:hover,
+    html.dark .action-btn.secondary:hover {
+      background: rgba(75, 85, 99, 0.4) !important;
     }
   `]
 })
 export class CarCardComponent {
+  
   @Input() car!: CarWithHistory;
   @Input() customerName!: string;
   

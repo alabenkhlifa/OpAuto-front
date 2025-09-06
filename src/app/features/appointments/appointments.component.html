@@ -1,47 +1,50 @@
 <!-- Appointments Main Container -->
-<div class="appointments-container p-4 lg:p-8" [class.dark]="themeService.isDarkMode()">
+<div class="min-h-screen appointments-container p-4 lg:p-6" 
+     style="background-color: var(--color-bg-secondary); color: var(--color-text-primary)">
   
   <!-- Header Section -->
-  <header class="appointments-header">
-    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-      <div class="flex-1">
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-1">Appointments</h1>
-        <p class="text-gray-600 dark:text-gray-300">Manage your garage schedule</p>
+  <div class="mb-6">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div>
+        <h1 class="text-2xl lg:text-3xl font-bold text-primary-themed">Appointments</h1>
+        <p class="mt-1 text-secondary-themed">Manage your garage schedule</p>
       </div>
       
-      <div>
-        <!-- Add Appointment Button -->
-        <button class="add-btn" (click)="openAddModal()">
-          <svg class="w-5 h-5 lg:w-4 lg:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+      <!-- Add Appointment Button -->
+      <div class="flex justify-end">
+        <button (click)="openAddModal()"
+                class="nav-button-add flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-semibold hover:scale-105 shadow-lg hover:shadow-xl">
+          <!-- Add Icon -->
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
           </svg>
-          <span class="hidden lg:inline">Add Appointment</span>
+          <span class="text-sm">Add Appointment</span>
         </button>
       </div>
     </div>
-  </header>
+  </div>
 
   <!-- Date Navigation & Stats (Mobile & Desktop) -->
-  <div class="mobile-nav" 
+  <div class="mobile-nav glass-card" 
        appSwipe 
        (swipeLeft)="onSwipeLeft($event)" 
        (swipeRight)="onSwipeRight($event)">
     <div class="flex justify-between items-center mb-4">
       <button class="p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5" (click)="goToPreviousDay()">
-        <svg class="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg class="w-5 h-5 text-secondary-themed" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
         </svg>
       </button>
       
       <div class="text-center">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ formatDate(selectedDate()) }}</h2>
+        <h2 class="text-lg font-semibold text-primary-themed">{{ formatDate(selectedDate()) }}</h2>
         <button class="text-xs text-blue-600 dark:text-blue-400" (click)="goToToday()" *ngIf="!isToday()">
           Today
         </button>
       </div>
       
       <button class="p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5" (click)="goToNextDay()">
-        <svg class="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg class="w-5 h-5 text-secondary-themed" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
         </svg>
       </button>
@@ -50,16 +53,16 @@
     <!-- Mobile Quick Stats -->
     <div class="grid grid-cols-3 gap-3">
       <div class="text-center">
-        <div class="text-xl font-bold text-gray-900 dark:text-white">{{ filteredAppointments().length }}</div>
-        <div class="text-xs text-gray-600 dark:text-gray-400">{{ isToday() ? 'Today' : 'Selected' }}</div>
+        <div class="text-xl font-bold text-primary-themed">{{ filteredAppointments().length }}</div>
+        <div class="text-xs text-secondary-themed">{{ isToday() ? 'Today' : 'Selected' }}</div>
       </div>
       <div class="text-center">
         <div class="text-xl font-bold text-amber-600 dark:text-amber-400">{{ inProgressCount() }}</div>
-        <div class="text-xs text-gray-600 dark:text-gray-400">Active</div>
+        <div class="text-xs text-secondary-themed">Active</div>
       </div>
       <div class="text-center">
         <div class="text-xl font-bold text-green-600 dark:text-green-400">{{ completedToday() }}</div>
-        <div class="text-xs text-gray-600 dark:text-gray-400">Done</div>
+        <div class="text-xs text-secondary-themed">Done</div>
       </div>
     </div>
   </div>
@@ -94,7 +97,7 @@
     </div>
     
     <!-- Empty State -->
-    <div *ngIf="!isLoading() && filteredAppointments().length === 0" class="empty-state">
+    <div *ngIf="!isLoading() && filteredAppointments().length === 0" class="empty-state glass-card">
       <div class="mb-4">
         <svg class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -110,10 +113,38 @@
       </button>
     </div>
 
+    <!-- Status Legend -->
+    <div *ngIf="!isLoading() && filteredAppointments().length > 0" class="status-legend glass-card mb-4">
+      <div class="flex items-center gap-1 text-sm text-secondary-themed mb-2">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <span>Status Indicators:</span>
+      </div>
+      <div class="flex flex-wrap gap-4 text-xs">
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 rounded-full bg-gray-500"></div>
+          <span class="text-secondary-themed">Scheduled</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+          <span class="text-secondary-themed">In Progress</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 rounded-full bg-green-500"></div>
+          <span class="text-secondary-themed">Completed</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 rounded-full bg-red-500"></div>
+          <span class="text-secondary-themed">Cancelled</span>
+        </div>
+      </div>
+    </div>
+
     <!-- Appointments List -->
     <div *ngIf="!isLoading() && filteredAppointments().length > 0" class="space-y-4">
       @for (appointment of filteredAppointments(); track appointment.id) {
-        <div class="appointment-card" 
+        <div class="appointment-card glass-card" 
              (click)="selectAppointment(appointment)"
              appSwipe
              (swipeRight)="onAppointmentSwipeRight(appointment, $event)"
@@ -132,8 +163,8 @@
                   </div>
                 </div>
                 <div class="flex-1 min-w-0">
-                  <h3 class="font-semibold text-gray-900 dark:text-white truncate">{{ appointment.serviceName }}</h3>
-                  <div class="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  <h3 class="font-semibold text-primary-themed truncate">{{ appointment.serviceName }}</h3>
+                  <div class="flex items-center gap-1 text-sm text-secondary-themed mt-1">
                     <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.22.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
                     </svg>
@@ -202,12 +233,6 @@
   </main>
 </div>
 
-<!-- Floating Add Button (Mobile Only) -->
-<button class="mobile-fab lg:hidden" (click)="openAddModal()">
-  <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-  </svg>
-</button>
 
 <!-- Add Appointment Modal -->
 <app-appointment-modal 

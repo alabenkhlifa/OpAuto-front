@@ -158,6 +158,23 @@ export class InventoryComponent implements OnInit {
     return this.partService.getCategoryIcon(category as any);
   }
 
+  getCategoryColor(category: string): string {
+    const colors = {
+      'engine': 'bg-red-600',
+      'transmission': 'bg-purple-600', 
+      'brakes': 'bg-orange-600',
+      'suspension': 'bg-indigo-600',
+      'electrical': 'bg-yellow-600',
+      'filters': 'bg-green-600',
+      'fluids': 'bg-blue-600',
+      'tires': 'bg-gray-600',
+      'body': 'bg-pink-600',
+      'accessories': 'bg-teal-600',
+      'consumables': 'bg-cyan-600'
+    };
+    return colors[category as keyof typeof colors] || 'bg-gray-600';
+  }
+
   getSupplierName(supplierId: string): string {
     const supplier = this.suppliers().find(s => s.id === supplierId);
     return supplier?.name || 'Unknown Supplier';
@@ -226,9 +243,9 @@ export class InventoryComponent implements OnInit {
 
   getAlertSeverityClass(severity: string): string {
     const classes = {
-      'info': 'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400',
-      'warning': 'bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-900/20 dark:border-amber-700 dark:text-amber-400',
-      'critical': 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-700 dark:text-red-400'
+      'info': 'alert-info',
+      'warning': 'alert-warning',
+      'critical': 'alert-critical'
     };
     return classes[severity as keyof typeof classes] || classes.info;
   }

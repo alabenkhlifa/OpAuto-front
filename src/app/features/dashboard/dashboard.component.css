@@ -1,13 +1,35 @@
-/* OpAuto Dashboard - Optimized for Garage Operations */
+/* OpAuto Dashboard - Permanent Dark Mode */
+
+/* Navigation button styles */
+.nav-button-active {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover)) !important;
+  border-color: var(--color-primary) !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+}
+
+.nav-button-inactive {
+  background-color: var(--color-bg-primary) !important;
+  border-color: var(--color-border) !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.nav-button-inactive:hover {
+  background-color: var(--color-bg-tertiary) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-text-primary) !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+}
+
+/* Theme-aware text classes */
+.text-primary-themed { color: var(--color-text-primary); }
+.text-secondary-themed { color: var(--color-text-secondary); }
+.text-tertiary-themed { color: var(--color-text-tertiary); }
 
 .dashboard-container {
   padding: 2rem;
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(245, 158, 11, 0.08) 100%);
-  min-height: 100vh;
-}
-
-.dark .dashboard-container {
   background: linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(245, 158, 11, 0.12) 100%);
+  min-height: 100vh;
 }
 
 .dashboard-header {
@@ -72,32 +94,21 @@
   }
 }
 
-/* Glass Card Base */
+/* Glass Card Base - Permanent Dark Mode */
 .glass-card {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(17, 24, 39, 0.6);
   backdrop-filter: blur(20px);
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 2rem;
-  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .glass-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(31, 38, 135, 0.5);
-  background: rgba(255, 255, 255, 0.35);
-}
-
-.dark .glass-card {
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
-}
-
-.dark .glass-card:hover {
-  background: rgba(0, 0, 0, 0.35);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+  background: rgba(31, 41, 55, 0.7);
 }
 
 .card-header {
@@ -136,30 +147,21 @@
   grid-template-columns: 80px 1fr;
   gap: 1rem;
   padding: 1rem;
-  background: rgba(255, 255, 255, 0.4);
+  background: rgba(31, 41, 55, 0.6);
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   transition: all 0.2s ease;
 }
 
 .appointment-item:hover {
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(31, 41, 55, 0.8);
   transform: translateX(4px);
 }
 
 .appointment-item.completed {
   opacity: 0.7;
-  background: rgba(34, 197, 94, 0.1);
-  border-color: rgba(34, 197, 94, 0.3);
-}
-
-.dark .appointment-item {
-  background: rgba(0, 0, 0, 0.3);
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-.dark .appointment-item:hover {
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(34, 197, 94, 0.2);
+  border-color: rgba(34, 197, 94, 0.4);
 }
 
 .appointment-time {
@@ -289,16 +291,11 @@
 
 .service-tag {
   padding: 0.25rem 0.5rem;
-  background: var(--color-primary-light);
-  color: var(--color-primary);
+  background: rgba(96, 165, 250, 0.2);
+  color: #60a5fa;
   border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 500;
-}
-
-.dark .service-tag {
-  background: var(--color-primary-dark);
-  color: var(--color-primary-light);
 }
 
 /* Progress Bar */
@@ -326,7 +323,7 @@
 .progress-bar {
   width: 100%;
   height: 8px;
-  background: rgba(156, 163, 175, 0.3);
+  background: rgba(75, 85, 99, 0.4);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -363,15 +360,11 @@
   color: var(--color-text-primary);
 }
 
-/* Urgent Actions */
+/* Urgent Actions - Fixed Dark Mode */
 .urgent-card {
-  border: 2px solid rgba(239, 68, 68, 0.3);
-  background: rgba(254, 242, 242, 0.8);
-}
-
-.dark .urgent-card {
-  border-color: rgba(248, 113, 113, 0.3);
-  background: rgba(127, 29, 29, 0.3);
+  border: 2px solid rgba(248, 113, 113, 0.4);
+  background: rgba(17, 24, 39, 0.8) !important;
+  backdrop-filter: blur(20px);
 }
 
 .urgent-content {
@@ -391,7 +384,7 @@
 .urgent-title {
   font-size: 1.1rem;
   font-weight: 600;
-  color: var(--color-error);
+  color: #f87171;
   margin: 0 0 0.25rem 0;
 }
 
@@ -465,46 +458,432 @@
   margin: 0;
 }
 
-/* Action Icon Colors */
+/* Action Icon Colors - Dark Mode */
 .action-icon-primary {
-  background: rgba(37, 99, 235, 0.1);
-  color: #2563eb;
-}
-
-.action-icon-secondary {
-  background: rgba(245, 158, 11, 0.1);
-  color: #f59e0b;
-}
-
-.action-icon-success {
-  background: rgba(34, 197, 94, 0.1);
-  color: #22c55e;
-}
-
-.action-icon-automotive {
-  background: rgba(113, 113, 122, 0.1);
-  color: #71717a;
-}
-
-/* Dark mode action icons */
-.dark .action-icon-primary {
   background: rgba(96, 165, 250, 0.2);
   color: #60a5fa;
 }
 
-.dark .action-icon-secondary {
+.action-icon-secondary {
   background: rgba(251, 191, 36, 0.2);
   color: #fbbf24;
 }
 
-.dark .action-icon-success {
+.action-icon-success {
   background: rgba(74, 222, 128, 0.2);
   color: #4ade80;
 }
 
-.dark .action-icon-automotive {
+.action-icon-automotive {
   background: rgba(161, 161, 170, 0.2);
   color: #a1a1aa;
+}
+
+.action-icon-quality {
+  background: rgba(168, 85, 247, 0.3);
+  color: #a855f7;
+  border: 1px solid rgba(168, 85, 247, 0.4);
+}
+
+/* Language Toggle Enhanced Visibility */
+::ng-deep app-language-toggle button {
+  border: 2px solid rgba(156, 163, 175, 0.8) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+::ng-deep app-language-toggle button:hover {
+  border-color: rgba(209, 213, 219, 0.9) !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+  transform: translateY(-1px);
+}
+
+/* Remove borders from language dropdown items */
+::ng-deep app-language-toggle .absolute button:not(:first-child),
+::ng-deep app-language-toggle div[class*="py-2"] button,
+::ng-deep app-language-toggle div[class*="backdrop-blur"] button:not([class*="flex items-center gap-2"]) {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+::ng-deep app-language-toggle .absolute button:not(:first-child):hover,
+::ng-deep app-language-toggle div[class*="py-2"] button:hover,
+::ng-deep app-language-toggle div[class*="backdrop-blur"] button:not([class*="flex items-center gap-2"]):hover {
+  border: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* ==================== REDESIGNED COMPONENTS ==================== */
+
+/* Schedule Card Redesigned */
+.schedule-card-redesigned {
+  min-height: 450px;
+  overflow: hidden;
+}
+
+.card-header-redesigned {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.schedule-icon, .stats-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.2), rgba(59, 130, 246, 0.3));
+  color: #60a5fa;
+  border: 1px solid rgba(96, 165, 250, 0.3);
+}
+
+.card-title-redesigned {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.card-subtitle {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  margin: 0.25rem 0 0 0;
+}
+
+.schedule-summary-redesigned {
+  display: flex;
+  align-items: center;
+}
+
+.summary-badge {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.3));
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  border-radius: 20px;
+  padding: 0.5rem 1rem;
+  min-width: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.summary-count {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #22c55e;
+}
+
+/* Timeline Schedule */
+.schedule-timeline {
+  position: relative;
+  max-height: 497px; /* Height for exactly 3 timeline items (measured: 496.6px) */
+  overflow-y: auto;
+}
+
+.timeline-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem 0;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.timeline-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 1rem;
+  top: 3.5rem;
+  bottom: -1rem;
+  width: 2px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent);
+}
+
+.timeline-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.timeline-dot {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 0.5rem;
+  position: relative;
+  z-index: 2;
+}
+
+.timeline-dot-inner {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.timeline-dot.completed {
+  background: rgba(34, 197, 94, 0.2);
+  border: 2px solid #22c55e;
+  color: #22c55e;
+}
+
+.timeline-dot.in-progress {
+  background: rgba(59, 130, 246, 0.2);
+  border: 2px solid #3b82f6;
+  color: #3b82f6;
+}
+
+.timeline-dot.scheduled {
+  background: rgba(156, 163, 175, 0.2);
+  border: 2px solid #9ca3af;
+  color: #9ca3af;
+}
+
+.timeline-dot.delayed {
+  background: rgba(239, 68, 68, 0.2);
+  border: 2px solid #ef4444;
+  color: #ef4444;
+}
+
+.timeline-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.timeline-time {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #60a5fa;
+  margin-bottom: 0.5rem;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 6px;
+  padding: 0.25rem 0.75rem;
+  display: inline-block;
+}
+
+.timeline-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.customer-name-redesigned {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.car-info-redesigned {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.service-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.service-type-redesigned {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.status-pill {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.status-pill.completed {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.status-pill.in-progress {
+  background: rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.status-pill.scheduled {
+  background: rgba(156, 163, 175, 0.2);
+  color: #9ca3af;
+  border: 1px solid rgba(156, 163, 175, 0.3);
+}
+
+.status-pill.delayed {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Stats Card Redesigned */
+.stats-card-redesigned {
+  min-height: 450px;
+}
+
+.stats-grid-redesigned {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: rgba(31, 41, 55, 0.6);
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.stat-card:hover {
+  background: rgba(31, 41, 55, 0.8);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.stat-icon-wrapper {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.completed-icon {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.3));
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.4);
+}
+
+.progress-icon {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(29, 78, 216, 0.3));
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+}
+
+.approval-icon {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.3));
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.slots-icon {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.3));
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.4);
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-number {
+  font-size: 1.875rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.completed-color { color: #22c55e; }
+.progress-color { color: #3b82f6; }
+.approval-color { color: #ef4444; }
+.slots-color { color: #fbbf24; }
+
+.stat-label {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+/* Revenue Section Redesigned */
+.revenue-section-redesigned {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(22, 163, 74, 0.05));
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.3s ease;
+}
+
+.revenue-section-redesigned:hover {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(22, 163, 74, 0.08));
+  transform: scale(1.02);
+}
+
+.revenue-icon-wrapper {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.3));
+  color: #22c55e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(34, 197, 94, 0.4);
+}
+
+.revenue-content {
+  flex: 1;
+}
+
+.revenue-amount-redesigned {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #22c55e;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.revenue-label-redesigned {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.revenue-trend {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
 /* Responsive Design */

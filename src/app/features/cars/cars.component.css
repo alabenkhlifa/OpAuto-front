@@ -1,4 +1,4 @@
-/* Cars Component - Glassmorphism Design */
+/* Cars Component - Permanent Dark Mode Glassmorphism Design */
 
 .cars-container {
   min-height: 100vh;
@@ -7,18 +7,19 @@
 
 .cars-header {
   backdrop-filter: blur(20px);
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(31, 41, 55, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  .cars-header {
-    background: rgba(31, 41, 55, 0.8);
-    border-color: rgba(255, 255, 255, 0.1);
-  }
+.cars-header h1 {
+  color: #ffffff;
+}
+
+.cars-header p {
+  color: #d1d5db;
 }
 
 .search-input {
@@ -26,30 +27,23 @@
   min-width: 250px;
   padding: 0.75rem 1rem 0.75rem 2.5rem;
   backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(31, 41, 55, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   font-size: 0.875rem;
   transition: all 0.2s ease;
+  color: white;
 }
 
 .search-input:focus {
   outline: none;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(31, 41, 55, 0.9);
   border-color: rgba(59, 130, 246, 0.5);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-@media (prefers-color-scheme: dark) {
-  .search-input {
-    background: rgba(31, 41, 55, 0.7);
-    border-color: rgba(255, 255, 255, 0.1);
-    color: white;
-  }
-  .search-input:focus {
-    background: rgba(31, 41, 55, 0.9);
-    border-color: rgba(59, 130, 246, 0.5);
-  }
+.search-input::placeholder {
+  color: #9ca3af;
 }
 
 .add-btn {
@@ -73,18 +67,11 @@
 
 .stats-nav {
   backdrop-filter: blur(20px);
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(31, 41, 55, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   padding: 1rem;
   margin-bottom: 1rem;
-}
-
-@media (prefers-color-scheme: dark) {
-  .stats-nav {
-    background: rgba(31, 41, 55, 0.8);
-    border-color: rgba(255, 255, 255, 0.1);
-  }
 }
 
 .filter-toggle {
@@ -94,33 +81,22 @@
   gap: 0.5rem;
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
-  color: #374151;
-  background: rgba(255, 255, 255, 0.6);
+  color: #d1d5db;
+  background: rgba(31, 41, 55, 0.6);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   transition: all 0.2s ease;
 }
 
 .filter-toggle:hover {
-  background: rgba(255, 255, 255, 0.8);
-}
-
-@media (prefers-color-scheme: dark) {
-  .filter-toggle {
-    color: #d1d5db;
-    background: rgba(31, 41, 55, 0.6);
-    border-color: rgba(255, 255, 255, 0.1);
-  }
-  .filter-toggle:hover {
-    background: rgba(31, 41, 55, 0.8);
-  }
+  background: rgba(31, 41, 55, 0.8);
 }
 
 .filters-panel {
   backdrop-filter: blur(20px);
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(31, 41, 55, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   margin-bottom: 1rem;
   max-height: 0;
@@ -132,39 +108,27 @@
   max-height: 300px;
 }
 
-@media (prefers-color-scheme: dark) {
-  .filters-panel {
-    background: rgba(31, 41, 55, 0.95);
-    border-color: rgba(255, 255, 255, 0.1);
-  }
-}
-
 .filter-select {
   width: 100%;
   padding: 0.75rem;
   backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(31, 41, 55, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   font-size: 0.875rem;
   transition: all 0.2s ease;
+  color: white;
 }
 
 .filter-select:focus {
   outline: none;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(31, 41, 55, 0.9);
   border-color: rgba(59, 130, 246, 0.5);
 }
 
-@media (prefers-color-scheme: dark) {
-  .filter-select {
-    background: rgba(31, 41, 55, 0.7);
-    border-color: rgba(255, 255, 255, 0.1);
-    color: white;
-  }
-  .filter-select:focus {
-    background: rgba(31, 41, 55, 0.9);
-  }
+.filter-select option {
+  background: #374151;
+  color: white;
 }
 
 .clear-filters-btn {
@@ -189,16 +153,9 @@
   text-align: center;
   padding: 3rem 1rem;
   backdrop-filter: blur(20px);
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(31, 41, 55, 0.6);
   border-radius: 16px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-@media (prefers-color-scheme: dark) {
-  .empty-state {
-    background: rgba(31, 41, 55, 0.6);
-    border-color: rgba(255, 255, 255, 0.1);
-  }
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .loading-spinner {

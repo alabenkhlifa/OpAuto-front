@@ -1,4 +1,4 @@
-<div class="app-container" [class.sidebar-collapsed]="sidebarService.isCollapsed()" [class.hide-sidebar]="isAuthRoute()" [class.dark]="themeService.isDarkMode()">
+<div class="app-container" [class.sidebar-collapsed]="sidebarService.isCollapsed()" [class.hide-sidebar]="isAuthRoute()">
   <!-- Sidebar Navigation -->
   @if (!isAuthRoute()) {
     <app-sidebar></app-sidebar>

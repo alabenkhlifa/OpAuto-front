@@ -1,7 +1,6 @@
 import { Component, inject, signal, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ThemeService } from '../../../core/services/theme.service';
 import { AppointmentService } from '../services/appointment.service';
 import { Appointment, Car, Customer, Mechanic } from '../../../core/models/appointment.model';
 
@@ -44,7 +43,7 @@ import { Appointment, Car, Customer, Mechanic } from '../../../core/models/appoi
                   }
                 </select>
               </div>
-              <button type="button" class="quick-add-btn" title="Quick add car">
+              <button type="button" class="quick-add-btn" title="Quick add car" (click)="openQuickAddCar()">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
@@ -164,38 +163,49 @@ import { Appointment, Car, Customer, Mechanic } from '../../../core/models/appoi
     </div>
   `,
   styles: [`
-    /* Modal Styles */
+    /* Dark Glassmorphism Modal Styles - Permanent Theme */
     .modal-overlay {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(4px);
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
       z-index: 50;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 1rem;
+      animation: overlayFadeIn 0.2s ease-out;
+    }
+
+    @keyframes overlayFadeIn {
+      from { opacity: 0; backdrop-filter: blur(0px); }
+      to { opacity: 1; backdrop-filter: blur(8px); }
     }
 
     .modal-content {
-      background: rgba(255, 255, 255, 0.95);
+      background: rgba(17, 24, 39, 0.95);
       backdrop-filter: blur(20px);
-      border: 1px solid rgba(0, 0, 0, 0.1);
-      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
       width: 100%;
       max-width: 600px;
       max-height: 90vh;
       overflow-y: auto;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6);
+      animation: modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    @media (prefers-color-scheme: dark) {
-      .modal-content {
-        background: rgba(15, 23, 42, 0.95) !important;
-        border-color: rgba(255, 255, 255, 0.2) !important;
+    @keyframes modalSlideIn {
+      from { 
+        opacity: 0; 
+        transform: translateY(20px) scale(0.95); 
+      }
+      to { 
+        opacity: 1; 
+        transform: translateY(0) scale(1); 
       }
     }
 
@@ -204,70 +214,40 @@ import { Appointment, Car, Customer, Mechanic } from '../../../core/models/appoi
       justify-content: space-between;
       align-items: flex-start;
       padding: 2rem 2rem 1rem 2rem;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .modal-header {
-        border-bottom-color: rgba(255, 255, 255, 0.2) !important;
-      }
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     .modal-title {
       font-size: 1.5rem;
       font-weight: 700;
-      color: #1f2937;
+      color: #ffffff;
       margin: 0 0 0.25rem 0;
     }
 
-    @media (prefers-color-scheme: dark) {
-      .modal-title {
-        color: #ffffff !important;
-      }
-    }
-
     .modal-subtitle {
-      color: #6b7280;
+      color: #d1d5db;
       font-size: 0.875rem;
       margin: 0;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .modal-subtitle {
-        color: #d1d5db !important;
-      }
     }
 
     .modal-close-btn {
       width: 2.5rem;
       height: 2.5rem;
       border: none;
-      background: rgba(0, 0, 0, 0.05);
+      background: rgba(255, 255, 255, 0.1);
       border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      color: #6b7280;
-      transition: all 0.2s ease;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .modal-close-btn {
-        background: rgba(255, 255, 255, 0.1) !important;
-        color: #d1d5db !important;
-      }
+      color: #d1d5db;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .modal-close-btn:hover {
-      background: rgba(0, 0, 0, 0.1);
+      background: rgba(255, 255, 255, 0.2);
       transform: scale(1.05);
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .modal-close-btn:hover {
-        background: rgba(255, 255, 255, 0.2) !important;
-      }
+      color: #ffffff;
     }
 
     /* Form Styles */
@@ -282,14 +262,19 @@ import { Appointment, Car, Customer, Mechanic } from '../../../core/models/appoi
     .section-title {
       font-size: 1.125rem;
       font-weight: 600;
-      color: #374151;
+      color: #ffffff;
       margin: 0 0 1rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
-    @media (prefers-color-scheme: dark) {
-      .section-title {
-        color: #ffffff !important;
-      }
+    .section-title:before {
+      content: '';
+      width: 4px;
+      height: 1.5rem;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      border-radius: 2px;
     }
 
     .form-row {
@@ -314,35 +299,25 @@ import { Appointment, Car, Customer, Mechanic } from '../../../core/models/appoi
     .form-label {
       font-size: 0.875rem;
       font-weight: 500;
-      color: #374151;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .form-label {
-        color: #d1d5db !important;
-      }
+      color: #d1d5db;
     }
 
     .form-input,
     .form-select,
     .form-textarea {
-      padding: 0.75rem;
-      border: 1px solid rgba(0, 0, 0, 0.1);
+      padding: 0.875rem 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 12px;
-      background: rgba(255, 255, 255, 0.5);
-      color: #1f2937;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      color: #ffffff;
       font-size: 0.875rem;
-      transition: all 0.2s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    @media (prefers-color-scheme: dark) {
-      .form-input,
-      .form-select,
-      .form-textarea {
-        background: rgba(255, 255, 255, 0.1) !important;
-        border-color: rgba(255, 255, 255, 0.2) !important;
-        color: #ffffff !important;
-      }
+    .form-input::placeholder,
+    .form-textarea::placeholder {
+      color: #9ca3af;
     }
 
     .form-input:focus,
@@ -350,34 +325,54 @@ import { Appointment, Car, Customer, Mechanic } from '../../../core/models/appoi
     .form-textarea:focus {
       outline: none;
       border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      background: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .form-input:hover:not(:focus),
+    .form-select:hover:not(:focus),
+    .form-textarea:hover:not(:focus) {
+      border-color: rgba(255, 255, 255, 0.3);
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+
+    /* Ensure select arrows remain visible on hover */
+    .form-select:hover:not(:focus) {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+      background-position: right 0.75rem center;
+      background-repeat: no-repeat;
+      background-size: 1.5em 1.5em;
+    }
+
+    /* Ensure calendar icons remain visible on hover - use exact same icon */
+    .form-input[type="date"]:hover:not(:focus) {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='1.5'%3e%3cpath d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'/%3e%3c/svg%3e");
+      background-position: right 0.75rem center;
+      background-repeat: no-repeat;
+      background-size: 1.25em 1.25em;
     }
 
     .quick-add-btn {
       width: 2.5rem;
       height: 2.5rem;
-      border: 1px dashed rgba(0, 0, 0, 0.2);
+      border: 1px dashed rgba(255, 255, 255, 0.3);
       background: transparent;
-      border-radius: 8px;
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      color: #6b7280;
-      transition: all 0.2s ease;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .quick-add-btn {
-        border-color: rgba(255, 255, 255, 0.3) !important;
-        color: #d1d5db !important;
-      }
+      color: #d1d5db;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .quick-add-btn:hover {
       border-color: #3b82f6;
+      border-style: solid;
       color: #3b82f6;
-      background: rgba(59, 130, 246, 0.05);
+      background: rgba(59, 130, 246, 0.1);
+      transform: scale(1.05);
     }
 
     /* Modal Footer */
@@ -385,13 +380,7 @@ import { Appointment, Car, Customer, Mechanic } from '../../../core/models/appoi
       display: flex;
       gap: 1rem;
       padding: 1.5rem 2rem 2rem 2rem;
-      border-top: 1px solid rgba(0, 0, 0, 0.1);
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .modal-footer {
-        border-top-color: rgba(255, 255, 255, 0.2) !important;
-      }
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     @media (max-width: 767px) {
@@ -402,39 +391,48 @@ import { Appointment, Car, Customer, Mechanic } from '../../../core/models/appoi
 
     .modal-btn {
       flex: 1;
-      padding: 0.875rem 1.5rem;
+      padding: 1rem 1.5rem;
       border-radius: 12px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 0.5rem;
+      backdrop-filter: blur(10px);
     }
 
     .modal-btn.secondary {
-      background: transparent;
-      border: 1px solid rgba(0, 0, 0, 0.1);
-      color: #6b7280;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #d1d5db;
     }
 
-    @media (prefers-color-scheme: dark) {
-      .modal-btn.secondary {
-        border-color: rgba(255, 255, 255, 0.2) !important;
-        color: #d1d5db !important;
-      }
+    .modal-btn.secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
 
     .modal-btn.primary {
-      background: linear-gradient(135deg, #3b82f6, #2563eb);
-      border: none;
+      background: linear-gradient(135deg, #059669, #047857);
+      border: 1px solid #059669;
       color: white;
+      box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+    }
+
+    .modal-btn.primary:hover:not(:disabled) {
+      background: linear-gradient(135deg, #047857, #065f46);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
     }
 
     .modal-btn:disabled {
       opacity: 0.5;
       cursor: not-allowed;
+      transform: none !important;
     }
 
     .submit-spinner {
@@ -450,12 +448,69 @@ import { Appointment, Car, Customer, Mechanic } from '../../../core/models/appoi
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+
+    /* Custom scrollbar for modal */
+    .modal-content::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .modal-content::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+    }
+
+    .modal-content::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 3px;
+    }
+
+    .modal-content::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    /* Fix select dropdown arrow positioning and calendar icon styling */
+    .form-select {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+      background-position: right 0.75rem center;
+      background-repeat: no-repeat;
+      background-size: 1.5em 1.5em;
+      padding-right: 2.5rem;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+    }
+
+    /* Date input calendar icon styling - hide native and use custom white icon */
+    .form-input[type="date"] {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='1.5'%3e%3cpath d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'/%3e%3c/svg%3e");
+      background-position: right 0.75rem center;
+      background-repeat: no-repeat;
+      background-size: 1.25em 1.25em;
+      padding-right: 2.5rem;
+    }
+
+    /* Make the entire date field clickable by expanding the calendar picker indicator */
+    .form-input[type="date"]::-webkit-calendar-picker-indicator {
+      opacity: 0;
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Alternative approach for other browsers */
+    .form-input[type="date"]::-moz-calendar-picker-indicator {
+      display: none;
+    }
   `]
 })
 export class AppointmentModalComponent {
   private fb = inject(FormBuilder);
   private appointmentService = inject(AppointmentService);
-  public themeService = inject(ThemeService);
 
   // Outputs
   closed = output<void>();
@@ -542,5 +597,10 @@ export class AppointmentModalComponent {
 
   closeModal(): void {
     this.closed.emit();
+  }
+
+  openQuickAddCar(): void {
+    // For now, just show an alert - in a real app this would open a car registration modal
+    alert('Quick Add Car feature - This would open a modal to register a new car and customer.');
   }
 }

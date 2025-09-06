@@ -3,7 +3,9 @@ import { RouterModule, Routes } from '@angular/router';
 import { authGuard, guestGuard } from './core/guards/auth.guard';
 
 const routes: Routes = [
-  { path: '', redirectTo: '/auth', pathMatch: 'full' },
+  // 🔧 DEVELOPMENT MODE: Redirect to dashboard instead of auth for faster development
+  { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
+  // Original: { path: '', redirectTo: '/auth', pathMatch: 'full' },
   { 
     path: 'auth', 
     loadComponent: () => import('./features/auth/auth.component').then(m => m.AuthComponent),

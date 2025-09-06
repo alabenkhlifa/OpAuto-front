@@ -1,7 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { SidebarService } from './core/services/sidebar.service';
-import { ThemeService } from './core/services/theme.service';
 import { SidebarComponent } from './shared/components/sidebar/sidebar.component';
 
 @Component({
@@ -14,7 +13,6 @@ import { SidebarComponent } from './shared/components/sidebar/sidebar.component'
 export class App {
   protected title = 'OpAuto-front';
   public sidebarService = inject(SidebarService);
-  public themeService = inject(ThemeService);
   private router = inject(Router);
 
   public isAuthRoute(): boolean {

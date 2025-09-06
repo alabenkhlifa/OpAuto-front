@@ -4,7 +4,6 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CustomerService } from '../../../core/services/customer.service';
 import { Customer, CustomerHistory, UpdateCustomerRequest, CustomerStatus, ContactMethod } from '../../../core/models/customer.model';
-import { ThemeService } from '../../../core/services/theme.service';
 
 @Component({
   selector: 'app-customer-details',
@@ -18,7 +17,6 @@ export class CustomerDetailsComponent implements OnInit {
   private router = inject(Router);
   private customerService = inject(CustomerService);
   private fb = inject(FormBuilder);
-  public themeService = inject(ThemeService);
 
   customer = signal<Customer | null>(null);
   history = signal<CustomerHistory | null>(null);

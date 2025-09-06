@@ -1,32 +1,50 @@
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 lg:p-6">
+<div class="min-h-screen inventory-container p-4 lg:p-6" 
+     style="background-color: var(--color-bg-secondary); color: var(--color-text-primary)">
   <!-- Header -->
   <div class="mb-6">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
       <div>
-        <h1 class="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">Parts & Inventory</h1>
-        <p class="text-gray-600 dark:text-gray-400 mt-1">Manage your garage parts and stock levels</p>
+        <h1 class="text-2xl lg:text-3xl font-bold" style="color: var(--color-text-primary)">Parts & Inventory</h1>
+        <p class="mt-1" style="color: var(--color-text-secondary)">Manage your garage parts and stock levels</p>
       </div>
       
       <!-- Quick Actions -->
-      <div class="flex flex-wrap gap-2">
+      <div class="flex flex-wrap gap-2 justify-end sm:justify-start">
         <button (click)="setView('dashboard')" 
-                [class]="currentView() === 'dashboard' ? 'bg-blue-600 text-white' : 'bg-white/80 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800'"
-                class="px-4 py-2 rounded-lg backdrop-blur-sm border border-gray-200 dark:border-gray-700 transition-all">
-          <span class="text-sm font-medium">Dashboard</span>
+                class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105"
+                [class]="currentView() === 'dashboard' ? 'nav-button-active' : 'nav-button-inactive'">
+          <!-- Dashboard Icon -->
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6a2 2 0 01-2 2H10a2 2 0 01-2-2V5zM16 7h.01M16 11h.01M8 21l8-8"/>
+          </svg>
+          <span class="text-sm">Dashboard</span>
         </button>
         <button (click)="setView('parts')"
-                [class]="currentView() === 'parts' ? 'bg-blue-600 text-white' : 'bg-white/80 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800'"
-                class="px-4 py-2 rounded-lg backdrop-blur-sm border border-gray-200 dark:border-gray-700 transition-all">
-          <span class="text-sm font-medium">Parts Catalog</span>
+                class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105"
+                [class]="currentView() === 'parts' ? 'nav-button-active' : 'nav-button-inactive'">
+          <!-- Parts Catalog Icon -->
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+          </svg>
+          <span class="text-sm">Parts Catalog</span>
         </button>
         <button (click)="setView('suppliers')"
-                [class]="currentView() === 'suppliers' ? 'bg-blue-600 text-white' : 'bg-white/80 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800'"
-                class="px-4 py-2 rounded-lg backdrop-blur-sm border border-gray-200 dark:border-gray-700 transition-all">
-          <span class="text-sm font-medium">Suppliers</span>
+                class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105"
+                [class]="currentView() === 'suppliers' ? 'nav-button-active' : 'nav-button-inactive'">
+          <!-- Suppliers Icon -->
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+          <span class="text-sm">Suppliers</span>
         </button>
         <button (click)="onAddNewPart()"
-                class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
-          <span class="text-sm font-medium">+ Add Part</span>
+                class="nav-button-add flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-semibold hover:scale-105 shadow-lg hover:shadow-xl">
+          <!-- Add Icon -->
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+          </svg>
+          <span class="text-sm">Add Part</span>
         </button>
       </div>
     </div>
@@ -36,58 +54,58 @@
   <div *ngIf="currentView() === 'dashboard'" class="space-y-6">
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <div class="inventory-card backdrop-blur-sm rounded-xl border p-6" style="background-color: var(--color-bg-primary); border-color: var(--color-border)">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Parts</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats()?.totalParts || 0 }}</p>
+            <p class="text-sm font-medium" style="color: var(--color-text-secondary)">Total Parts</p>
+            <p class="text-2xl font-bold" style="color: var(--color-text-primary)">{{ stats()?.totalParts || 0 }}</p>
           </div>
-          <div class="h-12 w-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
-            <span class="text-blue-600 dark:text-blue-400 text-xl">📦</span>
+          <div class="h-12 w-12 rounded-lg flex items-center justify-center" style="background-color: rgba(59, 130, 246, 0.1)">
+            <span class="text-xl" style="color: #3b82f6">📦</span>
           </div>
         </div>
       </div>
 
-      <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <div class="inventory-card backdrop-blur-sm rounded-xl border p-6" style="background-color: var(--color-bg-primary); border-color: var(--color-border)">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Value</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ formatCurrency(stats()?.totalValue || 0) }}</p>
+            <p class="text-sm font-medium" style="color: var(--color-text-secondary)">Total Value</p>
+            <p class="text-2xl font-bold" style="color: var(--color-text-primary)">{{ formatCurrency(stats()?.totalValue || 0) }}</p>
           </div>
-          <div class="h-12 w-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-between">
-            <span class="text-green-600 dark:text-green-400 text-xl">💰</span>
+          <div class="h-12 w-12 rounded-lg flex items-center justify-center" style="background-color: rgba(34, 197, 94, 0.1)">
+            <span class="text-xl" style="color: #22c55e">💰</span>
           </div>
         </div>
       </div>
 
-      <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <div class="inventory-card backdrop-blur-sm rounded-xl border p-6" style="background-color: var(--color-bg-primary); border-color: var(--color-border)">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Low Stock</p>
-            <p class="text-2xl font-bold text-amber-600 dark:text-amber-400">{{ stats()?.lowStockCount || 0 }}</p>
+            <p class="text-sm font-medium" style="color: var(--color-text-secondary)">Low Stock</p>
+            <p class="text-2xl font-bold" style="color: #f59e0b">{{ stats()?.lowStockCount || 0 }}</p>
           </div>
-          <div class="h-12 w-12 bg-amber-100 dark:bg-amber-900/20 rounded-lg flex items-center justify-center">
-            <span class="text-amber-600 dark:text-amber-400 text-xl">⚠️</span>
+          <div class="h-12 w-12 rounded-lg flex items-center justify-center" style="background-color: rgba(245, 158, 11, 0.1)">
+            <span class="text-xl" style="color: #f59e0b">⚠️</span>
           </div>
         </div>
         <button (click)="setStockStatusFilter('low-stock')" 
-                class="mt-2 text-xs text-amber-600 dark:text-amber-400 hover:underline">
+                class="mt-2 text-xs hover:underline" style="color: #f59e0b">
           View Details
         </button>
       </div>
 
-      <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <div class="inventory-card backdrop-blur-sm rounded-xl border p-6" style="background-color: var(--color-bg-primary); border-color: var(--color-border)">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Out of Stock</p>
-            <p class="text-2xl font-bold text-red-600 dark:text-red-400">{{ stats()?.outOfStockCount || 0 }}</p>
+            <p class="text-sm font-medium" style="color: var(--color-text-secondary)">Out of Stock</p>
+            <p class="text-2xl font-bold" style="color: #ef4444">{{ stats()?.outOfStockCount || 0 }}</p>
           </div>
-          <div class="h-12 w-12 bg-red-100 dark:bg-red-900/20 rounded-lg flex items-center justify-center">
-            <span class="text-red-600 dark:text-red-400 text-xl">❌</span>
+          <div class="h-12 w-12 rounded-lg flex items-center justify-center" style="background-color: rgba(239, 68, 68, 0.1)">
+            <span class="text-xl" style="color: #ef4444">❌</span>
           </div>
         </div>
         <button (click)="setStockStatusFilter('out-of-stock')" 
-                class="mt-2 text-xs text-red-600 dark:text-red-400 hover:underline">
+                class="mt-2 text-xs hover:underline" style="color: #ef4444">
           View Details
         </button>
       </div>
@@ -95,11 +113,11 @@
 
     <!-- Alerts Section -->
     <div *ngIf="unreadAlerts().length > 0" 
-         class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+         class="inventory-card backdrop-blur-sm rounded-xl border p-6" style="background-color: var(--color-bg-primary); border-color: var(--color-border)">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+        <h2 class="text-lg font-semibold" style="color: var(--color-text-primary)">
           Recent Alerts
-          <span class="ml-2 px-2 py-1 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-xs rounded-full">
+          <span class="ml-2 px-2 py-1 text-xs rounded-full" style="background-color: rgba(239, 68, 68, 0.1); color: #ef4444">
             {{ unreadAlerts().length }}
           </span>
         </h2>
@@ -107,15 +125,24 @@
       
       <div class="space-y-3">
         <div *ngFor="let alert of unreadAlerts().slice(0, 5)" 
-             class="flex items-start gap-3 p-3 rounded-lg border"
+             class="flex items-center gap-4 p-4 rounded-lg border transition-all hover:shadow-sm"
              [class]="getAlertSeverityClass(alert.severity)">
-          <span class="text-lg">{{ getAlertIcon(alert.type) }}</span>
-          <div class="flex-1">
-            <p class="font-medium">{{ alert.message }}</p>
-            <p class="text-sm opacity-75 mt-1">{{ formatDate(alert.createdAt) }}</p>
+          <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center">
+            <!-- Error icon for out of stock -->
+            <svg *ngIf="alert.type === 'out-of-stock'" class="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <!-- Warning icon for low stock -->
+            <svg *ngIf="alert.type === 'low-stock'" class="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="font-medium text-primary-themed">{{ alert.message }}</p>
+            <p class="text-sm text-tertiary-themed mt-1">{{ formatDate(alert.createdAt) }}</p>
           </div>
           <button (click)="onMarkAlertRead(alert)"
-                  class="text-xs px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                  class="flex-shrink-0 text-xs px-3 py-1 rounded-md mark-read-button transition-colors font-medium">
             Mark Read
           </button>
         </div>
@@ -125,37 +152,93 @@
     <!-- Quick Stats Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Top Used Parts -->
-      <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Most Used This Month</h3>
+      <div class="inventory-card backdrop-blur-sm rounded-xl border p-6" style="background-color: var(--color-bg-primary); border-color: var(--color-border)">
+        <h3 class="text-lg font-semibold mb-4" style="color: var(--color-text-primary)">Most Used This Month</h3>
         <div class="space-y-3">
           <div *ngFor="let part of stats()?.topUsedParts?.slice(0, 5)" 
-               class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+               class="flex items-center justify-between p-3 inventory-list-item rounded-lg">
             <div class="flex items-center gap-3">
-              <span class="text-lg">{{ getCategoryIcon(part.category) }}</span>
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm"
+                   [class]="getCategoryColor(part.category)">
+                <!-- Engine icon -->
+                <svg *ngIf="part.category === 'engine'" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2.5L8.42 6.07c-.58.58-.42 1.61.35 1.97L10 8.5v2l-1.23.46c-.77.36-.93 1.39-.35 1.97L12 16.5l3.58-3.57c.58-.58.42-1.61-.35-1.97L14 10.5v-2l1.23-.46c.77-.36.93-1.39.35-1.97L12 2.5z"/>
+                </svg>
+                <!-- Filters icon -->
+                <svg *ngIf="part.category === 'filters'" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                </svg>
+                <!-- Fluids icon -->
+                <svg *ngIf="part.category === 'fluids'" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547A1.001 1.001 0 004 17v4a1 1 0 001.053.999l1.864-.218a1 1 0 01.17-.014h8.826c.06 0 .119.005.17.014l1.864.218A1 1 0 0020 21v-4a1.001 1.001 0 00-.572-1.428z"/>
+                </svg>
+                <!-- Brakes icon -->
+                <svg *ngIf="part.category === 'brakes'" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/>
+                </svg>
+                <!-- Tires icon -->
+                <svg *ngIf="part.category === 'tires'" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <!-- Default parts icon -->
+                <svg *ngIf="!['engine', 'filters', 'fluids', 'brakes', 'tires'].includes(part.category)" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+              </div>
               <div>
-                <p class="font-medium text-gray-900 dark:text-white">{{ part.name }}</p>
-                <p class="text-sm text-gray-600 dark:text-gray-400">{{ part.partNumber }}</p>
+                <p class="font-medium text-primary-themed">{{ part.name }}</p>
+                <p class="text-sm text-secondary-themed">{{ part.partNumber }}</p>
               </div>
             </div>
             <div class="text-right">
-              <p class="font-semibold text-gray-900 dark:text-white">{{ part.totalUsageThisMonth }}</p>
-              <p class="text-xs text-gray-600 dark:text-gray-400">used</p>
+              <p class="font-semibold text-primary-themed">{{ part.totalUsageThisMonth }}</p>
+              <p class="text-xs text-secondary-themed">used</p>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Stock Categories -->
-      <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Parts by Category</h3>
+      <div class="inventory-card backdrop-blur-sm rounded-xl border p-6" style="background-color: var(--color-bg-primary); border-color: var(--color-border)">
+        <h3 class="text-lg font-semibold mb-4" style="color: var(--color-text-primary)">Parts by Category</h3>
         <div class="space-y-3">
           <div *ngFor="let category of partService.getAvailableCategories()" 
-               class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+               class="flex items-center justify-between p-3 inventory-list-item rounded-lg">
             <div class="flex items-center gap-3">
-              <span class="text-lg">{{ getCategoryIcon(category) }}</span>
-              <span class="font-medium text-gray-900 dark:text-white capitalize">{{ category }}</span>
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm"
+                   [class]="getCategoryColor(category)">
+                <!-- Engine icon -->
+                <svg *ngIf="category === 'engine'" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2.5L8.42 6.07c-.58.58-.42 1.61.35 1.97L10 8.5v2l-1.23.46c-.77.36-.93 1.39-.35 1.97L12 16.5l3.58-3.57c.58-.58.42-1.61-.35-1.97L14 10.5v-2l1.23-.46c.77-.36.93-1.39.35-1.97L12 2.5z"/>
+                </svg>
+                <!-- Filters icon -->
+                <svg *ngIf="category === 'filters'" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                </svg>
+                <!-- Fluids icon -->
+                <svg *ngIf="category === 'fluids'" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547A1.001 1.001 0 004 17v4a1 1 0 001.053.999l1.864-.218a1 1 0 01.17-.014h8.826c.06 0 .119.005.17.014l1.864.218A1 1 0 0020 21v-4a1.001 1.001 0 00-.572-1.428z"/>
+                </svg>
+                <!-- Brakes icon -->
+                <svg *ngIf="category === 'brakes'" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/>
+                </svg>
+                <!-- Tires icon -->
+                <svg *ngIf="category === 'tires'" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <!-- Default parts icon -->
+                <svg *ngIf="!['engine', 'filters', 'fluids', 'brakes', 'tires'].includes(category)" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+              </div>
+              <span class="font-medium text-primary-themed capitalize">{{ category }}</span>
             </div>
-            <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">
+            <span class="text-sm font-semibold text-secondary-themed">
               {{ stats()?.categoryCounts?.[category] || 0 }}
             </span>
           </div>
@@ -167,7 +250,7 @@
   <!-- Parts Catalog View -->
   <div *ngIf="currentView() === 'parts'" class="space-y-6">
     <!-- Search and Filters -->
-    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+    <div class="inventory-card-bg backdrop-blur-sm rounded-xl border inventory-border p-6">
       <!-- Mobile filter toggle -->
       <button (click)="toggleMobileFilters()" 
               class="lg:hidden w-full mb-4 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium">
@@ -180,14 +263,14 @@
                placeholder="Search parts by name, part number, or brand..."
                (input)="onSearchChange($event)"
                [value]="searchQuery()"
-               class="w-full px-4 py-3 bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm">
+               class="w-full px-4 py-3 bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 text-primary-themed placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm">
       </div>
 
       <!-- Filters -->
       <div [class.hidden]="!showMobileFilters() && isMobile()" 
            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <select (change)="onCategoryChange($event)" [value]="selectedCategory()"
-                class="px-4 py-2 bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white backdrop-blur-sm">
+                class="px-4 py-2 bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-primary-themed backdrop-blur-sm">
           <option value="all">All Categories</option>
           <option *ngFor="let category of partService.getAvailableCategories()" [value]="category">
             {{ category | titlecase }}
@@ -195,7 +278,7 @@
         </select>
 
         <select (change)="onSupplierChange($event)" [value]="selectedSupplier()"
-                class="px-4 py-2 bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white backdrop-blur-sm">
+                class="px-4 py-2 bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-primary-themed backdrop-blur-sm">
           <option value="all">All Suppliers</option>
           <option *ngFor="let supplier of suppliers()" [value]="supplier.id">
             {{ supplier.name }}
@@ -203,7 +286,7 @@
         </select>
 
         <select (change)="onStockStatusChange($event)" [value]="selectedStockStatus()"
-                class="px-4 py-2 bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white backdrop-blur-sm">
+                class="px-4 py-2 bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-primary-themed backdrop-blur-sm">
           <option value="all">All Stock Status</option>
           <option value="in-stock">In Stock</option>
           <option value="low-stock">Low Stock</option>
@@ -221,20 +304,46 @@
     <!-- Parts Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
       <div *ngFor="let part of filteredParts()" 
-           class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition-all cursor-pointer group"
+           class="inventory-card-bg backdrop-blur-sm rounded-xl border inventory-border p-6 hover:shadow-lg transition-all cursor-pointer group"
            (click)="onPartSelect(part)">
         
         <!-- Part Header -->
         <div class="flex items-start justify-between mb-4">
           <div class="flex items-center gap-3">
-            <div class="h-10 w-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-              <span class="text-lg">{{ getCategoryIcon(part.category) }}</span>
+            <div class="h-10 w-10 rounded-lg flex items-center justify-center text-white font-bold text-sm"
+                 [class]="getCategoryColor(part.category)">
+              <!-- Engine icon -->
+              <svg *ngIf="part.category === 'engine'" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2.5L8.42 6.07c-.58.58-.42 1.61.35 1.97L10 8.5v2l-1.23.46c-.77.36-.93 1.39-.35 1.97L12 16.5l3.58-3.57c.58-.58.42-1.61-.35-1.97L14 10.5v-2l1.23-.46c.77-.36.93-1.39.35-1.97L12 2.5z"/>
+              </svg>
+              <!-- Filters icon -->
+              <svg *ngIf="part.category === 'filters'" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+              </svg>
+              <!-- Fluids icon -->
+              <svg *ngIf="part.category === 'fluids'" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547A1.001 1.001 0 004 17v4a1 1 0 001.053.999l1.864-.218a1 1 0 01.17-.014h8.826c.06 0 .119.005.17.014l1.864.218A1 1 0 0020 21v-4a1.001 1.001 0 00-.572-1.428z"/>
+              </svg>
+              <!-- Brakes icon -->
+              <svg *ngIf="part.category === 'brakes'" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/>
+              </svg>
+              <!-- Tires icon -->
+              <svg *ngIf="part.category === 'tires'" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <!-- Default parts icon -->
+              <svg *ngIf="!['engine', 'filters', 'fluids', 'brakes', 'tires'].includes(part.category)" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
             </div>
             <div>
-              <h3 class="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+              <h3 class="font-semibold text-primary-themed group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                 {{ part.name }}
               </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400">{{ part.partNumber }}</p>
+              <p class="text-sm text-secondary-themed">{{ part.partNumber }}</p>
             </div>
           </div>
           <span class="px-2 py-1 rounded-full text-xs font-medium border"
@@ -246,28 +355,28 @@
         <!-- Part Details -->
         <div class="space-y-2 mb-4">
           <div class="flex justify-between text-sm">
-            <span class="text-gray-600 dark:text-gray-400">Brand:</span>
-            <span class="font-medium text-gray-900 dark:text-white">{{ part.brand }}</span>
+            <span class="text-secondary-themed">Brand:</span>
+            <span class="font-medium text-primary-themed">{{ part.brand }}</span>
           </div>
           <div class="flex justify-between text-sm">
-            <span class="text-gray-600 dark:text-gray-400">Stock:</span>
+            <span class="text-secondary-themed">Stock:</span>
             <span class="font-medium" [class]="getStockStatusColor(part.stockStatus)">
               {{ part.stockLevel }} {{ part.unit }}{{ part.stockLevel !== 1 ? 's' : '' }}
             </span>
           </div>
           <div class="flex justify-between text-sm">
-            <span class="text-gray-600 dark:text-gray-400">Price:</span>
-            <span class="font-medium text-gray-900 dark:text-white">{{ formatCurrency(part.price) }}</span>
+            <span class="text-secondary-themed">Price:</span>
+            <span class="font-medium text-primary-themed">{{ formatCurrency(part.price) }}</span>
           </div>
           <div class="flex justify-between text-sm">
-            <span class="text-gray-600 dark:text-gray-400">Supplier:</span>
-            <span class="font-medium text-gray-900 dark:text-white">{{ getSupplierName(part.supplierId) }}</span>
+            <span class="text-secondary-themed">Supplier:</span>
+            <span class="font-medium text-primary-themed">{{ getSupplierName(part.supplierId) }}</span>
           </div>
         </div>
 
         <!-- Stock Level Bar -->
         <div class="mb-4">
-          <div class="flex justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+          <div class="flex justify-between text-xs text-secondary-themed mb-1">
             <span>Stock Level</span>
             <span>{{ part.stockLevel }}/{{ part.maxStockLevel || 'N/A' }}</span>
           </div>
@@ -295,12 +404,12 @@
 
     <!-- Empty State -->
     <div *ngIf="filteredParts().length === 0" 
-         class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
+         class="inventory-card-bg backdrop-blur-sm rounded-xl border inventory-border p-12 text-center">
       <div class="h-16 w-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
         <span class="text-2xl text-gray-400 dark:text-gray-600">📦</span>
       </div>
-      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No parts found</h3>
-      <p class="text-gray-600 dark:text-gray-400 mb-4">Try adjusting your search criteria or add new parts to get started.</p>
+      <h3 class="text-lg font-medium text-primary-themed mb-2">No parts found</h3>
+      <p class="text-secondary-themed mb-4">Try adjusting your search criteria or add new parts to get started.</p>
       <button (click)="onAddNewPart()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
         Add New Part
       </button>
@@ -309,30 +418,30 @@
 
   <!-- Suppliers View -->
   <div *ngIf="currentView() === 'suppliers'" class="space-y-6">
-    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-      <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Suppliers</h2>
+    <div class="inventory-card-bg backdrop-blur-sm rounded-xl border inventory-border p-6">
+      <h2 class="text-lg font-semibold text-primary-themed mb-4">Suppliers</h2>
       
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div *ngFor="let supplier of suppliers()" 
              class="p-4 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
           <div class="flex items-start justify-between mb-3">
-            <h4 class="font-semibold text-gray-900 dark:text-white">{{ supplier.name }}</h4>
+            <h4 class="font-semibold text-primary-themed">{{ supplier.name }}</h4>
             <span class="px-2 py-1 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-xs rounded-full">
               Active
             </span>
           </div>
           
           <div class="space-y-1 text-sm">
-            <p class="text-gray-600 dark:text-gray-400">
+            <p class="text-secondary-themed">
               <span class="font-medium">Contact:</span> {{ supplier.contactPerson }}
             </p>
-            <p class="text-gray-600 dark:text-gray-400">
+            <p class="text-secondary-themed">
               <span class="font-medium">Phone:</span> {{ supplier.phone }}
             </p>
-            <p class="text-gray-600 dark:text-gray-400">
+            <p class="text-secondary-themed">
               <span class="font-medium">Delivery:</span> {{ supplier.deliveryTime }} days
             </p>
-            <p class="text-gray-600 dark:text-gray-400">
+            <p class="text-secondary-themed">
               <span class="font-medium">Payment:</span> {{ supplier.paymentTerms }}
             </p>
           </div>
@@ -346,7 +455,7 @@
        class="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
     <div class="bg-white dark:bg-gray-800 rounded-xl p-6 flex items-center gap-3">
       <div class="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-      <span class="text-gray-900 dark:text-white">Loading inventory...</span>
+      <span class="text-primary-themed">Loading inventory...</span>
     </div>
   </div>
 

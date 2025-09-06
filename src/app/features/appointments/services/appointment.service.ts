@@ -12,82 +12,8 @@ export class AppointmentService {
   public selectedDate = signal<Date>(new Date());
   public viewMode = signal<'day' | 'week' | 'month'>('day');
 
-  // Mock data for development
-  private mockAppointments: Appointment[] = [
-    {
-      id: '1',
-      carId: 'car1',
-      customerId: 'customer1', 
-      mechanicId: 'mechanic1',
-      serviceType: 'oil-change',
-      serviceName: 'Oil Change & Filter Replacement',
-      scheduledDate: new Date(2025, 7, 30, 8, 30),
-      estimatedDuration: 90,
-      status: 'scheduled',
-      notes: 'Regular maintenance - customer requested synthetic oil',
-      priority: 'medium',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      id: '2', 
-      carId: 'car2',
-      customerId: 'customer2',
-      mechanicId: 'mechanic2',
-      serviceType: 'brake-repair',
-      serviceName: 'Front Brake Pads Replacement',
-      scheduledDate: new Date(2025, 7, 30, 10, 0),
-      estimatedDuration: 120,
-      status: 'in-progress',
-      notes: 'Customer reported squeaking noise',
-      priority: 'high',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      id: '3',
-      carId: 'car3', 
-      customerId: 'customer1',
-      mechanicId: 'mechanic1',
-      serviceType: 'inspection',
-      serviceName: 'Annual Technical Inspection',
-      scheduledDate: new Date(2025, 7, 30, 14, 30),
-      estimatedDuration: 60,
-      status: 'scheduled',
-      priority: 'low',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      id: '4',
-      carId: 'car4',
-      customerId: 'customer3',
-      mechanicId: 'mechanic2',
-      serviceType: 'engine',
-      serviceName: 'Engine Diagnostic & Tune-up',
-      scheduledDate: new Date(2025, 7, 30, 16, 0),
-      estimatedDuration: 180,
-      status: 'scheduled',
-      notes: 'Check engine light is on',
-      priority: 'high',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      id: '5',
-      carId: 'car5',
-      customerId: 'customer4',
-      mechanicId: 'mechanic1',
-      serviceType: 'tires',
-      serviceName: 'Tire Rotation & Balancing',
-      scheduledDate: new Date(2025, 7, 31, 9, 0),
-      estimatedDuration: 45,
-      status: 'scheduled',
-      priority: 'low',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }
-  ];
+  // Mock data for development - Dynamic dates based on today
+  private mockAppointments: Appointment[] = this.generateMockAppointments();
 
   private mockCars: Car[] = [
     { id: 'car1', licensePlate: '123 TUN 2024', make: 'BMW', model: 'X5', year: 2020, customerId: 'customer1' },
@@ -109,6 +35,134 @@ export class AppointmentService {
     { id: 'mechanic2', name: 'Slim Technician', specialties: ['brake-repair', 'transmission', 'electrical'], isAvailable: true, currentWorkload: 1 },
     { id: 'mechanic3', name: 'Hedi Expert', specialties: ['bodywork', 'painting', 'tires'], isAvailable: false, currentWorkload: 3 }
   ];
+
+  private generateMockAppointments(): Appointment[] {
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    return [
+      {
+        id: '1',
+        carId: 'car1',
+        customerId: 'customer1', 
+        mechanicId: 'mechanic1',
+        serviceType: 'oil-change',
+        serviceName: 'Oil Change & Filter Replacement',
+        scheduledDate: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 8, 30),
+        estimatedDuration: 90,
+        status: 'completed',
+        notes: 'Regular maintenance - customer requested synthetic oil',
+        priority: 'medium',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: '2', 
+        carId: 'car2',
+        customerId: 'customer2',
+        mechanicId: 'mechanic2',
+        serviceType: 'brake-repair',
+        serviceName: 'Front Brake Pads Replacement',
+        scheduledDate: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 14, 0),
+        estimatedDuration: 120,
+        status: 'completed',
+        notes: 'Customer reported squeaking noise',
+        priority: 'high',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: '3',
+        carId: 'car3', 
+        customerId: 'customer1',
+        mechanicId: 'mechanic1',
+        serviceType: 'inspection',
+        serviceName: 'Annual Technical Inspection',
+        scheduledDate: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 30),
+        estimatedDuration: 60,
+        status: 'scheduled',
+        priority: 'low',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: '4',
+        carId: 'car4',
+        customerId: 'customer3',
+        mechanicId: 'mechanic2',
+        serviceType: 'engine',
+        serviceName: 'Engine Diagnostic & Tune-up',
+        scheduledDate: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 11, 0),
+        estimatedDuration: 180,
+        status: 'in-progress',
+        notes: 'Check engine light is on',
+        priority: 'high',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: '5',
+        carId: 'car5',
+        customerId: 'customer4',
+        mechanicId: 'mechanic1',
+        serviceType: 'tires',
+        serviceName: 'Tire Rotation & Balancing',
+        scheduledDate: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 16, 30),
+        estimatedDuration: 45,
+        status: 'scheduled',
+        priority: 'low',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: '6',
+        carId: 'car2',
+        customerId: 'customer2',
+        mechanicId: 'mechanic2',
+        serviceType: 'transmission',
+        serviceName: 'Transmission Fluid Change',
+        scheduledDate: new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 8, 0),
+        estimatedDuration: 60,
+        status: 'scheduled',
+        notes: 'Scheduled maintenance',
+        priority: 'medium',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: '7',
+        carId: 'car1',
+        customerId: 'customer1',
+        mechanicId: 'mechanic1',
+        serviceType: 'electrical',
+        serviceName: 'Battery & Alternator Check',
+        scheduledDate: new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 10, 30),
+        estimatedDuration: 90,
+        status: 'scheduled',
+        notes: 'Customer reports starting issues',
+        priority: 'high',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: '8',
+        carId: 'car3',
+        customerId: 'customer1',
+        mechanicId: 'mechanic3',
+        serviceType: 'bodywork',
+        serviceName: 'Minor Dent Repair',
+        scheduledDate: new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 14, 0),
+        estimatedDuration: 120,
+        status: 'scheduled',
+        priority: 'low',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    ];
+  }
 
   constructor() {
     this.appointmentsSubject.next(this.mockAppointments);

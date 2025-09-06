@@ -5,7 +5,6 @@ import { FormsModule } from '@angular/forms';
 import { Chart, ChartConfiguration, ChartType, registerables } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
 import { ReportingService } from '../../core/services/reporting.service';
-import { ThemeService } from '../../core/services/theme.service';
 import { 
   ReportFilters, 
   DateRangePreset, 
@@ -28,7 +27,6 @@ Chart.register(...registerables);
 })
 export class ReportsComponent implements OnInit {
   private reportingService = inject(ReportingService);
-  public themeService = inject(ThemeService);
 
   // State signals
   currentView = signal<'dashboard' | 'financial' | 'operational' | 'customer' | 'inventory'>('dashboard');

@@ -1,7 +1,6 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ThemeService } from '../../core/services/theme.service';
 import { AppointmentService } from './services/appointment.service';
 import { AppointmentModalComponent } from './components/appointment-modal.component';
 import { SwipeDirective, SwipeEvent } from '../../shared/directives/swipe.directive';
@@ -16,7 +15,6 @@ import { Appointment, AppointmentStatus } from '../../core/models/appointment.mo
 })
 export class AppointmentsComponent {
   private appointmentService = inject(AppointmentService);
-  public themeService = inject(ThemeService);
   
   // Signals for reactive state
   selectedDate = this.appointmentService.selectedDate;
@@ -37,6 +35,9 @@ export class AppointmentsComponent {
   // Mobile optimizations
   isMobileView = signal(false);
   showMobileFilters = signal(false);
+  
+  // Navigation state
+  currentView = signal<'calendar' | 'list' | 'today'>('list');
   
   // Computed values
   todayAppointments = computed(() => {
@@ -208,6 +209,15 @@ export class AppointmentsComponent {
   // Mobile specific methods
   toggleMobileFilters(): void {
     this.showMobileFilters.set(!this.showMobileFilters());
+  }
+
+  // Navigation methods
+  setView(view: 'calendar' | 'list' | 'today'): void {
+    this.currentView.set(view);
+    if (view === 'today') {
+      this.goToToday();
+    }
+    this.applyFilters();
   }
 
   // Swipe gesture handlers

@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MaintenanceJob, MaintenanceStatus } from '../../../core/models/maintenance.model';
 
@@ -7,7 +7,7 @@ import { MaintenanceJob, MaintenanceStatus } from '../../../core/models/maintena
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition-all duration-200">
+    <div class="bg-white bg-opacity-60 backdrop-blur-sm rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-200 maintenance-card">
       
       <!-- Header -->
       <div class="flex items-start justify-between mb-4">
@@ -141,41 +141,21 @@ import { MaintenanceJob, MaintenanceStatus } from '../../../core/models/maintena
   `,
   styles: [`
     .btn-outline {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0.5rem 1rem;
-      border: 1px solid #d1d5db;
-      font-size: 0.875rem;
-      font-weight: 500;
-      border-radius: 0.375rem;
-      color: #374151;
-      background-color: white;
+      @apply inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500;
     }
     
     .btn-success {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid transparent;
-      font-weight: 500;
-      border-radius: 0.375rem;
-      color: white;
-      background-color: #059669;
+      @apply inline-flex items-center justify-center border border-transparent font-medium rounded-md text-white bg-green-600 hover:bg-green-700;
     }
     
-    .btn-success:hover {
-      background-color: #047857;
-    }
-    
-    .dark .btn-outline {
-      border-color: #4b5563;
-      color: #d1d5db;
-      background-color: #1f2937;
+    .maintenance-card.dark {
+      background-color: rgba(0, 0, 0, 0.2) !important;
+      border-color: rgba(75, 85, 99, 1) !important;
     }
   `]
 })
 export class MaintenanceJobCardComponent {
+  
   @Input() job!: MaintenanceJob;
   @Input() view: 'list' | 'grid' = 'grid';
   

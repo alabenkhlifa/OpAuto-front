@@ -4,7 +4,6 @@ import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CustomerService } from '../../core/services/customer.service';
 import { Customer, CustomerStats, CustomerSummary, CustomerStatus } from '../../core/models/customer.model';
-import { ThemeService } from '../../core/services/theme.service';
 
 @Component({
   selector: 'app-customers',
@@ -16,7 +15,6 @@ import { ThemeService } from '../../core/services/theme.service';
 export class CustomersComponent implements OnInit {
   private customerService = inject(CustomerService);
   private router = inject(Router);
-  public themeService = inject(ThemeService);
 
   customers = signal<Customer[]>([]);
   stats = signal<CustomerStats | null>(null);

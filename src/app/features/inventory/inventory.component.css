@@ -1,3 +1,37 @@
+/* Navigation button styles */
+.nav-button-active {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover)) !important;
+  border-color: var(--color-primary) !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+}
+
+.nav-button-inactive {
+  background-color: var(--color-bg-primary) !important;
+  border-color: var(--color-border) !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.nav-button-inactive:hover {
+  background-color: var(--color-bg-tertiary) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-text-primary) !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+}
+
+.nav-button-add {
+  background: linear-gradient(135deg, #059669, #047857) !important;
+  border-color: #059669 !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+}
+
+.nav-button-add:hover {
+  background: linear-gradient(135deg, #047857, #065f46) !important;
+  box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
+  transform: translateY(-1px);
+}
+
 /* Glassmorphism effects */
 .glass-card {
   background: rgba(255, 255, 255, 0.8);
@@ -5,9 +39,11 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.dark .glass-card {
-  background: rgba(31, 41, 55, 0.8);
-  border: 1px solid rgba(75, 85, 99, 0.3);
+@media (prefers-color-scheme: dark) {
+  .glass-card {
+    background: rgba(31, 41, 55, 0.8);
+    border: 1px solid rgba(75, 85, 99, 0.3);
+  }
 }
 
 /* Stock level progress bars */
@@ -32,8 +68,10 @@
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
-.dark .part-card:hover {
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+@media (prefers-color-scheme: dark) {
+  .part-card:hover {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  }
 }
 
 /* Alert animations */
@@ -55,6 +93,131 @@
 /* Smooth transitions for theme switching */
 * {
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+/* Additional dark mode overrides for inventory */
+@media (prefers-color-scheme: dark) {
+  .inventory-container {
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+  }
+  
+  .inventory-card {
+    background-color: var(--color-bg-secondary);
+    border-color: var(--color-border);
+    color: var(--color-text-primary);
+  }
+  
+  .inventory-card h3,
+  .inventory-card h4,
+  .inventory-card .font-bold,
+  .inventory-card .font-semibold {
+    color: var(--color-text-primary) !important;
+  }
+  
+  .inventory-card p,
+  .inventory-card .text-gray-600 {
+    color: var(--color-text-secondary) !important;
+  }
+  
+  .inventory-button {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
+  }
+  
+  .inventory-button:hover {
+    background-color: var(--color-primary-hover);
+    border-color: var(--color-primary-hover);
+  }
+}
+
+/* Theme-aware text color classes */
+.text-primary-themed {
+  color: var(--color-text-primary);
+}
+
+.text-secondary-themed {
+  color: var(--color-text-secondary);
+}
+
+.text-tertiary-themed {
+  color: var(--color-text-tertiary);
+}
+
+/* Theme-aware background and border classes */
+.inventory-card-bg {
+  background-color: var(--color-bg-primary);
+}
+
+.inventory-border {
+  border-color: var(--color-border);
+}
+
+/* Alert severity classes */
+.alert-info {
+  background-color: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #1e40af;
+}
+
+.alert-warning {
+  background-color: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #92400e;
+}
+
+.alert-critical {
+  background-color: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #991b1b;
+}
+
+@media (prefers-color-scheme: dark) {
+  .alert-info {
+    background-color: rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.4);
+    color: #93c5fd;
+  }
+  
+  .alert-warning {
+    background-color: rgba(245, 158, 11, 0.2);
+    border-color: rgba(245, 158, 11, 0.4);
+    color: #fcd34d;
+  }
+  
+  .alert-critical {
+    background-color: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #fca5a5;
+  }
+}
+
+/* Mark Read button */
+.mark-read-button {
+  background-color: var(--color-bg-secondary);
+  border-color: var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.mark-read-button:hover {
+  background-color: var(--color-bg-tertiary);
+}
+
+/* List item backgrounds */
+::ng-deep .inventory-list-item {
+  background-color: rgba(248, 250, 252, 0.5) !important;
+}
+
+::ng-deep html.dark .inventory-list-item,
+::ng-deep .dark .inventory-list-item,
+::ng-deep html:root.dark .inventory-list-item {
+  background-color: rgba(51, 65, 85, 0.5) !important;
+}
+
+::ng-deep html.light .inventory-list-item,
+::ng-deep html:not(.dark) .inventory-list-item {
+  background-color: rgba(248, 250, 252, 0.5) !important;
 }
 
 /* Focus states for accessibility */

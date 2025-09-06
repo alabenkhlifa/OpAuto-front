@@ -1,0 +1,60 @@
+{
+  "dashboard": {
+    "title": "Tableau de bord OpAuto",
+    "subtitle": "{{date}}",
+    "quickActions": {
+      "title": "Actions rapides",
+      "newCarEntry": {
+        "title": "Nouvelle entrée de voiture",
+        "description": "Enregistrer un client sans rendez-vous"
+      },
+      "scheduleAppointment": {
+        "title": "Programmer un rendez-vous",
+        "description": "Réserver un service futur"
+      },
+      "generateInvoice": {
+        "title": "Générer une facture",
+        "description": "Créer une facture pour un travail terminé"
+      },
+      "qualityCheck": {
+        "title": "Contrôle qualité",
+        "description": "Marquer le travail comme terminé"
+      }
+    },
+    "urgentActions": {
+      "title": "🚨 Actions urgentes requises",
+      "jobsNeedApproval": "{{count}} travaux nécessitent votre approbation",
+      "description": "Les achats de pièces et les devis de réparation attendent l'approbation",
+      "reviewButton": "Examiner les approbations"
+    },
+    "todaySchedule": {
+      "title": "Programme d'aujourd'hui",
+      "appointmentsScheduled": "{{count}} rendez-vous programmés",
+      "appointments": "rendez-vous"
+    },
+    "todayStatus": {
+      "title": "État d'aujourd'hui",
+      "description": "Aperçu du garage en temps réel",
+      "completed": "Terminé",
+      "inProgress": "En cours",
+      "needApproval": "Besoin d'approbation",
+      "availableSlots": "Créneaux disponibles",
+      "todayRevenue": "Revenus d'aujourd'hui"
+    },
+    "activeJobs": {
+      "title": "Voitures actuellement en cours de traitement",
+      "progress": "Progrès",
+      "mechanic": "Mécanicien",
+      "estimatedComplete": "Fin estimée"
+    },
+    "status": {
+      "scheduled": "Programmé",
+      "inProgress": "En cours",
+      "completed": "Terminé",
+      "delayed": "Retardé",
+      "inRepair": "En réparation",
+      "qualityCheck": "Contrôle qualité",
+      "waitingParts": "En attente de pièces"
+    }
+  }
+}

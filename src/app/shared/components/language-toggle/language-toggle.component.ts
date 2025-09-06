@@ -9,9 +9,9 @@ import { LanguageService, LanguageOption, SupportedLanguage } from '../../../cor
   imports: [CommonModule],
   template: `
     <div class="relative">
-      <!-- Language Toggle Button -->
+      <!-- Language Toggle Button - Permanent Dark Mode -->
       <button 
-        class="flex items-center gap-2 px-3 py-2 rounded-lg bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200 hover:bg-opacity-90 dark:hover:bg-opacity-90"
+        class="flex items-center gap-2 px-3 py-2 rounded-lg backdrop-blur-lg border shadow-sm hover:shadow-md transition-all duration-200 bg-gray-800 bg-opacity-80 border-gray-600 hover:bg-opacity-90 hover:border-gray-500"
         (click)="toggleDropdown()"
         [attr.aria-label]="'Change language. Current: ' + getCurrentLanguageOption()?.nativeName">
         
@@ -19,39 +19,25 @@ import { LanguageService, LanguageOption, SupportedLanguage } from '../../../cor
         <span class="text-lg leading-none">{{ getCurrentLanguageOption()?.flag }}</span>
         
         <!-- Language Code -->
-        <span class="text-xs font-medium uppercase"
-              [class.text-gray-700]="!isDarkMode()"
-              [class.text-white]="isDarkMode()">
+        <span class="text-xs font-medium uppercase text-white">
           {{ currentLanguage() }}
         </span>
         
         <!-- Dropdown Arrow -->
-        <svg class="w-3 h-3 transition-transform duration-200"
-             [class.text-gray-500]="!isDarkMode()"
-             [class.text-gray-300]="isDarkMode()"
+        <svg class="w-3 h-3 transition-transform duration-200 text-gray-300"
              [class.rotate-180]="isDropdownOpen()" 
              fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
         </svg>
       </button>
 
-      <!-- Dropdown Menu -->
+      <!-- Dropdown Menu - Permanent Dark Mode -->
       @if (isDropdownOpen()) {
-        <div class="absolute top-full right-0 mt-2 w-48 backdrop-blur-lg rounded-xl border shadow-lg z-50"
-             [class.bg-white]="!isDarkMode()"
-             [class.bg-opacity-95]="!isDarkMode()" 
-             [class.bg-gray-800]="isDarkMode()"
-             [class.bg-opacity-95]="isDarkMode()"
-             [class.border-gray-200]="!isDarkMode()"
-             [class.border-gray-700]="isDarkMode()">
+        <div class="absolute top-full right-0 mt-2 w-48 backdrop-blur-lg rounded-xl border shadow-lg z-50 bg-gray-800 bg-opacity-95 border-gray-600">
           
           <!-- Dropdown Header -->
-          <div class="px-4 py-3 border-b"
-               [class.border-gray-200]="!isDarkMode()"
-               [class.border-gray-700]="isDarkMode()">
-            <p class="text-xs font-medium uppercase tracking-wider"
-               [class.text-gray-600]="!isDarkMode()"
-               [class.text-gray-200]="isDarkMode()">
+          <div class="px-4 py-3 border-b border-gray-600">
+            <p class="text-xs font-medium uppercase tracking-wider text-gray-200">
               Select Language
             </p>
           </div>
@@ -60,13 +46,9 @@ import { LanguageService, LanguageOption, SupportedLanguage } from '../../../cor
           <div class="py-2">
             @for (language of languageOptions; track language.code) {
               <button 
-                class="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors duration-150"
-                [class.hover:bg-blue-50]="!isDarkMode()"
-                [class.hover:bg-blue-900]="isDarkMode()"
-                [class.hover:bg-opacity-50]="isDarkMode()"
-                [class.bg-blue-50]="language.code === currentLanguage() && !isDarkMode()"
-                [class.bg-blue-900]="language.code === currentLanguage() && isDarkMode()"
-                [class.bg-opacity-50]="language.code === currentLanguage() && isDarkMode()"
+                class="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors duration-150 hover:bg-blue-900 hover:bg-opacity-50"
+                [class.bg-blue-900]="language.code === currentLanguage()"
+                [class.bg-opacity-50]="language.code === currentLanguage()"
                 (click)="selectLanguage(language.code)">
                 
                 <!-- Flag -->
@@ -75,26 +57,20 @@ import { LanguageService, LanguageOption, SupportedLanguage } from '../../../cor
                 <!-- Language Info -->
                 <div class="flex-1 min-w-0">
                   <p class="text-sm font-medium"
-                     [class.text-gray-900]="!isDarkMode() && language.code !== currentLanguage()"
-                     [class.text-blue-900]="!isDarkMode() && language.code === currentLanguage()"
-                     [class.text-white]="isDarkMode() && language.code !== currentLanguage()"
-                     [class.text-blue-100]="isDarkMode() && language.code === currentLanguage()">
+                     [class.text-white]="language.code !== currentLanguage()"
+                     [class.text-blue-100]="language.code === currentLanguage()">
                     {{ language.nativeName }}
                   </p>
                   <p class="text-xs"
-                     [class.text-gray-600]="!isDarkMode() && language.code !== currentLanguage()"
-                     [class.text-blue-700]="!isDarkMode() && language.code === currentLanguage()"
-                     [class.text-gray-300]="isDarkMode() && language.code !== currentLanguage()"
-                     [class.text-blue-200]="isDarkMode() && language.code === currentLanguage()">
+                     [class.text-gray-300]="language.code !== currentLanguage()"
+                     [class.text-blue-200]="language.code === currentLanguage()">
                     {{ language.name }}
                   </p>
                 </div>
                 
                 <!-- Selected Indicator -->
                 @if (language.code === currentLanguage()) {
-                  <svg class="w-4 h-4" 
-                       [class.text-blue-600]="!isDarkMode()"
-                       [class.text-blue-200]="isDarkMode()"
+                  <svg class="w-4 h-4 text-blue-200" 
                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                   </svg>
@@ -103,19 +79,6 @@ import { LanguageService, LanguageOption, SupportedLanguage } from '../../../cor
             }
           </div>
 
-          <!-- Quick Toggle Info -->
-          <div class="px-4 py-3 border-t rounded-b-xl"
-               [class.border-gray-200]="!isDarkMode()"
-               [class.border-gray-700]="isDarkMode()"
-               [class.bg-gray-50]="!isDarkMode()"
-               [class.bg-gray-700]="isDarkMode()"
-               [class.bg-opacity-50]="isDarkMode()">
-            <p class="text-xs"
-               [class.text-gray-600]="!isDarkMode()"
-               [class.text-gray-200]="isDarkMode()">
-              💡 Tip: Click the flag to cycle through languages quickly
-            </p>
-          </div>
         </div>
       }
 

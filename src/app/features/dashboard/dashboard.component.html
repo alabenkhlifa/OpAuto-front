@@ -2,83 +2,150 @@
   <header class="dashboard-header">
     <div class="header-content">
       <div class="header-text">
-        <h1 class="dashboard-title text-4xl font-bold text-primary-700 dark:text-primary-300 mb-4">OpAuto Dashboard</h1>
-        <p class="dashboard-subtitle text-lg text-gray-600 dark:text-gray-300">{{ getCurrentDate() }}</p>
+        <h1 class="text-2xl lg:text-3xl font-bold text-primary-themed">{{ 'dashboard.title' | translate }}</h1>
+        <p class="mt-1 text-secondary-themed">{{ getCurrentDate() }}</p>
       </div>
       <div class="header-actions">
         <app-language-toggle></app-language-toggle>
-        <app-theme-toggle></app-theme-toggle>
       </div>
     </div>
   </header>
 
-  <!-- Critical Overview Cards -->
-  <div class="overview-grid mb-8">
-    <!-- Today's Schedule -->
-    <div class="glass-card schedule-card">
-      <div class="card-header">
-        <h2 class="card-title">Today's Schedule</h2>
-        <div class="schedule-summary">
-          <span class="text-2xl font-bold text-primary-600">{{ todayAppointments.length }}</span>
-          <span class="text-sm text-gray-600 ml-1">appointments</span>
+  <!-- Quick Actions - Top Priority -->
+  <div class="section-container mb-8">
+    <h2 class="section-title text-primary-themed">{{ 'dashboard.quickActions.title' | translate }}</h2>
+    <div class="quick-actions-grid">
+      <button class="action-card glass-card" (click)="navigateToNewCar()">
+        <div class="action-icon action-icon-primary">
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+          </svg>
+        </div>
+        <div class="action-content">
+          <h3 class="action-title">{{ 'dashboard.quickActions.newCarEntry.title' | translate }}</h3>
+          <p class="action-description">{{ 'dashboard.quickActions.newCarEntry.description' | translate }}</p>
+        </div>
+      </button>
+
+      <button class="action-card glass-card" (click)="navigateToAppointments()">
+        <div class="action-icon action-icon-secondary">
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <div class="action-content">
+          <h3 class="action-title">{{ 'dashboard.quickActions.scheduleAppointment.title' | translate }}</h3>
+          <p class="action-description">{{ 'dashboard.quickActions.scheduleAppointment.description' | translate }}</p>
+        </div>
+      </button>
+
+      <button class="action-card glass-card" (click)="navigateToInvoicing()">
+        <div class="action-icon action-icon-success">
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+        </div>
+        <div class="action-content">
+          <h3 class="action-title">{{ 'dashboard.quickActions.generateInvoice.title' | translate }}</h3>
+          <p class="action-description">{{ 'dashboard.quickActions.generateInvoice.description' | translate }}</p>
+        </div>
+      </button>
+
+      <button class="action-card glass-card" (click)="navigateToQualityCheck()">
+        <div class="action-icon action-icon-quality">
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M9 2a1 1 0 000 2h6a1 1 0 100-2H9z"/>
+            <path fill-rule="evenodd" d="M4 5a2 2 0 012-2h1a1 1 0 000 2H6a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 100 2H6a2 2 0 01-2-2V5zM16 4a1 1 0 000 2h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 100 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-1zM11 6a1 1 0 00-1 1v4a1 1 0 001 1h2a1 1 0 001-1V7a1 1 0 00-1-1h-2z" clip-rule="evenodd"/>
+            <path d="M7 16a1 1 0 011-1h8a1 1 0 110 2H8a1 1 0 01-1-1zM8 19a1 1 0 100 2h8a1 1 0 100-2H8z"/>
+          </svg>
+        </div>
+        <div class="action-content">
+          <h3 class="action-title">{{ 'dashboard.quickActions.qualityCheck.title' | translate }}</h3>
+          <p class="action-description">{{ 'dashboard.quickActions.qualityCheck.description' | translate }}</p>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Urgent Actions - Priority Section -->
+  @if (metrics.carsWaitingApproval > 0) {
+    <div class="section-container mb-8">
+      <h2 class="section-title text-error-600">{{ 'dashboard.urgentActions.title' | translate }}</h2>
+      <div class="glass-card urgent-card">
+        <div class="urgent-content">
+          <div class="urgent-icon">
+            <svg class="w-8 h-8" style="color: rgb(248, 113, 113);" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+            </svg>
+          </div>
+          <div class="urgent-text">
+            <h3 class="urgent-title">{{ 'dashboard.urgentActions.jobsNeedApproval' | translate:{ count: metrics.carsWaitingApproval } }}</h3>
+            <p class="urgent-description">{{ 'dashboard.urgentActions.description' | translate }}</p>
+          </div>
+          <div class="urgent-actions">
+            <button class="btn btn-error">{{ 'dashboard.urgentActions.reviewButton' | translate }}</button>
+          </div>
         </div>
       </div>
-      <div class="schedule-list">
+    </div>
+  }
+
+  <!-- Today's Schedule Section -->
+  <div class="mb-8">
+    <!-- Today's Schedule - Redesigned -->
+    <div class="glass-card schedule-card-redesigned">
+      <!-- Header with Icon -->
+      <div class="card-header-redesigned">
+        <div class="header-left">
+          <div class="schedule-icon">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="card-title-redesigned">{{ 'dashboard.todaySchedule.title' | translate }}</h2>
+            <p class="card-subtitle">{{ 'dashboard.todaySchedule.appointmentsScheduled' | translate:{ count: todayAppointments.length } }}</p>
+          </div>
+        </div>
+        <div class="schedule-summary-redesigned">
+          <div class="summary-badge">
+            <span class="summary-count">{{ todayAppointments.length }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Timeline Schedule -->
+      <div class="schedule-timeline">
         @for (appointment of todayAppointments; track appointment.id) {
-          <div class="appointment-item" [class.completed]="appointment.status === 'completed'">
-            <div class="appointment-time">{{ appointment.time }}</div>
-            <div class="appointment-details">
-              <div class="customer-info">
-                <span class="customer-name">{{ appointment.customerName }}</span>
-                <span class="car-info">{{ appointment.carModel }} - {{ appointment.licensePlate }}</span>
-              </div>
-              <div class="service-info">
-                <span class="service-type">{{ appointment.serviceType }}</span>
-                <span class="status-badge" [ngClass]="getStatusBadgeClass(appointment.status)">
-                  {{ appointment.status | titlecase }}
-                </span>
+          <div class="timeline-item" [ngClass]="getTimelineItemClass(appointment.status)">
+            <!-- Timeline Dot -->
+            <div class="timeline-dot" [ngClass]="getTimelineDotClass(appointment.status)">
+              <div class="timeline-dot-inner"></div>
+            </div>
+            
+            <!-- Timeline Content -->
+            <div class="timeline-content">
+              <div class="timeline-time">{{ appointment.time }}</div>
+              <div class="timeline-main">
+                <h4 class="customer-name-redesigned">{{ appointment.customerName }}</h4>
+                <p class="car-info-redesigned">{{ appointment.carModel }} • {{ appointment.licensePlate }}</p>
+                <div class="service-row">
+                  <span class="service-type-redesigned">{{ appointment.serviceType }}</span>
+                  <span class="status-pill" [ngClass]="getStatusPillClass(appointment.status)">
+                    {{ appointment.status | titlecase }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         }
       </div>
     </div>
-
-    <!-- Quick Stats -->
-    <div class="glass-card stats-card">
-      <h2 class="card-title mb-4">Today's Status</h2>
-      <div class="stats-grid">
-        <div class="stat-item">
-          <div class="stat-value text-success-600">{{ metrics.carsCompleted }}</div>
-          <div class="stat-label">Completed</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-value text-secondary-600">{{ metrics.carsInProgress }}</div>
-          <div class="stat-label">In Progress</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-value text-error-600">{{ metrics.carsWaitingApproval }}</div>
-          <div class="stat-label">Need Approval</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-value text-primary-600">{{ metrics.availableSlots }}/{{ metrics.totalSlots }}</div>
-          <div class="stat-label">Available Slots</div>
-        </div>
-      </div>
-      
-      <!-- Revenue -->
-      <div class="revenue-section mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-        <div class="revenue-amount text-2xl font-bold text-success-600 dark:text-success-400">
-          {{ formatCurrency(metrics.todayRevenue) }}
-        </div>
-        <div class="revenue-label text-sm text-gray-600 dark:text-gray-400">Today's Revenue</div>
-      </div>
-    </div>
   </div>
 
   <!-- Active Jobs Section -->
   <div class="section-container mb-8">
-    <h2 class="section-title">Cars Currently Being Worked On</h2>
+    <h2 class="section-title text-primary-themed">{{ 'dashboard.activeJobs.title' | translate }}</h2>
     <div class="active-jobs-grid">
       @for (job of activeJobs; track job.id) {
         <div class="glass-card job-card">
@@ -100,7 +167,7 @@
 
           <div class="job-progress">
             <div class="progress-header">
-              <span class="progress-label">Progress</span>
+              <span class="progress-label">{{ 'dashboard.activeJobs.progress' | translate }}</span>
               <span class="progress-percentage">{{ job.progress }}%</span>
             </div>
             <div class="progress-bar">
@@ -113,11 +180,11 @@
 
           <div class="job-footer">
             <div class="mechanic-info">
-              <span class="mechanic-label">Mechanic:</span>
+              <span class="mechanic-label">{{ 'dashboard.activeJobs.mechanic' | translate }}:</span>
               <span class="mechanic-name">{{ job.mechanic }}</span>
             </div>
             <div class="time-info">
-              <span class="time-label">Est. Complete:</span>
+              <span class="time-label">{{ 'dashboard.activeJobs.estimatedComplete' | translate }}:</span>
               <span class="completion-time">{{ job.estimatedCompletion }}</span>
             </div>
           </div>
@@ -126,80 +193,98 @@
     </div>
   </div>
 
-  <!-- Urgent Actions -->
-  @if (metrics.carsWaitingApproval > 0) {
-    <div class="section-container mb-8">
-      <h2 class="section-title text-error-600">🚨 Urgent Actions Required</h2>
-      <div class="glass-card urgent-card">
-        <div class="urgent-content">
-          <div class="urgent-icon">
-            <svg class="w-8 h-8 text-error-500" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+  <!-- Today's Status Section - Standalone -->
+  <div class="mb-8">
+    <div class="glass-card stats-card-redesigned">
+      <!-- Header -->
+      <div class="card-header-redesigned">
+        <div class="header-left">
+          <div class="stats-icon">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
             </svg>
           </div>
-          <div class="urgent-text">
-            <h3 class="urgent-title">{{ metrics.carsWaitingApproval }} jobs need your approval</h3>
-            <p class="urgent-description">Parts purchases and repair estimates are waiting for approval</p>
-          </div>
-          <div class="urgent-actions">
-            <button class="btn btn-error">Review Approvals</button>
+          <div>
+            <h2 class="card-title-redesigned">{{ 'dashboard.todayStatus.title' | translate }}</h2>
+            <p class="card-subtitle">{{ 'dashboard.todayStatus.description' | translate }}</p>
           </div>
         </div>
       </div>
-    </div>
-  }
 
-  <!-- Quick Actions -->
-  <div class="section-container">
-    <h2 class="section-title">Quick Actions</h2>
-    <div class="quick-actions-grid">
-      <button class="action-card glass-card" (click)="navigateToNewCar()">
-        <div class="action-icon action-icon-primary">
+      <!-- Stats Grid Redesigned -->
+      <div class="stats-grid-redesigned">
+        <!-- Completed Jobs -->
+        <div class="stat-card completed">
+          <div class="stat-icon-wrapper completed-icon">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number completed-color">{{ metrics.carsCompleted }}</div>
+            <div class="stat-label">{{ 'dashboard.todayStatus.completed' | translate }}</div>
+          </div>
+        </div>
+
+        <!-- In Progress -->
+        <div class="stat-card progress">
+          <div class="stat-icon-wrapper progress-icon">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number progress-color">{{ metrics.carsInProgress }}</div>
+            <div class="stat-label">{{ 'dashboard.todayStatus.inProgress' | translate }}</div>
+          </div>
+        </div>
+
+        <!-- Need Approval -->
+        <div class="stat-card approval">
+          <div class="stat-icon-wrapper approval-icon">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+            </svg>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number approval-color">{{ metrics.carsWaitingApproval }}</div>
+            <div class="stat-label">{{ 'dashboard.todayStatus.needApproval' | translate }}</div>
+          </div>
+        </div>
+
+        <!-- Available Slots -->
+        <div class="stat-card slots">
+          <div class="stat-icon-wrapper slots-icon">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            </svg>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number slots-color">{{ metrics.availableSlots }}/{{ metrics.totalSlots }}</div>
+            <div class="stat-label">{{ 'dashboard.todayStatus.availableSlots' | translate }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Revenue Section Redesigned -->
+      <div class="revenue-section-redesigned">
+        <div class="revenue-icon-wrapper">
           <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"/>
           </svg>
         </div>
-        <div class="action-content">
-          <h3 class="action-title">New Car Entry</h3>
-          <p class="action-description">Register a walk-in customer</p>
+        <div class="revenue-content">
+          <div class="revenue-amount-redesigned">{{ formatCurrency(metrics.todayRevenue) }}</div>
+          <div class="revenue-label-redesigned">{{ 'dashboard.todayStatus.todayRevenue' | translate }}</div>
         </div>
-      </button>
-
-      <button class="action-card glass-card" (click)="navigateToAppointments()">
-        <div class="action-icon action-icon-secondary">
-          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+        <div class="revenue-trend positive">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M7 14l5-5 5 5z"/>
           </svg>
         </div>
-        <div class="action-content">
-          <h3 class="action-title">Schedule Appointment</h3>
-          <p class="action-description">Book future service</p>
-        </div>
-      </button>
-
-      <button class="action-card glass-card" (click)="navigateToInvoiceCreate()">
-        <div class="action-icon action-icon-success">
-          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h10c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>
-          </svg>
-        </div>
-        <div class="action-content">
-          <h3 class="action-title">Generate Invoice</h3>
-          <p class="action-description">Create bill for completed job</p>
-        </div>
-      </button>
-
-      <button class="action-card glass-card" (click)="navigateToMaintenanceActive()">
-        <div class="action-icon action-icon-automotive">
-          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-          </svg>
-        </div>
-        <div class="action-content">
-          <h3 class="action-title">Quality Check</h3>
-          <p class="action-description">Mark job as completed</p>
-        </div>
-      </button>
+      </div>
     </div>
   </div>
+
+
 </div>

@@ -1,7 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
-import { ThemeService } from '../../../core/services/theme.service';
 import { SidebarService } from '../../../core/services/sidebar.service';
 
 interface NavItem {
@@ -24,7 +23,6 @@ interface NavItem {
 })
 export class SidebarComponent {
   private router = inject(Router);
-  public themeService = inject(ThemeService);
   private sidebarService = inject(SidebarService);
   
   isCollapsed = this.sidebarService.isCollapsed;
@@ -178,7 +176,7 @@ export class SidebarComponent {
   }
 
   getTextColor(): string {
-    return this.themeService.isDarkMode() ? 'white' : '#64748b';
+    return '#64748b';
   }
 
   onMouseEnter() {
