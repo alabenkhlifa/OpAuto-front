@@ -14,30 +14,41 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
       
       @if (job()) {
         <!-- Header -->
-        <div class="mb-6">
-          <div class="flex items-center space-x-4 mb-4">
+        <div class="glass-card mb-6">
+          <div class="flex items-start space-x-6">
             <button 
-              class="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              class="p-3 text-gray-400 hover:text-white transition-colors bg-gray-800/50 rounded-lg hover:bg-gray-700/50"
               (click)="goBack()">
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
             </button>
             <div class="flex-1">
-              <div class="flex items-center space-x-3">
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ job()!.jobTitle }}</h1>
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
-                      [class]="getStatusClasses(job()!.status)">
-                  {{ getStatusLabel(job()!.status) }}
-                </span>
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                      [class]="getPriorityClasses(job()!.priority)">
-                  {{ job()!.priority | titlecase }}
-                </span>
+              <div class="mb-3">
+                <h1 class="text-3xl lg:text-4xl font-bold text-white mb-2">{{ job()!.jobTitle }}</h1>
+                <div class="flex items-center space-x-4 mb-3">
+                  <span class="inline-flex items-center px-4 py-2 rounded-xl text-base font-semibold backdrop-filter backdrop-blur-sm"
+                        [class]="getStatusClasses(job()!.status)">
+                    {{ getStatusLabel(job()!.status) }}
+                  </span>
+                  <span class="inline-flex items-center px-4 py-2 rounded-xl text-base font-semibold backdrop-filter backdrop-blur-sm"
+                        [class]="getPriorityClasses(job()!.priority)">
+                    {{ job()!.priority | titlecase }}
+                  </span>
+                </div>
               </div>
-              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                {{ job()!.carDetails }} • {{ job()!.licensePlate }}
-              </p>
+              <div class="bg-gray-800/30 rounded-lg p-4 backdrop-filter backdrop-blur-sm">
+                <div class="flex items-center space-x-3">
+                  <svg class="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16H5a2 2 0 01-2-2V6a2 2 0 012-2h1.586a1 1 0 01.707.293L9 7.586A1 1 0 009.586 8H16a2 2 0 012 2v6a2 2 0 01-2 2h-1"/>
+                  </svg>
+                  <div>
+                    <p class="text-lg font-medium text-white">{{ job()!.carDetails }}</p>
+                    <p class="text-blue-300 font-semibold text-lg">{{ job()!.licensePlate }}</p>
+                  </div>
+                </div>
+              </div>
             </div>
             
             <!-- Actions -->
@@ -81,7 +92,7 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
           <div class="lg:col-span-2 space-y-6">
             
             <!-- Job Information -->
-            <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+            <div class="glass-card">
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Job Information</h2>
               
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -119,7 +130,7 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
             </div>
 
             <!-- Tasks -->
-            <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+            <div class="glass-card">
               <div class="flex items-center justify-between mb-4">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Tasks</h2>
                 <div class="text-sm text-gray-500 dark:text-gray-400">
@@ -201,7 +212,7 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
 
             <!-- Approval Requests -->
             @if (job()!.approvalRequests.length > 0) {
-              <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+              <div class="glass-card">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Approval Requests</h2>
                 
                 <div class="space-y-4">
@@ -263,7 +274,7 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
           <div class="space-y-6">
             
             <!-- Timeline -->
-            <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+            <div class="glass-card">
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Timeline</h3>
               
               <div class="space-y-4">
@@ -306,7 +317,7 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
             </div>
 
             <!-- Cost Information -->
-            <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+            <div class="glass-card">
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Cost Information</h3>
               
               <div class="space-y-3">
@@ -335,7 +346,7 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
             </div>
 
             <!-- Time Information -->
-            <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+            <div class="glass-card">
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Time Tracking</h3>
               
               <div class="space-y-3">
@@ -413,19 +424,169 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
     }
   `,
   styles: [`
+    /* Dark glassmorphism card styling */
+    .glass-card {
+      background: rgba(17, 24, 39, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(75, 85, 99, 0.6);
+      border-radius: 20px;
+      padding: 1.5rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      margin-bottom: 1rem;
+    }
+
+    .glass-card:hover {
+      background: rgba(31, 41, 55, 0.98);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+      border-color: rgba(59, 130, 246, 0.7);
+      transform: translateY(-2px);
+    }
+
+    /* Button styling to match other screens */
     .btn-primary {
-      @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      border: 1px solid #f59e0b;
+      color: white !important;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(20px);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       gap: 0.5rem;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #d97706, #b45309);
+      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+      transform: translateY(-1px);
     }
     
     .btn-secondary {
-      @apply inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      border: 1px solid #f59e0b;
+      color: white !important;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(20px);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       gap: 0.5rem;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+    }
+
+    .btn-secondary:hover {
+      background: linear-gradient(135deg, #d97706, #b45309);
+      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+      transform: translateY(-1px);
     }
     
     .btn-success {
-      @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500;
+      background: linear-gradient(135deg, #059669, #047857);
+      border: 1px solid #059669;
+      color: white;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(20px);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       gap: 0.5rem;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+    }
+
+    .btn-success:hover {
+      background: linear-gradient(135deg, #047857, #065f46);
+      box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
+      transform: translateY(-1px);
+    }
+
+    /* Fix text colors for permanent dark theme */
+    .glass-card h2,
+    .glass-card h3,
+    .glass-card .text-gray-900 {
+      color: #ffffff !important;
+    }
+
+    .glass-card .text-gray-500,
+    .glass-card .text-gray-400 {
+      color: #9ca3af !important;
+    }
+
+    .glass-card .text-gray-600 {
+      color: #d1d5db !important;
+    }
+
+    /* Enhanced status and priority badge styling */
+    .status-badge-waiting {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.9), rgba(217, 119, 6, 0.9)) !important;
+      color: #ffffff !important;
+      border: 1px solid rgba(245, 158, 11, 0.6);
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+    }
+
+    .status-badge-in-progress {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(29, 78, 216, 0.9)) !important;
+      color: #ffffff !important;
+      border: 1px solid rgba(59, 130, 246, 0.6);
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    }
+
+    .status-badge-completed {
+      background: linear-gradient(135deg, rgba(5, 150, 105, 0.9), rgba(4, 120, 87, 0.9)) !important;
+      color: #ffffff !important;
+      border: 1px solid rgba(5, 150, 105, 0.6);
+      box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+    }
+
+    .status-badge-waiting-approval {
+      background: linear-gradient(135deg, rgba(249, 115, 22, 0.9), rgba(194, 65, 12, 0.9)) !important;
+      color: #ffffff !important;
+      border: 1px solid rgba(249, 115, 22, 0.6);
+      box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);
+    }
+
+    .priority-badge-low {
+      background: linear-gradient(135deg, rgba(75, 85, 99, 0.9), rgba(55, 65, 81, 0.9)) !important;
+      color: #ffffff !important;
+      border: 1px solid rgba(75, 85, 99, 0.6);
+      box-shadow: 0 4px 15px rgba(75, 85, 99, 0.3);
+    }
+
+    .priority-badge-medium {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.9), rgba(217, 119, 6, 0.9)) !important;
+      color: #ffffff !important;
+      border: 1px solid rgba(245, 158, 11, 0.6);
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+    }
+
+    .priority-badge-high {
+      background: linear-gradient(135deg, rgba(249, 115, 22, 0.9), rgba(194, 65, 12, 0.9)) !important;
+      color: #ffffff !important;
+      border: 1px solid rgba(249, 115, 22, 0.6);
+      box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);
+    }
+
+    .priority-badge-urgent {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(185, 28, 28, 0.9)) !important;
+      color: #ffffff !important;
+      border: 1px solid rgba(239, 68, 68, 0.6);
+      box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
     }
   `]
 })
@@ -560,24 +721,24 @@ export class MaintenanceDetailsComponent implements OnInit {
 
   getStatusClasses(status: string): string {
     const classes = {
-      'waiting': 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300',
-      'in-progress': 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300',
-      'waiting-approval': 'bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300',
-      'waiting-parts': 'bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300',
-      'completed': 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300',
-      'cancelled': 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300'
+      'waiting': 'status-badge-waiting',
+      'in-progress': 'status-badge-in-progress',
+      'waiting-approval': 'status-badge-waiting-approval',
+      'waiting-parts': 'status-badge-waiting-approval',
+      'completed': 'status-badge-completed',
+      'cancelled': 'status-badge-waiting'
     };
-    return classes[status as keyof typeof classes] || classes.waiting;
+    return classes[status as keyof typeof classes] || 'status-badge-waiting';
   }
 
   getPriorityClasses(priority: string): string {
     const classes = {
-      'low': 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300',
-      'medium': 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300',
-      'high': 'bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300',
-      'urgent': 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300'
+      'low': 'priority-badge-low',
+      'medium': 'priority-badge-medium',
+      'high': 'priority-badge-high',
+      'urgent': 'priority-badge-urgent'
     };
-    return classes[priority as keyof typeof classes] || classes.medium;
+    return classes[priority as keyof typeof classes] || 'priority-badge-medium';
   }
 
   getTaskStatusColor(status: TaskStatus): string {

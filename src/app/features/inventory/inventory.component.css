@@ -204,20 +204,19 @@
   background-color: var(--color-bg-tertiary);
 }
 
-/* List item backgrounds */
-::ng-deep .inventory-list-item {
-  background-color: rgba(248, 250, 252, 0.5) !important;
+/* List item backgrounds - Glassmorphism theme */
+.inventory-list-item {
+  background: rgba(31, 41, 55, 0.6) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(75, 85, 99, 0.4) !important;
+  transition: all 0.2s ease !important;
 }
 
-::ng-deep html.dark .inventory-list-item,
-::ng-deep .dark .inventory-list-item,
-::ng-deep html:root.dark .inventory-list-item {
-  background-color: rgba(51, 65, 85, 0.5) !important;
-}
-
-::ng-deep html.light .inventory-list-item,
-::ng-deep html:not(.dark) .inventory-list-item {
-  background-color: rgba(248, 250, 252, 0.5) !important;
+.inventory-list-item:hover {
+  background: rgba(31, 41, 55, 0.8) !important;
+  border-color: rgba(75, 85, 99, 0.6) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
 }
 
 /* Focus states for accessibility */

@@ -7,7 +7,7 @@ import { MaintenanceJob, MaintenanceStatus } from '../../../core/models/maintena
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="bg-white bg-opacity-60 backdrop-blur-sm rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-200 maintenance-card">
+    <div class="maintenance-card">
       
       <!-- Header -->
       <div class="flex items-start justify-between mb-4">
@@ -97,16 +97,16 @@ import { MaintenanceJob, MaintenanceStatus } from '../../../core/models/maintena
       </div>
 
       <!-- Actions -->
-      <div class="flex space-x-2">
+      <div class="flex space-x-2" [class]="view === 'list' ? 'justify-end' : ''">
         <button 
-          class="flex-1 btn-outline text-sm py-2"
+          [class]="view === 'list' ? 'btn-secondary text-xs py-1.5 px-3' : 'flex-1 btn-secondary text-sm py-2'"
           (click)="viewDetails.emit(job.id)">
           View Details
         </button>
         
         @if (job.status !== 'completed' && job.status !== 'cancelled') {
           <button 
-            class="flex-1 btn-primary text-sm py-2"
+            [class]="view === 'list' ? 'btn-primary text-xs py-1.5 px-3' : 'flex-1 btn-primary text-sm py-2'"
             (click)="edit.emit(job.id)">
             Edit
           </button>
@@ -116,20 +116,20 @@ import { MaintenanceJob, MaintenanceStatus } from '../../../core/models/maintena
         @switch (job.status) {
           @case ('waiting') {
             <button 
-              class="btn-success text-sm py-2 px-3"
+              [class]="view === 'list' ? 'btn-success text-xs py-1.5 px-2' : 'btn-success text-sm py-2 px-3'"
               (click)="changeStatus('in-progress')"
               title="Start Job">
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg [class]="view === 'list' ? 'w-3 h-3' : 'w-4 h-4'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m-3-5h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </button>
           }
           @case ('in-progress') {
             <button 
-              class="btn-success text-sm py-2 px-3"
+              [class]="view === 'list' ? 'btn-success text-xs py-1.5 px-2' : 'btn-success text-sm py-2 px-3'"
               (click)="changeStatus('completed')"
               title="Complete Job">
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg [class]="view === 'list' ? 'w-3 h-3' : 'w-4 h-4'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
               </svg>
             </button>
@@ -140,17 +140,147 @@ import { MaintenanceJob, MaintenanceStatus } from '../../../core/models/maintena
     </div>
   `,
   styles: [`
-    .btn-outline {
-      @apply inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500;
+    /* Maintenance Job Card - Permanent Dark Glassmorphism */
+    .maintenance-card {
+      background: rgba(17, 24, 39, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(75, 85, 99, 0.6);
+      border-radius: 20px;
+      padding: 1.5rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+    }
+
+    .maintenance-card:hover {
+      background: rgba(31, 41, 55, 0.98);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+      border-color: rgba(59, 130, 246, 0.7);
+      transform: translateY(-2px);
+    }
+
+    /* Fix text colors for permanent dark theme */
+    .maintenance-card h3 {
+      color: #ffffff !important;
+    }
+
+    .maintenance-card p {
+      color: #d1d5db !important;
+    }
+
+    .maintenance-card .text-gray-500,
+    .maintenance-card .text-gray-400 {
+      color: #9ca3af !important;
+    }
+
+    .maintenance-card .text-gray-900 {
+      color: #ffffff !important;
+    }
+
+    .maintenance-card .text-xs.text-gray-500 {
+      color: #9ca3af !important;
+    }
+
+    /* Secondary button styling - blue gradient for view details */
+    .btn-secondary {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(29, 78, 216, 0.8));
+      border: 1px solid rgba(59, 130, 246, 0.6);
+      color: white;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(20px);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-secondary:hover {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(29, 78, 216, 0.9));
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+      transform: translateY(-1px);
     }
     
     .btn-success {
-      @apply inline-flex items-center justify-center border border-transparent font-medium rounded-md text-white bg-green-600 hover:bg-green-700;
+      background: linear-gradient(135deg, #059669, #047857);
+      border: 1px solid #059669;
+      color: white;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(20px);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
     }
-    
-    .maintenance-card.dark {
-      background-color: rgba(0, 0, 0, 0.2) !important;
-      border-color: rgba(75, 85, 99, 1) !important;
+
+    .btn-success:hover {
+      background: linear-gradient(135deg, #047857, #065f46);
+      box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
+      transform: translateY(-1px);
+    }
+
+    /* Edit button styling - orange gradient to match other screens */
+    .btn-primary {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      border: 1px solid #f59e0b;
+      color: white !important;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(20px);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #d97706, #b45309);
+      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+      transform: translateY(-1px);
+    }
+
+    /* Priority Badge Styling - Darker and more visible for dark theme */
+    .priority-badge-low {
+      background: rgba(75, 85, 99, 0.8) !important;
+      color: #d1d5db !important;
+      border: 1px solid rgba(156, 163, 175, 0.4);
+    }
+
+    .priority-badge-medium {
+      background: rgba(245, 158, 11, 0.8) !important;
+      color: #ffffff !important;
+      border: 1px solid rgba(245, 158, 11, 0.6);
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+    }
+
+    .priority-badge-high {
+      background: rgba(249, 115, 22, 0.9) !important;
+      color: #ffffff !important;
+      border: 1px solid rgba(249, 115, 22, 0.6);
+      box-shadow: 0 2px 8px rgba(249, 115, 22, 0.4);
+    }
+
+    .priority-badge-urgent {
+      background: rgba(239, 68, 68, 0.9) !important;
+      color: #ffffff !important;
+      border: 1px solid rgba(239, 68, 68, 0.6);
+      box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
     }
   `]
 })
@@ -201,10 +331,10 @@ export class MaintenanceJobCardComponent {
 
   getPriorityClasses(priority: string): string {
     const classes = {
-      'low': 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300',
-      'medium': 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300',
-      'high': 'bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300',
-      'urgent': 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300'
+      'low': 'priority-badge-low',
+      'medium': 'priority-badge-medium', 
+      'high': 'priority-badge-high',
+      'urgent': 'priority-badge-urgent'
     };
     return classes[priority as keyof typeof classes] || classes.medium;
   }

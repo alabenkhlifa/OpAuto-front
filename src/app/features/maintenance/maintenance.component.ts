@@ -20,64 +20,68 @@ import { MaintenanceFiltersComponent } from './components/maintenance-filters.co
     MaintenanceFiltersComponent
   ],
   template: `
-    <div class="p-6 space-y-6">
+    <!-- Maintenance Main Container -->
+    <div class="min-h-screen maintenance-container p-4 lg:p-6">
       
-      <!-- Header -->
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-            {{ getPageTitle() }}
-          </h1>
-          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {{ getPageDescription() }}
-          </p>
+      <!-- Header Section -->
+      <header class="glass-card maintenance-header">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div class="flex-1">
+            <h1 class="text-2xl lg:text-3xl font-bold text-white mb-1">
+              {{ getPageTitle() }}
+            </h1>
+            <p class="text-gray-300">{{ getPageDescription() }}</p>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <!-- Filter Toggle Button -->
+            <button class="filter-toggle" (click)="showFilters.set(!showFilters())">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+              <span>Filters</span>
+            </button>
+
+            <!-- Add Job Button -->
+            <button class="add-btn" (click)="createNewJob()">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              <span class="hidden lg:inline">New Job</span>
+            </button>
+          </div>
         </div>
-        <div class="mt-4 sm:mt-0 flex space-x-3">
-          <button 
-            class="btn-secondary"
-            (click)="showFilters.set(!showFilters())">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-            </svg>
-            <span class="hidden sm:inline">Filters</span>
-          </button>
-          <button 
-            class="btn-primary"
-            (click)="createNewJob()">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            <span class="hidden sm:inline">New Job</span>
-          </button>
-        </div>
-      </div>
+      </header>
 
       <!-- Stats Overview -->
-      <app-maintenance-stats 
-        [stats]="stats()"
-        [view]="currentView()">
-      </app-maintenance-stats>
+      <div class="glass-card">
+        <app-maintenance-stats 
+          [stats]="stats()"
+          [view]="currentView()">
+        </app-maintenance-stats>
+      </div>
 
       <!-- Filters -->
-      <app-maintenance-filters
-        *ngIf="showFilters()"
-        [filters]="filters()"
-        (filtersChange)="onFiltersChange($event)">
-      </app-maintenance-filters>
+      <div *ngIf="showFilters()" class="glass-card filters-panel">
+        <app-maintenance-filters
+          [filters]="filters()"
+          (filtersChange)="onFiltersChange($event)">
+        </app-maintenance-filters>
+      </div>
 
       <!-- Jobs List -->
-      <div class="space-y-4">
-        <div class="flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+      <div class="glass-card">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-lg font-semibold text-white">
             {{ getJobsTitle() }} ({{ filteredJobs().length }})
           </h2>
           
           <!-- View Toggle -->
-          <div class="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+          <div class="view-toggle">
             @for (view of viewOptions; track view.value) {
               <button
-                class="px-3 py-1 text-sm font-medium rounded-md transition-colors"
-                [class]="currentView() === view.value ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+                class="view-toggle-btn"
+                [class.active]="currentView() === view.value"
                 (click)="setView(view.value)">
                 {{ view.label }}
               </button>
@@ -87,20 +91,12 @@ import { MaintenanceFiltersComponent } from './components/maintenance-filters.co
 
         <!-- No Jobs Message -->
         @if (filteredJobs().length === 0) {
-          <div class="text-center py-12">
+          <div class="empty-state text-center py-12">
             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No maintenance jobs</h3>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Get started by creating a new maintenance job.</p>
-            <div class="mt-6">
-              <button class="btn-primary" (click)="createNewJob()">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
-                New Maintenance Job
-              </button>
-            </div>
+            <h3 class="mt-2 text-sm font-medium text-white">No maintenance jobs</h3>
+            <p class="mt-1 text-sm text-gray-300">Use the "New Job" button in the top right to create a new maintenance job.</p>
           </div>
         } @else {
           <!-- Jobs Grid -->
@@ -121,12 +117,131 @@ import { MaintenanceFiltersComponent } from './components/maintenance-filters.co
     </div>
   `,
   styles: [`
-    .btn-primary {
-      @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 gap-2;
-    }
+    /* Maintenance Component - Permanent Dark Glassmorphism to match other screens */
     
-    .btn-secondary {
-      @apply inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 gap-2;
+    .maintenance-container {
+      min-height: 100vh;
+      background: transparent;
+    }
+
+    /* Glass card styling to match other screens */
+    .glass-card {
+      background: rgba(17, 24, 39, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(75, 85, 99, 0.6);
+      border-radius: 20px;
+      padding: 1.5rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      margin-bottom: 1rem;
+    }
+
+    .glass-card:hover {
+      background: rgba(31, 41, 55, 0.98);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+      border-color: rgba(59, 130, 246, 0.7);
+      transform: translateY(-2px);
+    }
+
+    /* Header styling */
+    .maintenance-header {
+      /* Uses glass-card styles */
+    }
+
+    /* Filter toggle button styling - matches other screens */
+    .filter-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      font-size: 0.875rem;
+      color: #d1d5db;
+      background: rgba(31, 41, 55, 0.6);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .filter-toggle:hover {
+      background: rgba(31, 41, 55, 0.8);
+    }
+
+    /* Add button styling - matches other screens */
+    .add-btn {
+      backdrop-filter: blur(20px);
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(29, 78, 216, 0.8));
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 12px;
+      color: white !important;
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .add-btn:hover {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(29, 78, 216, 0.9));
+      transform: translateY(-1px);
+    }
+
+    /* Filters panel styling */
+    .filters-panel {
+      background: rgba(17, 24, 39, 0.9);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(75, 85, 99, 0.4);
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .filters-panel:hover {
+      transform: translateY(-2px);
+      background: rgba(31, 41, 55, 0.95);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    /* View toggle styling */
+    .view-toggle {
+      display: flex;
+      background: rgba(31, 41, 55, 0.6);
+      border-radius: 12px;
+      padding: 0.25rem;
+      gap: 0.25rem;
+    }
+
+    .view-toggle-btn {
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      color: #9ca3af;
+      cursor: pointer;
+    }
+
+    .view-toggle-btn.active {
+      background: rgba(59, 130, 246, 0.8);
+      color: white;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+    }
+
+    .view-toggle-btn:not(.active):hover {
+      background: rgba(75, 85, 99, 0.4);
+      color: #d1d5db;
+    }
+
+    /* Empty state styling */
+    .empty-state h3 {
+      color: #ffffff !important;
+    }
+
+    .empty-state p {
+      color: #d1d5db !important;
     }
   `]
 })

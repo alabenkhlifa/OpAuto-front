@@ -15,22 +15,29 @@ import { Car } from '../../../core/models/appointment.model';
     <div class="p-6 max-w-4xl mx-auto">
       
       <!-- Header -->
-      <div class="mb-6">
-        <div class="flex items-center space-x-4 mb-4">
+      <div class="glass-card mb-6">
+        <div class="flex items-start space-x-6">
           <button 
-            class="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+            class="p-3 text-gray-400 hover:text-white transition-colors bg-gray-800/50 rounded-lg hover:bg-gray-700/50"
             (click)="goBack()">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
           </button>
-          <div>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+          <div class="flex-1">
+            <h1 class="text-3xl lg:text-4xl font-bold text-white mb-2">
               {{ isEditMode() ? 'Edit Maintenance Job' : 'New Maintenance Job' }}
             </h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400">
-              {{ isEditMode() ? 'Update job details and tasks' : 'Create a new maintenance or repair job' }}
-            </p>
+            <div class="bg-gray-800/30 rounded-lg p-4 backdrop-filter backdrop-blur-sm">
+              <div class="flex items-center space-x-3">
+                <svg class="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                <p class="text-lg font-medium text-blue-300">
+                  {{ isEditMode() ? 'Update job details and tasks' : 'Create a new maintenance or repair job' }}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -39,7 +46,7 @@ import { Car } from '../../../core/models/appointment.model';
       <form [formGroup]="maintenanceForm" (ngSubmit)="onSubmit()" class="space-y-6">
         
         <!-- Basic Information -->
-        <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div class="glass-card">
           <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Basic Information</h2>
           
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -181,7 +188,7 @@ import { Car } from '../../../core/models/appointment.model';
         </div>
 
         <!-- Tasks -->
-        <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div class="glass-card">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Tasks</h2>
             <button 
@@ -287,16 +294,118 @@ import { Car } from '../../../core/models/appointment.model';
     </div>
   `,
   styles: [`
+    /* Dark glassmorphism card styling */
+    .glass-card {
+      background: rgba(17, 24, 39, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(75, 85, 99, 0.6);
+      border-radius: 20px;
+      padding: 1.5rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      margin-bottom: 1rem;
+    }
+
+    .glass-card:hover {
+      background: rgba(31, 41, 55, 0.98);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+      border-color: rgba(59, 130, 246, 0.7);
+      transform: translateY(-2px);
+    }
+
+    /* Button styling to match other screens */
     .btn-primary {
-      @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed;
+      background: linear-gradient(135deg, #059669, #047857);
+      border: 1px solid #059669;
+      color: white !important;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(20px);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: linear-gradient(135deg, #047857, #065f46);
+      box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
     }
     
     .btn-secondary {
-      @apply inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(29, 78, 216, 0.8));
+      border: 1px solid rgba(59, 130, 246, 0.6);
+      color: white;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(20px);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-secondary:hover {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(29, 78, 216, 0.9));
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+      transform: translateY(-1px);
     }
     
     .btn-danger {
-      @apply inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500;
+      background: linear-gradient(135deg, #dc2626, #991b1b);
+      border: 1px solid #dc2626;
+      color: white !important;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(20px);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+    }
+
+    .btn-danger:hover {
+      background: linear-gradient(135deg, #991b1b, #7f1d1d);
+      box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
+      transform: translateY(-1px);
+    }
+
+    /* Fix text colors for permanent dark theme */
+    .glass-card h2,
+    .glass-card .text-gray-900 {
+      color: #ffffff !important;
+    }
+
+    .glass-card .text-gray-500,
+    .glass-card .text-gray-400 {
+      color: #9ca3af !important;
+    }
+
+    .glass-card .text-gray-700,
+    .glass-card .text-gray-600 {
+      color: #d1d5db !important;
     }
   `]
 })

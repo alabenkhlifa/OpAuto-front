@@ -8,11 +8,11 @@ import { MaintenanceFilters, MaintenanceStatus, MaintenancePriority } from '../.
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+    <div class="glass-card">
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-lg font-medium text-gray-900 dark:text-white">Filters</h3>
         <button 
-          class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300"
+          class="btn-clear"
           (click)="clearFilters()">
           Clear All
         </button>
@@ -111,8 +111,7 @@ import { MaintenanceFilters, MaintenanceStatus, MaintenancePriority } from '../.
       <div class="mt-4 flex flex-wrap gap-2">
         @for (quickFilter of quickFilters; track quickFilter.label) {
           <button
-            class="px-3 py-1 text-xs font-medium rounded-full border"
-            [class]="isQuickFilterActive(quickFilter) ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-600' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'"
+            [class]="isQuickFilterActive(quickFilter) ? 'filter-chip active' : 'filter-chip'"
             (click)="applyQuickFilter(quickFilter)">
             {{ quickFilter.label }}
           </button>
@@ -120,7 +119,100 @@ import { MaintenanceFilters, MaintenanceStatus, MaintenancePriority } from '../.
       </div>
 
     </div>
-  `
+  `,
+  styles: [`
+    /* Dark glassmorphism card styling */
+    .glass-card {
+      background: rgba(17, 24, 39, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(75, 85, 99, 0.6);
+      border-radius: 20px;
+      padding: 1.5rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      margin-bottom: 1rem;
+    }
+
+    .glass-card:hover {
+      background: rgba(31, 41, 55, 0.98);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+      border-color: rgba(59, 130, 246, 0.7);
+      transform: translateY(-2px);
+    }
+
+    /* Fix text colors for permanent dark theme */
+    .glass-card h3,
+    .glass-card .text-gray-900 {
+      color: #ffffff !important;
+    }
+
+    .glass-card .text-gray-700,
+    .glass-card .text-gray-600 {
+      color: #d1d5db !important;
+    }
+
+    .glass-card .text-gray-300 {
+      color: #9ca3af !important;
+    }
+
+    /* Clear All button styling - matches theme */
+    .btn-clear {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #60a5fa !important;
+      background: rgba(59, 130, 246, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 12px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .btn-clear:hover {
+      background: rgba(59, 130, 246, 0.2);
+      border-color: rgba(59, 130, 246, 0.4);
+      color: #93c5fd !important;
+      transform: translateY(-1px);
+    }
+
+    /* Quick filter chips styling - matches theme */
+    .filter-chip {
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #d1d5db;
+      background: rgba(31, 41, 55, 0.6);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(75, 85, 99, 0.4);
+      border-radius: 12px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .filter-chip:hover {
+      background: rgba(31, 41, 55, 0.8);
+      border-color: rgba(75, 85, 99, 0.6);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+
+    .filter-chip.active {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(29, 78, 216, 0.8));
+      border-color: rgba(59, 130, 246, 0.6);
+      color: #ffffff !important;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .filter-chip.active:hover {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(29, 78, 216, 0.9));
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+    }
+  `]
 })
 export class MaintenanceFiltersComponent {
   @Input() filters: MaintenanceFilters = {};
