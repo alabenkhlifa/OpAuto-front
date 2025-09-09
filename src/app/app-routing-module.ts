@@ -3,9 +3,14 @@ import { RouterModule, Routes } from '@angular/router';
 import { authGuard, guestGuard } from './core/guards/auth.guard';
 
 const routes: Routes = [
-  // 🔧 DEVELOPMENT MODE: Redirect to dashboard instead of auth for faster development
-  { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
-  // Original: { path: '', redirectTo: '/auth', pathMatch: 'full' },
+  // Production: redirect to auth, Development: redirect to dashboard
+  { 
+    path: '', 
+    redirectTo: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+      ? '/dashboard'  // Development
+      : '/auth',      // Production 
+    pathMatch: 'full' 
+  },
   { 
     path: 'auth', 
     loadComponent: () => import('./features/auth/auth.component').then(m => m.AuthComponent),
@@ -145,7 +150,10 @@ const routes: Routes = [
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes)],
+  imports: [RouterModule.forRoot(routes, {
+    useHash: false,
+    enableTracing: false
+  })],
   exports: [RouterModule]
 })
 export class AppRoutingModule { }
