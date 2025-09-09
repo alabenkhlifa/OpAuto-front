@@ -11,9 +11,9 @@ import { OperationalSettings } from '../../../core/models/garage-settings.model'
     <div class="space-y-6">
       
       <!-- Garage Capacity -->
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <div class="glass-card">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Garage Capacity</h3>
+          <h3 class="text-lg font-semibold text-white">Garage Capacity</h3>
           <button 
             type="button"
             class="btn-primary text-sm"
@@ -77,9 +77,9 @@ import { OperationalSettings } from '../../../core/models/garage-settings.model'
       </div>
 
       <!-- Working Hours -->
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <div class="glass-card">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Working Hours</h3>
+          <h3 class="text-lg font-semibold text-white">Working Hours</h3>
           <button 
             type="button"
             class="btn-primary text-sm"
@@ -91,14 +91,14 @@ import { OperationalSettings } from '../../../core/models/garage-settings.model'
         <form [formGroup]="workingHoursForm">
           <div class="space-y-4">
             @for (day of weekDays; track day.key) {
-              <div class="flex items-center space-x-4 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg" [formGroupName]="day.key">
+              <div class="flex items-center space-x-4 p-3 bg-gray-800/30 rounded-lg" [formGroupName]="day.key">
                 <div class="w-24">
                   <label class="flex items-center">
                     <input 
                       type="checkbox" 
                       class="form-checkbox mr-2"
                       formControlName="isWorkingDay">
-                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ day.label }}</span>
+                    <span class="text-sm font-medium text-white">{{ day.label }}</span>
                   </label>
                 </div>
 
@@ -107,7 +107,7 @@ import { OperationalSettings } from '../../../core/models/garage-settings.model'
                     type="time" 
                     class="form-input w-20"
                     formControlName="openTime">
-                  <span class="text-gray-500 dark:text-gray-400">to</span>
+                  <span class="text-gray-400">to</span>
                   <input 
                     type="time" 
                     class="form-input w-20"
@@ -115,12 +115,12 @@ import { OperationalSettings } from '../../../core/models/garage-settings.model'
                 </div>
 
                 <div class="flex items-center space-x-2 ml-4" *ngIf="isWorkingDay(day.key)" formGroupName="lunchBreak">
-                  <span class="text-sm text-gray-500 dark:text-gray-400">Lunch:</span>
+                  <span class="text-sm text-gray-400">Lunch:</span>
                   <input 
                     type="time" 
                     class="form-input w-20"
                     formControlName="startTime">
-                  <span class="text-gray-500 dark:text-gray-400">-</span>
+                  <span class="text-gray-400">-</span>
                   <input 
                     type="time" 
                     class="form-input w-20"
@@ -143,9 +143,9 @@ import { OperationalSettings } from '../../../core/models/garage-settings.model'
       </div>
 
       <!-- Service Settings -->
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <div class="glass-card">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Service Settings</h3>
+          <h3 class="text-lg font-semibold text-white">Service Settings</h3>
           <button 
             type="button"
             class="btn-primary text-sm"
@@ -195,7 +195,7 @@ import { OperationalSettings } from '../../../core/models/garage-settings.model'
                 type="checkbox" 
                 class="form-checkbox mr-2"
                 formControlName="allowOverlappingAppointments">
-              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Allow overlapping appointments</span>
+              <span class="text-sm font-medium text-gray-300">Allow overlapping appointments</span>
             </label>
 
             <label class="flex items-center">
@@ -203,16 +203,16 @@ import { OperationalSettings } from '../../../core/models/garage-settings.model'
                 type="checkbox" 
                 class="form-checkbox mr-2"
                 formControlName="requireCustomerApproval">
-              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Require customer approval for additional work</span>
+              <span class="text-sm font-medium text-gray-300">Require customer approval for additional work</span>
             </label>
           </div>
         </form>
       </div>
 
       <!-- Appointment Settings -->
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <div class="glass-card">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Appointment Settings</h3>
+          <h3 class="text-lg font-semibold text-white">Appointment Settings</h3>
           <button 
             type="button"
             class="btn-primary text-sm"
@@ -261,7 +261,7 @@ import { OperationalSettings } from '../../../core/models/garage-settings.model'
                 type="checkbox" 
                 class="form-checkbox mr-2"
                 formControlName="allowOnlineBooking">
-              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Allow online booking</span>
+              <span class="text-sm font-medium text-gray-300">Allow online booking</span>
             </label>
 
             <label class="flex items-center">
@@ -269,7 +269,7 @@ import { OperationalSettings } from '../../../core/models/garage-settings.model'
                 type="checkbox" 
                 class="form-checkbox mr-2"
                 formControlName="allowSameDayBooking">
-              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Allow same-day booking</span>
+              <span class="text-sm font-medium text-gray-300">Allow same-day booking</span>
             </label>
 
             <label class="flex items-center">
@@ -277,7 +277,7 @@ import { OperationalSettings } from '../../../core/models/garage-settings.model'
                 type="checkbox" 
                 class="form-checkbox mr-2"
                 formControlName="requireDepositForBooking">
-              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Require deposit for booking</span>
+              <span class="text-sm font-medium text-gray-300">Require deposit for booking</span>
             </label>
           </div>
 
@@ -296,80 +296,18 @@ import { OperationalSettings } from '../../../core/models/garage-settings.model'
     </div>
   `,
   styles: [`
-    .form-label {
-      display: block;
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: #374151;
-      margin-bottom: 0.25rem;
+    /* Time input icons - make them white */
+    input[type="time"] {
+      color-scheme: dark;
     }
     
-    .dark .form-label {
-      color: #d1d5db;
+    input[type="time"]::-webkit-calendar-picker-indicator {
+      filter: invert(1);
+      cursor: pointer;
     }
     
-    .form-input, .form-select, .form-textarea {
-      display: block;
-      width: 100%;
-      padding: 0.5rem 0.75rem;
-      border: 1px solid #d1d5db;
-      border-radius: 0.375rem;
-      background-color: white;
-      color: #111827;
-      font-size: 0.875rem;
-    }
-    
-    .form-input:focus, .form-select:focus, .form-textarea:focus {
-      outline: none;
-      border-color: #2563eb;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-    
-    .form-checkbox {
-      width: 1rem;
-      height: 1rem;
-      color: #2563eb;
-      border-radius: 0.25rem;
-      border: 1px solid #d1d5db;
-    }
-    
-    .dark .form-input, .dark .form-select, .dark .form-textarea {
-      background-color: #1f2937;
-      border-color: #4b5563;
-      color: #f9fafb;
-    }
-    
-    .dark .form-input:focus, .dark .form-select:focus, .dark .form-textarea:focus {
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-    
-    .dark .form-checkbox {
-      background-color: #1f2937;
-      border-color: #4b5563;
-    }
-    
-    .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.5rem 1rem;
-      border: 1px solid transparent;
-      font-size: 0.875rem;
-      font-weight: 500;
-      border-radius: 0.375rem;
-      color: white;
-      background-color: #2563eb;
-      gap: 0.5rem;
-    }
-    
-    .btn-primary:hover:not(:disabled) {
-      background-color: #1d4ed8;
-    }
-    
-    .btn-primary:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
+    /* Component uses global form classes from /src/styles/forms.css */
+    /* Component uses global button classes from /src/styles/buttons.css */
   `]
 })
 export class OperationalSettingsComponent implements OnInit {

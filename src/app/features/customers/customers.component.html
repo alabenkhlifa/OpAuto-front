@@ -1,81 +1,94 @@
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+<div class="min-h-screen p-4 lg:p-6" style="background: var(--color-bg-primary)">
   <!-- Header -->
-  <div class="p-4 lg:p-6 border-b border-gray-200 dark:border-gray-700">
+  <header class="glass-card mb-6">
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
       <div>
-        <h1 class="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">Customer Management</h1>
-        <p class="text-gray-600 dark:text-gray-400 mt-1">Manage customer profiles, history, and analytics</p>
+        <h1 class="text-2xl lg:text-3xl font-bold text-white">Customer Management</h1>
+        <p class="text-gray-300 mt-1">Manage customer profiles, history, and analytics</p>
       </div>
       
       <!-- View Toggle -->
-      <div class="flex items-center gap-2 bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-lg p-1 border border-gray-200 dark:border-gray-700">
+      <div class="flex items-center gap-2">
         <button (click)="onViewChange('dashboard')"
-                [class]="currentView() === 'dashboard' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'"
-                class="px-3 py-2 rounded-md text-sm font-medium transition-all">
-          Dashboard
+                class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105"
+                [class]="currentView() === 'dashboard' ? 'nav-button-active' : 'nav-button-inactive'">
+          <!-- Dashboard Icon -->
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6a2 2 0 01-2 2H10a2 2 0 01-2-2V5zM16 7h.01M16 11h.01M8 21l8-8"/>
+          </svg>
+          <span class="text-sm">Dashboard</span>
         </button>
         <button (click)="onViewChange('list')"
-                [class]="currentView() === 'list' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'"
-                class="px-3 py-2 rounded-md text-sm font-medium transition-all">
-          Customer List
+                class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105"
+                [class]="currentView() === 'list' ? 'nav-button-active' : 'nav-button-inactive'">
+          <!-- Customer List Icon -->
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+          <span class="text-sm">Customer List</span>
         </button>
         <button (click)="onViewChange('analytics')"
-                [class]="currentView() === 'analytics' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'"
-                class="px-3 py-2 rounded-md text-sm font-medium transition-all">
-          Analytics
+                class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105"
+                [class]="currentView() === 'analytics' ? 'nav-button-active' : 'nav-button-inactive'">
+          <!-- Analytics Icon -->
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+          <span class="text-sm">Analytics</span>
         </button>
       </div>
     </div>
-  </div>
+  </header>
 
   <!-- Dashboard View -->
-  <div *ngIf="currentView() === 'dashboard'" class="p-4 lg:p-6 space-y-6">
+  <div *ngIf="currentView() === 'dashboard'" class="space-y-6">
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Customers</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats()?.totalCustomers || 0 }}</p>
+            <p class="text-sm font-medium text-gray-300">Total Customers</p>
+            <p class="text-2xl font-bold text-white">{{ stats()?.totalCustomers || 0 }}</p>
           </div>
-          <div class="h-12 w-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-            <span class="text-blue-600 dark:text-blue-400 text-xl">👥</span>
+          <div class="h-12 w-12 rounded-lg flex items-center justify-center" style="background-color: rgba(59, 130, 246, 0.1)">
+            <span class="text-xl" style="color: #3b82f6">👥</span>
           </div>
         </div>
       </div>
 
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Active Customers</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats()?.activeCustomers || 0 }}</p>
+            <p class="text-sm font-medium text-gray-300">Active Customers</p>
+            <p class="text-2xl font-bold text-white">{{ stats()?.activeCustomers || 0 }}</p>
           </div>
-          <div class="h-12 w-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-            <span class="text-green-600 dark:text-green-400 text-xl">✅</span>
+          <div class="h-12 w-12 rounded-lg flex items-center justify-center" style="background-color: rgba(34, 197, 94, 0.1)">
+            <span class="text-xl" style="color: #22c55e">✅</span>
           </div>
         </div>
       </div>
 
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">VIP Customers</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats()?.vipCustomers || 0 }}</p>
+            <p class="text-sm font-medium text-gray-300">VIP Customers</p>
+            <p class="text-2xl font-bold text-white">{{ stats()?.vipCustomers || 0 }}</p>
           </div>
-          <div class="h-12 w-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
-            <span class="text-purple-600 dark:text-purple-400 text-xl">👑</span>
+          <div class="h-12 w-12 rounded-lg flex items-center justify-center" style="background-color: rgba(147, 51, 234, 0.1)">
+            <span class="text-xl" style="color: #9333ea">👑</span>
           </div>
         </div>
       </div>
 
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Avg Customer Value</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ formatCurrency(stats()?.averageCustomerValue || 0) }}</p>
+            <p class="text-sm font-medium text-gray-300">Avg Customer Value</p>
+            <p class="text-2xl font-bold text-white">{{ formatCurrency(stats()?.averageCustomerValue || 0) }}</p>
           </div>
-          <div class="h-12 w-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center">
-            <span class="text-yellow-600 dark:text-yellow-400 text-xl">💰</span>
+          <div class="h-12 w-12 rounded-lg flex items-center justify-center" style="background-color: rgba(245, 158, 11, 0.1)">
+            <span class="text-xl" style="color: #f59e0b">💰</span>
           </div>
         </div>
       </div>
@@ -84,47 +97,49 @@
     <!-- Top Customers & Recent Customers -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Top Customers -->
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Top Customers</h3>
+      <div class="glass-card">
+        <h3 class="text-lg font-semibold text-white mb-4">Top Customers</h3>
         <div class="space-y-3">
           <div *ngFor="let customer of stats()?.topCustomers" 
-               class="flex items-center justify-between p-3 bg-gray-50 bg-opacity-80 dark:bg-gray-700 dark:bg-opacity-50 rounded-lg hover:bg-gray-100 hover:bg-opacity-80 dark:hover:bg-gray-700 dark:hover:bg-opacity-70 transition-all cursor-pointer"
+               class="flex items-center justify-between p-3 rounded-lg transition-all cursor-pointer hover:scale-[1.02]"
+               style="background: rgba(55, 65, 81, 0.3); border: 1px solid rgba(75, 85, 99, 0.6);"
                (click)="onViewCustomer(customer.id)">
             <div class="flex items-center gap-3">
               <div class="h-10 w-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                 <span class="text-white font-medium text-sm">{{ getCustomerInitials(customer.name) }}</span>
               </div>
               <div>
-                <p class="font-medium text-gray-900 dark:text-white">{{ customer.name }}</p>
-                <p class="text-sm text-gray-600 dark:text-gray-400">{{ customer.phone }}</p>
+                <p class="font-medium text-white">{{ customer.name }}</p>
+                <p class="text-sm text-gray-300">{{ customer.phone }}</p>
               </div>
             </div>
             <div class="text-right">
-              <p class="font-semibold text-gray-900 dark:text-white">{{ formatCurrency(customer.totalSpent) }}</p>
-              <p class="text-xs text-gray-600 dark:text-gray-400">{{ customer.totalCars }} cars</p>
+              <p class="font-semibold text-white">{{ formatCurrency(customer.totalSpent) }}</p>
+              <p class="text-xs text-gray-300">{{ customer.totalCars }} cars</p>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Recent Customers -->
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Customers</h3>
+      <div class="glass-card">
+        <h3 class="text-lg font-semibold text-white mb-4">Recent Customers</h3>
         <div class="space-y-3">
           <div *ngFor="let customer of stats()?.recentCustomers" 
-               class="flex items-center justify-between p-3 bg-gray-50 bg-opacity-80 dark:bg-gray-700 dark:bg-opacity-50 rounded-lg hover:bg-gray-100 hover:bg-opacity-80 dark:hover:bg-gray-700 dark:hover:bg-opacity-70 transition-all cursor-pointer"
+               class="flex items-center justify-between p-3 rounded-lg transition-all cursor-pointer hover:scale-[1.02]"
+               style="background: rgba(55, 65, 81, 0.3); border: 1px solid rgba(75, 85, 99, 0.6);"
                (click)="onViewCustomer(customer.id)">
             <div class="flex items-center gap-3">
               <div class="h-10 w-10 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center">
                 <span class="text-white font-medium text-sm">{{ getCustomerInitials(customer.name) }}</span>
               </div>
               <div>
-                <p class="font-medium text-gray-900 dark:text-white">{{ customer.name }}</p>
-                <p class="text-sm text-gray-600 dark:text-gray-400">{{ customer.phone }}</p>
+                <p class="font-medium text-white">{{ customer.name }}</p>
+                <p class="text-sm text-gray-300">{{ customer.phone }}</p>
               </div>
             </div>
             <div class="text-right">
-              <span class="px-2 py-1 rounded-full text-xs font-medium"
+              <span class="badge"
                     [class]="getStatusBadgeClass(customer.status)">
                 {{ customer.status | titlecase }}
               </span>
@@ -135,8 +150,8 @@
     </div>
 
     <!-- Quick Actions -->
-    <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h3>
+    <div class="glass-card">
+      <h3 class="text-lg font-semibold text-white mb-4">Quick Actions</h3>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <button (click)="onAddCustomer()"
                 class="p-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg transition-all shadow-lg shadow-blue-500/25">
@@ -169,22 +184,22 @@
   </div>
 
   <!-- List View -->
-  <div *ngIf="currentView() === 'list'" class="p-4 lg:p-6 space-y-6">
+  <div *ngIf="currentView() === 'list'" class="space-y-6">
     <!-- Filters -->
-    <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+    <div class="glass-card">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Search</label>
+          <label class="block text-sm font-medium text-gray-300 mb-2">Search</label>
           <input type="text" 
                  [(ngModel)]="searchQuery"
                  placeholder="Name, phone, email..."
-                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                 class="form-input w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400 backdrop-blur-sm">
         </div>
         
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Status</label>
+          <label class="block text-sm font-medium text-gray-300 mb-2">Status</label>
           <select [(ngModel)]="selectedStatus"
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                  class="form-input px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white backdrop-blur-sm w-full">
             <option value="all">All Status</option>
             <option value="active">Active</option>
             <option value="vip">VIP</option>
@@ -194,9 +209,9 @@
         </div>
         
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">City</label>
+          <label class="block text-sm font-medium text-gray-300 mb-2">City</label>
           <select [(ngModel)]="selectedCity"
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                  class="form-input px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white backdrop-blur-sm w-full">
             <option value="all">All Cities</option>
             <option *ngFor="let city of availableCities()" [value]="city">{{ city }}</option>
           </select>
@@ -204,11 +219,14 @@
         
         <div class="flex items-end gap-2">
           <button (click)="clearFilters()"
-                  class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                  class="btn-clear-filters">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
             Clear
           </button>
           <button (click)="onAddCustomer()"
-                  class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                  class="btn-primary flex-1">
             Add Customer
           </button>
         </div>
@@ -218,7 +236,7 @@
     <!-- Customer Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <div *ngFor="let customer of filteredCustomers()" 
-           class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg hover:shadow-gray-500/10 dark:hover:shadow-gray-900/20 transition-all cursor-pointer"
+           class="glass-card cursor-pointer hover:scale-[1.02] transition-all duration-300"
            (click)="onViewCustomer(customer.id)">
         
         <!-- Customer Header -->
@@ -228,16 +246,16 @@
               <span class="text-white font-medium">{{ getCustomerInitials(customer.name) }}</span>
             </div>
             <div>
-              <h3 class="font-semibold text-gray-900 dark:text-white">{{ customer.name }}</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400">{{ customer.phone }}</p>
+              <h3 class="font-semibold text-white">{{ customer.name }}</h3>
+              <p class="text-sm text-gray-300">{{ customer.phone }}</p>
             </div>
           </div>
           <div class="flex flex-col items-end gap-1">
-            <span class="px-2 py-1 rounded-full text-xs font-medium"
+            <span class="badge"
                   [class]="getStatusBadgeClass(customer.status)">
               {{ customer.status | titlecase }}
             </span>
-            <span class="px-2 py-1 rounded text-xs font-medium"
+            <span class="badge badge-sm"
                   [class]="getLoyaltyTierClass(customer.loyaltyPoints)">
               {{ getLoyaltyTier(customer.loyaltyPoints) }}
             </span>
@@ -246,54 +264,54 @@
 
         <!-- Customer Info -->
         <div class="space-y-2 mb-4">
-          <div *ngIf="customer.email" class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+          <div *ngIf="customer.email" class="flex items-center gap-2 text-sm text-gray-300">
             <span>✉️</span>
             <span>{{ customer.email }}</span>
           </div>
-          <div *ngIf="customer.address?.city" class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+          <div *ngIf="customer.address?.city" class="flex items-center gap-2 text-sm text-gray-300">
             <span>📍</span>
             <span>{{ customer.address?.city }}</span>
           </div>
-          <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+          <div class="flex items-center gap-2 text-sm text-gray-300">
             <span>📅</span>
             <span>Customer since {{ formatDate(customer.registrationDate) }}</span>
           </div>
         </div>
 
         <!-- Stats -->
-        <div class="grid grid-cols-3 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div class="grid grid-cols-3 gap-4 pt-4 border-t border-gray-500">
           <div class="text-center">
-            <p class="text-lg font-bold text-gray-900 dark:text-white">{{ customer.totalCars }}</p>
-            <p class="text-xs text-gray-600 dark:text-gray-400">Cars</p>
+            <p class="text-lg font-bold text-white">{{ customer.totalCars }}</p>
+            <p class="text-xs text-gray-300">Cars</p>
           </div>
           <div class="text-center">
-            <p class="text-lg font-bold text-gray-900 dark:text-white">{{ customer.totalAppointments }}</p>
-            <p class="text-xs text-gray-600 dark:text-gray-400">Visits</p>
+            <p class="text-lg font-bold text-white">{{ customer.totalAppointments }}</p>
+            <p class="text-xs text-gray-300">Visits</p>
           </div>
           <div class="text-center">
-            <p class="text-lg font-bold text-gray-900 dark:text-white">{{ formatCurrency(customer.totalSpent) }}</p>
-            <p class="text-xs text-gray-600 dark:text-gray-400">Spent</p>
+            <p class="text-lg font-bold text-white">{{ formatCurrency(customer.totalSpent) }}</p>
+            <p class="text-xs text-gray-300">Spent</p>
           </div>
         </div>
 
         <!-- Last Visit -->
-        <div *ngIf="customer.lastVisitDate" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div *ngIf="customer.lastVisitDate" class="mt-4 pt-4 border-t border-gray-500">
           <div class="flex items-center justify-between text-sm">
-            <span class="text-gray-600 dark:text-gray-400">Last visit:</span>
-            <span class="text-gray-900 dark:text-white">
+            <span class="text-gray-300">Last visit:</span>
+            <span class="text-white">
               {{ getDaysSinceLastVisit(customer.lastVisitDate) }} days ago
             </span>
           </div>
         </div>
 
         <!-- Actions -->
-        <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex gap-2">
+        <div class="mt-4 pt-4 border-t border-gray-500 flex gap-2">
           <button (click)="onEditCustomer(customer.id); $event.stopPropagation()"
-                  class="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors">
+                  class="btn-tertiary btn-sm flex-1">
             Edit
           </button>
           <button (click)="onDeleteCustomer(customer.id); $event.stopPropagation()"
-                  class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors">
+                  class="btn-danger btn-sm">
             Delete
           </button>
         </div>
@@ -303,88 +321,158 @@
     <!-- Empty State -->
     <div *ngIf="filteredCustomers().length === 0 && !isLoading()" 
          class="text-center py-12">
-      <div class="mx-auto h-24 w-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
-        <span class="text-gray-400 dark:text-gray-500 text-3xl">👥</span>
+      <div class="mx-auto h-24 w-24 bg-gray-800 rounded-full flex items-center justify-center mb-4">
+        <span class="text-gray-500 text-3xl">👥</span>
       </div>
-      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No customers found</h3>
-      <p class="text-gray-600 dark:text-gray-400 mb-4">Try adjusting your filters or add a new customer.</p>
+      <h3 class="text-lg font-medium text-white mb-2">No customers found</h3>
+      <p class="text-gray-400 mb-4">Try adjusting your filters or add a new customer.</p>
       <button (click)="onAddCustomer()"
-              class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+              class="btn-primary">
         Add First Customer
       </button>
     </div>
   </div>
 
   <!-- Analytics View -->
-  <div *ngIf="currentView() === 'analytics'" class="p-4 lg:p-6 space-y-6">
-    <!-- Customer Status Distribution -->
-    <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Customer Status Distribution</h3>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-          <p class="text-2xl font-bold text-green-600 dark:text-green-400">{{ stats()?.customersByStatus?.active || 0 }}</p>
-          <p class="text-sm text-green-700 dark:text-green-300">Active</p>
-        </div>
-        <div class="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-          <p class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ stats()?.customersByStatus?.vip || 0 }}</p>
-          <p class="text-sm text-purple-700 dark:text-purple-300">VIP</p>
-        </div>
-        <div class="text-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-          <p class="text-2xl font-bold text-gray-600 dark:text-gray-400">{{ stats()?.customersByStatus?.inactive || 0 }}</p>
-          <p class="text-sm text-gray-700 dark:text-gray-300">Inactive</p>
-        </div>
-        <div class="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
-          <p class="text-2xl font-bold text-red-600 dark:text-red-400">{{ stats()?.customersByStatus?.blocked || 0 }}</p>
-          <p class="text-sm text-red-700 dark:text-red-300">Blocked</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Growth Metrics -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Growth This Month</h3>
-        <div class="flex items-center gap-4">
-          <div class="h-16 w-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-            <span class="text-blue-600 dark:text-blue-400 text-2xl">📈</span>
-          </div>
+  <div *ngIf="currentView() === 'analytics'" class="space-y-6">
+    <!-- Analytics Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+      <div class="glass-card">
+        <div class="flex items-center justify-between">
           <div>
-            <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()?.newCustomersThisMonth || 0 }}</p>
-            <p class="text-sm text-gray-600 dark:text-gray-400">New customers this month</p>
+            <p class="text-sm font-medium text-gray-300">Active Customers</p>
+            <p class="text-2xl font-bold text-white">{{ stats()?.customersByStatus?.active || 0 }}</p>
+          </div>
+          <div class="h-12 w-12 rounded-lg flex items-center justify-center" style="background-color: rgba(34, 197, 94, 0.1)">
+            <span class="text-xl" style="color: #22c55e">✅</span>
           </div>
         </div>
       </div>
 
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Customer Insights</h3>
-        <div class="space-y-3">
-          <div class="flex justify-between">
-            <span class="text-gray-600 dark:text-gray-400">Retention Rate</span>
-            <span class="font-medium text-gray-900 dark:text-white">
-              {{ ((stats()?.activeCustomers || 0) / (stats()?.totalCustomers || 1) * 100).toFixed(1) }}%
-            </span>
+      <div class="glass-card">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-300">VIP Customers</p>
+            <p class="text-2xl font-bold text-white">{{ stats()?.customersByStatus?.vip || 0 }}</p>
           </div>
-          <div class="flex justify-between">
-            <span class="text-gray-600 dark:text-gray-400">VIP Rate</span>
-            <span class="font-medium text-gray-900 dark:text-white">
-              {{ ((stats()?.vipCustomers || 0) / (stats()?.totalCustomers || 1) * 100).toFixed(1) }}%
-            </span>
+          <div class="h-12 w-12 rounded-lg flex items-center justify-center" style="background-color: rgba(147, 51, 234, 0.1)">
+            <span class="text-xl" style="color: #9333ea">👑</span>
           </div>
-          <div class="flex justify-between">
-            <span class="text-gray-600 dark:text-gray-400">Avg Lifetime Value</span>
-            <span class="font-medium text-gray-900 dark:text-white">{{ formatCurrency(stats()?.averageCustomerValue || 0) }}</span>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-300">Inactive Customers</p>
+            <p class="text-2xl font-bold text-white">{{ stats()?.customersByStatus?.inactive || 0 }}</p>
+          </div>
+          <div class="h-12 w-12 rounded-lg flex items-center justify-center" style="background-color: rgba(107, 114, 128, 0.1)">
+            <span class="text-xl" style="color: #6b7280">⏸️</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-300">Growth This Month</p>
+            <p class="text-2xl font-bold text-white">{{ stats()?.newCustomersThisMonth || 0 }}</p>
+          </div>
+          <div class="h-12 w-12 rounded-lg flex items-center justify-center" style="background-color: rgba(59, 130, 246, 0.1)">
+            <span class="text-xl" style="color: #3b82f6">📈</span>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Analytics Insights -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Customer Metrics -->
+      <div class="glass-card">
+        <h3 class="text-lg font-semibold text-white mb-4">Customer Metrics</h3>
+        <div class="space-y-3">
+          <div class="flex items-center justify-between p-3 rounded-lg transition-all cursor-pointer hover:scale-[1.02]"
+               style="background: rgba(55, 65, 81, 0.3); border: 1px solid rgba(75, 85, 99, 0.6);">
+            <div class="flex items-center gap-3">
+              <div class="h-10 w-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                <span class="text-white font-medium text-sm">📊</span>
+              </div>
+              <div>
+                <p class="font-medium text-white">Retention Rate</p>
+                <p class="text-sm text-gray-300">Customer retention</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <p class="font-semibold text-white">{{ ((stats()?.activeCustomers || 0) / (stats()?.totalCustomers || 1) * 100).toFixed(1) }}%</p>
+            </div>
+          </div>
+          
+          <div class="flex items-center justify-between p-3 rounded-lg transition-all cursor-pointer hover:scale-[1.02]"
+               style="background: rgba(55, 65, 81, 0.3); border: 1px solid rgba(75, 85, 99, 0.6);">
+            <div class="flex items-center gap-3">
+              <div class="h-10 w-10 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center">
+                <span class="text-white font-medium text-sm">👑</span>
+              </div>
+              <div>
+                <p class="font-medium text-white">VIP Rate</p>
+                <p class="text-sm text-gray-300">Premium customers</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <p class="font-semibold text-white">{{ ((stats()?.vipCustomers || 0) / (stats()?.totalCustomers || 1) * 100).toFixed(1) }}%</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Revenue Insights -->
+      <div class="glass-card">
+        <h3 class="text-lg font-semibold text-white mb-4">Revenue Insights</h3>
+        <div class="space-y-3">
+          <div class="flex items-center justify-between p-3 rounded-lg transition-all cursor-pointer hover:scale-[1.02]"
+               style="background: rgba(55, 65, 81, 0.3); border: 1px solid rgba(75, 85, 99, 0.6);">
+            <div class="flex items-center gap-3">
+              <div class="h-10 w-10 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center">
+                <span class="text-white font-medium text-sm">💰</span>
+              </div>
+              <div>
+                <p class="font-medium text-white">Avg Customer Value</p>
+                <p class="text-sm text-gray-300">Lifetime value</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <p class="font-semibold text-white">{{ formatCurrency(stats()?.averageCustomerValue || 0) }}</p>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between p-3 rounded-lg transition-all cursor-pointer hover:scale-[1.02]"
+               style="background: rgba(55, 65, 81, 0.3); border: 1px solid rgba(75, 85, 99, 0.6);">
+            <div class="flex items-center gap-3">
+              <div class="h-10 w-10 bg-gradient-to-r from-amber-500 to-orange-600 rounded-full flex items-center justify-center">
+                <span class="text-white font-medium text-sm">📈</span>
+              </div>
+              <div>
+                <p class="font-medium text-white">Total Revenue</p>
+                <p class="text-sm text-gray-300">All time revenue</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <p class="font-semibold text-white">{{ formatCurrency((stats()?.averageCustomerValue || 0) * (stats()?.totalCustomers || 0)) }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- Loading State -->
   <div *ngIf="isLoading()" 
        class="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
-    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 flex items-center gap-3">
+    <div class="bg-gray-800 rounded-xl p-6 flex items-center gap-3">
       <div class="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-      <span class="text-gray-900 dark:text-white">Loading customers...</span>
+      <span class="text-white">Loading customers...</span>
     </div>
   </div>
 </div>

@@ -168,7 +168,7 @@ import { Employee, EmployeePerformanceMetrics } from '../../../core/models/emplo
             <div class="space-y-4">
               <div>
                 <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Experience Level</h3>
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
+                <span class="badge badge-active">
                   {{ getExperienceLabel(employee()!.skills.experienceLevel) }}
                 </span>
               </div>
@@ -191,7 +191,7 @@ import { Employee, EmployeePerformanceMetrics } from '../../../core/models/emplo
                 <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Specialties</h3>
                 <div class="flex flex-wrap gap-2">
                   @for (specialty of employee()!.skills.specialties; track specialty) {
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
+                    <span class="badge badge-active">
                       {{ getSpecialtyLabel(specialty) }}
                     </span>
                   }
@@ -428,10 +428,10 @@ export class EmployeeDetailsComponent implements OnInit {
 
   getStatusClasses(status: string): string {
     const classes = {
-      'active': 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300',
-      'inactive': 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300',
-      'on-leave': 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300',
-      'terminated': 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300'
+      'active': 'badge badge-active',
+      'inactive': 'badge badge-inactive',
+      'on-leave': 'badge badge-pending',
+      'terminated': 'badge badge-cancelled'
     };
     return classes[status as keyof typeof classes] || classes.inactive;
   }

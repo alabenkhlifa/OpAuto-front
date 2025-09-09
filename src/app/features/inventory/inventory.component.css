@@ -32,18 +32,22 @@
   transform: translateY(-1px);
 }
 
-/* Glassmorphism effects */
+/* Glassmorphism effects - Permanent Dark Mode */
 .glass-card {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(17, 24, 39, 0.95);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(75, 85, 99, 0.6);
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  .glass-card {
-    background: rgba(31, 41, 55, 0.8);
-    border: 1px solid rgba(75, 85, 99, 0.3);
-  }
+.glass-card:hover {
+  background: rgba(31, 41, 55, 0.98);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+  border-color: rgba(59, 130, 246, 0.7);
+  transform: translateY(-2px);
 }
 
 /* Stock level progress bars */
@@ -95,41 +99,52 @@
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
-/* Additional dark mode overrides for inventory */
-@media (prefers-color-scheme: dark) {
-  .inventory-container {
-    background-color: var(--color-bg-primary);
-    color: var(--color-text-primary);
-  }
-  
-  .inventory-card {
-    background-color: var(--color-bg-secondary);
-    border-color: var(--color-border);
-    color: var(--color-text-primary);
-  }
-  
-  .inventory-card h3,
-  .inventory-card h4,
-  .inventory-card .font-bold,
-  .inventory-card .font-semibold {
-    color: var(--color-text-primary) !important;
-  }
-  
-  .inventory-card p,
-  .inventory-card .text-gray-600 {
-    color: var(--color-text-secondary) !important;
-  }
-  
-  .inventory-button {
-    background-color: var(--color-primary);
-    border-color: var(--color-primary);
-    color: white;
-  }
-  
-  .inventory-button:hover {
-    background-color: var(--color-primary-hover);
-    border-color: var(--color-primary-hover);
-  }
+/* Permanent dark mode overrides for inventory */
+.inventory-container {
+  background: transparent;
+  color: #ffffff;
+  min-height: 100vh;
+}
+
+.inventory-card {
+  background: rgba(17, 24, 39, 0.95);
+  border: 1px solid rgba(75, 85, 99, 0.6);
+  color: #ffffff;
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.inventory-card:hover {
+  background: rgba(31, 41, 55, 0.98);
+  border-color: rgba(59, 130, 246, 0.7);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+}
+
+.inventory-card h3,
+.inventory-card h4,
+.inventory-card .font-bold,
+.inventory-card .font-semibold {
+  color: #ffffff !important;
+}
+
+.inventory-card p,
+.inventory-card .text-gray-600 {
+  color: #d1d5db !important;
+}
+
+.inventory-button {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(29, 78, 216, 0.8));
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: white;
+  backdrop-filter: blur(10px);
+}
+
+.inventory-button:hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(29, 78, 216, 0.9));
+  transform: translateY(-1px);
 }
 
 /* Theme-aware text color classes */
@@ -154,43 +169,26 @@
   border-color: var(--color-border);
 }
 
-/* Alert severity classes */
+/* Alert severity classes - Permanent Dark Mode */
 .alert-info {
-  background-color: rgba(59, 130, 246, 0.1);
-  border-color: rgba(59, 130, 246, 0.3);
-  color: #1e40af;
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #93c5fd;
+  backdrop-filter: blur(10px);
 }
 
 .alert-warning {
-  background-color: rgba(245, 158, 11, 0.1);
-  border-color: rgba(245, 158, 11, 0.3);
-  color: #92400e;
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #fcd34d;
+  backdrop-filter: blur(10px);
 }
 
 .alert-critical {
-  background-color: rgba(239, 68, 68, 0.1);
-  border-color: rgba(239, 68, 68, 0.3);
-  color: #991b1b;
-}
-
-@media (prefers-color-scheme: dark) {
-  .alert-info {
-    background-color: rgba(59, 130, 246, 0.2);
-    border-color: rgba(59, 130, 246, 0.4);
-    color: #93c5fd;
-  }
-  
-  .alert-warning {
-    background-color: rgba(245, 158, 11, 0.2);
-    border-color: rgba(245, 158, 11, 0.4);
-    color: #fcd34d;
-  }
-  
-  .alert-critical {
-    background-color: rgba(239, 68, 68, 0.2);
-    border-color: rgba(239, 68, 68, 0.4);
-    color: #fca5a5;
-  }
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  backdrop-filter: blur(10px);
 }
 
 /* Mark Read button */
@@ -217,6 +215,22 @@
   border-color: rgba(75, 85, 99, 0.6) !important;
   transform: translateY(-1px) !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Component uses global badge system from /src/styles/badges.css */
+
+/* Supplier card styling - Dark theme glassmorphism */
+.supplier-card {
+  background: rgba(31, 41, 55, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(75, 85, 99, 0.4);
+}
+
+.supplier-card:hover {
+  background: rgba(31, 41, 55, 0.8);
+  border-color: rgba(75, 85, 99, 0.6);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 /* Focus states for accessibility */

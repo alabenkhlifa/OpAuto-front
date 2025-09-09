@@ -724,14 +724,14 @@ export class InvoiceService {
 
   getStatusBadgeClass(status: InvoiceStatus): string {
     const classes = {
-      'draft': 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600',
-      'sent': 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-700',
-      'viewed': 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-700',
-      'paid': 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-700',
-      'partially-paid': 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-700',
-      'overdue': 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-700',
-      'cancelled': 'bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600',
-      'refunded': 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-700'
+      'draft': 'badge badge-neutral',
+      'sent': 'badge badge-active',
+      'viewed': 'badge badge-active',
+      'paid': 'badge badge-completed',
+      'partially-paid': 'badge badge-pending',
+      'overdue': 'badge badge-priority-urgent',
+      'cancelled': 'badge badge-cancelled',
+      'refunded': 'badge badge-info'
     };
     return classes[status] || classes.draft;
   }

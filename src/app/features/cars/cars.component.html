@@ -85,7 +85,7 @@
         </select>
 
         <!-- Clear Filters -->
-        <button class="clear-filters-btn" (click)="clearFilters()">
+        <button class="btn-clear-filters" (click)="clearFilters()">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
@@ -103,19 +103,19 @@
       <h3 class="legend-title">Status Legend</h3>
       <div class="legend-items">
         <div class="legend-item">
-          <span class="legend-badge bg-green-100 text-green-700 border-green-200">Up to Date</span>
+          <span class="legend-badge badge badge-up-to-date">Up to Date</span>
           <span class="legend-text">Maintenance is current</span>
         </div>
         <div class="legend-item">
-          <span class="legend-badge bg-amber-100 text-amber-700 border-amber-200">Due Soon</span>
+          <span class="legend-badge badge badge-due-soon">Due Soon</span>
           <span class="legend-text">Service needed within 7 days</span>
         </div>
         <div class="legend-item">
-          <span class="legend-badge bg-red-100 text-red-700 border-red-200">Overdue</span>
+          <span class="legend-badge badge badge-overdue">Overdue</span>
           <span class="legend-text">Service is past due</span>
         </div>
         <div class="legend-item">
-          <span class="legend-badge bg-gray-100 text-gray-700 border-gray-200">Unknown</span>
+          <span class="legend-badge badge badge-unknown">Unknown</span>
           <span class="legend-text">Status information unavailable</span>
         </div>
       </div>

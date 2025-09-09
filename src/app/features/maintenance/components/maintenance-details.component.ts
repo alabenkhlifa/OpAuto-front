@@ -762,18 +762,18 @@ export class MaintenanceDetailsComponent implements OnInit {
 
   getRequestStatusClasses(status: string): string {
     const classes = {
-      'pending': 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300',
-      'approved': 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300',
-      'rejected': 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300'
+      'pending': 'badge badge-pending',
+      'approved': 'badge badge-completed',
+      'rejected': 'badge badge-cancelled'
     };
     return classes[status as keyof typeof classes] || classes.pending;
   }
 
   getUrgencyClasses(urgency: string): string {
     const classes = {
-      'low': 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300',
-      'medium': 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300',
-      'high': 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300'
+      'low': 'badge badge-priority-low',
+      'medium': 'badge badge-priority-medium',
+      'high': 'badge badge-priority-high'
     };
     return classes[urgency as keyof typeof classes] || classes.medium;
   }

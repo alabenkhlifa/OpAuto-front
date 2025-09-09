@@ -9,9 +9,9 @@ import { LanguageService, LanguageOption, SupportedLanguage } from '../../../cor
   imports: [CommonModule],
   template: `
     <div class="relative">
-      <!-- Language Toggle Button - Permanent Dark Mode -->
+      <!-- Language Toggle Button - Glassmorphism Style -->
       <button 
-        class="flex items-center gap-2 px-3 py-2 rounded-lg backdrop-blur-lg border shadow-sm hover:shadow-md transition-all duration-200 bg-gray-800 bg-opacity-80 border-gray-600 hover:bg-opacity-90 hover:border-gray-500"
+        class="flex items-center gap-2 px-3 py-2 rounded-lg backdrop-blur-sm border transition-all duration-200 bg-slate-800 bg-opacity-50 border-slate-700 hover:bg-opacity-70 hover:border-slate-600 hover:transform hover:scale-105"
         (click)="toggleDropdown()"
         [attr.aria-label]="'Change language. Current: ' + getCurrentLanguageOption()?.nativeName">
         
@@ -31,13 +31,13 @@ import { LanguageService, LanguageOption, SupportedLanguage } from '../../../cor
         </svg>
       </button>
 
-      <!-- Dropdown Menu - Permanent Dark Mode -->
+      <!-- Dropdown Menu - Glassmorphism Style -->
       @if (isDropdownOpen()) {
-        <div class="absolute top-full right-0 mt-2 w-48 backdrop-blur-lg rounded-xl border shadow-lg z-50 bg-gray-800 bg-opacity-95 border-gray-600">
+        <div class="absolute top-full right-0 mt-2 w-48 backdrop-blur-lg rounded-xl border shadow-lg z-50 bg-slate-900 bg-opacity-95 border-slate-700">
           
           <!-- Dropdown Header -->
-          <div class="px-4 py-3 border-b border-gray-600">
-            <p class="text-xs font-medium uppercase tracking-wider text-gray-200">
+          <div class="px-4 py-3 border-b border-slate-600 border-opacity-60">
+            <p class="text-xs font-medium uppercase tracking-wider text-gray-300">
               Select Language
             </p>
           </div>
@@ -46,9 +46,10 @@ import { LanguageService, LanguageOption, SupportedLanguage } from '../../../cor
           <div class="py-2">
             @for (language of languageOptions; track language.code) {
               <button 
-                class="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors duration-150 hover:bg-blue-900 hover:bg-opacity-50"
-                [class.bg-blue-900]="language.code === currentLanguage()"
-                [class.bg-opacity-50]="language.code === currentLanguage()"
+                class="w-full flex items-center gap-3 px-4 py-3 text-left transition-all duration-150 hover:bg-blue-600 hover:bg-opacity-30 hover:backdrop-blur-sm"
+                [class.bg-blue-600]="language.code === currentLanguage()"
+                [class.bg-opacity-40]="language.code === currentLanguage()"
+                [class.backdrop-blur-sm]="language.code === currentLanguage()"
                 (click)="selectLanguage(language.code)">
                 
                 <!-- Flag -->
@@ -57,20 +58,20 @@ import { LanguageService, LanguageOption, SupportedLanguage } from '../../../cor
                 <!-- Language Info -->
                 <div class="flex-1 min-w-0">
                   <p class="text-sm font-medium"
-                     [class.text-white]="language.code !== currentLanguage()"
-                     [class.text-blue-100]="language.code === currentLanguage()">
+                     [class.text-gray-100]="language.code !== currentLanguage()"
+                     [class.text-white]="language.code === currentLanguage()">
                     {{ language.nativeName }}
                   </p>
                   <p class="text-xs"
-                     [class.text-gray-300]="language.code !== currentLanguage()"
-                     [class.text-blue-200]="language.code === currentLanguage()">
+                     [class.text-gray-400]="language.code !== currentLanguage()"
+                     [class.text-gray-200]="language.code === currentLanguage()">
                     {{ language.name }}
                   </p>
                 </div>
                 
                 <!-- Selected Indicator -->
                 @if (language.code === currentLanguage()) {
-                  <svg class="w-4 h-4 text-blue-200" 
+                  <svg class="w-4 h-4 text-white" 
                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                   </svg>
@@ -96,20 +97,30 @@ import { LanguageService, LanguageOption, SupportedLanguage } from '../../../cor
       transform: rotate(180deg);
     }
     
-    /* Enhanced backdrop blur for better glass effect */
+    /* Enhanced glassmorphism effects */
     .backdrop-blur-lg {
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
     }
 
-    /* Smooth transitions */
+    .backdrop-blur-sm {
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    /* Smooth transitions for glassmorphism */
     * {
-      transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* Hover effects for better UX */
+    /* Enhanced hover effects for glassmorphism */
     button:hover {
-      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Dropdown shadow enhancement */
+    .shadow-lg {
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
     }
 
     /* RTL Support */

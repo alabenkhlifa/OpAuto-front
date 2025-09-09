@@ -1,90 +1,46 @@
-/* Reports Component - Permanent Dark Mode */
-
-/* Override TailwindCSS with permanent dark mode styling */
-.reports-container {
-  background-color: rgb(17, 24, 39) !important; /* gray-900 */
-}
-
-.reports-card {
-  background-color: rgba(31, 41, 55, 0.8) !important; /* gray-800 with opacity */
-  border-color: rgba(75, 85, 99, 1) !important; /* gray-600 */
-  backdrop-filter: blur(20px);
-}
-
-.reports-control {
-  background-color: rgba(31, 41, 55, 0.8) !important; /* gray-800 with opacity */
-  border-color: rgba(75, 85, 99, 1) !important; /* gray-600 */
-  backdrop-filter: blur(20px);
-}
-
-/* Force button backgrounds to be visible */
-button.bg-blue-600 {
-  background-color: rgb(37, 99, 235) !important; /* blue-600 */
-}
-
-button.bg-green-600 {
-  background-color: rgb(22, 163, 74) !important; /* green-600 */
-}
-
-button.bg-blue-600:hover {
-  background-color: rgb(29, 78, 216) !important; /* blue-700 */
-}
-
-button.bg-green-600:hover {
-  background-color: rgb(21, 128, 61) !important; /* green-700 */
-}
-
-/* Fix selected report tab readability */
-.reports-control button.bg-blue-500.bg-opacity-90 {
-  background-color: rgb(59, 130, 246) !important; /* solid blue-500 */
-  opacity: 1 !important;
+/* Navigation button styles */
+.nav-button-active {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover)) !important;
+  border-color: var(--color-primary) !important;
   color: white !important;
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
 }
 
-/* Override any light mode backgrounds */
-.bg-white {
-  background-color: rgba(31, 41, 55, 0.8) !important;
+.nav-button-inactive {
+  background-color: var(--color-bg-primary) !important;
+  border-color: var(--color-border) !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.nav-button-inactive:hover {
+  background-color: var(--color-bg-tertiary) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-text-primary) !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+}
+
+/* Glass Control Styling */
+.glass-control {
+  background: rgba(17, 24, 39, 0.4);
   backdrop-filter: blur(20px);
-}
-
-.bg-gray-50 {
-  background-color: rgba(17, 24, 39, 0.8) !important;
-  backdrop-filter: blur(20px);
-}
-
-.bg-gray-100 {
-  background-color: rgba(31, 41, 55, 0.6) !important;
-  backdrop-filter: blur(20px);
-}
-
-/* Ensure text visibility */
-.text-gray-900 {
-  color: #ffffff !important;
-}
-
-.text-gray-700 {
-  color: #d1d5db !important;
-}
-
-.text-gray-600 {
-  color: #9ca3af !important;
-}
-
-.text-gray-500 {
-  color: #9ca3af !important;
-}
-
-/* Stats cards glassmorphism effect */
-.reports-container > div > div:first-child > div {
-  background-color: rgba(31, 41, 55, 0.8) !important;
-  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  min-width: 200px;
 }
 
-/* Chart containers */
-.reports-container canvas,
-.reports-container .chart-container {
-  background-color: rgba(31, 41, 55, 0.6) !important;
-  backdrop-filter: blur(20px);
-  border-radius: 12px;
+/* Header styling */
+.reports-header {
+  margin-bottom: 1.5rem;
+}
+
+/* Chart canvas dark theme compatibility */
+.glass-card canvas {
+  background: transparent !important;
+}
+
+/* Loading overlay */
+.reports-container .fixed {
+  background: rgba(0, 0, 0, 0.5) !important;
 }

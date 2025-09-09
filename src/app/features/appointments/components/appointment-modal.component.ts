@@ -34,7 +34,7 @@ import { Appointment, Car, Customer, Mechanic } from '../../../core/models/appoi
           <!-- Car Selection -->
           <div class="form-section">
             <h3 class="section-title">Vehicle Information</h3>
-            <div class="form-row">
+            <div class="form-row car-selection-row">
               <div class="form-group flex-1">
                 <label class="form-label">Car</label>
                 <select class="form-select" formControlName="carId">
@@ -281,13 +281,37 @@ import { Appointment, Car, Customer, Mechanic } from '../../../core/models/appoi
     .form-row {
       display: flex;
       gap: 1rem;
-      align-items: end;
+      align-items: flex-end;
+    }
+    
+    /* Special alignment for car selection row with quick-add button */
+    .car-selection-row {
+      align-items: flex-end;
+    }
+    
+    .car-selection-row .form-group {
+      margin-bottom: 0;
+    }
+    
+    .car-selection-row .quick-add-btn {
+      width: 3.125rem;
+      height: 3.125rem;
+      margin-bottom: 0;
+      flex-shrink: 0;
+      /* Position the button to align with the bottom of the select input */
+      align-self: flex-end;
     }
 
     @media (max-width: 767px) {
       .form-row {
         flex-direction: column;
         align-items: stretch;
+      }
+      
+      /* Keep car selection row horizontal on mobile */
+      .car-selection-row {
+        flex-direction: row !important;
+        align-items: end !important;
       }
     }
 
@@ -355,8 +379,8 @@ import { Appointment, Car, Customer, Mechanic } from '../../../core/models/appoi
     }
 
     .quick-add-btn {
-      width: 2.5rem;
-      height: 2.5rem;
+      width: 3.125rem; /* Match form input height */
+      height: 3.125rem; /* Match form input height */
       border: 1px dashed rgba(255, 255, 255, 0.3);
       background: transparent;
       border-radius: 12px;
@@ -366,6 +390,7 @@ import { Appointment, Car, Customer, Mechanic } from '../../../core/models/appoi
       cursor: pointer;
       color: #d1d5db;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      flex-shrink: 0; /* Prevent button from shrinking */
     }
 
     .quick-add-btn:hover {

@@ -1,5 +1,23 @@
 # Claude Developer Profile & Project Guidelines
 
+## 🚨 **CRITICAL: Design System Enforcement Protocol**
+
+**BEFORE making ANY UI changes, Claude MUST:**
+1. **Read** `/Users/alabenkhlifa/IdeaProjects/OpAuto-front/DESIGN_SYSTEM_CHECKLIST.md`
+2. **Follow** the mandatory checklist step-by-step
+3. **Verify** consistency with existing components
+
+**⚠️ NO EXCEPTIONS**: Every UI change must follow the established design system. Custom styling or "quick fixes" are NEVER acceptable.
+
+**📋 Quick Reference**:
+- Cards: `glass-card` ONLY
+- Buttons: `btn-primary|secondary|tertiary|danger|success` from global system
+- Badges: `badge badge-{status}` from global system  
+- Text: `text-white|gray-300|gray-400` (permanent dark theme)
+- NO conditional `dark:` classes, NO custom CSS
+
+---
+
 ## Developer Profile
 I am a senior Angular developer with expertise in:
 - Angular 15+ with standalone components
@@ -314,6 +332,155 @@ Based on the successful implementation in the inventory screen, all navigation e
   transform: translateY(-1px);
 }
 ```
+
+### ⚠️ MANDATORY: Consistent Button System
+
+**CRITICAL**: All buttons across the dashboard MUST use the standardized button classes defined in `/src/styles/buttons.css`. This ensures visual consistency and prevents styling fragmentation.
+
+#### Button Class Hierarchy (Use these ONLY)
+
+```html
+<!-- PRIMARY ACTIONS: Add, Save, Create, Submit -->
+<button class="btn-primary">
+  <svg><!-- icon --></svg>
+  <span>Action Label</span>
+</button>
+
+<!-- SECONDARY ACTIONS: Clear, Cancel, Reset -->
+<button class="btn-secondary">Clear Filters</button>
+
+<!-- TERTIARY/NEUTRAL ACTIONS: Edit, View, Adjust -->
+<button class="btn-tertiary">Edit</button>
+
+<!-- DANGER ACTIONS: Delete, Remove -->
+<button class="btn-danger">Delete</button>
+
+<!-- SUCCESS/CONFIRM ACTIONS: Approve, Confirm -->
+<button class="btn-success">Approve</button>
+
+<!-- FILTER TOGGLE BUTTONS -->
+<button class="btn-filter-toggle">
+  <svg><!-- filter icon --></svg>
+  <span>Filters</span>
+</button>
+
+<!-- FILTER CHIP BUTTONS -->
+<button class="btn-filter-chip" [class.active]="isActive">Today</button>
+```
+
+#### Button Implementation Rules
+
+1. **NEVER create custom button classes** - Always use the global system
+2. **Button Priority Guidelines**:
+   - `btn-primary`: Main call-to-action (limit 1 per screen section)
+   - `btn-secondary`: Secondary actions that complement primary
+   - `btn-tertiary`: Neutral actions, most common button type
+   - `btn-danger`: Destructive actions only
+   - `btn-success`: Confirmation of positive actions
+
+3. **Size Modifiers**:
+   - `btn-sm`: Compact buttons for dense layouts
+   - `btn-lg`: Prominent buttons for key actions
+   - `btn-icon`: Icon-only buttons
+
+4. **Accessibility**: All buttons include focus states automatically
+
+#### ❌ NEVER DO THIS:
+```html
+<!-- DON'T: Custom inline styles -->
+<button class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
+
+<!-- DON'T: Component-specific button classes -->
+<button class="inventory-btn-custom clear-filters-btn">
+```
+
+#### ✅ ALWAYS DO THIS:
+```html
+<!-- DO: Use global button classes -->
+<button class="btn-primary">
+<button class="btn-secondary">
+<button class="btn-tertiary">
+```
+
+**ENFORCEMENT**: Any PR introducing custom button styling will be rejected. All buttons must use the global system for consistency.
+
+### ⚠️ MANDATORY: Global Badge System
+
+**CRITICAL**: All badges across the dashboard MUST use the standardized badge classes defined in `/src/styles/badges.css`. This ensures visual consistency and prevents styling fragmentation.
+
+#### Badge Class Hierarchy (Use these ONLY)
+
+```html
+<!-- STATUS BADGES -->
+<span class="badge badge-active">Active</span>
+<span class="badge badge-completed">Completed</span>
+<span class="badge badge-pending">Pending</span>
+<span class="badge badge-cancelled">Cancelled</span>
+
+<!-- PRIORITY BADGES -->
+<span class="badge badge-priority-low">Low</span>
+<span class="badge badge-priority-medium">Medium</span>
+<span class="badge badge-priority-high">High</span>
+<span class="badge badge-priority-urgent">Urgent</span>
+
+<!-- INVENTORY BADGES -->
+<span class="badge badge-in-stock">In Stock</span>
+<span class="badge badge-low-stock">Low Stock</span>
+<span class="badge badge-out-of-stock">Out of Stock</span>
+<span class="badge badge-ordered">Ordered</span>
+
+<!-- WITH SIZE MODIFIERS -->
+<span class="badge badge-sm badge-active">Small</span>
+<span class="badge badge-lg badge-success">Large</span>
+
+<!-- WITH ICONS -->
+<span class="badge badge-with-icon badge-active">
+  <svg><!-- icon --></svg>
+  <span>Active</span>
+</span>
+```
+
+#### Badge Implementation Rules
+
+1. **Base Class Required**: Always include `badge` as the base class
+2. **Color/Status Classes**: Add semantic classes like `badge-active`, `badge-completed`
+3. **Size Modifiers**: Optional `badge-sm` or `badge-lg`
+4. **Icon Support**: Use `badge-with-icon` for badges with icons
+5. **Consistency**: All badges follow maintenance screen color scheme
+
+#### Available Badge Types
+
+| Badge Class | Color | Usage |
+|------------|-------|-------|
+| `badge-active` | Blue gradient | Active/in-progress status |
+| `badge-completed` | Green gradient | Completed/success status |
+| `badge-pending` | Amber gradient | Waiting/pending status |
+| `badge-cancelled` | Red gradient | Cancelled/failed status |
+| `badge-priority-low` | Gray gradient | Low priority |
+| `badge-priority-medium` | Amber gradient | Medium priority |
+| `badge-priority-high` | Orange gradient | High priority |
+| `badge-priority-urgent` | Red gradient | Urgent priority |
+| `badge-in-stock` | Green gradient | Stock available |
+| `badge-low-stock` | Amber gradient | Low stock warning |
+| `badge-out-of-stock` | Red gradient | No stock available |
+
+#### ❌ NEVER DO THIS:
+```html
+<!-- DON'T: Custom badge styles -->
+<span class="px-2 py-1 bg-green-100 text-green-700 rounded-full">
+
+<!-- DON'T: Component-specific badge classes -->
+<span class="supplier-badge inventory-status-badge">
+```
+
+#### ✅ ALWAYS DO THIS:
+```html
+<!-- DO: Use global badge classes -->
+<span class="badge badge-active">Active</span>
+<span class="badge badge-sm badge-priority-high">High Priority</span>
+```
+
+**ENFORCEMENT**: All badges must use the global system. Custom badge styling will be rejected.
 
 #### Icon Library Standards
 Use Heroicons or similar SVG icons with these specifications:
@@ -751,6 +918,8 @@ NEVER proactively create documentation files (*.md) or README files. Only create
 
 ## Playwright Usage Rule
 Do NOT use Playwright for validation or testing unless the user explicitly adds "use PL" at the end of their prompts. Focus on code changes and rely on compilation feedback instead of browser automation for efficiency.
+
+**CRITICAL: NEVER navigate to authentication pages or perform login flows automatically. Always navigate directly to the target page.**
 
 ### Fast Playwright Validation (when "use PL" is specified):
 1. **Direct Navigation** - Go straight to target page (auth is bypassed)

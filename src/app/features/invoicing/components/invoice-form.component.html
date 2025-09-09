@@ -1,37 +1,41 @@
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 lg:p-6">
-  <!-- Header -->
-  <div class="mb-6">
+<!-- Invoice Form Container -->
+<div class="min-h-screen invoice-form-container p-4 lg:p-6">
+  
+  <!-- Header Section -->
+  <header class="glass-card invoice-form-header">
     <div class="flex items-center gap-4">
       <button (click)="onCancel()" 
-              class="h-10 w-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-lg flex items-center justify-center hover:bg-white dark:hover:bg-gray-800 transition-all">
-        <span class="text-gray-600 dark:text-gray-400">←</span>
+              class="btn-tertiary btn-icon">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
       </button>
-      <div>
-        <h1 class="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
+      <div class="flex-1">
+        <h1 class="text-2xl lg:text-3xl font-bold text-white mb-1">
           {{ isEditMode() ? 'Edit Invoice' : 'Create New Invoice' }}
         </h1>
-        <p class="text-gray-600 dark:text-gray-400 mt-1">
+        <p class="text-gray-300">
           {{ isEditMode() ? 'Update invoice details and line items' : 'Generate a new invoice for services and parts' }}
         </p>
       </div>
     </div>
-  </div>
+  </header>
 
   <form [formGroup]="invoiceForm" (ngSubmit)="onSubmit()" class="space-y-6">
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- Main Form -->
       <div class="lg:col-span-2 space-y-6">
         <!-- Invoice Details -->
-        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Invoice Details</h2>
+        <div class="glass-card">
+          <h2 class="text-lg font-semibold text-white mb-4">Invoice Details</h2>
           
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label class="block text-sm font-medium text-gray-300 mb-2">
                 Customer *
               </label>
               <select formControlName="customerId" (change)="onCustomerChange()"
-                      class="w-full px-3 py-2 bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white backdrop-blur-sm">
+                      class="form-input w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white backdrop-blur-sm">
                 <option value="">Select customer</option>
                 <option *ngFor="let customer of customers()" [value]="customer.id">
                   {{ customer.name }} - {{ customer.phone }}
@@ -44,11 +48,11 @@
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label class="block text-sm font-medium text-gray-300 mb-2">
                 Vehicle *
               </label>
               <select formControlName="carId"
-                      class="w-full px-3 py-2 bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white backdrop-blur-sm">
+                      class="form-input w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white backdrop-blur-sm">
                 <option value="">Select vehicle</option>
                 <option *ngFor="let car of getCustomerCars()" [value]="car.id">
                   {{ car.make }} {{ car.model }} ({{ car.licensePlate }})
@@ -61,38 +65,38 @@
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label class="block text-sm font-medium text-gray-300 mb-2">
                 Issue Date *
               </label>
               <input type="date" formControlName="issueDate"
-                     class="w-full px-3 py-2 bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white backdrop-blur-sm">
+                     class="form-input w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white backdrop-blur-sm">
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label class="block text-sm font-medium text-gray-300 mb-2">
                 Due Date *
               </label>
               <input type="date" formControlName="dueDate"
-                     class="w-full px-3 py-2 bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white backdrop-blur-sm">
+                     class="form-input w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white backdrop-blur-sm">
             </div>
           </div>
 
           <div class="mt-4">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="block text-sm font-medium text-white mb-2">
               Payment Terms
             </label>
             <input type="text" formControlName="paymentTerms"
                    placeholder="e.g., Payment due within 30 days"
-                   class="w-full px-3 py-2 bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm">
+                   class="form-input w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400 backdrop-blur-sm">
           </div>
         </div>
 
         <!-- Line Items -->
-        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div class="glass-card">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Line Items</h2>
+            <h2 class="text-lg font-semibold text-white">Line Items</h2>
             <button type="button" (click)="addLineItem()"
-                    class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors">
+                    class="btn-primary btn-sm">
               + Add Item
             </button>
           </div>
@@ -100,21 +104,21 @@
           <div class="space-y-4">
             <div *ngFor="let lineItem of lineItems.controls; let i = index" 
                  [formGroup]="$any(lineItem)"
-                 class="p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700/30">
+                 class="line-item p-4 rounded-lg">
               
               <div class="flex items-center justify-between mb-3">
-                <h4 class="font-medium text-gray-900 dark:text-white">Item {{ i + 1 }}</h4>
+                <h4 class="font-medium text-white">Item {{ i + 1 }}</h4>
                 <button type="button" (click)="removeLineItem(i)"
-                        class="text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/20 p-1 rounded">
+                        class="remove-item-btn p-1 rounded">
                   ✕
                 </button>
               </div>
 
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 <div>
-                  <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Type</label>
+                  <label class="block text-xs font-medium text-gray-300 mb-1">Type</label>
                   <select formControlName="type" (change)="onLineItemTypeChange(i)"
-                          class="w-full px-2 py-1 text-sm bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 dark:text-white backdrop-blur-sm">
+                          class="form-input w-full px-2 py-1 text-sm rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white backdrop-blur-sm">
                     <option *ngFor="let type of lineItemTypes" [value]="type">
                       {{ type | titlecase }}
                     </option>
@@ -122,17 +126,17 @@
                 </div>
 
                 <div class="md:col-span-2">
-                  <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Description</label>
+                  <label class="block text-xs font-medium text-gray-300 mb-1">Description</label>
                   <input type="text" formControlName="description"
                          placeholder="Item description"
-                         class="w-full px-2 py-1 text-sm bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm">
+                         class="form-input w-full px-2 py-1 text-sm rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white placeholder-gray-400 backdrop-blur-sm">
                 </div>
 
                 <!-- Part Selection (only for part type) -->
                 <div *ngIf="lineItem.get('type')?.value === 'part'" class="md:col-span-3">
-                  <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Select Part</label>
+                  <label class="block text-xs font-medium text-gray-300 mb-1">Select Part</label>
                   <select formControlName="partId" (change)="onPartSelect(i, $any($event.target).value)"
-                          class="w-full px-2 py-1 text-sm bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 dark:text-white backdrop-blur-sm">
+                          class="form-input w-full px-2 py-1 text-sm rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white backdrop-blur-sm">
                     <option value="">Select part (optional)</option>
                     <option *ngFor="let part of parts()" [value]="part.id">
                       {{ part.name }} - {{ part.brand }} ({{ formatCurrency(part.price) }})
@@ -142,9 +146,9 @@
 
                 <!-- Service Selection (only for service type) -->
                 <div *ngIf="lineItem.get('type')?.value === 'service'" class="md:col-span-3">
-                  <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Select Service</label>
+                  <label class="block text-xs font-medium text-gray-300 mb-1">Select Service</label>
                   <select formControlName="serviceCode" (change)="onServiceSelect(i, $any($event.target).value)"
-                          class="w-full px-2 py-1 text-sm bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 dark:text-white backdrop-blur-sm">
+                          class="form-input w-full px-2 py-1 text-sm rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white backdrop-blur-sm">
                     <option value="">Select service (optional)</option>
                     <option *ngFor="let service of serviceRates()" [value]="service.serviceCode">
                       {{ service.serviceName }} ({{ formatCurrency(service.basePrice) }})
@@ -153,28 +157,28 @@
                 </div>
 
                 <div>
-                  <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Quantity</label>
+                  <label class="block text-xs font-medium text-gray-300 mb-1">Quantity</label>
                   <input type="number" formControlName="quantity" min="0.01" step="0.01"
-                         class="w-full px-2 py-1 text-sm bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 dark:text-white backdrop-blur-sm">
+                         class="form-input w-full px-2 py-1 text-sm rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white backdrop-blur-sm">
                 </div>
 
                 <div>
-                  <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Unit</label>
+                  <label class="block text-xs font-medium text-gray-300 mb-1">Unit</label>
                   <input type="text" formControlName="unit"
                          placeholder="piece, hour, etc."
-                         class="w-full px-2 py-1 text-sm bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm">
+                         class="form-input w-full px-2 py-1 text-sm rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white placeholder-gray-400 backdrop-blur-sm">
                 </div>
 
                 <div>
-                  <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Unit Price</label>
+                  <label class="block text-xs font-medium text-gray-300 mb-1">Unit Price</label>
                   <input type="number" formControlName="unitPrice" min="0" step="0.01"
-                         class="w-full px-2 py-1 text-sm bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 dark:text-white backdrop-blur-sm">
+                         class="form-input w-full px-2 py-1 text-sm rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white backdrop-blur-sm">
                 </div>
               </div>
 
               <!-- Line Item Total -->
               <div class="mt-3 text-right">
-                <span class="text-sm font-medium text-gray-900 dark:text-white">
+                <span class="text-sm font-medium text-white">
                   Total: {{ formatCurrency(calculateLineItemTotal(i)) }}
                 </span>
               </div>
@@ -183,12 +187,12 @@
         </div>
 
         <!-- Notes -->
-        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Additional Notes</h2>
+        <div class="glass-card">
+          <h2 class="text-lg font-semibold text-white mb-4">Additional Notes</h2>
           <textarea formControlName="notes"
                     placeholder="Add any additional notes or special instructions..."
                     rows="4"
-                    class="w-full px-3 py-2 bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm resize-none">
+                    class="form-input w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400 backdrop-blur-sm resize-none">
           </textarea>
         </div>
       </div>
@@ -196,22 +200,22 @@
       <!-- Summary Sidebar -->
       <div class="space-y-6">
         <!-- Invoice Summary -->
-        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 sticky top-6">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Invoice Summary</h3>
+        <div class="glass-card sticky-summary">
+          <h3 class="text-lg font-semibold text-white mb-4">Invoice Summary</h3>
           
           <!-- Customer & Car Info -->
-          <div *ngIf="getSelectedCustomer() && getSelectedCar()" class="mb-6 p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
+          <div *ngIf="getSelectedCustomer() && getSelectedCar()" class="customer-info mb-6 p-4 rounded-lg">
             <div class="space-y-2 text-sm">
               <div>
-                <span class="font-medium text-gray-900 dark:text-white">{{ getSelectedCustomer()?.name }}</span>
+                <span class="font-medium text-white">{{ getSelectedCustomer()?.name }}</span>
               </div>
-              <div class="text-gray-600 dark:text-gray-400">
+              <div class="text-gray-300">
                 {{ getSelectedCustomer()?.phone }}
               </div>
-              <div class="text-gray-600 dark:text-gray-400">
+              <div class="text-gray-300">
                 {{ getSelectedCar()?.make }} {{ getSelectedCar()?.model }} ({{ getSelectedCar()?.year }})
               </div>
-              <div class="text-gray-600 dark:text-gray-400">
+              <div class="text-gray-300">
                 {{ getSelectedCar()?.licensePlate }}
               </div>
             </div>
@@ -220,37 +224,37 @@
           <!-- Pricing Breakdown -->
           <div class="space-y-3">
             <div class="flex justify-between text-sm">
-              <span class="text-gray-600 dark:text-gray-400">Subtotal:</span>
-              <span class="font-medium text-gray-900 dark:text-white">{{ formatCurrency(subtotal()) }}</span>
+              <span class="text-gray-300">Subtotal:</span>
+              <span class="font-medium text-white">{{ formatCurrency(subtotal()) }}</span>
             </div>
             
             <div class="flex justify-between text-sm">
-              <span class="text-gray-600 dark:text-gray-400">Discount:</span>
+              <span class="text-gray-300">Discount:</span>
               <div class="flex items-center gap-2">
                 <input type="number" formControlName="discountPercentage" 
                        min="0" max="100" step="0.1"
-                       class="w-16 px-2 py-1 text-xs bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 dark:text-white backdrop-blur-sm">
-                <span class="text-xs text-gray-600 dark:text-gray-400">%</span>
-                <span class="font-medium text-gray-900 dark:text-white">{{ formatCurrency(discountAmount()) }}</span>
+                       class="form-input w-16 px-2 py-1 text-xs rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white backdrop-blur-sm">
+                <span class="text-xs text-gray-300">%</span>
+                <span class="font-medium text-white">{{ formatCurrency(discountAmount()) }}</span>
               </div>
             </div>
             
             <div class="flex justify-between text-sm">
-              <span class="text-gray-600 dark:text-gray-400">Tax (TVA):</span>
+              <span class="text-gray-300">Tax (TVA):</span>
               <div class="flex items-center gap-2">
                 <input type="number" formControlName="taxRate" 
                        min="0" max="100" step="0.1"
-                       class="w-16 px-2 py-1 text-xs bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 dark:text-white backdrop-blur-sm">
-                <span class="text-xs text-gray-600 dark:text-gray-400">%</span>
-                <span class="font-medium text-gray-900 dark:text-white">{{ formatCurrency(taxAmount()) }}</span>
+                       class="form-input w-16 px-2 py-1 text-xs rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white backdrop-blur-sm">
+                <span class="text-xs text-gray-300">%</span>
+                <span class="font-medium text-white">{{ formatCurrency(taxAmount()) }}</span>
               </div>
             </div>
             
-            <hr class="border-gray-200 dark:border-gray-600">
+            <hr class="border-gray-500">
             
             <div class="flex justify-between">
-              <span class="font-semibold text-gray-900 dark:text-white">Total:</span>
-              <span class="font-bold text-xl text-gray-900 dark:text-white">{{ formatCurrency(totalAmount()) }}</span>
+              <span class="font-semibold text-white">Total:</span>
+              <span class="total-amount font-bold text-xl">{{ formatCurrency(totalAmount()) }}</span>
             </div>
           </div>
 
@@ -258,19 +262,19 @@
           <div class="mt-6 space-y-3">
             <button type="submit" 
                     [disabled]="!invoiceForm.valid || isSubmitting()"
-                    class="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2">
+                    class="btn-primary w-full px-4 py-3 font-medium flex items-center justify-center gap-2">
               <div *ngIf="isSubmitting()" class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
               {{ isEditMode() ? 'Update Invoice' : 'Create Invoice' }}
             </button>
             
             <button type="button" (click)="onSaveAsDraft()"
                     [disabled]="isSubmitting()"
-                    class="w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white font-medium rounded-lg transition-colors">
+                    class="btn-warning w-full px-4 py-2 font-medium">
               Save as Draft
             </button>
             
             <button type="button" (click)="onCancel()"
-                    class="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                    class="btn-tertiary w-full px-4 py-2">
               Cancel
             </button>
           </div>
@@ -281,10 +285,10 @@
 
   <!-- Loading State -->
   <div *ngIf="isLoading()" 
-       class="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
-    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 flex items-center gap-3">
-      <div class="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-      <span class="text-gray-900 dark:text-white">Loading form data...</span>
+       class="loading-overlay fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
+    <div class="glass-card flex items-center gap-3">
+      <div class="animate-spin h-5 w-5 border-2 border-blue-400 border-t-transparent rounded-full"></div>
+      <span class="text-white">Loading form data...</span>
     </div>
   </div>
 </div>

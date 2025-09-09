@@ -1,0 +1,296 @@
+/* 
+ * Global Button System - OpAuto Dashboard
+ * Consistent glassmorphism button styling across all components
+ */
+
+/* Primary Action Button - Car Management "Register Car" Standard */
+.btn-primary {
+  backdrop-filter: blur(20px);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(29, 78, 216, 0.8));
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 12px;
+  color: white !important;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(29, 78, 216, 0.9));
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Secondary Action Button (e.g., Clear, Cancel, Reset) */
+.btn-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #ffffff !important;
+  background: rgba(59, 130, 246, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #ffffff !important;
+  transform: translateY(-1px);
+}
+
+/* Tertiary/Neutral Button (e.g., Edit, View, Adjust) */
+.btn-tertiary {
+  background: rgba(31, 41, 55, 0.6) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(75, 85, 99, 0.4) !important;
+  color: #d1d5db !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.btn-tertiary:hover {
+  background: rgba(31, 41, 55, 0.8) !important;
+  border-color: rgba(75, 85, 99, 0.6) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Filter Toggle Button */
+.btn-filter-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: #d1d5db;
+  background: rgba(31, 41, 55, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.btn-filter-toggle:hover {
+  background: rgba(31, 41, 55, 0.8);
+}
+
+/* Filter Chip Buttons (for quick filters) */
+.btn-filter-chip {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #d1d5db;
+  background: rgba(31, 41, 55, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(75, 85, 99, 0.4);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.btn-filter-chip:hover {
+  background: rgba(31, 41, 55, 0.8);
+  border-color: rgba(75, 85, 99, 0.6);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.btn-filter-chip.active {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(29, 78, 216, 0.8));
+  border-color: rgba(59, 130, 246, 0.6);
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-filter-chip.active:hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(29, 78, 216, 0.9));
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+/* Danger/Delete Button */
+.btn-danger {
+  backdrop-filter: blur(20px);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.8), rgba(185, 28, 28, 0.8));
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 12px;
+  color: white !important;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.btn-danger:hover {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(185, 28, 28, 0.9));
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* Success/Confirm Button */
+.btn-success {
+  backdrop-filter: blur(20px);
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.8), rgba(21, 128, 61, 0.8));
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 12px;
+  color: white !important;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.btn-success:hover {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.9), rgba(21, 128, 61, 0.9));
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+/* Warning/Draft Button (yellowish background) */
+.btn-warning {
+  backdrop-filter: blur(20px);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.8), rgba(217, 119, 6, 0.8));
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 12px;
+  color: white !important;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.btn-warning:hover {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.9), rgba(217, 119, 6, 0.9));
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+/* Button size variations */
+.btn-sm {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+}
+
+.btn-lg {
+  padding: 1rem 1.5rem;
+  font-size: 1rem;
+}
+
+/* Icon-only button variant */
+.btn-icon {
+  padding: 0.75rem;
+  width: auto;
+  height: auto;
+  min-width: 2.5rem;
+  justify-content: center;
+}
+
+.btn-icon.btn-sm {
+  padding: 0.5rem;
+  min-width: 2rem;
+}
+
+/* Disabled state for all buttons */
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-tertiary:disabled,
+.btn-danger:disabled,
+.btn-success:disabled,
+.btn-warning:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.btn-primary:disabled:hover,
+.btn-secondary:disabled:hover,
+.btn-tertiary:disabled:hover,
+.btn-danger:disabled:hover,
+.btn-success:disabled:hover,
+.btn-warning:disabled:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Clear Filters Button - Standardized across all filter components */
+.btn-clear-filters {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(239, 68, 68, 0.8);
+  color: white !important;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.btn-clear-filters:hover {
+  background: rgba(239, 68, 68, 0.9);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.btn-clear-filters:focus-visible {
+  outline: 2px solid #ef4444;
+  outline-offset: 2px;
+}
+
+/* Focus states for accessibility */
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible,
+.btn-tertiary:focus-visible,
+.btn-danger:focus-visible,
+.btn-success:focus-visible,
+.btn-warning:focus-visible,
+.btn-filter-toggle:focus-visible,
+.btn-filter-chip:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}

@@ -220,17 +220,17 @@ export class DashboardComponent implements OnInit {
 
   getStatusBadgeClass(status: string): string {
     const classes = {
-      'scheduled': 'bg-primary-100 text-primary-700 border-primary-200',
-      'in_progress': 'bg-secondary-100 text-secondary-700 border-secondary-200',
-      'completed': 'bg-success-100 text-success-700 border-success-200',
-      'delayed': 'bg-error-100 text-error-700 border-error-200',
-      'diagnosis': 'bg-blue-100 text-blue-700 border-blue-200',
-      'waiting_parts': 'bg-warning-100 text-warning-700 border-warning-200',
-      'in_repair': 'bg-secondary-100 text-secondary-700 border-secondary-200',
-      'quality_check': 'bg-purple-100 text-purple-700 border-purple-200',
-      'waiting_approval': 'bg-orange-100 text-orange-700 border-orange-200'
+      'scheduled': 'badge badge-pending',
+      'in_progress': 'badge badge-active',
+      'completed': 'badge badge-completed',
+      'delayed': 'badge badge-cancelled',
+      'diagnosis': 'badge badge-active',
+      'waiting_parts': 'badge badge-pending',
+      'in_repair': 'badge badge-active',
+      'quality_check': 'badge badge-completed',
+      'waiting_approval': 'badge badge-pending'
     };
-    return classes[status as keyof typeof classes] || 'bg-gray-100 text-gray-700 border-gray-200';
+    return classes[status as keyof typeof classes] || 'badge badge-pending';
   }
 
   getProgressBarClass(progress: number): string {

@@ -7,7 +7,7 @@ import { MaintenanceJob, MaintenanceStatus } from '../../../core/models/maintena
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="maintenance-card">
+    <div class="glass-card">
       
       <!-- Header -->
       <div class="flex items-start justify-between mb-4">
@@ -21,8 +21,7 @@ import { MaintenanceJob, MaintenanceStatus } from '../../../core/models/maintena
         </div>
         
         <!-- Priority Badge -->
-        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-              [class]="getPriorityClasses(job.priority)">
+        <span [class]="getPriorityBadgeClass(job.priority)">
           {{ job.priority | titlecase }}
         </span>
       </div>
@@ -37,7 +36,7 @@ import { MaintenanceJob, MaintenanceStatus } from '../../../core/models/maintena
         </div>
         
         @if (job.status === 'waiting-approval' && job.approvalRequests.length > 0) {
-          <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300">
+          <span class="approval-badge">
             {{ job.approvalRequests.length }} pending
           </span>
         }
@@ -99,14 +98,14 @@ import { MaintenanceJob, MaintenanceStatus } from '../../../core/models/maintena
       <!-- Actions -->
       <div class="flex space-x-2" [class]="view === 'list' ? 'justify-end' : ''">
         <button 
-          [class]="view === 'list' ? 'btn-secondary text-xs py-1.5 px-3' : 'flex-1 btn-secondary text-sm py-2'"
+          [class]="view === 'list' ? 'btn-tertiary btn-sm' : 'flex-1 btn-tertiary'"
           (click)="viewDetails.emit(job.id)">
           View Details
         </button>
         
         @if (job.status !== 'completed' && job.status !== 'cancelled') {
           <button 
-            [class]="view === 'list' ? 'btn-primary text-xs py-1.5 px-3' : 'flex-1 btn-primary text-sm py-2'"
+            [class]="view === 'list' ? 'btn-warning btn-sm' : 'flex-1 btn-warning'"
             (click)="edit.emit(job.id)">
             Edit
           </button>
@@ -116,7 +115,7 @@ import { MaintenanceJob, MaintenanceStatus } from '../../../core/models/maintena
         @switch (job.status) {
           @case ('waiting') {
             <button 
-              [class]="view === 'list' ? 'btn-success text-xs py-1.5 px-2' : 'btn-success text-sm py-2 px-3'"
+              [class]="view === 'list' ? 'btn-success btn-sm btn-icon' : 'btn-success btn-icon'"
               (click)="changeStatus('in-progress')"
               title="Start Job">
               <svg [class]="view === 'list' ? 'w-3 h-3' : 'w-4 h-4'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -126,7 +125,7 @@ import { MaintenanceJob, MaintenanceStatus } from '../../../core/models/maintena
           }
           @case ('in-progress') {
             <button 
-              [class]="view === 'list' ? 'btn-success text-xs py-1.5 px-2' : 'btn-success text-sm py-2 px-3'"
+              [class]="view === 'list' ? 'btn-success btn-sm btn-icon' : 'btn-success btn-icon'"
               (click)="changeStatus('completed')"
               title="Complete Job">
               <svg [class]="view === 'list' ? 'w-3 h-3' : 'w-4 h-4'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -140,147 +139,55 @@ import { MaintenanceJob, MaintenanceStatus } from '../../../core/models/maintena
     </div>
   `,
   styles: [`
-    /* Maintenance Job Card - Permanent Dark Glassmorphism */
-    .maintenance-card {
-      background: rgba(17, 24, 39, 0.95);
+    /* Maintenance Job Card - Uses global glass-card and button system */
+    .glass-card {
+      cursor: pointer;
+    }
+
+    /* Override text colors for dark theme readability */
+    .glass-card h3 {
+      color: #ffffff !important;
+    }
+
+    .glass-card p {
+      color: #d1d5db !important;
+    }
+
+    .glass-card .text-gray-500,
+    .glass-card .text-gray-400 {
+      color: #9ca3af !important;
+    }
+
+    .glass-card .text-gray-900 {
+      color: #ffffff !important;
+    }
+
+    .glass-card .text-gray-600 {
+      color: #d1d5db !important;
+    }
+
+    /* Component uses global button classes from /src/styles/buttons.css */
+    /* Component uses global badge classes from /src/styles/badges.css */
+
+    /* Custom approval badge - distinct from priority badges */
+    .approval-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 16px; /* More rounded than regular badges */
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.9), rgba(217, 119, 6, 0.9)) !important;
+      color: #ffffff !important;
+      border: 1px solid rgba(245, 158, 11, 0.6) !important;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
       backdrop-filter: blur(10px);
-      border: 1px solid rgba(75, 85, 99, 0.6);
-      border-radius: 20px;
-      padding: 1.5rem;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      cursor: pointer;
+      animation: pulse 2s infinite;
     }
 
-    .maintenance-card:hover {
-      background: rgba(31, 41, 55, 0.98);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
-      border-color: rgba(59, 130, 246, 0.7);
-      transform: translateY(-2px);
-    }
-
-    /* Fix text colors for permanent dark theme */
-    .maintenance-card h3 {
-      color: #ffffff !important;
-    }
-
-    .maintenance-card p {
-      color: #d1d5db !important;
-    }
-
-    .maintenance-card .text-gray-500,
-    .maintenance-card .text-gray-400 {
-      color: #9ca3af !important;
-    }
-
-    .maintenance-card .text-gray-900 {
-      color: #ffffff !important;
-    }
-
-    .maintenance-card .text-xs.text-gray-500 {
-      color: #9ca3af !important;
-    }
-
-    /* Secondary button styling - blue gradient for view details */
-    .btn-secondary {
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(29, 78, 216, 0.8));
-      border: 1px solid rgba(59, 130, 246, 0.6);
-      color: white;
-      padding: 0.75rem 1rem;
-      border-radius: 12px;
-      font-size: 0.875rem;
-      font-weight: 600;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      backdrop-filter: blur(20px);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      cursor: pointer;
-      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
-    }
-
-    .btn-secondary:hover {
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(29, 78, 216, 0.9));
-      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
-      transform: translateY(-1px);
-    }
-    
-    .btn-success {
-      background: linear-gradient(135deg, #059669, #047857);
-      border: 1px solid #059669;
-      color: white;
-      padding: 0.75rem 1rem;
-      border-radius: 12px;
-      font-size: 0.875rem;
-      font-weight: 600;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      backdrop-filter: blur(20px);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      cursor: pointer;
-      box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
-    }
-
-    .btn-success:hover {
-      background: linear-gradient(135deg, #047857, #065f46);
-      box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
-      transform: translateY(-1px);
-    }
-
-    /* Edit button styling - orange gradient to match other screens */
-    .btn-primary {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      border: 1px solid #f59e0b;
-      color: white !important;
-      padding: 0.75rem 1rem;
-      border-radius: 12px;
-      font-size: 0.875rem;
-      font-weight: 600;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      backdrop-filter: blur(20px);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      cursor: pointer;
-      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
-    }
-
-    .btn-primary:hover {
-      background: linear-gradient(135deg, #d97706, #b45309);
-      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
-      transform: translateY(-1px);
-    }
-
-    /* Priority Badge Styling - Darker and more visible for dark theme */
-    .priority-badge-low {
-      background: rgba(75, 85, 99, 0.8) !important;
-      color: #d1d5db !important;
-      border: 1px solid rgba(156, 163, 175, 0.4);
-    }
-
-    .priority-badge-medium {
-      background: rgba(245, 158, 11, 0.8) !important;
-      color: #ffffff !important;
-      border: 1px solid rgba(245, 158, 11, 0.6);
-      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
-    }
-
-    .priority-badge-high {
-      background: rgba(249, 115, 22, 0.9) !important;
-      color: #ffffff !important;
-      border: 1px solid rgba(249, 115, 22, 0.6);
-      box-shadow: 0 2px 8px rgba(249, 115, 22, 0.4);
-    }
-
-    .priority-badge-urgent {
-      background: rgba(239, 68, 68, 0.9) !important;
-      color: #ffffff !important;
-      border: 1px solid rgba(239, 68, 68, 0.6);
-      box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
     }
   `]
 })
@@ -329,14 +236,14 @@ export class MaintenanceJobCardComponent {
     return colors[status] || 'text-gray-700 dark:text-gray-300';
   }
 
-  getPriorityClasses(priority: string): string {
+  getPriorityBadgeClass(priority: string): string {
     const classes = {
-      'low': 'priority-badge-low',
-      'medium': 'priority-badge-medium', 
-      'high': 'priority-badge-high',
-      'urgent': 'priority-badge-urgent'
+      'low': 'badge badge-priority-low',
+      'medium': 'badge badge-priority-medium', 
+      'high': 'badge badge-priority-high',
+      'urgent': 'badge badge-priority-urgent'
     };
-    return classes[priority as keyof typeof classes] || classes.medium;
+    return classes[priority as keyof typeof classes] || 'badge badge-priority-medium';
   }
 
   getTaskProgress(job: MaintenanceJob): number {

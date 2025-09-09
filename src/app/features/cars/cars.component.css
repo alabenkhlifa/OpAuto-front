@@ -158,23 +158,7 @@
   color: white;
 }
 
-.clear-filters-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  background: rgba(239, 68, 68, 0.8);
-  color: white;
-  border-radius: 12px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  transition: all 0.2s ease;
-}
-
-.clear-filters-btn:hover {
-  background: rgba(239, 68, 68, 0.9);
-  transform: translateY(-1px);
-}
+/* Clear filters button styling moved to global buttons.css as .btn-clear-filters */
 
 .empty-state {
   text-align: center;

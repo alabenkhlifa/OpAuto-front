@@ -11,7 +11,7 @@ import { EmployeeStats } from '../../../core/models/employee.model';
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         
         <!-- Total Employees -->
-        <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div class="glass-card">
           <div class="flex items-center">
             <div class="flex-shrink-0">
               <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
@@ -21,14 +21,14 @@ import { EmployeeStats } from '../../../core/models/employee.model';
               </div>
             </div>
             <div class="ml-4">
-              <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Employees</p>
-              <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ stats.totalEmployees }}</p>
+              <p class="text-sm font-medium text-gray-400">Total Employees</p>
+              <p class="text-2xl font-semibold text-white">{{ stats.totalEmployees }}</p>
             </div>
           </div>
         </div>
 
         <!-- Active Employees -->
-        <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div class="glass-card">
           <div class="flex items-center">
             <div class="flex-shrink-0">
               <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
@@ -38,14 +38,14 @@ import { EmployeeStats } from '../../../core/models/employee.model';
               </div>
             </div>
             <div class="ml-4">
-              <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Active</p>
-              <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ stats.activeEmployees }}</p>
+              <p class="text-sm font-medium text-gray-400">Active</p>
+              <p class="text-2xl font-semibold text-white">{{ stats.activeEmployees }}</p>
             </div>
           </div>
         </div>
 
         <!-- Available Now -->
-        <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div class="glass-card">
           <div class="flex items-center">
             <div class="flex-shrink-0">
               <div class="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
@@ -55,14 +55,14 @@ import { EmployeeStats } from '../../../core/models/employee.model';
               </div>
             </div>
             <div class="ml-4">
-              <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Available Now</p>
-              <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ stats.availableEmployees }}</p>
+              <p class="text-sm font-medium text-gray-400">Available Now</p>
+              <p class="text-2xl font-semibold text-white">{{ stats.availableEmployees }}</p>
             </div>
           </div>
         </div>
 
         <!-- Monthly Payroll -->
-        <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div class="glass-card">
           <div class="flex items-center">
             <div class="flex-shrink-0">
               <div class="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
@@ -72,8 +72,8 @@ import { EmployeeStats } from '../../../core/models/employee.model';
               </div>
             </div>
             <div class="ml-4">
-              <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Monthly Payroll</p>
-              <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ formatCurrency(stats.totalSalaryExpense) }}</p>
+              <p class="text-sm font-medium text-gray-400">Monthly Payroll</p>
+              <p class="text-2xl font-semibold text-white">{{ formatCurrency(stats.totalSalaryExpense) }}</p>
             </div>
           </div>
         </div>
@@ -81,19 +81,19 @@ import { EmployeeStats } from '../../../core/models/employee.model';
       </div>
 
       <!-- Department Distribution -->
-      <div class="mt-6 bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Department Distribution</h3>
+      <div class="mt-6 glass-card">
+        <h3 class="text-lg font-semibold text-white mb-4">Department Distribution</h3>
         <div class="space-y-3">
           @for (dept of getDepartmentEntries(stats); track dept.department) {
             @if (dept.count > 0) {
               <div class="flex items-center justify-between">
                 <div class="flex items-center">
                   <div class="w-3 h-3 rounded-full mr-3" [class]="getDepartmentColor(dept.department)"></div>
-                  <span class="text-sm font-medium text-gray-900 dark:text-white">{{ getDepartmentLabel(dept.department) }}</span>
+                  <span class="text-sm font-medium text-white">{{ getDepartmentLabel(dept.department) }}</span>
                 </div>
                 <div class="flex items-center space-x-2">
-                  <span class="text-sm text-gray-500 dark:text-gray-400">{{ dept.count }}</span>
-                  <div class="w-20 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <span class="text-sm text-gray-400">{{ dept.count }}</span>
+                  <div class="w-20 bg-gray-700 rounded-full h-2">
                     <div class="h-2 rounded-full" [class]="getDepartmentColor(dept.department)" [style.width.%]="dept.percentage"></div>
                   </div>
                 </div>

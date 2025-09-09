@@ -1,1 +1,33 @@
-/* TailwindCSS styles are already included globally - no custom styles needed */
+/* Navigation button styles */
+.nav-button-active {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover)) !important;
+  border-color: var(--color-primary) !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+}
+
+.nav-button-inactive {
+  background-color: var(--color-bg-primary) !important;
+  border-color: var(--color-border) !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.nav-button-inactive:hover {
+  background-color: var(--color-bg-tertiary) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-text-primary) !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+}
+
+.nav-button-add {
+  background: linear-gradient(135deg, #059669, #047857) !important;
+  border-color: #059669 !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+}
+
+.nav-button-add:hover {
+  background: linear-gradient(135deg, #047857, #065f46) !important;
+  box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
+  transform: translateY(-1px);
+}

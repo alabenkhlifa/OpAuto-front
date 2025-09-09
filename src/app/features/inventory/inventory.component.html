@@ -9,7 +9,7 @@
       </div>
       
       <!-- Quick Actions -->
-      <div class="flex flex-wrap gap-2 justify-end sm:justify-start">
+      <div class="flex items-center gap-2">
         <button (click)="setView('dashboard')" 
                 class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105"
                 [class]="currentView() === 'dashboard' ? 'nav-button-active' : 'nav-button-inactive'">
@@ -39,12 +39,12 @@
           <span class="text-sm">Suppliers</span>
         </button>
         <button (click)="onAddNewPart()"
-                class="nav-button-add flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-semibold hover:scale-105 shadow-lg hover:shadow-xl">
+                class="btn-primary">
           <!-- Add Icon -->
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
           </svg>
-          <span class="text-sm">Add Part</span>
+          <span>Add Part</span>
         </button>
       </div>
     </div>
@@ -89,7 +89,7 @@
           </div>
         </div>
         <button (click)="setStockStatusFilter('low-stock')" 
-                class="mt-2 text-xs hover:underline" style="color: #f59e0b">
+                class="btn-tertiary btn-sm mt-2">
           View Details
         </button>
       </div>
@@ -105,7 +105,7 @@
           </div>
         </div>
         <button (click)="setStockStatusFilter('out-of-stock')" 
-                class="mt-2 text-xs hover:underline" style="color: #ef4444">
+                class="btn-tertiary btn-sm mt-2">
           View Details
         </button>
       </div>
@@ -295,7 +295,10 @@
         </select>
 
         <button (click)="clearFilters()"
-                class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium">
+                class="btn-clear-filters">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
           Clear Filters
         </button>
       </div>
@@ -391,11 +394,11 @@
         <!-- Actions -->
         <div class="flex gap-2">
           <button (click)="onEditPart(part); $event.stopPropagation()"
-                  class="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+                  class="btn-primary flex-1">
             Edit
           </button>
           <button (click)="onAdjustStock(part); $event.stopPropagation()"
-                  class="flex-1 px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-lg transition-colors">
+                  class="btn-tertiary flex-1">
             Adjust Stock
           </button>
         </div>
@@ -423,10 +426,10 @@
       
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div *ngFor="let supplier of suppliers()" 
-             class="p-4 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+             class="supplier-card p-4 rounded-lg transition-all">
           <div class="flex items-start justify-between mb-3">
             <h4 class="font-semibold text-primary-themed">{{ supplier.name }}</h4>
-            <span class="px-2 py-1 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-xs rounded-full">
+            <span class="badge badge-active">
               Active
             </span>
           </div>

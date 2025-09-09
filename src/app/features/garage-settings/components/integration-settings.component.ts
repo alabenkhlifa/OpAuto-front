@@ -8,10 +8,10 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   template: `
-    <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+    <div class="glass-card">
       
       <div class="flex items-center justify-between mb-6">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Integration Settings</h2>
+        <h2 class="text-lg font-semibold text-white">Integration Settings</h2>
         <div class="flex space-x-2">
           <button 
             type="button"
@@ -45,14 +45,14 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
             <input 
               type="checkbox" 
               id="smsEnabled"
-              class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              class="form-checkbox"
               formControlName="smsEnabled">
-            <h3 class="text-md font-medium text-gray-900 dark:text-white">SMS Integration</h3>
+            <h3 class="text-md font-medium text-white">SMS Integration</h3>
           </div>
           
           <div formGroupName="sms" class="grid grid-cols-1 md:grid-cols-2 gap-4" [class.opacity-50]="!integrationForm.get('smsEnabled')?.value">
             <div>
-              <label class="form-label">Provider</label>
+              <label class="form-label">SMS Service Provider</label>
               <select 
                 class="form-select"
                 formControlName="provider"
@@ -64,7 +64,7 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
             </div>
 
             <div>
-              <label class="form-label">API Key</label>
+              <label class="form-label">SMS API Key</label>
               <input 
                 type="password" 
                 class="form-input"
@@ -74,7 +74,7 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
             </div>
 
             <div>
-              <label class="form-label">Sender ID</label>
+              <label class="form-label">SMS Sender Name</label>
               <input 
                 type="text" 
                 class="form-input"
@@ -109,14 +109,14 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
             <input 
               type="checkbox" 
               id="emailEnabled"
-              class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              class="form-checkbox"
               formControlName="emailEnabled">
-            <h3 class="text-md font-medium text-gray-900 dark:text-white">Email Integration</h3>
+            <h3 class="text-md font-medium text-white">Email Integration</h3>
           </div>
           
           <div formGroupName="email" class="grid grid-cols-1 md:grid-cols-2 gap-4" [class.opacity-50]="!integrationForm.get('emailEnabled')?.value">
             <div>
-              <label class="form-label">Provider</label>
+              <label class="form-label">Email Service Provider</label>
               <select 
                 class="form-select"
                 formControlName="provider"
@@ -128,7 +128,7 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
             </div>
 
             <div>
-              <label class="form-label">SMTP Host</label>
+              <label class="form-label">SMTP Server Address</label>
               <input 
                 type="text" 
                 class="form-input"
@@ -138,7 +138,7 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
             </div>
 
             <div>
-              <label class="form-label">SMTP Port</label>
+              <label class="form-label">SMTP Server Port</label>
               <input 
                 type="number" 
                 class="form-input"
@@ -148,7 +148,7 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
             </div>
 
             <div>
-              <label class="form-label">Username</label>
+              <label class="form-label">Email Account Username</label>
               <input 
                 type="email" 
                 class="form-input"
@@ -158,7 +158,7 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
             </div>
 
             <div>
-              <label class="form-label">Password</label>
+              <label class="form-label">Email Account Password</label>
               <input 
                 type="password" 
                 class="form-input"
@@ -193,9 +193,9 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
             <input 
               type="checkbox" 
               id="paymentEnabled"
-              class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              class="form-checkbox"
               formControlName="paymentEnabled">
-            <h3 class="text-md font-medium text-gray-900 dark:text-white">Payment Gateway</h3>
+            <h3 class="text-md font-medium text-white">Payment Gateway</h3>
           </div>
           
           <div formGroupName="paymentGateway" class="grid grid-cols-1 md:grid-cols-2 gap-4" [class.opacity-50]="!integrationForm.get('paymentEnabled')?.value">
@@ -246,12 +246,12 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
                 <input 
                   type="checkbox" 
                   id="testMode"
-                  class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  class="form-checkbox"
                   formControlName="testMode"
                   [disabled]="!integrationForm.get('paymentEnabled')?.value">
-                <label for="testMode" class="form-label">Test Mode</label>
+                <label for="testMode" class="text-sm font-medium text-gray-300">Test Mode</label>
               </div>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Use sandbox environment for testing payments</p>
+              <p class="text-sm text-gray-400 mt-1">Use sandbox environment for testing payments</p>
             </div>
 
             <div class="flex items-center mt-6">
@@ -280,9 +280,9 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
             <input 
               type="checkbox" 
               id="inventoryEnabled"
-              class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              class="form-checkbox"
               formControlName="inventoryEnabled">
-            <h3 class="text-md font-medium text-gray-900 dark:text-white">Inventory Management</h3>
+            <h3 class="text-md font-medium text-white">Inventory Management</h3>
           </div>
           
           <div formGroupName="inventory" class="grid grid-cols-1 md:grid-cols-2 gap-4" [class.opacity-50]="!integrationForm.get('inventoryEnabled')?.value">
@@ -336,12 +336,12 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
                 <input 
                   type="checkbox" 
                   id="autoOrder"
-                  class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  class="form-checkbox"
                   formControlName="autoOrderEnabled"
                   [disabled]="!integrationForm.get('inventoryEnabled')?.value">
-                <label for="autoOrder" class="form-label">Auto-order when stock is low</label>
+                <label for="autoOrder" class="text-sm font-medium text-gray-300">Auto-order when stock is low</label>
               </div>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Automatically create purchase orders when parts reach minimum stock levels</p>
+              <p class="text-sm text-gray-400 mt-1">Automatically create purchase orders when parts reach minimum stock levels</p>
             </div>
 
             <div class="flex items-center mt-6">
@@ -370,9 +370,9 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
             <input 
               type="checkbox" 
               id="accountingEnabled"
-              class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              class="form-checkbox"
               formControlName="accountingEnabled">
-            <h3 class="text-md font-medium text-gray-900 dark:text-white">Accounting Software</h3>
+            <h3 class="text-md font-medium text-white">Accounting Software</h3>
           </div>
           
           <div formGroupName="accounting" class="grid grid-cols-1 md:grid-cols-2 gap-4" [class.opacity-50]="!integrationForm.get('accountingEnabled')?.value">
@@ -436,12 +436,12 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
                 <input 
                   type="checkbox" 
                   id="autoSync"
-                  class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  class="form-checkbox"
                   formControlName="autoSyncEnabled"
                   [disabled]="!integrationForm.get('accountingEnabled')?.value">
-                <label for="autoSync" class="form-label">Auto-sync invoices and expenses</label>
+                <label for="autoSync" class="text-sm font-medium text-gray-300">Auto-sync invoices and expenses</label>
               </div>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Automatically synchronize financial data with your accounting software</p>
+              <p class="text-sm text-gray-400 mt-1">Automatically synchronize financial data with your accounting software</p>
             </div>
 
             <div class="flex items-center mt-6">
@@ -466,14 +466,14 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
 
         <!-- Integration Status -->
         <div>
-          <h3 class="text-md font-medium text-gray-900 dark:text-white mb-4">Integration Status</h3>
-          <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg space-y-3">
+          <h3 class="text-md font-medium text-white mb-4">Integration Status</h3>
+          <div class="bg-gray-800/30 p-4 rounded-lg space-y-3">
             @for (status of integrationStatuses; track status.name) {
               <div class="flex items-center justify-between">
-                <span class="text-sm font-medium text-gray-900 dark:text-white">{{ status.name }}</span>
+                <span class="text-sm font-medium text-white">{{ status.name }}</span>
                 <div class="flex items-center space-x-2">
                   <div class="w-2 h-2 rounded-full" [class]="status.connected ? 'bg-green-500' : 'bg-red-500'"></div>
-                  <span class="text-sm" [class]="status.connected ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+                  <span class="text-sm" [class]="status.connected ? 'text-green-400' : 'text-red-400'">
                     {{ status.connected ? 'Connected' : 'Disconnected' }}
                   </span>
                 </div>
@@ -487,94 +487,8 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
     </div>
   `,
   styles: [`
-    .form-label {
-      display: block;
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: #374151;
-      margin-bottom: 0.25rem;
-    }
-    
-    .dark .form-label {
-      color: #d1d5db;
-    }
-    
-    .form-input, .form-select, .form-textarea {
-      display: block;
-      width: 100%;
-      padding: 0.5rem 0.75rem;
-      border: 1px solid #d1d5db;
-      border-radius: 0.375rem;
-      background-color: white;
-      color: #111827;
-      font-size: 0.875rem;
-    }
-    
-    .form-input:focus, .form-select:focus, .form-textarea:focus {
-      outline: none;
-      border-color: #2563eb;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-    
-    .dark .form-input, .dark .form-select, .dark .form-textarea {
-      background-color: #1f2937;
-      border-color: #4b5563;
-      color: #f9fafb;
-    }
-    
-    .dark .form-input:focus, .dark .form-select:focus, .dark .form-textarea:focus {
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-    
-    .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.5rem 1rem;
-      border: 1px solid transparent;
-      font-size: 0.875rem;
-      font-weight: 500;
-      border-radius: 0.375rem;
-      color: white;
-      background-color: #2563eb;
-      gap: 0.5rem;
-    }
-    
-    .btn-primary:hover:not(:disabled) {
-      background-color: #1d4ed8;
-    }
-    
-    .btn-primary:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    
-    .btn-secondary {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.5rem 1rem;
-      border: 1px solid #d1d5db;
-      font-size: 0.875rem;
-      font-weight: 500;
-      border-radius: 0.375rem;
-      color: #374151;
-      background-color: white;
-      gap: 0.5rem;
-    }
-    
-    .btn-secondary:hover {
-      background-color: #f9fafb;
-    }
-    
-    .dark .btn-secondary {
-      border-color: #4b5563;
-      color: #d1d5db;
-      background-color: #1f2937;
-    }
-    
-    .dark .btn-secondary:hover {
-      background-color: #374151;
-    }
+    /* Component uses global form classes from /src/styles/forms.css */
+    /* Component uses global button classes from /src/styles/buttons.css */
   `]
 })
 export class IntegrationSettingsComponent implements OnInit {

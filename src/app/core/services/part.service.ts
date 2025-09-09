@@ -454,12 +454,12 @@ export class PartService {
 
   getStockStatusBadgeClass(status: StockStatus): string {
     const classes = {
-      'in-stock': 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-700',
-      'low-stock': 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-700',
-      'out-of-stock': 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-700',
-      'ordered': 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-700'
+      'in-stock': 'badge badge-in-stock',
+      'low-stock': 'badge badge-low-stock',
+      'out-of-stock': 'badge badge-out-of-stock',
+      'ordered': 'badge badge-ordered'
     };
-    return classes[status] || 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600';
+    return classes[status] || 'badge badge-ordered';
   }
 
   getCategoryIcon(category: PartCategory): string {

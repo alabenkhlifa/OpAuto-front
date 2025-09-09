@@ -266,11 +266,11 @@ export class CarCardComponent {
 
   getStatusBadgeClass(status: string): string {
     const classes = {
-      'up-to-date': 'bg-green-100 text-green-700 border-green-200',
-      'due-soon': 'bg-amber-100 text-amber-700 border-amber-200',
-      'overdue': 'bg-red-100 text-red-700 border-red-200'
+      'up-to-date': 'badge badge-up-to-date',
+      'due-soon': 'badge badge-due-soon', 
+      'overdue': 'badge badge-overdue'
     };
-    return classes[status as keyof typeof classes] || 'bg-gray-100 text-gray-700 border-gray-200';
+    return classes[status as keyof typeof classes] || 'badge badge-unknown';
   }
 
   getStatusLabel(status: string): string {

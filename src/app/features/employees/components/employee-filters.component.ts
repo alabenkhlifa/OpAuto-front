@@ -8,12 +8,15 @@ import { EmployeeFilters, EmployeeRole, EmployeeDepartment, EmployeeStatus, Expe
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+    <div class="glass-card">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Filters</h3>
+        <h3 class="text-lg font-semibold text-white">Filters</h3>
         <button 
-          class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+          class="btn-clear-filters"
           (click)="clearFilters()">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
           Clear All
         </button>
       </div>
@@ -22,7 +25,7 @@ import { EmployeeFilters, EmployeeRole, EmployeeDepartment, EmployeeStatus, Expe
         
         <!-- Search -->
         <div class="lg:col-span-2">
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label class="form-label">
             Search
           </label>
           <input 
@@ -35,7 +38,7 @@ import { EmployeeFilters, EmployeeRole, EmployeeDepartment, EmployeeStatus, Expe
 
         <!-- Role Filter -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label class="form-label">
             Role
           </label>
           <select 
@@ -51,7 +54,7 @@ import { EmployeeFilters, EmployeeRole, EmployeeDepartment, EmployeeStatus, Expe
 
         <!-- Department Filter -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label class="form-label">
             Department
           </label>
           <select 
@@ -67,7 +70,7 @@ import { EmployeeFilters, EmployeeRole, EmployeeDepartment, EmployeeStatus, Expe
 
         <!-- Status Filter -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label class="form-label">
             Status
           </label>
           <select 
@@ -83,7 +86,7 @@ import { EmployeeFilters, EmployeeRole, EmployeeDepartment, EmployeeStatus, Expe
 
         <!-- Availability Filter -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label class="form-label">
             Availability
           </label>
           <select 
@@ -100,52 +103,7 @@ import { EmployeeFilters, EmployeeRole, EmployeeDepartment, EmployeeStatus, Expe
     </div>
   `,
   styles: [`
-    .form-input {
-      display: block;
-      width: 100%;
-      padding: 0.5rem 0.75rem;
-      border: 1px solid #d1d5db;
-      border-radius: 0.375rem;
-      background-color: white;
-      color: #111827;
-      font-size: 0.875rem;
-    }
-    
-    .form-input:focus {
-      outline: none;
-      border-color: #2563eb;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-    
-    .form-select {
-      display: block;
-      width: 100%;
-      padding: 0.5rem 0.75rem;
-      border: 1px solid #d1d5db;
-      border-radius: 0.375rem;
-      background-color: white;
-      color: #111827;
-      font-size: 0.875rem;
-    }
-    
-    .form-select:focus {
-      outline: none;
-      border-color: #2563eb;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-    
-    .dark .form-input,
-    .dark .form-select {
-      background-color: #1f2937;
-      border-color: #4b5563;
-      color: #f9fafb;
-    }
-    
-    .dark .form-input:focus,
-    .dark .form-select:focus {
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
+    /* Component uses global form classes from /src/styles/forms.css */
   `]
 })
 export class EmployeeFiltersComponent {

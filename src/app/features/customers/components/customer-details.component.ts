@@ -194,19 +194,17 @@ export class CustomerDetailsComponent implements OnInit {
   }
 
   getStatusBadgeClass(status: CustomerStatus): string {
-    const baseClasses = 'px-3 py-1 rounded-full text-sm font-medium border';
-    
     switch (status) {
       case 'active':
-        return `${baseClasses} bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700`;
+        return 'badge badge-active';
       case 'vip':
-        return `${baseClasses} bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700`;
+        return 'badge badge-vip';
       case 'inactive':
-        return `${baseClasses} bg-gray-50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600`;
+        return 'badge badge-inactive';
       case 'blocked':
-        return `${baseClasses} bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700`;
+        return 'badge badge-blocked';
       default:
-        return `${baseClasses} bg-gray-50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600`;
+        return 'badge badge-inactive';
     }
   }
 
@@ -219,19 +217,18 @@ export class CustomerDetailsComponent implements OnInit {
 
   getLoyaltyTierClass(points: number): string {
     const tier = this.getLoyaltyTier(points);
-    const baseClasses = 'px-3 py-1 rounded-lg text-sm font-medium';
     
     switch (tier) {
       case 'Platinum':
-        return `${baseClasses} bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200`;
+        return 'badge badge-platinum';
       case 'Gold':
-        return `${baseClasses} bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200`;
+        return 'badge badge-gold';
       case 'Silver':
-        return `${baseClasses} bg-gray-100 dark:bg-gray-700/50 text-gray-800 dark:text-gray-200`;
+        return 'badge badge-silver';
       case 'Bronze':
-        return `${baseClasses} bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200`;
+        return 'badge badge-bronze';
       default:
-        return `${baseClasses} bg-gray-100 dark:bg-gray-700/50 text-gray-800 dark:text-gray-200`;
+        return 'badge badge-silver';
     }
   }
 

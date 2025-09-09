@@ -1,103 +1,124 @@
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 lg:p-6">
-  <!-- Header -->
-  <div class="mb-6">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h1 class="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">Invoicing</h1>
-        <p class="text-gray-600 dark:text-gray-400 mt-1">Manage invoices, payments, and billing</p>
+<!-- Invoicing Main Container -->
+<div class="min-h-screen invoicing-container p-4 lg:p-6">
+  
+  <!-- Header Section -->
+  <header class="glass-card invoicing-header">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div class="flex-1">
+        <h1 class="text-2xl lg:text-3xl font-bold text-white mb-1">Invoicing</h1>
+        <p class="text-gray-300">Manage invoices, payments, and billing</p>
       </div>
-      
-      <!-- Quick Actions -->
-      <div class="flex flex-wrap gap-2">
+
+      <div class="flex items-center gap-3">
+        <!-- Navigation Buttons -->
         <button (click)="setView('dashboard')" 
-                [class]="currentView() === 'dashboard' ? 'bg-blue-600 text-white' : 'bg-white/80 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800'"
-                class="px-4 py-2 rounded-lg backdrop-blur-sm border border-gray-200 dark:border-gray-700 transition-all">
-          <span class="text-sm font-medium">Dashboard</span>
+                [class]="currentView() === 'dashboard' ? 'nav-button-active' : 'nav-button-inactive'"
+                class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105">
+          <!-- Dashboard Icon -->
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          <span class="text-sm">Dashboard</span>
         </button>
+        
         <button (click)="setView('list')"
-                [class]="currentView() === 'list' ? 'bg-blue-600 text-white' : 'bg-white/80 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800'"
-                class="px-4 py-2 rounded-lg backdrop-blur-sm border border-gray-200 dark:border-gray-700 transition-all">
-          <span class="text-sm font-medium">All Invoices</span>
+                [class]="currentView() === 'list' ? 'nav-button-active' : 'nav-button-inactive'"
+                class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105">
+          <!-- Invoice List Icon -->
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <span class="text-sm">All Invoices</span>
         </button>
+        
         <button (click)="setView('pending')"
-                [class]="currentView() === 'pending' ? 'bg-blue-600 text-white' : 'bg-white/80 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800'"
-                class="px-4 py-2 rounded-lg backdrop-blur-sm border border-gray-200 dark:border-gray-700 transition-all">
-          <span class="text-sm font-medium">Pending Payment</span>
+                [class]="currentView() === 'pending' ? 'nav-button-active' : 'nav-button-inactive'"
+                class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105">
+          <!-- Pending Payment Icon -->
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span class="text-sm">Pending Payment</span>
           <span *ngIf="pendingInvoices().length > 0" 
-                class="ml-2 px-2 py-1 bg-red-500 text-white text-xs rounded-full">
+                class="badge badge-priority-urgent badge-sm">
             {{ pendingInvoices().length }}
           </span>
         </button>
+        
+        <!-- Create Invoice Button -->
         <button (click)="navigateToCreate()"
-                class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
-          <span class="text-sm font-medium">+ Create Invoice</span>
+                class="btn-primary">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>Create Invoice</span>
         </button>
       </div>
     </div>
-  </div>
+  </header>
 
   <!-- Dashboard View -->
   <div *ngIf="currentView() === 'dashboard'" class="space-y-6">
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Revenue</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ formatCurrency(stats()?.totalRevenue || 0) }}</p>
+            <p class="text-sm font-medium text-gray-300">Total Revenue</p>
+            <p class="text-2xl font-bold text-white">{{ formatCurrency(stats()?.totalRevenue || 0) }}</p>
           </div>
-          <div class="h-12 w-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
-            <span class="text-green-600 dark:text-green-400 text-xl">💰</span>
+          <div class="h-12 w-12 rounded-lg flex items-center justify-center" style="background-color: rgba(34, 197, 94, 0.1)">
+            <span class="text-xl" style="color: #22c55e">💰</span>
           </div>
         </div>
-        <p class="text-xs text-gray-600 dark:text-gray-400 mt-2">
+        <p class="text-xs text-gray-400 mt-2">
           This month: {{ formatCurrency(stats()?.monthlyRevenue || 0) }}
         </p>
       </div>
 
-      <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Invoices</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats()?.totalInvoices || 0 }}</p>
+            <p class="text-sm font-medium text-gray-300">Total Invoices</p>
+            <p class="text-2xl font-bold text-white">{{ stats()?.totalInvoices || 0 }}</p>
           </div>
-          <div class="h-12 w-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
-            <span class="text-blue-600 dark:text-blue-400 text-xl">📄</span>
+          <div class="h-12 w-12 rounded-lg flex items-center justify-center" style="background-color: rgba(59, 130, 246, 0.1)">
+            <span class="text-xl" style="color: #3b82f6">📄</span>
           </div>
         </div>
-        <p class="text-xs text-gray-600 dark:text-gray-400 mt-2">
+        <p class="text-xs text-gray-400 mt-2">
           Paid: {{ stats()?.paidInvoices || 0 }}
         </p>
       </div>
 
-      <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Pending Payment</p>
-            <p class="text-2xl font-bold text-amber-600 dark:text-amber-400">{{ stats()?.pendingInvoices || 0 }}</p>
+            <p class="text-sm font-medium text-gray-300">Pending Payment</p>
+            <p class="text-2xl font-bold text-amber-400">{{ stats()?.pendingInvoices || 0 }}</p>
           </div>
-          <div class="h-12 w-12 bg-amber-100 dark:bg-amber-900/20 rounded-lg flex items-center justify-center">
-            <span class="text-amber-600 dark:text-amber-400 text-xl">⏳</span>
+          <div class="h-12 w-12 rounded-lg flex items-center justify-center" style="background-color: rgba(245, 158, 11, 0.1)">
+            <span class="text-xl" style="color: #f59e0b">⏳</span>
           </div>
         </div>
         <button (click)="setStatusFilter('sent')" 
-                class="mt-2 text-xs text-amber-600 dark:text-amber-400 hover:underline">
+                class="btn-tertiary btn-sm mt-2">
           View Details
         </button>
       </div>
 
-      <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Overdue</p>
-            <p class="text-2xl font-bold text-red-600 dark:text-red-400">{{ stats()?.overdueInvoices || 0 }}</p>
+            <p class="text-sm font-medium text-gray-300">Overdue</p>
+            <p class="text-2xl font-bold text-red-400">{{ stats()?.overdueInvoices || 0 }}</p>
           </div>
-          <div class="h-12 w-12 bg-red-100 dark:bg-red-900/20 rounded-lg flex items-center justify-center">
-            <span class="text-red-600 dark:text-red-400 text-xl">⚠️</span>
+          <div class="h-12 w-12 rounded-lg flex items-center justify-center" style="background-color: rgba(239, 68, 68, 0.1)">
+            <span class="text-xl" style="color: #ef4444">⚠️</span>
           </div>
         </div>
         <button (click)="setStatusFilter('overdue')" 
-                class="mt-2 text-xs text-red-600 dark:text-red-400 hover:underline">
+                class="btn-tertiary btn-sm mt-2">
           View Details
         </button>
       </div>
@@ -106,29 +127,30 @@
     <!-- Quick Access Sections -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Recent Invoices -->
-      <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <div class="glass-card">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Recent Invoices</h3>
+          <h3 class="text-lg font-semibold text-white">Recent Invoices</h3>
           <button (click)="setView('list')" 
-                  class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                  class="btn-tertiary btn-sm">
             View All
           </button>
         </div>
         
         <div class="space-y-3">
           <div *ngFor="let invoice of recentInvoices().slice(0, 5)" 
-               class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+               class="flex items-center justify-between p-3 rounded-lg transition-colors cursor-pointer"
+               style="background: rgba(55, 65, 81, 0.3); border: 1px solid rgba(75, 85, 99, 0.6);"
                (click)="onInvoiceSelect(invoice)">
             <div class="flex items-center gap-3">
               <span class="text-lg">{{ getStatusIcon(invoice.status) }}</span>
               <div>
-                <p class="font-medium text-gray-900 dark:text-white">{{ invoice.invoiceNumber }}</p>
-                <p class="text-sm text-gray-600 dark:text-gray-400">{{ invoice.customerName }}</p>
+                <p class="font-medium text-white">{{ invoice.invoiceNumber }}</p>
+                <p class="text-sm text-gray-300">{{ invoice.customerName }}</p>
               </div>
             </div>
             <div class="text-right">
-              <p class="font-semibold text-gray-900 dark:text-white">{{ formatCurrency(invoice.totalAmount) }}</p>
-              <span class="px-2 py-1 rounded-full text-xs font-medium border"
+              <p class="font-semibold text-white">{{ formatCurrency(invoice.totalAmount) }}</p>
+              <span class="badge"
                     [class]="getStatusBadgeClass(invoice.status)">
                 {{ invoice.status | titlecase }}
               </span>
@@ -138,18 +160,19 @@
       </div>
 
       <!-- Payment Methods Distribution -->
-      <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Payment Methods</h3>
+      <div class="glass-card">
+        <h3 class="text-lg font-semibold text-white mb-4">Payment Methods</h3>
         <div class="space-y-3">
           <div *ngFor="let methodStat of stats()?.paymentMethodStats" 
-               class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+               class="flex items-center justify-between p-3 rounded-lg"
+               style="background: rgba(55, 65, 81, 0.3); border: 1px solid rgba(75, 85, 99, 0.6);">
             <div class="flex items-center gap-3">
               <span class="text-lg">{{ getPaymentMethodIcon(methodStat.method) }}</span>
-              <span class="font-medium text-gray-900 dark:text-white capitalize">{{ methodStat.method }}</span>
+              <span class="font-medium text-white capitalize">{{ methodStat.method }}</span>
             </div>
             <div class="text-right">
-              <p class="font-semibold text-gray-900 dark:text-white">{{ formatCurrency(methodStat.totalAmount) }}</p>
-              <p class="text-xs text-gray-600 dark:text-gray-400">{{ methodStat.count }} invoices</p>
+              <p class="font-semibold text-white">{{ formatCurrency(methodStat.totalAmount) }}</p>
+              <p class="text-xs text-gray-300">{{ methodStat.count }} invoices</p>
             </div>
           </div>
         </div>
@@ -160,10 +183,10 @@
   <!-- Invoices List View -->
   <div *ngIf="currentView() === 'list'" class="space-y-6">
     <!-- Search and Filters -->
-    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+    <div class="glass-card">
       <!-- Mobile filter toggle -->
       <button (click)="toggleMobileFilters()" 
-              class="lg:hidden w-full mb-4 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium">
+              class="lg:hidden w-full mb-4 btn-secondary">
         {{ showMobileFilters() ? 'Hide Filters' : 'Show Filters' }}
       </button>
 
@@ -173,14 +196,14 @@
                placeholder="Search by invoice number, customer, or service..."
                (input)="onSearchChange($event)"
                [value]="searchQuery()"
-               class="w-full px-4 py-3 bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm">
+               class="form-input w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400 backdrop-blur-sm">
       </div>
 
       <!-- Filters -->
       <div [class.hidden]="!showMobileFilters() && isMobile()" 
            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <select (change)="onStatusChange($event)" [value]="selectedStatus()"
-                class="px-4 py-2 bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white backdrop-blur-sm">
+                class="form-input px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white backdrop-blur-sm">
           <option value="all">All Status</option>
           <option *ngFor="let status of getAvailableStatuses()" [value]="status">
             {{ status | titlecase }}
@@ -188,7 +211,7 @@
         </select>
 
         <select (change)="onPaymentMethodChange($event)" [value]="selectedPaymentMethod()"
-                class="px-4 py-2 bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white backdrop-blur-sm">
+                class="form-input px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white backdrop-blur-sm">
           <option value="all">All Payment Methods</option>
           <option *ngFor="let method of getAvailablePaymentMethods()" [value]="method">
             {{ method | titlecase }}
@@ -196,7 +219,10 @@
         </select>
 
         <button (click)="clearFilters()"
-                class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium">
+                class="btn-clear-filters">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
           Clear Filters
         </button>
       </div>
@@ -205,18 +231,18 @@
     <!-- Invoices Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
       <div *ngFor="let invoice of filteredInvoices()" 
-           class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition-all cursor-pointer group"
+           class="glass-card cursor-pointer group hover:scale-[1.02] transition-all duration-300"
            (click)="onInvoiceSelect(invoice)">
         
         <!-- Invoice Header -->
         <div class="flex items-start justify-between mb-4">
           <div>
-            <h3 class="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+            <h3 class="font-semibold text-white group-hover:text-blue-400 transition-colors">
               {{ invoice.invoiceNumber }}
             </h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400">{{ formatDate(invoice.issueDate) }}</p>
+            <p class="text-sm text-gray-300">{{ formatDate(invoice.issueDate) }}</p>
           </div>
-          <span class="px-2 py-1 rounded-full text-xs font-medium border"
+          <span class="badge"
                 [class]="getStatusBadgeClass(invoice.status)">
             {{ invoice.status | titlecase }}
           </span>
@@ -225,46 +251,46 @@
         <!-- Customer & Car Info -->
         <div class="space-y-2 mb-4">
           <div class="flex justify-between text-sm">
-            <span class="text-gray-600 dark:text-gray-400">Customer:</span>
-            <span class="font-medium text-gray-900 dark:text-white">{{ invoice.customerName }}</span>
+            <span class="text-gray-300">Customer:</span>
+            <span class="font-medium text-white">{{ invoice.customerName }}</span>
           </div>
           <div class="flex justify-between text-sm">
-            <span class="text-gray-600 dark:text-gray-400">Vehicle:</span>
-            <span class="font-medium text-gray-900 dark:text-white">{{ invoice.carMake }} {{ invoice.carModel }}</span>
+            <span class="text-gray-300">Vehicle:</span>
+            <span class="font-medium text-white">{{ invoice.carMake }} {{ invoice.carModel }}</span>
           </div>
           <div class="flex justify-between text-sm">
-            <span class="text-gray-600 dark:text-gray-400">License:</span>
-            <span class="font-medium text-gray-900 dark:text-white">{{ invoice.licensePlate }}</span>
+            <span class="text-gray-300">License:</span>
+            <span class="font-medium text-white">{{ invoice.licensePlate }}</span>
           </div>
           <div class="flex justify-between text-sm">
-            <span class="text-gray-600 dark:text-gray-400">Service:</span>
-            <span class="font-medium text-gray-900 dark:text-white">{{ invoice.serviceName || 'Multiple Services' }}</span>
+            <span class="text-gray-300">Service:</span>
+            <span class="font-medium text-white">{{ invoice.serviceName || 'Multiple Services' }}</span>
           </div>
         </div>
 
         <!-- Payment Info -->
         <div class="space-y-2 mb-4">
           <div class="flex justify-between text-sm">
-            <span class="text-gray-600 dark:text-gray-400">Total:</span>
-            <span class="font-bold text-gray-900 dark:text-white">{{ formatCurrency(invoice.totalAmount) }}</span>
+            <span class="text-gray-300">Total:</span>
+            <span class="font-bold text-white">{{ formatCurrency(invoice.totalAmount) }}</span>
           </div>
           <div class="flex justify-between text-sm">
-            <span class="text-gray-600 dark:text-gray-400">Paid:</span>
-            <span class="font-medium text-green-600 dark:text-green-400">{{ formatCurrency(invoice.paidAmount) }}</span>
+            <span class="text-gray-300">Paid:</span>
+            <span class="font-medium text-green-400">{{ formatCurrency(invoice.paidAmount) }}</span>
           </div>
           <div *ngIf="invoice.remainingAmount > 0" class="flex justify-between text-sm">
-            <span class="text-gray-600 dark:text-gray-400">Remaining:</span>
-            <span class="font-medium text-red-600 dark:text-red-400">{{ formatCurrency(invoice.remainingAmount) }}</span>
+            <span class="text-gray-300">Remaining:</span>
+            <span class="font-medium text-red-400">{{ formatCurrency(invoice.remainingAmount) }}</span>
           </div>
         </div>
 
         <!-- Payment Progress -->
         <div class="mb-4">
-          <div class="flex justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+          <div class="flex justify-between text-xs text-gray-300 mb-1">
             <span>Payment Progress</span>
             <span>{{ getPaymentProgress(invoice).toFixed(0) }}%</span>
           </div>
-          <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+          <div class="w-full rounded-full h-2" style="background: rgba(75, 85, 99, 0.6);">
             <div class="h-2 rounded-full transition-all"
                  [class]="invoice.status === 'paid' ? 'bg-green-500' : invoice.status === 'overdue' ? 'bg-red-500' : 'bg-blue-500'"
                  [style.width.%]="getPaymentProgress(invoice)">
@@ -275,8 +301,8 @@
         <!-- Due Date Info -->
         <div *ngIf="invoice.status !== 'paid'" class="mb-4">
           <div class="flex justify-between text-xs">
-            <span class="text-gray-600 dark:text-gray-400">Due Date:</span>
-            <span [class]="isOverdue(invoice) ? 'text-red-600 dark:text-red-400 font-medium' : 'text-gray-900 dark:text-white'">
+            <span class="text-gray-300">Due Date:</span>
+            <span [class]="isOverdue(invoice) ? 'text-red-400 font-medium' : 'text-white'">
               {{ formatDate(invoice.dueDate) }}
               <span *ngIf="isOverdue(invoice)" class="ml-1">
                 ({{ getDaysOverdue(invoice.dueDate) }} days overdue)
@@ -289,16 +315,16 @@
         <div class="flex gap-2">
           <button *ngIf="invoice.status === 'draft'"
                   (click)="onSendInvoice(invoice); $event.stopPropagation()"
-                  class="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+                  class="btn-primary btn-sm flex-1">
             Send
           </button>
           <button *ngIf="invoice.remainingAmount > 0"
                   (click)="onMarkAsPaid(invoice); $event.stopPropagation()"
-                  class="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors">
+                  class="btn-success btn-sm flex-1">
             Mark Paid
           </button>
           <button (click)="$event.stopPropagation()"
-                  class="px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-lg transition-colors">
+                  class="btn-secondary btn-sm">
             Print
           </button>
         </div>
@@ -307,13 +333,13 @@
 
     <!-- Empty State -->
     <div *ngIf="filteredInvoices().length === 0" 
-         class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
-      <div class="h-16 w-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-        <span class="text-2xl text-gray-400 dark:text-gray-600">📄</span>
+         class="glass-card p-12 text-center">
+      <div class="h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4" style="background: rgba(75, 85, 99, 0.6);">
+        <span class="text-2xl text-gray-400">📄</span>
       </div>
-      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No invoices found</h3>
-      <p class="text-gray-600 dark:text-gray-400 mb-4">Try adjusting your search criteria or create your first invoice.</p>
-      <button (click)="navigateToCreate()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+      <h3 class="text-lg font-medium text-white mb-2">No invoices found</h3>
+      <p class="text-gray-300 mb-4">Try adjusting your search criteria or create your first invoice.</p>
+      <button (click)="navigateToCreate()" class="btn-primary">
         Create First Invoice
       </button>
     </div>
@@ -321,28 +347,29 @@
 
   <!-- Pending Payments View -->
   <div *ngIf="currentView() === 'pending'" class="space-y-6">
-    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+    <div class="glass-card">
       <div class="flex items-center justify-between mb-6">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Pending Payments</h2>
-        <span class="px-3 py-1 bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 rounded-full text-sm font-medium">
+        <h2 class="text-lg font-semibold text-white">Pending Payments</h2>
+        <span class="badge badge-pending">
           {{ pendingInvoices().length }} invoices
         </span>
       </div>
       
       <div class="space-y-4">
         <div *ngFor="let invoice of pendingInvoices()" 
-             class="p-4 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+             class="p-4 rounded-lg transition-colors"
+             style="background: rgba(55, 65, 81, 0.3); border: 1px solid rgba(75, 85, 99, 0.6);">
           
           <div class="flex items-center justify-between mb-3">
             <div>
-              <h4 class="font-semibold text-gray-900 dark:text-white">{{ invoice.invoiceNumber }}</h4>
-              <p class="text-sm text-gray-600 dark:text-gray-400">{{ invoice.customerName }} - {{ invoice.licensePlate }}</p>
+              <h4 class="font-semibold text-white">{{ invoice.invoiceNumber }}</h4>
+              <p class="text-sm text-gray-300">{{ invoice.customerName }} - {{ invoice.licensePlate }}</p>
             </div>
             <div class="text-right">
-              <p class="font-bold text-gray-900 dark:text-white">{{ formatCurrency(invoice.remainingAmount) }}</p>
-              <p class="text-xs text-gray-600 dark:text-gray-400">
+              <p class="font-bold text-white">{{ formatCurrency(invoice.remainingAmount) }}</p>
+              <p class="text-xs text-gray-300">
                 Due {{ formatDate(invoice.dueDate) }}
-                <span *ngIf="isOverdue(invoice)" class="text-red-600 dark:text-red-400 font-medium">
+                <span *ngIf="isOverdue(invoice)" class="text-red-400 font-medium">
                   ({{ getDaysOverdue(invoice.dueDate) }} days overdue)
                 </span>
               </p>
@@ -351,11 +378,11 @@
 
           <div class="flex gap-2">
             <button (click)="onInvoiceSelect(invoice)"
-                    class="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors">
+                    class="btn-tertiary btn-sm">
               View Details
             </button>
             <button (click)="onMarkAsPaid(invoice)"
-                    class="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg transition-colors">
+                    class="btn-success btn-sm">
               Record Payment
             </button>
           </div>
@@ -365,11 +392,11 @@
       <!-- Empty State for Pending -->
       <div *ngIf="pendingInvoices().length === 0" 
            class="text-center py-8">
-        <div class="h-16 w-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-          <span class="text-2xl text-green-600 dark:text-green-400">✅</span>
+        <div class="h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4" style="background: rgba(34, 197, 94, 0.1);">
+          <span class="text-2xl text-green-400">✅</span>
         </div>
-        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">All caught up!</h3>
-        <p class="text-gray-600 dark:text-gray-400">No pending payments at this time.</p>
+        <h3 class="text-lg font-medium text-white mb-2">All caught up!</h3>
+        <p class="text-gray-300">No pending payments at this time.</p>
       </div>
     </div>
   </div>
@@ -377,9 +404,9 @@
   <!-- Loading State -->
   <div *ngIf="isLoading()" 
        class="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
-    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 flex items-center gap-3">
-      <div class="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-      <span class="text-gray-900 dark:text-white">Loading invoices...</span>
+    <div class="glass-card flex items-center gap-3">
+      <div class="animate-spin h-5 w-5 border-2 border-blue-400 border-t-transparent rounded-full"></div>
+      <span class="text-white">Loading invoices...</span>
     </div>
   </div>
 </div>

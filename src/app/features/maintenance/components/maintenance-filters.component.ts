@@ -12,8 +12,11 @@ import { MaintenanceFilters, MaintenanceStatus, MaintenancePriority } from '../.
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-lg font-medium text-gray-900 dark:text-white">Filters</h3>
         <button 
-          class="btn-clear"
+          class="btn-clear-filters"
           (click)="clearFilters()">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
           Clear All
         </button>
       </div>
@@ -111,7 +114,7 @@ import { MaintenanceFilters, MaintenanceStatus, MaintenancePriority } from '../.
       <div class="mt-4 flex flex-wrap gap-2">
         @for (quickFilter of quickFilters; track quickFilter.label) {
           <button
-            [class]="isQuickFilterActive(quickFilter) ? 'filter-chip active' : 'filter-chip'"
+            [class]="isQuickFilterActive(quickFilter) ? 'btn-filter-chip active' : 'btn-filter-chip'"
             (click)="applyQuickFilter(quickFilter)">
             {{ quickFilter.label }}
           </button>
@@ -155,63 +158,7 @@ import { MaintenanceFilters, MaintenanceStatus, MaintenancePriority } from '../.
       color: #9ca3af !important;
     }
 
-    /* Clear All button styling - matches theme */
-    .btn-clear {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem 1rem;
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: #60a5fa !important;
-      background: rgba(59, 130, 246, 0.1);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(59, 130, 246, 0.3);
-      border-radius: 12px;
-      transition: all 0.2s ease;
-      cursor: pointer;
-    }
-
-    .btn-clear:hover {
-      background: rgba(59, 130, 246, 0.2);
-      border-color: rgba(59, 130, 246, 0.4);
-      color: #93c5fd !important;
-      transform: translateY(-1px);
-    }
-
-    /* Quick filter chips styling - matches theme */
-    .filter-chip {
-      padding: 0.5rem 1rem;
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: #d1d5db;
-      background: rgba(31, 41, 55, 0.6);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(75, 85, 99, 0.4);
-      border-radius: 12px;
-      transition: all 0.2s ease;
-      cursor: pointer;
-    }
-
-    .filter-chip:hover {
-      background: rgba(31, 41, 55, 0.8);
-      border-color: rgba(75, 85, 99, 0.6);
-      color: #ffffff;
-      transform: translateY(-1px);
-    }
-
-    .filter-chip.active {
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(29, 78, 216, 0.8));
-      border-color: rgba(59, 130, 246, 0.6);
-      color: #ffffff !important;
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-    }
-
-    .filter-chip.active:hover {
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(29, 78, 216, 0.9));
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
-    }
+    /* Component uses global button system from /src/styles/buttons.css */
   `]
 })
 export class MaintenanceFiltersComponent {

@@ -22,34 +22,71 @@ import { IntegrationSettingsComponent } from './components/integration-settings.
     IntegrationSettingsComponent
   ],
   template: `
-    <div class="p-6 max-w-7xl mx-auto">
+    <div class="min-h-screen garage-settings-container p-4 lg:p-6">
       
       <!-- Header -->
-      <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-          Garage Settings
-        </h1>
-        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Configure your garage operations, business rules, and system preferences
-        </p>
-      </div>
+      <header class="glass-card garage-settings-header">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div class="flex-1">
+            <h1 class="text-2xl lg:text-3xl font-bold text-white mb-1">Garage Settings</h1>
+            <p class="text-gray-300">Configure your garage operations, business rules, and system preferences</p>
+          </div>
+        </div>
+      </header>
 
       <!-- Settings Navigation -->
-      <div class="mb-6">
-        <nav class="flex space-x-8 overflow-x-auto">
-          @for (tab of settingsTabs; track tab.id) {
-            <button
-              class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm transition-colors"
-              [class]="activeTab() === tab.id ? 
-                'border-blue-500 text-blue-600 dark:text-blue-400' : 
-                'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
-              (click)="setActiveTab(tab.id)">
-              <div class="flex items-center space-x-2">
-                <svg class="w-4 h-4" [innerHTML]="tab.icon"></svg>
-                <span>{{ tab.label }}</span>
-              </div>
-            </button>
-          }
+      <div class="glass-card settings-nav">
+        <nav class="flex flex-wrap gap-2 overflow-x-auto">
+          <button
+            class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105 whitespace-nowrap"
+            [class]="activeTab() === 'garage-info' ? 'nav-button-active' : 'nav-button-inactive'"
+            (click)="setActiveTab('garage-info')">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+            </svg>
+            <span class="text-sm">Garage Information</span>
+          </button>
+          
+          <button
+            class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105 whitespace-nowrap"
+            [class]="activeTab() === 'operational' ? 'nav-button-active' : 'nav-button-inactive'"
+            (click)="setActiveTab('operational')">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+            <span class="text-sm">Operations</span>
+          </button>
+          
+          <button
+            class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105 whitespace-nowrap"
+            [class]="activeTab() === 'business' ? 'nav-button-active' : 'nav-button-inactive'"
+            (click)="setActiveTab('business')">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+            </svg>
+            <span class="text-sm">Business</span>
+          </button>
+          
+          <button
+            class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105 whitespace-nowrap"
+            [class]="activeTab() === 'system' ? 'nav-button-active' : 'nav-button-inactive'"
+            (click)="setActiveTab('system')">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+            </svg>
+            <span class="text-sm">System</span>
+          </button>
+          
+          <button
+            class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105 whitespace-nowrap"
+            [class]="activeTab() === 'integrations' ? 'nav-button-active' : 'nav-button-inactive'"
+            (click)="setActiveTab('integrations')">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+            </svg>
+            <span class="text-sm">Integrations</span>
+          </button>
         </nav>
       </div>
 
@@ -101,19 +138,21 @@ import { IntegrationSettingsComponent } from './components/integration-settings.
         </div>
       } @else {
         <!-- Loading State -->
-        <div class="text-center py-12">
-          <div class="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
-          <p class="mt-2 text-gray-500 dark:text-gray-400">Loading settings...</p>
+        <div class="glass-card">
+          <div class="text-center py-12">
+            <div class="loading-spinner mx-auto"></div>
+            <p class="mt-4 text-gray-300">Loading settings...</p>
+          </div>
         </div>
       }
 
       <!-- Actions Bar -->
       @if (settings() && hasUnsavedChanges()) {
-        <div class="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 shadow-lg">
-          <div class="max-w-7xl mx-auto flex items-center justify-between">
+        <div class="fixed bottom-0 left-0 right-0 glass-card m-4 rounded-2xl shadow-2xl">
+          <div class="flex items-center justify-between">
             <div class="flex items-center space-x-2">
-              <div class="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
-              <span class="text-sm text-gray-600 dark:text-gray-400">You have unsaved changes</span>
+              <div class="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
+              <span class="text-sm text-gray-300">You have unsaved changes</span>
             </div>
             <div class="flex space-x-3">
               <button 
@@ -143,54 +182,50 @@ import { IntegrationSettingsComponent } from './components/integration-settings.
     </div>
   `,
   styles: [`
-    .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.5rem 1rem;
-      border: 1px solid transparent;
-      font-size: 0.875rem;
-      font-weight: 500;
-      border-radius: 0.375rem;
-      color: white;
-      background-color: #2563eb;
-      gap: 0.5rem;
+    /* Garage Settings - Permanent Dark Glassmorphism */
+    .garage-settings-container {
+      min-height: 100vh;
+      background: transparent;
     }
-    
-    .btn-primary:hover:not(:disabled) {
-      background-color: #1d4ed8;
+
+    /* Navigation button styles */
+    .nav-button-active {
+      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover)) !important;
+      border-color: var(--color-primary) !important;
+      color: white !important;
+      box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
     }
-    
-    .btn-primary:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
+
+    .nav-button-inactive {
+      background-color: var(--color-bg-primary) !important;
+      border-color: var(--color-border) !important;
+      color: var(--color-text-secondary) !important;
     }
-    
-    .btn-secondary {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.5rem 1rem;
-      border: 1px solid #d1d5db;
-      font-size: 0.875rem;
-      font-weight: 500;
-      border-radius: 0.375rem;
-      color: #374151;
-      background-color: white;
-      gap: 0.5rem;
+
+    .nav-button-inactive:hover {
+      background-color: var(--color-bg-tertiary) !important;
+      border-color: var(--color-primary) !important;
+      color: var(--color-text-primary) !important;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
     }
-    
-    .btn-secondary:hover {
-      background-color: #f9fafb;
+
+    /* Loading spinner */
+    .loading-spinner {
+      width: 2rem;
+      height: 2rem;
+      border: 3px solid rgba(59, 130, 246, 0.3);
+      border-top: 3px solid #3b82f6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
     }
-    
-    .dark .btn-secondary {
-      border-color: #4b5563;
-      color: #d1d5db;
-      background-color: #1f2937;
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
-    
-    .dark .btn-secondary:hover {
-      background-color: #374151;
-    }
+
+    /* Component uses global button classes from /src/styles/buttons.css */
+    /* Component uses global glass-card from /src/styles.css */
   `]
 })
 export class GarageSettingsComponent implements OnInit {
@@ -201,33 +236,6 @@ export class GarageSettingsComponent implements OnInit {
   isSaving = signal(false);
   unsavedChanges = signal(false);
 
-  settingsTabs = [
-    {
-      id: 'garage-info',
-      label: 'Garage Information',
-      icon: '<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>'
-    },
-    {
-      id: 'operational',
-      label: 'Operations',
-      icon: '<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>'
-    },
-    {
-      id: 'business',
-      label: 'Business',
-      icon: '<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>'
-    },
-    {
-      id: 'system',
-      label: 'System',
-      icon: '<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>'
-    },
-    {
-      id: 'integrations',
-      label: 'Integrations',
-      icon: '<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>'
-    }
-  ];
 
   ngOnInit() {
     this.loadSettings();

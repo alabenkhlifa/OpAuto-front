@@ -35,7 +35,7 @@ import { MaintenanceFiltersComponent } from './components/maintenance-filters.co
 
           <div class="flex items-center gap-3">
             <!-- Filter Toggle Button -->
-            <button class="filter-toggle" (click)="showFilters.set(!showFilters())">
+            <button class="btn-filter-toggle" (click)="showFilters.set(!showFilters())">
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
               </svg>
@@ -43,7 +43,7 @@ import { MaintenanceFiltersComponent } from './components/maintenance-filters.co
             </button>
 
             <!-- Add Job Button -->
-            <button class="add-btn" (click)="createNewJob()">
+            <button class="btn-primary" (click)="createNewJob()">
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
@@ -148,46 +148,7 @@ import { MaintenanceFiltersComponent } from './components/maintenance-filters.co
       /* Uses glass-card styles */
     }
 
-    /* Filter toggle button styling - matches other screens */
-    .filter-toggle {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.75rem 1rem;
-      font-size: 0.875rem;
-      color: #d1d5db;
-      background: rgba(31, 41, 55, 0.6);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      transition: all 0.2s ease;
-      cursor: pointer;
-    }
-
-    .filter-toggle:hover {
-      background: rgba(31, 41, 55, 0.8);
-    }
-
-    /* Add button styling - matches other screens */
-    .add-btn {
-      backdrop-filter: blur(20px);
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(29, 78, 216, 0.8));
-      border: 1px solid rgba(59, 130, 246, 0.3);
-      border-radius: 12px;
-      color: white !important;
-      padding: 0.75rem 1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      transition: all 0.2s ease;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .add-btn:hover {
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(29, 78, 216, 0.9));
-      transform: translateY(-1px);
-    }
+    /* Component uses global button system from /src/styles/buttons.css */
 
     /* Filters panel styling */
     .filters-panel {

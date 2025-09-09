@@ -25,16 +25,17 @@ import { EmployeeFiltersComponent } from './components/employee-filters.componen
       <!-- Header -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 class="text-2xl font-bold text-white">
             Employee Management
           </h1>
-          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <p class="mt-1 text-sm text-gray-300">
             Manage garage staff, schedules, and performance
           </p>
         </div>
         <div class="mt-4 sm:mt-0 flex space-x-3">
           <button 
-            class="btn-secondary"
+            class="btn-filter-toggle"
+            [class.active]="showFilters()"
             (click)="showFilters.set(!showFilters())">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -65,16 +66,16 @@ import { EmployeeFiltersComponent } from './components/employee-filters.componen
       <!-- Employees List -->
       <div class="space-y-4">
         <div class="flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+          <h2 class="text-lg font-semibold text-white">
             Employees ({{ filteredEmployees().length }})
           </h2>
           
           <!-- View Toggle -->
-          <div class="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+          <div class="flex bg-gray-800/30 rounded-lg p-1">
             @for (view of viewOptions; track view.value) {
               <button
                 class="px-3 py-1 text-sm font-medium rounded-md transition-colors"
-                [class]="currentView() === view.value ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+                [class]="currentView() === view.value ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-400 hover:text-gray-200'"
                 (click)="setView(view.value)">
                 {{ view.label }}
               </button>
@@ -88,8 +89,8 @@ import { EmployeeFiltersComponent } from './components/employee-filters.componen
             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
-            <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No employees found</h3>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Get started by adding a new employee to your garage.</p>
+            <h3 class="mt-2 text-sm font-medium text-white">No employees found</h3>
+            <p class="mt-1 text-sm text-gray-400">Get started by adding a new employee to your garage.</p>
             <div class="mt-6">
               <button class="btn-primary" (click)="createNewEmployee()">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -118,49 +119,7 @@ import { EmployeeFiltersComponent } from './components/employee-filters.componen
     </div>
   `,
   styles: [`
-    .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.5rem 1rem;
-      border: 1px solid transparent;
-      font-size: 0.875rem;
-      font-weight: 500;
-      border-radius: 0.375rem;
-      color: white;
-      background-color: #2563eb;
-      gap: 0.5rem;
-    }
-    
-    .btn-primary:hover {
-      background-color: #1d4ed8;
-    }
-    
-    .btn-secondary {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.5rem 1rem;
-      border: 1px solid #d1d5db;
-      font-size: 0.875rem;
-      font-weight: 500;
-      border-radius: 0.375rem;
-      color: #374151;
-      background-color: white;
-      gap: 0.5rem;
-    }
-    
-    .btn-secondary:hover {
-      background-color: #f9fafb;
-    }
-    
-    .dark .btn-secondary {
-      border-color: #4b5563;
-      color: #d1d5db;
-      background-color: #1f2937;
-    }
-    
-    .dark .btn-secondary:hover {
-      background-color: #374151;
-    }
+    /* Component uses global button classes from /src/styles/buttons.css */
   `]
 })
 export class EmployeesComponent implements OnInit {

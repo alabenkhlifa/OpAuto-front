@@ -11,9 +11,9 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
     <div class="space-y-6">
       
       <!-- Tax Settings -->
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <div class="glass-card">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Tax Settings</h3>
+          <h3 class="text-lg font-semibold text-white">Tax Settings</h3>
           <button 
             type="button"
             class="btn-primary text-sm"
@@ -36,7 +36,7 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
                 step="0.1"
                 [class.border-red-500]="isTaxFieldInvalid('defaultTaxRate')">
               @if (isTaxFieldInvalid('defaultTaxRate')) {
-                <p class="mt-1 text-sm text-red-600 dark:text-red-400">Tax rate must be between 0 and 100</p>
+                <p class="mt-1 text-sm text-red-400">Tax rate must be between 0 and 100</p>
               }
             </div>
 
@@ -65,7 +65,7 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
                 type="checkbox" 
                 class="form-checkbox mr-2"
                 formControlName="taxIncluded">
-              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Tax included in prices</span>
+              <span class="text-sm font-medium text-gray-300">Tax included in prices</span>
             </label>
 
             <label class="flex items-center">
@@ -73,7 +73,7 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
                 type="checkbox" 
                 class="form-checkbox mr-2"
                 formControlName="applyTaxToLabor">
-              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Apply tax to labor charges</span>
+              <span class="text-sm font-medium text-gray-300">Apply tax to labor charges</span>
             </label>
 
             <label class="flex items-center">
@@ -81,16 +81,16 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
                 type="checkbox" 
                 class="form-checkbox mr-2"
                 formControlName="applyTaxToParts">
-              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Apply tax to parts</span>
+              <span class="text-sm font-medium text-gray-300">Apply tax to parts</span>
             </label>
           </div>
         </form>
       </div>
 
       <!-- Payment Settings -->
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <div class="glass-card">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Payment Settings</h3>
+          <h3 class="text-lg font-semibold text-white">Payment Settings</h3>
           <button 
             type="button"
             class="btn-primary text-sm"
@@ -104,7 +104,7 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
             <label class="form-label">Accepted Payment Methods</label>
             <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
               @for (method of paymentMethods; track method.value) {
-                <label class="flex items-center p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer">
+                <label class="flex items-center p-3 border border-gray-600 rounded-lg hover:bg-gray-700/50 cursor-pointer">
                   <input 
                     type="checkbox" 
                     class="form-checkbox mr-3"
@@ -112,8 +112,8 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
                     [checked]="isPaymentMethodSelected(method.value)"
                     (change)="onPaymentMethodChange(method.value, $event)">
                   <div>
-                    <div class="font-medium text-gray-900 dark:text-white">{{ method.label }}</div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ method.description }}</div>
+                    <div class="font-medium text-white">{{ method.label }}</div>
+                    <div class="text-sm text-gray-400">{{ method.description }}</div>
                   </div>
                 </label>
               }
@@ -159,16 +159,16 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
                 type="checkbox" 
                 class="form-checkbox mr-2"
                 formControlName="allowPartialPayments">
-              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Allow partial payments</span>
+              <span class="text-sm font-medium text-gray-300">Allow partial payments</span>
             </label>
           </div>
         </form>
       </div>
 
       <!-- Pricing Rules -->
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <div class="glass-card">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Pricing Rules</h3>
+          <h3 class="text-lg font-semibold text-white">Pricing Rules</h3>
           <button 
             type="button"
             class="btn-primary text-sm"
@@ -250,16 +250,16 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
                 type="checkbox" 
                 class="form-checkbox mr-2"
                 formControlName="autoApplyDiscounts">
-              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Automatically apply discounts when applicable</span>
+              <span class="text-sm font-medium text-gray-300">Automatically apply discounts when applicable</span>
             </label>
           </div>
         </form>
       </div>
 
       <!-- Invoice Settings -->
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <div class="glass-card">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Invoice Settings</h3>
+          <h3 class="text-lg font-semibold text-white">Invoice Settings</h3>
           <button 
             type="button"
             class="btn-primary text-sm"
@@ -314,7 +314,7 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
                 type="checkbox" 
                 class="form-checkbox mr-2"
                 formControlName="showItemCodes">
-              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Show item codes on invoices</span>
+              <span class="text-sm font-medium text-gray-300">Show item codes on invoices</span>
             </label>
 
             <label class="flex items-center">
@@ -322,7 +322,7 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
                 type="checkbox" 
                 class="form-checkbox mr-2"
                 formControlName="showMechanicNames">
-              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Show mechanic names on invoices</span>
+              <span class="text-sm font-medium text-gray-300">Show mechanic names on invoices</span>
             </label>
 
             <label class="flex items-center">
@@ -330,7 +330,7 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
                 type="checkbox" 
                 class="form-checkbox mr-2"
                 formControlName="includeTermsAndConditions">
-              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Include terms and conditions</span>
+              <span class="text-sm font-medium text-gray-300">Include terms and conditions</span>
             </label>
           </div>
 
@@ -360,80 +360,8 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
     </div>
   `,
   styles: [`
-    .form-label {
-      display: block;
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: #374151;
-      margin-bottom: 0.25rem;
-    }
-    
-    .dark .form-label {
-      color: #d1d5db;
-    }
-    
-    .form-input, .form-select, .form-textarea {
-      display: block;
-      width: 100%;
-      padding: 0.5rem 0.75rem;
-      border: 1px solid #d1d5db;
-      border-radius: 0.375rem;
-      background-color: white;
-      color: #111827;
-      font-size: 0.875rem;
-    }
-    
-    .form-input:focus, .form-select:focus, .form-textarea:focus {
-      outline: none;
-      border-color: #2563eb;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-    
-    .form-checkbox {
-      width: 1rem;
-      height: 1rem;
-      color: #2563eb;
-      border-radius: 0.25rem;
-      border: 1px solid #d1d5db;
-    }
-    
-    .dark .form-input, .dark .form-select, .dark .form-textarea {
-      background-color: #1f2937;
-      border-color: #4b5563;
-      color: #f9fafb;
-    }
-    
-    .dark .form-input:focus, .dark .form-select:focus, .dark .form-textarea:focus {
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-    
-    .dark .form-checkbox {
-      background-color: #1f2937;
-      border-color: #4b5563;
-    }
-    
-    .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.5rem 1rem;
-      border: 1px solid transparent;
-      font-size: 0.875rem;
-      font-weight: 500;
-      border-radius: 0.375rem;
-      color: white;
-      background-color: #2563eb;
-      gap: 0.5rem;
-    }
-    
-    .btn-primary:hover:not(:disabled) {
-      background-color: #1d4ed8;
-    }
-    
-    .btn-primary:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
+    /* Component uses global form classes from /src/styles/forms.css */
+    /* Component uses global button classes from /src/styles/buttons.css */
   `]
 })
 export class BusinessSettingsComponent implements OnInit {

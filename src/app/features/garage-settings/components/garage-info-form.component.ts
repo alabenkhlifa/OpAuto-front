@@ -8,10 +8,10 @@ import { GarageInfo } from '../../../core/models/garage-settings.model';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   template: `
-    <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+    <div class="glass-card">
       
       <div class="flex items-center justify-between mb-6">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Garage Information</h2>
+        <h2 class="text-lg font-semibold text-white">Garage Information</h2>
         <div class="flex space-x-2">
           <button 
             type="button"
@@ -79,7 +79,7 @@ import { GarageInfo } from '../../../core/models/garage-settings.model';
 
         <!-- Contact Information -->
         <div>
-          <h3 class="text-md font-medium text-gray-900 dark:text-white mb-4">Contact Information</h3>
+          <h3 class="text-md font-medium text-white mb-4">Contact Information</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="form-label">Phone Number *</label>
@@ -133,7 +133,7 @@ import { GarageInfo } from '../../../core/models/garage-settings.model';
 
         <!-- Address -->
         <div>
-          <h3 class="text-md font-medium text-gray-900 dark:text-white mb-4">Address</h3>
+          <h3 class="text-md font-medium text-white mb-4">Address</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="md:col-span-2">
               <label class="form-label">Street Address *</label>
@@ -195,7 +195,7 @@ import { GarageInfo } from '../../../core/models/garage-settings.model';
 
         <!-- Bank Details -->
         <div>
-          <h3 class="text-md font-medium text-gray-900 dark:text-white mb-4">Bank Details (Optional)</h3>
+          <h3 class="text-md font-medium text-white mb-4">Bank Details (Optional)</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4" formGroupName="bankDetails">
             <div>
               <label class="form-label">Bank Name</label>
@@ -249,94 +249,8 @@ import { GarageInfo } from '../../../core/models/garage-settings.model';
     </div>
   `,
   styles: [`
-    .form-label {
-      display: block;
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: #374151;
-      margin-bottom: 0.25rem;
-    }
-    
-    .dark .form-label {
-      color: #d1d5db;
-    }
-    
-    .form-input, .form-select, .form-textarea {
-      display: block;
-      width: 100%;
-      padding: 0.5rem 0.75rem;
-      border: 1px solid #d1d5db;
-      border-radius: 0.375rem;
-      background-color: white;
-      color: #111827;
-      font-size: 0.875rem;
-    }
-    
-    .form-input:focus, .form-select:focus, .form-textarea:focus {
-      outline: none;
-      border-color: #2563eb;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-    
-    .dark .form-input, .dark .form-select, .dark .form-textarea {
-      background-color: #1f2937;
-      border-color: #4b5563;
-      color: #f9fafb;
-    }
-    
-    .dark .form-input:focus, .dark .form-select:focus, .dark .form-textarea:focus {
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-    
-    .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.5rem 1rem;
-      border: 1px solid transparent;
-      font-size: 0.875rem;
-      font-weight: 500;
-      border-radius: 0.375rem;
-      color: white;
-      background-color: #2563eb;
-      gap: 0.5rem;
-    }
-    
-    .btn-primary:hover:not(:disabled) {
-      background-color: #1d4ed8;
-    }
-    
-    .btn-primary:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    
-    .btn-secondary {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.5rem 1rem;
-      border: 1px solid #d1d5db;
-      font-size: 0.875rem;
-      font-weight: 500;
-      border-radius: 0.375rem;
-      color: #374151;
-      background-color: white;
-      gap: 0.5rem;
-    }
-    
-    .btn-secondary:hover {
-      background-color: #f9fafb;
-    }
-    
-    .dark .btn-secondary {
-      border-color: #4b5563;
-      color: #d1d5db;
-      background-color: #1f2937;
-    }
-    
-    .dark .btn-secondary:hover {
-      background-color: #374151;
-    }
+    /* Component uses global form classes from /src/styles/forms.css */
+    /* Component uses global button classes from /src/styles/buttons.css */
   `]
 })
 export class GarageInfoFormComponent implements OnInit {

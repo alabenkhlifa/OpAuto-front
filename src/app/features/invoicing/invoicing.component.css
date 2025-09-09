@@ -1,13 +1,53 @@
-/* Glassmorphism effects for invoicing */
-.glass-card {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+/* Invoicing Component - Permanent Dark Glassmorphism */
+
+.invoicing-container {
+  min-height: 100vh;
+  background: transparent;
 }
 
-.dark .glass-card {
-  background: rgba(31, 41, 55, 0.8);
-  border: 1px solid rgba(75, 85, 99, 0.3);
+/* Glass card styling to match other screens */
+.glass-card {
+  background: rgba(17, 24, 39, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(75, 85, 99, 0.6);
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-bottom: 1rem;
+}
+
+.glass-card:hover {
+  background: rgba(31, 41, 55, 0.98);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+  border-color: rgba(59, 130, 246, 0.7);
+  transform: translateY(-2px);
+}
+
+/* Header styling */
+.invoicing-header {
+  /* Uses glass-card styles */
+}
+
+/* Navigation button styles - consistent with other screens */
+.nav-button-active {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover)) !important;
+  border-color: var(--color-primary) !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+}
+
+.nav-button-inactive {
+  background-color: var(--color-bg-primary) !important;
+  border-color: var(--color-border) !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.nav-button-inactive:hover {
+  background-color: var(--color-bg-tertiary) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-text-primary) !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
 }
 
 /* Payment progress bars */

@@ -1,53 +1,51 @@
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900 reports-container">
+<div class="reports-container p-4 lg:p-8">
   <!-- Header -->
-  <div class="p-4 lg:p-6 border-b border-gray-200 dark:border-gray-700">
+  <header class="glass-card reports-header">
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
       <div>
-        <h1 class="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">Business Reports</h1>
-        <p class="text-gray-600 dark:text-gray-400 mt-1">Comprehensive analytics and insights for {{ getCurrentDateRangeLabel() }}</p>
+        <h1 class="text-2xl lg:text-3xl font-bold text-white">Business Reports</h1>
+        <p class="text-gray-300 mt-1">Comprehensive analytics and insights for {{ getCurrentDateRangeLabel() }}</p>
       </div>
       
       <!-- Controls -->
       <div class="flex flex-col sm:flex-row gap-3">
         <!-- Date Range Selector -->
-        <div class="flex items-center gap-2 bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-lg px-3 py-2 border border-gray-200 dark:border-gray-700 min-w-[200px] reports-control">
-          <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div class="flex items-center gap-2 glass-control">
+          <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
           <select [(ngModel)]="selectedPreset" 
                   (ngModelChange)="onPresetChange($event)"
-                  class="bg-transparent text-gray-900 dark:text-white text-sm font-medium focus:outline-none flex-1 cursor-pointer">
+                  class="bg-transparent text-white text-sm font-medium focus:outline-none flex-1 cursor-pointer">
             <option *ngFor="let preset of datePresets" [value]="preset.value">{{ preset.label }}</option>
           </select>
         </div>
 
         <!-- Custom Date Range (shown when custom is selected) -->
-        <div *ngIf="selectedPreset() === 'custom'" class="flex items-center gap-2 bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-lg px-3 py-2 border border-gray-200 dark:border-gray-700 reports-control">
-          <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div *ngIf="selectedPreset() === 'custom'" class="flex items-center gap-2 glass-control">
+          <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
           <input type="date" 
                  [(ngModel)]="customStartDate"
                  (ngModelChange)="onCustomDateChange()"
-                 class="bg-transparent text-gray-900 dark:text-white text-sm focus:outline-none">
-          <span class="text-gray-500 dark:text-gray-400 font-medium">to</span>
+                 class="bg-transparent text-white text-sm focus:outline-none">
+          <span class="text-gray-400 font-medium">to</span>
           <input type="date" 
                  [(ngModel)]="customEndDate"
                  (ngModelChange)="onCustomDateChange()"
-                 class="bg-transparent text-gray-900 dark:text-white text-sm focus:outline-none">
+                 class="bg-transparent text-white text-sm focus:outline-none">
         </div>
 
         <!-- Actions -->
         <div class="flex gap-2">
-          <button (click)="onRefreshData()"
-                  class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md">
+          <button (click)="onRefreshData()" class="btn-secondary">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
             <span class="hidden sm:inline">Refresh</span>
           </button>
-          <button (click)="onExportReport('pdf')"
-                  class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md">
+          <button (click)="onExportReport('pdf')" class="btn-success">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
@@ -57,67 +55,62 @@
       </div>
     </div>
 
-    <!-- View Toggle -->
-    <div class="mt-4 flex flex-wrap items-center gap-1 bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-lg p-1 border border-gray-200 dark:border-gray-700 reports-control">
+    <!-- Navigation Buttons -->
+    <div class="flex items-center gap-2 justify-start flex-wrap">
       <button (click)="onViewChange('dashboard')"
-              [class]="currentView() === 'dashboard' ? 'bg-blue-500 bg-opacity-90 text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/50'"
-              class="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 whitespace-nowrap">
+              class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105"
+              [class]="currentView() === 'dashboard' ? 'nav-button-active' : 'nav-button-inactive'">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
         </svg>
-        <span class="hidden sm:inline">Dashboard</span>
-        <span class="sm:hidden">📊</span>
+        <span class="text-sm">Dashboard</span>
       </button>
       <button (click)="onViewChange('financial')"
-              [class]="currentView() === 'financial' ? 'bg-blue-500 bg-opacity-90 text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/50'"
-              class="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 whitespace-nowrap">
+              class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105"
+              [class]="currentView() === 'financial' ? 'nav-button-active' : 'nav-button-inactive'">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
         </svg>
-        <span class="hidden sm:inline">Financial</span>
-        <span class="sm:hidden">💰</span>
+        <span class="text-sm">Financial</span>
       </button>
       <button (click)="onViewChange('operational')"
-              [class]="currentView() === 'operational' ? 'bg-blue-500 bg-opacity-90 text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/50'"
-              class="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 whitespace-nowrap">
+              class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105"
+              [class]="currentView() === 'operational' ? 'nav-button-active' : 'nav-button-inactive'">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
-        <span class="hidden sm:inline">Operations</span>
-        <span class="sm:hidden">🔧</span>
+        <span class="text-sm">Operations</span>
       </button>
       <button (click)="onViewChange('customer')"
-              [class]="currentView() === 'customer' ? 'bg-blue-500 bg-opacity-90 text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/50'"
-              class="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 whitespace-nowrap">
+              class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105"
+              [class]="currentView() === 'customer' ? 'nav-button-active' : 'nav-button-inactive'">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
         </svg>
-        <span class="hidden sm:inline">Customers</span>
-        <span class="sm:hidden">👥</span>
+        <span class="text-sm">Customers</span>
       </button>
       <button (click)="onViewChange('inventory')"
-              [class]="currentView() === 'inventory' ? 'bg-blue-500 bg-opacity-90 text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/50'"
-              class="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 whitespace-nowrap">
+              class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105"
+              [class]="currentView() === 'inventory' ? 'nav-button-active' : 'nav-button-inactive'">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
         </svg>
-        <span class="hidden sm:inline">Inventory</span>
-        <span class="sm:hidden">📦</span>
+        <span class="text-sm">Inventory</span>
       </button>
     </div>
-  </div>
+  </header>
 
   <!-- Dashboard View -->
   <div *ngIf="currentView() === 'dashboard'" class="p-4 lg:p-6 space-y-6">
     
     <!-- KPI Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 lg:gap-6">
-      <div *ngFor="let kpi of kpis()" [class]="getMetricCardClass(kpi.color)" class="reports-card">
+      <div *ngFor="let kpi of kpis()" class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{{ kpi.label }}</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ formatKpiValue(kpi) }}</p>
+            <p class="text-sm font-medium text-gray-300">{{ kpi.label }}</p>
+            <p class="text-2xl font-bold text-white">{{ formatKpiValue(kpi) }}</p>
             <div class="flex items-center gap-1 mt-1">
               <span>{{ getKpiChangeIcon(kpi) }}</span>
               <span [class]="getKpiChangeClass(kpi)">{{ formatChange(kpi.change) }}</span>
@@ -132,8 +125,8 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       
       <!-- Revenue Trends Chart -->
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 reports-card">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Revenue Trends</h3>
+      <div class="glass-card">
+        <h3 class="text-lg font-semibold text-white mb-4">Revenue Trends</h3>
         <div class="h-80">
           <canvas *ngIf="revenueChartConfig()" 
                   baseChart
@@ -145,8 +138,8 @@
       </div>
 
       <!-- Service Types Distribution -->
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 reports-card">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Service Distribution</h3>
+      <div class="glass-card">
+        <h3 class="text-lg font-semibold text-white mb-4">Service Distribution</h3>
         <div class="h-80">
           <canvas *ngIf="serviceTypeChartConfig()" 
                   baseChart
@@ -160,57 +153,57 @@
     </div>
 
     <!-- Monthly Comparison -->
-    <div *ngIf="monthlyComparison()" class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 reports-card">
-      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Monthly Comparison</h3>
+    <div *ngIf="monthlyComparison()" class="glass-card">
+      <h3 class="text-lg font-semibold text-white mb-4">Monthly Comparison</h3>
       <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
         
         <!-- Revenue Comparison -->
-        <div class="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-          <h4 class="text-sm font-medium text-blue-700 dark:text-blue-300 mb-2">Revenue</h4>
-          <p class="text-xl font-bold text-blue-600 dark:text-blue-400">
+        <div class="text-center p-4 glass-card">
+          <h4 class="text-sm font-medium text-blue-400 mb-2">Revenue</h4>
+          <p class="text-xl font-bold text-white">
             {{ formatKpiValue({label: '', value: monthlyComparison()!.currentMonth.revenue, change: 0, changeType: 'neutral', format: 'currency', icon: '', color: 'blue'}) }}
           </p>
           <div class="flex items-center justify-center gap-1 mt-1">
-            <span class="text-xs" [class]="monthlyComparison()!.growth.revenue >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+            <span class="text-xs" [class]="monthlyComparison()!.growth.revenue >= 0 ? 'text-green-400' : 'text-red-400'">
               {{ monthlyComparison()!.growth.revenue >= 0 ? '↗️' : '↘️' }} {{ formatChange(monthlyComparison()!.growth.revenue) }}
             </span>
           </div>
         </div>
 
         <!-- Appointments Comparison -->
-        <div class="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-          <h4 class="text-sm font-medium text-purple-700 dark:text-purple-300 mb-2">Appointments</h4>
-          <p class="text-xl font-bold text-purple-600 dark:text-purple-400">
+        <div class="text-center p-4 glass-card">
+          <h4 class="text-sm font-medium text-purple-400 mb-2">Appointments</h4>
+          <p class="text-xl font-bold text-white">
             {{ monthlyComparison()!.currentMonth.appointments }}
           </p>
           <div class="flex items-center justify-center gap-1 mt-1">
-            <span class="text-xs" [class]="monthlyComparison()!.growth.appointments >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+            <span class="text-xs" [class]="monthlyComparison()!.growth.appointments >= 0 ? 'text-green-400' : 'text-red-400'">
               {{ monthlyComparison()!.growth.appointments >= 0 ? '↗️' : '↘️' }} {{ formatChange(monthlyComparison()!.growth.appointments) }}
             </span>
           </div>
         </div>
 
         <!-- Customers Comparison -->
-        <div class="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-          <h4 class="text-sm font-medium text-green-700 dark:text-green-300 mb-2">New Customers</h4>
-          <p class="text-xl font-bold text-green-600 dark:text-green-400">
+        <div class="text-center p-4 glass-card">
+          <h4 class="text-sm font-medium text-green-400 mb-2">New Customers</h4>
+          <p class="text-xl font-bold text-white">
             {{ monthlyComparison()!.currentMonth.customers }}
           </p>
           <div class="flex items-center justify-center gap-1 mt-1">
-            <span class="text-xs" [class]="monthlyComparison()!.growth.customers >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+            <span class="text-xs" [class]="monthlyComparison()!.growth.customers >= 0 ? 'text-green-400' : 'text-red-400'">
               {{ monthlyComparison()!.growth.customers >= 0 ? '↗️' : '↘️' }} {{ formatChange(monthlyComparison()!.growth.customers) }}
             </span>
           </div>
         </div>
 
         <!-- Parts Comparison -->
-        <div class="text-center p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-          <h4 class="text-sm font-medium text-yellow-700 dark:text-yellow-300 mb-2">Parts Inventory</h4>
-          <p class="text-xl font-bold text-yellow-600 dark:text-yellow-400">
+        <div class="text-center p-4 glass-card">
+          <h4 class="text-sm font-medium text-yellow-400 mb-2">Parts Inventory</h4>
+          <p class="text-xl font-bold text-white">
             {{ monthlyComparison()!.currentMonth.parts }}
           </p>
           <div class="flex items-center justify-center gap-1 mt-1">
-            <span class="text-xs" [class]="monthlyComparison()!.growth.parts >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+            <span class="text-xs" [class]="monthlyComparison()!.growth.parts >= 0 ? 'text-green-400' : 'text-red-400'">
               {{ monthlyComparison()!.growth.parts >= 0 ? '↗️' : '↘️' }} {{ formatChange(monthlyComparison()!.growth.parts) }}
             </span>
           </div>
@@ -220,8 +213,8 @@
     </div>
 
     <!-- Appointment Status Chart -->
-    <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 reports-card">
-      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Appointment Status Overview</h3>
+    <div class="glass-card">
+      <h3 class="text-lg font-semibold text-white mb-4">Appointment Status Overview</h3>
       <div class="h-80">
         <canvas *ngIf="appointmentStatusChartConfig()" 
                 baseChart
@@ -238,11 +231,11 @@
     
     <!-- Financial KPIs -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 border-l-4 border-l-green-500 reports-card">
+      <div class="glass-card border-l-4 border-l-green-500">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Revenue</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">
+            <p class="text-sm font-medium text-gray-300">Total Revenue</p>
+            <p class="text-2xl font-bold text-white">
               {{ formatKpiValue({label: '', value: financialMetrics()?.totalRevenue || 0, change: 0, changeType: 'neutral', format: 'currency', icon: '', color: 'green'}) }}
             </p>
           </div>
@@ -250,11 +243,11 @@
         </div>
       </div>
 
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 border-l-4 border-l-blue-500 reports-card">
+      <div class="glass-card border-l-4 border-l-blue-500">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Paid Revenue</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">
+            <p class="text-sm font-medium text-gray-300">Paid Revenue</p>
+            <p class="text-2xl font-bold text-white">
               {{ formatKpiValue({label: '', value: financialMetrics()?.paidRevenue || 0, change: 0, changeType: 'neutral', format: 'currency', icon: '', color: 'blue'}) }}
             </p>
           </div>
@@ -262,11 +255,11 @@
         </div>
       </div>
 
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 border-l-4 border-l-yellow-500 reports-card">
+      <div class="glass-card border-l-4 border-l-yellow-500">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Pending Revenue</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">
+            <p class="text-sm font-medium text-gray-300">Pending Revenue</p>
+            <p class="text-2xl font-bold text-white">
               {{ formatKpiValue({label: '', value: financialMetrics()?.pendingRevenue || 0, change: 0, changeType: 'neutral', format: 'currency', icon: '', color: 'yellow'}) }}
             </p>
           </div>
@@ -274,11 +267,11 @@
         </div>
       </div>
 
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 border-l-4 border-l-red-500 reports-card">
+      <div class="glass-card border-l-4 border-l-red-500">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Overdue Revenue</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">
+            <p class="text-sm font-medium text-gray-300">Overdue Revenue</p>
+            <p class="text-2xl font-bold text-white">
               {{ formatKpiValue({label: '', value: financialMetrics()?.overdueRevenue || 0, change: 0, changeType: 'neutral', format: 'currency', icon: '', color: 'red'}) }}
             </p>
           </div>
@@ -291,30 +284,30 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       
       <!-- Revenue Breakdown -->
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 reports-card">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Revenue Breakdown</h3>
+      <div class="glass-card">
+        <h3 class="text-lg font-semibold text-white mb-4">Revenue Breakdown</h3>
         <div class="space-y-4">
           <div class="flex justify-between items-center">
-            <span class="text-gray-600 dark:text-gray-400">Average Invoice Value</span>
-            <span class="font-semibold text-gray-900 dark:text-white">
+            <span class="text-gray-300">Average Invoice Value</span>
+            <span class="font-semibold text-white">
               {{ formatKpiValue({label: '', value: financialMetrics()?.averageInvoiceValue || 0, change: 0, changeType: 'neutral', format: 'currency', icon: '', color: 'blue'}) }}
             </span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-gray-600 dark:text-gray-400">Tax Collected (TVA)</span>
-            <span class="font-semibold text-gray-900 dark:text-white">
+            <span class="text-gray-300">Tax Collected (TVA)</span>
+            <span class="font-semibold text-white">
               {{ formatKpiValue({label: '', value: financialMetrics()?.taxCollected || 0, change: 0, changeType: 'neutral', format: 'currency', icon: '', color: 'blue'}) }}
             </span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-gray-600 dark:text-gray-400">Discounts Given</span>
-            <span class="font-semibold text-gray-900 dark:text-white">
+            <span class="text-gray-300">Discounts Given</span>
+            <span class="font-semibold text-white">
               {{ formatKpiValue({label: '', value: financialMetrics()?.discountsGiven || 0, change: 0, changeType: 'neutral', format: 'currency', icon: '', color: 'blue'}) }}
             </span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-gray-600 dark:text-gray-400">Profit Margin</span>
-            <span class="font-semibold text-gray-900 dark:text-white">
+            <span class="text-gray-300">Profit Margin</span>
+            <span class="font-semibold text-white">
               {{ formatKpiValue({label: '', value: financialMetrics()?.profitMargin || 0, change: 0, changeType: 'neutral', format: 'percentage', icon: '', color: 'blue'}) }}
             </span>
           </div>
@@ -322,16 +315,16 @@
       </div>
 
       <!-- Growth Metrics -->
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 reports-card">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Growth Analysis</h3>
+      <div class="glass-card">
+        <h3 class="text-lg font-semibold text-white mb-4">Growth Analysis</h3>
         <div class="space-y-4">
           <div class="flex justify-between items-center">
-            <span class="text-gray-600 dark:text-gray-400">Revenue Growth</span>
+            <span class="text-gray-300">Revenue Growth</span>
             <div class="flex items-center gap-2">
-              <span [class]="(financialMetrics()?.revenueGrowth || 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+              <span [class]="(financialMetrics()?.revenueGrowth || 0) >= 0 ? 'text-green-400' : 'text-red-400'">
                 {{ (financialMetrics()?.revenueGrowth || 0) >= 0 ? '↗️' : '↘️' }}
               </span>
-              <span class="font-semibold text-gray-900 dark:text-white">
+              <span class="font-semibold text-white">
                 {{ formatChange(financialMetrics()?.revenueGrowth || 0) }}
               </span>
             </div>
@@ -341,27 +334,27 @@
           <div class="space-y-3">
             <div>
               <div class="flex justify-between text-sm mb-1">
-                <span class="text-gray-600 dark:text-gray-400">This Month</span>
-                <span class="text-gray-900 dark:text-white">
+                <span class="text-gray-300">This Month</span>
+                <span class="text-white">
                   {{ formatKpiValue({label: '', value: monthlyComparison()?.currentMonth?.revenue || 0, change: 0, changeType: 'neutral', format: 'currency', icon: '', color: 'blue'}) }}
                 </span>
               </div>
-              <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+              <div class="w-full bg-gray-600 rounded-full h-2">
                 <div class="bg-blue-500 h-2 rounded-full" 
-                     [style.width.%]="100"></div>
+                     [style.width.%]="(monthlyComparison()?.currentMonth?.revenue || 0) === 0 ? 0 : ((monthlyComparison()?.currentMonth?.revenue || 0) >= (monthlyComparison()?.previousMonth?.revenue || 0) ? 100 : ((monthlyComparison()?.currentMonth?.revenue || 0) / (monthlyComparison()?.previousMonth?.revenue || 1)) * 100)"></div>
               </div>
             </div>
             
             <div>
               <div class="flex justify-between text-sm mb-1">
-                <span class="text-gray-600 dark:text-gray-400">Last Month</span>
-                <span class="text-gray-900 dark:text-white">
+                <span class="text-gray-300">Last Month</span>
+                <span class="text-white">
                   {{ formatKpiValue({label: '', value: monthlyComparison()?.previousMonth?.revenue || 0, change: 0, changeType: 'neutral', format: 'currency', icon: '', color: 'blue'}) }}
                 </span>
               </div>
-              <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+              <div class="w-full bg-gray-600 rounded-full h-2">
                 <div class="bg-gray-400 h-2 rounded-full" 
-                     [style.width.%]="(monthlyComparison()?.previousMonth?.revenue || 0) / (monthlyComparison()?.currentMonth?.revenue || 1) * 100"></div>
+                     [style.width.%]="(monthlyComparison()?.previousMonth?.revenue || 0) === 0 ? 0 : ((monthlyComparison()?.previousMonth?.revenue || 0) >= (monthlyComparison()?.currentMonth?.revenue || 0) ? 100 : ((monthlyComparison()?.previousMonth?.revenue || 0) / (monthlyComparison()?.currentMonth?.revenue || 1)) * 100)"></div>
               </div>
             </div>
           </div>
@@ -376,21 +369,21 @@
     
     <!-- Operational KPIs -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 reports-card">
+      <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Appointments</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ operationalMetrics()?.totalAppointments || 0 }}</p>
+            <p class="text-sm font-medium text-gray-300">Total Appointments</p>
+            <p class="text-2xl font-bold text-white">{{ operationalMetrics()?.totalAppointments || 0 }}</p>
           </div>
           <div class="text-2xl">📅</div>
         </div>
       </div>
 
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 reports-card">
+      <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Completion Rate</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">
+            <p class="text-sm font-medium text-gray-300">Completion Rate</p>
+            <p class="text-2xl font-bold text-white">
               {{ formatKpiValue({label: '', value: operationalMetrics()?.onTimeCompletionRate || 0, change: 0, changeType: 'neutral', format: 'percentage', icon: '', color: 'green'}) }}
             </p>
           </div>
@@ -398,11 +391,11 @@
         </div>
       </div>
 
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 reports-card">
+      <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Mechanic Utilization</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">
+            <p class="text-sm font-medium text-gray-300">Mechanic Utilization</p>
+            <p class="text-2xl font-bold text-white">
               {{ formatKpiValue({label: '', value: operationalMetrics()?.mechanicUtilization || 0, change: 0, changeType: 'neutral', format: 'percentage', icon: '', color: 'blue'}) }}
             </p>
           </div>
@@ -410,11 +403,11 @@
         </div>
       </div>
 
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 reports-card">
+      <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Garage Capacity</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">
+            <p class="text-sm font-medium text-gray-300">Garage Capacity</p>
+            <p class="text-2xl font-bold text-white">
               {{ formatKpiValue({label: '', value: operationalMetrics()?.garageCapacityUsed || 0, change: 0, changeType: 'neutral', format: 'percentage', icon: '', color: 'purple'}) }}
             </p>
           </div>
@@ -427,34 +420,34 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       
       <!-- Service Performance -->
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 reports-card">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Service Performance</h3>
+      <div class="glass-card">
+        <h3 class="text-lg font-semibold text-white mb-4">Service Performance</h3>
         <div class="space-y-4">
           <div class="flex justify-between items-center">
-            <span class="text-gray-600 dark:text-gray-400">Avg Service Time</span>
-            <span class="font-semibold text-gray-900 dark:text-white">{{ (operationalMetrics()?.averageServiceTime || 0).toFixed(0) }} min</span>
+            <span class="text-gray-300">Avg Service Time</span>
+            <span class="font-semibold text-white">{{ (operationalMetrics()?.averageServiceTime || 0).toFixed(0) }} min</span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-gray-600 dark:text-gray-400">Customer Satisfaction</span>
-            <span class="font-semibold text-gray-900 dark:text-white">{{ (operationalMetrics()?.customerSatisfactionScore || 0).toFixed(1) }}/5.0</span>
+            <span class="text-gray-300">Customer Satisfaction</span>
+            <span class="font-semibold text-white">{{ (operationalMetrics()?.customerSatisfactionScore || 0).toFixed(1) }}/5.0</span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-gray-600 dark:text-gray-400">Repeat Customer Rate</span>
-            <span class="font-semibold text-gray-900 dark:text-white">{{ (operationalMetrics()?.repeatCustomerRate || 0).toFixed(1) }}%</span>
+            <span class="text-gray-300">Repeat Customer Rate</span>
+            <span class="font-semibold text-white">{{ (operationalMetrics()?.repeatCustomerRate || 0).toFixed(1) }}%</span>
           </div>
         </div>
       </div>
 
       <!-- Efficiency Metrics -->
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 reports-card">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Efficiency Metrics</h3>
+      <div class="glass-card">
+        <h3 class="text-lg font-semibold text-white mb-4">Efficiency Metrics</h3>
         <div class="space-y-4">
           <div>
             <div class="flex justify-between text-sm mb-2">
-              <span class="text-gray-600 dark:text-gray-400">Mechanic Utilization</span>
-              <span class="text-gray-900 dark:text-white">{{ (operationalMetrics()?.mechanicUtilization || 0).toFixed(1) }}%</span>
+              <span class="text-gray-300">Mechanic Utilization</span>
+              <span class="text-white">{{ (operationalMetrics()?.mechanicUtilization || 0).toFixed(1) }}%</span>
             </div>
-            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+            <div class="w-full bg-gray-600 rounded-full h-2">
               <div class="bg-blue-500 h-2 rounded-full transition-all" 
                    [style.width.%]="operationalMetrics()?.mechanicUtilization || 0"></div>
             </div>
@@ -462,10 +455,10 @@
           
           <div>
             <div class="flex justify-between text-sm mb-2">
-              <span class="text-gray-600 dark:text-gray-400">Garage Capacity Used</span>
-              <span class="text-gray-900 dark:text-white">{{ (operationalMetrics()?.garageCapacityUsed || 0).toFixed(1) }}%</span>
+              <span class="text-gray-300">Garage Capacity Used</span>
+              <span class="text-white">{{ (operationalMetrics()?.garageCapacityUsed || 0).toFixed(1) }}%</span>
             </div>
-            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+            <div class="w-full bg-gray-600 rounded-full h-2">
               <div class="bg-purple-500 h-2 rounded-full transition-all" 
                    [style.width.%]="operationalMetrics()?.garageCapacityUsed || 0"></div>
             </div>
@@ -481,31 +474,31 @@
     
     <!-- Customer KPIs -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 reports-card">
+      <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Customers</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ customerMetrics()?.totalCustomers || 0 }}</p>
+            <p class="text-sm font-medium text-gray-300">Total Customers</p>
+            <p class="text-2xl font-bold text-white">{{ customerMetrics()?.totalCustomers || 0 }}</p>
           </div>
           <div class="text-2xl">👥</div>
         </div>
       </div>
 
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 reports-card">
+      <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">New Customers</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ customerMetrics()?.newCustomers || 0 }}</p>
+            <p class="text-sm font-medium text-gray-300">New Customers</p>
+            <p class="text-2xl font-bold text-white">{{ customerMetrics()?.newCustomers || 0 }}</p>
           </div>
           <div class="text-2xl">🆕</div>
         </div>
       </div>
 
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 reports-card">
+      <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Avg Customer Value</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">
+            <p class="text-sm font-medium text-gray-300">Avg Customer Value</p>
+            <p class="text-2xl font-bold text-white">
               {{ formatKpiValue({label: '', value: customerMetrics()?.averageCustomerValue || 0, change: 0, changeType: 'neutral', format: 'currency', icon: '', color: 'green'}) }}
             </p>
           </div>
@@ -513,11 +506,11 @@
         </div>
       </div>
 
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 reports-card">
+      <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Retention Rate</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">
+            <p class="text-sm font-medium text-gray-300">Retention Rate</p>
+            <p class="text-2xl font-bold text-white">
               {{ formatKpiValue({label: '', value: customerMetrics()?.customerRetentionRate || 0, change: 0, changeType: 'neutral', format: 'percentage', icon: '', color: 'purple'}) }}
             </p>
           </div>
@@ -532,21 +525,21 @@
     
     <!-- Inventory KPIs -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 reports-card">
+      <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Parts</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ inventoryMetrics()?.totalParts || 0 }}</p>
+            <p class="text-sm font-medium text-gray-300">Total Parts</p>
+            <p class="text-2xl font-bold text-white">{{ inventoryMetrics()?.totalParts || 0 }}</p>
           </div>
           <div class="text-2xl">📦</div>
         </div>
       </div>
 
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 reports-card">
+      <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Stock Value</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">
+            <p class="text-sm font-medium text-gray-300">Stock Value</p>
+            <p class="text-2xl font-bold text-white">
               {{ formatKpiValue({label: '', value: inventoryMetrics()?.stockValue || 0, change: 0, changeType: 'neutral', format: 'currency', icon: '', color: 'green'}) }}
             </p>
           </div>
@@ -554,21 +547,21 @@
         </div>
       </div>
 
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 reports-card">
+      <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Low Stock Items</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ inventoryMetrics()?.lowStockItems || 0 }}</p>
+            <p class="text-sm font-medium text-gray-300">Low Stock Items</p>
+            <p class="text-2xl font-bold text-white">{{ inventoryMetrics()?.lowStockItems || 0 }}</p>
           </div>
           <div class="text-2xl">⚠️</div>
         </div>
       </div>
 
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 reports-card">
+      <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Turnover Rate</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ (inventoryMetrics()?.inventoryTurnover || 0).toFixed(1) }}</p>
+            <p class="text-sm font-medium text-gray-300">Turnover Rate</p>
+            <p class="text-2xl font-bold text-white">{{ (inventoryMetrics()?.inventoryTurnover || 0).toFixed(1) }}</p>
           </div>
           <div class="text-2xl">🔄</div>
         </div>

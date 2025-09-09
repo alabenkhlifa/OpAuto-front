@@ -8,10 +8,10 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   template: `
-    <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+    <div class="glass-card">
       
       <div class="flex items-center justify-between mb-6">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">System Settings</h2>
+        <h2 class="text-lg font-semibold text-white">System Settings</h2>
         <div class="flex space-x-2">
           <button 
             type="button"
@@ -41,7 +41,7 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
         
         <!-- Notifications Settings -->
         <div>
-          <h3 class="text-md font-medium text-gray-900 dark:text-white mb-4">Notifications</h3>
+          <h3 class="text-md font-medium text-white mb-4">Notifications</h3>
           <div formGroupName="notifications" class="space-y-4">
             <!-- Browser Notifications -->
             <div class="flex items-start space-x-3">
@@ -52,7 +52,7 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
                 formControlName="enableBrowserNotifications">
               <div class="flex-1">
                 <label for="browserNotifications" class="form-label mb-1">Browser Notifications</label>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Receive notifications in your browser for new appointments and updates</p>
+                <p class="text-sm text-gray-400">Receive notifications in your browser for new appointments and updates</p>
               </div>
             </div>
 
@@ -65,7 +65,7 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
                 formControlName="enableSmsNotifications">
               <div class="flex-1">
                 <label for="smsNotifications" class="form-label mb-1">SMS Notifications</label>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Send SMS alerts for urgent notifications</p>
+                <p class="text-sm text-gray-400">Send SMS alerts for urgent notifications</p>
               </div>
             </div>
 
@@ -78,7 +78,7 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
                 formControlName="enableEmailNotifications">
               <div class="flex-1">
                 <label for="emailNotifications" class="form-label mb-1">Email Notifications</label>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Send email notifications for daily summaries and reports</p>
+                <p class="text-sm text-gray-400">Send email notifications for daily summaries and reports</p>
               </div>
             </div>
 
@@ -87,7 +87,7 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
 
         <!-- Security Settings -->
         <div>
-          <h3 class="text-md font-medium text-gray-900 dark:text-white mb-4">Security</h3>
+          <h3 class="text-md font-medium text-white mb-4">Security</h3>
           <div formGroupName="security" class="space-y-4">
             <!-- Session Timeout -->
             <div>
@@ -117,7 +117,7 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
                 formControlName="enableTwoFactor">
               <div class="flex-1">
                 <label for="twoFactorAuth" class="form-label mb-1">Two-Factor Authentication</label>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Add an extra layer of security to your account</p>
+                <p class="text-sm text-gray-400">Add an extra layer of security to your account</p>
               </div>
             </div>
 
@@ -130,7 +130,7 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
                 formControlName="allowMultipleSessions">
               <div class="flex-1">
                 <label for="multipleSessions" class="form-label mb-1">Allow Multiple Sessions</label>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Allow the same user to be logged in from multiple devices</p>
+                <p class="text-sm text-gray-400">Allow the same user to be logged in from multiple devices</p>
               </div>
             </div>
           </div>
@@ -138,7 +138,7 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
 
         <!-- Data Retention Settings -->
         <div>
-          <h3 class="text-md font-medium text-gray-900 dark:text-white mb-4">Data Retention</h3>
+          <h3 class="text-md font-medium text-white mb-4">Data Retention</h3>
           <div formGroupName="dataRetention" class="space-y-4">
             <!-- Customer Data -->
             <div>
@@ -202,7 +202,7 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
                 formControlName="autoArchiveCompletedJobs">
               <div class="flex-1">
                 <label for="autoArchive" class="form-label mb-1">Auto-Archive Completed Jobs</label>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Automatically archive completed jobs based on retention periods</p>
+                <p class="text-sm text-gray-400">Automatically archive completed jobs based on retention periods</p>
               </div>
             </div>
           </div>
@@ -210,7 +210,7 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
 
         <!-- Backup Settings -->
         <div>
-          <h3 class="text-md font-medium text-gray-900 dark:text-white mb-4">Backup</h3>
+          <h3 class="text-md font-medium text-white mb-4">Backup</h3>
           <div formGroupName="backup" class="space-y-4">
             <!-- Auto Backup -->
             <div class="flex items-start space-x-3">
@@ -221,7 +221,7 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
                 formControlName="autoBackupEnabled">
               <div class="flex-1">
                 <label for="autoBackup" class="form-label mb-1">Automatic Backup</label>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Automatically backup your data at scheduled intervals</p>
+                <p class="text-sm text-gray-400">Automatically backup your data at scheduled intervals</p>
               </div>
             </div>
 
@@ -254,8 +254,8 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
 
             <!-- Last Backup Info -->
             @if (lastBackupDate) {
-              <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                <p class="text-sm text-gray-600 dark:text-gray-300">
+              <div class="bg-gray-800/30 p-4 rounded-lg">
+                <p class="text-sm text-gray-300">
                   <strong>Last Backup:</strong> {{ lastBackupDate | date:'medium' }}
                 </p>
               </div>
@@ -284,7 +284,7 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
 
         <!-- Appearance Settings -->
         <div>
-          <h3 class="text-md font-medium text-gray-900 dark:text-white mb-4">Appearance</h3>
+          <h3 class="text-md font-medium text-white mb-4">Appearance</h3>
           <div formGroupName="appearance" class="space-y-4">
             <!-- Theme -->
             <div>
@@ -343,19 +343,19 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
 
         <!-- System Information -->
         <div>
-          <h3 class="text-md font-medium text-gray-900 dark:text-white mb-4">System Information</h3>
+          <h3 class="text-md font-medium text-white mb-4">System Information</h3>
           <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg space-y-2">
             <div class="flex justify-between">
-              <span class="text-sm text-gray-600 dark:text-gray-300">Application Version:</span>
-              <span class="text-sm font-medium text-gray-900 dark:text-white">{{ systemInfo.version }}</span>
+              <span class="text-sm text-gray-300">Application Version:</span>
+              <span class="text-sm font-medium text-white">{{ systemInfo.version }}</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-sm text-gray-600 dark:text-gray-300">Last Update:</span>
-              <span class="text-sm font-medium text-gray-900 dark:text-white">{{ systemInfo.lastUpdate | date:'medium' }}</span>
+              <span class="text-sm text-gray-300">Last Update:</span>
+              <span class="text-sm font-medium text-white">{{ systemInfo.lastUpdate | date:'medium' }}</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-sm text-gray-600 dark:text-gray-300">Database Size:</span>
-              <span class="text-sm font-medium text-gray-900 dark:text-white">{{ systemInfo.databaseSize }}</span>
+              <span class="text-sm text-gray-300">Database Size:</span>
+              <span class="text-sm font-medium text-white">{{ systemInfo.databaseSize }}</span>
             </div>
           </div>
         </div>
@@ -365,94 +365,8 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
     </div>
   `,
   styles: [`
-    .form-label {
-      display: block;
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: #374151;
-      margin-bottom: 0.25rem;
-    }
-    
-    .dark .form-label {
-      color: #d1d5db;
-    }
-    
-    .form-input, .form-select, .form-textarea {
-      display: block;
-      width: 100%;
-      padding: 0.5rem 0.75rem;
-      border: 1px solid #d1d5db;
-      border-radius: 0.375rem;
-      background-color: white;
-      color: #111827;
-      font-size: 0.875rem;
-    }
-    
-    .form-input:focus, .form-select:focus, .form-textarea:focus {
-      outline: none;
-      border-color: #2563eb;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-    
-    .dark .form-input, .dark .form-select, .dark .form-textarea {
-      background-color: #1f2937;
-      border-color: #4b5563;
-      color: #f9fafb;
-    }
-    
-    .dark .form-input:focus, .dark .form-select:focus, .dark .form-textarea:focus {
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-    
-    .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.5rem 1rem;
-      border: 1px solid transparent;
-      font-size: 0.875rem;
-      font-weight: 500;
-      border-radius: 0.375rem;
-      color: white;
-      background-color: #2563eb;
-      gap: 0.5rem;
-    }
-    
-    .btn-primary:hover:not(:disabled) {
-      background-color: #1d4ed8;
-    }
-    
-    .btn-primary:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    
-    .btn-secondary {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.5rem 1rem;
-      border: 1px solid #d1d5db;
-      font-size: 0.875rem;
-      font-weight: 500;
-      border-radius: 0.375rem;
-      color: #374151;
-      background-color: white;
-      gap: 0.5rem;
-    }
-    
-    .btn-secondary:hover {
-      background-color: #f9fafb;
-    }
-    
-    .dark .btn-secondary {
-      border-color: #4b5563;
-      color: #d1d5db;
-      background-color: #1f2937;
-    }
-    
-    .dark .btn-secondary:hover {
-      background-color: #374151;
-    }
+    /* Component uses global form classes from /src/styles/forms.css */
+    /* Component uses global button classes from /src/styles/buttons.css */
   `]
 })
 export class SystemSettingsComponent implements OnInit {

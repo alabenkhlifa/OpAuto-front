@@ -25,35 +25,33 @@ import {
         </div>
 
         <!-- Modal Content -->
-        <div class="relative bg-white bg-opacity-95 dark:bg-gray-800 dark:bg-opacity-95 backdrop-blur-lg rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg max-w-2xl w-full max-h-[90vh] overflow-hidden">
+        <div class="relative glass-modal max-w-2xl w-full max-h-[90vh] overflow-hidden">
           
           <!-- Header -->
-          <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+          <div class="p-6 border-b border-gray-600">
             <div class="flex items-start justify-between">
               <div>
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">{{ approval.title }}</h2>
+                <h2 class="text-xl font-semibold text-white mb-2">{{ approval.title }}</h2>
                 <div class="flex items-center space-x-4">
                   <!-- Type Badge -->
-                  <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                  <span class="badge badge-active">
                     {{ getTypeLabel(approval.type) }}
                   </span>
                   
                   <!-- Priority Badge -->
-                  <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
-                        [class]="getPriorityBadgeClass(approval.priority)">
+                  <span class="badge" [class]="getPriorityBadgeClass(approval.priority)">
                     {{ getPriorityLabel(approval.priority) }}
                   </span>
                   
                   <!-- Status Badge -->
-                  <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
-                        [class]="getStatusBadgeClass(approval.status)">
+                  <span class="badge" [class]="getStatusBadgeClass(approval.status)">
                     {{ getStatusLabel(approval.status) }}
                   </span>
                 </div>
               </div>
               
               <button 
-                class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                class="text-gray-400 hover:text-gray-200"
                 (click)="onClose()">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -67,8 +65,8 @@ import {
             
             <!-- Description -->
             <div class="mb-6">
-              <h3 class="text-md font-medium text-gray-900 dark:text-white mb-2">Description</h3>
-              <p class="text-gray-700 dark:text-gray-300">{{ approval.description }}</p>
+              <h3 class="text-md font-medium text-white mb-2">Description</h3>
+              <p class="text-gray-300">{{ approval.description }}</p>
             </div>
 
             <!-- Details Grid -->
@@ -76,26 +74,25 @@ import {
               
               <!-- Request Details -->
               <div>
-                <h3 class="text-md font-medium text-gray-900 dark:text-white mb-3">Request Details</h3>
+                <h3 class="text-md font-medium text-white mb-3">Request Details</h3>
                 <div class="space-y-2 text-sm">
                   <div class="flex justify-between">
-                    <span class="text-gray-600 dark:text-gray-400">Requested by:</span>
-                    <span class="text-gray-900 dark:text-white font-medium">{{ approval.requestedBy.name }}</span>
+                    <span class="text-gray-400">Requested by:</span>
+                    <span class="text-white font-medium">{{ approval.requestedBy.name }}</span>
                   </div>
                   <div class="flex justify-between">
-                    <span class="text-gray-600 dark:text-gray-400">Role:</span>
-                    <span class="text-gray-900 dark:text-white">{{ approval.requestedBy.role }}</span>
+                    <span class="text-gray-400">Role:</span>
+                    <span class="text-white">{{ approval.requestedBy.role }}</span>
                   </div>
                   <div class="flex justify-between">
-                    <span class="text-gray-600 dark:text-gray-400">Requested on:</span>
-                    <span class="text-gray-900 dark:text-white">{{ approval.requestedAt | date:'MMM d, y h:mm a' }}</span>
+                    <span class="text-gray-400">Requested on:</span>
+                    <span class="text-white">{{ approval.requestedAt | date:'MMM d, y h:mm a' }}</span>
                   </div>
                   @if (approval.dueDate) {
                     <div class="flex justify-between">
-                      <span class="text-gray-600 dark:text-gray-400">Due date:</span>
-                      <span class="text-gray-900 dark:text-white" 
-                            [class.text-red-600]="isOverdue(approval.dueDate)"
-                            [class.dark:text-red-400]="isOverdue(approval.dueDate)">
+                      <span class="text-gray-400">Due date:</span>
+                      <span class="text-white" 
+                            [class.text-red-400]="isOverdue(approval.dueDate)">
                         {{ approval.dueDate | date:'MMM d, y h:mm a' }}
                         @if (isOverdue(approval.dueDate)) {
                           <span class="text-xs ml-1">(Overdue)</span>
@@ -109,18 +106,18 @@ import {
               <!-- Financial Details -->
               @if (approval.estimatedCost) {
                 <div>
-                  <h3 class="text-md font-medium text-gray-900 dark:text-white mb-3">Financial Details</h3>
+                  <h3 class="text-md font-medium text-white mb-3">Financial Details</h3>
                   <div class="space-y-2 text-sm">
                     <div class="flex justify-between">
-                      <span class="text-gray-600 dark:text-gray-400">Estimated cost:</span>
-                      <span class="text-gray-900 dark:text-white font-medium text-lg">
+                      <span class="text-gray-400">Estimated cost:</span>
+                      <span class="text-white font-medium text-lg">
                         {{ approval.estimatedCost }} {{ approval.currency }}
                       </span>
                     </div>
                     @if (approval.relatedEntity) {
                       <div class="flex justify-between">
-                        <span class="text-gray-600 dark:text-gray-400">Related to:</span>
-                        <span class="text-gray-900 dark:text-white">{{ approval.relatedEntity.name }}</span>
+                        <span class="text-gray-400">Related to:</span>
+                        <span class="text-white">{{ approval.relatedEntity.name }}</span>
                       </div>
                     }
                   </div>
@@ -131,8 +128,8 @@ import {
             <!-- Status Information -->
             @if (approval.status !== 'pending') {
               <div class="mb-6">
-                <h3 class="text-md font-medium text-gray-900 dark:text-white mb-3">Status Information</h3>
-                <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                <h3 class="text-md font-medium text-white mb-3">Status Information</h3>
+                <div class="bg-gray-700 bg-opacity-50 p-4 rounded-lg">
                   @if (approval.status === 'approved' && approval.approvedBy) {
                     <div class="flex items-center text-green-600 dark:text-green-400 mb-2">
                       <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -140,7 +137,7 @@ import {
                       </svg>
                       <span class="font-medium">Approved by {{ approval.approvedBy.name }}</span>
                     </div>
-                    <p class="text-sm text-gray-600 dark:text-gray-300">
+                    <p class="text-sm text-gray-300">
                       Approved on {{ approval.approvedAt | date:'MMM d, y h:mm a' }}
                     </p>
                   }
@@ -152,7 +149,7 @@ import {
                       </svg>
                       <span class="font-medium">Rejected by {{ approval.rejectedBy.name }}</span>
                     </div>
-                    <p class="text-sm text-gray-600 dark:text-gray-300">
+                    <p class="text-sm text-gray-300">
                       Rejected on {{ approval.rejectedAt | date:'MMM d, y h:mm a' }}
                     </p>
                   }
@@ -172,23 +169,23 @@ import {
             <!-- Comments -->
             @if (approval.comments && approval.comments.length > 0) {
               <div class="mb-6">
-                <h3 class="text-md font-medium text-gray-900 dark:text-white mb-3">Comments</h3>
+                <h3 class="text-md font-medium text-white mb-3">Comments</h3>
                 <div class="space-y-3">
                   @for (comment of approval.comments; track comment.id) {
-                    <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                    <div class="bg-gray-700 bg-opacity-50 p-3 rounded-lg">
                       <div class="flex items-start justify-between mb-2">
                         <div class="flex items-center space-x-2">
-                          <span class="text-sm font-medium text-gray-900 dark:text-white">{{ comment.author.name }}</span>
-                          <span class="text-xs text-gray-500 dark:text-gray-400">{{ comment.author.role }}</span>
+                          <span class="text-sm font-medium text-white">{{ comment.author.name }}</span>
+                          <span class="text-xs text-gray-400">{{ comment.author.role }}</span>
                           @if (comment.isInternal) {
-                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                            <span class="badge badge-pending badge-sm">
                               Internal
                             </span>
                           }
                         </div>
-                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ comment.createdAt | date:'MMM d, h:mm a' }}</span>
+                        <span class="text-xs text-gray-400">{{ comment.createdAt | date:'MMM d, h:mm a' }}</span>
                       </div>
-                      <p class="text-sm text-gray-700 dark:text-gray-300">{{ comment.content }}</p>
+                      <p class="text-sm text-gray-300">{{ comment.content }}</p>
                     </div>
                   }
                 </div>
@@ -198,11 +195,11 @@ import {
             <!-- Add Comment Form -->
             @if (approval.status === 'pending' || approval.status === 'info_requested') {
               <div>
-                <h3 class="text-md font-medium text-gray-900 dark:text-white mb-3">Add Comment</h3>
+                <h3 class="text-md font-medium text-white mb-3">Add Comment</h3>
                 <form [formGroup]="commentForm" (ngSubmit)="addComment()">
                   <div class="space-y-3">
                     <textarea 
-                      class="form-input"
+                      class="glass-input"
                       formControlName="comment"
                       rows="3"
                       placeholder="Add your comment or feedback..."></textarea>
@@ -213,7 +210,7 @@ import {
                         id="internalComment"
                         class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                         formControlName="isInternal">
-                      <label for="internalComment" class="text-sm text-gray-700 dark:text-gray-300">Internal comment (not visible to requester)</label>
+                      <label for="internalComment" class="text-sm text-gray-300">Internal comment (not visible to requester)</label>
                     </div>
                   </div>
                 </form>
@@ -223,7 +220,7 @@ import {
           </div>
 
           <!-- Footer Actions -->
-          <div class="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750">
+          <div class="p-6 border-t border-gray-600 bg-gray-800 bg-opacity-50">
             @if (approval.status === 'pending' || approval.status === 'info_requested') {
               <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
@@ -267,7 +264,7 @@ import {
                   
                   <button 
                     type="button"
-                    class="btn-secondary"
+                    class="btn-tertiary"
                     (click)="processApproval('request_info')"
                     [disabled]="isProcessing()">
                     @if (isProcessing() && currentAction() === 'request_info') {
@@ -310,109 +307,7 @@ import {
     </div>
   `,
   styles: [`
-    .form-input {
-      display: block;
-      width: 100%;
-      padding: 0.5rem 0.75rem;
-      border: 1px solid #d1d5db;
-      border-radius: 0.375rem;
-      background-color: white;
-      color: #111827;
-      font-size: 0.875rem;
-    }
-    
-    .form-input:focus {
-      outline: none;
-      border-color: #2563eb;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-    
-    .dark .form-input {
-      background-color: #1f2937;
-      border-color: #4b5563;
-      color: #f9fafb;
-    }
-    
-    .dark .form-input:focus {
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-    
-    .btn-success {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.5rem 1rem;
-      border: 1px solid transparent;
-      font-size: 0.875rem;
-      font-weight: 500;
-      border-radius: 0.375rem;
-      color: white;
-      background-color: #16a34a;
-      gap: 0.5rem;
-    }
-    
-    .btn-success:hover:not(:disabled) {
-      background-color: #15803d;
-    }
-    
-    .btn-success:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    
-    .btn-danger {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.5rem 1rem;
-      border: 1px solid transparent;
-      font-size: 0.875rem;
-      font-weight: 500;
-      border-radius: 0.375rem;
-      color: white;
-      background-color: #dc2626;
-      gap: 0.5rem;
-    }
-    
-    .btn-danger:hover:not(:disabled) {
-      background-color: #b91c1c;
-    }
-    
-    .btn-danger:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    
-    .btn-secondary {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.5rem 1rem;
-      border: 1px solid #d1d5db;
-      font-size: 0.875rem;
-      font-weight: 500;
-      border-radius: 0.375rem;
-      color: #374151;
-      background-color: white;
-      gap: 0.5rem;
-    }
-    
-    .btn-secondary:hover:not(:disabled) {
-      background-color: #f9fafb;
-    }
-    
-    .btn-secondary:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    
-    .dark .btn-secondary {
-      border-color: #4b5563;
-      color: #d1d5db;
-      background-color: #1f2937;
-    }
-    
-    .dark .btn-secondary:hover:not(:disabled) {
-      background-color: #374151;
-    }
+    /* Modal uses global glass styles and buttons - minimal custom styling needed */
   `]
 })
 export class ApprovalModalComponent implements OnInit {
@@ -485,21 +380,21 @@ export class ApprovalModalComponent implements OnInit {
 
   getPriorityBadgeClass(priority: string): string {
     const classes = {
-      'low': 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
-      'medium': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-      'high': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-      'urgent': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+      'low': 'badge-priority-low',
+      'medium': 'badge-priority-medium',
+      'high': 'badge-priority-high',
+      'urgent': 'badge-priority-urgent'
     };
     return classes[priority as keyof typeof classes] || classes.medium;
   }
 
   getStatusBadgeClass(status: string): string {
     const classes = {
-      'pending': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-      'approved': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-      'rejected': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-      'info_requested': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-      'cancelled': 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+      'pending': 'badge-pending',
+      'approved': 'badge-completed',
+      'rejected': 'badge-cancelled',
+      'info_requested': 'badge-active',
+      'cancelled': 'badge-cancelled'
     };
     return classes[status as keyof typeof classes] || classes.pending;
   }
