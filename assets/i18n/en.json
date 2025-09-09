@@ -1,0 +1,60 @@
+{
+  "dashboard": {
+    "title": "OpAuto Dashboard",
+    "subtitle": "{{date}}",
+    "quickActions": {
+      "title": "Quick Actions",
+      "newCarEntry": {
+        "title": "New Car Entry",
+        "description": "Register a walk-in customer"
+      },
+      "scheduleAppointment": {
+        "title": "Schedule Appointment",
+        "description": "Book future service"
+      },
+      "generateInvoice": {
+        "title": "Generate Invoice",
+        "description": "Create bill for completed job"
+      },
+      "qualityCheck": {
+        "title": "Quality Check",
+        "description": "Mark job as completed"
+      }
+    },
+    "urgentActions": {
+      "title": "🚨 Urgent Actions Required",
+      "jobsNeedApproval": "{{count}} jobs need your approval",
+      "description": "Parts purchases and repair estimates are waiting for approval",
+      "reviewButton": "Review Approvals"
+    },
+    "todaySchedule": {
+      "title": "Today's Schedule",
+      "appointmentsScheduled": "{{count}} appointments scheduled",
+      "appointments": "appointments"
+    },
+    "todayStatus": {
+      "title": "Today's Status",
+      "description": "Real-time garage overview",
+      "completed": "Completed",
+      "inProgress": "In Progress",
+      "needApproval": "Need Approval",
+      "availableSlots": "Available Slots",
+      "todayRevenue": "Today's Revenue"
+    },
+    "activeJobs": {
+      "title": "Cars Currently Being Worked On",
+      "progress": "Progress",
+      "mechanic": "Mechanic",
+      "estimatedComplete": "Est. Complete"
+    },
+    "status": {
+      "scheduled": "Scheduled",
+      "inProgress": "In Progress", 
+      "completed": "Completed",
+      "delayed": "Delayed",
+      "inRepair": "In Repair",
+      "qualityCheck": "Quality Check",
+      "waitingParts": "Waiting Parts"
+    }
+  }
+}
