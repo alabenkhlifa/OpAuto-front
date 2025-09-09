@@ -10,7 +10,7 @@ import { MaintenanceFilters, MaintenanceStatus, MaintenancePriority } from '../.
   template: `
     <div class="glass-card">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-medium text-gray-900 dark:text-white">Filters</h3>
+        <h3 class="text-lg font-medium text-white">Filters</h3>
         <button 
           class="btn-clear-filters"
           (click)="clearFilters()">
@@ -25,7 +25,7 @@ import { MaintenanceFilters, MaintenanceStatus, MaintenancePriority } from '../.
         
         <!-- Search -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label class="block text-sm font-medium text-gray-300 mb-1">
             Search
           </label>
           <input
@@ -33,18 +33,18 @@ import { MaintenanceFilters, MaintenanceStatus, MaintenancePriority } from '../.
             [(ngModel)]="localFilters.searchTerm"
             (ngModelChange)="onFilterChange()"
             placeholder="Job title, customer, license plate..."
-            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm">
+            class="form-input">
         </div>
 
         <!-- Status Filter -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label class="block text-sm font-medium text-gray-300 mb-1">
             Status
           </label>
           <select
             [(ngModel)]="selectedStatus"
             (ngModelChange)="onStatusChange($event)"
-            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm">
+            class="form-select">
             <option value="">All Statuses</option>
             @for (status of statusOptions; track status.value) {
               <option [value]="status.value">{{ status.label }}</option>
@@ -54,13 +54,13 @@ import { MaintenanceFilters, MaintenanceStatus, MaintenancePriority } from '../.
 
         <!-- Priority Filter -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label class="block text-sm font-medium text-gray-300 mb-1">
             Priority
           </label>
           <select
             [(ngModel)]="selectedPriority"
             (ngModelChange)="onPriorityChange($event)"
-            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm">
+            class="form-select">
             <option value="">All Priorities</option>
             @for (priority of priorityOptions; track priority.value) {
               <option [value]="priority.value">{{ priority.label }}</option>
@@ -70,13 +70,13 @@ import { MaintenanceFilters, MaintenanceStatus, MaintenancePriority } from '../.
 
         <!-- Mechanic Filter -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label class="block text-sm font-medium text-gray-300 mb-1">
             Mechanic
           </label>
           <select
             [(ngModel)]="localFilters.mechanicId"
             (ngModelChange)="onFilterChange()"
-            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm">
+            class="form-select">
             <option value="">All Mechanics</option>
             @for (mechanic of mechanicOptions; track mechanic.id) {
               <option [value]="mechanic.id">{{ mechanic.name }}</option>

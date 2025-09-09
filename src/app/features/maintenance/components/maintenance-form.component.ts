@@ -53,12 +53,12 @@ import { Car } from '../../../core/models/appointment.model';
             
             <!-- Car Selection -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label class="block text-sm font-medium text-gray-300 mb-1">
                 Vehicle *
               </label>
               <select 
                 formControlName="carId"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                class="form-select"
                 [class.border-red-500]="isFieldInvalid('carId')">
                 <option value="">Select a vehicle</option>
                 @for (car of cars(); track car.id) {
@@ -66,18 +66,18 @@ import { Car } from '../../../core/models/appointment.model';
                 }
               </select>
               @if (isFieldInvalid('carId')) {
-                <p class="mt-1 text-sm text-red-600 dark:text-red-400">Vehicle is required</p>
+                <p class="mt-1 text-sm text-red-400">Vehicle is required</p>
               }
             </div>
 
             <!-- Mechanic Assignment -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label class="block text-sm font-medium text-gray-300 mb-1">
                 Assigned Mechanic *
               </label>
               <select 
                 formControlName="mechanicId"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                class="form-select"
                 [class.border-red-500]="isFieldInvalid('mechanicId')">
                 <option value="">Select a mechanic</option>
                 @for (mechanic of mechanics; track mechanic.id) {
@@ -85,34 +85,34 @@ import { Car } from '../../../core/models/appointment.model';
                 }
               </select>
               @if (isFieldInvalid('mechanicId')) {
-                <p class="mt-1 text-sm text-red-600 dark:text-red-400">Mechanic is required</p>
+                <p class="mt-1 text-sm text-red-400">Mechanic is required</p>
               }
             </div>
 
             <!-- Job Title -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label class="block text-sm font-medium text-gray-300 mb-1">
                 Job Title *
               </label>
               <input 
                 type="text"
                 formControlName="jobTitle"
                 placeholder="e.g., Brake Repair, Oil Change"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                class="form-input"
                 [class.border-red-500]="isFieldInvalid('jobTitle')">
               @if (isFieldInvalid('jobTitle')) {
-                <p class="mt-1 text-sm text-red-600 dark:text-red-400">Job title is required</p>
+                <p class="mt-1 text-sm text-red-400">Job title is required</p>
               }
             </div>
 
             <!-- Priority -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label class="block text-sm font-medium text-gray-300 mb-1">
                 Priority *
               </label>
               <select 
                 formControlName="priority"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                class="form-select"
                 [class.border-red-500]="isFieldInvalid('priority')">
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -123,7 +123,7 @@ import { Car } from '../../../core/models/appointment.model';
 
             <!-- Current Mileage -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label class="block text-sm font-medium text-gray-300 mb-1">
                 Current Mileage (km) *
               </label>
               <input 
@@ -132,16 +132,16 @@ import { Car } from '../../../core/models/appointment.model';
                 placeholder="85000"
                 min="0"
                 max="999999"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                class="form-input"
                 [class.border-red-500]="isFieldInvalid('currentMileage')">
               @if (isFieldInvalid('currentMileage')) {
-                <p class="mt-1 text-sm text-red-600 dark:text-red-400">Valid mileage is required</p>
+                <p class="mt-1 text-sm text-red-400">Valid mileage is required</p>
               }
             </div>
 
             <!-- Estimated Cost -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label class="block text-sm font-medium text-gray-300 mb-1">
                 Estimated Cost (TND)
               </label>
               <input 
@@ -150,38 +150,38 @@ import { Car } from '../../../core/models/appointment.model';
                 placeholder="150"
                 min="0"
                 step="0.01"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white">
+                class="form-input">
             </div>
 
           </div>
 
           <!-- Description -->
           <div class="mt-4">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label class="block text-sm font-medium text-gray-300 mb-1">
               Description *
             </label>
             <textarea 
               formControlName="description"
               rows="3"
               placeholder="Describe the issue, symptoms, or maintenance required..."
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              class="form-textarea"
               [class.border-red-500]="isFieldInvalid('description')">
             </textarea>
             @if (isFieldInvalid('description')) {
-              <p class="mt-1 text-sm text-red-600 dark:text-red-400">Description is required</p>
+              <p class="mt-1 text-sm text-red-400">Description is required</p>
             }
           </div>
 
           <!-- Notes -->
           <div class="mt-4">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label class="block text-sm font-medium text-gray-300 mb-1">
               Additional Notes
             </label>
             <textarea 
               formControlName="notes"
               rows="2"
               placeholder="Any additional information or special instructions..."
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white">
+              class="form-textarea">
             </textarea>
           </div>
 
@@ -208,18 +208,18 @@ import { Car } from '../../../core/models/appointment.model';
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                   
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label class="block text-sm font-medium text-gray-300 mb-1">
                       Task Name *
                     </label>
                     <input 
                       type="text"
                       formControlName="name"
                       placeholder="e.g., Replace brake pads"
-                      class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white">
+                      class="form-input text-sm">
                   </div>
 
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label class="block text-sm font-medium text-gray-300 mb-1">
                       Estimated Time (min)
                     </label>
                     <input 
@@ -228,7 +228,7 @@ import { Car } from '../../../core/models/appointment.model';
                       placeholder="60"
                       min="5"
                       max="480"
-                      class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white">
+                      class="form-input text-sm">
                   </div>
 
                   <div class="flex items-end">
@@ -243,14 +243,14 @@ import { Car } from '../../../core/models/appointment.model';
                 </div>
 
                 <div class="mt-3">
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label class="block text-sm font-medium text-gray-300 mb-1">
                     Task Description
                   </label>
                   <textarea 
                     formControlName="description"
                     rows="2"
                     placeholder="Detailed description of what needs to be done..."
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white">
+                    class="form-textarea text-sm">
                   </textarea>
                 </div>
               </div>

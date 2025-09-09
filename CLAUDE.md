@@ -482,6 +482,83 @@ Based on the successful implementation in the inventory screen, all navigation e
 
 **ENFORCEMENT**: All badges must use the global system. Custom badge styling will be rejected.
 
+### ⚠️ MANDATORY: Global Dropdown/Select System
+
+**CRITICAL**: All dropdown/select elements across the dashboard MUST use the standardized dropdown classes defined in `/src/styles/forms.css`. This ensures visual consistency with glassmorphism styling and prevents native browser styling inconsistencies.
+
+#### Dropdown Class Hierarchy (Use these ONLY)
+
+```html
+<!-- STANDARD FORM SELECTS -->
+<select class="form-select">
+  <option value="option1">Option 1</option>
+  <option value="option2">Option 2</option>
+</select>
+
+<!-- FILTER DROPDOWNS -->
+<select class="filter-select" [value]="selectedValue()" (change)="onChange($event)">
+  <option value="all">All Items</option>
+  <option value="active">Active</option>
+</select>
+
+<!-- GENERAL DROPDOWNS -->
+<select class="dropdown-select">
+  <option>Choose option...</option>
+</select>
+
+<!-- ANY SELECT WITH "select" IN CLASS NAME -->
+<select class="custom-select-component">
+  <!-- Will automatically get glassmorphism styling -->
+</select>
+```
+
+#### Dropdown Implementation Rules
+
+1. **Automatic Styling**: Any `<select>` with class containing "select" gets glassmorphism styling
+2. **Cross-Device Consistency**: Uses `appearance: none` to override browser defaults
+3. **Custom Arrow**: SVG dropdown arrow works on all devices and browsers
+4. **Dark Theme**: Permanent dark glassmorphism with backdrop blur
+5. **Focus States**: Blue accent border and glow on focus
+6. **Error States**: Red border when `.error` class is added
+
+#### Available Dropdown Classes
+
+| Class Name | Usage | Features |
+|------------|-------|----------|
+| `form-select` | Standard form dropdowns | Full glassmorphism styling |
+| `filter-select` | Filter/search dropdowns | Optimized for filtering UI |
+| `dropdown-select` | General purpose dropdowns | Standard dropdown styling |
+| `select[class*="select"]` | Any class containing "select" | Auto-applies styling |
+
+#### Features Included
+
+- **Glassmorphism**: `backdrop-filter: blur(10px)` with rgba backgrounds
+- **Rounded Corners**: `border-radius: 12px` for modern look  
+- **Custom Arrow**: White SVG chevron that works on all devices
+- **Focus States**: Blue accent with glow effect
+- **Error States**: Red border for validation feedback
+- **Disabled States**: Opacity and cursor changes
+- **Cross-Platform**: Works identically on desktop, tablet, and mobile
+
+#### ❌ NEVER DO THIS:
+```html
+<!-- DON'T: Custom select styling -->
+<select class="px-4 py-2 bg-gray-800 border rounded">
+
+<!-- DON'T: Component-specific select classes -->  
+<select class="inventory-dropdown custom-select-style">
+```
+
+#### ✅ ALWAYS DO THIS:
+```html
+<!-- DO: Use global dropdown classes -->
+<select class="form-select">
+<select class="filter-select">  
+<select class="dropdown-select">
+```
+
+**ENFORCEMENT**: All select/dropdown elements must use the global system. Custom dropdown styling will be rejected.
+
 #### Icon Library Standards
 Use Heroicons or similar SVG icons with these specifications:
 - **Size**: `w-4 h-4` (16x16px) for navigation buttons
@@ -901,6 +978,70 @@ src/app/features/
 - **If user reports same readability issue twice = FAILURE**
 - **Never claim "fixed" without completing full verification**
 - **Screenshots and contrast checks are MANDATORY evidence**
+
+## 🎛️ MANDATORY: Filter Button Active States
+
+**CRITICAL**: All filter buttons across the application MUST show visual feedback when the filter panel is OPEN, not when filters are applied to data.
+
+### **Implementation Requirements**:
+
+1. **Logic Pattern**:
+   ```typescript
+   // Create computed signal to track filter state
+   hasActiveFilters = computed(() => {
+     return this.searchQuery() !== '' || 
+            this.selectedMake() !== 'all' || 
+            this.selectedStatus() !== 'all';
+   });
+   ```
+
+2. **HTML Pattern**:
+   ```html
+   <!-- Add dynamic class binding for active state -->
+   <button class="filter-toggle" [class.active]="hasActiveFilters()" (click)="toggleFilters()">
+     <svg><!-- filter icon --></svg>
+     <span>Filters</span>
+   </button>
+   ```
+
+3. **CSS Pattern**:
+   ```css
+   /* Inactive state - subtle styling */
+   .filter-toggle {
+     background: rgba(31, 41, 55, 0.6);
+     color: #d1d5db;
+     border: 1px solid rgba(255, 255, 255, 0.1);
+   }
+
+   /* Active state - prominent styling */
+   .filter-toggle.active {
+     background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(29, 78, 216, 0.8)) !important;
+     border-color: rgba(59, 130, 246, 0.5) !important;
+     color: white !important;
+     box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+   }
+   ```
+
+### **Visual Standards**:
+- **Inactive**: Subtle gray/dark styling that blends with interface
+- **Active**: Prominent blue gradient with white text and enhanced shadows
+- **Clear Distinction**: Users must immediately see when filters are applied
+- **Consistent**: All filter buttons use the same active state pattern
+
+### **Filter Criteria That Trigger Active State**:
+- Search queries (text input not empty)
+- Dropdown selections (not set to "All" or default values)
+- Date ranges (not set to default/all time)
+- Checkbox selections (any boxes checked)
+- Any other filtering mechanisms
+
+### **Enforcement**:
+- **MANDATORY**: Every screen with filters must implement this pattern
+- **No Exceptions**: All filter buttons must show active/inactive states
+- **Test Requirement**: Always verify both states with screenshots
+- **User Experience**: Filters without visual feedback are considered broken
+
+**This pattern improves user experience by providing immediate visual feedback about applied filters.**
 
 ## Commands to Remember
 - `npm run lint` - Run linting

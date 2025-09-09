@@ -549,6 +549,7 @@ export class AppointmentModalComponent {
   cars = signal<Car[]>([]);
   customers = signal<Customer[]>([]);
   mechanics = signal<Mechanic[]>([]);
+  currentAppointmentId = signal<string | null>(null);
 
   // Form
   appointmentForm: FormGroup = this.fb.group({
@@ -608,7 +609,12 @@ export class AppointmentModalComponent {
         notes: formValue.notes || undefined
       };
 
-      this.appointmentService.createAppointment(appointmentData).subscribe({
+      // Choose create or update based on edit mode
+      const operation = this.editMode() && this.currentAppointmentId() 
+        ? this.appointmentService.updateAppointment(this.currentAppointmentId()!, appointmentData)
+        : this.appointmentService.createAppointment(appointmentData);
+
+      operation.subscribe({
         next: (appointment) => {
           this.saved.emit(appointment);
           this.closeModal();
@@ -623,7 +629,33 @@ export class AppointmentModalComponent {
   }
 
   closeModal(): void {
+    this.editMode.set(false);
+    this.currentAppointmentId.set(null);
+    this.appointmentForm.reset();
     this.closed.emit();
+  }
+
+  // Method to set appointment for editing
+  setEditAppointment(appointment: Appointment): void {
+    this.editMode.set(true);
+    this.currentAppointmentId.set(appointment.id);
+    
+    // Convert scheduled date to form format
+    const scheduledDate = new Date(appointment.scheduledDate);
+    const dateStr = scheduledDate.toISOString().split('T')[0];
+    const timeStr = scheduledDate.toTimeString().slice(0, 5);
+
+    this.appointmentForm.patchValue({
+      carId: appointment.carId,
+      serviceType: appointment.serviceType,
+      serviceName: appointment.serviceName,
+      scheduledDate: dateStr,
+      scheduledTime: timeStr,
+      estimatedDuration: appointment.estimatedDuration,
+      mechanicId: appointment.mechanicId,
+      priority: appointment.priority,
+      notes: appointment.notes || ''
+    });
   }
 
   openQuickAddCar(): void {

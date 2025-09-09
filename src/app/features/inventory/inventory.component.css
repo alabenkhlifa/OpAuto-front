@@ -140,6 +140,11 @@
   border: 1px solid rgba(59, 130, 246, 0.3);
   color: white;
   backdrop-filter: blur(10px);
+  /* Perfect centering for text */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .inventory-button:hover {

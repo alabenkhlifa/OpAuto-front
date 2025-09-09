@@ -16,7 +16,7 @@
           </svg>
           <select [(ngModel)]="selectedPreset" 
                   (ngModelChange)="onPresetChange($event)"
-                  class="bg-transparent text-white text-sm font-medium focus:outline-none flex-1 cursor-pointer">
+                  class="dropdown-select flex-1">
             <option *ngFor="let preset of datePresets" [value]="preset.value">{{ preset.label }}</option>
           </select>
         </div>

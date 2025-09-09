@@ -35,7 +35,7 @@
                 Customer *
               </label>
               <select formControlName="customerId" (change)="onCustomerChange()"
-                      class="form-input w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white backdrop-blur-sm">
+                      class="form-select">
                 <option value="">Select customer</option>
                 <option *ngFor="let customer of customers()" [value]="customer.id">
                   {{ customer.name }} - {{ customer.phone }}
@@ -52,7 +52,7 @@
                 Vehicle *
               </label>
               <select formControlName="carId"
-                      class="form-input w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white backdrop-blur-sm">
+                      class="form-select">
                 <option value="">Select vehicle</option>
                 <option *ngFor="let car of getCustomerCars()" [value]="car.id">
                   {{ car.make }} {{ car.model }} ({{ car.licensePlate }})
@@ -118,7 +118,7 @@
                 <div>
                   <label class="block text-xs font-medium text-gray-300 mb-1">Type</label>
                   <select formControlName="type" (change)="onLineItemTypeChange(i)"
-                          class="form-input w-full px-2 py-1 text-sm rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white backdrop-blur-sm">
+                          class="form-select text-sm">
                     <option *ngFor="let type of lineItemTypes" [value]="type">
                       {{ type | titlecase }}
                     </option>
@@ -136,7 +136,7 @@
                 <div *ngIf="lineItem.get('type')?.value === 'part'" class="md:col-span-3">
                   <label class="block text-xs font-medium text-gray-300 mb-1">Select Part</label>
                   <select formControlName="partId" (change)="onPartSelect(i, $any($event.target).value)"
-                          class="form-input w-full px-2 py-1 text-sm rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white backdrop-blur-sm">
+                          class="form-select text-sm">
                     <option value="">Select part (optional)</option>
                     <option *ngFor="let part of parts()" [value]="part.id">
                       {{ part.name }} - {{ part.brand }} ({{ formatCurrency(part.price) }})
@@ -148,7 +148,7 @@
                 <div *ngIf="lineItem.get('type')?.value === 'service'" class="md:col-span-3">
                   <label class="block text-xs font-medium text-gray-300 mb-1">Select Service</label>
                   <select formControlName="serviceCode" (change)="onServiceSelect(i, $any($event.target).value)"
-                          class="form-input w-full px-2 py-1 text-sm rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white backdrop-blur-sm">
+                          class="form-select text-sm">
                     <option value="">Select service (optional)</option>
                     <option *ngFor="let service of serviceRates()" [value]="service.serviceCode">
                       {{ service.serviceName }} ({{ formatCurrency(service.basePrice) }})

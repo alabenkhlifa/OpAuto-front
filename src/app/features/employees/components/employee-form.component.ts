@@ -10,34 +10,35 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   template: `
-    <div class="p-6 max-w-4xl mx-auto">
-      
-      <!-- Header -->
-      <div class="mb-6">
-        <div class="flex items-center space-x-2 mb-2">
-          <button 
-            class="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-            (click)="goBack()">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-          </button>
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-            {{ isEditMode ? 'Edit Employee' : 'Add New Employee' }}
-          </h1>
+    <div class="min-h-screen p-4 lg:p-6 employee-form-container">
+      <div class="max-w-4xl mx-auto">
+        
+        <!-- Header -->
+        <div class="mb-6">
+          <div class="flex items-center space-x-2 mb-2">
+            <button 
+              class="p-2 text-gray-400 hover:text-white transition-colors"
+              (click)="goBack()">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+            </button>
+            <h1 class="text-2xl lg:text-3xl font-bold text-white">
+              {{ isEditMode ? 'Edit Employee' : 'Add New Employee' }}
+            </h1>
+          </div>
+          <p class="text-sm text-gray-300 ml-9">
+            {{ isEditMode ? 'Update employee information and settings' : 'Enter employee details and work configuration' }}
+          </p>
         </div>
-        <p class="text-sm text-gray-500 dark:text-gray-400">
-          {{ isEditMode ? 'Update employee information and settings' : 'Enter employee details and work configuration' }}
-        </p>
-      </div>
 
-      <!-- Form -->
-      <div class="bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700">
-        <form [formGroup]="employeeForm" (ngSubmit)="onSubmit()">
+        <!-- Form -->
+        <div class="glass-card">
+          <form [formGroup]="employeeForm" (ngSubmit)="onSubmit()">
           
-          <!-- Personal Information -->
-          <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Personal Information</h2>
+            <!-- Personal Information -->
+            <div class="p-6 border-b border-gray-700/50">
+              <h2 class="text-lg font-semibold text-white mb-4">Personal Information</h2>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -109,9 +110,9 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
             </div>
           </div>
 
-          <!-- Employment Information -->
-          <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Employment Details</h2>
+            <!-- Employment Information -->
+            <div class="p-6 border-b border-gray-700/50">
+              <h2 class="text-lg font-semibold text-white mb-4">Employment Details</h2>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -206,9 +207,9 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
             </div>
           </div>
 
-          <!-- Skills & Experience -->
-          <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Skills & Experience</h2>
+            <!-- Skills & Experience -->
+            <div class="p-6 border-b border-gray-700/50">
+              <h2 class="text-lg font-semibold text-white mb-4">Skills & Experience</h2>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -248,7 +249,7 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
                         class="form-checkbox"
                         [value]="specialty.value"
                         (change)="onSpecialtyChange(specialty.value, $event)">
-                      <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ specialty.label }}</span>
+                      <span class="ml-2 text-sm text-gray-300">{{ specialty.label }}</span>
                     </label>
                   }
                 </div>
@@ -266,9 +267,9 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
             </div>
           </div>
 
-          <!-- Availability -->
-          <div class="p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Availability Settings</h2>
+            <!-- Availability -->
+            <div class="p-6">
+              <h2 class="text-lg font-semibold text-white mb-4">Availability Settings</h2>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -287,14 +288,14 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
                     type="checkbox" 
                     class="form-checkbox"
                     formControlName="isAvailable">
-                  <span class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">Currently Available</span>
+                  <span class="ml-2 text-sm font-medium text-gray-300">Currently Available</span>
                 </label>
               </div>
             </div>
           </div>
 
-          <!-- Form Actions -->
-          <div class="px-6 py-4 bg-gray-50 dark:bg-gray-900/50 rounded-b-xl flex justify-end space-x-3">
+            <!-- Form Actions -->
+            <div class="px-6 py-4 bg-gray-900/30 backdrop-blur-sm rounded-b-xl flex justify-end space-x-3">
             <button 
               type="button"
               class="btn-secondary"
@@ -317,111 +318,148 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
             </button>
           </div>
 
-        </form>
-      </div>
+          </form>
+        </div>
 
+      </div>
     </div>
   `,
   styles: [`
+    /* Container Styling */
+    .employee-form-container {
+      background: transparent;
+      min-height: 100vh;
+    }
+
+    /* Glass Card - matching other screens */
+    .glass-card {
+      background: rgba(17, 24, 39, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(75, 85, 99, 0.6);
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-card:hover {
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+      border-color: rgba(59, 130, 246, 0.7);
+    }
+    
+    /* Form Labels - Dark Theme */
     .form-label {
       display: block;
       font-size: 0.875rem;
       font-weight: 500;
-      color: #374151;
+      color: #d1d5db;
       margin-bottom: 0.25rem;
     }
     
-    .dark .form-label {
-      color: #d1d5db;
-    }
-    
+    /* Form Inputs - Glassmorphism Dark Theme */
     .form-input, .form-select, .form-textarea {
       display: block;
       width: 100%;
-      padding: 0.5rem 0.75rem;
-      border: 1px solid #d1d5db;
-      border-radius: 0.375rem;
-      background-color: white;
-      color: #111827;
+      padding: 0.75rem 1rem;
+      border: 1px solid rgba(75, 85, 99, 0.6);
+      border-radius: 12px;
+      background: rgba(31, 41, 55, 0.6);
+      backdrop-filter: blur(10px);
+      color: #f9fafb;
       font-size: 0.875rem;
+      transition: all 0.2s ease;
     }
     
     .form-input:focus, .form-select:focus, .form-textarea:focus {
       outline: none;
-      border-color: #2563eb;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-    
-    .form-checkbox {
-      width: 1rem;
-      height: 1rem;
-      color: #2563eb;
-      border-radius: 0.25rem;
-      border: 1px solid #d1d5db;
-    }
-    
-    .dark .form-input, .dark .form-select, .dark .form-textarea {
-      background-color: #1f2937;
-      border-color: #4b5563;
-      color: #f9fafb;
-    }
-    
-    .dark .form-input:focus, .dark .form-select:focus, .dark .form-textarea:focus {
       border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      background: rgba(31, 41, 55, 0.8);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    /* Select dropdown styling */
+    .form-select {
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 1rem center;
+      background-size: 1em;
+      padding-right: 2.5rem;
     }
     
-    .dark .form-checkbox {
-      background-color: #1f2937;
-      border-color: #4b5563;
+    /* Checkbox styling */
+    .form-checkbox {
+      width: 1.25rem;
+      height: 1.25rem;
+      background: rgba(31, 41, 55, 0.6);
+      border: 1px solid rgba(75, 85, 99, 0.6);
+      border-radius: 0.375rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .form-checkbox:checked {
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      border-color: #3b82f6;
+    }
+
+    .form-checkbox:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
     }
     
+    /* Button Styles - Using global button system */
     .btn-primary {
       display: inline-flex;
       align-items: center;
-      padding: 0.5rem 1rem;
-      border: 1px solid transparent;
-      font-size: 0.875rem;
-      font-weight: 500;
-      border-radius: 0.375rem;
-      color: white;
-      background-color: #2563eb;
       gap: 0.5rem;
+      padding: 0.625rem 1.25rem;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: white;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
     }
     
     .btn-primary:hover:not(:disabled) {
-      background-color: #1d4ed8;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
     }
     
     .btn-primary:disabled {
       opacity: 0.5;
       cursor: not-allowed;
+      transform: none;
     }
     
     .btn-secondary {
       display: inline-flex;
       align-items: center;
-      padding: 0.5rem 1rem;
-      border: 1px solid #d1d5db;
+      padding: 0.625rem 1.25rem;
+      border-radius: 12px;
       font-size: 0.875rem;
       font-weight: 500;
-      border-radius: 0.375rem;
-      color: #374151;
-      background-color: white;
+      transition: all 0.2s ease;
+      background: rgba(31, 41, 55, 0.6);
+      color: #d1d5db;
+      border: 1px solid rgba(75, 85, 99, 0.6);
+      backdrop-filter: blur(10px);
     }
     
     .btn-secondary:hover {
-      background-color: #f9fafb;
+      background: rgba(55, 65, 81, 0.8);
+      border-color: rgba(107, 114, 128, 0.8);
+      transform: translateY(-1px);
     }
-    
-    .dark .btn-secondary {
-      border-color: #4b5563;
-      color: #d1d5db;
-      background-color: #1f2937;
-    }
-    
-    .dark .btn-secondary:hover {
-      background-color: #374151;
+
+    /* Error state styling */
+    .form-input.border-red-500, 
+    .form-select.border-red-500 {
+      border-color: #ef4444 !important;
+      background: rgba(239, 68, 68, 0.1);
     }
   `]
 })

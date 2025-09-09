@@ -199,7 +199,7 @@
         <div>
           <label class="block text-sm font-medium text-gray-300 mb-2">Status</label>
           <select [(ngModel)]="selectedStatus"
-                  class="form-input px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white backdrop-blur-sm w-full">
+                  class="filter-select">
             <option value="all">All Status</option>
             <option value="active">Active</option>
             <option value="vip">VIP</option>
@@ -211,7 +211,7 @@
         <div>
           <label class="block text-sm font-medium text-gray-300 mb-2">City</label>
           <select [(ngModel)]="selectedCity"
-                  class="form-input px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white backdrop-blur-sm w-full">
+                  class="filter-select">
             <option value="all">All Cities</option>
             <option *ngFor="let city of availableCities()" [value]="city">{{ city }}</option>
           </select>

@@ -186,7 +186,8 @@
     <div class="glass-card">
       <!-- Mobile filter toggle -->
       <button (click)="toggleMobileFilters()" 
-              class="lg:hidden w-full mb-4 btn-secondary">
+              class="lg:hidden w-full mb-4 btn-filter-toggle"
+              [class.active]="showMobileFilters()">
         {{ showMobileFilters() ? 'Hide Filters' : 'Show Filters' }}
       </button>
 
@@ -203,7 +204,7 @@
       <div [class.hidden]="!showMobileFilters() && isMobile()" 
            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <select (change)="onStatusChange($event)" [value]="selectedStatus()"
-                class="form-input px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white backdrop-blur-sm">
+                class="filter-select">
           <option value="all">All Status</option>
           <option *ngFor="let status of getAvailableStatuses()" [value]="status">
             {{ status | titlecase }}
@@ -211,7 +212,7 @@
         </select>
 
         <select (change)="onPaymentMethodChange($event)" [value]="selectedPaymentMethod()"
-                class="form-input px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white backdrop-blur-sm">
+                class="filter-select">
           <option value="all">All Payment Methods</option>
           <option *ngFor="let method of getAvailablePaymentMethods()" [value]="method">
             {{ method | titlecase }}

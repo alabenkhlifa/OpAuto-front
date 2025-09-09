@@ -29,6 +29,13 @@ export class CarsComponent implements OnInit {
   
   availableMakes = computed(() => this.carService.getAvailableMakes());
   
+  // Check if any filters are active
+  hasActiveFilters = computed(() => {
+    return this.searchQuery() !== '' || 
+           this.selectedMake() !== 'all' || 
+           this.selectedStatus() !== 'all';
+  });
+  
   filteredCars = computed(() => {
     let filtered = [...this.cars()];
     

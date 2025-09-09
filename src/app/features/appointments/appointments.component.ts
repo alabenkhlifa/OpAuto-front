@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AppointmentService } from './services/appointment.service';
@@ -13,8 +13,10 @@ import { Appointment, AppointmentStatus } from '../../core/models/appointment.mo
   templateUrl: './appointments.component.html',
   styleUrl: './appointments.component.css'
 })
-export class AppointmentsComponent {
+export class AppointmentsComponent implements AfterViewInit {
   private appointmentService = inject(AppointmentService);
+  
+  @ViewChild(AppointmentModalComponent) appointmentModal!: AppointmentModalComponent;
   
   // Signals for reactive state
   selectedDate = this.appointmentService.selectedDate;
@@ -164,9 +166,21 @@ export class AppointmentsComponent {
     this.viewMode.set(mode);
   }
 
+  ngAfterViewInit(): void {
+    // Component initialization after view init
+  }
+
   // Appointment actions
   selectAppointment(appointment: Appointment): void {
     this.selectedAppointment.set(appointment);
+    this.showAddModal.set(true); // Open the modal for editing
+    
+    // Set the appointment for editing after a brief delay to ensure modal is rendered
+    setTimeout(() => {
+      if (this.appointmentModal) {
+        this.appointmentModal.setEditAppointment(appointment);
+      }
+    }, 0);
   }
 
   updateAppointmentStatus(appointmentId: string, status: AppointmentStatus): void {
@@ -195,11 +209,13 @@ export class AppointmentsComponent {
 
   // Modal management
   openAddModal(): void {
+    this.selectedAppointment.set(null); // Clear any selected appointment
     this.showAddModal.set(true);
   }
 
   closeAddModal(): void {
     this.showAddModal.set(false);
+    this.selectedAppointment.set(null); // Clear selected appointment
   }
 
   closeAppointmentDetails(): void {

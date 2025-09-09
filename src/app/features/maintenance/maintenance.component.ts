@@ -35,7 +35,7 @@ import { MaintenanceFiltersComponent } from './components/maintenance-filters.co
 
           <div class="flex items-center gap-3">
             <!-- Filter Toggle Button -->
-            <button class="btn-filter-toggle" (click)="showFilters.set(!showFilters())">
+            <button class="btn-filter-toggle" [class.active]="showFilters()" (click)="showFilters.set(!showFilters())">
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
               </svg>
@@ -47,19 +47,11 @@ import { MaintenanceFiltersComponent } from './components/maintenance-filters.co
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
-              <span class="hidden lg:inline">New Job</span>
+              <span>New Job</span>
             </button>
           </div>
         </div>
       </header>
-
-      <!-- Stats Overview -->
-      <div class="glass-card">
-        <app-maintenance-stats 
-          [stats]="stats()"
-          [view]="currentView()">
-        </app-maintenance-stats>
-      </div>
 
       <!-- Filters -->
       <div *ngIf="showFilters()" class="glass-card filters-panel">
@@ -69,6 +61,14 @@ import { MaintenanceFiltersComponent } from './components/maintenance-filters.co
         </app-maintenance-filters>
       </div>
 
+      <!-- Stats Overview -->
+      <div class="glass-card">
+        <app-maintenance-stats 
+          [stats]="stats()"
+          [view]="currentView()">
+        </app-maintenance-stats>
+      </div>
+
       <!-- Jobs List -->
       <div class="glass-card">
         <div class="flex items-center justify-between mb-6">
@@ -76,8 +76,8 @@ import { MaintenanceFiltersComponent } from './components/maintenance-filters.co
             {{ getJobsTitle() }} ({{ filteredJobs().length }})
           </h2>
           
-          <!-- View Toggle -->
-          <div class="view-toggle">
+          <!-- View Toggle - Hidden on mobile, shown on desktop -->
+          <div class="view-toggle" [class.hidden]="isMobile()">
             @for (view of viewOptions; track view.value) {
               <button
                 class="view-toggle-btn"
@@ -100,11 +100,11 @@ import { MaintenanceFiltersComponent } from './components/maintenance-filters.co
           </div>
         } @else {
           <!-- Jobs Grid -->
-          <div class="grid gap-4" [class]="currentView() === 'grid' ? 'grid-cols-1 lg:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'">
+          <div class="grid gap-4" [class]="getGridClasses()">
             @for (job of filteredJobs(); track job.id) {
               <app-maintenance-job-card
                 [job]="job"
-                [view]="currentView()"
+                [view]="getViewForCard()"
                 (statusChange)="onStatusChange($event)"
                 (edit)="editJob($event)"
                 (viewDetails)="viewJob($event)">
@@ -175,6 +175,11 @@ import { MaintenanceFiltersComponent } from './components/maintenance-filters.co
       gap: 0.25rem;
     }
 
+    /* Ensure hidden class works properly */
+    .view-toggle.hidden {
+      display: none !important;
+    }
+
     .view-toggle-btn {
       padding: 0.5rem 1rem;
       font-size: 0.875rem;
@@ -218,6 +223,7 @@ export class MaintenanceComponent implements OnInit {
   showFilters = signal(false);
   currentView = signal<'list' | 'grid'>('grid');
   loading = signal(false);
+  isMobile = signal(false);
 
   // View options
   viewOptions = [
@@ -244,11 +250,23 @@ export class MaintenanceComponent implements OnInit {
   ngOnInit() {
     this.loadMaintenanceData();
     this.loadStats();
+    this.checkMobileView();
     
     // Set initial view based on route
     const segment = this.route.snapshot.url[1]?.path;
     if (segment) {
       this.setViewFromRoute(segment);
+    }
+
+    // Listen for window resize
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', () => this.checkMobileView());
+    }
+  }
+
+  private checkMobileView() {
+    if (typeof window !== 'undefined') {
+      this.isMobile.set(window.innerWidth < 1024);
     }
   }
 
@@ -353,6 +371,20 @@ export class MaintenanceComponent implements OnInit {
 
   setView(view: 'list' | 'grid') {
     this.currentView.set(view);
+  }
+
+  getGridClasses(): string {
+    // Always use list view on mobile (single column)
+    // Use current view setting on desktop
+    return this.isMobile() 
+      ? 'grid-cols-1' 
+      : (this.currentView() === 'grid' ? 'grid-cols-1 lg:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1');
+  }
+
+  getViewForCard(): 'list' | 'grid' {
+    // Always use list view on mobile
+    // Use current view setting on desktop
+    return this.isMobile() ? 'list' : this.currentView();
   }
 
   onFiltersChange(newFilters: MaintenanceFilters) {

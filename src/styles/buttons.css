@@ -13,6 +13,7 @@
   padding: 0.75rem 1rem;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   transition: all 0.2s ease;
   font-weight: 600;
@@ -98,6 +99,20 @@
 
 .btn-filter-toggle:hover {
   background: rgba(31, 41, 55, 0.8);
+}
+
+/* Active state for filter toggle - shows when filters are visible */
+.btn-filter-toggle.active {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(29, 78, 216, 0.8)) !important;
+  border-color: rgba(59, 130, 246, 0.5) !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+.btn-filter-toggle.active:hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(29, 78, 216, 0.9)) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
 }
 
 /* Filter Chip Buttons (for quick filters) */

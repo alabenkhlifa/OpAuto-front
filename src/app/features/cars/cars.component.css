@@ -38,7 +38,7 @@
 
 .search-input {
   width: 100%;
-  min-width: 250px;
+  min-width: 200px;
   padding: 0.75rem 1rem 0.75rem 2.5rem;
   backdrop-filter: blur(10px);
   background: rgba(31, 41, 55, 0.7);
@@ -47,6 +47,13 @@
   font-size: 0.875rem;
   transition: all 0.2s ease;
   color: white;
+}
+
+@media (max-width: 640px) {
+  .search-input {
+    min-width: 0;
+    width: 100%;
+  }
 }
 
 .search-input:focus {
@@ -113,6 +120,19 @@
   background: rgba(31, 41, 55, 0.8);
 }
 
+.filter-toggle.active {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(29, 78, 216, 0.8)) !important;
+  border-color: rgba(59, 130, 246, 0.5) !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+.filter-toggle.active:hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(29, 78, 216, 0.9)) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
 .filters-panel {
   background: rgba(17, 24, 39, 0.9);
   backdrop-filter: blur(10px);
@@ -145,12 +165,26 @@
   font-size: 0.875rem;
   transition: all 0.2s ease;
   color: white;
+  /* Force custom styling on mobile */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+  padding-right: 2.5rem;
 }
 
 .filter-select:focus {
   outline: none;
   background: rgba(31, 41, 55, 0.9);
   border-color: rgba(59, 130, 246, 0.5);
+  /* Maintain custom dropdown arrow on focus */
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
 }
 
 .filter-select option {
