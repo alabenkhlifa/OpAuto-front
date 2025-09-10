@@ -1,23 +1,24 @@
 import { Component, Input, Output, EventEmitter, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 import { IntegrationSettings } from '../../../core/models/garage-settings.model';
 
 @Component({
   selector: 'app-integration-settings',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   template: `
     <div class="glass-card">
       
       <div class="flex items-center justify-between mb-6">
-        <h2 class="text-lg font-semibold text-white">Integration Settings</h2>
+        <h2 class="text-lg font-semibold text-white">{{ 'settings.integrations.title' | translate }}</h2>
         <div class="flex space-x-2">
           <button 
             type="button"
             class="btn-secondary text-sm"
             (click)="resetForm()">
-            Reset
+            {{ 'settings.integrations.resetButton' | translate }}
           </button>
           <button 
             type="button"
@@ -29,9 +30,9 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              Saving...
+              {{ 'settings.integrations.saving' | translate }}
             } @else {
-              Save Changes
+              {{ 'settings.integrations.saveChanges' | translate }}
             }
           </button>
         </div>
@@ -47,12 +48,12 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
               id="smsEnabled"
               class="form-checkbox"
               formControlName="smsEnabled">
-            <h3 class="text-md font-medium text-white">SMS Integration</h3>
+            <h3 class="text-md font-medium text-white">{{ 'settings.integrations.sms.title' | translate }}</h3>
           </div>
           
           <div formGroupName="sms" class="grid grid-cols-1 md:grid-cols-2 gap-4" [class.opacity-50]="!integrationForm.get('smsEnabled')?.value">
             <div>
-              <label class="form-label">SMS Service Provider</label>
+              <label class="form-label">{{ 'settings.integrations.sms.provider' | translate }}</label>
               <select 
                 class="form-select"
                 formControlName="provider"
@@ -64,22 +65,22 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
             </div>
 
             <div>
-              <label class="form-label">SMS API Key</label>
+              <label class="form-label">{{ 'settings.integrations.sms.apiKey' | translate }}</label>
               <input 
                 type="password" 
                 class="form-input"
                 formControlName="apiKey"
-                placeholder="Enter your SMS API key"
+                placeholder="{{ 'settings.integrations.sms.apiKeyPlaceholder' | translate }}"
                 [disabled]="!integrationForm.get('smsEnabled')?.value">
             </div>
 
             <div>
-              <label class="form-label">SMS Sender Name</label>
+              <label class="form-label">{{ 'settings.integrations.sms.senderName' | translate }}</label>
               <input 
                 type="text" 
                 class="form-input"
                 formControlName="senderId"
-                placeholder="OpAuto"
+                placeholder="{{ 'settings.integrations.sms.senderNamePlaceholder' | translate }}"
                 [disabled]="!integrationForm.get('smsEnabled')?.value">
             </div>
 
@@ -94,9 +95,9 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Testing...
+                  {{ 'settings.integrations.sms.testing' | translate }}
                 } @else {
-                  Test Connection
+                  {{ 'settings.integrations.sms.testConnection' | translate }}
                 }
               </button>
             </div>
@@ -111,12 +112,12 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
               id="emailEnabled"
               class="form-checkbox"
               formControlName="emailEnabled">
-            <h3 class="text-md font-medium text-white">Email Integration</h3>
+            <h3 class="text-md font-medium text-white">{{ 'settings.integrations.email.title' | translate }}</h3>
           </div>
           
           <div formGroupName="email" class="grid grid-cols-1 md:grid-cols-2 gap-4" [class.opacity-50]="!integrationForm.get('emailEnabled')?.value">
             <div>
-              <label class="form-label">Email Service Provider</label>
+              <label class="form-label">{{ 'settings.integrations.email.provider' | translate }}</label>
               <select 
                 class="form-select"
                 formControlName="provider"
@@ -128,42 +129,42 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
             </div>
 
             <div>
-              <label class="form-label">SMTP Server Address</label>
+              <label class="form-label">{{ 'settings.integrations.email.smtpHost' | translate }}</label>
               <input 
                 type="text" 
                 class="form-input"
                 formControlName="smtpHost"
-                placeholder="smtp.gmail.com"
+                placeholder="{{ 'settings.integrations.email.smtpHostPlaceholder' | translate }}"
                 [disabled]="!integrationForm.get('emailEnabled')?.value">
             </div>
 
             <div>
-              <label class="form-label">SMTP Server Port</label>
+              <label class="form-label">{{ 'settings.integrations.email.smtpPort' | translate }}</label>
               <input 
                 type="number" 
                 class="form-input"
                 formControlName="smtpPort"
-                placeholder="587"
+                placeholder="{{ 'settings.integrations.email.smtpPortPlaceholder' | translate }}"
                 [disabled]="!integrationForm.get('emailEnabled')?.value">
             </div>
 
             <div>
-              <label class="form-label">Email Account Username</label>
+              <label class="form-label">{{ 'settings.integrations.email.username' | translate }}</label>
               <input 
                 type="email" 
                 class="form-input"
                 formControlName="username"
-                placeholder="your-email@gmail.com"
+                placeholder="{{ 'settings.integrations.email.usernamePlaceholder' | translate }}"
                 [disabled]="!integrationForm.get('emailEnabled')?.value">
             </div>
 
             <div>
-              <label class="form-label">Email Account Password</label>
+              <label class="form-label">{{ 'settings.integrations.email.password' | translate }}</label>
               <input 
                 type="password" 
                 class="form-input"
                 formControlName="password"
-                placeholder="Enter your email password"
+                placeholder="{{ 'settings.integrations.email.passwordPlaceholder' | translate }}"
                 [disabled]="!integrationForm.get('emailEnabled')?.value">
             </div>
 
@@ -176,11 +177,11 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
                 @if (isTesting.email) {
                   <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Testing...
+                  {{ 'settings.integrations.email.testing' | translate }}
                 } @else {
-                  Test Connection
+                  {{ 'settings.integrations.email.testConnection' | translate }}
                 }
               </button>
             </div>
@@ -195,49 +196,49 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
               id="paymentEnabled"
               class="form-checkbox"
               formControlName="paymentEnabled">
-            <h3 class="text-md font-medium text-white">Payment Gateway</h3>
+            <h3 class="text-md font-medium text-white">{{ 'settings.integrations.payment.title' | translate }}</h3>
           </div>
           
           <div formGroupName="paymentGateway" class="grid grid-cols-1 md:grid-cols-2 gap-4" [class.opacity-50]="!integrationForm.get('paymentEnabled')?.value">
             <div>
-              <label class="form-label">Provider</label>
+              <label class="form-label">{{ 'settings.integrations.payment.provider' | translate }}</label>
               <select 
                 class="form-select"
                 formControlName="provider"
                 [disabled]="!integrationForm.get('paymentEnabled')?.value">
                 @for (provider of paymentProviders; track provider.value) {
-                  <option [value]="provider.value">{{ provider.label }}</option>
+                  <option [value]="provider.value">{{ 'settings.integrations.payment.providers.' + provider.value | translate }}</option>
                 }
               </select>
             </div>
 
             <div>
-              <label class="form-label">Merchant ID</label>
+              <label class="form-label">{{ 'settings.integrations.payment.merchantId' | translate }}</label>
               <input 
                 type="text" 
                 class="form-input"
                 formControlName="merchantId"
-                placeholder="Enter merchant ID"
+                placeholder="{{ 'settings.integrations.payment.merchantIdPlaceholder' | translate }}"
                 [disabled]="!integrationForm.get('paymentEnabled')?.value">
             </div>
 
             <div>
-              <label class="form-label">API Key</label>
+              <label class="form-label">{{ 'settings.integrations.payment.apiKey' | translate }}</label>
               <input 
                 type="password" 
                 class="form-input"
                 formControlName="apiKey"
-                placeholder="Enter payment gateway API key"
+                placeholder="{{ 'settings.integrations.payment.apiKeyPlaceholder' | translate }}"
                 [disabled]="!integrationForm.get('paymentEnabled')?.value">
             </div>
 
             <div>
-              <label class="form-label">Webhook URL</label>
+              <label class="form-label">{{ 'settings.integrations.payment.webhookUrl' | translate }}</label>
               <input 
                 type="url" 
                 class="form-input"
                 formControlName="webhookUrl"
-                placeholder="https://yourdomain.com/webhook"
+                placeholder="{{ 'settings.integrations.payment.webhookUrlPlaceholder' | translate }}"
                 [disabled]="!integrationForm.get('paymentEnabled')?.value">
             </div>
 
@@ -249,9 +250,9 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
                   class="form-checkbox"
                   formControlName="testMode"
                   [disabled]="!integrationForm.get('paymentEnabled')?.value">
-                <label for="testMode" class="text-sm font-medium text-gray-300">Test Mode</label>
+                <label for="testMode" class="text-sm font-medium text-gray-300">{{ 'settings.integrations.payment.testMode' | translate }}</label>
               </div>
-              <p class="text-sm text-gray-400 mt-1">Use sandbox environment for testing payments</p>
+              <p class="text-sm text-gray-400 mt-1">{{ 'settings.integrations.payment.testModeDescription' | translate }}</p>
             </div>
 
             <div class="flex items-center mt-6">
@@ -265,9 +266,9 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Testing...
+                  {{ 'settings.integrations.common.testing' | translate }}
                 } @else {
-                  Test Connection
+                  {{ 'settings.integrations.common.testConnection' | translate }}
                 }
               </button>
             </div>
@@ -282,52 +283,52 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
               id="inventoryEnabled"
               class="form-checkbox"
               formControlName="inventoryEnabled">
-            <h3 class="text-md font-medium text-white">Inventory Management</h3>
+            <h3 class="text-md font-medium text-white">{{ 'settings.integrations.inventory.title' | translate }}</h3>
           </div>
           
           <div formGroupName="inventory" class="grid grid-cols-1 md:grid-cols-2 gap-4" [class.opacity-50]="!integrationForm.get('inventoryEnabled')?.value">
             <div>
-              <label class="form-label">Provider</label>
+              <label class="form-label">{{ 'settings.integrations.inventory.provider' | translate }}</label>
               <select 
                 class="form-select"
                 formControlName="provider"
                 [disabled]="!integrationForm.get('inventoryEnabled')?.value">
                 @for (provider of inventoryProviders; track provider.value) {
-                  <option [value]="provider.value">{{ provider.label }}</option>
+                  <option [value]="provider.value">{{ 'settings.integrations.inventory.providers.' + provider.value | translate }}</option>
                 }
               </select>
             </div>
 
             <div>
-              <label class="form-label">API Endpoint</label>
+              <label class="form-label">{{ 'settings.integrations.inventory.apiEndpoint' | translate }}</label>
               <input 
                 type="url" 
                 class="form-input"
                 formControlName="apiEndpoint"
-                placeholder="https://api.parts-supplier.com/v1"
+                placeholder="{{ 'settings.integrations.inventory.apiEndpointPlaceholder' | translate }}"
                 [disabled]="!integrationForm.get('inventoryEnabled')?.value">
             </div>
 
             <div>
-              <label class="form-label">API Key</label>
+              <label class="form-label">{{ 'settings.integrations.inventory.apiKey' | translate }}</label>
               <input 
                 type="password" 
                 class="form-input"
                 formControlName="apiKey"
-                placeholder="Enter inventory API key"
+                placeholder="{{ 'settings.integrations.inventory.apiKeyPlaceholder' | translate }}"
                 [disabled]="!integrationForm.get('inventoryEnabled')?.value">
             </div>
 
             <div>
-              <label class="form-label">Sync Frequency</label>
+              <label class="form-label">{{ 'settings.integrations.inventory.syncFrequency' | translate }}</label>
               <select 
                 class="form-select"
                 formControlName="syncFrequency"
                 [disabled]="!integrationForm.get('inventoryEnabled')?.value">
-                <option value="realtime">Real-time</option>
-                <option value="hourly">Hourly</option>
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
+                <option value="realtime">{{ 'settings.integrations.common.frequencies.realtime' | translate }}</option>
+                <option value="hourly">{{ 'settings.integrations.common.frequencies.hourly' | translate }}</option>
+                <option value="daily">{{ 'settings.integrations.common.frequencies.daily' | translate }}</option>
+                <option value="weekly">{{ 'settings.integrations.common.frequencies.weekly' | translate }}</option>
               </select>
             </div>
 
@@ -339,9 +340,9 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
                   class="form-checkbox"
                   formControlName="autoOrderEnabled"
                   [disabled]="!integrationForm.get('inventoryEnabled')?.value">
-                <label for="autoOrder" class="text-sm font-medium text-gray-300">Auto-order when stock is low</label>
+                <label for="autoOrder" class="text-sm font-medium text-gray-300">{{ 'settings.integrations.inventory.autoOrder' | translate }}</label>
               </div>
-              <p class="text-sm text-gray-400 mt-1">Automatically create purchase orders when parts reach minimum stock levels</p>
+              <p class="text-sm text-gray-400 mt-1">{{ 'settings.integrations.inventory.autoOrderDescription' | translate }}</p>
             </div>
 
             <div class="flex items-center mt-6">
@@ -355,9 +356,9 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Testing...
+                  {{ 'settings.integrations.common.testing' | translate }}
                 } @else {
-                  Test Connection
+                  {{ 'settings.integrations.common.testConnection' | translate }}
                 }
               </button>
             </div>
@@ -372,12 +373,12 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
               id="accountingEnabled"
               class="form-checkbox"
               formControlName="accountingEnabled">
-            <h3 class="text-md font-medium text-white">Accounting Software</h3>
+            <h3 class="text-md font-medium text-white">{{ 'settings.integrations.accounting.title' | translate }}</h3>
           </div>
           
           <div formGroupName="accounting" class="grid grid-cols-1 md:grid-cols-2 gap-4" [class.opacity-50]="!integrationForm.get('accountingEnabled')?.value">
             <div>
-              <label class="form-label">Software</label>
+              <label class="form-label">{{ 'settings.integrations.accounting.software' | translate }}</label>
               <select 
                 class="form-select"
                 formControlName="software"
@@ -389,45 +390,45 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
             </div>
 
             <div>
-              <label class="form-label">API Endpoint</label>
+              <label class="form-label">{{ 'settings.integrations.accounting.apiEndpoint' | translate }}</label>
               <input 
                 type="url" 
                 class="form-input"
                 formControlName="apiEndpoint"
-                placeholder="https://api.accounting-software.com/v1"
+                placeholder="{{ 'settings.integrations.accounting.apiEndpointPlaceholder' | translate }}"
                 [disabled]="!integrationForm.get('accountingEnabled')?.value">
             </div>
 
             <div>
-              <label class="form-label">Client ID</label>
+              <label class="form-label">{{ 'settings.integrations.accounting.clientId' | translate }}</label>
               <input 
                 type="text" 
                 class="form-input"
                 formControlName="clientId"
-                placeholder="Enter client ID"
+                placeholder="{{ 'settings.integrations.accounting.clientIdPlaceholder' | translate }}"
                 [disabled]="!integrationForm.get('accountingEnabled')?.value">
             </div>
 
             <div>
-              <label class="form-label">Client Secret</label>
+              <label class="form-label">{{ 'settings.integrations.accounting.clientSecret' | translate }}</label>
               <input 
                 type="password" 
                 class="form-input"
                 formControlName="clientSecret"
-                placeholder="Enter client secret"
+                placeholder="{{ 'settings.integrations.accounting.clientSecretPlaceholder' | translate }}"
                 [disabled]="!integrationForm.get('accountingEnabled')?.value">
             </div>
 
             <div>
-              <label class="form-label">Sync Frequency</label>
+              <label class="form-label">{{ 'settings.integrations.accounting.syncFrequency' | translate }}</label>
               <select 
                 class="form-select"
                 formControlName="syncFrequency"
                 [disabled]="!integrationForm.get('accountingEnabled')?.value">
-                <option value="realtime">Real-time</option>
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
+                <option value="realtime">{{ 'settings.integrations.common.frequencies.realtime' | translate }}</option>
+                <option value="daily">{{ 'settings.integrations.common.frequencies.daily' | translate }}</option>
+                <option value="weekly">{{ 'settings.integrations.common.frequencies.weekly' | translate }}</option>
+                <option value="monthly">{{ 'settings.integrations.common.frequencies.monthly' | translate }}</option>
               </select>
             </div>
 
@@ -439,9 +440,9 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
                   class="form-checkbox"
                   formControlName="autoSyncEnabled"
                   [disabled]="!integrationForm.get('accountingEnabled')?.value">
-                <label for="autoSync" class="text-sm font-medium text-gray-300">Auto-sync invoices and expenses</label>
+                <label for="autoSync" class="text-sm font-medium text-gray-300">{{ 'settings.integrations.accounting.autoSync' | translate }}</label>
               </div>
-              <p class="text-sm text-gray-400 mt-1">Automatically synchronize financial data with your accounting software</p>
+              <p class="text-sm text-gray-400 mt-1">{{ 'settings.integrations.accounting.autoSyncDescription' | translate }}</p>
             </div>
 
             <div class="flex items-center mt-6">
@@ -455,9 +456,9 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Testing...
+                  {{ 'settings.integrations.common.testing' | translate }}
                 } @else {
-                  Test Connection
+                  {{ 'settings.integrations.common.testConnection' | translate }}
                 }
               </button>
             </div>
@@ -466,15 +467,15 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
 
         <!-- Integration Status -->
         <div>
-          <h3 class="text-md font-medium text-white mb-4">Integration Status</h3>
+          <h3 class="text-md font-medium text-white mb-4">{{ 'settings.integrations.status.title' | translate }}</h3>
           <div class="bg-gray-800/30 p-4 rounded-lg space-y-3">
             @for (status of integrationStatuses; track status.name) {
               <div class="flex items-center justify-between">
-                <span class="text-sm font-medium text-white">{{ status.name }}</span>
+                <span class="text-sm font-medium text-white">{{ 'settings.integrations.status.services.' + status.name.toLowerCase().replace(' ', '_') | translate }}</span>
                 <div class="flex items-center space-x-2">
                   <div class="w-2 h-2 rounded-full" [class]="status.connected ? 'bg-green-500' : 'bg-red-500'"></div>
                   <span class="text-sm" [class]="status.connected ? 'text-green-400' : 'text-red-400'">
-                    {{ status.connected ? 'Connected' : 'Disconnected' }}
+                    {{ status.connected ? ('settings.integrations.status.connected' | translate) : ('settings.integrations.status.disconnected' | translate) }}
                   </span>
                 </div>
               </div>

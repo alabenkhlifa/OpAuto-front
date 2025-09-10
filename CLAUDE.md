@@ -1072,3 +1072,4 @@ Do NOT use Playwright for validation or testing unless the user explicitly adds 
    - Button visibility: `await page.locator('button:has-text("Add Part")').isVisible()`
    - Element screenshot: `await page.locator('.header').screenshot({path: 'check.png'})`
    - Direct page check: `await page.goto('http://localhost:4200/inventory')`
+- always check using PL the translations, use AR language to check, you don't need to navigate to dashboard to set the language, use localstorage to set it, don't navigate to Auth screen on your own, if the page redirects you there, re login, or else don't do it on your own

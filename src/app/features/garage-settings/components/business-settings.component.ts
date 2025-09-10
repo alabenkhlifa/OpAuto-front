@@ -1,32 +1,33 @@
 import { Component, Input, Output, EventEmitter, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-settings.model';
 
 @Component({
   selector: 'app-business-settings',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   template: `
     <div class="space-y-6">
       
       <!-- Tax Settings -->
       <div class="glass-card">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-white">Tax Settings</h3>
+          <h3 class="text-lg font-semibold text-white">{{ 'settings.business.taxSettings.title' | translate }}</h3>
           <button 
             type="button"
             class="btn-primary text-sm"
             [disabled]="taxForm.invalid"
             (click)="saveTaxSettings()">
-            Save Tax Settings
+            {{ 'settings.business.taxSettings.saveButton' | translate }}
           </button>
         </div>
 
         <form [formGroup]="taxForm" class="space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label class="form-label">Default Tax Rate (%)</label>
+              <label class="form-label">{{ 'settings.business.taxSettings.defaultTaxRate' | translate }}</label>
               <input 
                 type="number" 
                 class="form-input"
@@ -36,26 +37,26 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
                 step="0.1"
                 [class.border-red-500]="isTaxFieldInvalid('defaultTaxRate')">
               @if (isTaxFieldInvalid('defaultTaxRate')) {
-                <p class="mt-1 text-sm text-red-400">Tax rate must be between 0 and 100</p>
+                <p class="mt-1 text-sm text-red-400">{{ 'settings.business.taxSettings.taxRateValidation' | translate }}</p>
               }
             </div>
 
             <div>
-              <label class="form-label">Tax Label</label>
+              <label class="form-label">{{ 'settings.business.taxSettings.taxLabel' | translate }}</label>
               <input 
                 type="text" 
                 class="form-input"
                 formControlName="taxLabel"
-                placeholder="TVA, VAT, GST">
+                placeholder="{{ 'settings.business.taxSettings.taxLabelPlaceholder' | translate }}">
             </div>
 
             <div>
-              <label class="form-label">Tax ID</label>
+              <label class="form-label">{{ 'settings.business.taxSettings.taxId' | translate }}</label>
               <input 
                 type="text" 
                 class="form-input"
                 formControlName="taxId"
-                placeholder="TN123456789">
+                placeholder="{{ 'settings.business.taxSettings.taxIdPlaceholder' | translate }}">
             </div>
           </div>
 
@@ -65,7 +66,7 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
                 type="checkbox" 
                 class="form-checkbox mr-2"
                 formControlName="taxIncluded">
-              <span class="text-sm font-medium text-gray-300">Tax included in prices</span>
+              <span class="text-sm font-medium text-gray-300">{{ 'settings.business.taxSettings.taxIncluded' | translate }}</span>
             </label>
 
             <label class="flex items-center">
@@ -73,7 +74,7 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
                 type="checkbox" 
                 class="form-checkbox mr-2"
                 formControlName="applyTaxToLabor">
-              <span class="text-sm font-medium text-gray-300">Apply tax to labor charges</span>
+              <span class="text-sm font-medium text-gray-300">{{ 'settings.business.taxSettings.applyTaxToLabor' | translate }}</span>
             </label>
 
             <label class="flex items-center">
@@ -81,7 +82,7 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
                 type="checkbox" 
                 class="form-checkbox mr-2"
                 formControlName="applyTaxToParts">
-              <span class="text-sm font-medium text-gray-300">Apply tax to parts</span>
+              <span class="text-sm font-medium text-gray-300">{{ 'settings.business.taxSettings.applyTaxToParts' | translate }}</span>
             </label>
           </div>
         </form>
@@ -90,18 +91,18 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
       <!-- Payment Settings -->
       <div class="glass-card">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-white">Payment Settings</h3>
+          <h3 class="text-lg font-semibold text-white">{{ 'settings.business.paymentSettings.title' | translate }}</h3>
           <button 
             type="button"
             class="btn-primary text-sm"
             (click)="savePaymentSettings()">
-            Save Payment Settings
+            {{ 'settings.business.paymentSettings.saveButton' | translate }}
           </button>
         </div>
 
         <form [formGroup]="paymentForm" class="space-y-4">
           <div>
-            <label class="form-label">Accepted Payment Methods</label>
+            <label class="form-label">{{ 'settings.business.paymentSettings.acceptedMethods' | translate }}</label>
             <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
               @for (method of paymentMethods; track method.value) {
                 <label class="flex items-center p-3 border border-gray-600 rounded-lg hover:bg-gray-700/50 cursor-pointer">
@@ -112,8 +113,8 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
                     [checked]="isPaymentMethodSelected(method.value)"
                     (change)="onPaymentMethodChange(method.value, $event)">
                   <div>
-                    <div class="font-medium text-white">{{ method.label }}</div>
-                    <div class="text-sm text-gray-400">{{ method.description }}</div>
+                    <div class="font-medium text-white">{{ 'settings.business.paymentSettings.methods.' + method.value + '.label' | translate }}</div>
+                    <div class="text-sm text-gray-400">{{ 'settings.business.paymentSettings.methods.' + method.value + '.description' | translate }}</div>
                   </div>
                 </label>
               }
@@ -122,7 +123,7 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="form-label">Late Fee (%)</label>
+              <label class="form-label">{{ 'settings.business.paymentSettings.lateFee' | translate }}</label>
               <input 
                 type="number" 
                 class="form-input"
@@ -133,7 +134,7 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
             </div>
 
             <div>
-              <label class="form-label">Late Fee Grace Period (days)</label>
+              <label class="form-label">{{ 'settings.business.paymentSettings.gracePeriod' | translate }}</label>
               <input 
                 type="number" 
                 class="form-input"
@@ -144,12 +145,12 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
           </div>
 
           <div>
-            <label class="form-label">Default Payment Terms</label>
+            <label class="form-label">{{ 'settings.business.paymentSettings.defaultTerms' | translate }}</label>
             <textarea 
               class="form-textarea"
               formControlName="defaultPaymentTerms"
               rows="2"
-              placeholder="Payment due upon completion of service">
+              placeholder="{{ 'settings.business.paymentSettings.defaultTermsPlaceholder' | translate }}">
             </textarea>
           </div>
 
@@ -159,7 +160,7 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
                 type="checkbox" 
                 class="form-checkbox mr-2"
                 formControlName="allowPartialPayments">
-              <span class="text-sm font-medium text-gray-300">Allow partial payments</span>
+              <span class="text-sm font-medium text-gray-300">{{ 'settings.business.paymentSettings.allowPartialPayments' | translate }}</span>
             </label>
           </div>
         </form>
@@ -168,19 +169,19 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
       <!-- Pricing Rules -->
       <div class="glass-card">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-white">Pricing Rules</h3>
+          <h3 class="text-lg font-semibold text-white">{{ 'settings.business.pricingRules.title' | translate }}</h3>
           <button 
             type="button"
             class="btn-primary text-sm"
             (click)="savePricingRules()">
-            Save Pricing Rules
+            {{ 'settings.business.pricingRules.saveButton' | translate }}
           </button>
         </div>
 
         <form [formGroup]="pricingForm" class="space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="form-label">Labor Rate per Hour ({{ settings.currency || 'TND' }})</label>
+              <label class="form-label">{{ 'settings.business.pricingRules.laborRate' | translate }} ({{ settings.currency || 'TND' }})</label>
               <input 
                 type="number" 
                 class="form-input"
@@ -190,7 +191,7 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
             </div>
 
             <div>
-              <label class="form-label">Weekend Surcharge (%)</label>
+              <label class="form-label">{{ 'settings.business.pricingRules.weekendSurcharge' | translate }}</label>
               <input 
                 type="number" 
                 class="form-input"
@@ -201,7 +202,7 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
             </div>
 
             <div>
-              <label class="form-label">Urgent Job Surcharge (%)</label>
+              <label class="form-label">{{ 'settings.business.pricingRules.urgentSurcharge' | translate }}</label>
               <input 
                 type="number" 
                 class="form-input"
@@ -212,7 +213,7 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
             </div>
 
             <div>
-              <label class="form-label">Loyal Customer Discount (%)</label>
+              <label class="form-label">{{ 'settings.business.pricingRules.loyalDiscount' | translate }}</label>
               <input 
                 type="number" 
                 class="form-input"
@@ -223,7 +224,7 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
             </div>
 
             <div>
-              <label class="form-label">Bulk Discount Threshold ({{ settings.currency || 'TND' }})</label>
+              <label class="form-label">{{ 'settings.business.pricingRules.bulkThreshold' | translate }} ({{ settings.currency || 'TND' }})</label>
               <input 
                 type="number" 
                 class="form-input"
@@ -233,7 +234,7 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
             </div>
 
             <div>
-              <label class="form-label">Bulk Discount Percentage (%)</label>
+              <label class="form-label">{{ 'settings.business.pricingRules.bulkDiscount' | translate }}</label>
               <input 
                 type="number" 
                 class="form-input"
@@ -250,7 +251,7 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
                 type="checkbox" 
                 class="form-checkbox mr-2"
                 formControlName="autoApplyDiscounts">
-              <span class="text-sm font-medium text-gray-300">Automatically apply discounts when applicable</span>
+              <span class="text-sm font-medium text-gray-300">{{ 'settings.business.pricingRules.autoApplyDiscounts' | translate }}</span>
             </label>
           </div>
         </form>
@@ -259,37 +260,37 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
       <!-- Invoice Settings -->
       <div class="glass-card">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-white">Invoice Settings</h3>
+          <h3 class="text-lg font-semibold text-white">{{ 'settings.business.invoiceSettings.title' | translate }}</h3>
           <button 
             type="button"
             class="btn-primary text-sm"
             (click)="saveInvoiceSettings()">
-            Save Invoice Settings
+            {{ 'settings.business.invoiceSettings.saveButton' | translate }}
           </button>
         </div>
 
         <form [formGroup]="invoiceForm" class="space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label class="form-label">Invoice Prefix</label>
+              <label class="form-label">{{ 'settings.business.invoiceSettings.invoicePrefix' | translate }}</label>
               <input 
                 type="text" 
                 class="form-input"
                 formControlName="invoicePrefix"
-                placeholder="INV">
+                placeholder="{{ 'settings.business.invoiceSettings.invoicePrefixPlaceholder' | translate }}">
             </div>
 
             <div>
-              <label class="form-label">Number Format</label>
+              <label class="form-label">{{ 'settings.business.invoiceSettings.numberFormat' | translate }}</label>
               <input 
                 type="text" 
                 class="form-input"
                 formControlName="invoiceNumberFormat"
-                placeholder="INV-{YYYY}-{000001}">
+                placeholder="{{ 'settings.business.invoiceSettings.numberFormatPlaceholder' | translate }}">
             </div>
 
             <div>
-              <label class="form-label">Next Invoice Number</label>
+              <label class="form-label">{{ 'settings.business.invoiceSettings.nextInvoiceNumber' | translate }}</label>
               <input 
                 type="number" 
                 class="form-input"
@@ -299,12 +300,12 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
           </div>
 
           <div>
-            <label class="form-label">Default Payment Terms</label>
+            <label class="form-label">{{ 'settings.business.invoiceSettings.defaultPaymentTerms' | translate }}</label>
             <textarea 
               class="form-textarea"
               formControlName="defaultPaymentTerms"
               rows="2"
-              placeholder="Payment terms and conditions">
+              placeholder="{{ 'settings.business.invoiceSettings.paymentTermsPlaceholder' | translate }}">
             </textarea>
           </div>
 
@@ -314,7 +315,7 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
                 type="checkbox" 
                 class="form-checkbox mr-2"
                 formControlName="showItemCodes">
-              <span class="text-sm font-medium text-gray-300">Show item codes on invoices</span>
+              <span class="text-sm font-medium text-gray-300">{{ 'settings.business.invoiceSettings.showItemCodes' | translate }}</span>
             </label>
 
             <label class="flex items-center">
@@ -322,7 +323,7 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
                 type="checkbox" 
                 class="form-checkbox mr-2"
                 formControlName="showMechanicNames">
-              <span class="text-sm font-medium text-gray-300">Show mechanic names on invoices</span>
+              <span class="text-sm font-medium text-gray-300">{{ 'settings.business.invoiceSettings.showMechanicNames' | translate }}</span>
             </label>
 
             <label class="flex items-center">
@@ -330,29 +331,29 @@ import { BusinessSettings, PaymentMethod } from '../../../core/models/garage-set
                 type="checkbox" 
                 class="form-checkbox mr-2"
                 formControlName="includeTermsAndConditions">
-              <span class="text-sm font-medium text-gray-300">Include terms and conditions</span>
+              <span class="text-sm font-medium text-gray-300">{{ 'settings.business.invoiceSettings.includeTermsAndConditions' | translate }}</span>
             </label>
           </div>
 
           @if (includeTermsAndConditions()) {
             <div>
-              <label class="form-label">Terms and Conditions</label>
+              <label class="form-label">{{ 'settings.business.invoiceSettings.termsAndConditions' | translate }}</label>
               <textarea 
                 class="form-textarea"
                 formControlName="termsAndConditions"
                 rows="4"
-                placeholder="Enter your terms and conditions">
+                placeholder="{{ 'settings.business.invoiceSettings.termsPlaceholder' | translate }}">
               </textarea>
             </div>
           }
 
           <div>
-            <label class="form-label">Invoice Footer Text</label>
+            <label class="form-label">{{ 'settings.business.invoiceSettings.footerText' | translate }}</label>
             <input 
               type="text" 
               class="form-input"
               formControlName="footerText"
-              placeholder="Thank you for choosing our garage!">
+              placeholder="{{ 'settings.business.invoiceSettings.footerTextPlaceholder' | translate }}">
           </div>
         </form>
       </div>

@@ -2,11 +2,14 @@ import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { SidebarService } from '../../../core/services/sidebar.service';
+import { TranslationService } from '../../../core/services/translation.service';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 import { filter, Subscription } from 'rxjs';
 
 interface NavItem {
   id: string;
   label: string;
+  translationKey: string;
   icon: string;
   route?: string;
   badge?: number;
@@ -18,13 +21,14 @@ interface NavItem {
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, TranslatePipe],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.css'
 })
 export class SidebarComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private sidebarService = inject(SidebarService);
+  private translationService = inject(TranslationService);
   private routerSubscription?: Subscription;
   
   isCollapsed = this.sidebarService.isCollapsed;
@@ -35,6 +39,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
     {
       id: 'dashboard',
       label: 'Dashboard',
+      translationKey: 'navigation.dashboard',
       icon: 'dashboard',
       route: '/dashboard',
       isActive: true
@@ -42,59 +47,67 @@ export class SidebarComponent implements OnInit, OnDestroy {
     {
       id: 'appointments',
       label: 'Appointments',
+      translationKey: 'navigation.appointments',
       icon: 'calendar',
       route: '/appointments',
       badge: 3
     },
     {
       id: 'cars',
-      label: 'Car Management',
+      label: 'Cars',
+      translationKey: 'navigation.cars',
       icon: 'car',
       route: '/cars'
     },
     {
       id: 'maintenance',
       label: 'Maintenance',
+      translationKey: 'navigation.maintenance',
       icon: 'wrench',
       isExpanded: false,
       children: [
-        { id: 'maintenance-active', label: 'Active Jobs', icon: 'play', route: '/maintenance/active', badge: 5 },
-        { id: 'maintenance-history', label: 'History', icon: 'history', route: '/maintenance/history' },
-        { id: 'maintenance-schedule', label: 'Schedule', icon: 'calendar', route: '/maintenance/schedule' }
+        { id: 'maintenance-active', label: 'Active Jobs', translationKey: 'maintenance.activeJobs', icon: 'play', route: '/maintenance/active', badge: 5 },
+        { id: 'maintenance-history', label: 'Completed Jobs', translationKey: 'maintenance.completedJobs', icon: 'history', route: '/maintenance/history' },
+        { id: 'maintenance-schedule', label: 'Schedule', translationKey: 'maintenance.schedule', icon: 'calendar', route: '/maintenance/schedule' }
       ]
     },
     {
       id: 'inventory',
       label: 'Parts & Inventory',
+      translationKey: 'navigation.inventory',
       icon: 'package',
       route: '/inventory'
     },
     {
       id: 'invoices',
       label: 'Invoicing',
+      translationKey: 'navigation.invoicing',
       icon: 'receipt',
       isExpanded: false,
       children: [
-        { id: 'invoices-list', label: 'All Invoices', icon: 'list', route: '/invoices' },
-        { id: 'invoices-create', label: 'Create Invoice', icon: 'plus', route: '/invoices/create' },
-        { id: 'invoices-pending', label: 'Pending Payment', icon: 'clock', route: '/invoices/pending', badge: 2 }
+        { id: 'invoices-list', label: 'All Invoices', translationKey: 'invoicing.allInvoices', icon: 'list', route: '/invoices' },
+        { id: 'invoices-create', label: 'Create Invoice', translationKey: 'invoicing.createInvoice', icon: 'plus', route: '/invoices/create' },
+        { id: 'invoices-pending', label: 'Pending Payment', translationKey: 'invoicing.pendingPayment', icon: 'clock', route: '/invoices/pending', badge: 2 }
       ]
     },
     {
       id: 'customers',
       label: 'Customers',
+      translationKey: 'navigation.customers',
       icon: 'users',
       route: '/customers'
     },
     {
       id: 'reports',
       label: 'Reports',
+      translationKey: 'navigation.reports',
       icon: 'chart',
       route: '/reports'
     },
     {
       id: 'approvals',
       label: 'Approvals',
+      translationKey: 'maintenance.pendingApproval',
       icon: 'check-circle',
       route: '/approvals',
       badge: 3
@@ -104,23 +117,31 @@ export class SidebarComponent implements OnInit, OnDestroy {
   settingsItems: NavItem[] = [
     {
       id: 'garage-settings',
-      label: 'Garage Settings',
+      label: 'Settings',
+      translationKey: 'navigation.settings',
       icon: 'settings',
       route: '/settings'
     },
     {
       id: 'employees',
       label: 'Employees',
+      translationKey: 'navigation.employees',
       icon: 'team',
       route: '/employees'
     },
     {
       id: 'profile',
       label: 'Profile',
+      translationKey: 'navigation.profile',
       icon: 'user',
       route: '/profile'
     }
   ];
+
+  // Helper method to get translated label
+  getTranslatedLabel(translationKey: string, fallback: string): string {
+    return this.translationService.instant(translationKey) || fallback;
+  }
 
   ngOnInit() {
     // Set initial active state based on current URL

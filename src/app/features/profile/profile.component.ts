@@ -4,20 +4,20 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
-import { LanguageService, SupportedLanguage } from '../../core/services/language.service';
 import { User, ChangePasswordRequest, AuthError, UserRole, USER_ROLE_LABELS } from '../../core/models/auth.model';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   template: `
     <div class="min-h-screen p-6">
       <!-- Header -->
       <div class="glass-card mb-6">
         <div>
-          <h1 class="text-3xl font-bold text-white">Profile Settings</h1>
-          <p class="text-gray-300 mt-1">Manage your account and preferences</p>
+          <h1 class="text-3xl font-bold text-white">{{ 'profile.title' | translate }}</h1>
+          <p class="text-gray-300 mt-1">{{ 'profile.subtitle' | translate }}</p>
         </div>
       </div>
 
@@ -43,15 +43,15 @@ import { User, ChangePasswordRequest, AuthError, UserRole, USER_ROLE_LABELS } fr
             <!-- Quick Stats -->
             <div class="space-y-3">
               <div class="flex justify-between items-center py-2 border-b border-white/10">
-                <span class="text-gray-300 text-sm">Member Since</span>
+                <span class="text-gray-300 text-sm">{{ 'profile.memberSince' | translate }}</span>
                 <span class="text-white text-sm font-medium">{{ formatDate(currentUser()?.createdAt) }}</span>
               </div>
               <div class="flex justify-between items-center py-2 border-b border-white/10">
-                <span class="text-gray-300 text-sm">Last Login</span>
+                <span class="text-gray-300 text-sm">{{ 'profile.lastLogin' | translate }}</span>
                 <span class="text-white text-sm font-medium">{{ formatDate(currentUser()?.lastLogin) }}</span>
               </div>
               <div class="flex justify-between items-center py-2">
-                <span class="text-gray-300 text-sm">Account Status</span>
+                <span class="text-gray-300 text-sm">{{ 'profile.accountStatus' | translate }}</span>
                 <span [class]="currentUser()?.isActive ? 'badge badge-active' : 'badge badge-inactive'">
                   {{ currentUser()?.isActive ? 'Active' : 'Inactive' }}
                 </span>
@@ -65,7 +65,7 @@ import { User, ChangePasswordRequest, AuthError, UserRole, USER_ROLE_LABELS } fr
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H4a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
               </svg>
-              Sign Out
+              {{ 'profile.signOut' | translate }}
             </button>
           </div>
         </div>
@@ -83,7 +83,7 @@ import { User, ChangePasswordRequest, AuthError, UserRole, USER_ROLE_LABELS } fr
                   <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
-                  Profile
+                  {{ 'profile.tabs.profile' | translate }}
                 </div>
               </button>
 
@@ -95,7 +95,7 @@ import { User, ChangePasswordRequest, AuthError, UserRole, USER_ROLE_LABELS } fr
                   <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
                   </svg>
-                  Preferences
+                  {{ 'profile.tabs.preferences' | translate }}
                 </div>
               </button>
 
@@ -107,7 +107,7 @@ import { User, ChangePasswordRequest, AuthError, UserRole, USER_ROLE_LABELS } fr
                   <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
-                  Security
+                  {{ 'profile.tabs.security' | translate }}
                 </div>
               </button>
             </div>
@@ -121,7 +121,7 @@ import { User, ChangePasswordRequest, AuthError, UserRole, USER_ROLE_LABELS } fr
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label class="form-label">Full Name</label>
+                        <label class="form-label">{{ 'profile.profileForm.fullName' | translate }}</label>
                         <input
                           type="text"
                           class="form-input"
@@ -129,12 +129,12 @@ import { User, ChangePasswordRequest, AuthError, UserRole, USER_ROLE_LABELS } fr
                           placeholder="Enter your full name"
                           [class.border-red-500]="isFieldInvalid('name', profileForm)">
                         @if (isFieldInvalid('name', profileForm)) {
-                          <p class="mt-1 text-sm text-red-400">Name is required</p>
+                          <p class="mt-1 text-sm text-red-400">{{ 'profile.profileForm.fullNameRequired' | translate }}</p>
                         }
                       </div>
 
                       <div>
-                        <label class="form-label">Email Address</label>
+                        <label class="form-label">{{ 'profile.profileForm.emailAddress' | translate }}</label>
                         <input
                           type="email"
                           class="form-input"
@@ -142,14 +142,14 @@ import { User, ChangePasswordRequest, AuthError, UserRole, USER_ROLE_LABELS } fr
                           placeholder="Enter your email"
                           [class.border-red-500]="isFieldInvalid('email', profileForm)">
                         @if (isFieldInvalid('email', profileForm)) {
-                          <p class="mt-1 text-sm text-red-400">Valid email is required</p>
+                          <p class="mt-1 text-sm text-red-400">{{ 'profile.profileForm.emailRequired' | translate }}</p>
                         }
                       </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label class="form-label">Phone Number</label>
+                        <label class="form-label">{{ 'profile.profileForm.phoneNumber' | translate }}</label>
                         <input
                           type="tel"
                           class="form-input"
@@ -158,7 +158,7 @@ import { User, ChangePasswordRequest, AuthError, UserRole, USER_ROLE_LABELS } fr
                       </div>
 
                       <div>
-                        <label class="form-label">Garage Name</label>
+                        <label class="form-label">{{ 'profile.profileForm.garageName' | translate }}</label>
                         <input
                           type="text"
                           class="form-input"
@@ -166,7 +166,7 @@ import { User, ChangePasswordRequest, AuthError, UserRole, USER_ROLE_LABELS } fr
                           placeholder="Enter garage name"
                           [class.border-red-500]="isFieldInvalid('garageName', profileForm)">
                         @if (isFieldInvalid('garageName', profileForm)) {
-                          <p class="mt-1 text-sm text-red-400">Garage name is required</p>
+                          <p class="mt-1 text-sm text-red-400">{{ 'profile.profileForm.garageNameRequired' | translate }}</p>
                         }
                       </div>
                     </div>
@@ -177,7 +177,7 @@ import { User, ChangePasswordRequest, AuthError, UserRole, USER_ROLE_LABELS } fr
                         type="button"
                         class="btn-secondary"
                         (click)="resetProfileForm()">
-                        Reset
+                        {{ 'profile.buttons.reset' | translate }}
                       </button>
                       <button
                         type="submit"
@@ -188,9 +188,9 @@ import { User, ChangePasswordRequest, AuthError, UserRole, USER_ROLE_LABELS } fr
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                           </svg>
-                          Updating...
+                          {{ 'profile.loadingStates.updating' | translate }}
                         } @else {
-                          Update Profile
+                          {{ 'profile.buttons.updateProfile' | translate }}
                         }
                       </button>
                     </div>
@@ -201,24 +201,14 @@ import { User, ChangePasswordRequest, AuthError, UserRole, USER_ROLE_LABELS } fr
                 @if (activeTab() === 'preferences') {
                   <form [formGroup]="preferencesForm" (ngSubmit)="onUpdatePreferences()" class="space-y-6">
 
-                    <!-- Language Settings -->
-                    <div>
-                      <label class="form-label">Language</label>
-                      <select class="form-input" formControlName="language">
-                        <option value="en">English</option>
-                        <option value="fr">Français</option>
-                        <option value="ar">العربية</option>
-                      </select>
-                    </div>
-
                     <!-- Notification Settings -->
                     <div>
-                      <label class="form-label">Notifications</label>
+                      <label class="form-label">{{ 'profile.preferences.notifications' | translate }}</label>
                       <div class="space-y-3 mt-2">
                         <div class="flex items-center justify-between">
                           <div>
-                            <p class="text-sm font-medium text-white">Email Notifications</p>
-                            <p class="text-xs text-gray-400">Receive notifications via email</p>
+                            <p class="text-sm font-medium text-white">{{ 'profile.preferences.emailNotifications' | translate }}</p>
+                            <p class="text-xs text-gray-400">{{ 'profile.preferences.emailNotificationsDescription' | translate }}</p>
                           </div>
                           <label class="relative inline-flex items-center cursor-pointer">
                             <input
@@ -231,8 +221,8 @@ import { User, ChangePasswordRequest, AuthError, UserRole, USER_ROLE_LABELS } fr
 
                         <div class="flex items-center justify-between">
                           <div>
-                            <p class="text-sm font-medium text-white">SMS Notifications</p>
-                            <p class="text-xs text-gray-400">Receive notifications via SMS</p>
+                            <p class="text-sm font-medium text-white">{{ 'profile.preferences.smsNotifications' | translate }}</p>
+                            <p class="text-xs text-gray-400">{{ 'profile.preferences.smsNotificationsDescription' | translate }}</p>
                           </div>
                           <label class="relative inline-flex items-center cursor-pointer">
                             <input
@@ -245,8 +235,8 @@ import { User, ChangePasswordRequest, AuthError, UserRole, USER_ROLE_LABELS } fr
 
                         <div class="flex items-center justify-between">
                           <div>
-                            <p class="text-sm font-medium text-white">Browser Notifications</p>
-                            <p class="text-xs text-gray-400">Receive notifications in browser</p>
+                            <p class="text-sm font-medium text-white">{{ 'profile.preferences.browserNotifications' | translate }}</p>
+                            <p class="text-xs text-gray-400">{{ 'profile.preferences.browserNotificationsDescription' | translate }}</p>
                           </div>
                           <label class="relative inline-flex items-center cursor-pointer">
                             <input
@@ -265,7 +255,7 @@ import { User, ChangePasswordRequest, AuthError, UserRole, USER_ROLE_LABELS } fr
                         type="button"
                         class="btn-secondary"
                         (click)="resetPreferencesForm()">
-                        Reset
+                        {{ 'profile.buttons.reset' | translate }}
                       </button>
                       <button
                         type="submit"
@@ -276,9 +266,9 @@ import { User, ChangePasswordRequest, AuthError, UserRole, USER_ROLE_LABELS } fr
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                           </svg>
-                          Saving...
+                          {{ 'profile.loadingStates.saving' | translate }}
                         } @else {
-                          Save Preferences
+                          {{ 'profile.buttons.savePreferences' | translate }}
                         }
                       </button>
                     </div>
@@ -295,14 +285,14 @@ import { User, ChangePasswordRequest, AuthError, UserRole, USER_ROLE_LABELS } fr
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
                         </svg>
                         <div>
-                          <h3 class="text-sm font-medium text-amber-300">Security Reminder</h3>
-                          <p class="text-sm text-amber-400 mt-1">Use a strong password with at least 8 characters, including uppercase, lowercase, and numbers.</p>
+                          <h3 class="text-sm font-medium text-amber-300">{{ 'profile.security.securityReminderTitle' | translate }}</h3>
+                          <p class="text-sm text-amber-400 mt-1">{{ 'profile.security.securityReminder' | translate }}</p>
                         </div>
                       </div>
                     </div>
 
                     <div>
-                      <label class="form-label">Current Password</label>
+                      <label class="form-label">{{ 'profile.security.currentPassword' | translate }}</label>
                       <div class="relative">
                         <input
                           [type]="showCurrentPassword() ? 'text' : 'password'"
@@ -325,12 +315,12 @@ import { User, ChangePasswordRequest, AuthError, UserRole, USER_ROLE_LABELS } fr
                         </button>
                       </div>
                       @if (isFieldInvalid('currentPassword', passwordForm)) {
-                        <p class="mt-1 text-sm text-red-400">Current password is required</p>
+                        <p class="mt-1 text-sm text-red-400">{{ 'profile.security.currentPasswordRequired' | translate }}</p>
                       }
                     </div>
 
                     <div>
-                      <label class="form-label">New Password</label>
+                      <label class="form-label">{{ 'profile.security.newPassword' | translate }}</label>
                       <div class="relative">
                         <input
                           [type]="showNewPassword() ? 'text' : 'password'"
@@ -353,12 +343,12 @@ import { User, ChangePasswordRequest, AuthError, UserRole, USER_ROLE_LABELS } fr
                         </button>
                       </div>
                       @if (isFieldInvalid('newPassword', passwordForm)) {
-                        <p class="mt-1 text-sm text-red-400">Password must be at least 6 characters</p>
+                        <p class="mt-1 text-sm text-red-400">{{ 'profile.security.newPasswordMinLength' | translate }}</p>
                       }
                     </div>
 
                     <div>
-                      <label class="form-label">Confirm New Password</label>
+                      <label class="form-label">{{ 'profile.security.confirmPassword' | translate }}</label>
                       <div class="relative">
                         <input
                           [type]="showConfirmNewPassword() ? 'text' : 'password'"
@@ -381,9 +371,9 @@ import { User, ChangePasswordRequest, AuthError, UserRole, USER_ROLE_LABELS } fr
                         </button>
                       </div>
                       @if (isFieldInvalid('confirmPassword', passwordForm)) {
-                        <p class="mt-1 text-sm text-red-400">Please confirm your password</p>
+                        <p class="mt-1 text-sm text-red-400">{{ 'profile.security.confirmPasswordRequired' | translate }}</p>
                       } @else if (hasNewPasswordMismatch()) {
-                        <p class="mt-1 text-sm text-red-400">Passwords do not match</p>
+                        <p class="mt-1 text-sm text-red-400">{{ 'profile.security.passwordsMismatch' | translate }}</p>
                       }
                     </div>
 
@@ -393,7 +383,7 @@ import { User, ChangePasswordRequest, AuthError, UserRole, USER_ROLE_LABELS } fr
                         type="button"
                         class="btn-secondary"
                         (click)="resetPasswordForm()">
-                        Reset
+                        {{ 'profile.buttons.reset' | translate }}
                       </button>
                       <button
                         type="submit"
@@ -404,9 +394,9 @@ import { User, ChangePasswordRequest, AuthError, UserRole, USER_ROLE_LABELS } fr
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                           </svg>
-                          Changing...
+                          {{ 'profile.loadingStates.changing' | translate }}
                         } @else {
-                          Change Password
+                          {{ 'profile.buttons.changePassword' | translate }}
                         }
                       </button>
                     </div>
@@ -506,7 +496,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private authService = inject(AuthService);
-  private languageService = inject(LanguageService);
   private destroy$ = new Subject<void>();
 
   activeTab = signal<'profile' | 'preferences' | 'security'>('profile');
@@ -542,7 +531,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
     });
 
     this.preferencesForm = this.fb.group({
-      language: ['en'],
       emailNotifications: [true],
       smsNotifications: [false],
       browserNotifications: [true]
@@ -566,13 +554,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
           this.router.navigate(['/auth']);
         }
       });
-
-    // Also listen to language changes from the language toggle
-    this.languageService.currentLanguage$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(language => {
-        this.preferencesForm.patchValue({ language }, { emitEvent: false });
-      });
   }
 
   private populateForms(user: User) {
@@ -585,15 +566,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
     if (user.preferences) {
       this.preferencesForm.patchValue({
-        language: user.preferences.language || this.languageService.getCurrentLanguage(),
         emailNotifications: user.preferences.notifications.email,
         smsNotifications: user.preferences.notifications.sms,
         browserNotifications: user.preferences.notifications.browser
-      });
-    } else {
-      // Set current language if no preferences exist
-      this.preferencesForm.patchValue({
-        language: this.languageService.getCurrentLanguage()
       });
     }
   }
@@ -621,12 +596,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
     if (this.preferencesForm.valid && !this.isLoading()) {
       this.isLoading.set(true);
       this.clearMessages();
-
-      // Update language service with new language preference
-      const newLanguage = this.preferencesForm.get('language')?.value as SupportedLanguage;
-      if (newLanguage !== this.languageService.getCurrentLanguage()) {
-        this.languageService.setLanguage(newLanguage);
-      }
 
       // In a real app, this would call an API to save all preferences
       setTimeout(() => {

@@ -2,22 +2,25 @@ import { Component, Input, Output, EventEmitter, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MaintenanceFilters, MaintenanceStatus, MaintenancePriority } from '../../../core/models/maintenance.model';
+import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
+import { TranslationService } from '../../../core/services/translation.service';
+import { inject } from '@angular/core';
 
 @Component({
   selector: 'app-maintenance-filters',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   template: `
     <div class="glass-card">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-medium text-white">Filters</h3>
+        <h3 class="text-lg font-medium text-white">{{ 'maintenance.filters.title' | translate }}</h3>
         <button 
           class="btn-clear-filters"
           (click)="clearFilters()">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
-          Clear All
+          {{ 'maintenance.filters.clearAll' | translate }}
         </button>
       </div>
 
@@ -26,28 +29,28 @@ import { MaintenanceFilters, MaintenanceStatus, MaintenancePriority } from '../.
         <!-- Search -->
         <div>
           <label class="block text-sm font-medium text-gray-300 mb-1">
-            Search
+            {{ 'maintenance.filters.search' | translate }}
           </label>
           <input
             type="text"
             [(ngModel)]="localFilters.searchTerm"
             (ngModelChange)="onFilterChange()"
-            placeholder="Job title, customer, license plate..."
+            placeholder="{{ 'maintenance.filters.searchPlaceholder' | translate }}"
             class="form-input">
         </div>
 
         <!-- Status Filter -->
         <div>
           <label class="block text-sm font-medium text-gray-300 mb-1">
-            Status
+            {{ 'maintenance.filters.status' | translate }}
           </label>
           <select
             [(ngModel)]="selectedStatus"
             (ngModelChange)="onStatusChange($event)"
             class="form-select">
-            <option value="">All Statuses</option>
+            <option value="">{{ 'maintenance.filters.allStatuses' | translate }}</option>
             @for (status of statusOptions; track status.value) {
-              <option [value]="status.value">{{ status.label }}</option>
+              <option [value]="status.value">{{ getStatusLabel(status.value) }}</option>
             }
           </select>
         </div>
@@ -55,15 +58,15 @@ import { MaintenanceFilters, MaintenanceStatus, MaintenancePriority } from '../.
         <!-- Priority Filter -->
         <div>
           <label class="block text-sm font-medium text-gray-300 mb-1">
-            Priority
+            {{ 'maintenance.filters.priority' | translate }}
           </label>
           <select
             [(ngModel)]="selectedPriority"
             (ngModelChange)="onPriorityChange($event)"
             class="form-select">
-            <option value="">All Priorities</option>
+            <option value="">{{ 'maintenance.filters.allPriorities' | translate }}</option>
             @for (priority of priorityOptions; track priority.value) {
-              <option [value]="priority.value">{{ priority.label }}</option>
+              <option [value]="priority.value">{{ getPriorityLabel(priority.value) }}</option>
             }
           </select>
         </div>
@@ -71,13 +74,13 @@ import { MaintenanceFilters, MaintenanceStatus, MaintenancePriority } from '../.
         <!-- Mechanic Filter -->
         <div>
           <label class="block text-sm font-medium text-gray-300 mb-1">
-            Mechanic
+            {{ 'maintenance.filters.mechanic' | translate }}
           </label>
           <select
             [(ngModel)]="localFilters.mechanicId"
             (ngModelChange)="onFilterChange()"
             class="form-select">
-            <option value="">All Mechanics</option>
+            <option value="">{{ 'maintenance.filters.allMechanics' | translate }}</option>
             @for (mechanic of mechanicOptions; track mechanic.id) {
               <option [value]="mechanic.id">{{ mechanic.name }}</option>
             }
@@ -90,7 +93,7 @@ import { MaintenanceFilters, MaintenanceStatus, MaintenancePriority } from '../.
       <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            From Date
+            {{ 'maintenance.filters.fromDate' | translate }}
           </label>
           <input
             type="date"
@@ -100,7 +103,7 @@ import { MaintenanceFilters, MaintenanceStatus, MaintenancePriority } from '../.
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            To Date
+            {{ 'maintenance.filters.toDate' | translate }}
           </label>
           <input
             type="date"
@@ -112,11 +115,11 @@ import { MaintenanceFilters, MaintenanceStatus, MaintenancePriority } from '../.
 
       <!-- Quick Filter Buttons -->
       <div class="mt-4 flex flex-wrap gap-2">
-        @for (quickFilter of quickFilters; track quickFilter.label) {
+        @for (quickFilter of quickFilters; track quickFilter.key) {
           <button
             [class]="isQuickFilterActive(quickFilter) ? 'btn-filter-chip active' : 'btn-filter-chip'"
             (click)="applyQuickFilter(quickFilter)">
-            {{ quickFilter.label }}
+            {{ getQuickFilterLabel(quickFilter.key) }}
           </button>
         }
       </div>
@@ -162,6 +165,8 @@ import { MaintenanceFilters, MaintenanceStatus, MaintenancePriority } from '../.
   `]
 })
 export class MaintenanceFiltersComponent {
+  private translationService = inject(TranslationService);
+  
   @Input() filters: MaintenanceFilters = {};
   @Output() filtersChange = new EventEmitter<MaintenanceFilters>();
 
@@ -172,19 +177,19 @@ export class MaintenanceFiltersComponent {
   endDate = '';
 
   statusOptions = [
-    { value: 'waiting', label: 'Waiting' },
-    { value: 'in-progress', label: 'In Progress' },
-    { value: 'waiting-approval', label: 'Needs Approval' },
-    { value: 'waiting-parts', label: 'Waiting for Parts' },
-    { value: 'completed', label: 'Completed' },
-    { value: 'cancelled', label: 'Cancelled' }
+    { value: 'waiting', key: 'waiting' },
+    { value: 'in-progress', key: 'inProgress' },
+    { value: 'waiting-approval', key: 'needsApproval' },
+    { value: 'waiting-parts', key: 'waitingParts' },
+    { value: 'completed', key: 'completed' },
+    { value: 'cancelled', key: 'cancelled' }
   ];
 
   priorityOptions = [
-    { value: 'urgent', label: 'Urgent' },
-    { value: 'high', label: 'High' },
-    { value: 'medium', label: 'Medium' },
-    { value: 'low', label: 'Low' }
+    { value: 'urgent', key: 'urgent' },
+    { value: 'high', key: 'high' },
+    { value: 'medium', key: 'medium' },
+    { value: 'low', key: 'low' }
   ];
 
   mechanicOptions = [
@@ -194,11 +199,11 @@ export class MaintenanceFiltersComponent {
   ];
 
   quickFilters = [
-    { label: 'High Priority', filter: { priority: ['high', 'urgent'] as MaintenancePriority[] } },
-    { label: 'Needs Approval', filter: { status: ['waiting-approval'] as MaintenanceStatus[] } },
-    { label: 'In Progress', filter: { status: ['in-progress'] as MaintenanceStatus[] } },
-    { label: 'Today', filter: { dateRange: this.getTodayRange() } },
-    { label: 'This Week', filter: { dateRange: this.getThisWeekRange() } }
+    { key: 'highPriority', filter: { priority: ['high', 'urgent'] as MaintenancePriority[] } },
+    { key: 'needsApproval', filter: { status: ['waiting-approval'] as MaintenanceStatus[] } },
+    { key: 'inProgress', filter: { status: ['in-progress'] as MaintenanceStatus[] } },
+    { key: 'today', filter: { dateRange: this.getTodayRange() } },
+    { key: 'thisWeek', filter: { dateRange: this.getThisWeekRange() } }
   ];
 
   ngOnInit() {
@@ -303,5 +308,33 @@ export class MaintenanceFiltersComponent {
 
   private formatDateForInput(date: Date): string {
     return date.toISOString().split('T')[0];
+  }
+
+  getStatusLabel(status: string): string {
+    const statusKeys: {[key: string]: string} = {
+      'waiting': 'waiting',
+      'in-progress': 'inProgress',
+      'waiting-approval': 'needsApproval',
+      'waiting-parts': 'waitingParts',
+      'completed': 'completed',
+      'cancelled': 'cancelled'
+    };
+    const key = statusKeys[status] || 'completed';
+    return this.translationService.instant(`maintenance.status.${key}`);
+  }
+
+  getPriorityLabel(priority: string): string {
+    const priorityKeys: {[key: string]: string} = {
+      'urgent': 'urgent',
+      'high': 'high',
+      'medium': 'medium',
+      'low': 'low'
+    };
+    const key = priorityKeys[priority] || 'medium';
+    return this.translationService.instant(`maintenance.priority.${key}`);
+  }
+
+  getQuickFilterLabel(filterKey: string): string {
+    return this.translationService.instant(`maintenance.filters.quickFilters.${filterKey}`);
   }
 }

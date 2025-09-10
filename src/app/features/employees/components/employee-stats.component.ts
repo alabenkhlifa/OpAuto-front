@@ -1,11 +1,13 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { EmployeeStats } from '../../../core/models/employee.model';
+import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
+import { TranslationService } from '../../../core/services/translation.service';
 
 @Component({
   selector: 'app-employee-stats',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
   template: `
     @if (stats) {
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -21,7 +23,7 @@ import { EmployeeStats } from '../../../core/models/employee.model';
               </div>
             </div>
             <div class="ml-4">
-              <p class="text-sm font-medium text-gray-400">Total Employees</p>
+              <p class="text-sm font-medium text-gray-400">{{ 'employees.stats.totalEmployees' | translate }}</p>
               <p class="text-2xl font-semibold text-white">{{ stats.totalEmployees }}</p>
             </div>
           </div>
@@ -38,7 +40,7 @@ import { EmployeeStats } from '../../../core/models/employee.model';
               </div>
             </div>
             <div class="ml-4">
-              <p class="text-sm font-medium text-gray-400">Active</p>
+              <p class="text-sm font-medium text-gray-400">{{ 'employees.stats.active' | translate }}</p>
               <p class="text-2xl font-semibold text-white">{{ stats.activeEmployees }}</p>
             </div>
           </div>
@@ -55,7 +57,7 @@ import { EmployeeStats } from '../../../core/models/employee.model';
               </div>
             </div>
             <div class="ml-4">
-              <p class="text-sm font-medium text-gray-400">Available Now</p>
+              <p class="text-sm font-medium text-gray-400">{{ 'employees.stats.availableNow' | translate }}</p>
               <p class="text-2xl font-semibold text-white">{{ stats.availableEmployees }}</p>
             </div>
           </div>
@@ -72,7 +74,7 @@ import { EmployeeStats } from '../../../core/models/employee.model';
               </div>
             </div>
             <div class="ml-4">
-              <p class="text-sm font-medium text-gray-400">Monthly Payroll</p>
+              <p class="text-sm font-medium text-gray-400">{{ 'employees.stats.monthlyPayroll' | translate }}</p>
               <p class="text-2xl font-semibold text-white">{{ formatCurrency(stats.totalSalaryExpense) }}</p>
             </div>
           </div>
@@ -82,14 +84,14 @@ import { EmployeeStats } from '../../../core/models/employee.model';
 
       <!-- Department Distribution -->
       <div class="mt-6 glass-card">
-        <h3 class="text-lg font-semibold text-white mb-4">Department Distribution</h3>
+        <h3 class="text-lg font-semibold text-white mb-4">{{ 'employees.stats.departmentDistribution' | translate }}</h3>
         <div class="space-y-3">
           @for (dept of getDepartmentEntries(stats); track dept.department) {
             @if (dept.count > 0) {
               <div class="flex items-center justify-between">
                 <div class="flex items-center">
                   <div class="w-3 h-3 rounded-full mr-3" [class]="getDepartmentColor(dept.department)"></div>
-                  <span class="text-sm font-medium text-white">{{ getDepartmentLabel(dept.department) }}</span>
+                  <span class="text-sm font-medium text-white">{{ ('employees.departments.' + dept.department) | translate }}</span>
                 </div>
                 <div class="flex items-center space-x-2">
                   <span class="text-sm text-gray-400">{{ dept.count }}</span>
@@ -145,5 +147,11 @@ export class EmployeeStatsComponent {
       'service': 'bg-orange-500'
     };
     return colors[department as keyof typeof colors] || 'bg-gray-500';
+  }
+
+  private translationService = inject(TranslationService);
+
+  getDepartmentTranslation(department: string): string {
+    return this.translationService.instant(`employees.departments.${department}`);
   }
 }

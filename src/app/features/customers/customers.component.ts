@@ -4,17 +4,20 @@ import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CustomerService } from '../../core/services/customer.service';
 import { Customer, CustomerStats, CustomerSummary, CustomerStatus } from '../../core/models/customer.model';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+import { TranslationService } from '../../core/services/translation.service';
 
 @Component({
   selector: 'app-customers',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, TranslatePipe],
   templateUrl: './customers.component.html',
   styleUrl: './customers.component.css'
 })
 export class CustomersComponent implements OnInit {
   private customerService = inject(CustomerService);
   private router = inject(Router);
+  private translationService = inject(TranslationService);
 
   customers = signal<Customer[]>([]);
   stats = signal<CustomerStats | null>(null);
@@ -109,7 +112,8 @@ export class CustomersComponent implements OnInit {
   }
 
   onDeleteCustomer(customerId: string) {
-    if (confirm('Are you sure you want to delete this customer?')) {
+    const confirmMessage = this.translationService.instant('customers.actions.confirmDelete');
+    if (confirm(confirmMessage)) {
       this.customerService.deleteCustomer(customerId).subscribe({
         next: (success) => {
           if (success) {
@@ -146,10 +150,10 @@ export class CustomersComponent implements OnInit {
   }
 
   getLoyaltyTier(points: number): string {
-    if (points >= 500) return 'Platinum';
-    if (points >= 250) return 'Gold';
-    if (points >= 100) return 'Silver';
-    return 'Bronze';
+    if (points >= 500) return this.translationService.instant('customers.loyaltyTiers.platinum');
+    if (points >= 250) return this.translationService.instant('customers.loyaltyTiers.gold');
+    if (points >= 100) return this.translationService.instant('customers.loyaltyTiers.silver');
+    return this.translationService.instant('customers.loyaltyTiers.bronze');
   }
 
   getLoyaltyTierClass(points: number): string {
@@ -193,4 +197,21 @@ export class CustomersComponent implements OnInit {
   getCustomerInitials(name: string): string {
     return name.split(' ').map(n => n[0]).join('');
   }
+
+  getStatusLabel(status: CustomerStatus): string {
+    const statusKeys = {
+      'active': 'active',
+      'vip': 'vip',
+      'inactive': 'inactive',
+      'blocked': 'blocked'
+    };
+    const key = statusKeys[status] || 'inactive';
+    return this.translationService.instant(`customers.status.${key}`);
+  }
+
+  hasActiveFilters = computed(() => {
+    return this.searchQuery() !== '' || 
+           this.selectedStatus() !== 'all' || 
+           this.selectedCity() !== 'all';
+  });
 }

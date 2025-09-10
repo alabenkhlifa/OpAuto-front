@@ -3,12 +3,14 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CustomerService } from '../../../core/services/customer.service';
+import { TranslationService } from '../../../core/services/translation.service';
+import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 import { Customer, CustomerHistory, UpdateCustomerRequest, CustomerStatus, ContactMethod } from '../../../core/models/customer.model';
 
 @Component({
   selector: 'app-customer-details',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, ReactiveFormsModule, TranslatePipe],
   templateUrl: './customer-details.component.html',
   styleUrl: './customer-details.component.css'
 })
@@ -16,6 +18,7 @@ export class CustomerDetailsComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private customerService = inject(CustomerService);
+  private translationService = inject(TranslationService);
   private fb = inject(FormBuilder);
 
   customer = signal<Customer | null>(null);
@@ -296,5 +299,24 @@ export class CustomerDetailsComponent implements OnInit {
 
   getCustomerInitials(name: string): string {
     return name.split(' ').map(n => n[0]).join('');
+  }
+
+  getStatusLabel(status: CustomerStatus): string {
+    return this.translationService.instant(`customers.status.${status}`);
+  }
+
+  getLoyaltyTierLabel(points: number): string {
+    const tier = this.getLoyaltyTier(points).toLowerCase();
+    const tierMap: {[key: string]: string} = {
+      'platinum': 'platinum',
+      'gold': 'gold', 
+      'silver': 'silver',
+      'bronze': 'bronze'
+    };
+    return this.translationService.instant(`customers.loyaltyTiers.${tierMap[tier]}`);
+  }
+
+  getContactMethodLabel(method: ContactMethod): string {
+    return this.translationService.instant(`customers.form.contactMethods.${method}`);
   }
 }

@@ -276,13 +276,4 @@ export class DashboardComponent implements OnInit {
     return statusMap[status as keyof typeof statusMap] || 'scheduled';
   }
 
-  public getStatusPillClass(status: string): string {
-    const statusMap = {
-      'scheduled': 'scheduled',
-      'in_progress': 'in-progress',
-      'completed': 'completed',
-      'delayed': 'delayed'
-    };
-    return statusMap[status as keyof typeof statusMap] || 'scheduled';
-  }
 }

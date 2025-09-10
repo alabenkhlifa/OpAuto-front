@@ -1,11 +1,13 @@
 import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
+import { TranslationService } from '../../../core/services/translation.service';
 import { CarWithHistory } from '../services/car.service';
 
 @Component({
   selector: 'app-car-card',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
   template: `
     <div class="car-card" (click)="onCardClick()">
       <!-- Car Header -->
@@ -42,20 +44,20 @@ import { CarWithHistory } from '../services/car.service';
       <!-- Service Stats -->
       <div class="service-stats">
         <div class="stat-row">
-          <span class="stat-label">Mileage:</span>
+          <span class="stat-label">{{ 'cars.mileage' | translate }}:</span>
           <span class="stat-value">{{ formatMileage(car.currentMileage) }}</span>
         </div>
         <div class="stat-row">
-          <span class="stat-label">Total Services:</span>
+          <span class="stat-label">{{ 'cars.totalServices' | translate }}:</span>
           <span class="stat-value">{{ car.totalServices }}</span>
         </div>
         <div class="stat-row">
-          <span class="stat-label">Last Service:</span>
+          <span class="stat-label">{{ 'cars.lastService' | translate }}:</span>
           <span class="stat-value">{{ formatDate(car.lastServiceDate) }}</span>
         </div>
         @if (car.nextServiceDue) {
           <div class="stat-row">
-            <span class="stat-label">Next Due:</span>
+            <span class="stat-label">{{ 'cars.nextDue' | translate }}:</span>
             <span class="stat-value" [ngClass]="getDateColor(car.nextServiceDue)">
               {{ formatDate(car.nextServiceDue) }}
             </span>
@@ -69,13 +71,13 @@ import { CarWithHistory } from '../services/car.service';
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
-          <span class="hidden lg:inline">Schedule</span>
+          <span class="hidden lg:inline">{{ 'cars.schedule' | translate }}</span>
         </button>
         <button class="action-btn secondary" (click)="onHistoryClick($event)">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <span class="hidden lg:inline">History</span>
+          <span class="hidden lg:inline">{{ 'cars.history' | translate }}</span>
         </button>
       </div>
     </div>
@@ -242,6 +244,7 @@ import { CarWithHistory } from '../services/car.service';
   `]
 })
 export class CarCardComponent {
+  private translationService = inject(TranslationService);
   
   @Input() car!: CarWithHistory;
   @Input() customerName!: string;
@@ -275,11 +278,11 @@ export class CarCardComponent {
 
   getStatusLabel(status: string): string {
     const labels = {
-      'up-to-date': 'Up to Date',
-      'due-soon': 'Due Soon',
-      'overdue': 'Overdue'
+      'up-to-date': this.translationService.instant('cars.upToDate'),
+      'due-soon': this.translationService.instant('cars.dueSoon'),
+      'overdue': this.translationService.instant('cars.overdue')
     };
-    return labels[status as keyof typeof labels] || 'Unknown';
+    return labels[status as keyof typeof labels] || this.translationService.instant('cars.unknown');
   }
 
   getDateColor(date: Date | undefined): string {

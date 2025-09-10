@@ -5,11 +5,13 @@ import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { LoginRequest, RegisterRequest, AuthError, ForgotPasswordRequest } from '../../core/models/auth.model';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+import { LanguageToggleComponent } from '../../shared/components/language-toggle/language-toggle.component';
 
 @Component({
   selector: 'app-auth',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, LanguageToggleComponent],
   template: `
     <div class="min-h-screen flex items-center justify-center p-4" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);">
       
@@ -24,15 +26,25 @@ import { LoginRequest, RegisterRequest, AuthError, ForgotPasswordRequest } from 
       <div class="relative w-full max-w-md">
         <div class="glass-card p-8">
           
-          <!-- Logo and Header -->
-          <div class="text-center mb-8">
-            <div class="mx-auto w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4 shadow-lg">
-              <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.22.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
-              </svg>
+          <!-- Header with Logo and Language Selector -->
+          <div class="relative mb-8">
+            <!-- Language Selector - Positioned absolute top right -->
+            <div class="absolute top-0 right-0">
+              <app-language-toggle></app-language-toggle>
             </div>
-            <h1 class="text-2xl font-bold text-white mb-2">OpAuto</h1>
-            <p class="text-gray-300">Garage Management System</p>
+            
+            <!-- Logo and Title - Centered -->
+            <div class="flex flex-col items-center">
+              <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4 shadow-lg">
+                <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.22.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
+                </svg>
+              </div>
+              <div class="text-center">
+                <h1 class="text-2xl font-bold text-white mb-2">{{ 'auth.title' | translate }}</h1>
+                <p class="text-gray-300">{{ 'auth.subtitle' | translate }}</p>
+              </div>
+            </div>
           </div>
 
           <!-- Mode Toggle - Enhanced Visibility -->
@@ -45,7 +57,7 @@ import { LoginRequest, RegisterRequest, AuthError, ForgotPasswordRequest } from 
               <svg class="w-4 h-4 mr-2 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
               </svg>
-              Sign In
+              {{ 'auth.signIn' | translate }}
             </button>
             <button 
               type="button"
@@ -55,7 +67,7 @@ import { LoginRequest, RegisterRequest, AuthError, ForgotPasswordRequest } from 
               <svg class="w-4 h-4 mr-2 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
               </svg>
-              Register
+              {{ 'auth.register' | translate }}
             </button>
             
             <!-- Sliding Indicator -->
@@ -82,27 +94,27 @@ import { LoginRequest, RegisterRequest, AuthError, ForgotPasswordRequest } from 
             <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="space-y-4">
               
               <div>
-                <label class="form-label">Email Address</label>
+                <label class="form-label">{{ 'auth.login.emailLabel' | translate }}</label>
                 <input 
                   type="email" 
                   class="form-input"
                   formControlName="email"
-                  placeholder="Enter your email"
+                  placeholder="{{ 'auth.login.emailPlaceholder' | translate }}"
                   [class.border-red-500]="isFieldInvalid('email', loginForm)"
                   autocomplete="email">
                 @if (isFieldInvalid('email', loginForm)) {
-                  <p class="mt-1 text-sm text-red-400">Valid email is required</p>
+                  <p class="mt-1 text-sm text-red-400">{{ 'auth.login.emailRequired' | translate }}</p>
                 }
               </div>
 
               <div>
-                <label class="form-label">Password</label>
+                <label class="form-label">{{ 'auth.login.passwordLabel' | translate }}</label>
                 <div class="relative">
                   <input 
                     [type]="showPassword() ? 'text' : 'password'"
                     class="form-input pr-10"
                     formControlName="password"
-                    placeholder="Enter your password"
+                    placeholder="{{ 'auth.login.passwordPlaceholder' | translate }}"
                     [class.border-red-500]="isFieldInvalid('password', loginForm)"
                     autocomplete="current-password">
                   <button 
@@ -120,7 +132,7 @@ import { LoginRequest, RegisterRequest, AuthError, ForgotPasswordRequest } from 
                   </button>
                 </div>
                 @if (isFieldInvalid('password', loginForm)) {
-                  <p class="mt-1 text-sm text-red-400">Password is required</p>
+                  <p class="mt-1 text-sm text-red-400">{{ 'auth.login.passwordRequired' | translate }}</p>
                 }
               </div>
 
@@ -131,14 +143,14 @@ import { LoginRequest, RegisterRequest, AuthError, ForgotPasswordRequest } from 
                     id="rememberMe"
                     class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                     formControlName="rememberMe">
-                  <label for="rememberMe" class="ml-2 text-sm text-gray-300">Remember me</label>
+                  <label for="rememberMe" class="ml-2 text-sm text-gray-300">{{ 'auth.login.rememberMe' | translate }}</label>
                 </div>
                 
                 <button 
                   type="button"
                   class="text-sm text-blue-400 hover:text-blue-300"
                   (click)="showForgotPassword()">
-                  Forgot password?
+                  {{ 'auth.login.forgotPassword' | translate }}
                 </button>
               </div>
 
@@ -151,12 +163,12 @@ import { LoginRequest, RegisterRequest, AuthError, ForgotPasswordRequest } from 
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  <span>Signing In...</span>
+                  <span>{{ 'auth.login.signingIn' | translate }}</span>
                 } @else {
                   <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                   </svg>
-                  <span>Sign In</span>
+                  <span>{{ 'auth.signIn' | translate }}</span>
                 }
               </button>
 
@@ -170,68 +182,68 @@ import { LoginRequest, RegisterRequest, AuthError, ForgotPasswordRequest } from 
               <!-- Personal Information -->
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label class="form-label">Full Name</label>
+                  <label class="form-label">{{ 'auth.registration.fullNameLabel' | translate }}</label>
                   <input 
                     type="text" 
                     class="form-input"
                     formControlName="name"
-                    placeholder="Your full name"
+                    placeholder="{{ 'auth.registration.fullNamePlaceholder' | translate }}"
                     [class.border-red-500]="isFieldInvalid('name', registerForm)"
                     autocomplete="name">
                   @if (isFieldInvalid('name', registerForm)) {
-                    <p class="mt-1 text-sm text-red-400">Name is required</p>
+                    <p class="mt-1 text-sm text-red-400">{{ 'auth.registration.nameRequired' | translate }}</p>
                   }
                 </div>
 
                 <div>
-                  <label class="form-label">Phone Number</label>
+                  <label class="form-label">{{ 'auth.registration.phoneLabel' | translate }}</label>
                   <input 
                     type="tel" 
                     class="form-input"
                     formControlName="phoneNumber"
-                    placeholder="+216 XX XXX XXX"
+                    placeholder="{{ 'auth.registration.phonePlaceholder' | translate }}"
                     autocomplete="tel">
                 </div>
               </div>
 
               <!-- Business Information -->
               <div>
-                <label class="form-label">Garage Name</label>
+                <label class="form-label">{{ 'auth.registration.garageNameLabel' | translate }}</label>
                 <input 
                   type="text" 
                   class="form-input"
                   formControlName="garageName"
-                  placeholder="Your garage name"
+                  placeholder="{{ 'auth.registration.garageNamePlaceholder' | translate }}"
                   [class.border-red-500]="isFieldInvalid('garageName', registerForm)"
                   autocomplete="organization">
                 @if (isFieldInvalid('garageName', registerForm)) {
-                  <p class="mt-1 text-sm text-red-400">Garage name is required</p>
+                  <p class="mt-1 text-sm text-red-400">{{ 'auth.registration.garageNameRequired' | translate }}</p>
                 }
               </div>
 
               <!-- Account Information -->
               <div>
-                <label class="form-label">Email Address</label>
+                <label class="form-label">{{ 'auth.registration.emailLabel' | translate }}</label>
                 <input 
                   type="email" 
                   class="form-input"
                   formControlName="email"
-                  placeholder="your.email@example.com"
+                  placeholder="{{ 'auth.registration.emailPlaceholder' | translate }}"
                   [class.border-red-500]="isFieldInvalid('email', registerForm)"
                   autocomplete="email">
                 @if (isFieldInvalid('email', registerForm)) {
-                  <p class="mt-1 text-sm text-red-400">Valid email is required</p>
+                  <p class="mt-1 text-sm text-red-400">{{ 'auth.registration.emailRequired' | translate }}</p>
                 }
               </div>
 
               <div>
-                <label class="form-label">Password</label>
+                <label class="form-label">{{ 'auth.registration.passwordLabel' | translate }}</label>
                 <div class="relative">
                   <input 
                     [type]="showPassword() ? 'text' : 'password'"
                     class="form-input pr-10"
                     formControlName="password"
-                    placeholder="Create a strong password"
+                    placeholder="{{ 'auth.registration.passwordPlaceholder' | translate }}"
                     [class.border-red-500]="isFieldInvalid('password', registerForm)"
                     autocomplete="new-password">
                   <button 
@@ -249,18 +261,18 @@ import { LoginRequest, RegisterRequest, AuthError, ForgotPasswordRequest } from 
                   </button>
                 </div>
                 @if (isFieldInvalid('password', registerForm)) {
-                  <p class="mt-1 text-sm text-red-400">Password must be at least 6 characters</p>
+                  <p class="mt-1 text-sm text-red-400">{{ 'auth.registration.passwordMinLength' | translate }}</p>
                 }
               </div>
 
               <div>
-                <label class="form-label">Confirm Password</label>
+                <label class="form-label">{{ 'auth.registration.confirmPasswordLabel' | translate }}</label>
                 <div class="relative">
                   <input 
                     [type]="showConfirmPassword() ? 'text' : 'password'"
                     class="form-input pr-10"
                     formControlName="confirmPassword"
-                    placeholder="Confirm your password"
+                    placeholder="{{ 'auth.registration.confirmPasswordPlaceholder' | translate }}"
                     [class.border-red-500]="isFieldInvalid('confirmPassword', registerForm) || hasPasswordMismatch()"
                     autocomplete="new-password">
                   <button 
@@ -278,9 +290,9 @@ import { LoginRequest, RegisterRequest, AuthError, ForgotPasswordRequest } from 
                   </button>
                 </div>
                 @if (isFieldInvalid('confirmPassword', registerForm)) {
-                  <p class="mt-1 text-sm text-red-400">Please confirm your password</p>
+                  <p class="mt-1 text-sm text-red-400">{{ 'auth.registration.confirmPasswordRequired' | translate }}</p>
                 } @else if (hasPasswordMismatch()) {
-                  <p class="mt-1 text-sm text-red-400">Passwords do not match</p>
+                  <p class="mt-1 text-sm text-red-400">{{ 'auth.registration.passwordMismatch' | translate }}</p>
                 }
               </div>
 
@@ -293,18 +305,18 @@ import { LoginRequest, RegisterRequest, AuthError, ForgotPasswordRequest } from 
                   formControlName="acceptTerms"
                   [class.border-red-500]="isFieldInvalid('acceptTerms', registerForm)">
                 <label for="acceptTerms" class="text-sm text-gray-300">
-                  I agree to the 
+                  {{ 'auth.registration.agreeToTerms' | translate }}
                   <button type="button" class="text-blue-400 hover:text-blue-300 hover:underline" (click)="showTerms()">
-                    Terms and Conditions
+                    {{ 'auth.registration.termsAndConditions' | translate }}
                   </button> 
-                  and 
+                  {{ 'auth.registration.and' | translate }}
                   <button type="button" class="text-blue-400 hover:text-blue-300 hover:underline" (click)="showPrivacy()">
-                    Privacy Policy
+                    {{ 'auth.registration.privacyPolicy' | translate }}
                   </button>
                 </label>
               </div>
               @if (isFieldInvalid('acceptTerms', registerForm)) {
-                <p class="mt-1 text-sm text-red-400">You must accept the terms and conditions</p>
+                <p class="mt-1 text-sm text-red-400">{{ 'auth.registration.acceptTermsRequired' | translate }}</p>
               }
 
               <button 
@@ -316,12 +328,12 @@ import { LoginRequest, RegisterRequest, AuthError, ForgotPasswordRequest } from 
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  <span>Creating Account...</span>
+                  <span>{{ 'auth.registration.creatingAccount' | translate }}</span>
                 } @else {
                   <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                   </svg>
-                  <span>Create Account</span>
+                  <span>{{ 'auth.register' | translate }}</span>
                 }
               </button>
 
@@ -331,10 +343,10 @@ import { LoginRequest, RegisterRequest, AuthError, ForgotPasswordRequest } from 
           <!-- Demo Credentials -->
           @if (!isRegisterMode()) {
             <div class="mt-6 p-4 backdrop-blur-sm bg-blue-900 bg-opacity-20 border border-blue-500 border-opacity-30 rounded-lg">
-              <h3 class="text-sm font-medium text-blue-300 mb-2">Demo Credentials</h3>
+              <h3 class="text-sm font-medium text-blue-300 mb-2">{{ 'auth.demo.title' | translate }}</h3>
               <div class="space-y-1 text-xs text-blue-200">
-                <p><strong>Admin:</strong> admin&#64;opauto.tn / admin123</p>
-                <p><strong>Mechanic:</strong> mechanic&#64;opauto.tn / mech123</p>
+                <p><strong>{{ 'auth.demo.admin' | translate }}:</strong> {{ 'auth.demo.adminCredentials' | translate }}</p>
+                <p><strong>{{ 'auth.demo.mechanic' | translate }}:</strong> {{ 'auth.demo.mechanicCredentials' | translate }}</p>
               </div>
             </div>
           }
@@ -342,7 +354,7 @@ import { LoginRequest, RegisterRequest, AuthError, ForgotPasswordRequest } from 
           <!-- Footer -->
           <div class="mt-6 text-center">
             <p class="text-xs text-gray-400">
-              OpAuto Garage Management System v1.0
+              {{ 'auth.footer.systemName' | translate }}
             </p>
           </div>
 
@@ -367,7 +379,7 @@ import { LoginRequest, RegisterRequest, AuthError, ForgotPasswordRequest } from 
             <!-- Header -->
             <div class="p-6 border-b border-slate-700 border-opacity-50">
               <div class="flex items-center justify-between">
-                <h2 class="text-lg font-semibold text-white">Reset Password</h2>
+                <h2 class="text-lg font-semibold text-white">{{ 'auth.forgotPassword.title' | translate }}</h2>
                 <button 
                   class="text-gray-400 hover:text-gray-200"
                   (click)="closeForgotPassword()">
@@ -381,21 +393,21 @@ import { LoginRequest, RegisterRequest, AuthError, ForgotPasswordRequest } from 
             <!-- Content -->
             <div class="p-6">
               <p class="text-gray-300 mb-4">
-                Enter your email address and we'll send you instructions to reset your password.
+                {{ 'auth.forgotPassword.description' | translate }}
               </p>
               
               <form [formGroup]="forgotPasswordForm" (ngSubmit)="onForgotPassword()">
                 <div class="mb-4">
-                  <label class="form-label">Email Address</label>
+                  <label class="form-label">{{ 'auth.forgotPassword.emailLabel' | translate }}</label>
                   <input 
                     type="email" 
                     class="form-input"
                     formControlName="email"
-                    placeholder="Enter your email"
+                    placeholder="{{ 'auth.forgotPassword.emailPlaceholder' | translate }}"
                     [class.border-red-500]="isFieldInvalid('email', forgotPasswordForm)"
                     autocomplete="email">
                   @if (isFieldInvalid('email', forgotPasswordForm)) {
-                    <p class="mt-1 text-sm text-red-400">Valid email is required</p>
+                    <p class="mt-1 text-sm text-red-400">{{ 'auth.forgotPassword.emailRequired' | translate }}</p>
                   }
                 </div>
 
@@ -404,7 +416,7 @@ import { LoginRequest, RegisterRequest, AuthError, ForgotPasswordRequest } from 
                     type="button"
                     class="flex-1 btn-secondary"
                     (click)="closeForgotPassword()">
-                    Cancel
+                    {{ 'auth.forgotPassword.cancel' | translate }}
                   </button>
                   
                   <button 
@@ -416,9 +428,9 @@ import { LoginRequest, RegisterRequest, AuthError, ForgotPasswordRequest } from 
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Sending...
+                      {{ 'auth.forgotPassword.sending' | translate }}
                     } @else {
-                      Send Reset Link
+                      {{ 'auth.forgotPassword.sendResetLink' | translate }}
                     }
                   </button>
                 </div>

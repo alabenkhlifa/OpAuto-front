@@ -6,11 +6,12 @@ import { CarService, CarWithHistory } from './services/car.service';
 import { Customer } from '../../core/models/appointment.model';
 import { CarCardComponent } from './components/car-card.component';
 import { CarRegistrationFormComponent } from './components/car-registration-form.component';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 
 @Component({
   selector: 'app-cars',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, CarCardComponent, CarRegistrationFormComponent],
+  imports: [CommonModule, FormsModule, RouterModule, CarCardComponent, CarRegistrationFormComponent, TranslatePipe],
   templateUrl: './cars.component.html',
   styleUrl: './cars.component.css'
 })

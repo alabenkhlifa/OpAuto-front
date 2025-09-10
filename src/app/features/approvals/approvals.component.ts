@@ -1,8 +1,10 @@
-import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject, takeUntil, combineLatest } from 'rxjs';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+import { TranslationService } from '../../core/services/translation.service';
 import { 
   Approval, 
   ApprovalFilter, 
@@ -20,15 +22,15 @@ import { ApprovalModalComponent } from './components/approval-modal.component';
 @Component({
   selector: 'app-approvals',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ApprovalModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, ApprovalModalComponent, TranslatePipe],
   template: `
     <div class="p-6 max-w-7xl mx-auto">
       
       <!-- Header -->
       <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
         <div>
-          <h1 class="text-2xl font-bold text-white mb-2">Approval Requests</h1>
-          <p class="text-gray-300">Manage and review pending approval requests</p>
+          <h1 class="text-2xl font-bold text-white mb-2">{{ 'approvals.title' | translate }}</h1>
+          <p class="text-gray-300">{{ 'approvals.subtitle' | translate }}</p>
         </div>
         
         <div class="flex items-center space-x-3 mt-4 lg:mt-0">
@@ -38,7 +40,7 @@ import { ApprovalModalComponent } from './components/approval-modal.component';
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-            Refresh
+            {{ 'approvals.actions.refresh' | translate }}
           </button>
           
           @if (selectedApprovals().length > 0) {
@@ -50,7 +52,7 @@ import { ApprovalModalComponent } from './components/approval-modal.component';
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                 </svg>
-                Approve ({{ selectedApprovals().length }})
+                {{ 'approvals.actions.approve' | translate }} ({{ selectedApprovals().length }})
               </button>
               
               <button 
@@ -60,7 +62,7 @@ import { ApprovalModalComponent } from './components/approval-modal.component';
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
-                Reject ({{ selectedApprovals().length }})
+                {{ 'approvals.actions.reject' | translate }} ({{ selectedApprovals().length }})
               </button>
             </div>
           }
@@ -73,7 +75,7 @@ import { ApprovalModalComponent } from './components/approval-modal.component';
           <div class="glass-card">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm font-medium text-gray-300">Pending</p>
+                <p class="text-sm font-medium text-gray-300">{{ 'approvals.stats.pending' | translate }}</p>
                 <p class="text-2xl font-bold text-white">{{ stats()!.pending }}</p>
               </div>
               <div class="text-2xl">⏱️</div>
@@ -83,7 +85,7 @@ import { ApprovalModalComponent } from './components/approval-modal.component';
           <div class="glass-card">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm font-medium text-gray-300">Overdue</p>
+                <p class="text-sm font-medium text-gray-300">{{ 'approvals.stats.overdue' | translate }}</p>
                 <p class="text-2xl font-bold text-white">{{ stats()!.overdue }}</p>
               </div>
               <div class="text-2xl">🚨</div>
@@ -93,7 +95,7 @@ import { ApprovalModalComponent } from './components/approval-modal.component';
           <div class="glass-card">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm font-medium text-gray-300">Approved</p>
+                <p class="text-sm font-medium text-gray-300">{{ 'approvals.stats.approved' | translate }}</p>
                 <p class="text-2xl font-bold text-white">{{ stats()!.approved }}</p>
               </div>
               <div class="text-2xl">✅</div>
@@ -103,7 +105,7 @@ import { ApprovalModalComponent } from './components/approval-modal.component';
           <div class="glass-card">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm font-medium text-gray-300">Total</p>
+                <p class="text-sm font-medium text-gray-300">{{ 'approvals.stats.total' | translate }}</p>
                 <p class="text-2xl font-bold text-white">{{ stats()!.total }}</p>
               </div>
               <div class="text-2xl">📋</div>
@@ -119,20 +121,20 @@ import { ApprovalModalComponent } from './components/approval-modal.component';
             
             <!-- Search -->
             <div>
-              <label class="form-label">Search</label>
+              <label class="form-label">{{ 'approvals.filters.search' | translate }}</label>
               <input 
                 type="text" 
                 class="form-input"
                 formControlName="searchQuery"
-                placeholder="Search approvals...">
+                [placeholder]="'approvals.filters.searchPlaceholder' | translate">
             </div>
 
             <!-- Status Filter -->
             <div>
-              <label class="form-label">Status</label>
+              <label class="form-label">{{ 'approvals.filters.status' | translate }}</label>
               <select class="form-select" formControlName="status">
-                <option value="">All Status</option>
-                @for (status of statusOptions; track status.value) {
+                <option value="">{{ 'approvals.filters.allStatuses' | translate }}</option>
+                @for (status of statusOptions(); track status.value) {
                   <option [value]="status.value">{{ status.label }}</option>
                 }
               </select>
@@ -140,10 +142,10 @@ import { ApprovalModalComponent } from './components/approval-modal.component';
 
             <!-- Type Filter -->
             <div>
-              <label class="form-label">Type</label>
+              <label class="form-label">{{ 'approvals.filters.type' | translate }}</label>
               <select class="form-select" formControlName="type">
-                <option value="">All Types</option>
-                @for (type of typeOptions; track type.value) {
+                <option value="">{{ 'approvals.filters.allTypes' | translate }}</option>
+                @for (type of typeOptions(); track type.value) {
                   <option [value]="type.value">{{ type.label }}</option>
                 }
               </select>
@@ -151,10 +153,10 @@ import { ApprovalModalComponent } from './components/approval-modal.component';
 
             <!-- Priority Filter -->
             <div>
-              <label class="form-label">Priority</label>
+              <label class="form-label">{{ 'approvals.filters.priority' | translate }}</label>
               <select class="form-select" formControlName="priority">
-                <option value="">All Priorities</option>
-                @for (priority of priorityOptions; track priority.value) {
+                <option value="">{{ 'approvals.filters.allPriorities' | translate }}</option>
+                @for (priority of priorityOptions(); track priority.value) {
                   <option [value]="priority.value">{{ priority.label }}</option>
                 }
               </select>
@@ -167,11 +169,11 @@ import { ApprovalModalComponent } from './components/approval-modal.component';
               type="button"
               class="btn-secondary text-sm"
               (click)="resetFilters()">
-              Reset Filters
+              {{ 'approvals.actions.resetFilters' | translate }}
             </button>
             
             <div class="text-sm text-gray-300">
-              {{ filteredApprovals().length }} of {{ approvals().length }} approvals
+              {{ 'approvals.labels.showing' | translate:{current: filteredApprovals().length, total: approvals().length} }}
             </div>
           </div>
         </form>
@@ -183,7 +185,7 @@ import { ApprovalModalComponent } from './components/approval-modal.component';
         <!-- List Header -->
         <div class="p-6 border-b border-gray-600">
           <div class="flex items-center justify-between">
-            <h2 class="text-lg font-semibold text-white">Approval Requests</h2>
+            <h2 class="text-lg font-semibold text-white">{{ 'approvals.labels.listTitle' | translate }}</h2>
             
             @if (filteredApprovals().length > 0) {
               <div class="flex items-center space-x-2">
@@ -193,7 +195,7 @@ import { ApprovalModalComponent } from './components/approval-modal.component';
                   [checked]="isAllSelected()"
                   [indeterminate]="isSomeSelected()"
                   (change)="toggleSelectAll()">
-                <span class="text-sm text-gray-300">Select All</span>
+                <span class="text-sm text-gray-300">{{ 'approvals.actions.selectAll' | translate }}</span>
               </div>
             }
           </div>
@@ -207,15 +209,15 @@ import { ApprovalModalComponent } from './components/approval-modal.component';
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              <span class="ml-2 text-gray-300">Loading approvals...</span>
+              <span class="ml-2 text-gray-300">{{ 'approvals.loading' | translate }}</span>
             </div>
           } @else if (filteredApprovals().length === 0) {
             <div class="text-center py-12">
               <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <h3 class="text-lg font-medium text-white mb-2">No approvals found</h3>
-              <p class="text-gray-300">There are no approval requests matching your criteria.</p>
+              <h3 class="text-lg font-medium text-white mb-2">{{ 'approvals.emptyState.title' | translate }}</h3>
+              <p class="text-gray-300">{{ 'approvals.emptyState.message' | translate }}</p>
             </div>
           } @else {
             <div class="space-y-4">
@@ -296,7 +298,7 @@ import { ApprovalModalComponent } from './components/approval-modal.component';
                             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                             </svg>
-                            Approve
+                            {{ 'approvals.actions.approve' | translate }}
                           </button>
                           
                           <button 
@@ -305,7 +307,7 @@ import { ApprovalModalComponent } from './components/approval-modal.component';
                             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                             </svg>
-                            Reject
+                            {{ 'approvals.actions.reject' | translate }}
                           </button>
                           
                           <button 
@@ -314,7 +316,7 @@ import { ApprovalModalComponent } from './components/approval-modal.component';
                             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            Request Info
+                            {{ 'approvals.actions.requestInfo' | translate }}
                           </button>
                           
                           <button 
@@ -324,7 +326,7 @@ import { ApprovalModalComponent } from './components/approval-modal.component';
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 616 0z" />
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                             </svg>
-                            View Details
+                            {{ 'approvals.actions.viewDetails' | translate }}
                           </button>
                         </div>
                       } @else {
@@ -336,14 +338,14 @@ import { ApprovalModalComponent } from './components/approval-modal.component';
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 616 0z" />
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                             </svg>
-                            View Details
+                            {{ 'approvals.actions.viewDetails' | translate }}
                           </button>
                           
                           @if (approval.status === 'approved' || approval.status === 'rejected') {
                             <span class="text-sm text-gray-400">
-                              {{ approval.status === 'approved' ? 'Approved' : 'Rejected' }} by 
+                              {{ approval.status === 'approved' ? ('approvals.labels.approvedBy' | translate) : ('approvals.labels.rejectedBy' | translate) }} 
                               {{ approval.status === 'approved' ? approval.approvedBy?.name : approval.rejectedBy?.name }}
-                              on {{ (approval.status === 'approved' ? approval.approvedAt : approval.rejectedAt) | date:'MMM d, y' }}
+                              {{ 'approvals.labels.on' | translate }} {{ (approval.status === 'approved' ? approval.approvedAt : approval.rejectedAt) | date:'MMM d, y' }}
                             </span>
                           }
                         </div>
@@ -406,6 +408,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private approvalService = inject(ApprovalService);
+  private translationService = inject(TranslationService);
   private destroy$ = new Subject<void>();
 
   approvals = signal<Approval[]>([]);
@@ -418,20 +421,31 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 
   filterForm!: FormGroup;
 
-  statusOptions = Object.values(ApprovalStatus).map(status => ({
+  // Computed properties for filter options with translations
+  statusOptions = computed(() => Object.values(ApprovalStatus).map(status => ({
     value: status,
-    label: APPROVAL_STATUS_LABELS[status]
-  }));
+    label: this.getStatusLabel(status)
+  })));
 
-  typeOptions = Object.values(ApprovalType).map(type => ({
+  typeOptions = computed(() => Object.values(ApprovalType).map(type => ({
     value: type,
-    label: APPROVAL_TYPE_LABELS[type]
-  }));
+    label: this.getTypeLabel(type)
+  })));
 
-  priorityOptions = Object.values(ApprovalPriority).map(priority => ({
+  priorityOptions = computed(() => Object.values(ApprovalPriority).map(priority => ({
     value: priority,
-    label: APPROVAL_PRIORITY_LABELS[priority]
-  }));
+    label: this.getPriorityLabel(priority)
+  })));
+
+  // Computed property for filter active state
+  hasActiveFilters = computed(() => {
+    if (!this.filterForm) return false;
+    const formValue = this.filterForm.value;
+    return (formValue.searchQuery || '').trim() !== '' || 
+           (formValue.status || '') !== '' || 
+           (formValue.type || '') !== '' || 
+           (formValue.priority || '') !== '';
+  });
 
   ngOnInit() {
     this.initializeFilterForm();
@@ -661,15 +675,15 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
   }
 
   getTypeLabel(type: ApprovalType): string {
-    return APPROVAL_TYPE_LABELS[type];
+    return this.translationService.instant(`approvals.type.${type}`);
   }
 
   getStatusLabel(status: ApprovalStatus): string {
-    return APPROVAL_STATUS_LABELS[status];
+    return this.translationService.instant(`approvals.status.${status}`);
   }
 
   getPriorityLabel(priority: ApprovalPriority): string {
-    return APPROVAL_PRIORITY_LABELS[priority];
+    return this.translationService.instant(`approvals.priority.${priority}`);
   }
 
   getPriorityBadgeClass(priority: ApprovalPriority): string {

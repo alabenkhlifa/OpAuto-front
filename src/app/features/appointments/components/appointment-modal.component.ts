@@ -4,11 +4,12 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { Router } from '@angular/router';
 import { AppointmentService } from '../services/appointment.service';
 import { Appointment, Car, Customer, Mechanic } from '../../../core/models/appointment.model';
+import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 
 @Component({
   selector: 'app-appointment-modal',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   template: `
     <!-- Modal Overlay -->
     <div class="modal-overlay" (click)="closeModal()">
@@ -18,8 +19,8 @@ import { Appointment, Car, Customer, Mechanic } from '../../../core/models/appoi
         <!-- Modal Header -->
         <header class="modal-header">
           <div class="modal-title-section">
-            <h2 class="modal-title">{{ editMode() ? 'Edit' : 'New' }} Appointment</h2>
-            <p class="modal-subtitle">Schedule a service appointment</p>
+            <h2 class="modal-title">{{ editMode() ? ('appointments.edit' | translate) : ('appointments.new' | translate) }} {{ 'appointments.title' | translate }}</h2>
+            <p class="modal-subtitle">{{ 'appointments.scheduleServiceAppointment' | translate }}</p>
           </div>
           <button class="modal-close-btn" (click)="closeModal()">
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -33,18 +34,18 @@ import { Appointment, Car, Customer, Mechanic } from '../../../core/models/appoi
           
           <!-- Car Selection -->
           <div class="form-section">
-            <h3 class="section-title">Vehicle Information</h3>
+            <h3 class="section-title">{{ 'appointments.vehicleInformation' | translate }}</h3>
             <div class="form-row car-selection-row">
               <div class="form-group flex-1">
-                <label class="form-label">Car</label>
+                <label class="form-label">{{ 'appointments.car' | translate }}</label>
                 <select class="form-select" formControlName="carId">
-                  <option value="">Select a car</option>
+                  <option value="">{{ 'appointments.selectCar' | translate }}</option>
                   @for (car of cars(); track car.id) {
                     <option [value]="car.id">{{ car.make }} {{ car.model }} - {{ car.licensePlate }}</option>
                   }
                 </select>
               </div>
-              <button type="button" class="quick-add-btn" title="Quick add car" (click)="openQuickAddCar()">
+              <button type="button" class="quick-add-btn" [title]="'appointments.quickAddCar' | translate" (click)="openQuickAddCar()">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
@@ -54,44 +55,44 @@ import { Appointment, Car, Customer, Mechanic } from '../../../core/models/appoi
 
           <!-- Service Details -->
           <div class="form-section">
-            <h3 class="section-title">Service Details</h3>
+            <h3 class="section-title">{{ 'appointments.serviceDetails' | translate }}</h3>
             <div class="form-row">
               <div class="form-group flex-1">
-                <label class="form-label">Service Type</label>
+                <label class="form-label">{{ 'appointments.serviceType' | translate }}</label>
                 <select class="form-select" formControlName="serviceType">
-                  <option value="">Select service</option>
-                  <option value="oil-change">Oil Change</option>
-                  <option value="brake-repair">Brake Repair</option>
-                  <option value="inspection">Inspection</option>
-                  <option value="transmission">Transmission</option>
-                  <option value="engine">Engine Work</option>
-                  <option value="tires">Tire Service</option>
+                  <option value="">{{ 'appointments.selectService' | translate }}</option>
+                  <option value="oil-change">{{ 'appointments.oilChange' | translate }}</option>
+                  <option value="brake-repair">{{ 'appointments.brakeRepair' | translate }}</option>
+                  <option value="inspection">{{ 'appointments.inspection' | translate }}</option>
+                  <option value="transmission">{{ 'appointments.transmission' | translate }}</option>
+                  <option value="engine">{{ 'appointments.engineWork' | translate }}</option>
+                  <option value="tires">{{ 'appointments.tireService' | translate }}</option>
                 </select>
               </div>
               <div class="form-group">
-                <label class="form-label">Duration (min)</label>
+                <label class="form-label">{{ 'appointments.durationMin' | translate }}</label>
                 <input type="number" class="form-input" formControlName="estimatedDuration" min="15" max="480" step="15">
               </div>
             </div>
             
             <div class="form-group">
-              <label class="form-label">Service Name</label>
-              <input type="text" class="form-input" formControlName="serviceName" placeholder="e.g., Oil Change & Filter Replacement">
+              <label class="form-label">{{ 'appointments.serviceName' | translate }}</label>
+              <input type="text" class="form-input" formControlName="serviceName" [placeholder]="'appointments.serviceNamePlaceholder' | translate">
             </div>
           </div>
 
           <!-- Schedule Details -->
           <div class="form-section">
-            <h3 class="section-title">Schedule</h3>
+            <h3 class="section-title">{{ 'appointments.schedule' | translate }}</h3>
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">Date</label>
+                <label class="form-label">{{ 'appointments.date' | translate }}</label>
                 <input type="date" class="form-input" formControlName="scheduledDate">
               </div>
               <div class="form-group">
-                <label class="form-label">Time</label>
+                <label class="form-label">{{ 'appointments.time' | translate }}</label>
                 <select class="form-select" formControlName="scheduledTime">
-                  <option value="">Select time</option>
+                  <option value="">{{ 'appointments.selectTime' | translate }}</option>
                   <option value="08:00">8:00 AM</option>
                   <option value="08:30">8:30 AM</option>
                   <option value="09:00">9:00 AM</option>
@@ -113,20 +114,20 @@ import { Appointment, Car, Customer, Mechanic } from '../../../core/models/appoi
             
             <div class="form-row">
               <div class="form-group flex-1">
-                <label class="form-label">Assigned Mechanic</label>
+                <label class="form-label">{{ 'appointments.assignedMechanic' | translate }}</label>
                 <select class="form-select" formControlName="mechanicId">
-                  <option value="">Auto-assign</option>
+                  <option value="">{{ 'appointments.autoAssign' | translate }}</option>
                   @for (mechanic of mechanics(); track mechanic.id) {
                     <option [value]="mechanic.id">{{ mechanic.name }}</option>
                   }
                 </select>
               </div>
               <div class="form-group">
-                <label class="form-label">Priority</label>
+                <label class="form-label">{{ 'appointments.priority' | translate }}</label>
                 <select class="form-select" formControlName="priority">
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
+                  <option value="low">{{ 'appointments.low' | translate }}</option>
+                  <option value="medium">{{ 'appointments.medium' | translate }}</option>
+                  <option value="high">{{ 'appointments.high' | translate }}</option>
                 </select>
               </div>
             </div>
@@ -135,9 +136,9 @@ import { Appointment, Car, Customer, Mechanic } from '../../../core/models/appoi
           <!-- Notes -->
           <div class="form-section">
             <div class="form-group">
-              <label class="form-label">Notes (Optional)</label>
+              <label class="form-label">{{ 'appointments.notesOptional' | translate }}</label>
               <textarea class="form-textarea" formControlName="notes" 
-                       placeholder="Additional notes about the service..."
+                       [placeholder]="'appointments.additionalNotes' | translate"
                        rows="3"></textarea>
             </div>
           </div>
@@ -147,15 +148,15 @@ import { Appointment, Car, Customer, Mechanic } from '../../../core/models/appoi
         <!-- Modal Footer -->
         <footer class="modal-footer">
           <button type="button" class="modal-btn secondary" (click)="closeModal()">
-            Cancel
+            {{ 'appointments.cancel' | translate }}
           </button>
           <button type="button" class="modal-btn primary" 
                   [disabled]="!appointmentForm.valid || isSubmitting()"
                   (click)="saveAppointment()">
-            <span *ngIf="!isSubmitting()">{{ editMode() ? 'Update' : 'Schedule' }} Appointment</span>
+            <span *ngIf="!isSubmitting()">{{ editMode() ? ('appointments.update' | translate) : ('appointments.schedule' | translate) }} {{ 'appointments.title' | translate }}</span>
             <span *ngIf="isSubmitting()" class="flex items-center gap-2">
               <div class="submit-spinner"></div>
-              Saving...
+              {{ 'appointments.saving' | translate }}
             </span>
           </button>
         </footer>

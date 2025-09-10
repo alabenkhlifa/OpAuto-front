@@ -4,6 +4,8 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } fr
 import { Router, ActivatedRoute } from '@angular/router';
 import { InvoiceService } from '../../../core/services/invoice.service';
 import { PartService } from '../../../core/services/part.service';
+import { TranslationService } from '../../../core/services/translation.service';
+import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 import { 
   InvoiceWithDetails, 
   InvoiceLineItem, 
@@ -17,7 +19,7 @@ import { Car, Customer } from '../../../core/models/appointment.model';
 @Component({
   selector: 'app-invoice-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   templateUrl: './invoice-form.component.html',
   styleUrl: './invoice-form.component.css'
 })
@@ -27,6 +29,7 @@ export class InvoiceFormComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private invoiceService = inject(InvoiceService);
   private partService = inject(PartService);
+  private translationService = inject(TranslationService);
 
   invoiceForm: FormGroup;
   isLoading = signal(false);

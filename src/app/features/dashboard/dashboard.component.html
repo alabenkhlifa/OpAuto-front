@@ -131,8 +131,8 @@
                 <p class="car-info-redesigned">{{ appointment.carModel }} • {{ appointment.licensePlate }}</p>
                 <div class="service-row">
                   <span class="service-type-redesigned">{{ appointment.serviceType }}</span>
-                  <span class="status-pill" [ngClass]="getStatusPillClass(appointment.status)">
-                    {{ appointment.status | titlecase }}
+                  <span class="badge" [ngClass]="getStatusBadgeClass(appointment.status)">
+                    {{ 'dashboard.status.' + appointment.status | translate }}
                   </span>
                 </div>
               </div>
@@ -154,8 +154,8 @@
               <h3 class="customer-name">{{ job.customerName }}</h3>
               <p class="car-details">{{ job.carModel }} - {{ job.licensePlate }}</p>
             </div>
-            <span class="status-badge" [ngClass]="getStatusBadgeClass(job.status)">
-              {{ job.status.replace('_', ' ') | titlecase }}
+            <span class="badge" [ngClass]="getStatusBadgeClass(job.status)">
+              {{ 'dashboard.status.' + job.status | translate }}
             </span>
           </div>
           

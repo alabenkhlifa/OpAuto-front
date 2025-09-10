@@ -26,8 +26,8 @@
         </svg>
       </div>
       <div class="logo-text" [class.hidden]="!shouldShowExpanded()">
-        <h2 class="logo-title">OpAuto</h2>
-        <p class="logo-subtitle">Garage Management</p>
+        <h2 class="logo-title">{{ 'navigation.opAuto' | translate }}</h2>
+        <p class="logo-subtitle">{{ 'navigation.garageManagement' | translate }}</p>
       </div>
     </div>
     
@@ -51,7 +51,7 @@
     <!-- Main Navigation -->
     <div class="nav-section">
       <h3 class="nav-section-title" 
-          [class.hidden]="!shouldShowExpanded()">Main</h3>
+          [class.hidden]="!shouldShowExpanded()">{{ 'navigation.main' | translate }}</h3>
       <ul class="nav-list">
         @for (item of navItems; track item.id) {
           <li class="nav-item">
@@ -60,7 +60,7 @@
               [class.active]="item.isActive"
               [class.has-children]="item.children"
               (click)="item.children ? toggleSubmenu(item, $event) : navigateTo(item.route!); $event.stopPropagation()"
-              [attr.title]="isCollapsed() && !isHovered() ? item.label : null">
+              [attr.title]="isCollapsed() && !isHovered() ? (item.translationKey | translate) : null">
               
               <!-- Icon -->
               <span class="nav-icon">
@@ -119,7 +119,7 @@
 
               <!-- Label -->
               <span class="nav-label" 
-                    [class.hidden]="!shouldShowExpanded()">{{ item.label }}</span>
+                    [class.hidden]="!shouldShowExpanded()">{{ item.translationKey | translate }}</span>
 
               <!-- Badge -->
               @if (item.badge && shouldShowExpanded()) {
@@ -146,7 +146,7 @@
                       [class.active]="child.isActive"
                       (click)="navigateTo(child.route!)">
                       <span class="submenu-icon">•</span>
-                      <span class="submenu-label">{{ child.label }}</span>
+                      <span class="submenu-label">{{ child.translationKey | translate }}</span>
                       @if (child.badge) {
                         <span class="nav-badge">{{ child.badge }}</span>
                       }
@@ -162,7 +162,7 @@
 
     <!-- Settings Section -->
     <div class="nav-section">
-      <h3 class="nav-section-title" [class.hidden]="!shouldShowExpanded()">Settings</h3>
+      <h3 class="nav-section-title" [class.hidden]="!shouldShowExpanded()">{{ 'navigation.settings' | translate }}</h3>
       <ul class="nav-list">
         @for (item of settingsItems; track item.id) {
           <li class="nav-item">
@@ -170,7 +170,7 @@
               class="nav-link"
               [class.active]="item.isActive"
               (click)="navigateTo(item.route!); $event.stopPropagation()"
-              [attr.title]="isCollapsed() && !isHovered() ? item.label : null">
+              [attr.title]="isCollapsed() && !isHovered() ? (item.translationKey | translate) : null">
               
               <!-- Icon -->
               <span class="nav-icon">
@@ -195,7 +195,7 @@
               </span>
 
               <span class="nav-label" 
-                    [class.hidden]="!shouldShowExpanded()">{{ item.label }}</span>
+                    [class.hidden]="!shouldShowExpanded()">{{ item.translationKey | translate }}</span>
             </button>
           </li>
         }
@@ -207,8 +207,8 @@
   <div class="sidebar-footer" [class.collapsed]="isCollapsed()">
     @if (shouldShowExpanded()) {
       <div class="footer-content">
-        <p class="footer-text">OpAuto v1.0.0</p>
-        <p class="footer-subtext">Garage Management System</p>
+        <p class="footer-text">{{ 'navigation.version' | translate }}</p>
+        <p class="footer-subtext">{{ 'navigation.garageManagement' | translate }}</p>
       </div>
     }
   </div>

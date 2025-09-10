@@ -1,11 +1,13 @@
 import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MaintenanceJob, MaintenanceStatus } from '../../../core/models/maintenance.model';
+import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
+import { TranslationService } from '../../../core/services/translation.service';
 
 @Component({
   selector: 'app-maintenance-job-card',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
   template: `
     <div class="glass-card">
       
@@ -13,7 +15,7 @@ import { MaintenanceJob, MaintenanceStatus } from '../../../core/models/maintena
       <div class="flex items-start justify-between mb-4">
         <div class="flex-1 min-w-0">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white truncate">
-            {{ job.jobTitle }}
+            {{ getServiceName(job.jobTitle) }}
           </h3>
           <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
             {{ job.carDetails }} • {{ job.licensePlate }}
@@ -22,7 +24,7 @@ import { MaintenanceJob, MaintenanceStatus } from '../../../core/models/maintena
         
         <!-- Priority Badge -->
         <span [class]="getPriorityBadgeClass(job.priority)">
-          {{ job.priority | titlecase }}
+          {{ 'maintenance.priority.' + job.priority | translate }}
         </span>
       </div>
 
@@ -37,7 +39,7 @@ import { MaintenanceJob, MaintenanceStatus } from '../../../core/models/maintena
         
         @if (job.status === 'waiting-approval' && job.approvalRequests.length > 0) {
           <span class="approval-badge">
-            {{ job.approvalRequests.length }} pending
+            {{ job.approvalRequests.length }} {{ 'maintenance.pending' | translate }}
           </span>
         }
       </div>
@@ -45,11 +47,11 @@ import { MaintenanceJob, MaintenanceStatus } from '../../../core/models/maintena
       <!-- Customer & Mechanic -->
       <div class="grid grid-cols-2 gap-4 mb-4">
         <div>
-          <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Customer</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">{{ 'maintenance.customer' | translate }}</p>
           <p class="text-sm font-medium text-gray-900 dark:text-white">{{ job.customerName }}</p>
         </div>
         <div>
-          <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Mechanic</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">{{ 'maintenance.mechanic' | translate }}</p>
           <p class="text-sm font-medium text-gray-900 dark:text-white">{{ job.mechanicName }}</p>
         </div>
       </div>
@@ -58,7 +60,7 @@ import { MaintenanceJob, MaintenanceStatus } from '../../../core/models/maintena
       @if (job.tasks.length > 0) {
         <div class="mb-4">
           <div class="flex justify-between text-sm mb-1">
-            <span class="text-gray-600 dark:text-gray-400">Progress</span>
+            <span class="text-gray-600 dark:text-gray-400">{{ 'maintenance.progress' | translate }}</span>
             <span class="text-gray-900 dark:text-white">{{ getTaskProgress(job) }}%</span>
           </div>
           <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
@@ -71,11 +73,11 @@ import { MaintenanceJob, MaintenanceStatus } from '../../../core/models/maintena
       <!-- Time & Cost Info -->
       <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
         <div>
-          <p class="text-gray-500 dark:text-gray-400">Mileage</p>
+          <p class="text-gray-500 dark:text-gray-400">{{ 'maintenance.mileage' | translate }}</p>
           <p class="font-medium text-gray-900 dark:text-white">{{ job.currentMileage | number }} km</p>
         </div>
         <div>
-          <p class="text-gray-500 dark:text-gray-400">Est. Cost</p>
+          <p class="text-gray-500 dark:text-gray-400">{{ 'maintenance.estimatedCost' | translate }}</p>
           <p class="font-medium text-gray-900 dark:text-white">{{ formatCurrency(job.estimatedCost) }}</p>
         </div>
       </div>
@@ -87,11 +89,11 @@ import { MaintenanceJob, MaintenanceStatus } from '../../../core/models/maintena
 
       <!-- Timestamps -->
       <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-4">
-        <span>Created: {{ job.createdAt | date:'short' }}</span>
+        <span>{{ 'maintenance.created' | translate }}: {{ job.createdAt | date:'short' }}</span>
         @if (job.completionDate) {
-          <span>Completed: {{ job.completionDate | date:'short' }}</span>
+          <span>{{ 'maintenance.completed' | translate }}: {{ job.completionDate | date:'short' }}</span>
         } @else if (job.startDate) {
-          <span>Started: {{ job.startDate | date:'short' }}</span>
+          <span>{{ 'maintenance.started' | translate }}: {{ job.startDate | date:'short' }}</span>
         }
       </div>
 
@@ -100,14 +102,14 @@ import { MaintenanceJob, MaintenanceStatus } from '../../../core/models/maintena
         <button 
           [class]="view === 'list' ? 'btn-tertiary btn-sm' : 'flex-1 btn-tertiary'"
           (click)="viewDetails.emit(job.id)">
-          View Details
+          {{ 'maintenance.actions.viewDetails' | translate }}
         </button>
         
         @if (job.status !== 'completed' && job.status !== 'cancelled') {
           <button 
             [class]="view === 'list' ? 'btn-warning btn-sm' : 'flex-1 btn-warning'"
             (click)="edit.emit(job.id)">
-            Edit
+            {{ 'maintenance.actions.edit' | translate }}
           </button>
         }
 
@@ -117,7 +119,7 @@ import { MaintenanceJob, MaintenanceStatus } from '../../../core/models/maintena
             <button 
               [class]="view === 'list' ? 'btn-success btn-sm btn-icon' : 'btn-success btn-icon'"
               (click)="changeStatus('in-progress')"
-              title="Start Job">
+              [title]="'maintenance.startJob' | translate">
               <svg [class]="view === 'list' ? 'w-3 h-3' : 'w-4 h-4'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m-3-5h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -127,7 +129,7 @@ import { MaintenanceJob, MaintenanceStatus } from '../../../core/models/maintena
             <button 
               [class]="view === 'list' ? 'btn-success btn-sm btn-icon' : 'btn-success btn-icon'"
               (click)="changeStatus('completed')"
-              title="Complete Job">
+              [title]="'maintenance.completeJob' | translate">
               <svg [class]="view === 'list' ? 'w-3 h-3' : 'w-4 h-4'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
               </svg>
@@ -192,6 +194,7 @@ import { MaintenanceJob, MaintenanceStatus } from '../../../core/models/maintena
   `]
 })
 export class MaintenanceJobCardComponent {
+  private translationService = inject(TranslationService);
   
   @Input() job!: MaintenanceJob;
   @Input() view: 'list' | 'grid' = 'grid';
@@ -201,15 +204,16 @@ export class MaintenanceJobCardComponent {
   @Output() viewDetails = new EventEmitter<string>();
 
   getStatusLabel(status: MaintenanceStatus): string {
-    const labels = {
-      'waiting': 'Waiting',
-      'in-progress': 'In Progress',
-      'waiting-approval': 'Needs Approval',
-      'waiting-parts': 'Waiting for Parts',
-      'completed': 'Completed',
-      'cancelled': 'Cancelled'
+    const statusKeys = {
+      'waiting': 'waiting',
+      'in-progress': 'inProgress',
+      'waiting-approval': 'needsApproval',
+      'waiting-parts': 'waitingParts',
+      'completed': 'completed',
+      'cancelled': 'cancelled'
     };
-    return labels[status] || status;
+    const key = statusKeys[status as keyof typeof statusKeys] || 'completed';
+    return this.translationService.instant(`maintenance.status.${key}`);
   }
 
   getStatusColor(status: MaintenanceStatus): string {
@@ -262,5 +266,11 @@ export class MaintenanceJobCardComponent {
 
   changeStatus(newStatus: MaintenanceStatus) {
     this.statusChange.emit({ jobId: this.job.id, status: newStatus });
+  }
+
+  getServiceName(serviceName: string): string {
+    const translationKey = `serviceNames.${serviceName}`;
+    const translatedName = this.translationService.instant(translationKey);
+    return translatedName === translationKey ? serviceName : translatedName;
   }
 }

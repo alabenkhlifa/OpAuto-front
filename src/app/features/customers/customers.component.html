@@ -3,8 +3,8 @@
   <header class="glass-card mb-6">
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
       <div>
-        <h1 class="text-2xl lg:text-3xl font-bold text-white">Customer Management</h1>
-        <p class="text-gray-300 mt-1">Manage customer profiles, history, and analytics</p>
+        <h1 class="text-2xl lg:text-3xl font-bold text-white">{{ 'customers.title' | translate }}</h1>
+        <p class="text-gray-300 mt-1">{{ 'customers.subtitle' | translate }}</p>
       </div>
       
       <!-- View Toggle -->
@@ -17,7 +17,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6a2 2 0 01-2 2H10a2 2 0 01-2-2V5zM16 7h.01M16 11h.01M8 21l8-8"/>
           </svg>
-          <span class="text-sm">Dashboard</span>
+          <span class="text-sm">{{ 'customers.navigation.dashboard' | translate }}</span>
         </button>
         <button (click)="onViewChange('list')"
                 class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105"
@@ -26,7 +26,7 @@
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
           </svg>
-          <span class="text-sm">Customer List</span>
+          <span class="text-sm">{{ 'customers.navigation.list' | translate }}</span>
         </button>
         <button (click)="onViewChange('analytics')"
                 class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105"
@@ -35,7 +35,7 @@
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
           </svg>
-          <span class="text-sm">Analytics</span>
+          <span class="text-sm">{{ 'customers.navigation.analytics' | translate }}</span>
         </button>
       </div>
     </div>
@@ -48,7 +48,7 @@
       <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-300">Total Customers</p>
+            <p class="text-sm font-medium text-gray-300">{{ 'customers.dashboard.totalCustomers' | translate }}</p>
             <p class="text-2xl font-bold text-white">{{ stats()?.totalCustomers || 0 }}</p>
           </div>
           <div class="h-12 w-12 rounded-lg flex items-center justify-center" style="background-color: rgba(59, 130, 246, 0.1)">
@@ -60,7 +60,7 @@
       <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-300">Active Customers</p>
+            <p class="text-sm font-medium text-gray-300">{{ 'customers.dashboard.activeCustomers' | translate }}</p>
             <p class="text-2xl font-bold text-white">{{ stats()?.activeCustomers || 0 }}</p>
           </div>
           <div class="h-12 w-12 rounded-lg flex items-center justify-center" style="background-color: rgba(34, 197, 94, 0.1)">
@@ -72,7 +72,7 @@
       <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-300">VIP Customers</p>
+            <p class="text-sm font-medium text-gray-300">{{ 'customers.dashboard.vipCustomers' | translate }}</p>
             <p class="text-2xl font-bold text-white">{{ stats()?.vipCustomers || 0 }}</p>
           </div>
           <div class="h-12 w-12 rounded-lg flex items-center justify-center" style="background-color: rgba(147, 51, 234, 0.1)">
@@ -84,7 +84,7 @@
       <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-300">Avg Customer Value</p>
+            <p class="text-sm font-medium text-gray-300">{{ 'customers.dashboard.avgCustomerValue' | translate }}</p>
             <p class="text-2xl font-bold text-white">{{ formatCurrency(stats()?.averageCustomerValue || 0) }}</p>
           </div>
           <div class="h-12 w-12 rounded-lg flex items-center justify-center" style="background-color: rgba(245, 158, 11, 0.1)">
@@ -98,7 +98,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Top Customers -->
       <div class="glass-card">
-        <h3 class="text-lg font-semibold text-white mb-4">Top Customers</h3>
+        <h3 class="text-lg font-semibold text-white mb-4">{{ 'customers.dashboard.topCustomers' | translate }}</h3>
         <div class="space-y-3">
           <div *ngFor="let customer of stats()?.topCustomers" 
                class="flex items-center justify-between p-3 rounded-lg transition-all cursor-pointer hover:scale-[1.02]"
@@ -115,7 +115,7 @@
             </div>
             <div class="text-right">
               <p class="font-semibold text-white">{{ formatCurrency(customer.totalSpent) }}</p>
-              <p class="text-xs text-gray-300">{{ customer.totalCars }} cars</p>
+              <p class="text-xs text-gray-300">{{ customer.totalCars }} {{ 'customers.labels.cars' | translate }}</p>
             </div>
           </div>
         </div>
@@ -123,7 +123,7 @@
 
       <!-- Recent Customers -->
       <div class="glass-card">
-        <h3 class="text-lg font-semibold text-white mb-4">Recent Customers</h3>
+        <h3 class="text-lg font-semibold text-white mb-4">{{ 'customers.dashboard.recentCustomers' | translate }}</h3>
         <div class="space-y-3">
           <div *ngFor="let customer of stats()?.recentCustomers" 
                class="flex items-center justify-between p-3 rounded-lg transition-all cursor-pointer hover:scale-[1.02]"
@@ -141,7 +141,7 @@
             <div class="text-right">
               <span class="badge"
                     [class]="getStatusBadgeClass(customer.status)">
-                {{ customer.status | titlecase }}
+                {{ getStatusLabel(customer.status) }}
               </span>
             </div>
           </div>
@@ -151,14 +151,14 @@
 
     <!-- Quick Actions -->
     <div class="glass-card">
-      <h3 class="text-lg font-semibold text-white mb-4">Quick Actions</h3>
+      <h3 class="text-lg font-semibold text-white mb-4">{{ 'customers.dashboard.quickActions' | translate }}</h3>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <button (click)="onAddCustomer()"
                 class="p-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg transition-all shadow-lg shadow-blue-500/25">
           <div class="text-center">
             <span class="text-2xl mb-2 block">👤</span>
-            <p class="font-medium">Add New Customer</p>
-            <p class="text-sm opacity-90">Register a new customer</p>
+            <p class="font-medium">{{ 'customers.actions.addNewCustomer' | translate }}</p>
+            <p class="text-sm opacity-90">{{ 'customers.actions.registerNewCustomer' | translate }}</p>
           </div>
         </button>
         
@@ -166,8 +166,8 @@
                 class="p-4 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg transition-all shadow-lg shadow-purple-500/25">
           <div class="text-center">
             <span class="text-2xl mb-2 block">📋</span>
-            <p class="font-medium">View All Customers</p>
-            <p class="text-sm opacity-90">Browse customer list</p>
+            <p class="font-medium">{{ 'customers.actions.viewAllCustomers' | translate }}</p>
+            <p class="text-sm opacity-90">{{ 'customers.actions.browseCustomerList' | translate }}</p>
           </div>
         </button>
         
@@ -175,8 +175,8 @@
                 class="p-4 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg transition-all shadow-lg shadow-green-500/25">
           <div class="text-center">
             <span class="text-2xl mb-2 block">📊</span>
-            <p class="font-medium">Customer Analytics</p>
-            <p class="text-sm opacity-90">View insights & reports</p>
+            <p class="font-medium">{{ 'customers.actions.customerAnalytics' | translate }}</p>
+            <p class="text-sm opacity-90">{{ 'customers.actions.viewInsightsReports' | translate }}</p>
           </div>
         </button>
       </div>
@@ -189,30 +189,30 @@
     <div class="glass-card">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">Search</label>
+          <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'customers.filters.search' | translate }}</label>
           <input type="text" 
                  [(ngModel)]="searchQuery"
-                 placeholder="Name, phone, email..."
+                 [placeholder]="'customers.filters.searchPlaceholder' | translate"
                  class="form-input w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400 backdrop-blur-sm">
         </div>
         
         <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">Status</label>
+          <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'customers.filters.status' | translate }}</label>
           <select [(ngModel)]="selectedStatus"
                   class="filter-select">
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="vip">VIP</option>
-            <option value="inactive">Inactive</option>
-            <option value="blocked">Blocked</option>
+            <option value="all">{{ 'customers.filters.allStatus' | translate }}</option>
+            <option value="active">{{ 'customers.status.active' | translate }}</option>
+            <option value="vip">{{ 'customers.status.vip' | translate }}</option>
+            <option value="inactive">{{ 'customers.status.inactive' | translate }}</option>
+            <option value="blocked">{{ 'customers.status.blocked' | translate }}</option>
           </select>
         </div>
         
         <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">City</label>
+          <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'customers.filters.city' | translate }}</label>
           <select [(ngModel)]="selectedCity"
                   class="filter-select">
-            <option value="all">All Cities</option>
+            <option value="all">{{ 'customers.filters.allCities' | translate }}</option>
             <option *ngFor="let city of availableCities()" [value]="city">{{ city }}</option>
           </select>
         </div>
@@ -223,11 +223,11 @@
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
-            Clear
+            {{ 'customers.actions.clear' | translate }}
           </button>
           <button (click)="onAddCustomer()"
                   class="btn-primary flex-1">
-            Add Customer
+            {{ 'customers.actions.addCustomer' | translate }}
           </button>
         </div>
       </div>
@@ -253,7 +253,7 @@
           <div class="flex flex-col items-end gap-1">
             <span class="badge"
                   [class]="getStatusBadgeClass(customer.status)">
-              {{ customer.status | titlecase }}
+              {{ getStatusLabel(customer.status) }}
             </span>
             <span class="badge badge-sm"
                   [class]="getLoyaltyTierClass(customer.loyaltyPoints)">
@@ -274,7 +274,7 @@
           </div>
           <div class="flex items-center gap-2 text-sm text-gray-300">
             <span>📅</span>
-            <span>Customer since {{ formatDate(customer.registrationDate) }}</span>
+            <span>{{ 'customers.labels.customerSince' | translate }} {{ formatDate(customer.registrationDate) }}</span>
           </div>
         </div>
 
@@ -282,24 +282,24 @@
         <div class="grid grid-cols-3 gap-4 pt-4 border-t border-gray-500">
           <div class="text-center">
             <p class="text-lg font-bold text-white">{{ customer.totalCars }}</p>
-            <p class="text-xs text-gray-300">Cars</p>
+            <p class="text-xs text-gray-300">{{ 'customers.labels.cars' | translate }}</p>
           </div>
           <div class="text-center">
             <p class="text-lg font-bold text-white">{{ customer.totalAppointments }}</p>
-            <p class="text-xs text-gray-300">Visits</p>
+            <p class="text-xs text-gray-300">{{ 'customers.labels.visits' | translate }}</p>
           </div>
           <div class="text-center">
             <p class="text-lg font-bold text-white">{{ formatCurrency(customer.totalSpent) }}</p>
-            <p class="text-xs text-gray-300">Spent</p>
+            <p class="text-xs text-gray-300">{{ 'customers.labels.spent' | translate }}</p>
           </div>
         </div>
 
         <!-- Last Visit -->
         <div *ngIf="customer.lastVisitDate" class="mt-4 pt-4 border-t border-gray-500">
           <div class="flex items-center justify-between text-sm">
-            <span class="text-gray-300">Last visit:</span>
+            <span class="text-gray-300">{{ 'customers.labels.lastVisit' | translate }}:</span>
             <span class="text-white">
-              {{ getDaysSinceLastVisit(customer.lastVisitDate) }} days ago
+              {{ getDaysSinceLastVisit(customer.lastVisitDate) }} {{ 'customers.labels.daysAgo' | translate }}
             </span>
           </div>
         </div>
@@ -308,11 +308,11 @@
         <div class="mt-4 pt-4 border-t border-gray-500 flex gap-2">
           <button (click)="onEditCustomer(customer.id); $event.stopPropagation()"
                   class="btn-tertiary btn-sm flex-1">
-            Edit
+            {{ 'customers.actions.edit' | translate }}
           </button>
           <button (click)="onDeleteCustomer(customer.id); $event.stopPropagation()"
                   class="btn-danger btn-sm">
-            Delete
+            {{ 'customers.actions.delete' | translate }}
           </button>
         </div>
       </div>
@@ -324,11 +324,11 @@
       <div class="mx-auto h-24 w-24 bg-gray-800 rounded-full flex items-center justify-center mb-4">
         <span class="text-gray-500 text-3xl">👥</span>
       </div>
-      <h3 class="text-lg font-medium text-white mb-2">No customers found</h3>
-      <p class="text-gray-400 mb-4">Try adjusting your filters or add a new customer.</p>
+      <h3 class="text-lg font-medium text-white mb-2">{{ 'customers.emptyState.noCustomersFound' | translate }}</h3>
+      <p class="text-gray-400 mb-4">{{ 'customers.emptyState.tryAdjustingFilters' | translate }}</p>
       <button (click)="onAddCustomer()"
               class="btn-primary">
-        Add First Customer
+        {{ 'customers.actions.addFirstCustomer' | translate }}
       </button>
     </div>
   </div>
@@ -340,7 +340,7 @@
       <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-300">Active Customers</p>
+            <p class="text-sm font-medium text-gray-300">{{ 'customers.analytics.activeCustomers' | translate }}</p>
             <p class="text-2xl font-bold text-white">{{ stats()?.customersByStatus?.active || 0 }}</p>
           </div>
           <div class="h-12 w-12 rounded-lg flex items-center justify-center" style="background-color: rgba(34, 197, 94, 0.1)">
@@ -352,7 +352,7 @@
       <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-300">VIP Customers</p>
+            <p class="text-sm font-medium text-gray-300">{{ 'customers.analytics.vipCustomers' | translate }}</p>
             <p class="text-2xl font-bold text-white">{{ stats()?.customersByStatus?.vip || 0 }}</p>
           </div>
           <div class="h-12 w-12 rounded-lg flex items-center justify-center" style="background-color: rgba(147, 51, 234, 0.1)">
@@ -364,7 +364,7 @@
       <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-300">Inactive Customers</p>
+            <p class="text-sm font-medium text-gray-300">{{ 'customers.analytics.inactiveCustomers' | translate }}</p>
             <p class="text-2xl font-bold text-white">{{ stats()?.customersByStatus?.inactive || 0 }}</p>
           </div>
           <div class="h-12 w-12 rounded-lg flex items-center justify-center" style="background-color: rgba(107, 114, 128, 0.1)">
@@ -376,7 +376,7 @@
       <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-300">Growth This Month</p>
+            <p class="text-sm font-medium text-gray-300">{{ 'customers.analytics.growthThisMonth' | translate }}</p>
             <p class="text-2xl font-bold text-white">{{ stats()?.newCustomersThisMonth || 0 }}</p>
           </div>
           <div class="h-12 w-12 rounded-lg flex items-center justify-center" style="background-color: rgba(59, 130, 246, 0.1)">
@@ -390,7 +390,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Customer Metrics -->
       <div class="glass-card">
-        <h3 class="text-lg font-semibold text-white mb-4">Customer Metrics</h3>
+        <h3 class="text-lg font-semibold text-white mb-4">{{ 'customers.analytics.customerMetrics' | translate }}</h3>
         <div class="space-y-3">
           <div class="flex items-center justify-between p-3 rounded-lg transition-all cursor-pointer hover:scale-[1.02]"
                style="background: rgba(55, 65, 81, 0.3); border: 1px solid rgba(75, 85, 99, 0.6);">
@@ -399,8 +399,8 @@
                 <span class="text-white font-medium text-sm">📊</span>
               </div>
               <div>
-                <p class="font-medium text-white">Retention Rate</p>
-                <p class="text-sm text-gray-300">Customer retention</p>
+                <p class="font-medium text-white">{{ 'customers.analytics.retentionRate' | translate }}</p>
+                <p class="text-sm text-gray-300">{{ 'customers.analytics.customerRetention' | translate }}</p>
               </div>
             </div>
             <div class="text-right">
@@ -415,8 +415,8 @@
                 <span class="text-white font-medium text-sm">👑</span>
               </div>
               <div>
-                <p class="font-medium text-white">VIP Rate</p>
-                <p class="text-sm text-gray-300">Premium customers</p>
+                <p class="font-medium text-white">{{ 'customers.analytics.vipRate' | translate }}</p>
+                <p class="text-sm text-gray-300">{{ 'customers.analytics.premiumCustomers' | translate }}</p>
               </div>
             </div>
             <div class="text-right">
@@ -428,7 +428,7 @@
 
       <!-- Revenue Insights -->
       <div class="glass-card">
-        <h3 class="text-lg font-semibold text-white mb-4">Revenue Insights</h3>
+        <h3 class="text-lg font-semibold text-white mb-4">{{ 'customers.analytics.revenueInsights' | translate }}</h3>
         <div class="space-y-3">
           <div class="flex items-center justify-between p-3 rounded-lg transition-all cursor-pointer hover:scale-[1.02]"
                style="background: rgba(55, 65, 81, 0.3); border: 1px solid rgba(75, 85, 99, 0.6);">
@@ -437,8 +437,8 @@
                 <span class="text-white font-medium text-sm">💰</span>
               </div>
               <div>
-                <p class="font-medium text-white">Avg Customer Value</p>
-                <p class="text-sm text-gray-300">Lifetime value</p>
+                <p class="font-medium text-white">{{ 'customers.analytics.avgCustomerValue' | translate }}</p>
+                <p class="text-sm text-gray-300">{{ 'customers.analytics.lifetimeValue' | translate }}</p>
               </div>
             </div>
             <div class="text-right">
@@ -453,8 +453,8 @@
                 <span class="text-white font-medium text-sm">📈</span>
               </div>
               <div>
-                <p class="font-medium text-white">Total Revenue</p>
-                <p class="text-sm text-gray-300">All time revenue</p>
+                <p class="font-medium text-white">{{ 'customers.analytics.totalRevenue' | translate }}</p>
+                <p class="text-sm text-gray-300">{{ 'customers.analytics.allTimeRevenue' | translate }}</p>
               </div>
             </div>
             <div class="text-right">
@@ -472,7 +472,7 @@
        class="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
     <div class="bg-gray-800 rounded-xl p-6 flex items-center gap-3">
       <div class="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-      <span class="text-white">Loading customers...</span>
+      <span class="text-white">{{ 'customers.loading' | translate }}</span>
     </div>
   </div>
 </div>

@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { SidebarService } from './core/services/sidebar.service';
+import { TranslationService } from './core/services/translation.service';
 import { SidebarComponent } from './shared/components/sidebar/sidebar.component';
 
 @Component({
@@ -13,6 +14,7 @@ import { SidebarComponent } from './shared/components/sidebar/sidebar.component'
 export class App {
   protected title = 'OpAuto-front';
   public sidebarService = inject(SidebarService);
+  private translationService = inject(TranslationService); // Force early initialization
   private router = inject(Router);
 
   public isAuthRoute(): boolean {

@@ -4,17 +4,20 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
 import { InvoiceService } from '../../core/services/invoice.service';
 import { InvoiceWithDetails, InvoiceStats, InvoiceStatus, PaymentMethod } from '../../core/models/invoice.model';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+import { TranslationService } from '../../core/services/translation.service';
 
 @Component({
   selector: 'app-invoicing',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, TranslatePipe],
   templateUrl: './invoicing.component.html',
   styleUrl: './invoicing.component.css'
 })
 export class InvoicingComponent implements OnInit {
   public invoiceService = inject(InvoiceService);
   private router = inject(Router);
+  private translationService = inject(TranslationService);
 
   invoices = signal<InvoiceWithDetails[]>([]);
   stats = signal<InvoiceStats | null>(null);
@@ -221,5 +224,32 @@ export class InvoicingComponent implements OnInit {
 
   isMobile(): boolean {
     return typeof window !== 'undefined' && window.innerWidth < 1024;
+  }
+
+  getStatusLabel(status: InvoiceStatus): string {
+    const statusMap: {[key in InvoiceStatus]: string} = {
+      'draft': 'draft',
+      'sent': 'sent',
+      'viewed': 'viewed',
+      'paid': 'paid',
+      'partially-paid': 'partiallyPaid',
+      'overdue': 'overdue',
+      'cancelled': 'cancelled',
+      'refunded': 'refunded'
+    };
+    const key = statusMap[status] || 'draft';
+    return this.translationService.instant(`invoicing.status.${key}`);
+  }
+
+  getPaymentMethodLabel(method: PaymentMethod): string {
+    const methodMap: {[key in PaymentMethod]: string} = {
+      'cash': 'cash',
+      'card': 'card',
+      'bank-transfer': 'bankTransfer',
+      'check': 'check',
+      'credit': 'credit'
+    };
+    const key = methodMap[method] || 'cash';
+    return this.translationService.instant(`invoicing.paymentMethods.${key}`);
   }
 }

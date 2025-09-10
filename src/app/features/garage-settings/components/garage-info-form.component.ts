@@ -1,23 +1,24 @@
 import { Component, Input, Output, EventEmitter, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 import { GarageInfo } from '../../../core/models/garage-settings.model';
 
 @Component({
   selector: 'app-garage-info-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   template: `
     <div class="glass-card">
       
       <div class="flex items-center justify-between mb-6">
-        <h2 class="text-lg font-semibold text-white">Garage Information</h2>
+        <h2 class="text-lg font-semibold text-white">{{ 'settings.garageInfo.title' | translate }}</h2>
         <div class="flex space-x-2">
           <button 
             type="button"
             class="btn-secondary text-sm"
             (click)="resetForm()">
-            Reset
+            {{ 'common.reset' | translate }}
           </button>
           <button 
             type="button"
@@ -29,9 +30,9 @@ import { GarageInfo } from '../../../core/models/garage-settings.model';
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              Saving...
+              {{ 'settings.saving' | translate }}
             } @else {
-              Save Changes
+              {{ 'settings.saveChanges' | translate }}
             }
           </button>
         </div>
@@ -42,19 +43,19 @@ import { GarageInfo } from '../../../core/models/garage-settings.model';
         <!-- Basic Information -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label class="form-label">Garage Name *</label>
+            <label class="form-label">{{ 'settings.garageInfo.garageName' | translate }} *</label>
             <input 
               type="text" 
               class="form-input"
               formControlName="name"
               [class.border-red-500]="isFieldInvalid('name')">
             @if (isFieldInvalid('name')) {
-              <p class="mt-1 text-sm text-red-600 dark:text-red-400">Garage name is required</p>
+              <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ 'settings.garageInfo.errors.garageNameRequired' | translate }}</p>
             }
           </div>
 
           <div>
-            <label class="form-label">Registration Number *</label>
+            <label class="form-label">{{ 'settings.garageInfo.registrationNumber' | translate }} *</label>
             <input 
               type="text" 
               class="form-input"
@@ -62,27 +63,27 @@ import { GarageInfo } from '../../../core/models/garage-settings.model';
               placeholder="RC-A-12345"
               [class.border-red-500]="isFieldInvalid('registrationNumber')">
             @if (isFieldInvalid('registrationNumber')) {
-              <p class="mt-1 text-sm text-red-600 dark:text-red-400">Registration number is required</p>
+              <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ 'settings.garageInfo.errors.registrationNumberRequired' | translate }}</p>
             }
           </div>
 
           <div class="md:col-span-2">
-            <label class="form-label">Description</label>
+            <label class="form-label">{{ 'common.description' | translate }}</label>
             <textarea 
               class="form-textarea"
               formControlName="description"
               rows="3"
-              placeholder="Brief description of your garage services">
+              [placeholder]="'settings.garageInfo.descriptionPlaceholder' | translate">
             </textarea>
           </div>
         </div>
 
         <!-- Contact Information -->
         <div>
-          <h3 class="text-md font-medium text-white mb-4">Contact Information</h3>
+          <h3 class="text-md font-medium text-white mb-4">{{ 'settings.garageInfo.contactInformation' | translate }}</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="form-label">Phone Number *</label>
+              <label class="form-label">{{ 'settings.garageInfo.phoneNumber' | translate }} *</label>
               <input 
                 type="tel" 
                 class="form-input"
@@ -90,12 +91,12 @@ import { GarageInfo } from '../../../core/models/garage-settings.model';
                 placeholder="+216 71 123 456"
                 [class.border-red-500]="isFieldInvalid('phone')">
               @if (isFieldInvalid('phone')) {
-                <p class="mt-1 text-sm text-red-600 dark:text-red-400">Valid phone number is required</p>
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ 'settings.garageInfo.errors.phoneNumberRequired' | translate }}</p>
               }
             </div>
 
             <div>
-              <label class="form-label">Email Address *</label>
+              <label class="form-label">{{ 'settings.garageInfo.emailAddress' | translate }} *</label>
               <input 
                 type="email" 
                 class="form-input"
@@ -103,12 +104,12 @@ import { GarageInfo } from '../../../core/models/garage-settings.model';
                 placeholder="contact@garage.tn"
                 [class.border-red-500]="isFieldInvalid('email')">
               @if (isFieldInvalid('email')) {
-                <p class="mt-1 text-sm text-red-600 dark:text-red-400">Valid email address is required</p>
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ 'settings.garageInfo.errors.emailAddressRequired' | translate }}</p>
               }
             </div>
 
             <div>
-              <label class="form-label">Website</label>
+              <label class="form-label">{{ 'settings.garageInfo.website' | translate }}</label>
               <input 
                 type="url" 
                 class="form-input"
@@ -117,7 +118,7 @@ import { GarageInfo } from '../../../core/models/garage-settings.model';
             </div>
 
             <div>
-              <label class="form-label">Tax ID *</label>
+              <label class="form-label">{{ 'settings.garageInfo.taxId' | translate }} *</label>
               <input 
                 type="text" 
                 class="form-input"
@@ -125,7 +126,7 @@ import { GarageInfo } from '../../../core/models/garage-settings.model';
                 placeholder="TN123456789"
                 [class.border-red-500]="isFieldInvalid('taxId')">
               @if (isFieldInvalid('taxId')) {
-                <p class="mt-1 text-sm text-red-600 dark:text-red-400">Tax ID is required</p>
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ 'settings.garageInfo.errors.taxIdRequired' | translate }}</p>
               }
             </div>
           </div>
@@ -133,10 +134,10 @@ import { GarageInfo } from '../../../core/models/garage-settings.model';
 
         <!-- Address -->
         <div>
-          <h3 class="text-md font-medium text-white mb-4">Address</h3>
+          <h3 class="text-md font-medium text-white mb-4">{{ 'settings.garageInfo.address' | translate }}</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="md:col-span-2">
-              <label class="form-label">Street Address *</label>
+              <label class="form-label">{{ 'settings.garageInfo.streetAddress' | translate }} *</label>
               <input 
                 type="text" 
                 class="form-input"
@@ -144,12 +145,12 @@ import { GarageInfo } from '../../../core/models/garage-settings.model';
                 placeholder="123 Avenue Habib Bourguiba"
                 [class.border-red-500]="isFieldInvalid('address')">
               @if (isFieldInvalid('address')) {
-                <p class="mt-1 text-sm text-red-600 dark:text-red-400">Address is required</p>
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ 'settings.garageInfo.errors.addressRequired' | translate }}</p>
               }
             </div>
 
             <div>
-              <label class="form-label">City *</label>
+              <label class="form-label">{{ 'settings.garageInfo.city' | translate }} *</label>
               <input 
                 type="text" 
                 class="form-input"
@@ -157,12 +158,12 @@ import { GarageInfo } from '../../../core/models/garage-settings.model';
                 placeholder="Tunis"
                 [class.border-red-500]="isFieldInvalid('city')">
               @if (isFieldInvalid('city')) {
-                <p class="mt-1 text-sm text-red-600 dark:text-red-400">City is required</p>
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ 'settings.garageInfo.errors.cityRequired' | translate }}</p>
               }
             </div>
 
             <div>
-              <label class="form-label">Postal Code *</label>
+              <label class="form-label">{{ 'settings.garageInfo.postalCode' | translate }} *</label>
               <input 
                 type="text" 
                 class="form-input"
@@ -170,12 +171,12 @@ import { GarageInfo } from '../../../core/models/garage-settings.model';
                 placeholder="1000"
                 [class.border-red-500]="isFieldInvalid('postalCode')">
               @if (isFieldInvalid('postalCode')) {
-                <p class="mt-1 text-sm text-red-600 dark:text-red-400">Postal code is required</p>
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ 'settings.garageInfo.errors.postalCodeRequired' | translate }}</p>
               }
             </div>
 
             <div>
-              <label class="form-label">Country *</label>
+              <label class="form-label">{{ 'settings.garageInfo.country' | translate }} *</label>
               <select 
                 class="form-select"
                 formControlName="country"
@@ -187,7 +188,7 @@ import { GarageInfo } from '../../../core/models/garage-settings.model';
                 <option value="Egypt">Egypt</option>
               </select>
               @if (isFieldInvalid('country')) {
-                <p class="mt-1 text-sm text-red-600 dark:text-red-400">Country is required</p>
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ 'settings.garageInfo.errors.countryRequired' | translate }}</p>
               }
             </div>
           </div>
@@ -195,10 +196,10 @@ import { GarageInfo } from '../../../core/models/garage-settings.model';
 
         <!-- Bank Details -->
         <div>
-          <h3 class="text-md font-medium text-white mb-4">Bank Details (Optional)</h3>
+          <h3 class="text-md font-medium text-white mb-4">{{ 'settings.garageInfo.bankDetails' | translate }}</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4" formGroupName="bankDetails">
             <div>
-              <label class="form-label">Bank Name</label>
+              <label class="form-label">{{ 'settings.garageInfo.bankName' | translate }}</label>
               <input 
                 type="text" 
                 class="form-input"
@@ -207,7 +208,7 @@ import { GarageInfo } from '../../../core/models/garage-settings.model';
             </div>
 
             <div>
-              <label class="form-label">Account Holder Name</label>
+              <label class="form-label">{{ 'settings.garageInfo.accountHolderName' | translate }}</label>
               <input 
                 type="text" 
                 class="form-input"
@@ -216,7 +217,7 @@ import { GarageInfo } from '../../../core/models/garage-settings.model';
             </div>
 
             <div>
-              <label class="form-label">Account Number</label>
+              <label class="form-label">{{ 'settings.garageInfo.accountNumber' | translate }}</label>
               <input 
                 type="text" 
                 class="form-input"
@@ -225,7 +226,7 @@ import { GarageInfo } from '../../../core/models/garage-settings.model';
             </div>
 
             <div>
-              <label class="form-label">IBAN</label>
+              <label class="form-label">{{ 'settings.garageInfo.iban' | translate }}</label>
               <input 
                 type="text" 
                 class="form-input"
@@ -234,7 +235,7 @@ import { GarageInfo } from '../../../core/models/garage-settings.model';
             </div>
 
             <div>
-              <label class="form-label">BIC/SWIFT Code</label>
+              <label class="form-label">{{ 'settings.garageInfo.bicSwiftCode' | translate }}</label>
               <input 
                 type="text" 
                 class="form-input"

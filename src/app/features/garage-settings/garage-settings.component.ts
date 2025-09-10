@@ -1,6 +1,7 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { GarageSettingsService } from '../../core/services/garage-settings.service';
 import { GarageSettings } from '../../core/models/garage-settings.model';
 import { GarageInfoFormComponent } from './components/garage-info-form.component';
@@ -15,6 +16,7 @@ import { IntegrationSettingsComponent } from './components/integration-settings.
   imports: [
     CommonModule,
     RouterModule,
+    TranslatePipe,
     GarageInfoFormComponent,
     OperationalSettingsComponent,
     BusinessSettingsComponent,
@@ -28,8 +30,8 @@ import { IntegrationSettingsComponent } from './components/integration-settings.
       <header class="glass-card garage-settings-header">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div class="flex-1">
-            <h1 class="text-2xl lg:text-3xl font-bold text-white mb-1">Garage Settings</h1>
-            <p class="text-gray-300">Configure your garage operations, business rules, and system preferences</p>
+            <h1 class="text-2xl lg:text-3xl font-bold text-white mb-1">{{ 'settings.title' | translate }}</h1>
+            <p class="text-gray-300">{{ 'settings.subtitle' | translate }}</p>
           </div>
         </div>
       </header>
@@ -44,7 +46,7 @@ import { IntegrationSettingsComponent } from './components/integration-settings.
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
             </svg>
-            <span class="text-sm">Garage Information</span>
+            <span class="text-sm">{{ 'settings.navigation.garageInformation' | translate }}</span>
           </button>
           
           <button
@@ -55,7 +57,7 @@ import { IntegrationSettingsComponent } from './components/integration-settings.
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
             </svg>
-            <span class="text-sm">Operations</span>
+            <span class="text-sm">{{ 'settings.navigation.operations' | translate }}</span>
           </button>
           
           <button
@@ -65,7 +67,7 @@ import { IntegrationSettingsComponent } from './components/integration-settings.
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
             </svg>
-            <span class="text-sm">Business</span>
+            <span class="text-sm">{{ 'settings.navigation.business' | translate }}</span>
           </button>
           
           <button
@@ -75,7 +77,7 @@ import { IntegrationSettingsComponent } from './components/integration-settings.
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
             </svg>
-            <span class="text-sm">System</span>
+            <span class="text-sm">{{ 'settings.navigation.system' | translate }}</span>
           </button>
           
           <button
@@ -85,7 +87,7 @@ import { IntegrationSettingsComponent } from './components/integration-settings.
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
             </svg>
-            <span class="text-sm">Integrations</span>
+            <span class="text-sm">{{ 'settings.navigation.integrations' | translate }}</span>
           </button>
         </nav>
       </div>
@@ -141,7 +143,7 @@ import { IntegrationSettingsComponent } from './components/integration-settings.
         <div class="glass-card">
           <div class="text-center py-12">
             <div class="loading-spinner mx-auto"></div>
-            <p class="mt-4 text-gray-300">Loading settings...</p>
+            <p class="mt-4 text-gray-300">{{ 'settings.loading' | translate }}</p>
           </div>
         </div>
       }
@@ -152,13 +154,13 @@ import { IntegrationSettingsComponent } from './components/integration-settings.
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-2">
               <div class="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
-              <span class="text-sm text-gray-300">You have unsaved changes</span>
+              <span class="text-sm text-gray-300">{{ 'settings.unsavedChanges' | translate }}</span>
             </div>
             <div class="flex space-x-3">
               <button 
                 class="btn-secondary"
                 (click)="discardChanges()">
-                Discard Changes
+                {{ 'settings.discardChanges' | translate }}
               </button>
               <button 
                 class="btn-primary"
@@ -169,9 +171,9 @@ import { IntegrationSettingsComponent } from './components/integration-settings.
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Saving...
+                  {{ 'settings.saving' | translate }}
                 } @else {
-                  Save All Changes
+                  {{ 'settings.saveAllChanges' | translate }}
                 }
               </button>
             </div>

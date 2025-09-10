@@ -67,6 +67,12 @@ https://[your-username].github.io/OpAuto-front/
 - You'll need to configure API endpoints for production
 - Authentication guards will need backend integration
 
+### Translation/i18n Support
+- ✅ Translation files are automatically included in build
+- ✅ Service dynamically constructs correct asset paths using base href
+- Supports English, French, and Arabic languages
+- Translation files located in `/assets/i18n/` directory
+
 ### Custom Domain (Optional)
 To use a custom domain:
 1. Add a `CNAME` file to your `public/` folder with your domain

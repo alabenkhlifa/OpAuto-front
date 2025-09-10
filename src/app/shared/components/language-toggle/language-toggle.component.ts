@@ -2,6 +2,7 @@ import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
 import { LanguageService, LanguageOption, SupportedLanguage } from '../../../core/services/language.service';
+import { TranslationService } from '../../../core/services/translation.service';
 
 @Component({
   selector: 'app-language-toggle',
@@ -38,7 +39,7 @@ import { LanguageService, LanguageOption, SupportedLanguage } from '../../../cor
           <!-- Dropdown Header -->
           <div class="px-4 py-3 border-b border-slate-600 border-opacity-60">
             <p class="text-xs font-medium uppercase tracking-wider text-gray-300">
-              Select Language
+              {{ getTranslatedText('settings.language', 'Select Language') }}
             </p>
           </div>
 
@@ -136,6 +137,7 @@ import { LanguageService, LanguageOption, SupportedLanguage } from '../../../cor
 })
 export class LanguageToggleComponent implements OnInit, OnDestroy {
   private languageService = inject(LanguageService);
+  private translationService = inject(TranslationService);
   private destroy$ = new Subject<void>();
 
   currentLanguage = signal<SupportedLanguage>('en');
@@ -179,6 +181,10 @@ export class LanguageToggleComponent implements OnInit, OnDestroy {
 
   getCurrentLanguageOption(): LanguageOption | undefined {
     return this.languageService.getLanguageOption(this.currentLanguage());
+  }
+
+  getTranslatedText(key: string, fallback: string): string {
+    return this.translationService.instant(key) || fallback;
   }
 
   isDarkMode(): boolean {

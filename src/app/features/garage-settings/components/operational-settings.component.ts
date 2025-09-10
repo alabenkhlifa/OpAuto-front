@@ -1,31 +1,32 @@
 import { Component, Input, Output, EventEmitter, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 import { OperationalSettings } from '../../../core/models/garage-settings.model';
 
 @Component({
   selector: 'app-operational-settings',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   template: `
     <div class="space-y-6">
       
       <!-- Garage Capacity -->
       <div class="glass-card">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-white">Garage Capacity</h3>
+          <h3 class="text-lg font-semibold text-white">{{ 'settings.operations.garageCapacity' | translate }}</h3>
           <button 
             type="button"
             class="btn-primary text-sm"
             [disabled]="capacityForm.invalid"
             (click)="saveCapacity()">
-            Save Capacity
+            {{ 'settings.operations.saveCapacity' | translate }}
           </button>
         </div>
 
         <form [formGroup]="capacityForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label class="form-label">Total Lifts *</label>
+            <label class="form-label">{{ 'settings.operations.totalLifts' | translate }} *</label>
             <input 
               type="number" 
               class="form-input"
@@ -34,12 +35,12 @@ import { OperationalSettings } from '../../../core/models/garage-settings.model'
               max="20"
               [class.border-red-500]="isCapacityFieldInvalid('totalLifts')">
             @if (isCapacityFieldInvalid('totalLifts')) {
-              <p class="mt-1 text-sm text-red-600 dark:text-red-400">At least 1 lift required</p>
+              <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ 'settings.operations.errors.atLeastOneLift' | translate }}</p>
             }
           </div>
 
           <div>
-            <label class="form-label">Total Mechanics *</label>
+            <label class="form-label">{{ 'settings.operations.totalMechanics' | translate }} *</label>
             <input 
               type="number" 
               class="form-input"
@@ -48,12 +49,12 @@ import { OperationalSettings } from '../../../core/models/garage-settings.model'
               max="50"
               [class.border-red-500]="isCapacityFieldInvalid('totalMechanics')">
             @if (isCapacityFieldInvalid('totalMechanics')) {
-              <p class="mt-1 text-sm text-red-600 dark:text-red-400">At least 1 mechanic required</p>
+              <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ 'settings.operations.errors.atLeastOneMechanic' | translate }}</p>
             }
           </div>
 
           <div>
-            <label class="form-label">Max Daily Appointments *</label>
+            <label class="form-label">{{ 'settings.operations.maxDailyAppointments' | translate }} *</label>
             <input 
               type="number" 
               class="form-input"
@@ -64,7 +65,7 @@ import { OperationalSettings } from '../../../core/models/garage-settings.model'
           </div>
 
           <div>
-            <label class="form-label">Avg Service Duration (minutes)</label>
+            <label class="form-label">{{ 'settings.operations.avgServiceDuration' | translate }}</label>
             <input 
               type="number" 
               class="form-input"
@@ -79,12 +80,12 @@ import { OperationalSettings } from '../../../core/models/garage-settings.model'
       <!-- Working Hours -->
       <div class="glass-card">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-white">Working Hours</h3>
+          <h3 class="text-lg font-semibold text-white">{{ 'settings.operations.workingHours' | translate }}</h3>
           <button 
             type="button"
             class="btn-primary text-sm"
             (click)="saveWorkingHours()">
-            Save Hours
+            {{ 'settings.operations.saveHours' | translate }}
           </button>
         </div>
 
@@ -98,7 +99,7 @@ import { OperationalSettings } from '../../../core/models/garage-settings.model'
                       type="checkbox" 
                       class="form-checkbox mr-2"
                       formControlName="isWorkingDay">
-                    <span class="text-sm font-medium text-white">{{ day.label }}</span>
+                    <span class="text-sm font-medium text-white">{{ 'settings.operations.days.' + day.key | translate }}</span>
                   </label>
                 </div>
 
@@ -107,7 +108,7 @@ import { OperationalSettings } from '../../../core/models/garage-settings.model'
                     type="time" 
                     class="form-input w-20"
                     formControlName="openTime">
-                  <span class="text-gray-400">to</span>
+                  <span class="text-gray-400">{{ 'settings.operations.to' | translate }}</span>
                   <input 
                     type="time" 
                     class="form-input w-20"
@@ -115,7 +116,7 @@ import { OperationalSettings } from '../../../core/models/garage-settings.model'
                 </div>
 
                 <div class="flex items-center space-x-2 ml-4" *ngIf="isWorkingDay(day.key)" formGroupName="lunchBreak">
-                  <span class="text-sm text-gray-400">Lunch:</span>
+                  <span class="text-sm text-gray-400">{{ 'settings.operations.lunch' | translate }}:</span>
                   <input 
                     type="time" 
                     class="form-input w-20"
@@ -131,7 +132,7 @@ import { OperationalSettings } from '../../../core/models/garage-settings.model'
           </div>
 
           <div class="mt-4">
-            <label class="form-label">Timezone</label>
+            <label class="form-label">{{ 'settings.operations.timezone' | translate }}</label>
             <select class="form-select w-48" formControlName="timezone">
               <option value="Africa/Tunis">Africa/Tunis (GMT+1)</option>
               <option value="Africa/Algiers">Africa/Algiers (GMT+1)</option>
@@ -145,19 +146,19 @@ import { OperationalSettings } from '../../../core/models/garage-settings.model'
       <!-- Service Settings -->
       <div class="glass-card">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-white">Service Settings</h3>
+          <h3 class="text-lg font-semibold text-white">{{ 'settings.operations.serviceSettings' | translate }}</h3>
           <button 
             type="button"
             class="btn-primary text-sm"
             (click)="saveServiceSettings()">
-            Save Settings
+            {{ 'settings.operations.saveSettings' | translate }}
           </button>
         </div>
 
         <form [formGroup]="serviceForm" class="space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="form-label">Default Service Duration (minutes)</label>
+              <label class="form-label">{{ 'settings.operations.defaultServiceDuration' | translate }}</label>
               <input 
                 type="number" 
                 class="form-input"
@@ -168,7 +169,7 @@ import { OperationalSettings } from '../../../core/models/garage-settings.model'
             </div>
 
             <div>
-              <label class="form-label">Buffer Time Between Services (minutes)</label>
+              <label class="form-label">{{ 'settings.operations.bufferTime' | translate }}</label>
               <input 
                 type="number" 
                 class="form-input"
@@ -179,7 +180,7 @@ import { OperationalSettings } from '../../../core/models/garage-settings.model'
             </div>
 
             <div>
-              <label class="form-label">Default Warranty Period (days)</label>
+              <label class="form-label">{{ 'settings.operations.warrantyPeriod' | translate }}</label>
               <input 
                 type="number" 
                 class="form-input"
@@ -195,7 +196,7 @@ import { OperationalSettings } from '../../../core/models/garage-settings.model'
                 type="checkbox" 
                 class="form-checkbox mr-2"
                 formControlName="allowOverlappingAppointments">
-              <span class="text-sm font-medium text-gray-300">Allow overlapping appointments</span>
+              <span class="text-sm font-medium text-gray-300">{{ 'settings.operations.allowOverlapping' | translate }}</span>
             </label>
 
             <label class="flex items-center">
@@ -203,7 +204,7 @@ import { OperationalSettings } from '../../../core/models/garage-settings.model'
                 type="checkbox" 
                 class="form-checkbox mr-2"
                 formControlName="requireCustomerApproval">
-              <span class="text-sm font-medium text-gray-300">Require customer approval for additional work</span>
+              <span class="text-sm font-medium text-gray-300">{{ 'settings.operations.requireApproval' | translate }}</span>
             </label>
           </div>
         </form>
@@ -212,19 +213,19 @@ import { OperationalSettings } from '../../../core/models/garage-settings.model'
       <!-- Appointment Settings -->
       <div class="glass-card">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-white">Appointment Settings</h3>
+          <h3 class="text-lg font-semibold text-white">{{ 'settings.operations.appointmentSettings' | translate }}</h3>
           <button 
             type="button"
             class="btn-primary text-sm"
             (click)="saveAppointmentSettings()">
-            Save Settings
+            {{ 'settings.operations.saveAppointmentSettings' | translate }}
           </button>
         </div>
 
         <form [formGroup]="appointmentForm" class="space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label class="form-label">Max Advance Booking (days)</label>
+              <label class="form-label">{{ 'settings.operations.maxAdvanceBooking' | translate }}</label>
               <input 
                 type="number" 
                 class="form-input"
@@ -234,7 +235,7 @@ import { OperationalSettings } from '../../../core/models/garage-settings.model'
             </div>
 
             <div>
-              <label class="form-label">Min Advance Booking (hours)</label>
+              <label class="form-label">{{ 'settings.operations.minAdvanceBooking' | translate }}</label>
               <input 
                 type="number" 
                 class="form-input"
@@ -244,7 +245,7 @@ import { OperationalSettings } from '../../../core/models/garage-settings.model'
             </div>
 
             <div>
-              <label class="form-label">Deposit Percentage (%)</label>
+              <label class="form-label">{{ 'settings.operations.depositPercentage' | translate }}</label>
               <input 
                 type="number" 
                 class="form-input"
@@ -261,7 +262,7 @@ import { OperationalSettings } from '../../../core/models/garage-settings.model'
                 type="checkbox" 
                 class="form-checkbox mr-2"
                 formControlName="allowOnlineBooking">
-              <span class="text-sm font-medium text-gray-300">Allow online booking</span>
+              <span class="text-sm font-medium text-gray-300">{{ 'settings.operations.allowOnlineBooking' | translate }}</span>
             </label>
 
             <label class="flex items-center">
@@ -269,7 +270,7 @@ import { OperationalSettings } from '../../../core/models/garage-settings.model'
                 type="checkbox" 
                 class="form-checkbox mr-2"
                 formControlName="allowSameDayBooking">
-              <span class="text-sm font-medium text-gray-300">Allow same-day booking</span>
+              <span class="text-sm font-medium text-gray-300">{{ 'settings.operations.allowSameDayBooking' | translate }}</span>
             </label>
 
             <label class="flex items-center">
@@ -277,17 +278,17 @@ import { OperationalSettings } from '../../../core/models/garage-settings.model'
                 type="checkbox" 
                 class="form-checkbox mr-2"
                 formControlName="requireDepositForBooking">
-              <span class="text-sm font-medium text-gray-300">Require deposit for booking</span>
+              <span class="text-sm font-medium text-gray-300">{{ 'settings.operations.requireDeposit' | translate }}</span>
             </label>
           </div>
 
           <div>
-            <label class="form-label">Cancellation Policy</label>
+            <label class="form-label">{{ 'settings.operations.cancellationPolicy' | translate }}</label>
             <textarea 
               class="form-textarea"
               formControlName="cancellationPolicy"
               rows="3"
-              placeholder="Describe your cancellation policy...">
+              [placeholder]="'settings.operations.cancellationPlaceholder' | translate">
             </textarea>
           </div>
         </form>

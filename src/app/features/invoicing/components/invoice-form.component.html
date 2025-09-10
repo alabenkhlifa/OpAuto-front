@@ -12,10 +12,10 @@
       </button>
       <div class="flex-1">
         <h1 class="text-2xl lg:text-3xl font-bold text-white mb-1">
-          {{ isEditMode() ? 'Edit Invoice' : 'Create New Invoice' }}
+          {{ isEditMode() ? ('invoicing.create.editTitle' | translate) : ('invoicing.create.title' | translate) }}
         </h1>
         <p class="text-gray-300">
-          {{ isEditMode() ? 'Update invoice details and line items' : 'Generate a new invoice for services and parts' }}
+          {{ isEditMode() ? ('invoicing.create.editSubtitle' | translate) : ('invoicing.create.subtitle' | translate) }}
         </p>
       </div>
     </div>
@@ -27,46 +27,46 @@
       <div class="lg:col-span-2 space-y-6">
         <!-- Invoice Details -->
         <div class="glass-card">
-          <h2 class="text-lg font-semibold text-white mb-4">Invoice Details</h2>
+          <h2 class="text-lg font-semibold text-white mb-4">{{ 'invoicing.create.invoiceDetails' | translate }}</h2>
           
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-300 mb-2">
-                Customer *
+                {{ 'invoicing.create.customer' | translate }} *
               </label>
               <select formControlName="customerId" (change)="onCustomerChange()"
                       class="form-select">
-                <option value="">Select customer</option>
+                <option value="">{{ 'invoicing.create.selectCustomer' | translate }}</option>
                 <option *ngFor="let customer of customers()" [value]="customer.id">
                   {{ customer.name }} - {{ customer.phone }}
                 </option>
               </select>
               <div *ngIf="invoiceForm.get('customerId')?.errors && invoiceForm.get('customerId')?.touched" 
                    class="text-red-500 text-xs mt-1">
-                Customer is required
+                {{ 'invoicing.create.customerRequired' | translate }}
               </div>
             </div>
 
             <div>
               <label class="block text-sm font-medium text-gray-300 mb-2">
-                Vehicle *
+                {{ 'invoicing.create.vehicle' | translate }} *
               </label>
               <select formControlName="carId"
                       class="form-select">
-                <option value="">Select vehicle</option>
+                <option value="">{{ 'invoicing.create.selectVehicle' | translate }}</option>
                 <option *ngFor="let car of getCustomerCars()" [value]="car.id">
                   {{ car.make }} {{ car.model }} ({{ car.licensePlate }})
                 </option>
               </select>
               <div *ngIf="invoiceForm.get('carId')?.errors && invoiceForm.get('carId')?.touched" 
                    class="text-red-500 text-xs mt-1">
-                Vehicle is required
+                {{ 'invoicing.create.vehicleRequired' | translate }}
               </div>
             </div>
 
             <div>
               <label class="block text-sm font-medium text-gray-300 mb-2">
-                Issue Date *
+                {{ 'invoicing.create.issueDate' | translate }} *
               </label>
               <input type="date" formControlName="issueDate"
                      class="form-input w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white backdrop-blur-sm">
@@ -74,7 +74,7 @@
 
             <div>
               <label class="block text-sm font-medium text-gray-300 mb-2">
-                Due Date *
+                {{ 'invoicing.create.dueDate' | translate }} *
               </label>
               <input type="date" formControlName="dueDate"
                      class="form-input w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white backdrop-blur-sm">
@@ -83,10 +83,10 @@
 
           <div class="mt-4">
             <label class="block text-sm font-medium text-white mb-2">
-              Payment Terms
+              {{ 'invoicing.create.paymentTerms' | translate }}
             </label>
             <input type="text" formControlName="paymentTerms"
-                   placeholder="e.g., Payment due within 30 days"
+                   placeholder="{{ 'invoicing.create.paymentTermsPlaceholder' | translate }}"
                    class="form-input w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400 backdrop-blur-sm">
           </div>
         </div>
@@ -94,10 +94,10 @@
         <!-- Line Items -->
         <div class="glass-card">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold text-white">Line Items</h2>
+            <h2 class="text-lg font-semibold text-white">{{ 'invoicing.create.lineItems' | translate }}</h2>
             <button type="button" (click)="addLineItem()"
                     class="btn-primary btn-sm">
-              + Add Item
+              + {{ 'invoicing.create.addItem' | translate }}
             </button>
           </div>
 
@@ -107,7 +107,7 @@
                  class="line-item p-4 rounded-lg">
               
               <div class="flex items-center justify-between mb-3">
-                <h4 class="font-medium text-white">Item {{ i + 1 }}</h4>
+                <h4 class="font-medium text-white">{{ 'invoicing.create.item' | translate }} {{ i + 1 }}</h4>
                 <button type="button" (click)="removeLineItem(i)"
                         class="remove-item-btn p-1 rounded">
                   ✕
@@ -116,7 +116,7 @@
 
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 <div>
-                  <label class="block text-xs font-medium text-gray-300 mb-1">Type</label>
+                  <label class="block text-xs font-medium text-gray-300 mb-1">{{ 'invoicing.create.type' | translate }}</label>
                   <select formControlName="type" (change)="onLineItemTypeChange(i)"
                           class="form-select text-sm">
                     <option *ngFor="let type of lineItemTypes" [value]="type">
@@ -126,18 +126,18 @@
                 </div>
 
                 <div class="md:col-span-2">
-                  <label class="block text-xs font-medium text-gray-300 mb-1">Description</label>
+                  <label class="block text-xs font-medium text-gray-300 mb-1">{{ 'invoicing.create.description' | translate }}</label>
                   <input type="text" formControlName="description"
-                         placeholder="Item description"
+                         placeholder="{{ 'invoicing.create.itemDescription' | translate }}"
                          class="form-input w-full px-2 py-1 text-sm rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white placeholder-gray-400 backdrop-blur-sm">
                 </div>
 
                 <!-- Part Selection (only for part type) -->
                 <div *ngIf="lineItem.get('type')?.value === 'part'" class="md:col-span-3">
-                  <label class="block text-xs font-medium text-gray-300 mb-1">Select Part</label>
+                  <label class="block text-xs font-medium text-gray-300 mb-1">{{ 'invoicing.create.selectPart' | translate }}</label>
                   <select formControlName="partId" (change)="onPartSelect(i, $any($event.target).value)"
                           class="form-select text-sm">
-                    <option value="">Select part (optional)</option>
+                    <option value="">{{ 'invoicing.create.selectPartOptional' | translate }}</option>
                     <option *ngFor="let part of parts()" [value]="part.id">
                       {{ part.name }} - {{ part.brand }} ({{ formatCurrency(part.price) }})
                     </option>
@@ -146,10 +146,10 @@
 
                 <!-- Service Selection (only for service type) -->
                 <div *ngIf="lineItem.get('type')?.value === 'service'" class="md:col-span-3">
-                  <label class="block text-xs font-medium text-gray-300 mb-1">Select Service</label>
+                  <label class="block text-xs font-medium text-gray-300 mb-1">{{ 'invoicing.create.selectService' | translate }}</label>
                   <select formControlName="serviceCode" (change)="onServiceSelect(i, $any($event.target).value)"
                           class="form-select text-sm">
-                    <option value="">Select service (optional)</option>
+                    <option value="">{{ 'invoicing.create.selectServiceOptional' | translate }}</option>
                     <option *ngFor="let service of serviceRates()" [value]="service.serviceCode">
                       {{ service.serviceName }} ({{ formatCurrency(service.basePrice) }})
                     </option>
@@ -157,20 +157,20 @@
                 </div>
 
                 <div>
-                  <label class="block text-xs font-medium text-gray-300 mb-1">Quantity</label>
+                  <label class="block text-xs font-medium text-gray-300 mb-1">{{ 'invoicing.create.quantity' | translate }}</label>
                   <input type="number" formControlName="quantity" min="0.01" step="0.01"
                          class="form-input w-full px-2 py-1 text-sm rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white backdrop-blur-sm">
                 </div>
 
                 <div>
-                  <label class="block text-xs font-medium text-gray-300 mb-1">Unit</label>
+                  <label class="block text-xs font-medium text-gray-300 mb-1">{{ 'invoicing.create.unit' | translate }}</label>
                   <input type="text" formControlName="unit"
-                         placeholder="piece, hour, etc."
+                         placeholder="{{ 'invoicing.create.unitPlaceholder' | translate }}"
                          class="form-input w-full px-2 py-1 text-sm rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white placeholder-gray-400 backdrop-blur-sm">
                 </div>
 
                 <div>
-                  <label class="block text-xs font-medium text-gray-300 mb-1">Unit Price</label>
+                  <label class="block text-xs font-medium text-gray-300 mb-1">{{ 'invoicing.create.unitPrice' | translate }}</label>
                   <input type="number" formControlName="unitPrice" min="0" step="0.01"
                          class="form-input w-full px-2 py-1 text-sm rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white backdrop-blur-sm">
                 </div>
@@ -179,7 +179,7 @@
               <!-- Line Item Total -->
               <div class="mt-3 text-right">
                 <span class="text-sm font-medium text-white">
-                  Total: {{ formatCurrency(calculateLineItemTotal(i)) }}
+                  {{ 'invoicing.create.total' | translate }}: {{ formatCurrency(calculateLineItemTotal(i)) }}
                 </span>
               </div>
             </div>
@@ -188,9 +188,9 @@
 
         <!-- Notes -->
         <div class="glass-card">
-          <h2 class="text-lg font-semibold text-white mb-4">Additional Notes</h2>
+          <h2 class="text-lg font-semibold text-white mb-4">{{ 'invoicing.create.additionalNotes' | translate }}</h2>
           <textarea formControlName="notes"
-                    placeholder="Add any additional notes or special instructions..."
+                    placeholder="{{ 'invoicing.create.notesPlaceholder' | translate }}"
                     rows="4"
                     class="form-input w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400 backdrop-blur-sm resize-none">
           </textarea>
@@ -201,7 +201,7 @@
       <div class="space-y-6">
         <!-- Invoice Summary -->
         <div class="glass-card sticky-summary">
-          <h3 class="text-lg font-semibold text-white mb-4">Invoice Summary</h3>
+          <h3 class="text-lg font-semibold text-white mb-4">{{ 'invoicing.create.invoiceSummary' | translate }}</h3>
           
           <!-- Customer & Car Info -->
           <div *ngIf="getSelectedCustomer() && getSelectedCar()" class="customer-info mb-6 p-4 rounded-lg">
@@ -224,12 +224,12 @@
           <!-- Pricing Breakdown -->
           <div class="space-y-3">
             <div class="flex justify-between text-sm">
-              <span class="text-gray-300">Subtotal:</span>
+              <span class="text-gray-300">{{ 'invoicing.create.subtotal' | translate }}:</span>
               <span class="font-medium text-white">{{ formatCurrency(subtotal()) }}</span>
             </div>
             
             <div class="flex justify-between text-sm">
-              <span class="text-gray-300">Discount:</span>
+              <span class="text-gray-300">{{ 'invoicing.create.discount' | translate }}:</span>
               <div class="flex items-center gap-2">
                 <input type="number" formControlName="discountPercentage" 
                        min="0" max="100" step="0.1"
@@ -240,7 +240,7 @@
             </div>
             
             <div class="flex justify-between text-sm">
-              <span class="text-gray-300">Tax (TVA):</span>
+              <span class="text-gray-300">{{ 'invoicing.create.tax' | translate }}:</span>
               <div class="flex items-center gap-2">
                 <input type="number" formControlName="taxRate" 
                        min="0" max="100" step="0.1"
@@ -253,7 +253,7 @@
             <hr class="border-gray-500">
             
             <div class="flex justify-between">
-              <span class="font-semibold text-white">Total:</span>
+              <span class="font-semibold text-white">{{ 'invoicing.create.total' | translate }}:</span>
               <span class="total-amount font-bold text-xl">{{ formatCurrency(totalAmount()) }}</span>
             </div>
           </div>
@@ -264,18 +264,18 @@
                     [disabled]="!invoiceForm.valid || isSubmitting()"
                     class="btn-primary w-full px-4 py-3 font-medium flex items-center justify-center gap-2">
               <div *ngIf="isSubmitting()" class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-              {{ isEditMode() ? 'Update Invoice' : 'Create Invoice' }}
+              {{ isEditMode() ? ('invoicing.create.updateInvoice' | translate) : ('invoicing.create.createInvoice' | translate) }}
             </button>
             
             <button type="button" (click)="onSaveAsDraft()"
                     [disabled]="isSubmitting()"
                     class="btn-warning w-full px-4 py-2 font-medium">
-              Save as Draft
+              {{ 'invoicing.create.saveAsDraft' | translate }}
             </button>
             
             <button type="button" (click)="onCancel()"
                     class="btn-tertiary w-full px-4 py-2">
-              Cancel
+              {{ 'common.cancel' | translate }}
             </button>
           </div>
         </div>
@@ -288,7 +288,7 @@
        class="loading-overlay fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
     <div class="glass-card flex items-center gap-3">
       <div class="animate-spin h-5 w-5 border-2 border-blue-400 border-t-transparent rounded-full"></div>
-      <span class="text-white">Loading form data...</span>
+      <span class="text-white">{{ 'invoicing.create.loadingFormData' | translate }}</span>
     </div>
   </div>
 </div>

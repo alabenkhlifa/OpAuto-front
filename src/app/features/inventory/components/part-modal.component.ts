@@ -76,7 +76,7 @@ import { Part, PartWithStock, Supplier, PartCategory, PartUnit } from '../../../
                 Category *
               </label>
               <select formControlName="category"
-                      class="w-full px-3 py-2 bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white backdrop-blur-sm">
+                      class="form-select">
                 <option value="">Select category</option>
                 <option *ngFor="let category of availableCategories" [value]="category">
                   {{ category | titlecase }}
@@ -110,7 +110,7 @@ import { Part, PartWithStock, Supplier, PartCategory, PartUnit } from '../../../
                 Supplier *
               </label>
               <select formControlName="supplierId"
-                      class="w-full px-3 py-2 bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white backdrop-blur-sm">
+                      class="form-select">
                 <option value="">Select supplier</option>
                 <option *ngFor="let supplier of suppliers()" [value]="supplier.id">
                   {{ supplier.name }}
@@ -127,7 +127,7 @@ import { Part, PartWithStock, Supplier, PartCategory, PartUnit } from '../../../
                 Unit *
               </label>
               <select formControlName="unit"
-                      class="w-full px-3 py-2 bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white backdrop-blur-sm">
+                      class="form-select">
                 <option value="">Select unit</option>
                 <option *ngFor="let unit of availableUnits" [value]="unit">
                   {{ unit | titlecase }}
@@ -163,7 +163,7 @@ import { Part, PartWithStock, Supplier, PartCategory, PartUnit } from '../../../
                 Currency
               </label>
               <select formControlName="currency"
-                      class="w-full px-3 py-2 bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white backdrop-blur-sm">
+                      class="form-select">
                 <option value="TND">TND (Tunisian Dinar)</option>
                 <option value="EUR">EUR (Euro)</option>
                 <option value="USD">USD (US Dollar)</option>

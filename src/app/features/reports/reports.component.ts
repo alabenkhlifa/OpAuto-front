@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { Chart, ChartConfiguration, ChartType, registerables } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
 import { ReportingService } from '../../core/services/reporting.service';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+import { TranslationService } from '../../core/services/translation.service';
 import { 
   ReportFilters, 
   DateRangePreset, 
@@ -21,12 +23,13 @@ Chart.register(...registerables);
 @Component({
   selector: 'app-reports',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, BaseChartDirective],
+  imports: [CommonModule, RouterModule, FormsModule, BaseChartDirective, TranslatePipe],
   templateUrl: './reports.component.html',
   styleUrl: './reports.component.css'
 })
 export class ReportsComponent implements OnInit {
   private reportingService = inject(ReportingService);
+  private translationService = inject(TranslationService);
 
   // State signals
   currentView = signal<'dashboard' | 'financial' | 'operational' | 'customer' | 'inventory'>('dashboard');
@@ -53,23 +56,23 @@ export class ReportsComponent implements OnInit {
   serviceTypeChartConfig = signal<ChartConfiguration | null>(null);
   appointmentStatusChartConfig = signal<ChartConfiguration | null>(null);
 
-  // Date presets for dropdown
-  datePresets: { value: DateRangePreset; label: string }[] = [
-    { value: 'today', label: 'Today' },
-    { value: 'yesterday', label: 'Yesterday' },
-    { value: 'this-week', label: 'This Week' },
-    { value: 'last-week', label: 'Last Week' },
-    { value: 'this-month', label: 'This Month' },
-    { value: 'last-month', label: 'Last Month' },
-    { value: 'this-quarter', label: 'This Quarter' },
-    { value: 'last-quarter', label: 'Last Quarter' },
-    { value: 'this-year', label: 'This Year' },
-    { value: 'last-year', label: 'Last Year' },
-    { value: 'last-30-days', label: 'Last 30 Days' },
-    { value: 'last-90-days', label: 'Last 90 Days' },
-    { value: 'last-365-days', label: 'Last 365 Days' },
-    { value: 'custom', label: 'Custom Range' }
-  ];
+  // Date presets for dropdown (computed for translation)
+  datePresets = computed(() => [
+    { value: 'today' as DateRangePreset, label: this.translationService.instant('reports.datePresets.today') },
+    { value: 'yesterday' as DateRangePreset, label: this.translationService.instant('reports.datePresets.yesterday') },
+    { value: 'this-week' as DateRangePreset, label: this.translationService.instant('reports.datePresets.thisWeek') },
+    { value: 'last-week' as DateRangePreset, label: this.translationService.instant('reports.datePresets.lastWeek') },
+    { value: 'this-month' as DateRangePreset, label: this.translationService.instant('reports.datePresets.thisMonth') },
+    { value: 'last-month' as DateRangePreset, label: this.translationService.instant('reports.datePresets.lastMonth') },
+    { value: 'this-quarter' as DateRangePreset, label: this.translationService.instant('reports.datePresets.thisQuarter') },
+    { value: 'last-quarter' as DateRangePreset, label: this.translationService.instant('reports.datePresets.lastQuarter') },
+    { value: 'this-year' as DateRangePreset, label: this.translationService.instant('reports.datePresets.thisYear') },
+    { value: 'last-year' as DateRangePreset, label: this.translationService.instant('reports.datePresets.lastYear') },
+    { value: 'last-30-days' as DateRangePreset, label: this.translationService.instant('reports.datePresets.last30Days') },
+    { value: 'last-90-days' as DateRangePreset, label: this.translationService.instant('reports.datePresets.last90Days') },
+    { value: 'last-365-days' as DateRangePreset, label: this.translationService.instant('reports.datePresets.last365Days') },
+    { value: 'custom' as DateRangePreset, label: this.translationService.instant('reports.datePresets.custom') }
+  ]);
 
   ngOnInit() {
     this.loadDashboardData();
@@ -255,8 +258,9 @@ export class ReportsComponent implements OnInit {
   }
 
   onExportReport(format: 'pdf' | 'excel' | 'csv') {
+    const message = this.translationService.instant('reports.export.exporting', { format: format.toUpperCase() });
+    console.log(message);
     // TODO: Implement export functionality
-    console.log(`Exporting report as ${format}`);
   }
 
   onPrintReport() {
@@ -309,8 +313,13 @@ export class ReportsComponent implements OnInit {
     return this.filters().dateRange.label;
   }
 
+  hasActiveFilters = computed(() => {
+    const currentFilters = this.filters();
+    return currentFilters.preset !== 'this-month';
+  });
+
   getMetricCardClass(color: string): string {
-    const baseClasses = 'bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6';
+    const baseClasses = 'glass-card';
     
     switch (color) {
       case 'blue':
@@ -326,5 +335,19 @@ export class ReportsComponent implements OnInit {
       default:
         return `${baseClasses} border-l-4 border-l-gray-500`;
     }
+  }
+
+  getKpiTranslationKey(kpi: DashboardKPI): string {
+    // Map English labels to translation keys
+    const labelToKeyMap: { [key: string]: string } = {
+      'Total Revenue': 'reports.kpis.totalRevenue',
+      'Appointments': 'reports.kpis.appointments',
+      'Active Customers': 'reports.kpis.activeCustomers',
+      'Mechanic Utilization': 'reports.kpis.mechanicUtilization',
+      'Stock Value': 'reports.kpis.stockValue',
+      'Customer Satisfaction': 'reports.kpis.customerSatisfaction'
+    };
+    
+    return labelToKeyMap[kpi.label] || kpi.label;
   }
 }

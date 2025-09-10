@@ -6,16 +6,19 @@ import { PartService } from '../../core/services/part.service';
 import { PartWithStock, InventoryAlert, InventoryStats, Supplier, Part } from '../../core/models/part.model';
 import { PartModalComponent } from './components/part-modal.component';
 import { StockAdjustmentModalComponent } from './components/stock-adjustment-modal.component';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+import { TranslationService } from '../../core/services/translation.service';
 
 @Component({
   selector: 'app-inventory',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, PartModalComponent, StockAdjustmentModalComponent],
+  imports: [CommonModule, FormsModule, RouterModule, PartModalComponent, StockAdjustmentModalComponent, TranslatePipe],
   templateUrl: './inventory.component.html',
   styleUrl: './inventory.component.css'
 })
 export class InventoryComponent implements OnInit {
   public partService = inject(PartService);
+  private translationService = inject(TranslationService);
 
   parts = signal<PartWithStock[]>([]);
   alerts = signal<InventoryAlert[]>([]);
@@ -267,5 +270,34 @@ export class InventoryComponent implements OnInit {
 
   isMobile(): boolean {
     return typeof window !== 'undefined' && window.innerWidth < 1024;
+  }
+
+  getStockStatusLabel(status: string): string {
+    const statusKeys: {[key: string]: string} = {
+      'in-stock': 'inStock',
+      'low-stock': 'lowStock',
+      'out-of-stock': 'outOfStock',
+      'ordered': 'ordered'
+    };
+    const key = statusKeys[status] || 'inStock';
+    return this.translationService.instant(`inventory.stockStatus.${key}`);
+  }
+
+  getCategoryLabel(category: string): string {
+    const categoryKeys: {[key: string]: string} = {
+      'engine': 'engine',
+      'transmission': 'transmission',
+      'brakes': 'brakes',
+      'suspension': 'suspension',
+      'electrical': 'electrical',
+      'filters': 'filters',
+      'fluids': 'fluids',
+      'tires': 'tires',
+      'body': 'body',
+      'accessories': 'accessories',
+      'consumables': 'consumables'
+    };
+    const key = categoryKeys[category] || category;
+    return this.translationService.instant(`inventory.categories.${key}`);
   }
 }

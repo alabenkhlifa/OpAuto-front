@@ -5,8 +5,8 @@
   <header class="glass-card invoicing-header">
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
       <div class="flex-1">
-        <h1 class="text-2xl lg:text-3xl font-bold text-white mb-1">Invoicing</h1>
-        <p class="text-gray-300">Manage invoices, payments, and billing</p>
+        <h1 class="text-2xl lg:text-3xl font-bold text-white mb-1">{{ 'invoicing.title' | translate }}</h1>
+        <p class="text-gray-300">{{ 'invoicing.subtitle' | translate }}</p>
       </div>
 
       <div class="flex items-center gap-3">
@@ -18,7 +18,7 @@
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
-          <span class="text-sm">Dashboard</span>
+          <span class="text-sm">{{ 'invoicing.navigation.dashboard' | translate }}</span>
         </button>
         
         <button (click)="setView('list')"
@@ -28,7 +28,7 @@
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          <span class="text-sm">All Invoices</span>
+          <span class="text-sm">{{ 'invoicing.navigation.allInvoices' | translate }}</span>
         </button>
         
         <button (click)="setView('pending')"
@@ -38,7 +38,7 @@
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <span class="text-sm">Pending Payment</span>
+          <span class="text-sm">{{ 'invoicing.navigation.pendingPayment' | translate }}</span>
           <span *ngIf="pendingInvoices().length > 0" 
                 class="badge badge-priority-urgent badge-sm">
             {{ pendingInvoices().length }}
@@ -51,7 +51,7 @@
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          <span>Create Invoice</span>
+          <span>{{ 'invoicing.navigation.createInvoice' | translate }}</span>
         </button>
       </div>
     </div>
@@ -64,7 +64,7 @@
       <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-300">Total Revenue</p>
+            <p class="text-sm font-medium text-gray-300">{{ 'invoicing.dashboard.totalRevenue' | translate }}</p>
             <p class="text-2xl font-bold text-white">{{ formatCurrency(stats()?.totalRevenue || 0) }}</p>
           </div>
           <div class="h-12 w-12 rounded-lg flex items-center justify-center" style="background-color: rgba(34, 197, 94, 0.1)">
@@ -72,14 +72,14 @@
           </div>
         </div>
         <p class="text-xs text-gray-400 mt-2">
-          This month: {{ formatCurrency(stats()?.monthlyRevenue || 0) }}
+          {{ 'invoicing.dashboard.thisMonth' | translate }}: {{ formatCurrency(stats()?.monthlyRevenue || 0) }}
         </p>
       </div>
 
       <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-300">Total Invoices</p>
+            <p class="text-sm font-medium text-gray-300">{{ 'invoicing.dashboard.totalInvoices' | translate }}</p>
             <p class="text-2xl font-bold text-white">{{ stats()?.totalInvoices || 0 }}</p>
           </div>
           <div class="h-12 w-12 rounded-lg flex items-center justify-center" style="background-color: rgba(59, 130, 246, 0.1)">
@@ -87,14 +87,14 @@
           </div>
         </div>
         <p class="text-xs text-gray-400 mt-2">
-          Paid: {{ stats()?.paidInvoices || 0 }}
+          {{ 'invoicing.dashboard.paid' | translate }}: {{ stats()?.paidInvoices || 0 }}
         </p>
       </div>
 
       <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-300">Pending Payment</p>
+            <p class="text-sm font-medium text-gray-300">{{ 'invoicing.dashboard.pendingPayment' | translate }}</p>
             <p class="text-2xl font-bold text-amber-400">{{ stats()?.pendingInvoices || 0 }}</p>
           </div>
           <div class="h-12 w-12 rounded-lg flex items-center justify-center" style="background-color: rgba(245, 158, 11, 0.1)">
@@ -103,14 +103,14 @@
         </div>
         <button (click)="setStatusFilter('sent')" 
                 class="btn-tertiary btn-sm mt-2">
-          View Details
+          {{ 'invoicing.dashboard.viewDetails' | translate }}
         </button>
       </div>
 
       <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-300">Overdue</p>
+            <p class="text-sm font-medium text-gray-300">{{ 'invoicing.dashboard.overdue' | translate }}</p>
             <p class="text-2xl font-bold text-red-400">{{ stats()?.overdueInvoices || 0 }}</p>
           </div>
           <div class="h-12 w-12 rounded-lg flex items-center justify-center" style="background-color: rgba(239, 68, 68, 0.1)">
@@ -119,7 +119,7 @@
         </div>
         <button (click)="setStatusFilter('overdue')" 
                 class="btn-tertiary btn-sm mt-2">
-          View Details
+          {{ 'invoicing.dashboard.viewDetails' | translate }}
         </button>
       </div>
     </div>
@@ -129,10 +129,10 @@
       <!-- Recent Invoices -->
       <div class="glass-card">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-white">Recent Invoices</h3>
+          <h3 class="text-lg font-semibold text-white">{{ 'invoicing.dashboard.recentInvoices' | translate }}</h3>
           <button (click)="setView('list')" 
                   class="btn-tertiary btn-sm">
-            View All
+            {{ 'invoicing.dashboard.viewAll' | translate }}
           </button>
         </div>
         
@@ -152,7 +152,7 @@
               <p class="font-semibold text-white">{{ formatCurrency(invoice.totalAmount) }}</p>
               <span class="badge"
                     [class]="getStatusBadgeClass(invoice.status)">
-                {{ invoice.status | titlecase }}
+                {{ getStatusLabel(invoice.status) }}
               </span>
             </div>
           </div>
@@ -161,18 +161,18 @@
 
       <!-- Payment Methods Distribution -->
       <div class="glass-card">
-        <h3 class="text-lg font-semibold text-white mb-4">Payment Methods</h3>
+        <h3 class="text-lg font-semibold text-white mb-4">{{ 'invoicing.dashboard.paymentMethods' | translate }}</h3>
         <div class="space-y-3">
           <div *ngFor="let methodStat of stats()?.paymentMethodStats" 
                class="flex items-center justify-between p-3 rounded-lg"
                style="background: rgba(55, 65, 81, 0.3); border: 1px solid rgba(75, 85, 99, 0.6);">
             <div class="flex items-center gap-3">
               <span class="text-lg">{{ getPaymentMethodIcon(methodStat.method) }}</span>
-              <span class="font-medium text-white capitalize">{{ methodStat.method }}</span>
+              <span class="font-medium text-white">{{ getPaymentMethodLabel(methodStat.method) }}</span>
             </div>
             <div class="text-right">
               <p class="font-semibold text-white">{{ formatCurrency(methodStat.totalAmount) }}</p>
-              <p class="text-xs text-gray-300">{{ methodStat.count }} invoices</p>
+              <p class="text-xs text-gray-300">{{ methodStat.count }} {{ 'invoicing.dashboard.invoices' | translate }}</p>
             </div>
           </div>
         </div>
@@ -188,13 +188,13 @@
       <button (click)="toggleMobileFilters()" 
               class="lg:hidden w-full mb-4 btn-filter-toggle"
               [class.active]="showMobileFilters()">
-        {{ showMobileFilters() ? 'Hide Filters' : 'Show Filters' }}
+        {{ showMobileFilters() ? ('invoicing.list.hideFilters' | translate) : ('invoicing.list.showFilters' | translate) }}
       </button>
 
       <!-- Search bar -->
       <div class="mb-4">
         <input type="text" 
-               placeholder="Search by invoice number, customer, or service..."
+               placeholder="{{ 'invoicing.list.searchPlaceholder' | translate }}"
                (input)="onSearchChange($event)"
                [value]="searchQuery()"
                class="form-input w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400 backdrop-blur-sm">
@@ -205,17 +205,17 @@
            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <select (change)="onStatusChange($event)" [value]="selectedStatus()"
                 class="filter-select">
-          <option value="all">All Status</option>
+          <option value="all">{{ 'invoicing.list.allStatus' | translate }}</option>
           <option *ngFor="let status of getAvailableStatuses()" [value]="status">
-            {{ status | titlecase }}
+            {{ getStatusLabel(status) }}
           </option>
         </select>
 
         <select (change)="onPaymentMethodChange($event)" [value]="selectedPaymentMethod()"
                 class="filter-select">
-          <option value="all">All Payment Methods</option>
+          <option value="all">{{ 'invoicing.list.allPaymentMethods' | translate }}</option>
           <option *ngFor="let method of getAvailablePaymentMethods()" [value]="method">
-            {{ method | titlecase }}
+            {{ getPaymentMethodLabel(method) }}
           </option>
         </select>
 
@@ -224,7 +224,7 @@
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
-          Clear Filters
+          {{ 'invoicing.list.clearFilters' | translate }}
         </button>
       </div>
     </div>
@@ -245,42 +245,42 @@
           </div>
           <span class="badge"
                 [class]="getStatusBadgeClass(invoice.status)">
-            {{ invoice.status | titlecase }}
+            {{ getStatusLabel(invoice.status) }}
           </span>
         </div>
 
         <!-- Customer & Car Info -->
         <div class="space-y-2 mb-4">
           <div class="flex justify-between text-sm">
-            <span class="text-gray-300">Customer:</span>
+            <span class="text-gray-300">{{ 'invoicing.list.customer' | translate }}:</span>
             <span class="font-medium text-white">{{ invoice.customerName }}</span>
           </div>
           <div class="flex justify-between text-sm">
-            <span class="text-gray-300">Vehicle:</span>
+            <span class="text-gray-300">{{ 'invoicing.list.vehicle' | translate }}:</span>
             <span class="font-medium text-white">{{ invoice.carMake }} {{ invoice.carModel }}</span>
           </div>
           <div class="flex justify-between text-sm">
-            <span class="text-gray-300">License:</span>
+            <span class="text-gray-300">{{ 'invoicing.list.license' | translate }}:</span>
             <span class="font-medium text-white">{{ invoice.licensePlate }}</span>
           </div>
           <div class="flex justify-between text-sm">
-            <span class="text-gray-300">Service:</span>
-            <span class="font-medium text-white">{{ invoice.serviceName || 'Multiple Services' }}</span>
+            <span class="text-gray-300">{{ 'invoicing.list.service' | translate }}:</span>
+            <span class="font-medium text-white">{{ invoice.serviceName || ('invoicing.list.multipleServices' | translate) }}</span>
           </div>
         </div>
 
         <!-- Payment Info -->
         <div class="space-y-2 mb-4">
           <div class="flex justify-between text-sm">
-            <span class="text-gray-300">Total:</span>
+            <span class="text-gray-300">{{ 'invoicing.list.total' | translate }}:</span>
             <span class="font-bold text-white">{{ formatCurrency(invoice.totalAmount) }}</span>
           </div>
           <div class="flex justify-between text-sm">
-            <span class="text-gray-300">Paid:</span>
+            <span class="text-gray-300">{{ 'invoicing.list.paid' | translate }}:</span>
             <span class="font-medium text-green-400">{{ formatCurrency(invoice.paidAmount) }}</span>
           </div>
           <div *ngIf="invoice.remainingAmount > 0" class="flex justify-between text-sm">
-            <span class="text-gray-300">Remaining:</span>
+            <span class="text-gray-300">{{ 'invoicing.list.remaining' | translate }}:</span>
             <span class="font-medium text-red-400">{{ formatCurrency(invoice.remainingAmount) }}</span>
           </div>
         </div>
@@ -288,7 +288,7 @@
         <!-- Payment Progress -->
         <div class="mb-4">
           <div class="flex justify-between text-xs text-gray-300 mb-1">
-            <span>Payment Progress</span>
+            <span>{{ 'invoicing.list.paymentProgress' | translate }}</span>
             <span>{{ getPaymentProgress(invoice).toFixed(0) }}%</span>
           </div>
           <div class="w-full rounded-full h-2" style="background: rgba(75, 85, 99, 0.6);">
@@ -302,11 +302,11 @@
         <!-- Due Date Info -->
         <div *ngIf="invoice.status !== 'paid'" class="mb-4">
           <div class="flex justify-between text-xs">
-            <span class="text-gray-300">Due Date:</span>
+            <span class="text-gray-300">{{ 'invoicing.list.dueDate' | translate }}:</span>
             <span [class]="isOverdue(invoice) ? 'text-red-400 font-medium' : 'text-white'">
               {{ formatDate(invoice.dueDate) }}
               <span *ngIf="isOverdue(invoice)" class="ml-1">
-                ({{ getDaysOverdue(invoice.dueDate) }} days overdue)
+                ({{ getDaysOverdue(invoice.dueDate) }} {{ 'invoicing.list.daysOverdue' | translate }})
               </span>
             </span>
           </div>
@@ -317,16 +317,16 @@
           <button *ngIf="invoice.status === 'draft'"
                   (click)="onSendInvoice(invoice); $event.stopPropagation()"
                   class="btn-primary btn-sm flex-1">
-            Send
+            {{ 'invoicing.list.send' | translate }}
           </button>
           <button *ngIf="invoice.remainingAmount > 0"
                   (click)="onMarkAsPaid(invoice); $event.stopPropagation()"
                   class="btn-success btn-sm flex-1">
-            Mark Paid
+            {{ 'invoicing.list.markPaid' | translate }}
           </button>
           <button (click)="$event.stopPropagation()"
                   class="btn-secondary btn-sm">
-            Print
+            {{ 'invoicing.list.print' | translate }}
           </button>
         </div>
       </div>
@@ -338,10 +338,10 @@
       <div class="h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4" style="background: rgba(75, 85, 99, 0.6);">
         <span class="text-2xl text-gray-400">📄</span>
       </div>
-      <h3 class="text-lg font-medium text-white mb-2">No invoices found</h3>
-      <p class="text-gray-300 mb-4">Try adjusting your search criteria or create your first invoice.</p>
+      <h3 class="text-lg font-medium text-white mb-2">{{ 'invoicing.list.noInvoicesFound' | translate }}</h3>
+      <p class="text-gray-300 mb-4">{{ 'invoicing.list.noInvoicesDescription' | translate }}</p>
       <button (click)="navigateToCreate()" class="btn-primary">
-        Create First Invoice
+        {{ 'invoicing.list.createFirstInvoice' | translate }}
       </button>
     </div>
   </div>
@@ -350,9 +350,9 @@
   <div *ngIf="currentView() === 'pending'" class="space-y-6">
     <div class="glass-card">
       <div class="flex items-center justify-between mb-6">
-        <h2 class="text-lg font-semibold text-white">Pending Payments</h2>
+        <h2 class="text-lg font-semibold text-white">{{ 'invoicing.pending.title' | translate }}</h2>
         <span class="badge badge-pending">
-          {{ pendingInvoices().length }} invoices
+          {{ pendingInvoices().length }} {{ 'invoicing.pending.invoices' | translate }}
         </span>
       </div>
       
@@ -369,9 +369,9 @@
             <div class="text-right">
               <p class="font-bold text-white">{{ formatCurrency(invoice.remainingAmount) }}</p>
               <p class="text-xs text-gray-300">
-                Due {{ formatDate(invoice.dueDate) }}
+                {{ 'invoicing.pending.due' | translate }} {{ formatDate(invoice.dueDate) }}
                 <span *ngIf="isOverdue(invoice)" class="text-red-400 font-medium">
-                  ({{ getDaysOverdue(invoice.dueDate) }} days overdue)
+                  ({{ getDaysOverdue(invoice.dueDate) }} {{ 'invoicing.list.daysOverdue' | translate }})
                 </span>
               </p>
             </div>
@@ -380,11 +380,11 @@
           <div class="flex gap-2">
             <button (click)="onInvoiceSelect(invoice)"
                     class="btn-tertiary btn-sm">
-              View Details
+              {{ 'invoicing.pending.viewDetails' | translate }}
             </button>
             <button (click)="onMarkAsPaid(invoice)"
                     class="btn-success btn-sm">
-              Record Payment
+              {{ 'invoicing.pending.recordPayment' | translate }}
             </button>
           </div>
         </div>
@@ -396,8 +396,8 @@
         <div class="h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4" style="background: rgba(34, 197, 94, 0.1);">
           <span class="text-2xl text-green-400">✅</span>
         </div>
-        <h3 class="text-lg font-medium text-white mb-2">All caught up!</h3>
-        <p class="text-gray-300">No pending payments at this time.</p>
+        <h3 class="text-lg font-medium text-white mb-2">{{ 'invoicing.pending.allCaughtUp' | translate }}</h3>
+        <p class="text-gray-300">{{ 'invoicing.pending.noPendingPayments' | translate }}</p>
       </div>
     </div>
   </div>
@@ -407,7 +407,7 @@
        class="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
     <div class="glass-card flex items-center gap-3">
       <div class="animate-spin h-5 w-5 border-2 border-blue-400 border-t-transparent rounded-full"></div>
-      <span class="text-white">Loading invoices...</span>
+      <span class="text-white">{{ 'invoicing.loading' | translate }}</span>
     </div>
   </div>
 </div>

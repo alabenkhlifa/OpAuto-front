@@ -1,11 +1,13 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus } from '../../../core/models/employee.model';
+import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
+import { TranslationService } from '../../../core/services/translation.service';
 
 @Component({
   selector: 'app-employee-card',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
   template: `
     <div class="glass-card">
       
@@ -30,18 +32,18 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus } from '../.
         <!-- Status Badge -->
         <span class="badge"
               [class]="getStatusClasses(employee.employment.status)">
-          {{ getStatusLabel(employee.employment.status) }}
+          {{ (employee.employment.status === 'on-leave' ? 'employees.status.onLeave' : 'employees.status.' + employee.employment.status) | translate }}
         </span>
       </div>
 
       <!-- Department & Contact -->
       <div class="grid grid-cols-2 gap-4 mb-4">
         <div>
-          <p class="text-xs text-gray-400 uppercase tracking-wide">Department</p>
-          <p class="text-sm font-medium text-white">{{ getDepartmentLabel(employee.employment.department) }}</p>
+          <p class="text-xs text-gray-400 uppercase tracking-wide">{{ 'employees.cardLabels.department' | translate }}</p>
+          <p class="text-sm font-medium text-white">{{ 'employees.departments.' + employee.employment.department | translate }}</p>
         </div>
         <div>
-          <p class="text-xs text-gray-400 uppercase tracking-wide">Phone</p>
+          <p class="text-xs text-gray-400 uppercase tracking-wide">{{ 'employees.cardLabels.phone' | translate }}</p>
           <p class="text-sm font-medium text-white">{{ employee.personalInfo.phone }}</p>
         </div>
       </div>
@@ -50,19 +52,19 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus } from '../.
       <div class="mb-4">
         <div class="flex items-center justify-between mb-2">
           <span class="text-xs text-gray-400 uppercase tracking-wide">
-            Availability
+            {{ 'employees.cardLabels.availability' | translate }}
           </span>
           <div class="flex items-center">
             <div class="w-2 h-2 rounded-full mr-2" [class]="getAvailabilityColor(employee.availability.isAvailable)"></div>
             <span class="text-sm font-medium" [class]="getAvailabilityTextColor(employee.availability.isAvailable)">
-              {{ employee.availability.isAvailable ? 'Available' : 'Unavailable' }}
+              {{ (employee.availability.isAvailable ? 'employees.status.available' : 'employees.status.unavailable') | translate }}
             </span>
           </div>
         </div>
         
         @if (employee.availability.isAvailable) {
           <div class="flex justify-between text-sm mb-1">
-            <span class="text-gray-400">Current Workload</span>
+            <span class="text-gray-400">{{ 'employees.cardLabels.currentWorkload' | translate }}</span>
             <span class="text-white">{{ employee.availability.currentWorkload }}/{{ employee.availability.maxWorkload }}</span>
           </div>
           <div class="w-full bg-gray-700 rounded-full h-2">
@@ -79,7 +81,7 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus } from '../.
 
       <!-- Skills & Experience -->
       <div class="mb-4">
-        <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">Specialties</p>
+        <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">{{ 'employees.cardLabels.specialties' | translate }}</p>
         <div class="flex flex-wrap gap-1">
           @for (specialty of employee.skills.specialties.slice(0, 3); track specialty) {
             <span class="badge badge-active">
@@ -98,7 +100,7 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus } from '../.
       @if (view === 'grid') {
         <div class="mb-4 text-sm">
           <div>
-            <p class="text-gray-400">Completed Jobs</p>
+            <p class="text-gray-400">{{ 'employees.cardLabels.completedJobs' | translate }}</p>
             <p class="font-medium text-white">{{ employee.performance.completedJobs }}</p>
           </div>
         </div>
@@ -109,13 +111,13 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus } from '../.
         <button 
           class="flex-1 btn-tertiary text-sm justify-center"
           (click)="viewDetails.emit(employee.id)">
-          View Details
+          {{ 'employees.actions.viewDetails' | translate }}
         </button>
         
         <button 
           class="flex-1 btn-primary text-sm justify-center"
           (click)="edit.emit(employee.id)">
-          Edit
+          {{ 'employees.actions.edit' | translate }}
         </button>
 
         <!-- Availability Toggle -->
@@ -128,12 +130,12 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus } from '../.
               <svg class="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636" />
               </svg>
-              Mark Unavailable
+              {{ 'employees.actions.markUnavailable' | translate }}
             } @else {
               <svg class="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Mark Available
+              {{ 'employees.actions.markAvailable' | translate }}
             }
           </button>
         }
@@ -222,5 +224,17 @@ export class EmployeeCardComponent {
       currency: 'TND',
       minimumFractionDigits: 0
     }).format(amount);
+  }
+
+  private translationService = inject(TranslationService);
+
+  getStatusTranslation(status: EmployeeStatus): string {
+    const key = status === 'on-leave' ? 'onLeave' : status;
+    return this.translationService.instant(`employees.status.${key}`);
+  }
+
+  getAvailabilityTranslation(isAvailable: boolean): string {
+    const key = isAvailable ? 'available' : 'unavailable';
+    return this.translationService.instant(`employees.status.${key}`);
   }
 }

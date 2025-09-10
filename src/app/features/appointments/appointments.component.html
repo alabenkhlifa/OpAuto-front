@@ -5,8 +5,8 @@
   <div class="mb-6">
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
       <div>
-        <h1 class="text-2xl lg:text-3xl font-bold text-primary-themed">Appointments</h1>
-        <p class="mt-1 text-secondary-themed">Manage your garage schedule</p>
+        <h1 class="text-2xl lg:text-3xl font-bold text-primary-themed">{{ 'appointments.title' | translate }}</h1>
+        <p class="mt-1 text-secondary-themed">{{ 'appointments.manageSchedule' | translate }}</p>
       </div>
       
       <!-- Add Appointment Button -->
@@ -16,7 +16,7 @@
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
           </svg>
-          <span>Add Appointment</span>
+          <span>{{ 'appointments.addAppointment' | translate }}</span>
         </button>
       </div>
     </div>
@@ -37,7 +37,7 @@
       <div class="text-center">
         <h2 class="text-lg font-semibold text-primary-themed">{{ formatDate(selectedDate()) }}</h2>
         <button class="text-xs text-blue-600 dark:text-blue-400" (click)="goToToday()" *ngIf="!isToday()">
-          Today
+          {{ 'appointments.today' | translate }}
         </button>
       </div>
       
@@ -52,15 +52,15 @@
     <div class="grid grid-cols-3 gap-3">
       <div class="text-center">
         <div class="text-xl font-bold text-primary-themed">{{ filteredAppointments().length }}</div>
-        <div class="text-xs text-secondary-themed">{{ isToday() ? 'Today' : 'Selected' }}</div>
+        <div class="text-xs text-secondary-themed">{{ isToday() ? ('appointments.today' | translate) : ('appointments.selected' | translate) }}</div>
       </div>
       <div class="text-center">
         <div class="text-xl font-bold text-amber-600 dark:text-amber-400">{{ inProgressCount() }}</div>
-        <div class="text-xs text-secondary-themed">Active</div>
+        <div class="text-xs text-secondary-themed">{{ 'appointments.active' | translate }}</div>
       </div>
       <div class="text-center">
         <div class="text-xl font-bold text-green-600 dark:text-green-400">{{ completedToday() }}</div>
-        <div class="text-xs text-secondary-themed">Done</div>
+        <div class="text-xs text-secondary-themed">{{ 'appointments.done' | translate }}</div>
       </div>
     </div>
   </div>
@@ -70,17 +70,17 @@
     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
     </svg>
-    <span>Filters</span>
+    <span>{{ 'common.filters' | translate }}</span>
   </button>
 
   <!-- Filters Panel -->
   <div class="mobile-filters" [class.open]="showMobileFilters()">
     <div class="p-4">
       <div class="flex flex-wrap gap-2">
-        <button class="filter-chip" [class.active]="selectedStatus() === 'all'" (click)="setStatusFilter('all')">All</button>
-        <button class="filter-chip" [class.active]="selectedStatus() === 'scheduled'" (click)="setStatusFilter('scheduled')">Scheduled</button>
-        <button class="filter-chip" [class.active]="selectedStatus() === 'in-progress'" (click)="setStatusFilter('in-progress')">Active</button>
-        <button class="filter-chip" [class.active]="selectedStatus() === 'completed'" (click)="setStatusFilter('completed')">Done</button>
+        <button class="filter-chip" [class.active]="selectedStatus() === 'all'" (click)="setStatusFilter('all')">{{ 'common.all' | translate }}</button>
+        <button class="filter-chip" [class.active]="selectedStatus() === 'scheduled'" (click)="setStatusFilter('scheduled')">{{ 'appointments.status.scheduled' | translate }}</button>
+        <button class="filter-chip" [class.active]="selectedStatus() === 'in-progress'" (click)="setStatusFilter('in-progress')">{{ 'appointments.status.in-progress' | translate }}</button>
+        <button class="filter-chip" [class.active]="selectedStatus() === 'completed'" (click)="setStatusFilter('completed')">{{ 'appointments.status.completed' | translate }}</button>
       </div>
     </div>
   </div>
@@ -91,7 +91,7 @@
     <!-- Loading State -->
     <div *ngIf="isLoading()" class="flex flex-col items-center justify-center py-12">
       <div class="loading-spinner"></div>
-      <p class="mt-4 text-gray-600 dark:text-gray-400">Loading appointments...</p>
+      <p class="mt-4 text-gray-600 dark:text-gray-400">{{ 'appointments.loadingAppointments' | translate }}</p>
     </div>
     
     <!-- Empty State -->
@@ -101,13 +101,13 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
       </div>
-      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No appointments found</h3>
-      <p class="text-gray-600 dark:text-gray-400 mb-6">{{ isToday() ? 'No appointments scheduled for today' : 'No appointments for this date' }}</p>
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">{{ 'appointments.noAppointments' | translate }}</h3>
+      <p class="text-gray-600 dark:text-gray-400 mb-6">{{ isToday() ? ('appointments.noAppointmentsToday' | translate) : ('appointments.noAppointmentsDate' | translate) }}</p>
       <button class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700" (click)="openAddModal()">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
-        Schedule Appointment
+        {{ 'appointments.scheduleAppointment' | translate }}
       </button>
     </div>
 
@@ -117,24 +117,24 @@
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
-        <span>Status Indicators:</span>
+        <span>{{ 'appointments.statusIndicators' | translate }}</span>
       </div>
       <div class="flex flex-wrap gap-4 text-xs">
         <div class="flex items-center gap-2">
           <div class="w-3 h-3 rounded-full bg-gray-500"></div>
-          <span class="text-secondary-themed">Scheduled</span>
+          <span class="text-secondary-themed">{{ 'appointments.status.scheduled' | translate }}</span>
         </div>
         <div class="flex items-center gap-2">
           <div class="w-3 h-3 rounded-full bg-blue-500"></div>
-          <span class="text-secondary-themed">In Progress</span>
+          <span class="text-secondary-themed">{{ 'appointments.status.in-progress' | translate }}</span>
         </div>
         <div class="flex items-center gap-2">
           <div class="w-3 h-3 rounded-full bg-green-500"></div>
-          <span class="text-secondary-themed">Completed</span>
+          <span class="text-secondary-themed">{{ 'appointments.status.completed' | translate }}</span>
         </div>
         <div class="flex items-center gap-2">
           <div class="w-3 h-3 rounded-full bg-red-500"></div>
-          <span class="text-secondary-themed">Cancelled</span>
+          <span class="text-secondary-themed">{{ 'appointments.status.cancelled' | translate }}</span>
         </div>
       </div>
     </div>
@@ -160,18 +160,18 @@
                       {{ formatTime(appointment.scheduledDate) }}
                     </div>
                     <div class="text-xs text-gray-500 dark:text-gray-400">
-                      {{ appointment.estimatedDuration }}min
+                      {{ appointment.estimatedDuration }}{{ 'appointments.min' | translate }}
                     </div>
                   </div>
                   <div class="w-3 h-3 rounded-full" [style.background-color]="getPriorityColor(appointment.priority)"></div>
                 </div>
                 <div class="status-badge" [style.background-color]="getStatusColor(appointment.status)">
-                  {{ appointment.status | titlecase }}
+                  {{ ('appointments.status.' + appointment.status) | translate }}
                 </div>
               </div>
               
               <!-- Service Name -->
-              <h3 class="font-semibold text-primary-themed mb-2 text-base">{{ appointment.serviceName }}</h3>
+              <h3 class="font-semibold text-primary-themed mb-2 text-base">{{ getServiceName(appointment.serviceName) }}</h3>
               
               <!-- Car Info -->
               <div class="flex items-center gap-2 text-sm text-secondary-themed mb-2">
@@ -209,11 +209,11 @@
                         {{ formatTime(appointment.scheduledDate) }}
                       </div>
                       <div class="text-xs text-gray-500 dark:text-gray-400">
-                        {{ appointment.estimatedDuration }}min
+                        {{ appointment.estimatedDuration }}{{ 'appointments.min' | translate }}
                       </div>
                     </div>
                     <div class="flex-1 min-w-0">
-                      <h3 class="font-semibold text-primary-themed truncate">{{ appointment.serviceName }}</h3>
+                      <h3 class="font-semibold text-primary-themed truncate">{{ getServiceName(appointment.serviceName) }}</h3>
                       <div class="flex items-center gap-1 text-sm text-secondary-themed mt-1">
                         <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.22.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
@@ -242,7 +242,7 @@
                     
                     <div class="flex items-center gap-2">
                       <div class="status-badge" [style.background-color]="getStatusColor(appointment.status)">
-                        {{ appointment.status | titlecase }}
+                        {{ ('appointments.status.' + appointment.status) | translate }}
                       </div>
                       <div class="w-3 h-3 rounded-full" [style.background-color]="getPriorityColor(appointment.priority)"></div>
                     </div>
@@ -260,13 +260,13 @@
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
               </svg>
-              <span>Complete</span>
+              <span>{{ 'appointments.complete' | translate }}</span>
             </button>
             <button class="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-sm font-medium" (click)="selectAppointment(appointment); $event.stopPropagation()">
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
-              <span>Edit</span>
+              <span>{{ 'appointments.edit' | translate }}</span>
             </button>
           </div>
           
@@ -275,10 +275,10 @@
             <button class="px-3 py-1 text-sm bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg hover:bg-green-200 dark:hover:bg-green-900/50" 
                     *ngIf="appointment.status !== 'completed'"
                     (click)="updateAppointmentStatus(appointment.id, 'completed'); $event.stopPropagation()">
-              Complete
+              {{ 'appointments.complete' | translate }}
             </button>
             <button class="px-3 py-1 text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50" (click)="selectAppointment(appointment); $event.stopPropagation()">
-              Edit
+              {{ 'appointments.edit' | translate }}
             </button>
           </div>
         </div>

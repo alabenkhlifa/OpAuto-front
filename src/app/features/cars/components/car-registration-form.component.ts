@@ -3,16 +3,18 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CarService, CarWithHistory } from '../services/car.service';
 import { Customer } from '../../../core/models/customer.model';
+import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
+import { TranslationService } from '../../../core/services/translation.service';
 
 @Component({
   selector: 'app-car-registration-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   template: `
     <div class="modal-overlay" (click)="onClose()">
       <div class="modal-container glass-card" (click)="$event.stopPropagation()">
         <div class="modal-header">
-          <h2 class="modal-title">Register New Car</h2>
+          <h2 class="modal-title">{{ 'cars.registerNewCar' | translate }}</h2>
           <button type="button" class="close-btn" (click)="onClose()">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -24,22 +26,22 @@ import { Customer } from '../../../core/models/customer.model';
           <div class="form-grid">
             <!-- License Plate -->
             <div class="form-group">
-              <label for="licensePlate" class="form-label">License Plate *</label>
+              <label for="licensePlate" class="form-label">{{ 'cars.licensePlateRequired' | translate }}</label>
               <input
                 id="licensePlate"
                 type="text"
                 formControlName="licensePlate"
                 class="form-input"
-                placeholder="e.g., 123 TUN 2024"
+                placeholder="{{ 'cars.licensePlatePlaceholder' | translate }}"
                 [class.error]="licensePlate?.invalid && (licensePlate?.dirty || licensePlate?.touched)"
               />
               @if (licensePlate?.invalid && (licensePlate?.dirty || licensePlate?.touched)) {
                 <div class="error-message">
                   @if (licensePlate?.errors?.['required']) {
-                    License plate is required
+                    {{ 'cars.licensePlate' | translate }} is required
                   }
                   @if (licensePlate?.errors?.['minlength']) {
-                    License plate must be at least 3 characters
+                    {{ 'cars.licensePlate' | translate }} must be at least 3 characters
                   }
                 </div>
               }
@@ -47,39 +49,39 @@ import { Customer } from '../../../core/models/customer.model';
 
             <!-- Make -->
             <div class="form-group">
-              <label for="make" class="form-label">Make *</label>
+              <label for="make" class="form-label">{{ 'cars.makeRequired' | translate }}</label>
               <input
                 id="make"
                 type="text"
                 formControlName="make"
                 class="form-input"
-                placeholder="e.g., BMW, Toyota, Peugeot"
+                placeholder="{{ 'cars.makePlaceholder' | translate }}"
                 [class.error]="make?.invalid && (make?.dirty || make?.touched)"
               />
               @if (make?.invalid && (make?.dirty || make?.touched)) {
-                <div class="error-message">Make is required</div>
+                <div class="error-message">{{ 'cars.make' | translate }} is required</div>
               }
             </div>
 
             <!-- Model -->
             <div class="form-group">
-              <label for="model" class="form-label">Model *</label>
+              <label for="model" class="form-label">{{ 'cars.modelRequired' | translate }}</label>
               <input
                 id="model"
                 type="text"
                 formControlName="model"
                 class="form-input"
-                placeholder="e.g., X5, Camry, 308"
+                placeholder="{{ 'cars.modelPlaceholder' | translate }}"
                 [class.error]="model?.invalid && (model?.dirty || model?.touched)"
               />
               @if (model?.invalid && (model?.dirty || model?.touched)) {
-                <div class="error-message">Model is required</div>
+                <div class="error-message">{{ 'cars.model' | translate }} is required</div>
               }
             </div>
 
             <!-- Year -->
             <div class="form-group">
-              <label for="year" class="form-label">Year *</label>
+              <label for="year" class="form-label">{{ 'cars.yearRequired' | translate }}</label>
               <input
                 id="year"
                 type="number"
@@ -93,10 +95,10 @@ import { Customer } from '../../../core/models/customer.model';
               @if (year?.invalid && (year?.dirty || year?.touched)) {
                 <div class="error-message">
                   @if (year?.errors?.['required']) {
-                    Year is required
+                    {{ 'cars.year' | translate }} is required
                   }
                   @if (year?.errors?.['min'] || year?.errors?.['max']) {
-                    Year must be between 1990 and {{ currentYear + 1 }}
+                    {{ 'cars.year' | translate }} must be between 1990 and {{ currentYear + 1 }}
                   }
                 </div>
               }
@@ -104,7 +106,7 @@ import { Customer } from '../../../core/models/customer.model';
 
             <!-- Current Mileage -->
             <div class="form-group">
-              <label for="currentMileage" class="form-label">Current Mileage (KM) *</label>
+              <label for="currentMileage" class="form-label">{{ 'cars.currentMileageRequired' | translate }}</label>
               <input
                 id="currentMileage"
                 type="number"
@@ -117,10 +119,10 @@ import { Customer } from '../../../core/models/customer.model';
               @if (currentMileage?.invalid && (currentMileage?.dirty || currentMileage?.touched)) {
                 <div class="error-message">
                   @if (currentMileage?.errors?.['required']) {
-                    Current mileage is required
+                    {{ 'cars.currentMileage' | translate }} is required
                   }
                   @if (currentMileage?.errors?.['min']) {
-                    Mileage cannot be negative
+                    {{ 'cars.mileage' | translate }} cannot be negative
                   }
                 </div>
               }
@@ -129,7 +131,7 @@ import { Customer } from '../../../core/models/customer.model';
 
           <!-- Customer Selection Section -->
           <div class="customer-section">
-            <h3 class="section-title">Customer Information</h3>
+            <h3 class="section-title">{{ 'cars.customerInformation' | translate }}</h3>
             
             <div class="customer-toggle">
               <div class="toggle-group">
@@ -140,7 +142,7 @@ import { Customer } from '../../../core/models/customer.model';
                     formControlName="customerType"
                     class="toggle-input"
                   />
-                  <span class="toggle-label">Existing Customer</span>
+                  <span class="toggle-label">{{ 'cars.existingCustomer' | translate }}</span>
                 </label>
                 <label class="toggle-option">
                   <input
@@ -149,27 +151,27 @@ import { Customer } from '../../../core/models/customer.model';
                     formControlName="customerType"
                     class="toggle-input"
                   />
-                  <span class="toggle-label">New Customer</span>
+                  <span class="toggle-label">{{ 'cars.newCustomer' | translate }}</span>
                 </label>
               </div>
             </div>
 
             @if (customerType?.value === 'existing') {
               <div class="form-group">
-                <label for="customerId" class="form-label">Select Customer *</label>
+                <label for="customerId" class="form-label">{{ 'cars.selectCustomerRequired' | translate }}</label>
                 <select
                   id="customerId"
                   formControlName="customerId"
-                  class="form-input"
+                  class="form-select"
                   [class.error]="customerId?.invalid && (customerId?.dirty || customerId?.touched)"
                 >
-                  <option value="">Choose a customer</option>
+                  <option value="">{{ 'cars.chooseCustomer' | translate }}</option>
                   @for (customer of customers(); track customer.id) {
                     <option [value]="customer.id">{{ customer.name }} - {{ customer.phone }}</option>
                   }
                 </select>
                 @if (customerId?.invalid && (customerId?.dirty || customerId?.touched)) {
-                  <div class="error-message">Please select a customer</div>
+                  <div class="error-message">Please select a {{ 'common.customer' | translate }}</div>
                 }
               </div>
             }
@@ -177,7 +179,7 @@ import { Customer } from '../../../core/models/customer.model';
             @if (customerType?.value === 'new') {
               <div class="new-customer-form">
                 <div class="form-group">
-                  <label for="customerName" class="form-label">Customer Name *</label>
+                  <label for="customerName" class="form-label">{{ 'cars.customerName' | translate }} *</label>
                   <input
                     id="customerName"
                     type="text"
@@ -187,12 +189,12 @@ import { Customer } from '../../../core/models/customer.model';
                     [class.error]="customerName?.invalid && (customerName?.dirty || customerName?.touched)"
                   />
                   @if (customerName?.invalid && (customerName?.dirty || customerName?.touched)) {
-                    <div class="error-message">Customer name is required</div>
+                    <div class="error-message">{{ 'cars.customerName' | translate }} is required</div>
                   }
                 </div>
 
                 <div class="form-group">
-                  <label for="customerPhone" class="form-label">Phone Number *</label>
+                  <label for="customerPhone" class="form-label">{{ 'cars.phoneNumber' | translate }} *</label>
                   <input
                     id="customerPhone"
                     type="tel"
@@ -204,17 +206,17 @@ import { Customer } from '../../../core/models/customer.model';
                   @if (customerPhone?.invalid && (customerPhone?.dirty || customerPhone?.touched)) {
                     <div class="error-message">
                       @if (customerPhone?.errors?.['required']) {
-                        Phone number is required
+                        {{ 'cars.phoneNumber' | translate }} is required
                       }
                       @if (customerPhone?.errors?.['pattern']) {
-                        Please enter a valid phone number
+                        Please enter a valid {{ 'cars.phoneNumber' | translate }}
                       }
                     </div>
                   }
                 </div>
 
                 <div class="form-group">
-                  <label for="customerEmail" class="form-label">Email (Optional)</label>
+                  <label for="customerEmail" class="form-label">{{ 'cars.email' | translate }} (Optional)</label>
                   <input
                     id="customerEmail"
                     type="email"
@@ -224,7 +226,7 @@ import { Customer } from '../../../core/models/customer.model';
                     [class.error]="customerEmail?.invalid && (customerEmail?.dirty || customerEmail?.touched)"
                   />
                   @if (customerEmail?.invalid && (customerEmail?.dirty || customerEmail?.touched)) {
-                    <div class="error-message">Please enter a valid email address</div>
+                    <div class="error-message">Please enter a valid {{ 'cars.email' | translate }}</div>
                   }
                 </div>
               </div>
@@ -233,7 +235,7 @@ import { Customer } from '../../../core/models/customer.model';
 
           <div class="form-actions">
             <button type="button" class="btn btn-secondary" (click)="onClose()">
-              Cancel
+              {{ 'common.cancel' | translate }}
             </button>
             <button 
               type="submit" 
@@ -245,9 +247,9 @@ import { Customer } from '../../../core/models/customer.model';
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Registering...
+                {{ 'cars.registering' | translate }}...
               } @else {
-                Register Car
+                {{ 'cars.registerCar' | translate }}
               }
             </button>
           </div>
@@ -277,16 +279,12 @@ import { Customer } from '../../../core/models/customer.model';
       max-height: 90vh;
       overflow-y: auto;
       overflow-x: hidden;
-      background: rgba(255, 255, 255, 0.95);
+      /* Permanent dark glassmorphism theme */
+      background: rgba(17, 24, 39, 0.95);
       backdrop-filter: blur(20px);
       border-radius: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    }
-
-    .dark .modal-container {
-      background: rgba(30, 41, 59, 0.95);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(75, 85, 99, 0.6);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
     }
 
     .modal-header {
@@ -294,25 +292,21 @@ import { Customer } from '../../../core/models/customer.model';
       justify-content: space-between;
       align-items: center;
       padding: 2rem 2rem 1rem;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+      border-bottom: 1px solid rgba(75, 85, 99, 0.3);
       margin-bottom: 1.5rem;
-    }
-
-    .dark .modal-header {
-      border-bottom-color: rgba(255, 255, 255, 0.1);
     }
 
     .modal-title {
       font-size: 1.5rem;
       font-weight: 700;
-      color: var(--color-text-primary);
+      color: #ffffff;
       margin: 0;
     }
 
     .close-btn {
       background: none;
       border: none;
-      color: var(--color-text-secondary);
+      color: #9ca3af;
       cursor: pointer;
       padding: 0.5rem;
       border-radius: 8px;
@@ -320,11 +314,7 @@ import { Customer } from '../../../core/models/customer.model';
     }
 
     .close-btn:hover {
-      color: var(--color-text-primary);
-      background: rgba(0, 0, 0, 0.1);
-    }
-
-    .dark .close-btn:hover {
+      color: #ffffff;
       background: rgba(255, 255, 255, 0.1);
     }
 
@@ -359,70 +349,58 @@ import { Customer } from '../../../core/models/customer.model';
     .form-label {
       font-size: 0.875rem;
       font-weight: 600;
-      color: var(--color-text-primary);
+      color: #d1d5db;
     }
 
     .form-input {
       padding: 0.75rem 1rem;
-      border: 2px solid rgba(0, 0, 0, 0.1);
+      border: 2px solid rgba(75, 85, 99, 0.4);
       border-radius: 12px;
-      background: rgba(255, 255, 255, 0.8);
-      color: var(--color-text-primary);
+      background: rgba(31, 41, 55, 0.8);
+      color: #ffffff;
       font-size: 1rem;
       transition: all 0.2s ease;
       width: 100%;
       box-sizing: border-box;
       min-width: 0;
+      backdrop-filter: blur(10px);
+    }
+
+    .form-input::placeholder {
+      color: #9ca3af;
     }
 
     .form-input:focus {
       outline: none;
-      border-color: var(--color-primary);
-      background: rgba(255, 255, 255, 0.95);
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+      border-color: #3b82f6;
+      background: rgba(31, 41, 55, 0.95);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
 
     .form-input.error {
-      border-color: var(--color-error);
-      background: rgba(254, 242, 242, 0.8);
-    }
-
-    .dark .form-input {
-      background: rgba(30, 41, 59, 0.8);
-      border-color: rgba(255, 255, 255, 0.1);
-      color: var(--color-text-primary);
-    }
-
-    .dark .form-input:focus {
-      background: rgba(30, 41, 59, 0.95);
-      border-color: var(--color-primary);
-    }
-
-    .dark .form-input.error {
-      border-color: var(--color-error);
+      border-color: #ef4444;
       background: rgba(127, 29, 29, 0.3);
     }
 
     .error-message {
       font-size: 0.75rem;
-      color: var(--color-error);
+      color: #ef4444;
       margin-top: 0.25rem;
     }
 
     .customer-section {
       margin-bottom: 2rem;
-      padding-top: 1.5rem;
-      border-top: 1px solid rgba(0, 0, 0, 0.1);
-    }
-
-    .dark .customer-section {
-      border-top-color: rgba(255, 255, 255, 0.1);
+      padding: 1.5rem;
+      background: rgba(31, 41, 55, 0.6);
+      border: 1px solid rgba(75, 85, 99, 0.6);
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
     }
 
     .section-title {
       font-size: 1.125rem;
       font-weight: 600;
-      color: var(--color-text-primary);
+      color: #ffffff;
       margin-bottom: 1rem;
     }
 
@@ -432,13 +410,10 @@ import { Customer } from '../../../core/models/customer.model';
 
     .toggle-group {
       display: flex;
-      background: rgba(0, 0, 0, 0.05);
+      background: rgba(55, 65, 81, 0.5);
       border-radius: 12px;
       padding: 0.25rem;
-    }
-
-    .dark .toggle-group {
-      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(5px);
     }
 
     .toggle-option {
@@ -457,19 +432,15 @@ import { Customer } from '../../../core/models/customer.model';
       text-align: center;
       border-radius: 8px;
       font-weight: 500;
-      color: var(--color-text-secondary);
+      color: #9ca3af;
       transition: all 0.2s ease;
     }
 
     .toggle-input:checked + .toggle-label {
-      background: rgba(255, 255, 255, 0.9);
-      color: var(--color-primary);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .dark .toggle-input:checked + .toggle-label {
-      background: rgba(30, 41, 59, 0.9);
-      color: var(--color-primary);
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(37, 99, 235, 0.8));
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      backdrop-filter: blur(10px);
     }
 
     .new-customer-form {
@@ -491,11 +462,7 @@ import { Customer } from '../../../core/models/customer.model';
       gap: 1rem;
       margin-top: 2rem;
       padding-top: 1.5rem;
-      border-top: 1px solid rgba(0, 0, 0, 0.1);
-    }
-
-    .dark .form-actions {
-      border-top-color: rgba(255, 255, 255, 0.1);
+      border-top: 1px solid rgba(75, 85, 99, 0.3);
     }
 
     .btn {
@@ -517,30 +484,31 @@ import { Customer } from '../../../core/models/customer.model';
     }
 
     .btn-secondary {
-      background: rgba(0, 0, 0, 0.1);
-      color: var(--color-text-primary);
+      background: rgba(75, 85, 99, 0.6);
+      color: #d1d5db;
+      border: 1px solid rgba(75, 85, 99, 0.4);
+      backdrop-filter: blur(10px);
     }
 
     .btn-secondary:hover:not(:disabled) {
-      background: rgba(0, 0, 0, 0.15);
-    }
-
-    .dark .btn-secondary {
-      background: rgba(255, 255, 255, 0.1);
-    }
-
-    .dark .btn-secondary:hover:not(:disabled) {
-      background: rgba(255, 255, 255, 0.15);
+      background: rgba(107, 114, 128, 0.6);
+      border-color: rgba(107, 114, 128, 0.6);
+      color: #ffffff;
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(37, 99, 235, 0.8));
       color: white;
+      border: 1px solid rgba(59, 130, 246, 0.6);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      backdrop-filter: blur(10px);
     }
 
     .btn-primary:hover:not(:disabled) {
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.9), rgba(29, 78, 216, 0.9));
+      border-color: rgba(37, 99, 235, 0.7);
+      box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
       transform: translateY(-1px);
-      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
     }
 
     .animate-spin {
@@ -579,6 +547,7 @@ import { Customer } from '../../../core/models/customer.model';
 export class CarRegistrationFormComponent {
   private formBuilder = inject(FormBuilder);
   private carService = inject(CarService);
+  private translationService = inject(TranslationService);
 
   @Output() close = new EventEmitter<void>();
   @Output() carRegistered = new EventEmitter<CarWithHistory>();

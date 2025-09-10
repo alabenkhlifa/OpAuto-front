@@ -1,23 +1,24 @@
 import { Component, Input, Output, EventEmitter, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 import { SystemSettings } from '../../../core/models/garage-settings.model';
 
 @Component({
   selector: 'app-system-settings',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   template: `
     <div class="glass-card">
       
       <div class="flex items-center justify-between mb-6">
-        <h2 class="text-lg font-semibold text-white">System Settings</h2>
+        <h2 class="text-lg font-semibold text-white">{{ 'settings.system.title' | translate }}</h2>
         <div class="flex space-x-2">
           <button 
             type="button"
             class="btn-secondary text-sm"
             (click)="resetForm()">
-            Reset
+            {{ 'settings.system.resetButton' | translate }}
           </button>
           <button 
             type="button"
@@ -29,9 +30,9 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              Saving...
+              {{ 'settings.system.saving' | translate }}
             } @else {
-              Save Changes
+              {{ 'settings.system.saveChanges' | translate }}
             }
           </button>
         </div>
@@ -41,7 +42,7 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
         
         <!-- Notifications Settings -->
         <div>
-          <h3 class="text-md font-medium text-white mb-4">Notifications</h3>
+          <h3 class="text-md font-medium text-white mb-4">{{ 'settings.system.notifications.title' | translate }}</h3>
           <div formGroupName="notifications" class="space-y-4">
             <!-- Browser Notifications -->
             <div class="flex items-start space-x-3">
@@ -51,8 +52,8 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
                 class="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 formControlName="enableBrowserNotifications">
               <div class="flex-1">
-                <label for="browserNotifications" class="form-label mb-1">Browser Notifications</label>
-                <p class="text-sm text-gray-400">Receive notifications in your browser for new appointments and updates</p>
+                <label for="browserNotifications" class="form-label mb-1">{{ 'settings.system.notifications.browserNotifications' | translate }}</label>
+                <p class="text-sm text-gray-400">{{ 'settings.system.notifications.browserDescription' | translate }}</p>
               </div>
             </div>
 
@@ -64,8 +65,8 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
                 class="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 formControlName="enableSmsNotifications">
               <div class="flex-1">
-                <label for="smsNotifications" class="form-label mb-1">SMS Notifications</label>
-                <p class="text-sm text-gray-400">Send SMS alerts for urgent notifications</p>
+                <label for="smsNotifications" class="form-label mb-1">{{ 'settings.system.notifications.smsNotifications' | translate }}</label>
+                <p class="text-sm text-gray-400">{{ 'settings.system.notifications.smsDescription' | translate }}</p>
               </div>
             </div>
 
@@ -77,8 +78,8 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
                 class="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 formControlName="enableEmailNotifications">
               <div class="flex-1">
-                <label for="emailNotifications" class="form-label mb-1">Email Notifications</label>
-                <p class="text-sm text-gray-400">Send email notifications for daily summaries and reports</p>
+                <label for="emailNotifications" class="form-label mb-1">{{ 'settings.system.notifications.emailNotifications' | translate }}</label>
+                <p class="text-sm text-gray-400">{{ 'settings.system.notifications.emailDescription' | translate }}</p>
               </div>
             </div>
 
@@ -87,24 +88,24 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
 
         <!-- Security Settings -->
         <div>
-          <h3 class="text-md font-medium text-white mb-4">Security</h3>
+          <h3 class="text-md font-medium text-white mb-4">{{ 'settings.system.security.title' | translate }}</h3>
           <div formGroupName="security" class="space-y-4">
             <!-- Session Timeout -->
             <div>
-              <label class="form-label">Session Timeout (minutes) *</label>
+              <label class="form-label">{{ 'settings.system.security.sessionTimeout' | translate }}</label>
               <select 
                 class="form-select"
                 formControlName="sessionTimeoutMinutes"
                 [class.border-red-500]="isFieldInvalid('security.sessionTimeoutMinutes')">
-                <option value="15">15 minutes</option>
-                <option value="30">30 minutes</option>
-                <option value="60">1 hour</option>
-                <option value="120">2 hours</option>
-                <option value="240">4 hours</option>
-                <option value="480">8 hours</option>
+                <option value="15">{{ 'settings.system.security.timeouts.15min' | translate }}</option>
+                <option value="30">{{ 'settings.system.security.timeouts.30min' | translate }}</option>
+                <option value="60">{{ 'settings.system.security.timeouts.1hour' | translate }}</option>
+                <option value="120">{{ 'settings.system.security.timeouts.2hours' | translate }}</option>
+                <option value="240">{{ 'settings.system.security.timeouts.4hours' | translate }}</option>
+                <option value="480">{{ 'settings.system.security.timeouts.8hours' | translate }}</option>
               </select>
               @if (isFieldInvalid('security.sessionTimeoutMinutes')) {
-                <p class="mt-1 text-sm text-red-600 dark:text-red-400">Session timeout is required</p>
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ 'settings.system.security.sessionTimeoutRequired' | translate }}</p>
               }
             </div>
 
@@ -116,8 +117,8 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
                 class="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 formControlName="enableTwoFactor">
               <div class="flex-1">
-                <label for="twoFactorAuth" class="form-label mb-1">Two-Factor Authentication</label>
-                <p class="text-sm text-gray-400">Add an extra layer of security to your account</p>
+                <label for="twoFactorAuth" class="form-label mb-1">{{ 'settings.system.security.twoFactorAuth' | translate }}</label>
+                <p class="text-sm text-gray-400">{{ 'settings.system.security.twoFactorDescription' | translate }}</p>
               </div>
             </div>
 
@@ -129,8 +130,8 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
                 class="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 formControlName="allowMultipleSessions">
               <div class="flex-1">
-                <label for="multipleSessions" class="form-label mb-1">Allow Multiple Sessions</label>
-                <p class="text-sm text-gray-400">Allow the same user to be logged in from multiple devices</p>
+                <label for="multipleSessions" class="form-label mb-1">{{ 'settings.system.security.multipleSessions' | translate }}</label>
+                <p class="text-sm text-gray-400">{{ 'settings.system.security.multipleSessionsDescription' | translate }}</p>
               </div>
             </div>
           </div>
@@ -138,58 +139,58 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
 
         <!-- Data Retention Settings -->
         <div>
-          <h3 class="text-md font-medium text-white mb-4">Data Retention</h3>
+          <h3 class="text-md font-medium text-white mb-4">{{ 'settings.system.dataRetention.title' | translate }}</h3>
           <div formGroupName="dataRetention" class="space-y-4">
             <!-- Customer Data -->
             <div>
-              <label class="form-label">Customer Data Retention (years) *</label>
+              <label class="form-label">{{ 'settings.system.dataRetention.customerData' | translate }}</label>
               <select 
                 class="form-select"
                 formControlName="customerDataRetentionYears"
                 [class.border-red-500]="isFieldInvalid('dataRetention.customerDataRetentionYears')">
-                <option value="3">3 years</option>
-                <option value="5">5 years</option>
-                <option value="7">7 years</option>
-                <option value="10">10 years</option>
-                <option value="0">Never delete</option>
+                <option value="3">{{ 'settings.system.dataRetention.periods.3years' | translate }}</option>
+                <option value="5">{{ 'settings.system.dataRetention.periods.5years' | translate }}</option>
+                <option value="7">{{ 'settings.system.dataRetention.periods.7years' | translate }}</option>
+                <option value="10">{{ 'settings.system.dataRetention.periods.10years' | translate }}</option>
+                <option value="0">{{ 'settings.system.dataRetention.periods.neverDelete' | translate }}</option>
               </select>
               @if (isFieldInvalid('dataRetention.customerDataRetentionYears')) {
-                <p class="mt-1 text-sm text-red-600 dark:text-red-400">Customer data retention period is required</p>
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ 'settings.system.dataRetention.customerDataRequired' | translate }}</p>
               }
             </div>
 
             <!-- Maintenance Records -->
             <div>
-              <label class="form-label">Maintenance Records Retention (years) *</label>
+              <label class="form-label">{{ 'settings.system.dataRetention.maintenanceRecords' | translate }}</label>
               <select 
                 class="form-select"
                 formControlName="maintenanceLogRetentionYears"
                 [class.border-red-500]="isFieldInvalid('dataRetention.maintenanceLogRetentionYears')">
-                <option value="3">3 years</option>
-                <option value="5">5 years</option>
-                <option value="7">7 years</option>
-                <option value="10">10 years</option>
-                <option value="0">Never delete</option>
+                <option value="3">{{ 'settings.system.dataRetention.periods.3years' | translate }}</option>
+                <option value="5">{{ 'settings.system.dataRetention.periods.5years' | translate }}</option>
+                <option value="7">{{ 'settings.system.dataRetention.periods.7years' | translate }}</option>
+                <option value="10">{{ 'settings.system.dataRetention.periods.10years' | translate }}</option>
+                <option value="0">{{ 'settings.system.dataRetention.periods.neverDelete' | translate }}</option>
               </select>
               @if (isFieldInvalid('dataRetention.maintenanceLogRetentionYears')) {
-                <p class="mt-1 text-sm text-red-600 dark:text-red-400">Maintenance records retention period is required</p>
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ 'settings.system.dataRetention.maintenanceRecordsRequired' | translate }}</p>
               }
             </div>
 
             <!-- Invoice Data -->
             <div>
-              <label class="form-label">Invoice Data Retention (years) *</label>
+              <label class="form-label">{{ 'settings.system.dataRetention.invoiceData' | translate }}</label>
               <select 
                 class="form-select"
                 formControlName="invoiceRetentionYears"
                 [class.border-red-500]="isFieldInvalid('dataRetention.invoiceRetentionYears')">
-                <option value="5">5 years</option>
-                <option value="7">7 years</option>
-                <option value="10">10 years</option>
-                <option value="0">Never delete</option>
+                <option value="5">{{ 'settings.system.dataRetention.periods.5years' | translate }}</option>
+                <option value="7">{{ 'settings.system.dataRetention.periods.7years' | translate }}</option>
+                <option value="10">{{ 'settings.system.dataRetention.periods.10years' | translate }}</option>
+                <option value="0">{{ 'settings.system.dataRetention.periods.neverDelete' | translate }}</option>
               </select>
               @if (isFieldInvalid('dataRetention.invoiceRetentionYears')) {
-                <p class="mt-1 text-sm text-red-600 dark:text-red-400">Invoice data retention period is required</p>
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ 'settings.system.dataRetention.invoiceDataRequired' | translate }}</p>
               }
             </div>
 
@@ -201,8 +202,8 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
                 class="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 formControlName="autoArchiveCompletedJobs">
               <div class="flex-1">
-                <label for="autoArchive" class="form-label mb-1">Auto-Archive Completed Jobs</label>
-                <p class="text-sm text-gray-400">Automatically archive completed jobs based on retention periods</p>
+                <label for="autoArchive" class="form-label mb-1">{{ 'settings.system.dataRetention.autoArchive' | translate }}</label>
+                <p class="text-sm text-gray-400">{{ 'settings.system.dataRetention.autoArchiveDescription' | translate }}</p>
               </div>
             </div>
           </div>
@@ -210,7 +211,7 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
 
         <!-- Backup Settings -->
         <div>
-          <h3 class="text-md font-medium text-white mb-4">Backup</h3>
+          <h3 class="text-md font-medium text-white mb-4">{{ 'settings.system.backup.title' | translate }}</h3>
           <div formGroupName="backup" class="space-y-4">
             <!-- Auto Backup -->
             <div class="flex items-start space-x-3">
@@ -220,35 +221,35 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
                 class="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 formControlName="autoBackupEnabled">
               <div class="flex-1">
-                <label for="autoBackup" class="form-label mb-1">Automatic Backup</label>
-                <p class="text-sm text-gray-400">Automatically backup your data at scheduled intervals</p>
+                <label for="autoBackup" class="form-label mb-1">{{ 'settings.system.backup.automaticBackup' | translate }}</label>
+                <p class="text-sm text-gray-400">{{ 'settings.system.backup.automaticBackupDescription' | translate }}</p>
               </div>
             </div>
 
             <!-- Backup Frequency -->
             <div>
-              <label class="form-label">Backup Frequency</label>
+              <label class="form-label">{{ 'settings.system.backup.frequency' | translate }}</label>
               <select 
                 class="form-select"
                 formControlName="backupFrequency"
                 [disabled]="!systemForm.get('backup.autoBackupEnabled')?.value">
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
+                <option value="daily">{{ 'settings.system.backup.frequencies.daily' | translate }}</option>
+                <option value="weekly">{{ 'settings.system.backup.frequencies.weekly' | translate }}</option>
+                <option value="monthly">{{ 'settings.system.backup.frequencies.monthly' | translate }}</option>
               </select>
             </div>
 
             <!-- Retention Period -->
             <div>
-              <label class="form-label">Backup Retention (days)</label>
+              <label class="form-label">{{ 'settings.system.backup.retention' | translate }}</label>
               <select 
                 class="form-select"
                 formControlName="backupRetentionDays"
                 [disabled]="!systemForm.get('backup.autoBackupEnabled')?.value">
-                <option value="7">7 days</option>
-                <option value="30">30 days</option>
-                <option value="90">90 days</option>
-                <option value="365">1 year</option>
+                <option value="7">{{ 'settings.system.backup.retentionPeriods.7days' | translate }}</option>
+                <option value="30">{{ 'settings.system.backup.retentionPeriods.30days' | translate }}</option>
+                <option value="90">{{ 'settings.system.backup.retentionPeriods.90days' | translate }}</option>
+                <option value="365">{{ 'settings.system.backup.retentionPeriods.1year' | translate }}</option>
               </select>
             </div>
 
@@ -256,7 +257,7 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
             @if (lastBackupDate) {
               <div class="bg-gray-800/30 p-4 rounded-lg">
                 <p class="text-sm text-gray-300">
-                  <strong>Last Backup:</strong> {{ lastBackupDate | date:'medium' }}
+                  <strong>{{ 'settings.system.backup.lastBackup' | translate }}:</strong> {{ lastBackupDate | date:'medium' }}
                 </p>
               </div>
             }
@@ -273,9 +274,9 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Creating Backup...
+                  {{ 'settings.system.backup.creatingBackup' | translate }}
                 } @else {
-                  Create Manual Backup
+                  {{ 'settings.system.backup.createManualBackup' | translate }}
                 }
               </button>
             </div>
@@ -284,27 +285,27 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
 
         <!-- Appearance Settings -->
         <div>
-          <h3 class="text-md font-medium text-white mb-4">Appearance</h3>
+          <h3 class="text-md font-medium text-white mb-4">{{ 'settings.system.appearance.title' | translate }}</h3>
           <div formGroupName="appearance" class="space-y-4">
             <!-- Theme -->
             <div>
-              <label class="form-label">Theme *</label>
+              <label class="form-label">{{ 'settings.system.appearance.theme' | translate }}</label>
               <select 
                 class="form-select"
                 formControlName="theme"
                 [class.border-red-500]="isFieldInvalid('appearance.theme')">
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-                <option value="system">Follow System</option>
+                <option value="light">{{ 'settings.system.appearance.themes.light' | translate }}</option>
+                <option value="dark">{{ 'settings.system.appearance.themes.dark' | translate }}</option>
+                <option value="system">{{ 'settings.system.appearance.themes.system' | translate }}</option>
               </select>
               @if (isFieldInvalid('appearance.theme')) {
-                <p class="mt-1 text-sm text-red-600 dark:text-red-400">Theme selection is required</p>
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ 'settings.system.appearance.themeRequired' | translate }}</p>
               }
             </div>
 
             <!-- Color Scheme -->
             <div>
-              <label class="form-label">Primary Color</label>
+              <label class="form-label">{{ 'settings.system.appearance.primaryColor' | translate }}</label>
               <div class="grid grid-cols-4 gap-3">
                 @for (color of colorOptions; track color.value) {
                   <div class="flex items-center space-x-2">
@@ -316,7 +317,7 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
                       class="w-4 h-4">
                     <label [for]="'color-' + color.value" class="flex items-center space-x-2 text-sm">
                       <div class="w-4 h-4 rounded-full border border-gray-300" [style.background-color]="color.hex"></div>
-                      <span>{{ color.name }}</span>
+                      <span>{{ 'settings.system.appearance.colors.' + color.value | translate }}</span>
                     </label>
                   </div>
                 }
@@ -325,17 +326,17 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
 
             <!-- Language -->
             <div>
-              <label class="form-label">Language *</label>
+              <label class="form-label">{{ 'settings.system.appearance.language' | translate }}</label>
               <select 
                 class="form-select"
                 formControlName="language"
                 [class.border-red-500]="isFieldInvalid('appearance.language')">
-                <option value="en">English</option>
-                <option value="fr">Français</option>
-                <option value="tn">تونسي</option>
+                <option value="en">{{ 'settings.system.appearance.languages.en' | translate }}</option>
+                <option value="fr">{{ 'settings.system.appearance.languages.fr' | translate }}</option>
+                <option value="ar">{{ 'settings.system.appearance.languages.ar' | translate }}</option>
               </select>
               @if (isFieldInvalid('appearance.language')) {
-                <p class="mt-1 text-sm text-red-600 dark:text-red-400">Language selection is required</p>
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ 'settings.system.appearance.languageRequired' | translate }}</p>
               }
             </div>
           </div>
@@ -343,18 +344,18 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
 
         <!-- System Information -->
         <div>
-          <h3 class="text-md font-medium text-white mb-4">System Information</h3>
+          <h3 class="text-md font-medium text-white mb-4">{{ 'settings.system.systemInfo.title' | translate }}</h3>
           <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg space-y-2">
             <div class="flex justify-between">
-              <span class="text-sm text-gray-300">Application Version:</span>
+              <span class="text-sm text-gray-300">{{ 'settings.system.systemInfo.appVersion' | translate }}:</span>
               <span class="text-sm font-medium text-white">{{ systemInfo.version }}</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-sm text-gray-300">Last Update:</span>
+              <span class="text-sm text-gray-300">{{ 'settings.system.systemInfo.lastUpdate' | translate }}:</span>
               <span class="text-sm font-medium text-white">{{ systemInfo.lastUpdate | date:'medium' }}</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-sm text-gray-300">Database Size:</span>
+              <span class="text-sm text-gray-300">{{ 'settings.system.systemInfo.databaseSize' | translate }}:</span>
               <span class="text-sm font-medium text-white">{{ systemInfo.databaseSize }}</span>
             </div>
           </div>

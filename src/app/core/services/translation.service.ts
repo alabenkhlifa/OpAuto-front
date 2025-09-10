@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { LanguageService, SupportedLanguage } from './language.service';
+import { DOCUMENT } from '@angular/common';
 
 @Injectable({
   providedIn: 'root'
@@ -10,6 +11,7 @@ import { LanguageService, SupportedLanguage } from './language.service';
 export class TranslationService {
   private http = inject(HttpClient);
   private languageService = inject(LanguageService);
+  private document = inject(DOCUMENT);
   
   private translationsSubject = new BehaviorSubject<any>({});
   public translations$ = this.translationsSubject.asObservable();
@@ -18,6 +20,10 @@ export class TranslationService {
   private translationsCache = new Map<SupportedLanguage, any>();
 
   constructor() {
+    // Clear any cached translations on startup
+    this.loadedLanguages.clear();
+    this.translationsCache.clear();
+    
     // Subscribe to language changes
     this.languageService.currentLanguage$.subscribe(language => {
       this.loadTranslations(language);
@@ -31,11 +37,16 @@ export class TranslationService {
     if (this.loadedLanguages.has(language)) {
       // If already loaded, emit cached translations
       const cachedTranslations = this.translationsCache.get(language) || {};
-      this.translationsSubject.next(cachedTranslations);
+        this.translationsSubject.next(cachedTranslations);
       return;
     }
 
-    this.http.get(`/assets/i18n/${language}.json`).pipe(
+    // Get the base href from document
+    const baseHref = this.document.getElementsByTagName('base')[0]?.getAttribute('href') || '/';
+    const assetsPath = baseHref + 'assets/i18n/' + language + '.json';
+    
+    
+    this.http.get(assetsPath).pipe(
       catchError(error => {
         console.warn(`Failed to load translations for ${language}:`, error);
         return of({});
@@ -78,6 +89,8 @@ export class TranslationService {
   // Synchronous version for templates
   instant(key: string, params?: Record<string, any>): string {
     const translations = this.translationsSubject.value;
+    
+    
     const keys = key.split('.');
     let value = translations;
     
@@ -97,6 +110,7 @@ export class TranslationService {
         result = result.replace(new RegExp(`{{${param}}}`, 'g'), params[param]);
       });
     }
+    
     
     return result;
   }

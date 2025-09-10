@@ -5,16 +5,21 @@ import { AppointmentService } from './services/appointment.service';
 import { AppointmentModalComponent } from './components/appointment-modal.component';
 import { SwipeDirective, SwipeEvent } from '../../shared/directives/swipe.directive';
 import { Appointment, AppointmentStatus } from '../../core/models/appointment.model';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+import { LanguageService } from '../../core/services/language.service';
+import { TranslationService } from '../../core/services/translation.service';
 
 @Component({
   selector: 'app-appointments',
   standalone: true,
-  imports: [CommonModule, FormsModule, AppointmentModalComponent, SwipeDirective],
+  imports: [CommonModule, FormsModule, AppointmentModalComponent, SwipeDirective, TranslatePipe],
   templateUrl: './appointments.component.html',
   styleUrl: './appointments.component.css'
 })
 export class AppointmentsComponent implements AfterViewInit {
   private appointmentService = inject(AppointmentService);
+  private languageService = inject(LanguageService);
+  public translationService = inject(TranslationService);
   
   @ViewChild(AppointmentModalComponent) appointmentModal!: AppointmentModalComponent;
   
@@ -262,21 +267,44 @@ export class AppointmentsComponent implements AfterViewInit {
   }
 
   // Utility methods
+  private getLocaleCode = computed(() => {
+    const currentLang = this.languageService.currentLanguage();
+    const localeMap = {
+      'en': 'en-US',
+      'fr': 'fr-FR',
+      'ar': 'ar-SA'
+    };
+    return localeMap[currentLang] || 'en-US';
+  });
+
   formatTime(date: Date): string {
-    return new Intl.DateTimeFormat('en-US', {
+    const locale = this.getLocaleCode();
+    const currentLang = this.languageService.currentLanguage();
+    
+    const options: Intl.DateTimeFormatOptions = {
       hour: '2-digit',
       minute: '2-digit',
-      hour12: true
-    }).format(date);
+      hour12: currentLang !== 'fr', // French uses 24h format typically
+      numberingSystem: currentLang === 'ar' ? 'latn' : undefined // Use Western numerals for Arabic
+    };
+    
+    return new Intl.DateTimeFormat(locale, options).format(date);
   }
 
   formatDate(date: Date): string {
-    return new Intl.DateTimeFormat('en-US', {
+    const locale = this.getLocaleCode();
+    const currentLang = this.languageService.currentLanguage();
+    
+    const options: Intl.DateTimeFormatOptions = {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
-    }).format(date);
+      day: 'numeric',
+      calendar: 'gregory', // Force Georgian calendar for all languages
+      numberingSystem: currentLang === 'ar' ? 'latn' : undefined // Use Western numerals for Arabic
+    };
+    
+    return new Intl.DateTimeFormat(locale, options).format(date);
   }
 
   getStatusColor(status: AppointmentStatus): string {
@@ -312,6 +340,13 @@ export class AppointmentsComponent implements AfterViewInit {
   getMechanicName(mechanicId: string): string {
     const mechanic = this.appointmentService.getMechanicById(mechanicId);
     return mechanic ? mechanic.name : 'Unassigned';
+  }
+
+  getServiceName(serviceName: string): string {
+    // Try to get translation first, if not found return original name
+    const translationKey = `serviceNames.${serviceName}`;
+    const translatedName = this.translationService.instant(translationKey);
+    return translatedName === translationKey ? serviceName : translatedName;
   }
 
   isToday(): boolean {

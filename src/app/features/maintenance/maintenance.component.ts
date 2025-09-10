@@ -7,6 +7,8 @@ import { MaintenanceJob, MaintenanceFilters, MaintenanceStats } from '../../core
 import { MaintenanceJobCardComponent } from './components/maintenance-job-card.component';
 import { MaintenanceStatsComponent } from './components/maintenance-stats.component';
 import { MaintenanceFiltersComponent } from './components/maintenance-filters.component';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+import { TranslationService } from '../../core/services/translation.service';
 
 @Component({
   selector: 'app-maintenance',
@@ -17,7 +19,8 @@ import { MaintenanceFiltersComponent } from './components/maintenance-filters.co
     FormsModule,
     MaintenanceJobCardComponent,
     MaintenanceStatsComponent,
-    MaintenanceFiltersComponent
+    MaintenanceFiltersComponent,
+    TranslatePipe
   ],
   template: `
     <!-- Maintenance Main Container -->
@@ -39,7 +42,7 @@ import { MaintenanceFiltersComponent } from './components/maintenance-filters.co
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
               </svg>
-              <span>Filters</span>
+              <span>{{ 'common.filters' | translate }}</span>
             </button>
 
             <!-- Add Job Button -->
@@ -47,7 +50,7 @@ import { MaintenanceFiltersComponent } from './components/maintenance-filters.co
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
-              <span>New Job</span>
+              <span>{{ 'maintenance.newJob' | translate }}</span>
             </button>
           </div>
         </div>
@@ -65,7 +68,7 @@ import { MaintenanceFiltersComponent } from './components/maintenance-filters.co
       <div class="glass-card">
         <app-maintenance-stats 
           [stats]="stats()"
-          [view]="currentView()">
+          [view]="getStatsView()">
         </app-maintenance-stats>
       </div>
 
@@ -83,7 +86,7 @@ import { MaintenanceFiltersComponent } from './components/maintenance-filters.co
                 class="view-toggle-btn"
                 [class.active]="currentView() === view.value"
                 (click)="setView(view.value)">
-                {{ view.label }}
+                {{ 'maintenance.view' + (view.value | titlecase) | translate }}
               </button>
             }
           </div>
@@ -95,8 +98,8 @@ import { MaintenanceFiltersComponent } from './components/maintenance-filters.co
             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <h3 class="mt-2 text-sm font-medium text-white">No maintenance jobs</h3>
-            <p class="mt-1 text-sm text-gray-300">Use the "New Job" button in the top right to create a new maintenance job.</p>
+            <h3 class="mt-2 text-sm font-medium text-white">{{ 'maintenance.noJobs' | translate }}</h3>
+            <p class="mt-1 text-sm text-gray-300">{{ 'maintenance.noJobsMessage' | translate }}</p>
           </div>
         } @else {
           <!-- Jobs Grid -->
@@ -215,6 +218,7 @@ export class MaintenanceComponent implements OnInit {
   private maintenanceService = inject(MaintenanceService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private translationService = inject(TranslationService);
 
   // Signals
   maintenanceJobs = signal<MaintenanceJob[]>([]);
@@ -342,30 +346,40 @@ export class MaintenanceComponent implements OnInit {
   getPageTitle(): string {
     const segment = this.route.snapshot.url[1]?.path;
     switch (segment) {
-      case 'active': return 'Active Maintenance Jobs';
-      case 'history': return 'Maintenance History';
-      case 'schedule': return 'Scheduled Maintenance';
-      default: return 'Maintenance Management';
+      case 'active': return this.translationService.instant('maintenance.activeTitle');
+      case 'history': return this.translationService.instant('maintenance.historyTitle');
+      case 'schedule': return this.translationService.instant('maintenance.scheduleTitle');
+      default: return this.translationService.instant('maintenance.title');
     }
   }
 
   getPageDescription(): string {
     const segment = this.route.snapshot.url[1]?.path;
     switch (segment) {
-      case 'active': return 'Monitor ongoing repairs and services';
-      case 'history': return 'View completed maintenance records';
-      case 'schedule': return 'Manage upcoming maintenance appointments';
-      default: return 'Manage vehicle maintenance and repairs';
+      case 'active': return this.translationService.instant('maintenance.activeSubtitle');
+      case 'history': return this.translationService.instant('maintenance.historySubtitle');
+      case 'schedule': return this.translationService.instant('maintenance.scheduleSubtitle');
+      default: return this.translationService.instant('maintenance.subtitle');
     }
   }
 
   getJobsTitle(): string {
     const segment = this.route.snapshot.url[1]?.path;
     switch (segment) {
-      case 'active': return 'Active Jobs';
-      case 'history': return 'Completed Jobs';
-      case 'schedule': return 'Scheduled Jobs';
-      default: return 'All Jobs';
+      case 'active': return this.translationService.instant('maintenance.activeJobs');
+      case 'history': return this.translationService.instant('maintenance.completedJobs');
+      case 'schedule': return this.translationService.instant('maintenance.scheduledJobs');
+      default: return this.translationService.instant('maintenance.allJobs');
+    }
+  }
+
+  getStatsView(): string {
+    const segment = this.route.snapshot.url[1]?.path;
+    switch (segment) {
+      case 'history': return 'history';
+      case 'active': return 'list';
+      case 'schedule': return 'list';  
+      default: return this.currentView();
     }
   }
 

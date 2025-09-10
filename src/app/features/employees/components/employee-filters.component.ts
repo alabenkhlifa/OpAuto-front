@@ -1,23 +1,25 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
+import { TranslationService } from '../../../core/services/translation.service';
 import { EmployeeFilters, EmployeeRole, EmployeeDepartment, EmployeeStatus, ExperienceLevel } from '../../../core/models/employee.model';
 
 @Component({
   selector: 'app-employee-filters',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   template: `
     <div class="glass-card">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-semibold text-white">Filters</h3>
+        <h3 class="text-lg font-semibold text-white">{{ 'employees.filters.title' | translate }}</h3>
         <button 
           class="btn-clear-filters"
           (click)="clearFilters()">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
-          Clear All
+          {{ 'employees.filters.clearAll' | translate }}
         </button>
       </div>
 
@@ -26,12 +28,12 @@ import { EmployeeFilters, EmployeeRole, EmployeeDepartment, EmployeeStatus, Expe
         <!-- Search -->
         <div class="lg:col-span-2">
           <label class="form-label">
-            Search
+            {{ 'employees.filters.search' | translate }}
           </label>
           <input 
             type="text" 
             class="form-input"
-            placeholder="Name, email, employee #..."
+            [placeholder]="'employees.filters.searchPlaceholder' | translate"
             [(ngModel)]="localFilters.searchTerm"
             (ngModelChange)="onFilterChange()">
         </div>
@@ -39,15 +41,15 @@ import { EmployeeFilters, EmployeeRole, EmployeeDepartment, EmployeeStatus, Expe
         <!-- Role Filter -->
         <div>
           <label class="form-label">
-            Role
+            {{ 'employees.filters.role' | translate }}
           </label>
           <select 
             class="form-select"
             [(ngModel)]="selectedRole"
             (ngModelChange)="onRoleChange($event)">
-            <option value="">All Roles</option>
+            <option value="">{{ 'employees.filters.allRoles' | translate }}</option>
             @for (role of roleOptions; track role.value) {
-              <option [value]="role.value">{{ role.label }}</option>
+              <option [value]="role.value">{{ 'employees.roles.' + role.value | translate }}</option>
             }
           </select>
         </div>
@@ -55,15 +57,15 @@ import { EmployeeFilters, EmployeeRole, EmployeeDepartment, EmployeeStatus, Expe
         <!-- Department Filter -->
         <div>
           <label class="form-label">
-            Department
+            {{ 'employees.filters.department' | translate }}
           </label>
           <select 
             class="form-select"
             [(ngModel)]="selectedDepartment"
             (ngModelChange)="onDepartmentChange($event)">
-            <option value="">All Departments</option>
+            <option value="">{{ 'employees.filters.allDepartments' | translate }}</option>
             @for (dept of departmentOptions; track dept.value) {
-              <option [value]="dept.value">{{ dept.label }}</option>
+              <option [value]="dept.value">{{ 'employees.departments.' + dept.value | translate }}</option>
             }
           </select>
         </div>
@@ -71,15 +73,15 @@ import { EmployeeFilters, EmployeeRole, EmployeeDepartment, EmployeeStatus, Expe
         <!-- Status Filter -->
         <div>
           <label class="form-label">
-            Status
+            {{ 'employees.filters.status' | translate }}
           </label>
           <select 
             class="form-select"
             [(ngModel)]="selectedStatus"
             (ngModelChange)="onStatusChange($event)">
-            <option value="">All Status</option>
+            <option value="">{{ 'employees.filters.allStatus' | translate }}</option>
             @for (status of statusOptions; track status.value) {
-              <option [value]="status.value">{{ status.label }}</option>
+              <option [value]="status.value">{{ (status.value === 'on-leave' ? 'employees.status.onLeave' : 'employees.status.' + status.value) | translate }}</option>
             }
           </select>
         </div>
@@ -87,15 +89,15 @@ import { EmployeeFilters, EmployeeRole, EmployeeDepartment, EmployeeStatus, Expe
         <!-- Availability Filter -->
         <div>
           <label class="form-label">
-            Availability
+            {{ 'employees.filters.availability' | translate }}
           </label>
           <select 
             class="form-select"
             [(ngModel)]="selectedAvailability"
             (ngModelChange)="onAvailabilityChange($event)">
-            <option value="">All</option>
-            <option value="true">Available</option>
-            <option value="false">Unavailable</option>
+            <option value="">{{ 'employees.filters.all' | translate }}</option>
+            <option value="true">{{ 'employees.filters.available' | translate }}</option>
+            <option value="false">{{ 'employees.filters.unavailable' | translate }}</option>
           </select>
         </div>
 
@@ -186,5 +188,12 @@ export class EmployeeFiltersComponent {
 
   private emitFilters() {
     this.filtersChange.emit({ ...this.localFilters });
+  }
+
+  private translationService = inject(TranslationService);
+
+  getStatusTranslation(status: string): string {
+    const key = status === 'on-leave' ? 'onLeave' : status;
+    return this.translationService.instant(`employees.status.${key}`);
   }
 }
