@@ -1,595 +1,316 @@
-# OpAuto - Comprehensive Features List
+# OpAuto Garage Management System - Features & Roadmap
 
-> **Modern Garage Management System**  
-> A comprehensive solution for automotive repair shops and garages with dark-mode glassmorphism design and multilingual support.
+## 🚧 Project Overview
 
-## 🌐 **Language Support**
-- **English** - Primary language
-- **French** - Secondary language  
-- **Arabic** - Standard Arabic with RTL layout support
-- Real-time language switching
-- Localized date/time formats
-- Currency formatting (TND)
+OpAuto is a comprehensive garage management system designed to streamline automotive service operations with modern technology and user-centric design.
 
----
+### Core Architecture (MVP)
 
-## 🏠 **Dashboard & Analytics**
+#### 🔐 Authentication
+- Single admin account per garage (login/logout + session management)
+- Secure token-based authentication (JWT implementation)
+- Session persistence and automatic renewal
 
-### Real-Time Garage Overview
-- **Daily Metrics Display**
-  - Total cars serviced today
-  - Cars in progress vs completed
-  - Cars waiting for approval
-  - Today's revenue tracking
-  - Available service slots monitoring
-  - Active mechanics count
+#### 📁 Backend Integration
+- REST API endpoints for:
+  - Car management
+  - Maintenance logs
+  - Appointments scheduling
+  - Invoice generation
+  - Approval requests
+  - Notifications system
 
-### Appointment Timeline
-- **Today's Schedule Visualization**
-  - Time-based appointment cards
-  - Service type and duration display
-  - Customer and vehicle information
-  - Real-time status updates (scheduled, in-progress, completed, delayed)
-  - Mechanic assignment tracking
+#### 🎨 Frontend Design
+- **Apple-style glassmorphism design**: Modern glass effect with blur and transparency
+- **Sidebar navigation**: Frosted glass backdrop with responsive mobile design
+- **CRUD interfaces**: Cars, jobs, appointments, invoices with glassmorphism styling
+- **Calendar integration**: Appointment booking and scheduling views
+- **Permanent dark mode**: Optimized for dark backgrounds, no theme switching
 
-### Active Jobs Monitoring
-- **Live Work Progress**
-  - Real-time job progress indicators (0-100%)
-  - Job status tracking (diagnosis, waiting parts, in repair, quality check, waiting approval)
-  - Estimated completion times
-  - Service breakdown by job
-  - Mechanic productivity tracking
+## 🔧 Phase 1 Features (MVP)
 
----
+### 1. Car Registration System
+**Status**: Core feature for vehicle management
 
-## 🚗 **Vehicle Management**
+**Features**:
+- Manual car registration with comprehensive vehicle data
+- Required fields: license plate, make, model, year
+- Customer linking: name, phone, contact information
+- Vehicle history access: past repairs, diagnostics, service records
+- Quick search and filtering capabilities
+- VIN number tracking (optional)
 
-### Car Registration & Database
-- **Comprehensive Vehicle Profiles**
-  - License plate registration
-  - Make, model, and year tracking
-  - Customer linking and history
-  - Current mileage (KM) recording
-  - Service status indicators (up-to-date, due-soon, overdue)
+**Business Value**:
+- Centralized vehicle database
+- Customer relationship management
+- Service history tracking
 
-### Advanced Search & Filtering
-- **Multi-Parameter Search**
-  - Search by license plate, make, model, or customer name
-  - Filter by car manufacturer
-  - Filter by service status
-  - Quick status filter chips (Today, Due Soon, Overdue)
-  - Real-time search results
+### 2. Maintenance & Repair Logging
+**Status**: Essential operational feature
 
-### Vehicle History & Analytics
-- **Complete Service Records**
-  - Historical maintenance logs
-  - Service recommendations
-  - Mileage tracking over time
-  - Customer service patterns
-  - Predictive maintenance alerts
+**Features**:
+- Current mileage (KM) recording for service intervals
+- Task management system:
+  - Oil changes, brake repairs, diagnostics, etc.
+  - Custom service categories
+  - Parts and labor tracking
+- Photo documentation:
+  - Before/after photos of issues
+  - Work progress documentation
+  - Parts replacement evidence
+- Status tracking workflow:
+  - `Waiting` - Job queued for work
+  - `In Progress` - Currently being serviced
+  - `Waiting for Approval` - Customer/owner approval needed
+  - `Done` - Service completed
 
----
+**Business Value**:
+- Complete service documentation
+- Quality assurance through photos
+- Clear workflow management
+- Historical maintenance records
 
-## 🔧 **Maintenance & Service Management**
+### 3. Notification System
+**Status**: Communication and workflow management
 
-### Job Creation & Management
-- **Comprehensive Service Jobs**
-  - Job title and detailed descriptions
-  - Customer and vehicle association
-  - Service category classification
-  - Priority level assignment (Low, Medium, High, Urgent)
-  - Estimated duration and cost
-  - Photo attachment support
+**Features**:
+- **Browser notifications**: Real-time alerts for new jobs, updates, approvals
+- **SMS/Email alerts**: Optional notifications for garage owner
+  - Job completion alerts
+  - Approval requests
+  - Customer communication
+- **Approval request system**: 
+  - Parts purchasing requests from mechanics
+  - Owner approval workflow
+  - Budget management controls
 
-### Advanced Job Tracking
-- **Multi-Status Workflow**
-  - Waiting (scheduled)
-  - In Progress (active work)
-  - Waiting for Approval (customer/parts approval needed)
-  - Waiting for Parts (inventory dependency)
-  - Completed (finished work)
-  - Cancelled (abandoned jobs)
+**Business Value**:
+- Improved communication
+- Faster decision making
+- Better customer service
+- Cost control mechanisms
 
-### Maintenance Views & Organization
-- **Flexible Display Options**
-  - Active Jobs View - Current work in progress
-  - History View - Completed and cancelled jobs
-  - Schedule View - Upcoming scheduled work
-  - Grid and List view modes
-  - Mobile-optimized layouts
+### 4. Appointments & Slot Management
+**Status**: Scheduling and resource optimization
 
-### Service Statistics & KPIs
-- **Performance Metrics**
-  - Jobs completed today/week/month
-  - Average completion time
-  - Mechanic productivity metrics
+**Features**:
+- **Calendar/List views**: Daily, weekly, monthly appointment overview
+- **Manual appointment creation**:
+  - Car details and service type
+  - Estimated completion time
+  - Assigned mechanic/technician
+- **Resource management**:
+  - Number of lifts/service bays
+  - Active mechanics scheduling
+  - Concurrent job limitations
+- **Filtering options**:
+  - By mechanic/technician
+  - By service type
+  - By customer/vehicle
+
+**Business Value**:
+- Optimized resource utilization
+- Better time management
+- Reduced customer wait times
+- Improved scheduling efficiency
+
+### 5. Garage Configuration Management
+**Status**: Administrative setup and management
+
+**Features**:
+- **Resource configuration**:
+  - Number of employees and their roles
+  - Service lift/bay count
+  - Working hours and availability
+- **Capacity planning**:
+  - Daily vehicle handling capacity
+  - Service time estimations
+  - Queue management
+- **Schedule management**:
+  - Holiday and off-day configuration
+  - Maintenance windows
+  - Special events scheduling
+- **Employee management**:
+  - Role assignments: Admin (owner), Mechanic, Assistant
+  - Skill set tracking
+  - Performance metrics
+
+**Business Value**:
+- Accurate capacity planning
+- Efficient resource allocation
+- Better scheduling accuracy
+- Employee management
+
+### 6. Basic Invoicing System
+**Status**: Financial transaction management
+
+**Features**:
+- **Cash-only invoicing**: Simple transaction processing
+- **Manual cost entry**:
+  - Service charges by category
+  - Parts costs and markup
+  - Labor charges by hour/service
+- **Pricing flexibility**:
+  - Final price calculation
+  - Discount application
+  - Tax handling (if applicable)
+- **Payment confirmation**: Cash receipt acknowledgment
+- **Invoice archival**:
+  - Searchable invoice history
+  - Customer-based search
+  - Vehicle-based search
+  - Date range filtering
+
+**Business Value**:
+- Revenue tracking
+- Financial record keeping
+- Customer transaction history
+- Basic accounting support
+
+### 7. Basic Reporting Dashboard
+**Status**: Business intelligence and analytics
+
+**Features**:
+- **Job completion tracking**:
+  - Daily/weekly completed services
   - Service type distribution
-  - Customer satisfaction scores
-
----
-
-## 📅 **Appointment Scheduling**
-
-### Smart Calendar Management
-- **Multi-View Calendar System**
-  - Daily, weekly, and monthly views
-  - Real-time availability checking
-  - Slot-based scheduling
-  - Appointment conflict prevention
-  - Drag-and-drop rescheduling
-
-### Appointment Features
-- **Comprehensive Booking System**
-  - Customer and vehicle selection
-  - Service type specification
-  - Estimated duration calculation
-  - Mechanic assignment
-  - Priority level setting
-  - Special notes and requirements
-
-### Mobile-Optimized Scheduling
-- **Touch-Friendly Interface**
-  - Swipe navigation between dates
-  - Touch-friendly appointment cards
-  - Quick status updates
-  - Mobile-specific filters
-  - Gesture-based interactions
-
-### Appointment Analytics
-- **Scheduling Insights**
-  - Appointment completion rates
-  - No-show tracking
-  - Peak time analysis
-  - Mechanic utilization rates
-  - Customer appointment patterns
-
----
-
-## 📦 **Inventory Management**
-
-### Comprehensive Parts Database
-- **Advanced Part Cataloging**
-  - Part numbers and descriptions
-  - Brand and category classification
-  - Supplier information
-  - Current stock levels
-  - Reorder points and quantities
-  - Cost and pricing data
-
-### Smart Stock Management
-- **Automated Inventory Tracking**
-  - Real-time stock level monitoring
-  - Low stock alerts and notifications
-  - Out-of-stock warnings
-  - Reorder point automation
-  - Stock adjustment logging
-  - Supplier lead time tracking
-
-### Inventory Analytics Dashboard
-- **Business Intelligence**
-  - Stock value calculations
-  - Fast/slow-moving parts analysis
-  - Supplier performance metrics
-  - Cost analysis and trends
-  - Inventory turnover rates
-  - Seasonal demand patterns
-
-### Categories & Organization
-- **Systematic Part Classification**
-  - Engine components
-  - Transmission parts
-  - Brake systems
-  - Suspension components
-  - Electrical systems
-  - Filters and fluids
-  - Tires and wheels
-  - Body parts
-  - Accessories
-  - Consumables
-
----
-
-## 🧾 **Invoicing & Financial Management**
-
-### Professional Invoice Generation
-- **Comprehensive Billing System**
-  - Automatic invoice numbering
-  - Customer and vehicle information
-  - Service breakdown with costs
-  - Parts listing with quantities
-  - Labor cost calculation
-  - Tax calculation and application
-  - Discount management
-
-### Payment Processing
-- **Multi-Method Payment Support**
-  - Cash payments
-  - Credit card processing
-  - Bank transfers
-  - Check payments
-  - Credit account management
-  - Partial payment handling
-
-### Financial Tracking & Analytics
-- **Revenue Management**
-  - Daily/weekly/monthly revenue reports
-  - Payment status tracking (paid, pending, overdue)
-  - Customer payment history
-  - Outstanding balance monitoring
-  - Profit margin analysis
-  - Financial forecasting
-
-### Invoice Status Management
-- **Lifecycle Tracking**
-  - Draft invoices
-  - Sent invoices
-  - Viewed by customer
-  - Paid in full
-  - Partially paid
-  - Overdue tracking
-  - Cancelled invoices
-  - Refunded transactions
-
----
-
-## 👥 **Employee Management**
-
-### Comprehensive Staff Profiles
-- **Complete Employee Records**
-  - Personal information (name, contact, emergency contacts)
-  - Employment details (role, department, hire date)
-  - Skill sets and specializations
-  - Experience levels and certifications
-  - Performance ratings and reviews
-  - Availability and scheduling preferences
-
-### Skills & Specialization Tracking
-- **Professional Development**
-  - Technical specialty areas
-  - Certification tracking
-  - Training records
-  - Skill level assessments
-  - Continuing education requirements
-  - Performance improvement plans
-
-### Employee Performance Analytics
-- **Productivity Metrics**
-  - Jobs completed per period
-  - Average completion times
-  - Quality ratings
-  - Customer feedback scores
-  - Attendance tracking
-  - Goal achievement monitoring
-
-### Staff Scheduling & Availability
-- **Workforce Management**
-  - Real-time availability status
-  - Shift scheduling
-  - Time-off requests
-  - Workload balancing
-  - Overtime tracking
-  - Emergency contact systems
-
----
-
-## 👤 **Customer Relationship Management**
-
-### Detailed Customer Profiles
-- **Complete Customer Records**
-  - Personal information and contacts
-  - Address and location data
-  - Vehicle ownership history
-  - Service preferences
-  - Communication preferences
-  - Special requirements or notes
-
-### Customer Analytics & Insights
-- **Relationship Intelligence**
-  - Visit frequency analysis
-  - Service spending patterns
-  - Loyalty program participation
-  - Customer lifetime value
-  - Satisfaction scores
-  - Referral tracking
-
-### Customer Status Management
-- **Segmentation & Classification**
-  - Active customers
-  - VIP customer tier
-  - Inactive customers
-  - Blocked customers
-  - Loyalty tier classification (Bronze, Silver, Gold, Platinum)
-
-### Communication & Engagement
-- **Customer Interaction History**
-  - Service reminders
-  - Appointment confirmations
-  - Follow-up communications
-  - Feedback collection
-  - Marketing campaign participation
-  - Complaint resolution tracking
-
----
-
-## ✅ **Approval & Authorization System**
-
-### Multi-Level Approval Workflow
-- **Structured Decision Making**
-  - Parts purchasing approvals
-  - Service authorization requests
-  - Pricing approval workflows
-  - Overtime authorization
-  - Major repair approvals
-  - Warranty claim processing
-
-### Request Management
-- **Comprehensive Approval Tracking**
-  - Request creation and submission
-  - Priority level assignment (Low, Medium, High, Urgent)
-  - Approval status tracking (Pending, Approved, Rejected, Info Requested)
-  - Estimated cost validation
-  - Supporting documentation
-  - Comment and feedback system
-
-### Bulk Operations
-- **Efficient Processing**
-  - Bulk approval capabilities
-  - Batch rejection handling
-  - Multi-select operations
-  - Quick action buttons
-  - Status filtering and sorting
-  - Search and filter functionality
-
-### Approval Analytics
-- **Process Optimization**
-  - Approval time metrics
-  - Approval rate statistics
-  - Cost approval patterns
-  - Workflow efficiency analysis
-  - User approval history
-  - Process bottleneck identification
-
----
-
-## 📊 **Advanced Reporting & Analytics**
-
-### Financial Reports
-- **Comprehensive Financial Analysis**
-  - Revenue trends and forecasting
-  - Profit margin analysis
-  - Cost breakdown reports
-  - Payment collection metrics
-  - Tax reporting assistance
-  - Monthly/quarterly comparisons
-
-### Operational Reports
-- **Performance Analytics**
-  - Service completion rates
-  - Mechanic productivity reports
-  - Appointment scheduling efficiency
-  - Average service times
-  - Customer satisfaction metrics
-  - Capacity utilization reports
-
-### Customer Analytics
-- **Business Intelligence**
-  - Customer retention analysis
-  - Service demand patterns
-  - Customer lifetime value
-  - Loyalty program effectiveness
-  - Geographic service distribution
-  - Customer acquisition costs
-
-### Inventory Reports
-- **Stock Management Intelligence**
-  - Inventory turnover analysis
-  - Supplier performance metrics
-  - Cost analysis and optimization
-  - Demand forecasting
-  - Seasonal trend analysis
-  - Stock optimization recommendations
-
-### Interactive Charts & Visualizations
-- **Data Visualization**
-  - Revenue trend charts (Line charts)
-  - Service type distribution (Pie/Doughnut charts)
-  - Appointment status tracking (Bar charts)
-  - Performance KPI dashboards
-  - Comparative analysis tools
-  - Export capabilities (PDF, Excel, CSV)
-
----
-
-## ⚙️ **Garage Configuration & Settings**
-
-### Garage Information Management
-- **Business Profile Setup**
-  - Garage name and branding
-  - Contact information
-  - Address and location
-  - Business hours configuration
-  - Service area definition
-  - Company registration details
-
-### Operational Settings
-- **Workflow Configuration**
-  - Number of service bays/lifts
-  - Mechanic capacity planning
-  - Service slot duration settings
-  - Appointment booking rules
-  - Working hours and holidays
-  - Break time configurations
-
-### Business Settings
-- **Financial Configuration**
-  - Tax rates and calculations
-  - Currency settings
-  - Pricing strategies
-  - Discount policies
-  - Payment terms
-  - Credit policies
-
-### System Settings
-- **Technical Configuration**
-  - User access controls
-  - Data backup settings
-  - Security configurations
-  - Notification preferences
-  - System integration settings
-  - Performance optimization
-
-### Integration Settings
-- **Third-Party Connections**
-  - Payment gateway integration
-  - SMS/Email service providers
-  - Parts supplier connections
-  - Accounting software links
-  - Customer communication tools
-  - Backup and sync services
-
----
-
-## 🎨 **User Experience & Design**
-
-### Modern Glassmorphism Interface
-- **Apple-Style Design System**
-  - Permanent dark mode theme
-  - Blur effects and transparency
-  - Smooth animations and transitions
-  - Consistent design language
-  - Accessible color schemes
-  - Professional aesthetic
-
-### Responsive Design
-- **Multi-Device Support**
-  - Desktop optimization (1024px+)
-  - Tablet compatibility (768px-1023px)
-  - Mobile-first design (375px minimum - iPhone SE 2020)
-  - Touch-friendly interactions
-  - Swipe gestures support
-  - Adaptive layouts
-
-### Navigation & Usability
-- **Intuitive User Experience**
-  - Collapsible sidebar navigation
-  - Breadcrumb navigation
-  - Quick action buttons
-  - Search functionality
-  - Filter and sort options
-  - Keyboard shortcuts
-
-### Performance & Optimization
-- **Fast & Efficient**
-  - Lazy loading implementation
-  - Optimized bundle sizes
-  - PWA capabilities
-  - Offline functionality
-  - Fast page transitions
-  - Minimal loading times
-
----
-
-## 🔐 **Security & Authentication**
-
-### User Management
-- **Secure Access Control**
-  - Single admin account per garage
-  - JWT token-based authentication
-  - Session management
-  - Password security requirements
-  - Account lockout protection
-  - Secure logout functionality
-
-### Data Protection
-- **Information Security**
-  - Encrypted data transmission
-  - Secure data storage
-  - Privacy compliance
-  - Regular security updates
-  - Audit trail logging
-  - Backup and recovery systems
-
----
-
-## 📱 **Mobile Features**
-
-### Touch-Optimized Interface
-- **Mobile-First Design**
-  - Minimum 44px touch targets
-  - Swipe navigation gestures
-  - Pull-to-refresh functionality
-  - Mobile-specific modals
-  - Responsive form layouts
-  - Touch-friendly buttons
-
-### Progressive Web App (PWA)
-- **App-Like Experience**
-  - Home screen installation
-  - Offline functionality
-  - Push notifications
-  - App icon and splash screen
-  - Fast loading times
-  - Native app feel
-
----
-
-## 🚀 **Technical Architecture**
-
-### Frontend Technology Stack
-- **Modern Angular Framework**
-  - Angular 15+ with standalone components
-  - TypeScript for type safety
-  - RxJS for reactive programming
-  - Angular Material components
-  - TailwindCSS for styling
-  - Chart.js for data visualization
-
-### Best Practices Implementation
-- **Clean Code Standards**
-  - Component-based architecture
-  - Lazy loading modules
-  - OnPush change detection
-  - Reactive forms
-  - Error handling
-  - Unit testing coverage
-
-### Performance Optimization
-- **Speed & Efficiency**
-  - Tree shaking for bundle optimization
-  - Virtual scrolling for large lists
-  - Preloading strategies
-  - Memory leak prevention
-  - Caching strategies
-  - Optimized asset loading
-
----
-
-## 🎯 **Future Roadmap Features**
+  - Completion time analysis
+- **Revenue reporting**:
+  - Cash received today/this week
+  - Revenue by service category
+  - Monthly financial summaries
+- **Service analytics**:
+  - Most frequently performed services
+  - Popular service combinations
+  - Service duration analysis
+- **Employee performance**:
+  - Work completion rates
+  - Service quality metrics
+  - Productivity tracking
+
+**Business Value**:
+- Data-driven decision making
+- Performance monitoring
+- Business trend analysis
+- Revenue optimization
+
+### 8. Internal Approval System
+**Status**: Workflow and cost management
+
+**Features**:
+- **Parts purchase requests**:
+  - Mechanic-initiated requests
+  - Part description and specifications
+  - Estimated cost and supplier information
+  - Urgency level classification
+- **Owner approval workflow**:
+  - Browser/email/SMS notifications
+  - Approve/reject with comments
+  - Budget threshold management
+  - Approval history tracking
+- **Integration with job logs**:
+  - Approval history saved in service records
+  - Cost tracking and budget management
+  - Parts delivery status
+
+**Business Value**:
+- Cost control and budget management
+- Transparent purchasing process
+- Audit trail for expenses
+- Improved financial oversight
+
+## 🚀 Phase 2 Features (Enhanced)
+
+### Advanced Communication
+- **SMS/Email integration**: Automated customer notifications
+- **Customer portal**: Online service status checking
+- **Appointment reminders**: Automated scheduling notifications
+
+### Enhanced Reporting
+- **Advanced analytics**: Predictive maintenance recommendations
+- **Financial reporting**: Profit/loss analysis, expense tracking
+- **Customer insights**: Service history analysis, loyalty metrics
+
+### Parts Management
+- **Parts database**: Comprehensive catalog with pricing
+- **Inventory tracking**: Stock levels and reordering alerts
+- **Supplier integration**: Direct ordering and delivery tracking
+
+### Employee Management
+- **CNSS integration**: Social security and payroll management
+- **Time tracking**: Work hours and productivity monitoring
+- **Training records**: Skill development and certification tracking
+
+## 🌟 Phase 3 Features (Advanced)
 
 ### AI & Advanced Features
-- AI-powered diagnostic recommendations
-- Predictive maintenance scheduling
-- Intelligent parts ordering
-- Customer behavior analysis
-- Automated report generation
-- Smart appointment optimization
+- **AI consulting/diagnosis**: Smart diagnostic recommendations based on symptoms
+- **Used car consulting**: AI-powered vehicle evaluation for purchase decisions
+- **Predictive maintenance**: Wearing parts replacement scheduling
+- **Smart inventory**: AI-driven parts ordering and stock optimization
 
-### Enhanced Business Management
-- Multi-location support
-- Advanced HR management (CNSS)
-- Complex billing and taxation
-- Home service capabilities
-- Supplier integration APIs
-- Customer mobile app
+### Business Expansion
+- **Advanced invoicing**: Complex billing with tax management and payment options
+- **Home service**: Mobile garage services with GPS tracking
+- **Multi-location**: Franchise/chain management capabilities
 
-### Analytics & Intelligence
-- Machine learning insights
-- Predictive analytics
-- Business forecasting
-- Competitive analysis
-- Market trend analysis
-- ROI optimization tools
+### Customer Experience
+- **Mobile app**: Customer booking and service tracking application
+- **Online booking**: 24/7 appointment scheduling system
+- **Loyalty programs**: Customer rewards and retention systems
+- **Integration ecosystem**: Parts suppliers, insurance companies, vehicle manufacturers
 
----
+### Analytics & Insights
+- **Workshop efficiency**: Detailed operational analytics
+- **Customer behavior**: Service patterns and preferences
+- **Market analysis**: Competitive insights and pricing optimization
+- **Predictive analytics**: Business forecasting and trend analysis
 
-*This feature list represents the comprehensive capabilities of the OpAuto garage management system, designed to streamline operations and enhance business efficiency for modern automotive service providers.*
+## 🎯 Implementation Priority Matrix
+
+### Immediate (Phase 1 - MVP)
+1. **Authentication & User Management** - Foundation requirement
+2. **Car Registration** - Core business function
+3. **Maintenance Logs** - Primary service tracking
+4. **Basic Appointments** - Essential scheduling
+5. **Garage Configuration** - Operational setup
+6. **Simple Invoicing** - Financial transactions
+7. **Browser Notifications** - Basic communication
+
+### Short-term (Phase 2 - Enhanced)
+1. **SMS/Email Notifications** - Improved communication
+2. **Advanced Reporting** - Business intelligence
+3. **Parts Database** - Inventory management
+4. **Employee Management** - Human resources
+
+### Long-term (Phase 3 - Advanced)
+1. **AI Diagnosis** - Competitive advantage
+2. **Home Service** - Market expansion
+3. **Mobile App** - Customer experience
+4. **Advanced Analytics** - Data-driven insights
+
+## 📊 Success Metrics
+
+### Phase 1 Targets
+- **User adoption**: 100% of garage operations managed through system
+- **Time savings**: 30% reduction in administrative tasks
+- **Accuracy improvement**: 95% reduction in manual data entry errors
+- **Customer satisfaction**: Improved service communication and tracking
+
+### Phase 2 Targets
+- **Revenue growth**: 15% increase through better efficiency and customer retention
+- **Operational efficiency**: 25% improvement in resource utilization
+- **Customer retention**: 90% customer satisfaction with service transparency
+
+### Phase 3 Targets
+- **Market expansion**: Support for multiple garage locations
+- **Innovation leadership**: AI-powered features providing competitive advantage
+- **Scalability**: Platform capable of supporting franchise operations
+
+## 🌐 Language Support
+- **English (en)** - Primary language
+- **French (fr)** - Secondary language  
+- **Arabic (ar)** - Standard Arabic with RTL layout support
+- Real-time language switching with localStorage persistence
+- Localized date/time formats
+- Currency formatting (TND)
