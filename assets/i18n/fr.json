@@ -30,7 +30,9 @@
     "description": "Description",
     "price": "Prix",
     "quantity": "Quantité",
-    "notes": "Notes"
+    "notes": "Notes",
+    "clearFilters": "Effacer les filtres",
+    "reset": "Réinitialiser"
   },
   "navigation": {
     "main": "Principal",
@@ -141,7 +143,21 @@
     "cancelled": "Annulé",
     "reschedule": "Reprogrammer",
     "confirm": "Confirmer",
-    "noAppointments": "Aucun rendez-vous trouvé"
+    "noAppointments": "Aucun rendez-vous trouvé",
+    "manageSchedule": "Gérer la planification du garage et les rendez-vous",
+    "today": "Aujourd'hui",
+    "active": "Actif",
+    "done": "Terminé",
+    "min": "min",
+    "statusIndicators": "Indicateurs de statut",
+    "complete": "Terminer",
+    "edit": "Modifier",
+    "status": {
+      "scheduled": "Programmé",
+      "in-progress": "En cours",
+      "completed": "Terminé",
+      "cancelled": "Annulé"
+    }
   },
   "cars": {
     "title": "Voitures",
@@ -172,7 +188,25 @@
     "serviceHistory": "Historique de service",
     "maintenanceRecords": "Dossiers de maintenance",
     "viewHistory": "Voir l'historique",
-    "noCars": "Aucune voiture trouvée"
+    "noCars": "Aucune voiture trouvée",
+    "totalCars": "Total des véhicules",
+    "upToDate": "À jour",
+    "dueSoon": "Bientôt dû",
+    "overdue": "En retard",
+    "allMakes": "Toutes les marques",
+    "allStatus": "Tous les statuts",
+    "statusLegend": "Légende des statuts",
+    "maintenanceIsCurrent": "La maintenance est à jour",
+    "serviceNeededWithin7Days": "Service nécessaire dans 7 jours",
+    "serviceIsPastDue": "Service en retard",
+    "unknown": "Inconnu",
+    "statusInformationUnavailable": "Informations de statut indisponibles",
+    "totalServices": "Services totaux",
+    "nextDue": "Prochaine échéance",
+    "schedule": "Planifier",
+    "history": "Historique",
+    "mileage": "Kilométrage",
+    "lastService": "Dernier service"
   },
   "maintenance": {
     "title": "Maintenance",
@@ -205,7 +239,43 @@
     "photos": "Photos",
     "addPhoto": "Ajouter une photo",
     "viewPhotos": "Voir les photos",
-    "noJobs": "Aucun travail de maintenance trouvé"
+    "noJobs": "Aucun travail de maintenance trouvé",
+    "newJob": "Nouveau travail",
+    "totalJobs": "Total des travaux",
+    "completedToday": "Terminés aujourd'hui",
+    "pendingApprovals": "En attente d'approbation",
+    "allJobs": "Tous les travaux",
+    "viewGrid": "Vue grille",
+    "viewList": "Vue liste",
+    "mechanic": "Mécanicien",
+    "progress": "Progrès",
+    "mileage": "Kilométrage",
+    "estimatedCost": "Coût estimé",
+    "created": "Créé",
+    "started": "Commencé",
+    "completed": "Terminé",
+    "pending": "En attente",
+    "completeJob": "Terminer le travail",
+    "priority": {
+      "low": "Faible",
+      "medium": "Moyen",
+      "high": "Élevé",
+      "urgent": "Urgent"
+    },
+    "status": {
+      "scheduled": "Programmé",
+      "inProgress": "En cours",
+      "completed": "Terminé",
+      "needsApproval": "Nécessite approbation",
+      "cancelled": "Annulé"
+    },
+    "actions": {
+      "viewDetails": "Voir détails",
+      "edit": "Modifier",
+      "complete": "Terminer",
+      "approve": "Approuver",
+      "reject": "Rejeter"
+    }
   },
   "inventory": {
     "title": "Pièces et Stock",
@@ -247,7 +317,15 @@
     "orderTotal": "Total de la commande",
     "noParts": "Aucune pièce trouvée",
     "noSuppliers": "Aucun fournisseur trouvé",
-    "noOrders": "Aucune commande trouvée"
+    "noOrders": "Aucune commande trouvée",
+    "navigation": {
+      "dashboard": "Tableau de bord",
+      "partsCatalog": "Catalogue de pièces"
+    },
+    "dashboard": {
+      "totalParts": "Total des pièces",
+      "viewDetails": "Voir les détails"
+    }
   },
   "invoicing": {
     "title": "Facturation",
@@ -285,7 +363,39 @@
     "bankTransfer": "Virement bancaire",
     "notes": "Notes",
     "terms": "Termes et conditions",
-    "noInvoices": "Aucune facture trouvée"
+    "noInvoices": "Aucune facture trouvée",
+    "navigation": {
+      "dashboard": "Tableau de bord",
+      "allInvoices": "Toutes les factures",
+      "pendingPayment": "Paiement en attente",
+      "createInvoice": "Créer une facture"
+    },
+    "dashboard": {
+      "totalRevenue": "Chiffre d'affaires total",
+      "totalInvoices": "Nombre de factures",
+      "pendingPayment": "Paiement en attente",
+      "overdue": "En retard",
+      "recentInvoices": "Factures récentes",
+      "paymentMethods": "Méthodes de paiement",
+      "viewDetails": "Voir les détails",
+      "viewAll": "Voir tout",
+      "thisMonth": "Ce mois",
+      "paid": "Payées",
+      "invoices": "Factures"
+    },
+    "status": {
+      "paid": "Payé",
+      "sent": "Envoyé",
+      "overdue": "En retard",
+      "pending": "En attente",
+      "draft": "Brouillon"
+    },
+    "paymentMethods": {
+      "cash": "Espèces",
+      "card": "Carte",
+      "bankTransfer": "Virement bancaire",
+      "check": "Chèque"
+    }
   },
   "customers": {
     "title": "Clients",
@@ -433,7 +543,61 @@
     "topServices": "Services les plus demandés",
     "topCustomers": "Meilleurs clients",
     "partsUsage": "Utilisation des pièces",
-    "noReports": "Aucun rapport disponible"
+    "noReports": "Aucun rapport disponible",
+    "datePresets": {
+      "today": "Aujourd'hui",
+      "yesterday": "Hier",
+      "thisWeek": "Cette semaine",
+      "lastWeek": "Semaine dernière",
+      "thisMonth": "Ce mois",
+      "lastMonth": "Mois dernier",
+      "thisQuarter": "Ce trimestre",
+      "lastQuarter": "Dernier trimestre",
+      "thisYear": "Cette année",
+      "lastYear": "Année dernière",
+      "last30Days": "30 derniers jours",
+      "last90Days": "90 derniers jours",
+      "last365Days": "365 derniers jours",
+      "custom": "Plage personnalisée"
+    },
+    "actions": {
+      "refresh": "Actualiser",
+      "export": "Exporter",
+      "print": "Imprimer",
+      "download": "Télécharger"
+    },
+    "navigation": {
+      "dashboard": "Tableau de bord",
+      "financial": "Financier",
+      "operational": "Opérationnel",
+      "customer": "Client",
+      "inventory": "Inventaire"
+    },
+    "kpis": {
+      "totalRevenue": "Chiffre d'affaires total",
+      "revenue": "Revenus",
+      "appointments": "Rendez-vous",
+      "activeCustomers": "Clients actifs",
+      "newCustomers": "Nouveaux clients",
+      "mechanicUtilization": "Utilisation mécanicien",
+      "stockValue": "Valeur du stock",
+      "customerSatisfaction": "Satisfaction client",
+      "partsInventory": "Inventaire des pièces"
+    },
+    "charts": {
+      "revenueTrends": {
+        "title": "Tendances des revenus"
+      },
+      "serviceDistribution": {
+        "title": "Répartition des services"
+      },
+      "monthlyComparison": {
+        "title": "Comparaison mensuelle"
+      },
+      "appointmentStatus": {
+        "title": "Statut des rendez-vous"
+      }
+    }
   },
   "settings": {
     "title": "Paramètres",

@@ -30,7 +30,9 @@
     "description": "Description",
     "price": "Price",
     "quantity": "Quantity",
-    "notes": "Notes"
+    "notes": "Notes",
+    "clearFilters": "Clear Filters",
+    "reset": "Reset"
   },
   "navigation": {
     "main": "Main",
@@ -115,21 +117,39 @@
   "appointments": {
     "title": "Appointments",
     "subtitle": "Manage garage scheduling and appointments",
+    "new": "New",
+    "edit": "Edit",
     "addAppointment": "Add Appointment",
     "editAppointment": "Edit Appointment",
     "deleteAppointment": "Delete Appointment",
     "appointmentDetails": "Appointment Details",
+    "scheduleServiceAppointment": "Schedule a service appointment for your customer",
     "customerName": "Customer Name",
     "phoneNumber": "Phone Number",
+    "vehicleInformation": "Vehicle Information",
     "vehicleInfo": "Vehicle Information",
+    "car": "Car",
+    "selectCar": "Select Car",
+    "quickAddCar": "Quick Add Car",
     "licensePlate": "License Plate",
     "make": "Make",
     "model": "Model",
     "year": "Year",
+    "serviceDetails": "Service Details",
     "serviceType": "Service Type",
+    "selectService": "Select Service Type",
+    "serviceName": "Service Name",
+    "serviceNamePlaceholder": "Enter service name",
+    "durationMin": "Duration (min)",
     "appointmentDate": "Appointment Date",
     "appointmentTime": "Appointment Time",
     "estimatedDuration": "Estimated Duration",
+    "schedule": "Schedule",
+    "date": "Date",
+    "time": "Time",
+    "selectTime": "Select Time",
+    "assignedMechanic": "Assigned Mechanic",
+    "autoAssign": "Auto-assign",
     "mechanic": "Mechanic",
     "priority": "Priority",
     "low": "Low",
@@ -141,7 +161,35 @@
     "cancelled": "Cancelled",
     "reschedule": "Reschedule",
     "confirm": "Confirm",
-    "noAppointments": "No appointments found"
+    "cancel": "Cancel",
+    "notesOptional": "Notes (Optional)",
+    "additionalNotes": "Additional notes or special instructions",
+    "oilChange": "Oil Change",
+    "brakeRepair": "Brake Repair",
+    "inspection": "Technical Inspection",
+    "transmission": "Transmission Service",
+    "engineWork": "Engine Work",
+    "tireService": "Tire Service",
+    "noAppointments": "No appointments found",
+    "noAppointmentsToday": "No appointments scheduled for today",
+    "noAppointmentsDate": "No appointments scheduled for this date",
+    "scheduleAppointment": "Schedule Appointment",
+    "loadingAppointments": "Loading appointments...",
+    "selected": "Selected",
+    "manageSchedule": "Manage garage scheduling and appointments",
+    "today": "Today",
+    "active": "Active",
+    "done": "Done",
+    "min": "min",
+    "statusIndicators": "Status Indicators",
+    "complete": "Complete",
+    "edit": "Edit",
+    "status": {
+      "scheduled": "Scheduled",
+      "in-progress": "In Progress",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    }
   },
   "cars": {
     "title": "Cars",
@@ -172,7 +220,25 @@
     "serviceHistory": "Service History",
     "maintenanceRecords": "Maintenance Records",
     "viewHistory": "View History",
-    "noCars": "No cars found"
+    "noCars": "No cars found",
+    "totalCars": "Total Cars",
+    "upToDate": "Up to Date",
+    "dueSoon": "Due Soon",
+    "overdue": "Overdue",
+    "allMakes": "All Makes",
+    "allStatus": "All Status",
+    "statusLegend": "Status Legend",
+    "maintenanceIsCurrent": "Maintenance is current",
+    "serviceNeededWithin7Days": "Service needed within 7 days",
+    "serviceIsPastDue": "Service is past due",
+    "unknown": "Unknown",
+    "statusInformationUnavailable": "Status information unavailable",
+    "totalServices": "Total Services",
+    "nextDue": "Next Due",
+    "schedule": "Schedule",
+    "history": "History",
+    "mileage": "Mileage",
+    "lastService": "Last Service"
   },
   "maintenance": {
     "title": "Maintenance",
@@ -205,7 +271,43 @@
     "photos": "Photos",
     "addPhoto": "Add Photo",
     "viewPhotos": "View Photos",
-    "noJobs": "No maintenance jobs found"
+    "noJobs": "No maintenance jobs found",
+    "newJob": "New Job",
+    "totalJobs": "Total Jobs",
+    "completedToday": "Completed Today",
+    "pendingApprovals": "Pending Approvals",
+    "allJobs": "All Jobs",
+    "viewGrid": "Grid View",
+    "viewList": "List View",
+    "mechanic": "Mechanic",
+    "progress": "Progress",
+    "mileage": "Mileage",
+    "estimatedCost": "Estimated Cost",
+    "created": "Created",
+    "started": "Started",
+    "completed": "Completed",
+    "pending": "Pending",
+    "completeJob": "Complete Job",
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "urgent": "Urgent"
+    },
+    "status": {
+      "scheduled": "Scheduled",
+      "inProgress": "In Progress",
+      "completed": "Completed",
+      "needsApproval": "Needs Approval",
+      "cancelled": "Cancelled"
+    },
+    "actions": {
+      "viewDetails": "View Details",
+      "edit": "Edit",
+      "complete": "Complete",
+      "approve": "Approve",
+      "reject": "Reject"
+    }
   },
   "inventory": {
     "title": "Parts & Inventory",
@@ -247,7 +349,38 @@
     "orderTotal": "Order Total",
     "noParts": "No parts found",
     "noSuppliers": "No suppliers found",
-    "noOrders": "No orders found"
+    "noOrders": "No orders found",
+    "navigation": {
+      "dashboard": "Dashboard",
+      "partsCatalog": "Parts Catalog",
+      "suppliers": "Suppliers",
+      "addPart": "Add Part"
+    },
+    "dashboard": {
+      "totalParts": "Total Parts",
+      "totalValue": "Total Value",
+      "lowStock": "Low Stock",
+      "outOfStock": "Out of Stock",
+      "viewDetails": "View Details",
+      "recentAlerts": "Recent Alerts",
+      "markRead": "Mark Read",
+      "mostUsedThisMonth": "Most Used This Month",
+      "used": "Used",
+      "partsByCategory": "Parts by Category"
+    },
+    "categories": {
+      "engine": "Engine",
+      "transmission": "Transmission",
+      "brakes": "Brakes",
+      "suspension": "Suspension",
+      "electrical": "Electrical",
+      "filters": "Filters",
+      "fluids": "Fluids",
+      "tires": "Tires",
+      "body": "Body",
+      "accessories": "Accessories",
+      "consumables": "Consumables"
+    }
   },
   "invoicing": {
     "title": "Invoicing",
@@ -285,7 +418,39 @@
     "bankTransfer": "Bank Transfer",
     "notes": "Notes",
     "terms": "Terms & Conditions",
-    "noInvoices": "No invoices found"
+    "noInvoices": "No invoices found",
+    "navigation": {
+      "dashboard": "Dashboard",
+      "allInvoices": "All Invoices",
+      "pendingPayment": "Pending Payment",
+      "createInvoice": "Create Invoice"
+    },
+    "dashboard": {
+      "totalRevenue": "Total Revenue",
+      "totalInvoices": "Total Invoices",
+      "pendingPayment": "Pending Payment",
+      "overdue": "Overdue",
+      "recentInvoices": "Recent Invoices",
+      "paymentMethods": "Payment Methods",
+      "viewDetails": "View Details",
+      "viewAll": "View All",
+      "thisMonth": "This Month",
+      "paid": "Paid",
+      "invoices": "Invoices"
+    },
+    "status": {
+      "paid": "Paid",
+      "sent": "Sent",
+      "overdue": "Overdue",
+      "pending": "Pending",
+      "draft": "Draft"
+    },
+    "paymentMethods": {
+      "cash": "Cash",
+      "card": "Card",
+      "bankTransfer": "Bank Transfer",
+      "check": "Check"
+    }
   },
   "customers": {
     "title": "Customers",
@@ -433,7 +598,61 @@
     "topServices": "Top Services",
     "topCustomers": "Top Customers",
     "partsUsage": "Parts Usage",
-    "noReports": "No reports available"
+    "noReports": "No reports available",
+    "datePresets": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "thisWeek": "This Week",
+      "lastWeek": "Last Week",
+      "thisMonth": "This Month",
+      "lastMonth": "Last Month",
+      "thisQuarter": "This Quarter",
+      "lastQuarter": "Last Quarter",
+      "thisYear": "This Year",
+      "lastYear": "Last Year",
+      "last30Days": "Last 30 Days",
+      "last90Days": "Last 90 Days",
+      "last365Days": "Last 365 Days",
+      "custom": "Custom Range"
+    },
+    "actions": {
+      "refresh": "Refresh",
+      "export": "Export",
+      "print": "Print",
+      "download": "Download"
+    },
+    "navigation": {
+      "dashboard": "Dashboard",
+      "financial": "Financial",
+      "operational": "Operational",
+      "customer": "Customer",
+      "inventory": "Inventory"
+    },
+    "kpis": {
+      "totalRevenue": "Total Revenue",
+      "revenue": "Revenue",
+      "appointments": "Appointments",
+      "activeCustomers": "Active Customers",
+      "newCustomers": "New Customers",
+      "mechanicUtilization": "Mechanic Utilization",
+      "stockValue": "Stock Value",
+      "customerSatisfaction": "Customer Satisfaction",
+      "partsInventory": "Parts Inventory"
+    },
+    "charts": {
+      "revenueTrends": {
+        "title": "Revenue Trends"
+      },
+      "serviceDistribution": {
+        "title": "Service Distribution"
+      },
+      "monthlyComparison": {
+        "title": "Monthly Comparison"
+      },
+      "appointmentStatus": {
+        "title": "Appointment Status"
+      }
+    }
   },
   "settings": {
     "title": "Settings",

@@ -30,7 +30,8 @@
     "description": "Description",
     "price": "Prix",
     "quantity": "Quantité",
-    "notes": "Notes"
+    "notes": "Notes",
+    "clearFilters": "Effacer les filtres"
   },
   "navigation": {
     "main": "Principal",
@@ -104,12 +105,14 @@
     },
     "status": {
       "scheduled": "Programmé",
-      "inProgress": "En cours",
+      "in_progress": "En cours",
       "completed": "Terminé",
       "delayed": "Retardé",
-      "inRepair": "En réparation",
-      "qualityCheck": "Contrôle qualité",
-      "waitingParts": "En attente de pièces"
+      "in_repair": "En réparation",
+      "quality_check": "Contrôle qualité",
+      "waiting_parts": "En attente de pièces",
+      "diagnosis": "Diagnostic",
+      "waiting_approval": "En attente d'approbation"
     }
   },
   "appointments": {
@@ -141,7 +144,26 @@
     "cancelled": "Annulé",
     "reschedule": "Reprogrammer",
     "confirm": "Confirmer",
-    "noAppointments": "Aucun rendez-vous trouvé"
+    "noAppointments": "Aucun rendez-vous trouvé",
+    "noAppointmentsToday": "Aucun rendez-vous programmé pour aujourd'hui",
+    "noAppointmentsDate": "Aucun rendez-vous programmé pour cette date",
+    "scheduleAppointment": "Programmer un rendez-vous",
+    "loadingAppointments": "Chargement des rendez-vous...",
+    "selected": "Sélectionné",
+    "manageSchedule": "Gérer la planification du garage et les rendez-vous",
+    "today": "Aujourd'hui",
+    "active": "Actif",
+    "done": "Terminé",
+    "min": "min",
+    "statusIndicators": "Indicateurs de statut",
+    "complete": "Terminer",
+    "edit": "Modifier",
+    "status": {
+      "scheduled": "Programmé",
+      "in-progress": "En cours",
+      "completed": "Terminé",
+      "cancelled": "Annulé"
+    }
   },
   "cars": {
     "title": "Voitures",
@@ -172,11 +194,51 @@
     "serviceHistory": "Historique de service",
     "maintenanceRecords": "Dossiers de maintenance",
     "viewHistory": "Voir l'historique",
-    "noCars": "Aucune voiture trouvée"
+    "noCars": "Aucune voiture trouvée",
+    "totalCars": "Total des véhicules",
+    "upToDate": "À jour",
+    "dueSoon": "Bientôt dû",
+    "overdue": "En retard",
+    "allMakes": "Toutes les marques",
+    "allStatus": "Tous les statuts",
+    "statusLegend": "Légende des statuts",
+    "maintenanceIsCurrent": "La maintenance est à jour",
+    "serviceNeededWithin7Days": "Service nécessaire dans 7 jours",
+    "serviceIsPastDue": "Service en retard",
+    "unknown": "Inconnu",
+    "statusInformationUnavailable": "Informations de statut indisponibles",
+    "totalServices": "Services totaux",
+    "nextDue": "Prochaine échéance",
+    "schedule": "Planifier",
+    "history": "Historique",
+    "registerNewCar": "Enregistrer nouvelle voiture",
+    "registerCar": "Enregistrer voiture",
+    "registering": "Enregistrement",
+    "licensePlateRequired": "Plaque d'immatriculation *",
+    "licensePlatePlaceholder": "ex: 123 TUN 2024",
+    "makeRequired": "Marque *",
+    "makePlaceholder": "ex: BMW, Toyota, Peugeot",
+    "modelRequired": "Modèle *",
+    "modelPlaceholder": "ex: X5, Camry, 308",
+    "yearRequired": "Année *",
+    "currentMileage": "Kilométrage actuel (KM)",
+    "currentMileageRequired": "Kilométrage actuel (KM) *",
+    "customerInformation": "Informations client",
+    "existingCustomer": "Client existant",
+    "newCustomer": "Nouveau client",
+    "selectCustomer": "Sélectionner client",
+    "selectCustomerRequired": "Sélectionner client *",
+    "chooseCustomer": "Choisir un client"
   },
   "maintenance": {
     "title": "Maintenance",
     "subtitle": "Travaux actifs et suivi de maintenance",
+    "activeTitle": "Travaux Actifs",
+    "activeSubtitle": "Travaux de maintenance actuellement en cours",
+    "historyTitle": "Historique des Travaux",
+    "historySubtitle": "Travaux de maintenance terminés et annulés",
+    "scheduleTitle": "Travaux Programmés",
+    "scheduleSubtitle": "Travaux de maintenance à venir programmés",
     "schedule": "Planification",
     "addJob": "Ajouter un travail",
     "editJob": "Modifier le travail",
@@ -184,6 +246,7 @@
     "jobDetails": "Détails du travail",
     "activeJobs": "Travaux actifs",
     "completedJobs": "Travaux terminés",
+    "scheduledJobs": "Travaux programmés",
     "pendingApproval": "En attente d'approbation",
     "jobId": "ID du travail",
     "carInfo": "Informations de la voiture",
@@ -205,7 +268,78 @@
     "photos": "Photos",
     "addPhoto": "Ajouter une photo",
     "viewPhotos": "Voir les photos",
-    "noJobs": "Aucun travail de maintenance trouvé"
+    "noJobs": "Aucun travail de maintenance trouvé",
+    "noJobsMessage": "Commencez par créer votre premier travail de maintenance",
+    "newJob": "Nouveau travail",
+    "totalJobs": "Total des travaux",
+    "completedToday": "Terminés aujourd'hui",
+    "pendingApprovals": "En attente d'approbation",
+    "allJobs": "Tous les travaux",
+    "viewGrid": "Grille",
+    "viewList": "Liste",
+    "history": "Historique",
+    "maintenanceHistory": "Historique de Maintenance",
+    "jobHistory": "Historique des Travaux",
+    "historyRecord": "Enregistrement Historique",
+    "pastMaintenanceJobs": "Anciens Travaux de Maintenance",
+    "completedMaintenanceJobs": "Travaux de Maintenance Terminés",
+    "serviceRecord": "Enregistrement de Service",
+    "workOrderHistory": "Historique des Bons de Travail",
+    "avgCompletionTime": "Temps Moyen d'Achèvement",
+    "revenueToday": "Revenus Aujourd'hui",
+    "weeklyEfficiency": "Efficacité Hebdomadaire",
+    "mechanic": "Mécanicien",
+    "progress": "Progrès",
+    "mileage": "Kilométrage",
+    "estimatedCost": "Coût estimé",
+    "created": "Créé",
+    "started": "Commencé",
+    "completed": "Terminé",
+    "pending": "En attente",
+    "completeJob": "Terminer le travail",
+    "priority": {
+      "low": "Faible",
+      "medium": "Moyen",
+      "high": "Élevé",
+      "urgent": "Urgent"
+    },
+    "status": {
+      "scheduled": "Programmé",
+      "waiting": "En attente",
+      "inProgress": "En cours",
+      "completed": "Terminé",
+      "needsApproval": "Nécessite approbation",
+      "waitingParts": "En attente de pièces",
+      "cancelled": "Annulé"
+    },
+    "actions": {
+      "viewDetails": "Voir détails",
+      "edit": "Modifier",
+      "complete": "Terminer",
+      "approve": "Approuver",
+      "reject": "Rejeter"
+    },
+    "filters": {
+      "title": "Filtres",
+      "clearAll": "Effacer Tout",
+      "search": "Rechercher",
+      "searchPlaceholder": "Rechercher par titre, description ou client...",
+      "status": "Statut",
+      "allStatuses": "Tous les Statuts",
+      "priority": "Priorité",
+      "allPriorities": "Toutes les Priorités",
+      "mechanic": "Mécanicien",
+      "allMechanics": "Tous les Mécaniciens",
+      "fromDate": "Date de Début",
+      "toDate": "Date de Fin",
+      "quickFilters": {
+        "highPriority": "Haute Priorité",
+        "needsApproval": "Nécessite Approbation",
+        "inProgress": "En Cours",
+        "today": "Aujourd'hui",
+        "thisWeek": "Cette Semaine"
+      }
+    }
   },
   "inventory": {
     "title": "Pièces et Stock",
@@ -247,7 +381,15 @@
     "orderTotal": "Total de la commande",
     "noParts": "Aucune pièce trouvée",
     "noSuppliers": "Aucun fournisseur trouvé",
-    "noOrders": "Aucune commande trouvée"
+    "noOrders": "Aucune commande trouvée",
+    "navigation": {
+      "dashboard": "Tableau de bord",
+      "partsCatalog": "Catalogue de pièces"
+    },
+    "dashboard": {
+      "totalParts": "Total des pièces",
+      "viewDetails": "Voir les détails"
+    }
   },
   "invoicing": {
     "title": "Facturation",
@@ -317,7 +459,114 @@
     "inactive": "Inactif",
     "vip": "VIP",
     "regular": "Régulier",
-    "noCustomers": "Aucun client trouvé"
+    "noCustomers": "Aucun client trouvé",
+    "navigation": {
+      "dashboard": "Tableau de bord",
+      "allCustomers": "Tous les clients",
+      "list": "Liste des clients",
+      "analytics": "Analyses",
+      "addCustomer": "Ajouter un client",
+      "customerDetails": "Détails du client"
+    },
+    "dashboard": {
+      "totalCustomers": "Total des clients",
+      "activeCustomers": "Clients actifs",
+      "vipCustomers": "Clients VIP",
+      "avgCustomerValue": "Valeur moyenne client",
+      "newThisMonth": "Nouveaux ce mois",
+      "topSpenders": "Gros dépensiers",
+      "topCustomers": "Meilleurs clients",
+      "customerGrowth": "Croissance clientèle",
+      "viewDetails": "Voir les détails",
+      "recentCustomers": "Clients récents",
+      "viewAll": "Voir tout",
+      "quickActions": "Actions rapides",
+      "customers": "clients"
+    },
+    "labels": {
+      "search": "Rechercher des clients...",
+      "filterBy": "Filtrer par",
+      "sortBy": "Trier par",
+      "all": "Tous",
+      "name": "Nom",
+      "phone": "Téléphone",
+      "email": "Email",
+      "cars": "voitures",
+      "visits": "visites",
+      "spent": "dépensé",
+      "lastVisit": "Dernière visite",
+      "totalSpent": "Total dépensé",
+      "joinDate": "Date d'adhésion",
+      "customerSince": "Client depuis",
+      "daysAgo": "jours",
+      "actions": "Actions"
+    },
+    "actions": {
+      "view": "Voir",
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "clear": "Effacer",
+      "addCar": "Ajouter voiture",
+      "addCustomer": "Ajouter un client",
+      "addNewCustomer": "Ajouter nouveau client",
+      "registerNewCustomer": "Enregistrer nouveau client",
+      "viewAllCustomers": "Voir tous les clients",
+      "browseCustomerList": "Parcourir la liste des clients",
+      "customerAnalytics": "Analyses clients",
+      "viewInsightsReports": "Voir rapports et analyses",
+      "addFirstCustomer": "Ajouter votre premier client",
+      "confirmDelete": "Êtes-vous sûr de vouloir supprimer ce client ?",
+      "viewHistory": "Voir historique",
+      "contact": "Contact"
+    },
+    "filters": {
+      "search": "Recherche",
+      "searchPlaceholder": "Rechercher des clients...",
+      "status": "Statut",
+      "city": "Ville",
+      "allStatus": "Tous les statuts",
+      "allCities": "Toutes les villes",
+      "activeOnly": "Actifs seulement",
+      "inactiveOnly": "Inactifs seulement",
+      "vipOnly": "VIP seulement",
+      "newCustomers": "Nouveaux clients",
+      "regularCustomers": "Clients réguliers"
+    },
+    "status": {
+      "active": "Actif",
+      "inactive": "Inactif",
+      "vip": "VIP",
+      "new": "Nouveau",
+      "regular": "Régulier",
+      "blocked": "Bloqué"
+    },
+    "emptyState": {
+      "noCustomersFound": "Aucun client trouvé",
+      "tryAdjustingFilters": "Essayez d'ajuster vos filtres de recherche"
+    },
+    "analytics": {
+      "activeCustomers": "Clients actifs",
+      "vipCustomers": "Clients VIP",
+      "inactiveCustomers": "Clients inactifs",
+      "growthThisMonth": "Croissance ce mois",
+      "customerMetrics": "Métriques clients",
+      "retentionRate": "Taux de rétention",
+      "customerRetention": "Pourcentage de rétention client",
+      "vipRate": "Taux VIP",
+      "premiumCustomers": "Pourcentage de clients premium",
+      "revenueInsights": "Revenus",
+      "avgCustomerValue": "Valeur moyenne client",
+      "lifetimeValue": "Valeur client vie",
+      "totalRevenue": "Chiffre d'affaires total",
+      "allTimeRevenue": "CA total de tous les clients"
+    },
+    "loyaltyTiers": {
+      "bronze": "Bronze",
+      "silver": "Argent",
+      "gold": "Or", 
+      "platinum": "Platine"
+    },
+    "loading": "Chargement des clients..."
   },
   "employees": {
     "title": "Gestion des Employés",
@@ -965,6 +1214,42 @@
       "updateError": "Erreur lors de la mise à jour du profil",
       "saveError": "Erreur lors de l'enregistrement des préférences",
       "passwordError": "Erreur lors du changement de mot de passe"
+    }
+  },
+  "invoicing": {
+    "title": "Facturation",
+    "subtitle": "Générer et gérer les factures",
+    "navigation": {
+      "dashboard": "Tableau de bord",
+      "allInvoices": "Toutes les factures",
+      "pendingPayment": "Paiement en attente",
+      "createInvoice": "Créer une facture"
+    },
+    "dashboard": {
+      "totalRevenue": "Chiffre d'affaires total",
+      "totalInvoices": "Total des factures",
+      "pendingPayment": "Paiement en attente",
+      "overdue": "En retard",
+      "thisMonth": "Ce mois",
+      "paid": "Payé",
+      "viewDetails": "Voir les détails",
+      "recentInvoices": "Factures récentes",
+      "viewAll": "Voir tout",
+      "paymentMethods": "Méthodes de paiement",
+      "invoices": "factures"
+    },
+    "status": {
+      "sent": "Envoyé",
+      "paid": "Payé",
+      "overdue": "En retard",
+      "draft": "Brouillon",
+      "cancelled": "Annulé"
+    },
+    "paymentMethods": {
+      "cash": "Espèces",
+      "card": "Carte",
+      "transfer": "Virement",
+      "check": "Chèque"
     }
   }
 }

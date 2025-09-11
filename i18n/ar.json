@@ -30,7 +30,8 @@
     "description": "الوصف",
     "price": "السعر",
     "quantity": "الكمية",
-    "notes": "ملاحظات"
+    "notes": "ملاحظات",
+    "clearFilters": "مسح المرشحات"
   },
   "navigation": {
     "main": "الرئيسي",
@@ -104,12 +105,14 @@
     },
     "status": {
       "scheduled": "مجدول",
-      "inProgress": "قيد التنفيذ",
+      "in_progress": "قيد التنفيذ",
       "completed": "مكتمل",
       "delayed": "متأخر",
-      "inRepair": "قيد الإصلاح",
-      "qualityCheck": "فحص الجودة",
-      "waitingParts": "في انتظار القطع"
+      "in_repair": "قيد الإصلاح",
+      "quality_check": "فحص الجودة",
+      "waiting_parts": "في انتظار القطع",
+      "diagnosis": "التشخيص",
+      "waiting_approval": "في انتظار الموافقة"
     }
   },
   "appointments": {
@@ -141,7 +144,26 @@
     "cancelled": "ملغاة",
     "reschedule": "إعادة جدولة",
     "confirm": "تأكيد",
-    "noAppointments": "لا توجد مواعيد"
+    "noAppointments": "لا توجد مواعيد",
+    "noAppointmentsToday": "لا توجد مواعيد مجدولة لليوم",
+    "noAppointmentsDate": "لا توجد مواعيد مجدولة لهذا التاريخ",
+    "scheduleAppointment": "جدولة موعد",
+    "loadingAppointments": "جاري تحميل المواعيد...",
+    "selected": "محدد",
+    "manageSchedule": "إدارة جدولة الورشة والمواعيد",
+    "today": "اليوم",
+    "active": "نشط",
+    "done": "تم",
+    "min": "دقيقة",
+    "statusIndicators": "مؤشرات الحالة",
+    "complete": "إكمال",
+    "edit": "تعديل",
+    "status": {
+      "scheduled": "مجدول",
+      "in-progress": "قيد التنفيذ",
+      "completed": "مكتمل",
+      "cancelled": "ملغي"
+    }
   },
   "cars": {
     "title": "السيارات",
@@ -172,11 +194,33 @@
     "serviceHistory": "تاريخ الخدمة",
     "maintenanceRecords": "سجلات الصيانة",
     "viewHistory": "عرض التاريخ",
-    "noCars": "لا توجد سيارات"
+    "noCars": "لا توجد سيارات",
+    "totalCars": "إجمالي السيارات",
+    "upToDate": "محدث",
+    "dueSoon": "مستحق قريباً",
+    "overdue": "متأخر",
+    "allMakes": "جميع الماركات",
+    "allStatus": "جميع الحالات",
+    "statusLegend": "دليل الحالات",
+    "maintenanceIsCurrent": "الصيانة محدثة",
+    "serviceNeededWithin7Days": "خدمة مطلوبة خلال 7 أيام",
+    "serviceIsPastDue": "الخدمة متأخرة",
+    "unknown": "غير معروف",
+    "statusInformationUnavailable": "معلومات الحالة غير متوفرة",
+    "totalServices": "إجمالي الخدمات",
+    "nextDue": "الاستحقاق التالي",
+    "schedule": "جدولة",
+    "history": "التاريخ"
   },
   "maintenance": {
     "title": "الصيانة",
     "subtitle": "الأعمال النشطة وتتبع الصيانة",
+    "activeTitle": "الأعمال النشطة",
+    "activeSubtitle": "أعمال الصيانة الجارية حاليا",
+    "historyTitle": "تاريخ الأعمال",
+    "historySubtitle": "أعمال الصيانة المكتملة والملغاة",
+    "scheduleTitle": "الأعمال المجدولة",
+    "scheduleSubtitle": "أعمال الصيانة المقبلة المجدولة",
     "schedule": "الجدولة",
     "addJob": "إضافة عمل",
     "editJob": "تعديل العمل",
@@ -184,6 +228,7 @@
     "jobDetails": "تفاصيل العمل",
     "activeJobs": "الأعمال النشطة",
     "completedJobs": "الأعمال المكتملة",
+    "scheduledJobs": "الأعمال المجدولة",
     "pendingApproval": "في انتظار الموافقة",
     "jobId": "رقم العمل",
     "carInfo": "معلومات السيارة",
@@ -205,7 +250,78 @@
     "photos": "الصور",
     "addPhoto": "إضافة صورة",
     "viewPhotos": "عرض الصور",
-    "noJobs": "لا توجد أعمال صيانة"
+    "noJobs": "لا توجد أعمال صيانة",
+    "noJobsMessage": "ابدأ بإنشاء أول عمل صيانة",
+    "newJob": "عمل جديد",
+    "totalJobs": "إجمالي الأعمال",
+    "completedToday": "مكتملة اليوم",
+    "pendingApprovals": "في انتظار الموافقة",
+    "allJobs": "جميع الأعمال",
+    "viewGrid": "شبكة",
+    "viewList": "قائمة",
+    "history": "التاريخ",
+    "maintenanceHistory": "تاريخ الصيانة",
+    "jobHistory": "تاريخ الأعمال",
+    "historyRecord": "سجل تاريخي",
+    "pastMaintenanceJobs": "أعمال الصيانة السابقة",
+    "completedMaintenanceJobs": "أعمال الصيانة المكتملة",
+    "serviceRecord": "سجل الخدمة",
+    "workOrderHistory": "تاريخ أوامر العمل", 
+    "avgCompletionTime": "متوسط وقت الإنجاز",
+    "revenueToday": "إيرادات اليوم",
+    "weeklyEfficiency": "الكفاءة الأسبوعية",
+    "mechanic": "الميكانيكي",
+    "progress": "التقدم",
+    "mileage": "الكيلومترات",
+    "estimatedCost": "التكلفة المقدرة",
+    "created": "أُنشئ",
+    "started": "بدأ",
+    "completed": "اكتمل",
+    "pending": "معلق",
+    "completeJob": "إكمال العمل",
+    "priority": {
+      "low": "منخفض",
+      "medium": "متوسط",
+      "high": "عالي",
+      "urgent": "عاجل"
+    },
+    "status": {
+      "scheduled": "مجدول",
+      "waiting": "في انتظار",
+      "inProgress": "قيد التنفيذ",
+      "completed": "مكتمل",
+      "needsApproval": "يحتاج موافقة",
+      "waitingParts": "في انتظار القطع",
+      "cancelled": "ملغي"
+    },
+    "actions": {
+      "viewDetails": "عرض التفاصيل",
+      "edit": "تعديل",
+      "complete": "إكمال",
+      "approve": "موافقة",
+      "reject": "رفض"
+    },
+    "filters": {
+      "title": "المرشحات",
+      "clearAll": "مسح الكل",
+      "search": "بحث",
+      "searchPlaceholder": "بحث بالعنوان أو الوصف أو العميل...",
+      "status": "الحالة",
+      "allStatuses": "جميع الحالات",
+      "priority": "الأولوية",
+      "allPriorities": "جميع الأولويات",
+      "mechanic": "الميكانيكي",
+      "allMechanics": "جميع الميكانيكيين",
+      "fromDate": "من تاريخ",
+      "toDate": "إلى تاريخ",
+      "quickFilters": {
+        "highPriority": "أولوية عالية",
+        "needsApproval": "يحتاج موافقة",
+        "inProgress": "قيد التنفيذ",
+        "today": "اليوم",
+        "thisWeek": "هذا الأسبوع"
+      }
+    }
   },
   "inventory": {
     "title": "قطع الغيار والمخزون",
@@ -247,7 +363,15 @@
     "orderTotal": "إجمالي الطلب",
     "noParts": "لا توجد قطع",
     "noSuppliers": "لا يوجد موردون",
-    "noOrders": "لا توجد طلبات"
+    "noOrders": "لا توجد طلبات",
+    "navigation": {
+      "dashboard": "لوحة التحكم",
+      "partsCatalog": "كتالوج القطع"
+    },
+    "dashboard": {
+      "totalParts": "إجمالي القطع",
+      "viewDetails": "عرض التفاصيل"
+    }
   },
   "invoicing": {
     "title": "الفوترة",
@@ -317,7 +441,114 @@
     "inactive": "غير نشط",
     "vip": "عميل مميز",
     "regular": "عادي",
-    "noCustomers": "لا يوجد عملاء"
+    "noCustomers": "لا يوجد عملاء",
+    "navigation": {
+      "dashboard": "لوحة التحكم",
+      "allCustomers": "جميع العملاء",
+      "list": "قائمة العملاء",
+      "analytics": "التحليلات",
+      "addCustomer": "إضافة عميل",
+      "customerDetails": "تفاصيل العميل"
+    },
+    "dashboard": {
+      "totalCustomers": "إجمالي العملاء",
+      "activeCustomers": "العملاء النشطين",
+      "vipCustomers": "عملاء مميزين",
+      "avgCustomerValue": "متوسط قيمة العميل",
+      "newThisMonth": "جدد هذا الشهر",
+      "topSpenders": "أكثر إنفاقاً",
+      "topCustomers": "أفضل العملاء",
+      "customerGrowth": "نمو العملاء",
+      "viewDetails": "عرض التفاصيل",
+      "recentCustomers": "العملاء الحاليين",
+      "viewAll": "عرض الكل",
+      "quickActions": "إجراءات سريعة",
+      "customers": "عملاء"
+    },
+    "labels": {
+      "search": "البحث عن عملاء...",
+      "filterBy": "تصفية حسب",
+      "sortBy": "ترتيب حسب",
+      "all": "الكل",
+      "name": "الاسم",
+      "phone": "الهاتف",
+      "email": "البريد الإلكتروني",
+      "cars": "سيارات",
+      "visits": "زيارات",
+      "spent": "أنفق",
+      "lastVisit": "آخر زيارة",
+      "totalSpent": "إجمالي الإنفاق",
+      "joinDate": "تاريخ الانضمام",
+      "customerSince": "عميل منذ",
+      "daysAgo": "أيام مضت",
+      "actions": "الإجراءات"
+    },
+    "actions": {
+      "view": "عرض",
+      "edit": "تعديل",
+      "delete": "حذف",
+      "clear": "مسح",
+      "addCar": "إضافة سيارة",
+      "addCustomer": "إضافة عميل",
+      "addNewCustomer": "إضافة عميل جديد",
+      "registerNewCustomer": "تسجيل عميل جديد",
+      "viewAllCustomers": "عرض جميع العملاء",
+      "browseCustomerList": "تصفح قائمة العملاء",
+      "customerAnalytics": "تحليلات العملاء",
+      "viewInsightsReports": "عرض الرؤى والتقارير",
+      "addFirstCustomer": "أضف عميلك الأول",
+      "confirmDelete": "هل أنت متأكد من حذف هذا العميل؟",
+      "viewHistory": "عرض التاريخ",
+      "contact": "اتصال"
+    },
+    "filters": {
+      "search": "بحث",
+      "searchPlaceholder": "البحث عن عملاء...",
+      "status": "الحالة",
+      "city": "المدينة",
+      "allStatus": "جميع الحالات",
+      "allCities": "جميع المدن",
+      "activeOnly": "النشطين فقط",
+      "inactiveOnly": "غير النشطين فقط",
+      "vipOnly": "المميزين فقط",
+      "newCustomers": "عملاء جدد",
+      "regularCustomers": "عملاء عاديين"
+    },
+    "status": {
+      "active": "نشط",
+      "inactive": "غير نشط",
+      "vip": "مميز",
+      "new": "جديد",
+      "regular": "عادي",
+      "blocked": "محظور"
+    },
+    "emptyState": {
+      "noCustomersFound": "لم يتم العثور على عملاء",
+      "tryAdjustingFilters": "جرب تعديل مرشحات البحث"
+    },
+    "analytics": {
+      "activeCustomers": "العملاء النشطين",
+      "vipCustomers": "عملاء مميزين",
+      "inactiveCustomers": "عملاء غير نشطين",
+      "growthThisMonth": "النمو هذا الشهر",
+      "customerMetrics": "مقاييس العملاء",
+      "retentionRate": "معدل الاحتفاظ",
+      "customerRetention": "نسبة الاحتفاظ بالعملاء",
+      "vipRate": "معدل العملاء المميزين",
+      "premiumCustomers": "نسبة العملاء المميزين",
+      "revenueInsights": "رؤى الإيرادات",
+      "avgCustomerValue": "متوسط قيمة العميل",
+      "lifetimeValue": "قيمة العميل مدى الحياة",
+      "totalRevenue": "إجمالي الإيرادات",
+      "allTimeRevenue": "إجمالي إيرادات العملاء"
+    },
+    "loyaltyTiers": {
+      "bronze": "برونزي",
+      "silver": "فضي",
+      "gold": "ذهبي",
+      "platinum": "بلاتيني"
+    },
+    "loading": "جاري تحميل العملاء..."
   },
   "employees": {
     "title": "إدارة الموظفين",
@@ -965,6 +1196,42 @@
       "updateError": "خطأ في تحديث الملف الشخصي",
       "saveError": "خطأ في حفظ التفضيلات",
       "passwordError": "خطأ في تغيير كلمة المرور"
+    }
+  },
+  "invoicing": {
+    "title": "الفواتير",
+    "subtitle": "إنشاء وإدارة الفواتير",
+    "navigation": {
+      "dashboard": "لوحة القيادة",
+      "allInvoices": "جميع الفواتير",
+      "pendingPayment": "الدفع المعلق",
+      "createInvoice": "إنشاء فاتورة"
+    },
+    "dashboard": {
+      "totalRevenue": "إجمالي الإيرادات",
+      "totalInvoices": "إجمالي الفواتير",
+      "pendingPayment": "الدفع المعلق",
+      "overdue": "متأخر",
+      "thisMonth": "هذا الشهر",
+      "paid": "مدفوع",
+      "viewDetails": "عرض التفاصيل",
+      "recentInvoices": "الفواتير الأخيرة",
+      "viewAll": "عرض الكل",
+      "paymentMethods": "طرق الدفع",
+      "invoices": "فواتير"
+    },
+    "status": {
+      "sent": "مرسل",
+      "paid": "مدفوع",
+      "overdue": "متأخر",
+      "draft": "مسودة",
+      "cancelled": "ملغي"
+    },
+    "paymentMethods": {
+      "cash": "نقداً",
+      "card": "بطاقة",
+      "transfer": "تحويل",
+      "check": "شيك"
     }
   }
 }
