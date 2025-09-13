@@ -147,7 +147,7 @@ export class ReportsComponent implements OnInit {
             plugins: {
               title: {
                 display: true,
-                text: 'Revenue Trends'
+                text: this.translationService.instant('reports.charts.revenueTrends.title')
               },
               legend: {
                 display: true,
@@ -178,7 +178,7 @@ export class ReportsComponent implements OnInit {
             plugins: {
               title: {
                 display: true,
-                text: 'Services by Type'
+                text: this.translationService.instant('reports.charts.serviceDistribution.title')
               },
               legend: {
                 display: true,
@@ -201,7 +201,7 @@ export class ReportsComponent implements OnInit {
             plugins: {
               title: {
                 display: true,
-                text: 'Appointments by Status'
+                text: this.translationService.instant('reports.charts.appointmentStatus.title')
               }
             },
             scales: {

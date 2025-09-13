@@ -1,0 +1,329 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - img [ref=e8]
+        - generic [ref=e10]:
+          - heading "OpAuto" [level=2] [ref=e11]
+          - paragraph [ref=e12]: Garage Management
+      - button "Collapse sidebar" [ref=e13] [cursor=pointer]:
+        - img [ref=e14] [cursor=pointer]
+    - navigation [ref=e17]:
+      - generic [ref=e18]:
+        - heading "Main" [level=3] [ref=e19]
+        - list [ref=e20]:
+          - listitem [ref=e21]:
+            - button "Dashboard" [ref=e22] [cursor=pointer]:
+              - img [ref=e24] [cursor=pointer]
+              - generic [ref=e26] [cursor=pointer]: Dashboard
+          - listitem [ref=e27]:
+            - button "Appointments 3" [ref=e28] [cursor=pointer]:
+              - img [ref=e30] [cursor=pointer]
+              - generic [ref=e32] [cursor=pointer]: Appointments
+              - generic [ref=e33] [cursor=pointer]: "3"
+          - listitem [ref=e34]:
+            - button "Cars" [ref=e35] [cursor=pointer]:
+              - img [ref=e37] [cursor=pointer]
+              - generic [ref=e39] [cursor=pointer]: Cars
+          - listitem [ref=e40]:
+            - button "Maintenance" [ref=e41] [cursor=pointer]:
+              - img [ref=e43] [cursor=pointer]
+              - generic [ref=e46] [cursor=pointer]: Maintenance
+              - img [ref=e47] [cursor=pointer]
+          - listitem [ref=e49]:
+            - button "Parts & Inventory" [ref=e50] [cursor=pointer]:
+              - img [ref=e52] [cursor=pointer]
+              - generic [ref=e54] [cursor=pointer]: Parts & Inventory
+          - listitem [ref=e55]:
+            - button "Invoicing" [ref=e56] [cursor=pointer]:
+              - img [ref=e58] [cursor=pointer]
+              - generic [ref=e60] [cursor=pointer]: Invoicing
+              - img [ref=e61] [cursor=pointer]
+          - listitem [ref=e63]:
+            - button "Customers" [ref=e64] [cursor=pointer]:
+              - img [ref=e66] [cursor=pointer]
+              - generic [ref=e68] [cursor=pointer]: Customers
+          - listitem [ref=e69]:
+            - button "Reports" [ref=e70] [cursor=pointer]:
+              - img [ref=e72] [cursor=pointer]
+              - generic [ref=e74] [cursor=pointer]: Reports
+          - listitem [ref=e75]:
+            - button "Pending Approval 3" [ref=e76] [cursor=pointer]:
+              - img [ref=e78] [cursor=pointer]
+              - generic [ref=e80] [cursor=pointer]: Pending Approval
+              - generic [ref=e81] [cursor=pointer]: "3"
+      - generic [ref=e82]:
+        - heading "Settings" [level=3] [ref=e83]
+        - list [ref=e84]:
+          - listitem [ref=e85]:
+            - button "Settings" [ref=e86] [cursor=pointer]:
+              - img [ref=e88] [cursor=pointer]
+              - generic [ref=e91] [cursor=pointer]: Settings
+          - listitem [ref=e92]:
+            - button "Employees" [ref=e93] [cursor=pointer]:
+              - img [ref=e95] [cursor=pointer]
+              - generic [ref=e97] [cursor=pointer]: Employees
+          - listitem [ref=e98]:
+            - button "Profile" [ref=e99] [cursor=pointer]:
+              - img [ref=e101] [cursor=pointer]
+              - generic [ref=e103] [cursor=pointer]: Profile
+    - generic [ref=e105]:
+      - paragraph [ref=e106]: OpAuto v1.0.0
+      - paragraph [ref=e107]: Garage Management
+  - main [ref=e108]:
+    - generic [ref=e110]:
+      - generic [ref=e112]:
+        - generic [ref=e113]:
+          - heading "Parts & Inventory" [level=1] [ref=e114]
+          - paragraph [ref=e115]: Manage parts, stock levels, and suppliers
+        - generic [ref=e116]:
+          - button "Dashboard" [ref=e117] [cursor=pointer]:
+            - img [ref=e118] [cursor=pointer]
+            - generic [ref=e121] [cursor=pointer]: Dashboard
+          - button "Parts Catalog" [ref=e122] [cursor=pointer]:
+            - img [ref=e123] [cursor=pointer]
+            - generic [ref=e125] [cursor=pointer]: Parts Catalog
+          - button "Suppliers" [ref=e126] [cursor=pointer]:
+            - img [ref=e127] [cursor=pointer]
+            - generic [ref=e129] [cursor=pointer]: Suppliers
+          - button "Add Part" [active] [ref=e130] [cursor=pointer]:
+            - img [ref=e131] [cursor=pointer]
+            - generic [ref=e133] [cursor=pointer]: Add Part
+      - generic [ref=e134]:
+        - generic [ref=e135]:
+          - generic [ref=e137]:
+            - generic [ref=e138]:
+              - paragraph [ref=e139]: Total Parts
+              - paragraph [ref=e140]: "5"
+            - generic [ref=e142]: 📦
+          - generic [ref=e144]:
+            - generic [ref=e145]:
+              - paragraph [ref=e146]: Total Value
+              - paragraph [ref=e147]: 6 546,000 DT
+            - generic [ref=e149]: 💰
+          - generic [ref=e150]:
+            - generic [ref=e151]:
+              - generic [ref=e152]:
+                - paragraph [ref=e153]: Low Stock
+                - paragraph [ref=e154]: "1"
+              - generic [ref=e156]: ⚠️
+            - button "View Details" [ref=e157] [cursor=pointer]
+          - generic [ref=e158]:
+            - generic [ref=e159]:
+              - generic [ref=e160]:
+                - paragraph [ref=e161]: Out of Stock
+                - paragraph [ref=e162]: "1"
+              - generic [ref=e164]: ❌
+            - button "View Details" [ref=e165] [cursor=pointer]
+        - generic [ref=e166]:
+          - heading "Recent Alerts 2" [level=2] [ref=e168]:
+            - text: Recent Alerts
+            - generic [ref=e169]: "2"
+          - generic [ref=e170]:
+            - generic [ref=e171]:
+              - img [ref=e173]
+              - generic [ref=e175]:
+                - paragraph [ref=e176]: Air Filter is out of stock
+                - paragraph [ref=e177]: 25 août 2025
+              - button "Mark Read" [ref=e178] [cursor=pointer]
+            - generic [ref=e179]:
+              - img [ref=e181]
+              - generic [ref=e183]:
+                - paragraph [ref=e184]: Brake Pads Front Set stock is low (2 remaining)
+                - paragraph [ref=e185]: 24 août 2025
+              - button "Mark Read" [ref=e186] [cursor=pointer]
+        - generic [ref=e187]:
+          - generic [ref=e188]:
+            - heading "Most Used This Month" [level=3] [ref=e189]
+            - generic [ref=e190]:
+              - generic [ref=e191]:
+                - generic [ref=e192]:
+                  - img [ref=e194]
+                  - generic [ref=e196]:
+                    - paragraph [ref=e197]: Engine Oil 5W-30
+                    - paragraph [ref=e198]: EO-5W30-5L
+                - generic [ref=e199]:
+                  - paragraph [ref=e200]: "8"
+                  - paragraph [ref=e201]: Used
+              - generic [ref=e202]:
+                - generic [ref=e203]:
+                  - img [ref=e205]
+                  - generic [ref=e207]:
+                    - paragraph [ref=e208]: Air Filter
+                    - paragraph [ref=e209]: AF-UNIVERSAL-001
+                - generic [ref=e210]:
+                  - paragraph [ref=e211]: "6"
+                  - paragraph [ref=e212]: Used
+              - generic [ref=e213]:
+                - generic [ref=e214]:
+                  - img [ref=e216]
+                  - generic [ref=e218]:
+                    - paragraph [ref=e219]: Tire 205/55R16
+                    - paragraph [ref=e220]: TR-205-55-16-MX
+                - generic [ref=e221]:
+                  - paragraph [ref=e222]: "4"
+                  - paragraph [ref=e223]: Used
+              - generic [ref=e224]:
+                - generic [ref=e225]:
+                  - img [ref=e227]
+                  - generic [ref=e230]:
+                    - paragraph [ref=e231]: Brake Pads Front Set
+                    - paragraph [ref=e232]: BP-FRONT-BMW-X5
+                - generic [ref=e233]:
+                  - paragraph [ref=e234]: "3"
+                  - paragraph [ref=e235]: Used
+              - generic [ref=e236]:
+                - generic [ref=e237]:
+                  - img [ref=e239]
+                  - generic [ref=e241]:
+                    - paragraph [ref=e242]: Spark Plugs Set
+                    - paragraph [ref=e243]: SP-4CYL-NGK
+                - generic [ref=e244]:
+                  - paragraph [ref=e245]: "2"
+                  - paragraph [ref=e246]: Used
+          - generic [ref=e247]:
+            - heading "Parts by Category" [level=3] [ref=e248]
+            - generic [ref=e249]:
+              - generic [ref=e250]:
+                - generic [ref=e251]:
+                  - img [ref=e253]
+                  - generic [ref=e255]: Engine
+                - generic [ref=e256]: "1"
+              - generic [ref=e257]:
+                - generic [ref=e258]:
+                  - img [ref=e260]
+                  - generic [ref=e263]: Transmission
+                - generic [ref=e264]: "0"
+              - generic [ref=e265]:
+                - generic [ref=e266]:
+                  - img [ref=e268]
+                  - generic [ref=e271]: Brakes
+                - generic [ref=e272]: "1"
+              - generic [ref=e273]:
+                - generic [ref=e274]:
+                  - img [ref=e276]
+                  - generic [ref=e279]: Suspension
+                - generic [ref=e280]: "0"
+              - generic [ref=e281]:
+                - generic [ref=e282]:
+                  - img [ref=e284]
+                  - generic [ref=e287]: Electrical
+                - generic [ref=e288]: "0"
+              - generic [ref=e289]:
+                - generic [ref=e290]:
+                  - img [ref=e292]
+                  - generic [ref=e294]: Filters
+                - generic [ref=e295]: "1"
+              - generic [ref=e296]:
+                - generic [ref=e297]:
+                  - img [ref=e299]
+                  - generic [ref=e301]: Fluids
+                - generic [ref=e302]: "1"
+              - generic [ref=e303]:
+                - generic [ref=e304]:
+                  - img [ref=e306]
+                  - generic [ref=e308]: Tires
+                - generic [ref=e309]: "1"
+              - generic [ref=e310]:
+                - generic [ref=e311]:
+                  - img [ref=e313]
+                  - generic [ref=e316]: Body
+                - generic [ref=e317]: "0"
+              - generic [ref=e318]:
+                - generic [ref=e319]:
+                  - img [ref=e321]
+                  - generic [ref=e324]: Accessories
+                - generic [ref=e325]: "0"
+              - generic [ref=e326]:
+                - generic [ref=e327]:
+                  - img [ref=e329]
+                  - generic [ref=e332]: Consumables
+                - generic [ref=e333]: "0"
+      - generic [ref=e335]:
+        - generic [ref=e336]:
+          - heading "Add New Part" [level=2] [ref=e337]
+          - button "✕" [ref=e338] [cursor=pointer]:
+            - generic [ref=e339] [cursor=pointer]: ✕
+        - generic [ref=e340]:
+          - generic [ref=e341]:
+            - generic [ref=e342]:
+              - generic [ref=e343]: Part Name *
+              - textbox "Enter part name" [ref=e344]
+            - generic [ref=e345]:
+              - generic [ref=e346]: Part Number *
+              - textbox "Enter part number" [ref=e347]
+          - generic [ref=e348]:
+            - generic [ref=e349]: Description
+            - textbox "Enter part description" [ref=e350]
+          - generic [ref=e351]:
+            - generic [ref=e352]:
+              - generic [ref=e353]: Category *
+              - combobox [ref=e354]:
+                - option "Select category" [selected]
+                - option "Engine"
+                - option "Transmission"
+                - option "Brakes"
+                - option "Suspension"
+                - option "Electrical"
+                - option "Filters"
+                - option "Fluids"
+                - option "Tires"
+                - option "Body"
+                - option "Accessories"
+                - option "Consumables"
+            - generic [ref=e355]:
+              - generic [ref=e356]: Brand *
+              - textbox "Enter brand name" [ref=e357]
+          - generic [ref=e358]:
+            - generic [ref=e359]:
+              - generic [ref=e360]: Supplier *
+              - combobox [ref=e361]:
+                - option "Select supplier" [selected]
+                - option "Auto Parts Tunisia"
+                - option "European Auto Supply"
+                - option "Maghreb Motors Parts"
+            - generic [ref=e362]:
+              - generic [ref=e363]: Unit *
+              - combobox [ref=e364]:
+                - option "Select unit" [selected]
+                - option "Piece"
+                - option "Liter"
+                - option "Kg"
+                - option "Meter"
+                - option "Pair"
+                - option "Set"
+                - option "Bottle"
+                - option "Box"
+          - generic [ref=e365]:
+            - generic [ref=e366]:
+              - generic [ref=e367]: Price *
+              - spinbutton [ref=e368]: "0"
+            - generic [ref=e369]:
+              - generic [ref=e370]: Currency
+              - combobox [ref=e371]:
+                - option "TND (Tunisian Dinar)" [selected]
+                - option "EUR (Euro)"
+                - option "USD (US Dollar)"
+          - generic [ref=e372]:
+            - generic [ref=e373]:
+              - generic [ref=e374]: Current Stock *
+              - spinbutton [ref=e375]: "0"
+            - generic [ref=e376]:
+              - generic [ref=e377]: Min Stock Level *
+              - spinbutton [ref=e378]: "0"
+            - generic [ref=e379]:
+              - generic [ref=e380]: Max Stock Level
+              - spinbutton [ref=e381]
+          - generic [ref=e382]:
+            - generic [ref=e383]: Storage Location
+            - textbox "e.g., Shelf A-1, Tire Rack 2" [ref=e384]
+          - generic [ref=e385]:
+            - checkbox "Active part (available for use)" [checked] [ref=e386]
+            - generic [ref=e387]: Active part (available for use)
+        - generic [ref=e388]:
+          - button "Cancel" [ref=e389] [cursor=pointer]
+          - button "Create Part" [disabled] [ref=e390] [cursor=pointer]
+```

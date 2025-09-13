@@ -261,7 +261,7 @@
   "maintenance": {
     "title": "Maintenance",
     "subtitle": "Active jobs and maintenance tracking",
-d    "activeTitle": "Active Jobs",
+    "activeTitle": "Active Jobs",
     "activeSubtitle": "Currently in progress maintenance jobs",
     "historyTitle": "Job History",
     "historySubtitle": "Completed and cancelled maintenance jobs",
@@ -440,7 +440,42 @@ d    "activeTitle": "Active Jobs",
       "body": "Body",
       "accessories": "Accessories",
       "consumables": "Consumables"
-    }
+    },
+    "stockStatus": {
+      "inStock": "In Stock",
+      "lowStock": "Low Stock",
+      "outOfStock": "Out of Stock",
+      "ordered": "Ordered"
+    },
+    "partsCatalog": {
+      "hideFilters": "Hide Filters",
+      "showFilters": "Show Filters",
+      "searchPlaceholder": "Search for parts...",
+      "allCategories": "All Categories",
+      "allSuppliers": "All Suppliers",
+      "allStockStatus": "All Stock Status",
+      "clearFilters": "Clear Filters",
+      "brand": "Brand",
+      "stock": "Stock",
+      "price": "Price",
+      "supplier": "Supplier",
+      "stockLevel": "Stock Level",
+      "edit": "Edit",
+      "adjustStock": "Adjust Stock",
+      "noPartsFound": "No parts found",
+      "noPartsMessage": "Try adjusting your search or filters",
+      "addNewPart": "Add New Part"
+    },
+    "suppliers": {
+      "title": "Suppliers",
+      "active": "Active",
+      "contact": "Contact",
+      "phone": "Phone",
+      "delivery": "Delivery Time",
+      "days": "days",
+      "payment": "Payment Terms"
+    },
+    "loading": "Loading..."
   },
   "invoicing": {
     "title": "Invoicing",
@@ -478,7 +513,49 @@ d    "activeTitle": "Active Jobs",
     "bankTransfer": "Bank Transfer",
     "notes": "Notes",
     "terms": "Terms & Conditions",
-    "noInvoices": "No invoices found"
+    "noInvoices": "No invoices found",
+    "create": {
+      "title": "Create Invoice",
+      "editTitle": "Edit Invoice",
+      "subtitle": "Generate a new invoice for completed services",
+      "editSubtitle": "Update invoice details",
+      "invoiceDetails": "Invoice Details",
+      "customer": "Customer",
+      "selectCustomer": "Select Customer",
+      "customerRequired": "Customer is required",
+      "vehicle": "Vehicle",
+      "selectVehicle": "Select Vehicle", 
+      "vehicleRequired": "Vehicle is required",
+      "issueDate": "Issue Date",
+      "dueDate": "Due Date",
+      "paymentTerms": "Payment Terms",
+      "paymentTermsPlaceholder": "e.g., Net 30 days",
+      "lineItems": "Line Items",
+      "addItem": "Add Item",
+      "item": "Item",
+      "type": "Type",
+      "description": "Description",
+      "itemDescription": "Enter item description",
+      "selectPart": "Select Part",
+      "selectPartOptional": "Select a part (optional)",
+      "selectService": "Select Service",
+      "selectServiceOptional": "Select a service (optional)",
+      "quantity": "Quantity",
+      "unit": "Unit",
+      "unitPlaceholder": "e.g., pcs, hours",
+      "unitPrice": "Unit Price",
+      "total": "Total",
+      "additionalNotes": "Additional Notes",
+      "notesPlaceholder": "Enter any additional notes or terms",
+      "invoiceSummary": "Invoice Summary",
+      "subtotal": "Subtotal",
+      "discount": "Discount",
+      "tax": "Tax",
+      "createInvoice": "Create Invoice",
+      "updateInvoice": "Update Invoice",
+      "saveAsDraft": "Save as Draft",
+      "loadingFormData": "Loading form data..."
+    }
   },
   "customers": {
     "title": "Customers",
@@ -718,6 +795,20 @@ d    "activeTitle": "Active Jobs",
   "reports": {
     "title": "Reports",
     "subtitle": "Business insights and analytics",
+    "navigation": {
+      "dashboard": "Dashboard",
+      "financial": "Financial",
+      "operational": "Operational",
+      "customer": "Customer",
+      "inventory": "Inventory"
+    },
+    "actions": {
+      "refresh": "Refresh",
+      "export": "Export"
+    },
+    "filters": {
+      "to": "to"
+    },
     "salesReport": "Sales Report",
     "serviceReport": "Service Report",
     "inventoryReport": "Inventory Report",
@@ -740,7 +831,53 @@ d    "activeTitle": "Active Jobs",
     "topServices": "Top Services",
     "topCustomers": "Top Customers",
     "partsUsage": "Parts Usage",
-    "noReports": "No reports available"
+    "noReports": "No reports available",
+    "datePresets": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "thisWeek": "This Week",
+      "lastWeek": "Last Week",
+      "thisMonth": "This Month",
+      "lastMonth": "Last Month",
+      "thisQuarter": "This Quarter",
+      "lastQuarter": "Last Quarter",
+      "thisYear": "This Year",
+      "lastYear": "Last Year",
+      "last30Days": "Last 30 Days",
+      "last90Days": "Last 90 Days",
+      "last365Days": "Last 365 Days",
+      "custom": "Custom"
+    },
+    "export": {
+      "exporting": "Exporting to {{format}}..."
+    },
+    "kpis": {
+      "totalRevenue": "Total Revenue",
+      "appointments": "Appointments",
+      "activeCustomers": "Active Customers",
+      "mechanicUtilization": "Mechanic Utilization",
+      "stockValue": "Stock Value",
+      "customerSatisfaction": "Customer Satisfaction"
+    },
+    "charts": {
+      "revenueTrends": {
+        "title": "Revenue Trends"
+      },
+      "serviceDistribution": {
+        "title": "Services by Type"
+      },
+      "appointmentStatus": {
+        "title": "Appointments by Status"
+      },
+      "monthlyComparison": {
+        "title": "Monthly Comparison"
+      }
+    },
+    "kpis": {
+      "revenue": "Revenue",
+      "newCustomers": "New Customers",
+      "partsInventory": "Parts Inventory"
+    }
   },
   "settings": {
     "title": "Settings",
@@ -1277,6 +1414,40 @@ d    "activeTitle": "Active Jobs",
   "invoicing": {
     "title": "Invoicing",
     "subtitle": "Generate and manage invoices",
+    "allInvoices": "All Invoices",
+    "createInvoice": "Create Invoice",
+    "pendingPayment": "Pending Payment",
+    "editInvoice": "Edit Invoice",
+    "deleteInvoice": "Delete Invoice",
+    "viewInvoice": "View Invoice",
+    "printInvoice": "Print Invoice",
+    "invoiceNumber": "Invoice Number",
+    "invoiceDate": "Invoice Date",
+    "dueDate": "Due Date",
+    "customerInfo": "Customer Information",
+    "billTo": "Bill To",
+    "items": "Items",
+    "services": "Services",
+    "addItem": "Add Item",
+    "itemDescription": "Item Description",
+    "unitPrice": "Unit Price",
+    "quantity": "Quantity",
+    "total": "Total",
+    "subtotal": "Subtotal",
+    "tax": "Tax",
+    "discount": "Discount",
+    "grandTotal": "Grand Total",
+    "paid": "Paid",
+    "unpaid": "Unpaid",
+    "overdue": "Overdue",
+    "paymentStatus": "Payment Status",
+    "paymentMethod": "Payment Method",
+    "cash": "Cash",
+    "card": "Card",
+    "bankTransfer": "Bank Transfer",
+    "notes": "Notes",
+    "terms": "Terms & Conditions",
+    "noInvoices": "No invoices found",
     "navigation": {
       "dashboard": "Dashboard",
       "allInvoices": "All Invoices",
@@ -1297,17 +1468,84 @@ d    "activeTitle": "Active Jobs",
       "invoices": "invoices"
     },
     "status": {
-      "sent": "Sent",
-      "paid": "Paid",
-      "overdue": "Overdue",
       "draft": "Draft",
-      "cancelled": "Cancelled"
+      "sent": "Sent",
+      "viewed": "Viewed",
+      "paid": "Paid",
+      "partiallyPaid": "Partially Paid",
+      "overdue": "Overdue",
+      "cancelled": "Cancelled",
+      "refunded": "Refunded"
     },
     "paymentMethods": {
       "cash": "Cash",
       "card": "Card",
       "transfer": "Transfer",
-      "check": "Check"
+      "bankTransfer": "Bank Transfer",
+      "check": "Check",
+      "credit": "Credit"
+    }
+  },
+  "approvals": {
+    "title": "Approvals",
+    "subtitle": "Manage approval requests and authorizations",
+    "actions": {
+      "refresh": "Refresh",
+      "approve": "Approve",
+      "reject": "Reject",
+      "resetFilters": "Reset Filters",
+      "selectAll": "Select All",
+      "requestInfo": "Request More Info",
+      "viewDetails": "View Details"
+    },
+    "stats": {
+      "pending": "Pending",
+      "overdue": "Overdue",
+      "approved": "Approved",
+      "total": "Total"
+    },
+    "filters": {
+      "search": "Search",
+      "searchPlaceholder": "Search requests...",
+      "status": "Status",
+      "allStatuses": "All Statuses",
+      "type": "Type",
+      "allTypes": "All Types",
+      "priority": "Priority",
+      "allPriorities": "All Priorities"
+    },
+    "labels": {
+      "showing": "Showing {{current}} of {{total}}",
+      "listTitle": "Requests List",
+      "approvedBy": "Approved by",
+      "rejectedBy": "Rejected by",
+      "on": "on"
+    },
+    "loading": "Loading...",
+    "emptyState": {
+      "title": "No approval requests",
+      "message": "There are currently no requests that need approval"
+    },
+    "type": {
+      "parts_purchase": "Parts Purchase",
+      "repair_estimate": "Repair Estimate",
+      "overtime_work": "Overtime Work",
+      "custom_work": "Custom Work",
+      "refund": "Refund",
+      "warranty_claim": "Warranty Claim"
+    },
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "info_requested": "Info Requested",
+      "cancelled": "Cancelled"
+    },
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "urgent": "Urgent"
     }
   }
 }

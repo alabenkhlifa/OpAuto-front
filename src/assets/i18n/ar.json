@@ -118,21 +118,39 @@
   "appointments": {
     "title": "المواعيد",
     "subtitle": "إدارة جدولة الورشة والمواعيد",
+    "new": "جديد",
+    "edit": "تعديل",
     "addAppointment": "إضافة موعد",
     "editAppointment": "تعديل الموعد",
     "deleteAppointment": "حذف الموعد",
     "appointmentDetails": "تفاصيل الموعد",
+    "scheduleServiceAppointment": "جدولة موعد خدمة لعميلك",
     "customerName": "اسم العميل",
     "phoneNumber": "رقم الهاتف",
+    "vehicleInformation": "معلومات المركبة",
     "vehicleInfo": "معلومات المركبة",
+    "car": "سيارة",
+    "selectCar": "اختيار سيارة",
+    "quickAddCar": "إضافة سيارة سريعة",
     "licensePlate": "لوحة الترخيص",
     "make": "الماركة",
     "model": "الطراز",
     "year": "السنة",
+    "serviceDetails": "تفاصيل الخدمة",
     "serviceType": "نوع الخدمة",
+    "selectService": "اختيار نوع الخدمة",
+    "serviceName": "اسم الخدمة",
+    "serviceNamePlaceholder": "أدخل اسم الخدمة",
+    "durationMin": "المدة (دقيقة)",
     "appointmentDate": "تاريخ الموعد",
     "appointmentTime": "وقت الموعد",
     "estimatedDuration": "المدة المقدرة",
+    "schedule": "جدولة",
+    "date": "التاريخ",
+    "time": "الوقت",
+    "selectTime": "اختيار الوقت",
+    "assignedMechanic": "الميكانيكي المعين",
+    "autoAssign": "تعيين تلقائي",
     "mechanic": "الميكانيكي",
     "priority": "الأولوية",
     "low": "منخفضة",
@@ -144,6 +162,15 @@
     "cancelled": "ملغاة",
     "reschedule": "إعادة جدولة",
     "confirm": "تأكيد",
+    "cancel": "إلغاء",
+    "notesOptional": "ملاحظات (اختيارية)",
+    "additionalNotes": "ملاحظات إضافية أو تعليمات خاصة",
+    "oilChange": "تغيير الزيت",
+    "brakeRepair": "إصلاح الفرامل",
+    "inspection": "الفحص الفني",
+    "transmission": "خدمة ناقل الحركة",
+    "engineWork": "عمل المحرك",
+    "tireService": "خدمة الإطارات",
     "noAppointments": "لا توجد مواعيد",
     "noAppointmentsToday": "لا توجد مواعيد مجدولة لليوم",
     "noAppointmentsDate": "لا توجد مواعيد مجدولة لهذا التاريخ",
@@ -210,7 +237,34 @@
     "totalServices": "إجمالي الخدمات",
     "nextDue": "الاستحقاق التالي",
     "schedule": "جدولة",
-    "history": "التاريخ"
+    "history": "التاريخ",
+    "registerNewCar": "تسجيل سيارة جديدة",
+    "registerCar": "تسجيل سيارة",
+    "registering": "جاري التسجيل...",
+    "licensePlateRequired": "لوحة الترخيص *",
+    "licensePlatePlaceholder": "أدخل لوحة الترخيص",
+    "makeRequired": "الماركة *",
+    "makePlaceholder": "اختر الماركة",
+    "modelRequired": "الطراز *",
+    "modelPlaceholder": "أدخل الطراز",
+    "yearRequired": "السنة *",
+    "yearPlaceholder": "اختر السنة",
+    "colorPlaceholder": "أدخل اللون",
+    "vinPlaceholder": "أدخل رقم الهيكل",
+    "engineTypePlaceholder": "أدخل نوع المحرك",
+    "fuelTypePlaceholder": "اختر نوع الوقود",
+    "mileagePlaceholder": "أدخل الكيلومترات الحالية",
+    "customerInformation": "معلومات العميل",
+    "existingCustomer": "عميل موجود",
+    "newCustomer": "عميل جديد",
+    "selectCustomer": "اختيار عميل",
+    "selectCustomerRequired": "اختيار عميل *",
+    "customerNameRequired": "اسم العميل *",
+    "customerNamePlaceholder": "أدخل اسم العميل",
+    "phoneNumberRequired": "رقم الهاتف *",
+    "phoneNumberPlaceholder": "أدخل رقم الهاتف",
+    "emailPlaceholder": "أدخل البريد الإلكتروني",
+    "addressPlaceholder": "أدخل العنوان"
   },
   "maintenance": {
     "title": "الصيانة",
@@ -366,12 +420,70 @@
     "noOrders": "لا توجد طلبات",
     "navigation": {
       "dashboard": "لوحة التحكم",
-      "partsCatalog": "كتالوج القطع"
+      "partsCatalog": "كتالوج القطع",
+      "suppliers": "الموردون",
+      "addPart": "إضافة قطعة"
+    },
+    "partsCatalog": {
+      "searchPlaceholder": "البحث عن قطع الغيار...",
+      "allCategories": "جميع الفئات",
+      "allSuppliers": "جميع الموردين",
+      "allStockStatus": "جميع حالات المخزون",
+      "hideFilters": "إخفاء المرشحات",
+      "showFilters": "إظهار المرشحات",
+      "clearFilters": "مسح المرشحات",
+      "brand": "الماركة",
+      "stock": "المخزون",
+      "price": "السعر",
+      "supplier": "المورد",
+      "stockLevel": "مستوى المخزون",
+      "edit": "تعديل",
+      "adjustStock": "تعديل المخزون",
+      "noPartsFound": "لم يتم العثور على قطع",
+      "noPartsMessage": "جرب تعديل البحث أو المرشحات",
+      "addNewPart": "إضافة قطعة جديدة"
+    },
+    "stockStatus": {
+      "inStock": "متوفر",
+      "lowStock": "مخزون منخفض",
+      "outOfStock": "نفد من المخزون",
+      "ordered": "مطلوب"
     },
     "dashboard": {
       "totalParts": "إجمالي القطع",
-      "viewDetails": "عرض التفاصيل"
-    }
+      "totalValue": "القيمة الإجمالية",
+      "lowStock": "مخزون منخفض",
+      "outOfStock": "نفد من المخزون",
+      "viewDetails": "عرض التفاصيل",
+      "recentAlerts": "التنبيهات الحديثة",
+      "markRead": "تعيين كمقروء",
+      "mostUsedThisMonth": "الأكثر استخداماً هذا الشهر",
+      "used": "مستخدم",
+      "partsByCategory": "القطع حسب الفئة"
+    },
+    "categories": {
+      "engine": "المحرك",
+      "transmission": "ناقل الحركة",
+      "brakes": "الفرامل",
+      "suspension": "التعليق",
+      "electrical": "الكهرباء",
+      "filters": "المرشحات",
+      "fluids": "السوائل",
+      "tires": "الإطارات",
+      "body": "الهيكل",
+      "accessories": "الملحقات",
+      "consumables": "المستهلكات"
+    },
+    "suppliers": {
+      "title": "الموردون",
+      "active": "نشط",
+      "contact": "جهة الاتصال",
+      "phone": "الهاتف",
+      "delivery": "وقت التسليم",
+      "days": "أيام",
+      "payment": "شروط الدفع"
+    },
+    "loading": "جارِ التحميل..."
   },
   "invoicing": {
     "title": "الفوترة",
@@ -642,6 +754,20 @@
   "reports": {
     "title": "التقارير",
     "subtitle": "رؤى الأعمال والتحليلات",
+    "navigation": {
+      "dashboard": "لوحة القيادة",
+      "financial": "المالية",
+      "operational": "التشغيلية",
+      "customer": "العملاء",
+      "inventory": "المخزون"
+    },
+    "actions": {
+      "refresh": "تحديث",
+      "export": "تصدير"
+    },
+    "filters": {
+      "to": "إلى"
+    },
     "salesReport": "تقرير المبيعات",
     "serviceReport": "تقرير الخدمة",
     "inventoryReport": "تقرير المخزون",
@@ -664,7 +790,53 @@
     "topServices": "أهم الخدمات",
     "topCustomers": "أهم العملاء",
     "partsUsage": "استخدام القطع",
-    "noReports": "لا توجد تقارير متاحة"
+    "noReports": "لا توجد تقارير متاحة",
+    "datePresets": {
+      "today": "اليوم",
+      "yesterday": "أمس",
+      "thisWeek": "هذا الأسبوع",
+      "lastWeek": "الأسبوع الماضي",
+      "thisMonth": "هذا الشهر",
+      "lastMonth": "الشهر الماضي",
+      "thisQuarter": "هذا الربع",
+      "lastQuarter": "الربع الماضي",
+      "thisYear": "هذا العام",
+      "lastYear": "العام الماضي",
+      "last30Days": "آخر 30 يوم",
+      "last90Days": "آخر 90 يوم",
+      "last365Days": "آخر 365 يوم",
+      "custom": "مخصص"
+    },
+    "export": {
+      "exporting": "جارِ التصدير إلى {{format}}..."
+    },
+    "kpis": {
+      "totalRevenue": "إجمالي الإيرادات",
+      "appointments": "المواعيد",
+      "activeCustomers": "العملاء النشطين",
+      "mechanicUtilization": "استخدام الميكانيكي",
+      "stockValue": "قيمة المخزون",
+      "customerSatisfaction": "رضا العملاء"
+    },
+    "charts": {
+      "revenueTrends": {
+        "title": "اتجاهات الإيرادات"
+      },
+      "serviceDistribution": {
+        "title": "توزيع الخدمات"
+      },
+      "appointmentStatus": {
+        "title": "حالة المواعيد"
+      },
+      "monthlyComparison": {
+        "title": "المقارنة الشهرية"
+      }
+    },
+    "kpis": {
+      "revenue": "الإيرادات",
+      "newCustomers": "عملاء جدد",
+      "partsInventory": "مخزون القطع"
+    }
   },
   "settings": {
     "title": "الإعدادات",
@@ -1201,6 +1373,40 @@
   "invoicing": {
     "title": "الفواتير",
     "subtitle": "إنشاء وإدارة الفواتير",
+    "allInvoices": "جميع الفواتير",
+    "createInvoice": "إنشاء فاتورة",
+    "pendingPayment": "الدفع المعلق",
+    "editInvoice": "تعديل الفاتورة",
+    "deleteInvoice": "حذف الفاتورة",
+    "viewInvoice": "عرض الفاتورة",
+    "printInvoice": "طباعة الفاتورة",
+    "invoiceNumber": "رقم الفاتورة",
+    "invoiceDate": "تاريخ الفاتورة",
+    "dueDate": "تاريخ الاستحقاق",
+    "customerInfo": "معلومات العميل",
+    "billTo": "فاتورة لـ",
+    "items": "البنود",
+    "services": "الخدمات",
+    "addItem": "إضافة بند",
+    "itemDescription": "وصف البند",
+    "unitPrice": "سعر الوحدة",
+    "quantity": "الكمية",
+    "total": "المجموع",
+    "subtotal": "المجموع الفرعي",
+    "tax": "الضريبة",
+    "discount": "الخصم",
+    "grandTotal": "الإجمالي العام",
+    "paid": "مدفوع",
+    "unpaid": "غير مدفوع",
+    "overdue": "متأخر",
+    "paymentStatus": "حالة الدفع",
+    "paymentMethod": "طريقة الدفع",
+    "cash": "نقداً",
+    "card": "بطاقة",
+    "bankTransfer": "حوالة بنكية",
+    "notes": "ملاحظات",
+    "terms": "الشروط والأحكام",
+    "noInvoices": "لا توجد فواتير",
     "navigation": {
       "dashboard": "لوحة القيادة",
       "allInvoices": "جميع الفواتير",
@@ -1221,17 +1427,161 @@
       "invoices": "فواتير"
     },
     "status": {
-      "sent": "مرسل",
-      "paid": "مدفوع",
-      "overdue": "متأخر",
       "draft": "مسودة",
-      "cancelled": "ملغي"
+      "sent": "مرسل",
+      "viewed": "تم عرضها",
+      "paid": "مدفوع",
+      "partiallyPaid": "مدفوع جزئياً",
+      "overdue": "متأخر",
+      "cancelled": "ملغي",
+      "refunded": "مُسترد"
     },
     "paymentMethods": {
       "cash": "نقداً",
       "card": "بطاقة",
       "transfer": "تحويل",
-      "check": "شيك"
+      "bankTransfer": "حوالة بنكية",
+      "check": "شيك",
+      "credit": "ائتمان"
+    },
+    "list": {
+      "hideFilters": "إخفاء المرشحات",
+      "showFilters": "عرض المرشحات",
+      "searchPlaceholder": "البحث عن الفواتير...",
+      "allStatus": "جميع الحالات",
+      "allPaymentMethods": "جميع الطرق",
+      "clearFilters": "مسح المرشحات",
+      "customer": "العميل",
+      "vehicle": "المركبة",
+      "license": "اللوحة",
+      "service": "الخدمة",
+      "multipleServices": "خدمات متعددة",
+      "total": "المجموع",
+      "paid": "مدفوع",
+      "remaining": "المتبقي",
+      "paymentProgress": "تقدم الدفع",
+      "dueDate": "تاريخ الاستحقاق",
+      "daysOverdue": "أيام متأخرة",
+      "send": "إرسال",
+      "markPaid": "وضع علامة مدفوع",
+      "print": "طباعة",
+      "noInvoicesFound": "لم يتم العثور على فواتير",
+      "noInvoicesDescription": "حاول تعديل البحث أو المرشحات",
+      "createFirstInvoice": "إنشاء أول فاتورة لك"
+    },
+    "pending": {
+      "title": "المدفوعات المعلقة",
+      "invoices": "فواتير",
+      "due": "الاستحقاق",
+      "viewDetails": "عرض التفاصيل",
+      "recordPayment": "تسجيل الدفع",
+      "allCaughtUp": "كل شيء محدث!",
+      "noPendingPayments": "لا توجد مدفوعات معلقة حالياً"
+    },
+    "create": {
+      "title": "إنشاء فاتورة",
+      "editTitle": "تعديل الفاتورة",
+      "subtitle": "إنشاء فاتورة جديدة للخدمات المكتملة",
+      "editSubtitle": "تعديل تفاصيل الفاتورة الحالية",
+      "invoiceDetails": "تفاصيل الفاتورة",
+      "customer": "العميل",
+      "selectCustomer": "اختر العميل",
+      "customerRequired": "العميل مطلوب",
+      "vehicle": "المركبة",
+      "selectVehicle": "اختر المركبة",
+      "vehicleRequired": "المركبة مطلوبة",
+      "issueDate": "تاريخ الإصدار",
+      "dueDate": "تاريخ الاستحقاق",
+      "paymentTerms": "شروط الدفع",
+      "paymentTermsPlaceholder": "مثال: صافي 30 يوم",
+      "lineItems": "البنود",
+      "addItem": "إضافة بند",
+      "item": "بند",
+      "type": "النوع",
+      "description": "الوصف",
+      "itemDescription": "وصف البند",
+      "selectPart": "اختر قطعة",
+      "selectPartOptional": "اختر قطعة (اختياري)",
+      "selectService": "اختر خدمة",
+      "selectServiceOptional": "اختر خدمة (اختياري)",
+      "quantity": "الكمية",
+      "unit": "الوحدة",
+      "unitPlaceholder": "مثال: قطعة، ساعة",
+      "unitPrice": "سعر الوحدة",
+      "total": "المجموع",
+      "additionalNotes": "ملاحظات إضافية",
+      "notesPlaceholder": "أضف ملاحظات أو شروط خاصة...",
+      "invoiceSummary": "ملخص الفاتورة",
+      "subtotal": "المجموع الفرعي",
+      "discount": "الخصم",
+      "tax": "الضريبة",
+      "createInvoice": "إنشاء الفاتورة",
+      "updateInvoice": "تحديث الفاتورة",
+      "saveAsDraft": "حفظ كمسودة",
+      "loadingFormData": "جارِ تحميل بيانات النموذج..."
+    },
+    "loading": "جارِ التحميل..."
+  },
+  "approvals": {
+    "title": "الموافقات",
+    "subtitle": "إدارة طلبات الموافقة والتصاريح",
+    "actions": {
+      "refresh": "تحديث",
+      "approve": "موافق",
+      "reject": "رفض",
+      "resetFilters": "إعادة تعيين المرشحات",
+      "selectAll": "اختيار الكل",
+      "requestInfo": "طلب معلومات إضافية",
+      "viewDetails": "عرض التفاصيل"
+    },
+    "stats": {
+      "pending": "في انتظار",
+      "overdue": "متأخر",
+      "approved": "موافق عليه",
+      "total": "الإجمالي"
+    },
+    "filters": {
+      "search": "البحث",
+      "searchPlaceholder": "البحث في الطلبات...",
+      "status": "الحالة",
+      "allStatuses": "جميع الحالات",
+      "type": "النوع",
+      "allTypes": "جميع الأنواع",
+      "priority": "الأولوية",
+      "allPriorities": "جميع الأولويات"
+    },
+    "labels": {
+      "showing": "عرض {{current}} من {{total}}",
+      "listTitle": "قائمة الطلبات",
+      "approvedBy": "موافق عليه بواسطة",
+      "rejectedBy": "مرفوض بواسطة",
+      "on": "في"
+    },
+    "loading": "جارِ التحميل...",
+    "emptyState": {
+      "title": "لا توجد طلبات موافقة",
+      "message": "لا توجد طلبات تحتاج إلى موافقة في الوقت الحالي"
+    },
+    "type": {
+      "parts_purchase": "شراء القطع",
+      "repair_estimate": "تقدير الإصلاح",
+      "overtime_work": "العمل الإضافي",
+      "custom_work": "عمل مخصص",
+      "refund": "استرداد",
+      "warranty_claim": "مطالبة الضمان"
+    },
+    "status": {
+      "pending": "في الانتظار",
+      "approved": "موافق عليه",
+      "rejected": "مرفوض",
+      "info_requested": "معلومات مطلوبة",
+      "cancelled": "ملغي"
+    },
+    "priority": {
+      "low": "منخفض",
+      "medium": "متوسط",
+      "high": "عالي",
+      "urgent": "عاجل"
     }
   }
 }
