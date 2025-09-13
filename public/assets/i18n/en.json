@@ -367,6 +367,31 @@
         "today": "Today",
         "thisWeek": "This Week"
       }
+    },
+    "new": {
+      "title": "New Maintenance Job",
+      "editTitle": "Edit Maintenance Job",
+      "subtitle": "Create a new maintenance or repair job",
+      "basicInfo": "Basic Information",
+      "vehicle": "Vehicle",
+      "selectVehicle": "Select a vehicle",
+      "assignedMechanic": "Assigned Mechanic",
+      "selectMechanic": "Select a mechanic",
+      "jobTitle": "Job Title",
+      "jobTitlePlaceholder": "e.g., Brake Repair, Oil Change",
+      "priority": "Priority",
+      "currentMileage": "Current Mileage (km)",
+      "estimatedCost": "Estimated Cost (TND)",
+      "description": "Description",
+      "descriptionPlaceholder": "Describe the issue, symptoms, or maintenance required...",
+      "additionalNotes": "Additional Notes",
+      "additionalNotesPlaceholder": "Any additional information or special instructions...",
+      "tasks": "Tasks",
+      "addTask": "Add Task",
+      "noTasks": "No tasks added yet. Click \"Add Task\" to get started.",
+      "cancel": "Cancel",
+      "createJob": "Create Job",
+      "updateJob": "Update Job"
     }
   },
   "inventory": {

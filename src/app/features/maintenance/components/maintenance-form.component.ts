@@ -6,11 +6,12 @@ import { MaintenanceService } from '../../../core/services/maintenance.service';
 import { CarService } from '../../cars/services/car.service';
 import { MaintenanceJob, MaintenanceTask, ServiceType } from '../../../core/models/maintenance.model';
 import { Car } from '../../../core/models/appointment.model';
+import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 
 @Component({
   selector: 'app-maintenance-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   template: `
     <div class="p-6 max-w-4xl mx-auto">
       
@@ -26,7 +27,7 @@ import { Car } from '../../../core/models/appointment.model';
           </button>
           <div class="flex-1">
             <h1 class="text-3xl lg:text-4xl font-bold text-white mb-2">
-              {{ isEditMode() ? 'Edit Maintenance Job' : 'New Maintenance Job' }}
+              {{ isEditMode() ? ('maintenance.new.editTitle' | translate) : ('maintenance.new.title' | translate) }}
             </h1>
             <div class="bg-gray-800/30 rounded-lg p-4 backdrop-filter backdrop-blur-sm">
               <div class="flex items-center space-x-3">
@@ -34,7 +35,7 @@ import { Car } from '../../../core/models/appointment.model';
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
                 <p class="text-lg font-medium text-blue-300">
-                  {{ isEditMode() ? 'Update job details and tasks' : 'Create a new maintenance or repair job' }}
+                  {{ 'maintenance.new.subtitle' | translate }}
                 </p>
               </div>
             </div>
@@ -47,20 +48,20 @@ import { Car } from '../../../core/models/appointment.model';
         
         <!-- Basic Information -->
         <div class="glass-card">
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Basic Information</h2>
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ 'maintenance.new.basicInfo' | translate }}</h2>
           
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             
             <!-- Car Selection -->
             <div>
               <label class="block text-sm font-medium text-gray-300 mb-1">
-                Vehicle *
+                {{ 'maintenance.new.vehicle' | translate }} *
               </label>
               <select 
                 formControlName="carId"
                 class="form-select"
                 [class.border-red-500]="isFieldInvalid('carId')">
-                <option value="">Select a vehicle</option>
+                <option value="">{{ 'maintenance.new.selectVehicle' | translate }}</option>
                 @for (car of cars(); track car.id) {
                   <option [value]="car.id">{{ car.licensePlate }} - {{ car.make }} {{ car.model }}</option>
                 }
@@ -73,13 +74,13 @@ import { Car } from '../../../core/models/appointment.model';
             <!-- Mechanic Assignment -->
             <div>
               <label class="block text-sm font-medium text-gray-300 mb-1">
-                Assigned Mechanic *
+                {{ 'maintenance.new.assignedMechanic' | translate }} *
               </label>
               <select 
                 formControlName="mechanicId"
                 class="form-select"
                 [class.border-red-500]="isFieldInvalid('mechanicId')">
-                <option value="">Select a mechanic</option>
+                <option value="">{{ 'maintenance.new.selectMechanic' | translate }}</option>
                 @for (mechanic of mechanics; track mechanic.id) {
                   <option [value]="mechanic.id">{{ mechanic.name }}</option>
                 }
@@ -92,12 +93,12 @@ import { Car } from '../../../core/models/appointment.model';
             <!-- Job Title -->
             <div>
               <label class="block text-sm font-medium text-gray-300 mb-1">
-                Job Title *
+                {{ 'maintenance.new.jobTitle' | translate }} *
               </label>
               <input 
                 type="text"
                 formControlName="jobTitle"
-                placeholder="e.g., Brake Repair, Oil Change"
+                [placeholder]="'maintenance.new.jobTitlePlaceholder' | translate"
                 class="form-input"
                 [class.border-red-500]="isFieldInvalid('jobTitle')">
               @if (isFieldInvalid('jobTitle')) {
@@ -108,23 +109,23 @@ import { Car } from '../../../core/models/appointment.model';
             <!-- Priority -->
             <div>
               <label class="block text-sm font-medium text-gray-300 mb-1">
-                Priority *
+                {{ 'maintenance.new.priority' | translate }} *
               </label>
               <select 
                 formControlName="priority"
                 class="form-select"
                 [class.border-red-500]="isFieldInvalid('priority')">
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="urgent">Urgent</option>
+                <option value="low">{{ 'maintenance.priority.low' | translate }}</option>
+                <option value="medium">{{ 'maintenance.priority.medium' | translate }}</option>
+                <option value="high">{{ 'maintenance.priority.high' | translate }}</option>
+                <option value="urgent">{{ 'maintenance.priority.urgent' | translate }}</option>
               </select>
             </div>
 
             <!-- Current Mileage -->
             <div>
               <label class="block text-sm font-medium text-gray-300 mb-1">
-                Current Mileage (km) *
+                {{ 'maintenance.new.currentMileage' | translate }} *
               </label>
               <input 
                 type="number"
@@ -142,7 +143,7 @@ import { Car } from '../../../core/models/appointment.model';
             <!-- Estimated Cost -->
             <div>
               <label class="block text-sm font-medium text-gray-300 mb-1">
-                Estimated Cost (TND)
+                {{ 'maintenance.new.estimatedCost' | translate }}
               </label>
               <input 
                 type="number"
@@ -158,12 +159,12 @@ import { Car } from '../../../core/models/appointment.model';
           <!-- Description -->
           <div class="mt-4">
             <label class="block text-sm font-medium text-gray-300 mb-1">
-              Description *
+              {{ 'maintenance.new.description' | translate }} *
             </label>
             <textarea 
               formControlName="description"
               rows="3"
-              placeholder="Describe the issue, symptoms, or maintenance required..."
+              [placeholder]="'maintenance.new.descriptionPlaceholder' | translate"
               class="form-textarea"
               [class.border-red-500]="isFieldInvalid('description')">
             </textarea>
@@ -175,12 +176,12 @@ import { Car } from '../../../core/models/appointment.model';
           <!-- Notes -->
           <div class="mt-4">
             <label class="block text-sm font-medium text-gray-300 mb-1">
-              Additional Notes
+              {{ 'maintenance.new.additionalNotes' | translate }}
             </label>
             <textarea 
               formControlName="notes"
               rows="2"
-              placeholder="Any additional information or special instructions..."
+              [placeholder]="'maintenance.new.additionalNotesPlaceholder' | translate"
               class="form-textarea">
             </textarea>
           </div>
@@ -190,7 +191,7 @@ import { Car } from '../../../core/models/appointment.model';
         <!-- Tasks -->
         <div class="glass-card">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Tasks</h2>
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ 'maintenance.new.tasks' | translate }}</h2>
             <button 
               type="button"
               class="btn-secondary text-sm"
@@ -198,7 +199,7 @@ import { Car } from '../../../core/models/appointment.model';
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
-              Add Task
+              {{ 'maintenance.new.addTask' | translate }}
             </button>
           </div>
 
@@ -259,7 +260,7 @@ import { Car } from '../../../core/models/appointment.model';
 
           @if (tasks.length === 0) {
             <div class="text-center py-8 text-gray-500 dark:text-gray-400">
-              <p class="text-sm">No tasks added yet. Click "Add Task" to get started.</p>
+              <p class="text-sm">{{ 'maintenance.new.noTasks' | translate }}</p>
             </div>
           }
 
@@ -271,7 +272,7 @@ import { Car } from '../../../core/models/appointment.model';
             type="button"
             class="btn-secondary"
             (click)="goBack()">
-            Cancel
+            {{ 'maintenance.new.cancel' | translate }}
           </button>
           <button 
             type="submit"
@@ -284,7 +285,7 @@ import { Car } from '../../../core/models/appointment.model';
               </svg>
               Saving...
             } @else {
-              {{ isEditMode() ? 'Update Job' : 'Create Job' }}
+              {{ isEditMode() ? ('maintenance.new.updateJob' | translate) : ('maintenance.new.createJob' | translate) }}
             }
           </button>
         </div>

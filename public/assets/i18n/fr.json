@@ -375,6 +375,31 @@
         "today": "Aujourd'hui",
         "thisWeek": "Cette Semaine"
       }
+    },
+    "new": {
+      "title": "Nouveau Travail de Maintenance",
+      "editTitle": "Modifier le Travail de Maintenance",
+      "subtitle": "Créer un nouveau travail de maintenance ou de réparation",
+      "basicInfo": "Informations de Base",
+      "vehicle": "Véhicule",
+      "selectVehicle": "Sélectionner un véhicule",
+      "assignedMechanic": "Mécanicien Assigné",
+      "selectMechanic": "Sélectionner un mécanicien",
+      "jobTitle": "Titre du Travail",
+      "jobTitlePlaceholder": "ex: Réparation de freins, Vidange",
+      "priority": "Priorité",
+      "currentMileage": "Kilométrage Actuel (km)",
+      "estimatedCost": "Coût Estimé (TND)",
+      "description": "Description",
+      "descriptionPlaceholder": "Décrivez le problème, les symptômes, ou la maintenance requise...",
+      "additionalNotes": "Notes Additionnelles",
+      "additionalNotesPlaceholder": "Toute information supplémentaire ou instructions spéciales...",
+      "tasks": "Tâches",
+      "addTask": "Ajouter une Tâche",
+      "noTasks": "Aucune tâche ajoutée. Cliquez sur \"Ajouter une Tâche\" pour commencer.",
+      "cancel": "Annuler",
+      "createJob": "Créer le Travail",
+      "updateJob": "Mettre à Jour le Travail"
     }
   },
   "inventory": {

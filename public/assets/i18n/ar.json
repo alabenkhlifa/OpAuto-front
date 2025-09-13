@@ -375,6 +375,31 @@
         "today": "اليوم",
         "thisWeek": "هذا الأسبوع"
       }
+    },
+    "new": {
+      "title": "مهمة صيانة جديدة",
+      "editTitle": "تعديل مهمة الصيانة",
+      "subtitle": "إنشاء مهمة صيانة أو إصلاح جديدة",
+      "basicInfo": "المعلومات الأساسية",
+      "vehicle": "المركبة",
+      "selectVehicle": "اختر مركبة",
+      "assignedMechanic": "الميكانيكي المكلف",
+      "selectMechanic": "اختر ميكانيكي",
+      "jobTitle": "عنوان المهمة",
+      "jobTitlePlaceholder": "مثل: إصلاح الفرامل، تغيير الزيت",
+      "priority": "الأولوية",
+      "currentMileage": "المسافة الحالية (كم)",
+      "estimatedCost": "التكلفة المقدرة (د.ت)",
+      "description": "الوصف",
+      "descriptionPlaceholder": "وصف المشكلة أو الأعراض أو الصيانة المطلوبة...",
+      "additionalNotes": "ملاحظات إضافية",
+      "additionalNotesPlaceholder": "أي معلومات إضافية أو تعليمات خاصة...",
+      "tasks": "المهام",
+      "addTask": "إضافة مهمة",
+      "noTasks": "لم يتم إضافة مهام بعد. انقر على \"إضافة مهمة\" للبدء.",
+      "cancel": "إلغاء",
+      "createJob": "إنشاء المهمة",
+      "updateJob": "تحديث المهمة"
     }
   },
   "inventory": {
