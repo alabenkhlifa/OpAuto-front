@@ -232,6 +232,7 @@
     "upToDate": "À jour",
     "dueSoon": "Bientôt dû",
     "overdue": "En retard",
+    "status": "Statut",
     "allMakes": "Toutes les marques",
     "allStatus": "Tous les statuts",
     "statusLegend": "Légende des statuts",

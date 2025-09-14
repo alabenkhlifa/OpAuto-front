@@ -232,6 +232,7 @@
     "upToDate": "محدث",
     "dueSoon": "مستحق قريباً",
     "overdue": "متأخر",
+    "status": "الحالة",
     "allMakes": "جميع الماركات",
     "allStatus": "جميع الحالات",
     "statusLegend": "دليل الحالات",

@@ -251,6 +251,7 @@
     "upToDate": "Up to Date",
     "dueSoon": "Due Soon",
     "overdue": "Overdue",
+    "status": "Status",
     "allMakes": "All Makes",
     "allStatus": "All Status",
     "statusLegend": "Status Legend",

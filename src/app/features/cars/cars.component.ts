@@ -199,7 +199,8 @@ export class CarsComponent implements OnInit {
   }
 
   toggleMobileFilters(): void {
-    this.showMobileFilters.set(!this.showMobileFilters());
+    const currentState = this.showMobileFilters();
+    this.showMobileFilters.set(!currentState);
   }
 
   clearFilters(): void {
