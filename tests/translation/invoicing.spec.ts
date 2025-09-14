@@ -197,7 +197,7 @@ test.describe('Invoicing & Billing - Translation Tests', () => {
       await utils.navigateToRoute('/invoicing');
       
       // Look for view invoice details button
-      const viewDetailsButton = utils.page.locator('button:has-text("View"), button:has-text("Details"), button:has-text("Open"), button:has-text("Voir"), button:has-text("Détails"), button:has-text("Ouvrir"), button:has-text("عرض"), button:has-text("تفاصيل"), button:has-text("فتح"), 'tr', '[class*="invoice-row"]').first();
+      const viewDetailsButton = utils.page.locator('button:has-text("View"), button:has-text("Details"), button:has-text("Open"), button:has-text("Voir"), button:has-text("Détails"), button:has-text("Ouvrir"), button:has-text("عرض"), button:has-text("تفاصيل"), button:has-text("فتح"), tr, [class*="invoice-row"]').first();
       
       if (await viewDetailsButton.count() > 0) {
         await viewDetailsButton.click();

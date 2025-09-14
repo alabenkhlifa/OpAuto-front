@@ -16,7 +16,7 @@ test.describe('Debug Arabic Translation Tests', () => {
       return {
         hasAngular: typeof window !== 'undefined' && (window as any).ng !== undefined,
         hasLocalStorage: typeof localStorage !== 'undefined',
-        currentLang: localStorage.getItem('language'),
+        currentLang: localStorage.getItem('opauth_language'),
         bodyContent: document.body.textContent?.substring(0, 200) || 'No body content'
       };
     });
@@ -26,7 +26,7 @@ test.describe('Debug Arabic Translation Tests', () => {
     // Test 2: Set Arabic language and check immediate effect
     console.log('\n=== SETTING LANGUAGE TO ARABIC ===');
     await page.evaluate(() => {
-      localStorage.setItem('language', 'ar');
+      localStorage.setItem('opauth_language', 'ar');
     });
     
     // Wait and reload
@@ -37,7 +37,7 @@ test.describe('Debug Arabic Translation Tests', () => {
     // Test 3: Check DOM content after Arabic language set
     const postArabicCheck = await page.evaluate(() => {
       return {
-        currentLang: localStorage.getItem('language'),
+        currentLang: localStorage.getItem('opauth_language'),
         bodyText: document.body.textContent || 'No body text',
         htmlDir: document.documentElement.getAttribute('dir'),
         htmlLang: document.documentElement.getAttribute('lang'),

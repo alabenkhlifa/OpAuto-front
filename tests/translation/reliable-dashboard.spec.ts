@@ -13,7 +13,7 @@ test.describe('Reliable Dashboard Translation Tests', () => {
     // Set language to English
     await page.evaluate(() => {
       if (typeof Storage !== 'undefined' && localStorage) {
-        localStorage.setItem('language', 'en');
+        localStorage.setItem('opauth_language', 'en');
       }
     });
     
@@ -48,7 +48,7 @@ test.describe('Reliable Dashboard Translation Tests', () => {
     // Set language to French
     await page.evaluate(() => {
       if (typeof Storage !== 'undefined' && localStorage) {
-        localStorage.setItem('language', 'fr');
+        localStorage.setItem('opauth_language', 'fr');
       }
     });
     
@@ -76,7 +76,7 @@ test.describe('Reliable Dashboard Translation Tests', () => {
     // Set language to Arabic
     await page.evaluate(() => {
       if (typeof Storage !== 'undefined' && localStorage) {
-        localStorage.setItem('language', 'ar');
+        localStorage.setItem('opauth_language', 'ar');
       }
     });
     

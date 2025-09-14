@@ -13,7 +13,7 @@ test.describe('Reliable Auth Translation Tests', () => {
     // Set language to English
     await page.evaluate(() => {
       if (typeof Storage !== 'undefined' && localStorage) {
-        localStorage.setItem('language', 'en');
+        localStorage.setItem('opauth_language', 'en');
       }
     });
     
@@ -52,7 +52,7 @@ test.describe('Reliable Auth Translation Tests', () => {
     // Set language to French
     await page.evaluate(() => {
       if (typeof Storage !== 'undefined' && localStorage) {
-        localStorage.setItem('language', 'fr');
+        localStorage.setItem('opauth_language', 'fr');
       }
     });
     
@@ -91,7 +91,7 @@ test.describe('Reliable Auth Translation Tests', () => {
     // Set language to Arabic
     await page.evaluate(() => {
       if (typeof Storage !== 'undefined' && localStorage) {
-        localStorage.setItem('language', 'ar');
+        localStorage.setItem('opauth_language', 'ar');
       }
     });
     
@@ -150,7 +150,7 @@ test.describe('Reliable Auth Translation Tests', () => {
       // Set language
       await page.evaluate((langCode) => {
         if (typeof Storage !== 'undefined' && localStorage) {
-          localStorage.setItem('language', langCode);
+          localStorage.setItem('opauth_language', langCode);
         }
       }, lang.code);
       
@@ -161,7 +161,7 @@ test.describe('Reliable Auth Translation Tests', () => {
       // Verify language was set
       const currentLang = await page.evaluate(() => {
         try {
-          return localStorage.getItem('language');
+          return localStorage.getItem('opauth_language');
         } catch {
           return 'en';
         }

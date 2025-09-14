@@ -9,8 +9,11 @@ test.describe('Authentication & Access - Translation Tests', () => {
   });
 
   test('Auth Screen - Login form translations (EN/FR/AR)', async () => {
+    // Navigate to auth page first, then test languages
+    await authUtils.navigateToRoute('/auth');
+    
     await authUtils.testAllLanguages(async (utils, language) => {
-      // Navigate to auth page
+      // Re-navigate to ensure clean state
       await utils.navigateToRoute('/auth');
       
       // Test login form translations

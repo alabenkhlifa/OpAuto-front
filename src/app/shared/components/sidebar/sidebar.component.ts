@@ -85,9 +85,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
       icon: 'receipt',
       isExpanded: false,
       children: [
-        { id: 'invoices-list', label: 'All Invoices', translationKey: 'invoicing.allInvoices', icon: 'list', route: '/invoices' },
-        { id: 'invoices-create', label: 'Create Invoice', translationKey: 'invoicing.createInvoice', icon: 'plus', route: '/invoices/create' },
-        { id: 'invoices-pending', label: 'Pending Payment', translationKey: 'invoicing.pendingPayment', icon: 'clock', route: '/invoices/pending', badge: 2 }
+        { id: 'invoices-list', label: 'All Invoices', translationKey: 'invoicing.navigation.allInvoices', icon: 'list', route: '/invoices' },
+        { id: 'invoices-create', label: 'Create Invoice', translationKey: 'invoicing.navigation.createInvoice', icon: 'plus', route: '/invoices/create' },
+        { id: 'invoices-pending', label: 'Pending Payment', translationKey: 'invoicing.navigation.pendingPayment', icon: 'clock', route: '/invoices/pending', badge: 2 }
       ]
     },
     {

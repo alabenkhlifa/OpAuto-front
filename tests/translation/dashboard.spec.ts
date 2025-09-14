@@ -133,6 +133,9 @@ test.describe('Dashboard & Overview - Translation Tests', () => {
         
         // Check for status badges
         await utils.verifyStatusTranslations();
+        
+        // ✅ NEW: Comprehensive dashboard status validation
+        await dashboardUtils.verifyDashboardStatusTranslations();
       }
       
       // Verify no hardcoded text appears

@@ -51,6 +51,9 @@ test.describe('Inventory & Parts Management - Translation Tests', () => {
       // Test parts entries and stock status badges
       await inventoryUtils.verifyPartsEntries();
       
+      // ✅ NEW: Enhanced inventory status validation
+      await inventoryUtils.verifyInventoryStatusTranslations();
+      
       // Test pagination if present
       await inventoryUtils.verifyPagination();
       

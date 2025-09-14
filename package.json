@@ -10,7 +10,17 @@
     "deploy:ghpages": "npx angular-cli-ghpages --dir=dist/OpAuto-front/browser",
     "deploy": "npm run predeploy && npm run deploy:ghpages",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "test:translation": "npx playwright test tests/translation --reporter=html",
+    "test:translation-audit": "tsx tests/translation/run-translation-audit.ts",
+    "test:translation-auth": "npx playwright test tests/translation/auth.spec.ts",
+    "test:translation-dashboard": "npx playwright test tests/translation/dashboard.spec.ts",
+    "test:translation-cars": "npx playwright test tests/translation/cars.spec.ts",
+    "test:translation-maintenance": "npx playwright test tests/translation/maintenance.spec.ts",
+    "test:translation-reliable": "npx playwright test tests/translation/reliable-*.spec.ts --reporter=html",
+    "test:translation-reliable-auth": "npx playwright test tests/translation/reliable-auth.spec.ts",
+    "test:translation-reliable-dashboard": "npx playwright test tests/translation/reliable-dashboard.spec.ts",
+    "test:translation-reliable-cars": "npx playwright test tests/translation/reliable-cars.spec.ts"
   },
   "private": true,
   "dependencies": {
@@ -33,7 +43,9 @@
     "@angular/build": "^20.0.0",
     "@angular/cli": "^20.0.0",
     "@angular/compiler-cli": "^20.0.0",
+    "@playwright/test": "^1.55.0",
     "@types/jasmine": "~5.1.0",
+    "@types/node": "^18.0.0",
     "angular-cli-ghpages": "^2.0.3",
     "jasmine-core": "~5.7.0",
     "karma": "~6.4.0",
@@ -42,6 +54,7 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
     "playwright": "^1.55.0",
+    "tsx": "^4.7.0",
     "typescript": "~5.8.2"
   }
 }

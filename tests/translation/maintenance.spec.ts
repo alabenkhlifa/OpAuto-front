@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { TranslationTestUtils, TableTestUtils, ModalTestUtils, FilterTestUtils } from './utils/screen-specific-utils';
+import { TranslationTestUtils } from './utils/translation-utils';
+import { TableTestUtils, ModalTestUtils, FilterTestUtils } from './utils/screen-specific-utils';
 
 test.describe('Maintenance & Service - Translation Tests', () => {
   let utils: TranslationTestUtils;

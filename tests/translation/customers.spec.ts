@@ -178,7 +178,7 @@ test.describe('Customer Management - Translation Tests', () => {
       await utils.navigateToRoute('/customers');
       
       // Look for view customer profile button
-      const viewProfileButton = utils.page.locator('button:has-text("View"), button:has-text("Profile"), button:has-text("Details"), button:has-text("Voir"), button:has-text("Profil"), button:has-text("Détails"), button:has-text("عرض"), button:has-text("الملف الشخصي"), button:has-text("تفاصيل"), 'tr', '[class*="customer-row"]').first();
+      const viewProfileButton = utils.page.locator('button:has-text("View"), button:has-text("Profile"), button:has-text("Details"), button:has-text("Voir"), button:has-text("Profil"), button:has-text("Détails"), button:has-text("عرض"), button:has-text("الملف الشخصي"), button:has-text("تفاصيل"), tr, [class*="customer-row"]').first();
       
       if (await viewProfileButton.count() > 0) {
         await viewProfileButton.click();

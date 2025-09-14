@@ -145,7 +145,7 @@ test.describe('Appointments & Scheduling - Translation Tests', () => {
       await utils.navigateToRoute('/appointments');
       
       // Look for Add/Book Appointment button
-      const addAppointmentButton = utils.page.locator('button:has-text("New Appointment"), button:has-text("Book"), button:has-text("Add"), button:has-text("Nouveau"), button:has-text("Réserver"), button:has-text("Ajouter"), button:has-text("موعد جديد"), button:has-text("حجز"), button:has-text("إضافة")')first();
+      const addAppointmentButton = utils.page.locator('button:has-text("New Appointment"), button:has-text("Book"), button:has-text("Add"), button:has-text("Nouveau"), button:has-text("Réserver"), button:has-text("Ajouter"), button:has-text("موعد جديد"), button:has-text("حجز"), button:has-text("إضافة")').first();
       
       if (await addAppointmentButton.count() > 0) {
         await addAppointmentButton.click();

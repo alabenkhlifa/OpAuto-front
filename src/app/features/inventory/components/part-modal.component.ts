@@ -1,13 +1,14 @@
 import { Component, Input, Output, EventEmitter, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 import { PartService } from '../../../core/services/part.service';
 import { Part, PartWithStock, Supplier, PartCategory, PartUnit } from '../../../core/models/part.model';
 
 @Component({
   selector: 'app-part-modal',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   template: `
     <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
          (click)="onBackdropClick($event)">
@@ -17,7 +18,7 @@ import { Part, PartWithStock, Supplier, PartCategory, PartUnit } from '../../../
         <!-- Header -->
         <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
-            {{ isEditMode() ? 'Edit Part' : 'Add New Part' }}
+            {{ isEditMode() ? ('inventory.parts.editPart' | translate) : ('inventory.parts.addNewPart' | translate) }}
           </h2>
           <button (click)="onClose()" 
                   class="h-8 w-8 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center transition-colors">
@@ -31,39 +32,39 @@ import { Part, PartWithStock, Supplier, PartCategory, PartUnit } from '../../../
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Part Name *
+                {{ 'inventory.parts.partName' | translate }} *
               </label>
               <input type="text" 
                      formControlName="name"
-                     placeholder="Enter part name"
+                     [placeholder]="'inventory.parts.enterPartName' | translate"
                      class="w-full px-3 py-2 bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm">
               <div *ngIf="partForm.get('name')?.errors && partForm.get('name')?.touched" 
                    class="text-red-500 text-xs mt-1">
-                Part name is required
+                {{ 'inventory.parts.partNameRequired' | translate }}
               </div>
             </div>
 
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Part Number *
+                {{ 'inventory.parts.partNumber' | translate }} *
               </label>
               <input type="text" 
                      formControlName="partNumber"
-                     placeholder="Enter part number"
+                     [placeholder]="'inventory.parts.enterPartNumber' | translate"
                      class="w-full px-3 py-2 bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm">
               <div *ngIf="partForm.get('partNumber')?.errors && partForm.get('partNumber')?.touched" 
                    class="text-red-500 text-xs mt-1">
-                Part number is required
+                {{ 'inventory.parts.partNumberRequired' | translate }}
               </div>
             </div>
           </div>
 
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Description
+              {{ 'inventory.parts.description' | translate }}
             </label>
             <textarea formControlName="description"
-                      placeholder="Enter part description"
+                      [placeholder]="'inventory.parts.enterDescription' | translate"
                       rows="3"
                       class="w-full px-3 py-2 bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm resize-none">
             </textarea>
@@ -73,32 +74,32 @@ import { Part, PartWithStock, Supplier, PartCategory, PartUnit } from '../../../
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Category *
+                {{ 'inventory.parts.category' | translate }} *
               </label>
               <select formControlName="category"
                       class="form-select">
-                <option value="">Select category</option>
+                <option value="">{{ 'inventory.parts.selectCategory' | translate }}</option>
                 <option *ngFor="let category of availableCategories" [value]="category">
                   {{ category | titlecase }}
                 </option>
               </select>
               <div *ngIf="partForm.get('category')?.errors && partForm.get('category')?.touched" 
                    class="text-red-500 text-xs mt-1">
-                Category is required
+                {{ 'inventory.parts.categoryRequired' | translate }}
               </div>
             </div>
 
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Brand *
+                {{ 'inventory.parts.brand' | translate }} *
               </label>
               <input type="text" 
                      formControlName="brand"
-                     placeholder="Enter brand name"
+                     [placeholder]="'inventory.parts.enterBrand' | translate"
                      class="w-full px-3 py-2 bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm">
               <div *ngIf="partForm.get('brand')?.errors && partForm.get('brand')?.touched" 
                    class="text-red-500 text-xs mt-1">
-                Brand is required
+                {{ 'inventory.parts.brandRequired' | translate }}
               </div>
             </div>
           </div>
@@ -107,35 +108,35 @@ import { Part, PartWithStock, Supplier, PartCategory, PartUnit } from '../../../
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Supplier *
+                {{ 'inventory.parts.supplier' | translate }} *
               </label>
               <select formControlName="supplierId"
                       class="form-select">
-                <option value="">Select supplier</option>
+                <option value="">{{ 'inventory.parts.selectSupplier' | translate }}</option>
                 <option *ngFor="let supplier of suppliers()" [value]="supplier.id">
                   {{ supplier.name }}
                 </option>
               </select>
               <div *ngIf="partForm.get('supplierId')?.errors && partForm.get('supplierId')?.touched" 
                    class="text-red-500 text-xs mt-1">
-                Supplier is required
+                {{ 'inventory.parts.supplierRequired' | translate }}
               </div>
             </div>
 
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Unit *
+                {{ 'inventory.parts.unit' | translate }} *
               </label>
               <select formControlName="unit"
                       class="form-select">
-                <option value="">Select unit</option>
+                <option value="">{{ 'inventory.parts.selectUnit' | translate }}</option>
                 <option *ngFor="let unit of availableUnits" [value]="unit">
                   {{ unit | titlecase }}
                 </option>
               </select>
               <div *ngIf="partForm.get('unit')?.errors && partForm.get('unit')?.touched" 
                    class="text-red-500 text-xs mt-1">
-                Unit is required
+                {{ 'inventory.parts.unitRequired' | translate }}
               </div>
             </div>
           </div>
@@ -144,7 +145,7 @@ import { Part, PartWithStock, Supplier, PartCategory, PartUnit } from '../../../
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Price *
+                {{ 'inventory.parts.price' | translate }} *
               </label>
               <input type="number" 
                      formControlName="price"
@@ -154,13 +155,13 @@ import { Part, PartWithStock, Supplier, PartCategory, PartUnit } from '../../../
                      class="w-full px-3 py-2 bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm">
               <div *ngIf="partForm.get('price')?.errors && partForm.get('price')?.touched" 
                    class="text-red-500 text-xs mt-1">
-                Valid price is required
+                {{ 'inventory.parts.priceRequired' | translate }}
               </div>
             </div>
 
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Currency
+                {{ 'inventory.parts.currency' | translate }}
               </label>
               <select formControlName="currency"
                       class="form-select">
@@ -175,7 +176,7 @@ import { Part, PartWithStock, Supplier, PartCategory, PartUnit } from '../../../
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Current Stock *
+                {{ 'inventory.parts.currentStock' | translate }} *
               </label>
               <input type="number" 
                      formControlName="stockLevel"
@@ -184,13 +185,13 @@ import { Part, PartWithStock, Supplier, PartCategory, PartUnit } from '../../../
                      class="w-full px-3 py-2 bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm">
               <div *ngIf="partForm.get('stockLevel')?.errors && partForm.get('stockLevel')?.touched" 
                    class="text-red-500 text-xs mt-1">
-                Stock level is required
+                {{ 'inventory.parts.stockLevelRequired' | translate }}
               </div>
             </div>
 
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Min Stock Level *
+                {{ 'inventory.parts.minStockLevel' | translate }} *
               </label>
               <input type="number" 
                      formControlName="minStockLevel"
@@ -199,17 +200,17 @@ import { Part, PartWithStock, Supplier, PartCategory, PartUnit } from '../../../
                      class="w-full px-3 py-2 bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm">
               <div *ngIf="partForm.get('minStockLevel')?.errors && partForm.get('minStockLevel')?.touched" 
                    class="text-red-500 text-xs mt-1">
-                Minimum stock level is required
+                {{ 'inventory.parts.minStockLevelRequired' | translate }}
               </div>
             </div>
 
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Max Stock Level
+                {{ 'inventory.parts.maxStockLevel' | translate }}
               </label>
               <input type="number" 
                      formControlName="maxStockLevel"
-                     placeholder="Optional"
+                     [placeholder]="'inventory.parts.optional' | translate"
                      min="0"
                      class="w-full px-3 py-2 bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm">
             </div>
@@ -218,11 +219,11 @@ import { Part, PartWithStock, Supplier, PartCategory, PartUnit } from '../../../
           <!-- Location -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Storage Location
+              {{ 'inventory.parts.storageLocation' | translate }}
             </label>
             <input type="text" 
                    formControlName="location"
-                   placeholder="e.g., Shelf A-1, Tire Rack 2"
+                   [placeholder]="'inventory.parts.locationPlaceholder' | translate"
                    class="w-full px-3 py-2 bg-white/50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm">
           </div>
 
@@ -233,7 +234,7 @@ import { Part, PartWithStock, Supplier, PartCategory, PartUnit } from '../../../
                    formControlName="isActive"
                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded">
             <label for="isActive" class="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Active part (available for use)
+              {{ 'inventory.parts.activePart' | translate }}
             </label>
           </div>
         </form>
@@ -243,14 +244,14 @@ import { Part, PartWithStock, Supplier, PartCategory, PartUnit } from '../../../
           <button type="button" 
                   (click)="onClose()"
                   class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
-            Cancel
+            {{ 'common.cancel' | translate }}
           </button>
           <button type="button"
                   (click)="onSubmit()"
                   [disabled]="!partForm.valid || isSubmitting()"
                   class="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center gap-2">
             <div *ngIf="isSubmitting()" class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-            {{ isEditMode() ? 'Update Part' : 'Create Part' }}
+            {{ isEditMode() ? ('inventory.parts.updatePart' | translate) : ('inventory.parts.createPart' | translate) }}
           </button>
         </div>
       </div>
