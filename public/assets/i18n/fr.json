@@ -31,7 +31,9 @@
     "price": "Prix",
     "quantity": "Quantité",
     "notes": "Notes",
-    "clearFilters": "Effacer les filtres"
+    "clearFilters": "Effacer les filtres",
+    "optional": "Optionnel",
+    "month": "mois"
   },
   "navigation": {
     "main": "Principal",
@@ -45,6 +47,8 @@
     "customers": "Clients",
     "reports": "Rapports",
     "employees": "Employés",
+    "users": "Gestion d'Équipe",
+    "subscription": "Abonnement",
     "profile": "Profil",
     "logout": "Déconnexion",
     "opAuto": "OpAuto",
@@ -1484,5 +1488,199 @@
       "noInvoicesDescription": "Essayez d'ajuster votre recherche ou vos filtres",
       "createFirstInvoice": "Créer votre première facture"
     }
+  },
+  "subscription": {
+    "title": "Plans d'Abonnement",
+    "subtitle": "Choisissez le plan parfait pour vos besoins de gestion de garage",
+    "current_plan": "Plan Actuel",
+    "per_month": "/mois",
+    "next_billing": "Prochaine Facturation",
+    "days_left": "jours restants",
+    "unlimited": "Illimité",
+    "used": "utilisé",
+    "included_features": "Fonctionnalités Incluses",
+    "compare_plans": "Comparer les Plans",
+    "most_popular": "Plus Populaire",
+    "upgrade_to": "Passer à",
+    "solo": "Solo",
+    "starter": "Débutant",
+    "professional": "Professionnel",
+    "usage": {
+      "users": "Utilisateurs",
+      "cars": "Voitures",
+      "service_bays": "Postes de Travail"
+    },
+    "features": {
+      "basic_inventory": "Gestion Inventaire de Base",
+      "customer_management": "Gestion des Clients",
+      "basic_reports": "Rapports de Base",
+      "mobile_app": "Accès Application Mobile",
+      "advanced_reports": "Rapports Avancés et Analyses",
+      "email_notifications": "Notifications Email",
+      "team_collaboration": "Collaboration d'Équipe",
+      "api_access": "Accès API",
+      "priority_support": "Support Prioritaire",
+      "custom_integrations": "Intégrations Personnalisées"
+    },
+    "tiers": {
+      "solo": {
+        "name": "Solo",
+        "description": "Parfait pour les petits mécaniciens indépendants"
+      },
+      "starter": {
+        "name": "Débutant",
+        "description": "Idéal pour les garages en croissance avec une petite équipe"
+      },
+      "professional": {
+        "name": "Professionnel",
+        "description": "Solution complète pour les garages établis"
+      },
+      "featureLocked": "Cette fonctionnalité n'est pas disponible dans votre plan actuel",
+      "featureLockedWithTier": "Cette fonctionnalité est disponible dans le plan {{tier}}",
+      "availableIn": "Disponible dans le plan {{tier}}",
+      "upgrade": "Mettre à niveau",
+      "upgradeNow": "Mettre à niveau maintenant",
+      "upgradeTitle": "Débloquer les fonctionnalités premium",
+      "upgradeMessage": "Améliorez votre plan pour accéder aux fonctionnalités avancées et développer votre entreprise",
+      "upgradeForFeatureMessage": "Améliorez votre plan pour débloquer cette fonctionnalité et améliorer votre expérience de gestion de garage",
+      "unlockFeature": "Débloquer cette fonctionnalité",
+      "choosePlan": "Choisissez votre plan",
+      "popular": "Le plus populaire",
+      "current": "Plan actuel",
+      "currentPlan": "Plan actuel",
+      "month": "mois",
+      "downgrade": "Contacter le support",
+      "usageLimitReached": "Limite d'utilisation atteinte pour votre plan actuel",
+      "usageLimitExceeded": "Vous avez dépassé la limite de {{type}} pour votre plan {{tier}}",
+      "upgradeToAddMore": "Passez au plan {{tier}} pour ajouter plus de {{type}}"
+    },
+    "why_upgrade": {
+      "title": "Pourquoi Choisir OpAuto Premium ?"
+    },
+    "benefits": {
+      "growth": {
+        "title": "Développer Votre Entreprise",
+        "description": "Gérez plus de clients, voitures et développez votre équipe avec des fonctionnalités avancées"
+      },
+      "efficiency": {
+        "title": "Améliorer l'Efficacité",
+        "description": "Rationalisez les opérations avec des outils d'automatisation et de collaboration d'équipe"
+      },
+      "insights": {
+        "title": "Insights Basés sur les Données",
+        "description": "Prenez des décisions éclairées avec des rapports et analyses complets"
+      }
+    },
+    "faq": {
+      "title": "Questions Fréquemment Posées",
+      "billing": {
+        "question": "Comment fonctionne la facturation ?",
+        "answer": "Nous facturons mensuellement à l'avance. Vous pouvez passer à un plan supérieur ou inférieur à tout moment, et les changements prennent effet immédiatement."
+      },
+      "cancellation": {
+        "question": "Puis-je annuler à tout moment ?",
+        "answer": "Oui, vous pouvez annuler votre abonnement à tout moment. Votre compte restera actif jusqu'à la fin de votre période de facturation actuelle."
+      },
+      "support": {
+        "question": "Quel support obtiens-je ?",
+        "answer": "Tous les plans incluent le support par email. Les plans professionnels bénéficient d'un support prioritaire avec des temps de réponse plus rapides et un support téléphonique."
+      }
+    },
+    "contact": {
+      "title": "Besoin d'Aide pour Choisir ?",
+      "description": "Notre équipe est là pour vous aider à trouver le plan parfait pour votre garage.",
+      "email": "Contacter par Email",
+      "phone": "Nous Appeler"
+    }
+  },
+  "users": {
+    "teamManagement": "Gestion d'Équipe",
+    "manageTeamMembers": "Gérer les membres de l'équipe et l'accès utilisateur",
+    "tierInfo": "Info Plan",
+    "inviteUser": "Inviter Utilisateur",
+    "teamMembers": "Membres de l'Équipe",
+    "totalUsers": "Total Utilisateurs",
+    "activeUsers": "Utilisateurs Actifs",
+    "pendingInvitations": "Invitations en Attente",
+    "roleDistribution": "Distribution des Rôles",
+    "recentJoins": "Nouveaux Membres",
+    "currentUsage": "Actuellement {{current}} sur {{limit}} utilisateurs",
+    "remaining": "Restant",
+    "limitReached": "Limite d'Utilisateurs Atteinte",
+    "limitReachedDescription": "Vous avez atteint le nombre maximum d'utilisateurs pour le plan {{tier}}.",
+    "searchUsers": "Rechercher membres d'équipe...",
+    "noUsersFound": "Aucun membre d'équipe trouvé",
+    "noUsersDescription": "Commencez par inviter votre premier membre d'équipe.",
+    "inviteFirstUser": "Inviter Premier Utilisateur",
+    "users": "utilisateurs",
+    "joinedOn": "Rejoint le {{date}}",
+    "lastActive": "Dernière activité {{date}}",
+    "permissions": "Permissions",
+    "invitedAs": "Invité comme {{role}}",
+    "changeRole": "Changer le Rôle",
+    "changeStatus": "Changer le Statut",
+    "removeUser": "Supprimer Utilisateur",
+    "inviteTeamMember": "Inviter Membre d'Équipe",
+    "inviteLimit": "{{remaining}} sur {{total}} emplacements d'utilisateurs restants",
+    "unlimitedInvites": "Invitations utilisateur illimitées disponibles",
+    "emailAddress": "Adresse Email",
+    "emailPlaceholder": "Entrer l'adresse email",
+    "firstName": "Prénom",
+    "firstNamePlaceholder": "Entrer le prénom",
+    "lastName": "Nom de Famille",
+    "lastNamePlaceholder": "Entrer le nom de famille",
+    "role": "Rôle",
+    "selectRole": "Sélectionner un rôle",
+    "personalMessage": "Message Personnel",
+    "messagePlaceholder": "Ajouter un message personnel à l'invitation...",
+    "sendInvitation": "Envoyer Invitation",
+    "sending": "Envoi en cours...",
+    "resend": "Renvoyer",
+    "maxUsers": "Max Utilisateurs"
+  },
+  "roles": {
+    "owner": "Propriétaire",
+    "admin": "Administrateur",
+    "mechanic": "Mécanicien",
+    "viewer": "Observateur"
+  },
+  "permissions": {
+    "manageUsers": "Gérer les Utilisateurs",
+    "manageSettings": "Gérer les Paramètres",
+    "viewReports": "Voir les Rapports",
+    "manageInventory": "Gérer l'Inventaire",
+    "manageAppointments": "Gérer les Rendez-vous",
+    "manageInvoices": "Gérer les Factures",
+    "manageMaintenance": "Gérer la Maintenance"
+  },
+  "status": {
+    "active": "Actif",
+    "pending": "En Attente",
+    "inactive": "Inactif",
+    "suspended": "Suspendu"
+  },
+  "validation": {
+    "emailRequired": "L'adresse email est requise",
+    "emailInvalid": "Veuillez entrer une adresse email valide",
+    "roleRequired": "Veuillez sélectionner un rôle"
+  },
+  "tiers": {
+    "currentPlan": "Plan Actuel",
+    "plan": "Plan",
+    "upgrade": "Mettre à Niveau",
+    "upgradeTo": "Passer à {{tier}}",
+    "upgradeRequired": "Mise à Niveau Requise",
+    "upgradeToAddMoreUsers": "Mettez à niveau votre plan pour ajouter plus de membres d'équipe",
+    "recommended": "Recommandé",
+    "whatsIncluded": "Ce qui est Inclus",
+    "upgradeMessage": "Mettez à niveau maintenant pour ajouter plus de membres d'équipe et débloquer des fonctionnalités supplémentaires",
+    "maybeLater": "Peut-être Plus Tard",
+    "upgradeNow": "Mettre à Niveau Maintenant",
+    "upgrading": "Mise à niveau...",
+    "upgradeNote": "La facturation sera calculée au prorata en fonction de votre cycle actuel.",
+    "unlimited": "Illimité",
+    "solo": "Solo",
+    "starter": "Débutant",
+    "professional": "Professionnel"
   }
 }

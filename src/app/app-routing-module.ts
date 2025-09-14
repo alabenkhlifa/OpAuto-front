@@ -132,6 +132,11 @@ const routes: Routes = [
     canActivate: [authGuard]
   },
   { 
+    path: 'users', 
+    loadComponent: () => import('./features/users/users.component').then(m => m.UsersComponent),
+    canActivate: [authGuard]
+  },
+  { 
     path: 'settings', 
     loadComponent: () => import('./features/garage-settings/garage-settings.component').then(m => m.GarageSettingsComponent),
     canActivate: [authGuard]
@@ -144,6 +149,11 @@ const routes: Routes = [
   { 
     path: 'profile', 
     loadComponent: () => import('./features/profile/profile.component').then(m => m.ProfileComponent),
+    canActivate: [authGuard]
+  },
+  { 
+    path: 'subscription', 
+    loadComponent: () => import('./features/subscription/subscription.component').then(m => m.SubscriptionComponent),
     canActivate: [authGuard]
   },
   { path: '**', redirectTo: '/auth' }

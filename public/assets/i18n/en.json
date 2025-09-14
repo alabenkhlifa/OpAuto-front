@@ -31,7 +31,9 @@
     "price": "Price",
     "quantity": "Quantity",
     "notes": "Notes",
-    "clearFilters": "Clear Filters"
+    "clearFilters": "Clear Filters",
+    "optional": "Optional",
+    "month": "month"
   },
   "navigation": {
     "main": "Main",
@@ -45,6 +47,8 @@
     "customers": "Customers",
     "reports": "Reports",
     "employees": "Employees",
+    "users": "Team Management",
+    "subscription": "Subscription",
     "profile": "Profile",
     "logout": "Logout",
     "opAuto": "OpAuto",
@@ -1483,5 +1487,199 @@
       "noInvoicesDescription": "Try adjusting your search or filters",
       "createFirstInvoice": "Create your first invoice"
     }
+  },
+  "subscription": {
+    "title": "Subscription Plans",
+    "subtitle": "Choose the perfect plan for your garage management needs",
+    "current_plan": "Current Plan",
+    "per_month": "/month",
+    "next_billing": "Next Billing",
+    "days_left": "days left",
+    "unlimited": "Unlimited",
+    "used": "used",
+    "included_features": "Included Features",
+    "compare_plans": "Compare Plans",
+    "most_popular": "Most Popular",
+    "upgrade_to": "Upgrade to",
+    "solo": "Solo",
+    "starter": "Starter",
+    "professional": "Professional",
+    "usage": {
+      "users": "Users",
+      "cars": "Cars",
+      "service_bays": "Service Bays"
+    },
+    "features": {
+      "basic_inventory": "Basic Inventory Management",
+      "customer_management": "Customer Management",
+      "basic_reports": "Basic Reports",
+      "mobile_app": "Mobile App Access",
+      "advanced_reports": "Advanced Reports & Analytics",
+      "email_notifications": "Email Notifications",
+      "team_collaboration": "Team Collaboration",
+      "api_access": "API Access",
+      "priority_support": "Priority Support",
+      "custom_integrations": "Custom Integrations"
+    },
+    "tiers": {
+      "solo": {
+        "name": "Solo",
+        "description": "Perfect for small independent mechanics"
+      },
+      "starter": {
+        "name": "Starter",
+        "description": "Ideal for growing garages with a small team"
+      },
+      "professional": {
+        "name": "Professional",
+        "description": "Complete solution for established garages"
+      },
+      "featureLocked": "This feature is not available in your current plan",
+      "featureLockedWithTier": "This feature is available in {{tier}} plan",
+      "availableIn": "Available in {{tier}} plan",
+      "upgrade": "Upgrade",
+      "upgradeNow": "Upgrade Now",
+      "upgradeTitle": "Unlock Premium Features",
+      "upgradeMessage": "Upgrade your plan to access advanced features and grow your business",
+      "upgradeForFeatureMessage": "Upgrade your plan to unlock this feature and enhance your garage management experience",
+      "unlockFeature": "Unlock This Feature",
+      "choosePlan": "Choose Your Plan",
+      "popular": "Most Popular",
+      "current": "Current Plan",
+      "currentPlan": "Current Plan",
+      "month": "month",
+      "downgrade": "Contact Support",
+      "usageLimitReached": "Usage limit reached for your current plan",
+      "usageLimitExceeded": "You have exceeded the {{type}} limit for your {{tier}} plan",
+      "upgradeToAddMore": "Upgrade to {{tier}} to add more {{type}}"
+    },
+    "why_upgrade": {
+      "title": "Why Choose OpAuto Premium?"
+    },
+    "benefits": {
+      "growth": {
+        "title": "Scale Your Business",
+        "description": "Handle more customers, cars, and grow your team with advanced features"
+      },
+      "efficiency": {
+        "title": "Boost Efficiency",
+        "description": "Streamline operations with automation and team collaboration tools"
+      },
+      "insights": {
+        "title": "Data-Driven Insights",
+        "description": "Make informed decisions with comprehensive reports and analytics"
+      }
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "billing": {
+        "question": "How does billing work?",
+        "answer": "We bill monthly in advance. You can upgrade or downgrade at any time, and changes take effect immediately."
+      },
+      "cancellation": {
+        "question": "Can I cancel anytime?",
+        "answer": "Yes, you can cancel your subscription at any time. Your account will remain active until the end of your current billing period."
+      },
+      "support": {
+        "question": "What support do I get?",
+        "answer": "All plans include email support. Professional plans get priority support with faster response times and phone support."
+      }
+    },
+    "contact": {
+      "title": "Need Help Choosing?",
+      "description": "Our team is here to help you find the perfect plan for your garage.",
+      "email": "Contact via Email",
+      "phone": "Call Us"
+    }
+  },
+  "users": {
+    "teamManagement": "Team Management",
+    "manageTeamMembers": "Manage team members and user access",
+    "tierInfo": "Plan Info",
+    "inviteUser": "Invite User",
+    "teamMembers": "Team Members",
+    "totalUsers": "Total Users",
+    "activeUsers": "Active Users",
+    "pendingInvitations": "Pending Invitations",
+    "roleDistribution": "Role Distribution",
+    "recentJoins": "Recent Joins",
+    "currentUsage": "Currently using {{current}} of {{limit}} users",
+    "remaining": "Remaining",
+    "limitReached": "User Limit Reached",
+    "limitReachedDescription": "You've reached the maximum number of users for the {{tier}} plan.",
+    "searchUsers": "Search team members...",
+    "noUsersFound": "No team members found",
+    "noUsersDescription": "Get started by inviting your first team member.",
+    "inviteFirstUser": "Invite First User",
+    "users": "users",
+    "joinedOn": "Joined on {{date}}",
+    "lastActive": "Last active {{date}}",
+    "permissions": "Permissions",
+    "invitedAs": "Invited as {{role}}",
+    "changeRole": "Change Role",
+    "changeStatus": "Change Status",
+    "removeUser": "Remove User",
+    "inviteTeamMember": "Invite Team Member",
+    "inviteLimit": "{{remaining}} of {{total}} user slots remaining",
+    "unlimitedInvites": "Unlimited user invitations available",
+    "emailAddress": "Email Address",
+    "emailPlaceholder": "Enter email address",
+    "firstName": "First Name",
+    "firstNamePlaceholder": "Enter first name",
+    "lastName": "Last Name",
+    "lastNamePlaceholder": "Enter last name",
+    "role": "Role",
+    "selectRole": "Select a role",
+    "personalMessage": "Personal Message",
+    "messagePlaceholder": "Add a personal message to the invitation...",
+    "sendInvitation": "Send Invitation",
+    "sending": "Sending...",
+    "resend": "Resend",
+    "maxUsers": "Max Users"
+  },
+  "roles": {
+    "owner": "Owner",
+    "admin": "Admin",
+    "mechanic": "Mechanic",
+    "viewer": "Viewer"
+  },
+  "permissions": {
+    "manageUsers": "Manage Users",
+    "manageSettings": "Manage Settings",
+    "viewReports": "View Reports",
+    "manageInventory": "Manage Inventory",
+    "manageAppointments": "Manage Appointments",
+    "manageInvoices": "Manage Invoices",
+    "manageMaintenance": "Manage Maintenance"
+  },
+  "status": {
+    "active": "Active",
+    "pending": "Pending",
+    "inactive": "Inactive",
+    "suspended": "Suspended"
+  },
+  "validation": {
+    "emailRequired": "Email address is required",
+    "emailInvalid": "Please enter a valid email address",
+    "roleRequired": "Please select a role"
+  },
+  "tiers": {
+    "currentPlan": "Current Plan",
+    "plan": "Plan",
+    "upgrade": "Upgrade",
+    "upgradeTo": "Upgrade to {{tier}}",
+    "upgradeRequired": "Upgrade Required",
+    "upgradeToAddMoreUsers": "Upgrade your plan to add more team members",
+    "recommended": "Recommended",
+    "whatsIncluded": "What's Included",
+    "upgradeMessage": "Upgrade now to add more team members and unlock additional features",
+    "maybeLater": "Maybe Later",
+    "upgradeNow": "Upgrade Now",
+    "upgrading": "Upgrading...",
+    "upgradeNote": "Billing will be prorated based on your current cycle.",
+    "unlimited": "Unlimited",
+    "solo": "Solo",
+    "starter": "Starter", 
+    "professional": "Professional"
   }
 }

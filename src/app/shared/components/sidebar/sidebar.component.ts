@@ -130,6 +130,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
       route: '/employees'
     },
     {
+      id: 'subscription',
+      label: 'Subscription',
+      translationKey: 'navigation.subscription',
+      icon: 'credit-card',
+      route: '/subscription'
+    },
+    {
       id: 'profile',
       label: 'Profile',
       translationKey: 'navigation.profile',

@@ -31,7 +31,9 @@
     "price": "السعر",
     "quantity": "الكمية",
     "notes": "ملاحظات",
-    "clearFilters": "مسح المرشحات"
+    "clearFilters": "مسح المرشحات",
+    "optional": "اختياري",
+    "month": "شهر"
   },
   "navigation": {
     "main": "الرئيسي",
@@ -45,6 +47,8 @@
     "customers": "العملاء",
     "reports": "التقارير",
     "employees": "الموظفين",
+    "users": "إدارة الفريق",
+    "subscription": "الاشتراك",
     "profile": "الملف الشخصي",
     "logout": "تسجيل خروج",
     "opAuto": "أوب أوتو",
@@ -1484,5 +1488,199 @@
       "noInvoicesDescription": "حاول تعديل البحث أو المرشحات",
       "createFirstInvoice": "إنشاء أول فاتورة لك"
     }
+  },
+  "subscription": {
+    "title": "خطط الاشتراك",
+    "subtitle": "اختر الخطة المثالية لاحتياجات إدارة الكراج الخاص بك",
+    "current_plan": "الخطة الحالية",
+    "per_month": "/شهرياً",
+    "next_billing": "الفوترة التالية",
+    "days_left": "أيام متبقية",
+    "unlimited": "غير محدود",
+    "used": "مستخدم",
+    "included_features": "المميزات المشمولة",
+    "compare_plans": "مقارنة الخطط",
+    "most_popular": "الأكثر شعبية",
+    "upgrade_to": "ترقية إلى",
+    "solo": "فردي",
+    "starter": "مبتدئ",
+    "professional": "احترافي",
+    "usage": {
+      "users": "المستخدمين",
+      "cars": "السيارات",
+      "service_bays": "أماكن العمل"
+    },
+    "features": {
+      "basic_inventory": "إدارة المخزون الأساسية",
+      "customer_management": "إدارة العملاء",
+      "basic_reports": "التقارير الأساسية",
+      "mobile_app": "الوصول لتطبيق الهاتف",
+      "advanced_reports": "التقارير والتحليلات المتقدمة",
+      "email_notifications": "إشعارات البريد الإلكتروني",
+      "team_collaboration": "التعاون الجماعي",
+      "api_access": "الوصول للواجهة البرمجية",
+      "priority_support": "الدعم المميز",
+      "custom_integrations": "التكامل المخصص"
+    },
+    "tiers": {
+      "solo": {
+        "name": "فردي",
+        "description": "مثالي للميكانيكيين المستقلين الصغار"
+      },
+      "starter": {
+        "name": "مبتدئ",
+        "description": "مناسب للكراجات النامية مع فريق صغير"
+      },
+      "professional": {
+        "name": "احترافي",
+        "description": "الحل الشامل للكراجات الراسخة"
+      },
+      "featureLocked": "هذه الميزة غير متوفرة في خطتك الحالية",
+      "featureLockedWithTier": "هذه الميزة متوفرة في خطة {{tier}}",
+      "availableIn": "متوفر في خطة {{tier}}",
+      "upgrade": "ترقية",
+      "upgradeNow": "ترقية الآن",
+      "upgradeTitle": "فتح الميزات المتقدمة",
+      "upgradeMessage": "قم بترقية خطتك للوصول إلى الميزات المتقدمة وتنمية عملك",
+      "upgradeForFeatureMessage": "قم بترقية خطتك لفتح هذه الميزة وتحسين تجربة إدارة الكراج",
+      "unlockFeature": "فتح هذه الميزة",
+      "choosePlan": "اختر خطتك",
+      "popular": "الأكثر شعبية",
+      "current": "الخطة الحالية",
+      "currentPlan": "الخطة الحالية",
+      "month": "شهر",
+      "downgrade": "اتصل بالدعم",
+      "usageLimitReached": "تم الوصول إلى حد الاستخدام لخطتك الحالية",
+      "usageLimitExceeded": "لقد تجاوزت حد {{type}} لخطة {{tier}}",
+      "upgradeToAddMore": "ترقية إلى {{tier}} لإضافة المزيد من {{type}}"
+    },
+    "why_upgrade": {
+      "title": "لماذا تختار OpAuto المميز؟"
+    },
+    "benefits": {
+      "growth": {
+        "title": "توسيع أعمالك",
+        "description": "تعامل مع المزيد من العملاء والسيارات وطور فريقك مع المميزات المتقدمة"
+      },
+      "efficiency": {
+        "title": "تحسين الكفاءة",
+        "description": "بسط العمليات بأدوات الأتمتة والتعاون الجماعي"
+      },
+      "insights": {
+        "title": "رؤى مبنية على البيانات",
+        "description": "اتخذ قرارات مدروسة بالتقارير والتحليلات الشاملة"
+      }
+    },
+    "faq": {
+      "title": "الأسئلة الشائعة",
+      "billing": {
+        "question": "كيف تعمل الفوترة؟",
+        "answer": "نقوم بالفوترة شهرياً مقدماً. يمكنك الترقية أو التراجع في أي وقت، والتغييرات تصبح سارية فوراً."
+      },
+      "cancellation": {
+        "question": "هل يمكنني الإلغاء في أي وقت؟",
+        "answer": "نعم، يمكنك إلغاء اشتراكك في أي وقت. سيبقى حسابك نشطاً حتى نهاية فترة الفوترة الحالية."
+      },
+      "support": {
+        "question": "ما هو الدعم الذي أحصل عليه؟",
+        "answer": "جميع الخطط تشمل دعم البريد الإلكتروني. الخطط الاحترافية تحصل على دعم مميز مع أوقات استجابة أسرع ودعم هاتفي."
+      }
+    },
+    "contact": {
+      "title": "تحتاج مساعدة في الاختيار؟",
+      "description": "فريقنا هنا لمساعدتك في العثور على الخطة المثالية لكراجك.",
+      "email": "التواصل عبر البريد الإلكتروني",
+      "phone": "اتصل بنا"
+    }
+  },
+  "users": {
+    "teamManagement": "إدارة الفريق",
+    "manageTeamMembers": "إدارة أعضاء الفريق والوصول للمستخدمين",
+    "tierInfo": "معلومات الخطة",
+    "inviteUser": "دعوة مستخدم",
+    "teamMembers": "أعضاء الفريق",
+    "totalUsers": "إجمالي المستخدمين",
+    "activeUsers": "المستخدمون النشطون",
+    "pendingInvitations": "الدعوات المعلقة",
+    "roleDistribution": "توزيع الأدوار",
+    "recentJoins": "المنضمون حديثاً",
+    "currentUsage": "يتم استخدام {{current}} من {{limit}} مستخدم حالياً",
+    "remaining": "متبقي",
+    "limitReached": "تم الوصول إلى حد المستخدمين",
+    "limitReachedDescription": "لقد وصلت إلى العدد الأقصى للمستخدمين لخطة {{tier}}.",
+    "searchUsers": "البحث في أعضاء الفريق...",
+    "noUsersFound": "لم يتم العثور على أعضاء فريق",
+    "noUsersDescription": "ابدأ بدعوة عضو الفريق الأول.",
+    "inviteFirstUser": "دعوة المستخدم الأول",
+    "users": "مستخدمين",
+    "joinedOn": "انضم في {{date}}",
+    "lastActive": "آخر نشاط {{date}}",
+    "permissions": "الصلاحيات",
+    "invitedAs": "مدعو كـ {{role}}",
+    "changeRole": "تغيير الدور",
+    "changeStatus": "تغيير الحالة",
+    "removeUser": "إزالة المستخدم",
+    "inviteTeamMember": "دعوة عضو فريق",
+    "inviteLimit": "{{remaining}} من {{total}} مكان للمستخدمين متبقي",
+    "unlimitedInvites": "دعوات مستخدمين غير محدودة متاحة",
+    "emailAddress": "عنوان البريد الإلكتروني",
+    "emailPlaceholder": "أدخل عنوان البريد الإلكتروني",
+    "firstName": "الاسم الأول",
+    "firstNamePlaceholder": "أدخل الاسم الأول",
+    "lastName": "اسم العائلة",
+    "lastNamePlaceholder": "أدخل اسم العائلة",
+    "role": "الدور",
+    "selectRole": "اختر دوراً",
+    "personalMessage": "رسالة شخصية",
+    "messagePlaceholder": "أضف رسالة شخصية للدعوة...",
+    "sendInvitation": "إرسال دعوة",
+    "sending": "جاري الإرسال...",
+    "resend": "إعادة إرسال",
+    "maxUsers": "الحد الأقصى للمستخدمين"
+  },
+  "roles": {
+    "owner": "المالك",
+    "admin": "مدير",
+    "mechanic": "ميكانيكي",
+    "viewer": "مشاهد"
+  },
+  "permissions": {
+    "manageUsers": "إدارة المستخدمين",
+    "manageSettings": "إدارة الإعدادات",
+    "viewReports": "عرض التقارير",
+    "manageInventory": "إدارة المخزون",
+    "manageAppointments": "إدارة المواعيد",
+    "manageInvoices": "إدارة الفواتير",
+    "manageMaintenance": "إدارة الصيانة"
+  },
+  "status": {
+    "active": "نشط",
+    "pending": "معلق",
+    "inactive": "غير نشط",
+    "suspended": "موقوف"
+  },
+  "validation": {
+    "emailRequired": "عنوان البريد الإلكتروني مطلوب",
+    "emailInvalid": "يرجى إدخال عنوان بريد إلكتروني صحيح",
+    "roleRequired": "يرجى اختيار دور"
+  },
+  "tiers": {
+    "currentPlan": "الخطة الحالية",
+    "plan": "خطة",
+    "upgrade": "ترقية",
+    "upgradeTo": "ترقية إلى {{tier}}",
+    "upgradeRequired": "ترقية مطلوبة",
+    "upgradeToAddMoreUsers": "قم بترقية خطتك لإضافة المزيد من أعضاء الفريق",
+    "recommended": "موصى به",
+    "whatsIncluded": "ما هو مشمول",
+    "upgradeMessage": "قم بالترقية الآن لإضافة المزيد من أعضاء الفريق وفتح ميزات إضافية",
+    "maybeLater": "ربما لاحقاً",
+    "upgradeNow": "ترقية الآن",
+    "upgrading": "جاري الترقية...",
+    "upgradeNote": "سيتم حساب الفوترة تناسبياً بناءً على دورتك الحالية.",
+    "unlimited": "غير محدود",
+    "solo": "فردي",
+    "starter": "مبتدئ",
+    "professional": "محترف"
   }
 }
