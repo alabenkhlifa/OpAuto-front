@@ -49,13 +49,13 @@ export class CarsComponent implements OnInit {
   isAtCarLimit = computed(() => {
     const limit = this.carLimit();
     const count = this.currentCarCount();
-    return limit !== null && limit !== undefined && count >= limit;
+    return typeof limit === 'number' && count >= limit;
   });
   
   isNearLimit = computed(() => {
     const limit = this.carLimit();
     const count = this.currentCarCount();
-    return limit !== null && limit !== undefined && count >= limit * 0.9; // 90% threshold
+    return typeof limit === 'number' && count >= (limit * 0.9); // 90% threshold
   });
   
   remainingCars = computed(() => {

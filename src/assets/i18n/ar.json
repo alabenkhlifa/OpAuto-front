@@ -1522,6 +1522,140 @@
     },
     "loading": "جارِ التحميل..."
   },
+  "photo": {
+    "title": "الصور",
+    "upload": {
+      "title": "رفع الصور",
+      "description": "ارفع صور السيارة أو إثباتات العمل",
+      "dropZone": "اسحب واترك الصور هنا، أو اضغط للاختيار",
+      "dropFiles": "اترك الملفات هنا لرفعها",
+      "chooseFiles": "اختر الصور",
+      "maxFiles": "بحد أقصى {{max}} صور",
+      "maxSize": "بحجم أقصى {{size}}",
+      "supportedFormats": "صيغ مدعومة: {{formats}}",
+      "uploadProgress": "جاري الرفع {{progress}}%",
+      "uploadComplete": "تم الرفع بنجاح",
+      "uploadFailed": "فشل في الرفع",
+      "restrictions": {
+        "professionalOnly": "هذه الميزة متاحة فقط للباقة المحترفة",
+        "upgradeRequired": "يتطلب ترقية إلى الباقة المحترفة",
+        "limitReached": "تم الوصول للحد الأقصى من الصور",
+        "fileTooBig": "حجم الملف كبير جداً",
+        "unsupportedFormat": "صيغة الملف غير مدعومة"
+      }
+    },
+    "gallery": {
+      "title": "معرض الصور",
+      "emptyState": "لا توجد صور حتى الآن",
+      "addPhotos": "أضف صور",
+      "viewPhoto": "عرض الصورة",
+      "editPhoto": "تعديل الصورة",
+      "deletePhoto": "حذف الصورة",
+      "downloadPhoto": "تحميل الصورة",
+      "categories": {
+        "all": "جميع الصور",
+        "before": "قبل",
+        "during": "أثناء العمل", 
+        "after": "بعد",
+        "damage": "الضرر",
+        "parts": "القطع",
+        "general": "عامة",
+        "documents": "وثائق"
+      },
+      "filters": {
+        "category": "الفئة",
+        "date": "التاريخ",
+        "sortBy": "ترتيب حسب",
+        "newest": "الأحدث",
+        "oldest": "الأقدم",
+        "name": "الاسم"
+      }
+    },
+    "modal": {
+      "title": "تفاصيل الصورة",
+      "description": "الوصف",
+      "category": "الفئة",
+      "uploadedOn": "تم الرفع في",
+      "size": "الحجم",
+      "dimensions": "الأبعاد",
+      "close": "إغلاق",
+      "previous": "السابق",
+      "next": "التالي"
+    },
+    "edit": {
+      "title": "تعديل الصورة",
+      "description": "وصف الصورة",
+      "descriptionPlaceholder": "أضف وصف للصورة...",
+      "category": "الفئة",
+      "selectCategory": "اختر الفئة",
+      "save": "حفظ",
+      "cancel": "إلغاء"
+    },
+    "actions": {
+      "upload": "رفع صور",
+      "view": "عرض",
+      "edit": "تعديل",
+      "delete": "حذف",
+      "download": "تحميل",
+      "share": "مشاركة",
+      "addToReport": "أضف للتقرير"
+    },
+    "messages": {
+      "uploadSuccess": "تم رفع الصور بنجاح",
+      "uploadError": "فشل في رفع الصور",
+      "deleteSuccess": "تم حذف الصورة بنجاح",
+      "deleteError": "فشل في حذف الصورة",
+      "editSuccess": "تم تحديث الصورة بنجاح",
+      "editError": "فشل في تحديث الصورة"
+    }
+  },
+  "tier": {
+    "solo": "أساسي",
+    "starter": "مبتدئ", 
+    "professional": "محترف",
+    "current": "الباقة الحالية",
+    "upgrade": {
+      "title": "ترقية الباقة",
+      "description": "احصل على ميزات أكثر مع الباقة المحترفة",
+      "benefits": {
+        "photos": "رفع وإدارة صور غير محدودة",
+        "documentation": "توثيق كامل للأعمال", 
+        "reports": "تقارير مفصلة مع الصور",
+        "storage": "مساحة تخزين أكبر",
+        "support": "دعم فني مميز"
+      },
+      "button": "ترقية الآن",
+      "features": {
+        "unlimited": "غير محدود",
+        "premium": "مميز",
+        "advanced": "متقدم"
+      }
+    },
+    "badges": {
+      "professionalOnly": "للمحترفين فقط",
+      "upgradeRequired": "يتطلب ترقية",
+      "comingSoon": "قريباً",
+      "locked": "مقفل"
+    },
+    "restrictions": {
+      "photoUpload": "رفع الصور متاح فقط في الباقة المحترفة",
+      "unlimitedPhotos": "صور غير محدودة للمحترفين فقط",
+      "advancedFeatures": "الميزات المتقدمة تتطلب ترقية"
+    }
+  },
+  "feature": {
+    "locked": {
+      "title": "ميزة مقفلة",
+      "description": "هذه الميزة متاحة فقط في الباقات المدفوعة",
+      "upgradeMessage": "ترقى إلى باقة أعلى للوصول لهذه الميزة",
+      "contactSupport": "تواصل مع الدعم الفني"
+    },
+    "coming": {
+      "title": "قريباً",
+      "description": "نعمل على إضافة هذه الميزة",
+      "stayTuned": "ترقب التحديثات القادمة"
+    }
+  },
   "approvals": {
     "title": "الموافقات",
     "subtitle": "إدارة طلبات الموافقة والتصاريح",
