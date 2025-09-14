@@ -43,7 +43,7 @@ import { UpgradePrompt } from '../../../core/models/user.model';
                   {{ 'tiers.' + upgradePrompt.currentTier.id | translate }}
                 </div>
                 <div class="text-gray-400">
-                  {{ upgradePrompt.currentTier.price }} {{ upgradePrompt.currentTier.currency }}/{{ 'common.month' | translate }}
+                  {{ upgradePrompt.currentTier.price }} {{ upgradePrompt.currentTier.currency }}/{{ 'common.year' | translate }}
                 </div>
               </div>
               
@@ -72,10 +72,10 @@ import { UpgradePrompt } from '../../../core/models/user.model';
                   {{ 'tiers.' + upgradePrompt.suggestedTier.id | translate }}
                 </div>
                 <div class="text-gray-300">
-                  {{ upgradePrompt.suggestedTier.price }} {{ upgradePrompt.suggestedTier.currency }}/{{ 'common.month' | translate }}
+                  {{ upgradePrompt.suggestedTier.price }} {{ upgradePrompt.suggestedTier.currency }}/{{ 'common.year' | translate }}
                 </div>
                 <div class="text-sm text-blue-400 mt-1">
-                  +{{ upgradePrompt.priceComparison.additionalCost }} {{ upgradePrompt.suggestedTier.currency }}/{{ 'common.month' | translate }}
+                  +{{ upgradePrompt.priceComparison.additionalCost }} {{ upgradePrompt.suggestedTier.currency }}/{{ 'common.year' | translate }}
                 </div>
               </div>
               

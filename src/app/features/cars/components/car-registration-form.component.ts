@@ -651,7 +651,14 @@ export class CarRegistrationFormComponent {
         error: (error) => {
           console.error('Failed to register car:', error);
           this.isSubmitting.set(false);
-          // TODO: Show error message to user
+          
+          if (error.error === 'CAR_LIMIT_EXCEEDED') {
+            // Show limit exceeded error
+            alert(`Vehicle limit reached: ${error.message}`);
+          } else {
+            // Show generic error
+            alert('Failed to register vehicle. Please try again.');
+          }
         }
       });
     }

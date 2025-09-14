@@ -21,13 +21,16 @@ export class SubscriptionService {
       price: 500,
       currency: 'TND',
       features: [
-        { key: 'basic_inventory', enabled: true },
-        { key: 'customer_management', enabled: true },
+        { key: 'single_user', enabled: true },
+        { key: 'basic_appointments', enabled: true },
+        { key: 'cash_invoicing', enabled: true },
         { key: 'basic_reports', enabled: true },
-        { key: 'mobile_app', enabled: false, requiresUpgrade: 'starter' },
-        { key: 'advanced_reports', enabled: false, requiresUpgrade: 'starter' },
-        { key: 'team_collaboration', enabled: false, requiresUpgrade: 'professional' },
-        { key: 'api_access', enabled: false, requiresUpgrade: 'professional' }
+        { key: 'browser_notifications', enabled: true },
+        { key: 'multi_user', enabled: false, requiresUpgrade: 'starter' },
+        { key: 'email_notifications', enabled: false, requiresUpgrade: 'starter' },
+        { key: 'internal_approvals', enabled: false, requiresUpgrade: 'starter' },
+        { key: 'photos_documentation', enabled: false, requiresUpgrade: 'professional' },
+        { key: 'inventory_management', enabled: false, requiresUpgrade: 'professional' }
       ],
       limits: {
         users: 1,
@@ -41,38 +44,42 @@ export class SubscriptionService {
       price: 2000,
       currency: 'TND',
       features: [
-        { key: 'basic_inventory', enabled: true },
-        { key: 'customer_management', enabled: true },
+        { key: 'multi_user', enabled: true },
+        { key: 'appointment_management', enabled: true },
+        { key: 'cash_invoicing', enabled: true },
         { key: 'basic_reports', enabled: true },
-        { key: 'mobile_app', enabled: true },
-        { key: 'advanced_reports', enabled: true },
         { key: 'email_notifications', enabled: true },
-        { key: 'team_collaboration', enabled: false, requiresUpgrade: 'professional' },
-        { key: 'api_access', enabled: false, requiresUpgrade: 'professional' }
+        { key: 'internal_approvals', enabled: true },
+        { key: 'photos_documentation', enabled: false, requiresUpgrade: 'professional' },
+        { key: 'inventory_management', enabled: false, requiresUpgrade: 'professional' },
+        { key: 'sms_notifications', enabled: false, requiresUpgrade: 'professional' },
+        { key: 'priority_support', enabled: false, requiresUpgrade: 'professional' }
       ],
       limits: {
-        users: 5,
+        users: 3,
         cars: 200,
-        serviceBays: 5
+        serviceBays: 2
       },
       popular: true
     },
     {
       id: 'professional',
       name: 'Professional',
-      price: 1788,
+      price: 6000,
       currency: 'TND',
       features: [
-        { key: 'basic_inventory', enabled: true },
-        { key: 'customer_management', enabled: true },
+        { key: 'unlimited_users', enabled: true },
+        { key: 'appointment_management', enabled: true },
+        { key: 'cash_invoicing', enabled: true },
         { key: 'basic_reports', enabled: true },
-        { key: 'mobile_app', enabled: true },
-        { key: 'advanced_reports', enabled: true },
         { key: 'email_notifications', enabled: true },
-        { key: 'team_collaboration', enabled: true },
-        { key: 'api_access', enabled: true },
+        { key: 'internal_approvals', enabled: true },
+        { key: 'photos_documentation', enabled: true },
+        { key: 'inventory_management', enabled: true },
+        { key: 'sms_notifications', enabled: true },
         { key: 'priority_support', enabled: true },
-        { key: 'custom_integrations', enabled: true }
+        { key: 'advanced_reports', enabled: true },
+        { key: 'data_export', enabled: true }
       ],
       limits: {
         users: null, // unlimited
@@ -249,6 +256,103 @@ export class SubscriptionService {
         const targetIndex = tierOrder.indexOf(tierId);
         
         return targetIndex > currentIndex;
+      })
+    );
+  }
+
+  /**
+   * Check if downgrade is blocked due to usage exceeding target tier limits
+   */
+  canDowngradeTo(tierId: SubscriptionTierId): Observable<{canDowngrade: boolean, reasons: string[]}> {
+    return this.getCurrentSubscriptionStatus().pipe(
+      map(status => {
+        const tierOrder: SubscriptionTierId[] = ['solo', 'starter', 'professional'];
+        const currentIndex = tierOrder.indexOf(status.currentTier.id);
+        const targetIndex = tierOrder.indexOf(tierId);
+        
+        // Can't downgrade to same tier or higher tier
+        if (targetIndex >= currentIndex) {
+          return { canDowngrade: false, reasons: ['subscription.errors.invalid_downgrade'] };
+        }
+
+        const targetTier = this.mockTiers.find(t => t.id === tierId)!;
+        const usage = status.usage;
+        const reasons: string[] = [];
+
+        // Check user limit
+        if (targetTier.limits.users !== null && usage.users > targetTier.limits.users) {
+          reasons.push('subscription.downgrade.blocked.users_exceed_limit');
+        }
+
+        // Check car limit  
+        if (targetTier.limits.cars !== null && usage.cars > targetTier.limits.cars) {
+          reasons.push('subscription.downgrade.blocked.cars_exceed_limit');
+        }
+
+        // Check service bay limit
+        if (targetTier.limits.serviceBays !== null && usage.serviceBays > targetTier.limits.serviceBays) {
+          reasons.push('subscription.downgrade.blocked.service_bays_exceed_limit');
+        }
+
+        // Check if target tier lacks features currently being used
+        const currentFeatures = status.currentTier.features.filter(f => f.enabled).map(f => f.key);
+        const targetFeatures = targetTier.features.filter(f => f.enabled).map(f => f.key);
+        const missingFeatures = currentFeatures.filter(f => !targetFeatures.includes(f));
+        
+        if (missingFeatures.length > 0) {
+          reasons.push('subscription.downgrade.blocked.features_in_use');
+        }
+
+        return {
+          canDowngrade: reasons.length === 0,
+          reasons
+        };
+      })
+    );
+  }
+
+  /**
+   * Check if tier change is allowed (upgrade or valid downgrade)
+   */
+  canChangeTo(tierId: SubscriptionTierId): Observable<{canChange: boolean, reasons: string[], isUpgrade: boolean}> {
+    return this.getCurrentSubscriptionStatus().pipe(
+      map(status => {
+        const tierOrder: SubscriptionTierId[] = ['solo', 'starter', 'professional'];
+        const currentIndex = tierOrder.indexOf(status.currentTier.id);
+        const targetIndex = tierOrder.indexOf(tierId);
+        
+        if (targetIndex === currentIndex) {
+          return { canChange: false, reasons: ['subscription.errors.same_tier'], isUpgrade: false };
+        }
+        
+        const isUpgrade = targetIndex > currentIndex;
+        
+        if (isUpgrade) {
+          return { canChange: true, reasons: [], isUpgrade: true };
+        } else {
+          // For downgrades, check restrictions
+          const targetTier = this.mockTiers.find(t => t.id === tierId)!;
+          const usage = status.usage;
+          const reasons: string[] = [];
+
+          if (targetTier.limits.users !== null && usage.users > targetTier.limits.users) {
+            reasons.push('subscription.downgrade.blocked.users_exceed_limit');
+          }
+
+          if (targetTier.limits.cars !== null && usage.cars > targetTier.limits.cars) {
+            reasons.push('subscription.downgrade.blocked.cars_exceed_limit');
+          }
+
+          if (targetTier.limits.serviceBays !== null && usage.serviceBays > targetTier.limits.serviceBays) {
+            reasons.push('subscription.downgrade.blocked.service_bays_exceed_limit');
+          }
+
+          return {
+            canChange: reasons.length === 0,
+            reasons,
+            isUpgrade: false
+          };
+        }
       })
     );
   }

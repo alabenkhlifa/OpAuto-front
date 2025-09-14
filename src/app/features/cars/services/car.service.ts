@@ -1,6 +1,8 @@
-import { Injectable, signal } from '@angular/core';
-import { Observable, of, BehaviorSubject } from 'rxjs';
+import { Injectable, signal, inject } from '@angular/core';
+import { Observable, of, BehaviorSubject, throwError } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 import { Car, Customer } from '../../../core/models/appointment.model';
+import { SubscriptionService } from '../../../core/services/subscription.service';
 
 export interface CarWithHistory extends Car {
   lastServiceDate?: Date;
@@ -15,6 +17,8 @@ export interface CarWithHistory extends Car {
   providedIn: 'root'
 })
 export class CarService {
+  private subscriptionService = inject(SubscriptionService);
+  
   private carsSubject = new BehaviorSubject<CarWithHistory[]>([]);
   public cars$ = this.carsSubject.asObservable();
   
@@ -162,14 +166,58 @@ export class CarService {
   }
 
   createCar(car: Omit<CarWithHistory, 'id'>): Observable<CarWithHistory> {
-    const newCar: CarWithHistory = {
-      ...car,
-      id: Date.now().toString()
-    };
-    
-    this.mockCars.push(newCar);
-    this.carsSubject.next([...this.mockCars]);
-    return of(newCar);
+    return this.subscriptionService.getCurrentSubscriptionStatus().pipe(
+      switchMap(status => {
+        const currentCount = this.mockCars.length;
+        const limit = status.currentTier.limits.cars;
+        
+        // Check if we're at the limit
+        if (limit !== null && currentCount >= limit) {
+          return throwError({
+            error: 'CAR_LIMIT_EXCEEDED',
+            message: `Vehicle limit of ${limit} reached for ${status.currentTier.name} tier`,
+            currentCount,
+            limit,
+            tier: status.currentTier.name
+          });
+        }
+        
+        const newCar: CarWithHistory = {
+          ...car,
+          id: Date.now().toString()
+        };
+        
+        this.mockCars.push(newCar);
+        this.carsSubject.next([...this.mockCars]);
+        return of(newCar);
+      })
+    );
+  }
+
+  canCreateCar(): Observable<{canCreate: boolean, reason?: string}> {
+    return this.subscriptionService.getCurrentSubscriptionStatus().pipe(
+      map(status => {
+        const currentCount = this.mockCars.length;
+        const limit = status.currentTier.limits.cars;
+        
+        if (limit === null) {
+          return { canCreate: true };
+        }
+        
+        if (currentCount >= limit) {
+          return { 
+            canCreate: false, 
+            reason: `Vehicle limit of ${limit} reached for ${status.currentTier.name} tier`
+          };
+        }
+        
+        return { canCreate: true };
+      })
+    );
+  }
+
+  getCurrentCarCount(): number {
+    return this.mockCars.length;
   }
 
   updateCar(carId: string, updates: Partial<CarWithHistory>): Observable<CarWithHistory> {

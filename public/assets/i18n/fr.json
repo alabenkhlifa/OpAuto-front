@@ -32,8 +32,10 @@
     "quantity": "Quantité",
     "notes": "Notes",
     "clearFilters": "Effacer les filtres",
+    "filtersActive": "Filtres Actifs",
     "optional": "Optionnel",
-    "month": "mois"
+    "month": "mois",
+    "year": "an"
   },
   "navigation": {
     "main": "Principal",
@@ -242,6 +244,16 @@
     "nextDue": "Prochaine échéance",
     "schedule": "Planifier",
     "history": "Historique",
+    "vehicleDatabase": "Base de données des véhicules",
+    "vehicleStatistics": "Statistiques des véhicules",
+    "vehicles": "Véhicules",
+    "addVehicle": "Ajouter un véhicule",
+    "limitReached": "Limite de véhicules atteinte",
+    "limitReachedDescription": "Vous avez atteint la limite de {{limit}} véhicules pour votre plan {{tier}}. Effectuez une mise à niveau pour ajouter plus de véhicules.",
+    "approachingLimit": "Il vous reste {{remaining}} emplacements de véhicules",
+    "approachingLimitDescription": "Envisagez de mettre à niveau votre plan pour éviter d'atteindre la limite de véhicules.",
+    "vehicleUsage": "Utilisation des véhicules",
+    "unlimitedVehicles": "Véhicules illimités",
     "registerNewCar": "Enregistrer nouvelle voiture",
     "registerCar": "Enregistrer voiture",
     "registering": "Enregistrement en cours...",
@@ -1493,7 +1505,7 @@
     "title": "Plans d'Abonnement",
     "subtitle": "Choisissez le plan parfait pour vos besoins de gestion de garage",
     "current_plan": "Plan Actuel",
-    "per_month": "/mois",
+    "per_year": "/an",
     "next_billing": "Prochaine Facturation",
     "days_left": "jours restants",
     "unlimited": "Illimité",
@@ -1502,6 +1514,9 @@
     "compare_plans": "Comparer les Plans",
     "most_popular": "Plus Populaire",
     "upgrade_to": "Passer à",
+    "downgrade_to": "Rétrograder vers",
+    "downgrade_blocked": "Rétrogradation Non Disponible",
+    "why_blocked": "Pourquoi?",
     "solo": "Solo",
     "starter": "Débutant",
     "professional": "Professionnel",
@@ -1511,16 +1526,22 @@
       "service_bays": "Postes de Travail"
     },
     "features": {
-      "basic_inventory": "Gestion Inventaire de Base",
-      "customer_management": "Gestion des Clients",
-      "basic_reports": "Rapports de Base",
-      "mobile_app": "Accès Application Mobile",
-      "advanced_reports": "Rapports Avancés et Analyses",
-      "email_notifications": "Notifications Email",
-      "team_collaboration": "Collaboration d'Équipe",
-      "api_access": "Accès API",
-      "priority_support": "Support Prioritaire",
-      "custom_integrations": "Intégrations Personnalisées"
+      "single_user": "1 Compte Utilisateur Seulement",
+      "basic_appointments": "Rendez-vous Illimités (Vue Calendrier)",
+      "cash_invoicing": "Facturation Simple en Espèces",
+      "basic_reports": "Rapports Basiques (Quotidiens/Hebdomadaires)",
+      "browser_notifications": "Notifications Navigateur",
+      "multi_user": "Jusqu'à 3 Comptes Utilisateurs",
+      "unlimited_users": "Comptes Utilisateurs Illimités",
+      "appointment_management": "Gestion Avancée des Rendez-vous",
+      "email_notifications": "Email Récapitulatif Quotidien",
+      "internal_approvals": "Système d'Approbation Interne",
+      "photos_documentation": "Documentation Photo pour Maintenance",
+      "inventory_management": "Gestion Stock de Pièces",
+      "sms_notifications": "Notifications SMS aux Clients",
+      "priority_support": "Support Email Prioritaire",
+      "advanced_reports": "Rapports et Analyses Avancés",
+      "data_export": "Export de Données (Excel/PDF)"
     },
     "tiers": {
       "solo": {
@@ -1554,6 +1575,21 @@
       "usageLimitExceeded": "Vous avez dépassé la limite de {{type}} pour votre plan {{tier}}",
       "upgradeToAddMore": "Passez au plan {{tier}} pour ajouter plus de {{type}}"
     },
+    "downgrade": {
+      "blocked": {
+        "users_exceed_limit": "Votre nombre d'utilisateurs actuel dépasse la limite du plan cible. Supprimez des utilisateurs avant de rétrograder.",
+        "cars_exceed_limit": "Votre nombre de véhicules actuel dépasse la limite du plan cible. Supprimez des véhicules avant de rétrograder.",
+        "service_bays_exceed_limit": "Votre nombre de postes de travail actuel dépasse la limite du plan cible. Ajustez votre configuration avant de rétrograder.",
+        "features_in_use": "Vous utilisez actuellement des fonctionnalités non disponibles dans le niveau inférieur. Contactez le support pour assistance."
+      },
+      "title": "Restrictions de Rétrogradation",
+      "explanation": "Pour protéger vos données et assurer un fonctionnement fluide, les rétrogradations sont restreintes lorsque votre utilisation actuelle dépasse les limites du plan inférieur.",
+      "contact_support": "Contactez notre équipe de support pour obtenir de l'aide avec la rétrogradation de votre plan."
+    },
+    "errors": {
+      "invalid_downgrade": "Sélection de rétrogradation invalide",
+      "same_tier": "Vous êtes déjà sur ce plan"
+    },
     "why_upgrade": {
       "title": "Pourquoi Choisir OpAuto Premium ?"
     },
@@ -1575,7 +1611,7 @@
       "title": "Questions Fréquemment Posées",
       "billing": {
         "question": "Comment fonctionne la facturation ?",
-        "answer": "Nous facturons mensuellement à l'avance. Vous pouvez passer à un plan supérieur ou inférieur à tout moment, et les changements prennent effet immédiatement."
+        "answer": "Nous facturons annuellement à l'avance. Vous pouvez passer à un plan supérieur à tout moment avec facturation au prorata, et les changements prennent effet immédiatement."
       },
       "cancellation": {
         "question": "Puis-je annuler à tout moment ?",
@@ -1675,6 +1711,7 @@
     "whatsIncluded": "Ce qui est Inclus",
     "upgradeMessage": "Mettez à niveau maintenant pour ajouter plus de membres d'équipe et débloquer des fonctionnalités supplémentaires",
     "maybeLater": "Peut-être Plus Tard",
+    "considerUpgrade": "Considérer la Mise à Niveau",
     "upgradeNow": "Mettre à Niveau Maintenant",
     "upgrading": "Mise à niveau...",
     "upgradeNote": "La facturation sera calculée au prorata en fonction de votre cycle actuel.",

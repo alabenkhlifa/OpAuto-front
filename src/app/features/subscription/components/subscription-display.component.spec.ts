@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CommonModule } from '@angular/common';
 import { signal } from '@angular/core';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { SubscriptionDisplayComponent } from './subscription-display.component';
 import { SubscriptionService } from '../../../core/services/subscription.service';
@@ -59,7 +59,7 @@ describe('SubscriptionDisplayComponent', () => {
 
     const languageSpy = jasmine.createSpyObj('LanguageService', [
       'getCurrentLanguage',
-      'isRtl'
+      'isRTL'
     ]);
 
     await TestBed.configureTestingModule({
@@ -84,7 +84,7 @@ describe('SubscriptionDisplayComponent', () => {
     mockSubscriptionService.getTierComparison.and.returnValue(of(mockComparison));
     mockSubscriptionService.upgradeTo.and.returnValue(of(true));
     mockLanguageService.getCurrentLanguage.and.returnValue('en');
-    mockLanguageService.isRtl.and.returnValue(false);
+    mockLanguageService.isRTL.and.returnValue(false);
   });
 
   it('should create', () => {
@@ -101,7 +101,7 @@ describe('SubscriptionDisplayComponent', () => {
   });
 
   it('should display loading state', () => {
-    mockSubscriptionService.isLoading = signal(true);
+    (mockSubscriptionService as any).isLoading = jasmine.createSpy().and.returnValue(signal(true));
     fixture.detectChanges();
     
     const loadingElement = fixture.debugElement.nativeElement.querySelector('.loading-container');
@@ -126,7 +126,7 @@ describe('SubscriptionDisplayComponent', () => {
     component.subscriptionStatus.set(mockStatus);
     const stats = component.getUsageStats();
     
-    expect(stats).toHaveLength(3);
+    expect(stats.length).toBe(3);
     
     const userStat = stats.find(s => s.type === 'users');
     expect(userStat).toBeDefined();
@@ -230,7 +230,7 @@ describe('SubscriptionDisplayComponent', () => {
   });
 
   it('should handle RTL layout', () => {
-    mockLanguageService.isRtl.and.returnValue(true);
+    mockLanguageService.isRTL.and.returnValue(true);
     
     // Recreate component to pick up the new RTL value
     const newFixture = TestBed.createComponent(SubscriptionDisplayComponent);
@@ -280,7 +280,7 @@ describe('SubscriptionDisplayComponent', () => {
   describe('data loading error handling', () => {
     it('should handle subscription status loading errors gracefully', () => {
       mockSubscriptionService.getCurrentSubscriptionStatus.and.returnValue(
-        new Promise((_, reject) => reject(new Error('Network error')))
+        throwError(() => new Error('Network error'))
       );
       
       fixture.detectChanges();
@@ -291,7 +291,7 @@ describe('SubscriptionDisplayComponent', () => {
 
     it('should handle tier comparison loading errors gracefully', () => {
       mockSubscriptionService.getTierComparison.and.returnValue(
-        new Promise((_, reject) => reject(new Error('Network error')))
+        throwError(() => new Error('Network error'))
       );
       
       fixture.detectChanges();

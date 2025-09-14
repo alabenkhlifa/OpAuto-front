@@ -32,8 +32,10 @@
     "quantity": "Quantity",
     "notes": "Notes",
     "clearFilters": "Clear Filters",
+    "filtersActive": "Filters Active",
     "optional": "Optional",
-    "month": "month"
+    "month": "month",
+    "year": "year"
   },
   "navigation": {
     "main": "Main",
@@ -260,7 +262,17 @@
     "totalServices": "Total Services",
     "nextDue": "Next Due",
     "schedule": "Schedule",
-    "history": "History"
+    "history": "History",
+    "vehicleDatabase": "Vehicle Database",
+    "vehicleStatistics": "Vehicle Statistics",
+    "vehicles": "Vehicles",
+    "addVehicle": "Add Vehicle",
+    "limitReached": "Vehicle Limit Reached",
+    "limitReachedDescription": "You've reached the {{limit}} vehicle limit for your {{tier}} plan. Upgrade to add more vehicles.",
+    "approachingLimit": "You have {{remaining}} vehicle slots remaining",
+    "approachingLimitDescription": "Consider upgrading your plan to avoid hitting the vehicle limit.",
+    "vehicleUsage": "Vehicle Usage",
+    "unlimitedVehicles": "Unlimited Vehicles"
   },
   "maintenance": {
     "title": "Maintenance",
@@ -1492,7 +1504,7 @@
     "title": "Subscription Plans",
     "subtitle": "Choose the perfect plan for your garage management needs",
     "current_plan": "Current Plan",
-    "per_month": "/month",
+    "per_year": "/year",
     "next_billing": "Next Billing",
     "days_left": "days left",
     "unlimited": "Unlimited",
@@ -1501,6 +1513,9 @@
     "compare_plans": "Compare Plans",
     "most_popular": "Most Popular",
     "upgrade_to": "Upgrade to",
+    "downgrade_to": "Downgrade to",
+    "downgrade_blocked": "Downgrade Not Available",
+    "why_blocked": "Why?",
     "solo": "Solo",
     "starter": "Starter",
     "professional": "Professional",
@@ -1510,16 +1525,22 @@
       "service_bays": "Service Bays"
     },
     "features": {
-      "basic_inventory": "Basic Inventory Management",
-      "customer_management": "Customer Management",
-      "basic_reports": "Basic Reports",
-      "mobile_app": "Mobile App Access",
-      "advanced_reports": "Advanced Reports & Analytics",
-      "email_notifications": "Email Notifications",
-      "team_collaboration": "Team Collaboration",
-      "api_access": "API Access",
-      "priority_support": "Priority Support",
-      "custom_integrations": "Custom Integrations"
+      "single_user": "1 User Account Only",
+      "basic_appointments": "Unlimited Appointments (Calendar View)",
+      "cash_invoicing": "Simple Cash Invoicing",
+      "basic_reports": "Basic Reporting (Daily/Weekly)",
+      "browser_notifications": "Browser Notifications",
+      "multi_user": "Up to 3 User Accounts",
+      "unlimited_users": "Unlimited User Accounts",
+      "appointment_management": "Advanced Appointment Management",
+      "email_notifications": "Daily Summary Email",
+      "internal_approvals": "Internal Approval System",
+      "photos_documentation": "Photo Documentation for Maintenance",
+      "inventory_management": "Parts Inventory Management",
+      "sms_notifications": "SMS Notifications to Customers",
+      "priority_support": "Priority Email Support",
+      "advanced_reports": "Advanced Reporting & Analytics",
+      "data_export": "Data Export (Excel/PDF)"
     },
     "tiers": {
       "solo": {
@@ -1553,6 +1574,21 @@
       "usageLimitExceeded": "You have exceeded the {{type}} limit for your {{tier}} plan",
       "upgradeToAddMore": "Upgrade to {{tier}} to add more {{type}}"
     },
+    "downgrade": {
+      "blocked": {
+        "users_exceed_limit": "Your current user count exceeds the target plan's limit. Remove users before downgrading.",
+        "cars_exceed_limit": "Your current vehicle count exceeds the target plan's limit. Remove vehicles before downgrading.",
+        "service_bays_exceed_limit": "Your current service bay count exceeds the target plan's limit. Adjust your setup before downgrading.",
+        "features_in_use": "You are currently using features not available in the lower tier. Contact support for assistance."
+      },
+      "title": "Downgrade Restrictions",
+      "explanation": "To protect your data and ensure smooth operations, downgrades are restricted when your current usage exceeds the lower plan's limits.",
+      "contact_support": "Contact our support team for help with downgrading your plan."
+    },
+    "errors": {
+      "invalid_downgrade": "Invalid downgrade selection",
+      "same_tier": "You are already on this plan"
+    },
     "why_upgrade": {
       "title": "Why Choose OpAuto Premium?"
     },
@@ -1574,7 +1610,7 @@
       "title": "Frequently Asked Questions",
       "billing": {
         "question": "How does billing work?",
-        "answer": "We bill monthly in advance. You can upgrade or downgrade at any time, and changes take effect immediately."
+        "answer": "We bill annually in advance. You can upgrade at any time with pro-rated billing, and changes take effect immediately."
       },
       "cancellation": {
         "question": "Can I cancel anytime?",
@@ -1674,6 +1710,7 @@
     "whatsIncluded": "What's Included",
     "upgradeMessage": "Upgrade now to add more team members and unlock additional features",
     "maybeLater": "Maybe Later",
+    "considerUpgrade": "Consider Upgrade",
     "upgradeNow": "Upgrade Now",
     "upgrading": "Upgrading...",
     "upgradeNote": "Billing will be prorated based on your current cycle.",

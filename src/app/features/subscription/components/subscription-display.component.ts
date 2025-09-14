@@ -46,7 +46,7 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
                 </h2>
                 <p class="tier-price">
                   {{ formatCurrency(subscriptionStatus()!.currentTier.price) }}
-                  {{ 'subscription.per_month' | translate }}
+                  {{ 'subscription.per_year' | translate }}
                 </p>
               </div>
             </div>
@@ -139,7 +139,7 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
                 </div>
                 <div class="tier-pricing">
                   <span class="price-amount">{{ formatCurrency(tier.price) }}</span>
-                  <span class="price-period">{{ 'subscription.per_month' | translate }}</span>
+                  <span class="price-period">{{ 'subscription.per_year' | translate }}</span>
                 </div>
               </div>
 
@@ -164,20 +164,53 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
               </div>
 
               <div class="tier-footer">
-                <button
-                  *ngIf="tier.id !== tierComparison()!.currentTierId"
-                  class="btn-primary upgrade-btn"
-                  [disabled]="isLoading()"
-                  (click)="upgradeTo(tier.id)"
-                  [attr.aria-label]="('subscription.upgrade_to' | translate) + ' ' + (tier.name | translate)"
-                >
-                  {{ 'subscription.upgrade_to' | translate }} {{ tier.name | translate }}
-                </button>
+                <!-- Current Plan -->
                 <div
                   *ngIf="tier.id === tierComparison()!.currentTierId"
                   class="current-plan-indicator"
                 >
                   {{ 'subscription.current_plan' | translate }}
+                </div>
+                
+                <!-- Upgrade Button -->
+                <button
+                  *ngIf="tier.id !== tierComparison()!.currentTierId && isUpgradeTier(tier.id)"
+                  class="btn-primary upgrade-btn"
+                  [disabled]="isLoading()"
+                  (click)="changeTier(tier.id)"
+                  [attr.aria-label]="('subscription.upgrade_to' | translate) + ' ' + (tier.name | translate)"
+                >
+                  {{ 'subscription.upgrade_to' | translate }} {{ tier.name | translate }}
+                </button>
+                
+                <!-- Downgrade Button (when allowed) -->
+                <button
+                  *ngIf="tier.id !== tierComparison()!.currentTierId && isDowngradeTier(tier.id) && canDowngradeToTier(tier.id)"
+                  class="btn-secondary downgrade-btn"
+                  [disabled]="isLoading()"
+                  (click)="changeTier(tier.id)"
+                  [attr.aria-label]="('subscription.downgrade_to' | translate) + ' ' + (tier.name | translate)"
+                >
+                  {{ 'subscription.downgrade_to' | translate }} {{ tier.name | translate }}
+                </button>
+                
+                <!-- Blocked Downgrade Indicator -->
+                <div
+                  *ngIf="tier.id !== tierComparison()!.currentTierId && isDowngradeTier(tier.id) && !canDowngradeToTier(tier.id)"
+                  class="downgrade-blocked"
+                >
+                  <div class="blocked-indicator">
+                    <svg class="block-icon" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span class="blocked-text">{{ 'subscription.downgrade_blocked' | translate }}</span>
+                  </div>
+                  <button
+                    class="btn-tertiary btn-sm blocked-details-btn"
+                    (click)="showDowngradeBlockedDetails(tier.id)"
+                  >
+                    {{ 'subscription.why_blocked' | translate }}
+                  </button>
                 </div>
               </div>
             </div>
@@ -565,6 +598,57 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
       font-weight: 500;
     }
 
+    .downgrade-btn {
+      width: 100%;
+      background: rgba(156, 163, 175, 0.8);
+      border: 1px solid rgba(156, 163, 175, 0.3);
+    }
+
+    .downgrade-btn:hover {
+      background: rgba(156, 163, 175, 1);
+      border-color: rgba(156, 163, 175, 0.5);
+    }
+
+    .downgrade-blocked {
+      padding: 0.75rem;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .blocked-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .block-icon {
+      width: 1.25rem;
+      height: 1.25rem;
+      color: rgba(239, 68, 68, 1);
+    }
+
+    .blocked-text {
+      color: rgba(239, 68, 68, 1);
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .blocked-details-btn {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      color: rgba(156, 163, 175, 1);
+      border: 1px solid rgba(156, 163, 175, 0.3);
+    }
+
+    .blocked-details-btn:hover {
+      color: white;
+      border-color: rgba(156, 163, 175, 0.5);
+    }
+
     /* Responsive styles */
     @media (min-width: 768px) {
       .current-header {
@@ -637,6 +721,96 @@ export class SubscriptionDisplayComponent implements OnInit {
           this.loadSubscriptionData();
         }
       });
+  }
+
+  changeTier(tierId: string): void {
+    this.subscriptionService.canChangeTo(tierId as any)
+      .pipe(takeUntilDestroyed())
+      .subscribe(({ canChange, reasons, isUpgrade }) => {
+        if (canChange) {
+          this.subscriptionService.upgradeTo(tierId as any)
+            .pipe(takeUntilDestroyed())
+            .subscribe(success => {
+              if (success) {
+                this.loadSubscriptionData();
+              }
+            });
+        } else {
+          // Show blocked reasons
+          this.showChangeBlockedDialog(tierId, reasons, isUpgrade);
+        }
+      });
+  }
+
+  isUpgradeTier(tierId: string): boolean {
+    const comparison = this.tierComparison();
+    if (!comparison) return false;
+    
+    const tierOrder = ['solo', 'starter', 'professional'];
+    const currentIndex = tierOrder.indexOf(comparison.currentTierId);
+    const targetIndex = tierOrder.indexOf(tierId);
+    
+    return targetIndex > currentIndex;
+  }
+
+  isDowngradeTier(tierId: string): boolean {
+    const comparison = this.tierComparison();
+    if (!comparison) return false;
+    
+    const tierOrder = ['solo', 'starter', 'professional'];
+    const currentIndex = tierOrder.indexOf(comparison.currentTierId);
+    const targetIndex = tierOrder.indexOf(tierId);
+    
+    return targetIndex < currentIndex;
+  }
+
+  canDowngradeToTier(tierId: string): boolean {
+    // This will be populated by the subscription service check
+    // For now, we'll use a simple logic but this should be reactive
+    const status = this.subscriptionStatus();
+    if (!status) return false;
+    
+    const tierOrder = ['solo', 'starter', 'professional'];
+    const targetTier = this.getTargetTierLimits(tierId);
+    if (!targetTier) return false;
+    
+    // Check if current usage exceeds target tier limits
+    if (targetTier.users !== null && status.usage.users > targetTier.users) return false;
+    if (targetTier.cars !== null && status.usage.cars > targetTier.cars) return false;
+    if (targetTier.serviceBays !== null && status.usage.serviceBays > targetTier.serviceBays) return false;
+    
+    return true;
+  }
+
+  private getTargetTierLimits(tierId: string) {
+    const comparison = this.tierComparison();
+    if (!comparison) return null;
+    
+    const targetTier = comparison.tiers.find(t => t.id === tierId);
+    return targetTier?.limits || null;
+  }
+
+  showDowngradeBlockedDetails(tierId: string): void {
+    this.subscriptionService.canDowngradeTo(tierId as any)
+      .pipe(takeUntilDestroyed())
+      .subscribe(({ canDowngrade, reasons }) => {
+        if (!canDowngrade) {
+          this.showDowngradeBlockedDialog(tierId, reasons);
+        }
+      });
+  }
+
+  private showChangeBlockedDialog(tierId: string, reasons: string[], isUpgrade: boolean): void {
+    // This would typically open a modal or show a toast with the blocking reasons
+    // For now, we'll use a simple alert (should be replaced with proper UI)
+    const action = isUpgrade ? 'upgrade' : 'downgrade';
+    const message = reasons.map(r => r).join('\n'); // Translation keys would be translated here
+    alert(`Cannot ${action} to ${tierId}:\n${message}`);
+  }
+
+  private showDowngradeBlockedDialog(tierId: string, reasons: string[]): void {
+    const message = reasons.map(r => r).join('\n'); // Translation keys would be translated here  
+    alert(`Cannot downgrade to ${tierId}:\n${message}`);
   }
 
   formatCurrency(amount: number): string {

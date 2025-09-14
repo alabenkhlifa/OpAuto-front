@@ -315,16 +315,16 @@ export class UserService {
       nextTier = { 
         id: 'starter' as const,
         name: 'Starter', 
-        price: 948,
+        price: 2000,
         currency: 'TND',
-        limits: { users: 5, cars: 200, serviceBays: 5 },
+        limits: { users: 3, cars: 200, serviceBays: 2 },
         features: []
       };
     } else if (tier.id === 'starter') {
       nextTier = { 
         id: 'professional' as const,
         name: 'Professional',
-        price: 149,
+        price: 6000,
         currency: 'TND', 
         limits: { users: null, cars: null, serviceBays: null },
         features: []

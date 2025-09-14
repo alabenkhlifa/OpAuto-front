@@ -39,7 +39,7 @@ describe('FeatureLockComponent', () => {
       expect(component.config).toEqual({ feature: '', showUpgradeButton: true });
       expect(component.feature).toBe('');
       expect(component.showUpgradeButton).toBe(true);
-      expect(component.showOverlay).toBe(true);
+      expect(component.shouldShowOverlay()).toBe(true);
     });
   });
 
@@ -86,7 +86,7 @@ describe('FeatureLockComponent', () => {
       mockSubscriptionService.isFeatureEnabled.and.returnValue(of(false));
       mockSubscriptionService.getUpgradeTierForFeature.and.returnValue('professional');
       component.feature = 'photo_upload';
-      component.showOverlay = true;
+      component.showOverlayInput = true;
       
       fixture.detectChanges();
       
@@ -97,7 +97,7 @@ describe('FeatureLockComponent', () => {
     it('should show lock icon in overlay', () => {
       mockSubscriptionService.isFeatureEnabled.and.returnValue(of(false));
       component.feature = 'photo_upload';
-      component.showOverlay = true;
+      component.showOverlayInput = true;
       
       fixture.detectChanges();
       
@@ -110,7 +110,7 @@ describe('FeatureLockComponent', () => {
       mockSubscriptionService.getUpgradeTierForFeature.and.returnValue('professional');
       component.feature = 'photo_upload';
       component.showUpgradeButton = true;
-      component.showOverlay = true;
+      component.showOverlayInput = true;
       
       fixture.detectChanges();
       
@@ -122,7 +122,7 @@ describe('FeatureLockComponent', () => {
       mockSubscriptionService.isFeatureEnabled.and.returnValue(of(false));
       component.feature = 'photo_upload';
       component.config = { feature: 'photo_upload', showUpgradeButton: false };
-      component.showOverlay = true;
+      component.showOverlayInput = true;
       
       fixture.detectChanges();
       
@@ -172,7 +172,7 @@ describe('FeatureLockComponent', () => {
       mockSubscriptionService.isFeatureEnabled.and.returnValue(of(false));
       component.feature = 'photo_upload';
       component.title = 'Photo Upload';
-      component.showOverlay = true;
+      component.showOverlayInput = true;
       
       fixture.detectChanges();
       
@@ -186,7 +186,7 @@ describe('FeatureLockComponent', () => {
       mockSubscriptionService.isFeatureEnabled.and.returnValue(of(false));
       mockSubscriptionService.getUpgradeTierForFeature.and.returnValue('professional');
       component.feature = 'photo_upload';
-      component.showOverlay = true;
+      component.showOverlayInput = true;
       
       fixture.detectChanges();
       
@@ -197,7 +197,7 @@ describe('FeatureLockComponent', () => {
     it('should be focusable', () => {
       mockSubscriptionService.isFeatureEnabled.and.returnValue(of(false));
       component.feature = 'photo_upload';
-      component.showOverlay = true;
+      component.showOverlayInput = true;
       
       fixture.detectChanges();
       
@@ -211,7 +211,7 @@ describe('FeatureLockComponent', () => {
       mockSubscriptionService.isFeatureEnabled.and.returnValue(of(false));
       mockSubscriptionService.getUpgradeTierForFeature.and.returnValue('professional');
       component.feature = 'photo_upload';
-      component.showOverlay = true;
+      component.showOverlayInput = true;
       
       spyOn(component.upgradeClicked, 'emit');
       

@@ -32,8 +32,10 @@
     "quantity": "الكمية",
     "notes": "ملاحظات",
     "clearFilters": "مسح المرشحات",
+    "filtersActive": "المرشحات نشطة",
     "optional": "اختياري",
-    "month": "شهر"
+    "month": "شهر",
+    "year": "سنة"
   },
   "navigation": {
     "main": "الرئيسي",
@@ -242,6 +244,16 @@
     "nextDue": "الاستحقاق التالي",
     "schedule": "جدولة",
     "history": "التاريخ",
+    "vehicleDatabase": "قاعدة بيانات المركبات",
+    "vehicleStatistics": "إحصائيات المركبات",
+    "vehicles": "المركبات",
+    "addVehicle": "إضافة مركبة",
+    "limitReached": "تم الوصول لحد المركبات",
+    "limitReachedDescription": "لقد وصلت إلى حد {{limit}} مركبة لخطة {{tier}}. ترقية للحصول على المزيد من المركبات.",
+    "approachingLimit": "متبقي لديك {{remaining}} مساحة للمركبات",
+    "approachingLimitDescription": "فكر في ترقية خطتك لتجنب الوصول لحد المركبات.",
+    "vehicleUsage": "استخدام المركبات",
+    "unlimitedVehicles": "مركبات غير محدودة",
     "registerNewCar": "تسجيل سيارة جديدة",
     "registerCar": "تسجيل سيارة",
     "registering": "جاري التسجيل...",
@@ -1493,7 +1505,7 @@
     "title": "خطط الاشتراك",
     "subtitle": "اختر الخطة المثالية لاحتياجات إدارة الكراج الخاص بك",
     "current_plan": "الخطة الحالية",
-    "per_month": "/شهرياً",
+    "per_year": "/سنوياً",
     "next_billing": "الفوترة التالية",
     "days_left": "أيام متبقية",
     "unlimited": "غير محدود",
@@ -1502,6 +1514,9 @@
     "compare_plans": "مقارنة الخطط",
     "most_popular": "الأكثر شعبية",
     "upgrade_to": "ترقية إلى",
+    "downgrade_to": "تراجع إلى",
+    "downgrade_blocked": "التراجع غير متاح",
+    "why_blocked": "لماذا؟",
     "solo": "فردي",
     "starter": "مبتدئ",
     "professional": "احترافي",
@@ -1511,16 +1526,22 @@
       "service_bays": "أماكن العمل"
     },
     "features": {
-      "basic_inventory": "إدارة المخزون الأساسية",
-      "customer_management": "إدارة العملاء",
-      "basic_reports": "التقارير الأساسية",
-      "mobile_app": "الوصول لتطبيق الهاتف",
-      "advanced_reports": "التقارير والتحليلات المتقدمة",
-      "email_notifications": "إشعارات البريد الإلكتروني",
-      "team_collaboration": "التعاون الجماعي",
-      "api_access": "الوصول للواجهة البرمجية",
-      "priority_support": "الدعم المميز",
-      "custom_integrations": "التكامل المخصص"
+      "single_user": "حساب مستخدم واحد فقط",
+      "basic_appointments": "مواعيد غير محدودة (عرض التقويم)",
+      "cash_invoicing": "فواتير نقدية بسيطة",
+      "basic_reports": "تقارير أساسية (يومية/أسبوعية)",
+      "browser_notifications": "إشعارات المتصفح",
+      "multi_user": "حتى 3 حسابات مستخدمين",
+      "unlimited_users": "حسابات مستخدمين غير محدودة",
+      "appointment_management": "إدارة متقدمة للمواعيد",
+      "email_notifications": "بريد إلكتروني يومي ملخص",
+      "internal_approvals": "نظام الموافقات الداخلية",
+      "photos_documentation": "توثيق بالصور للصيانة",
+      "inventory_management": "إدارة مخزون قطع الغيار",
+      "sms_notifications": "إشعارات رسائل نصية للعملاء",
+      "priority_support": "دعم بريد إلكتروني مميز",
+      "advanced_reports": "تقارير وتحليلات متقدمة",
+      "data_export": "تصدير البيانات (Excel/PDF)"
     },
     "tiers": {
       "solo": {
@@ -1554,6 +1575,21 @@
       "usageLimitExceeded": "لقد تجاوزت حد {{type}} لخطة {{tier}}",
       "upgradeToAddMore": "ترقية إلى {{tier}} لإضافة المزيد من {{type}}"
     },
+    "downgrade": {
+      "blocked": {
+        "users_exceed_limit": "عدد المستخدمين الحالي يتجاوز حد الخطة المستهدفة. قم بإزالة المستخدمين قبل التراجع.",
+        "cars_exceed_limit": "عدد المركبات الحالي يتجاوز حد الخطة المستهدفة. قم بإزالة المركبات قبل التراجع.",
+        "service_bays_exceed_limit": "عدد أماكن العمل الحالي يتجاوز حد الخطة المستهدفة. اضبط إعدادك قبل التراجع.",
+        "features_in_use": "تستخدم حاليًا ميزات غير متوفرة في المستوى الأدنى. اتصل بالدعم للمساعدة."
+      },
+      "title": "قيود التراجع",
+      "explanation": "لحماية بياناتك وضمان التشغيل السلس، يتم تقييد التراجع عندما يتجاوز استخدامك الحالي حدود الخطة الأدنى.",
+      "contact_support": "اتصل بفريق الدعم للحصول على المساعدة في تراجع خطتك."
+    },
+    "errors": {
+      "invalid_downgrade": "اختيار تراجع غير صحيح",
+      "same_tier": "أنت بالفعل على هذه الخطة"
+    },
     "why_upgrade": {
       "title": "لماذا تختار OpAuto المميز؟"
     },
@@ -1575,7 +1611,7 @@
       "title": "الأسئلة الشائعة",
       "billing": {
         "question": "كيف تعمل الفوترة؟",
-        "answer": "نقوم بالفوترة شهرياً مقدماً. يمكنك الترقية أو التراجع في أي وقت، والتغييرات تصبح سارية فوراً."
+        "answer": "نقوم بالفوترة سنوياً مقدماً. يمكنك الترقية في أي وقت مع فوترة تناسبية، والتغييرات تصبح سارية فوراً."
       },
       "cancellation": {
         "question": "هل يمكنني الإلغاء في أي وقت؟",
@@ -1675,6 +1711,7 @@
     "whatsIncluded": "ما هو مشمول",
     "upgradeMessage": "قم بالترقية الآن لإضافة المزيد من أعضاء الفريق وفتح ميزات إضافية",
     "maybeLater": "ربما لاحقاً",
+    "considerUpgrade": "فكر في الترقية",
     "upgradeNow": "ترقية الآن",
     "upgrading": "جاري الترقية...",
     "upgradeNote": "سيتم حساب الفوترة تناسبياً بناءً على دورتك الحالية.",
