@@ -355,10 +355,11 @@ export class CarsComponent implements OnInit {
     const currentLang = this.languageService.getCurrentLanguage();
     
     // Map language codes to locales
+    // For Arabic, use 'ar-TN' (Tunisia) or 'en-US' to ensure Western numerals
     const localeMap: Record<string, string> = {
       'en': 'en-US',
       'fr': 'fr-FR', 
-      'ar': 'ar-SA'
+      'ar': 'en-US' // Use English locale for Arabic to get Western numerals
     };
     
     const locale = localeMap[currentLang] || 'en-US';

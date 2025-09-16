@@ -814,7 +814,8 @@ export class SubscriptionDisplayComponent implements OnInit {
   }
 
   formatCurrency(amount: number): string {
-    return new Intl.NumberFormat(this.languageService.getCurrentLanguage(), {
+    // Use fr-TN for Tunisian locale with Western numerals regardless of language
+    return new Intl.NumberFormat('fr-TN', {
       style: 'currency',
       currency: 'TND',
       minimumFractionDigits: 0
