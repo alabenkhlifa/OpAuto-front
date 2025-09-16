@@ -5,41 +5,41 @@
   <header class="glass-card cars-header" role="banner">
     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
       <div class="flex-1">
-        <h1 id="page-title" class="text-3xl font-bold text-gray-900 dark:text-white mb-1">{{ 'cars.vehicleDatabase' | translate }}</h1>
-        <p class="text-gray-600 dark:text-gray-300" aria-describedby="page-title">{{ 'cars.subtitle' | translate }}</p>
-        
+        <h1 id="page-title" class="text-3xl font-bold text-white mb-1">{{ 'cars.vehicleDatabase' | translate }}</h1>
+        <p class="text-gray-300" aria-describedby="page-title">{{ 'cars.subtitle' | translate }}</p>
+
         <!-- Car Count and Tier Info with Progress Bar -->
         <div class="mt-3 space-y-3">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
-              <span class="text-sm text-gray-600 dark:text-gray-400">{{ 'cars.vehicles' | translate }}:</span>
-              <span class="count-badge text-sm font-semibold px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800"
+              <span class="text-sm text-white">{{ 'cars.vehicles' | translate }}:</span>
+              <span class="count-badge text-sm font-semibold px-2 py-1 rounded-full bg-gray-100"
                     [class.text-amber-600]="isNearLimit() && !isAtCarLimit()"
                     [class.text-red-600]="isAtCarLimit()"
                     [class.text-gray-700]="!isNearLimit() && !isAtCarLimit()"
-                    [class.dark:text-amber-400]="isNearLimit() && !isAtCarLimit()"
-                    [class.dark:text-red-400]="isAtCarLimit()"
-                    [class.dark:text-gray-300]="!isNearLimit() && !isAtCarLimit()"
+                    [class.text-amber-400]="isNearLimit() && !isAtCarLimit()"
+                    [class.text-red-400]="isAtCarLimit()"
+                    [class.text-gray-300]="!isNearLimit() && !isAtCarLimit()"
                     [attr.aria-label]="'Current vehicle count: ' + carLimitDisplay()">
                 {{ carLimitDisplay() }}
               </span>
             </div>
             <div class="flex items-center gap-2">
-              <span class="text-sm text-gray-600 dark:text-gray-400">{{ 'tiers.plan' | translate }}:</span>
-              <span class="text-sm font-medium text-blue-600 dark:text-blue-400">
+              <span class="text-sm text-white">{{ 'tiers.plan' | translate }}:</span>
+              <span class="text-sm font-medium text-blue-400">
                 {{ currentTier() }}
               </span>
             </div>
           </div>
-          
+
           <!-- Progress Bar -->
           @if (carLimit()) {
             <div class="w-full">
-              <div class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+              <div class="flex items-center justify-between text-xs text-white mb-1">
                 <span>{{ 'cars.vehicleUsage' | translate }}</span>
                 <span>{{ getUsagePercentage() }}%</span>
               </div>
-              <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+              <div class="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
                 <div class="progress-bar h-full rounded-full transition-all duration-300 ease-out"
                      [style.width.%]="getUsagePercentage()"
                      [class.bg-green-500]="!isNearLimit()"
@@ -54,7 +54,7 @@
               </div>
             </div>
           } @else {
-            <div class="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1">
+            <div class="text-xs text-gray-400 flex items-center gap-1">
               <svg class="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
               </svg>
@@ -102,9 +102,9 @@
   </header>
 
   <!-- Limit Warning (90% capacity) -->
-  <div *ngIf="isNearLimit() && !isAtCarLimit()" 
+  <div *ngIf="isNearLimit() && !isAtCarLimit()"
        id="limit-warning-notice"
-       class="limit-warning glass-card bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500"
+       class="limit-warning glass-card bg-amber-900/20 border-l-4 border-amber-500"
        role="alert"
        aria-live="polite">
     <div class="flex items-center gap-3 p-4">
@@ -112,10 +112,10 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
       </svg>
       <div class="flex-1">
-        <p class="text-amber-800 dark:text-amber-200 font-medium">{{ 'cars.approachingLimit' | translate: {remaining: remainingCars()} }}</p>
-        <p class="text-amber-700 dark:text-amber-300 text-sm mt-1">{{ 'cars.approachingLimitDescription' | translate }}</p>
+        <p class="text-amber-200 font-medium">{{ 'cars.approachingLimit' | translate: {remaining: remainingCars()} }}</p>
+        <p class="text-amber-300 text-sm mt-1">{{ 'cars.approachingLimitDescription' | translate }}</p>
       </div>
-      <button class="btn-secondary btn-sm" 
+      <button class="btn-secondary btn-sm"
               (click)="onUpgradeRequested()"
               [attr.aria-label]="'Consider upgrading your plan to add more vehicles'"
               type="button">
@@ -125,9 +125,9 @@
   </div>
 
   <!-- Limit Reached State -->
-  <div *ngIf="isAtCarLimit()" 
+  <div *ngIf="isAtCarLimit()"
        id="limit-reached-notice"
-       class="limit-reached-notice glass-card bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500"
+       class="limit-reached-notice glass-card bg-red-900/20 border-l-4 border-red-500"
        role="alert"
        aria-live="assertive"
        aria-atomic="true">
@@ -136,10 +136,10 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z" />
       </svg>
       <div class="flex-1">
-        <h4 class="text-red-800 dark:text-red-200 font-semibold">{{ 'cars.limitReached' | translate }}</h4>
-        <p class="text-red-700 dark:text-red-300 text-sm mt-1">{{ 'cars.limitReachedDescription' | translate: {limit: carLimit(), tier: currentTier()} }}</p>
+        <h4 class="text-red-200 font-semibold">{{ 'cars.limitReached' | translate }}</h4>
+        <p class="text-red-300 text-sm mt-1">{{ 'cars.limitReachedDescription' | translate: {limit: carLimit(), tier: currentTier()} }}</p>
       </div>
-      <button class="btn-primary" 
+      <button class="btn-primary"
               (click)="onUpgradeRequested()"
               [attr.aria-label]="'Upgrade your plan to add more vehicles'"
               type="button">
@@ -152,44 +152,44 @@
   <section class="glass-card stats-nav" aria-labelledby="stats-heading">
     <h2 id="stats-heading" class="sr-only">{{ 'cars.vehicleStatistics' | translate }}</h2>
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3" role="group" aria-label="Vehicle statistics summary">
-      <div class="text-center" role="button" tabindex="0" 
-           (click)="setStatusFilter('all')" 
+      <div class="text-center" role="button" tabindex="0"
+           (click)="setStatusFilter('all')"
            (keydown)="onStatKeyDown($event, 'all')"
            [attr.aria-label]="'Total vehicles: ' + statusCounts().total + ', click to view all'"
            [attr.aria-pressed]="selectedStatus() === 'all'">
-        <div class="text-2xl font-bold text-gray-900 dark:text-white" aria-hidden="true">{{ formatNumber(statusCounts().total) }}</div>
-        <div class="text-xs text-gray-600 dark:text-gray-400">{{ 'cars.totalCars' | translate }}</div>
+        <div class="text-2xl font-bold text-white" aria-hidden="true">{{ formatNumber(statusCounts().total) }}</div>
+        <div class="text-xs text-gray-400">{{ 'cars.totalCars' | translate }}</div>
       </div>
-      <div class="text-center" role="button" tabindex="0" 
-           (click)="setStatusFilter('up-to-date')" 
+      <div class="text-center" role="button" tabindex="0"
+           (click)="setStatusFilter('up-to-date')"
            (keydown)="onStatKeyDown($event, 'up-to-date')"
            [attr.aria-label]="'Up to date vehicles: ' + statusCounts().upToDate + ', click to filter'"
            [attr.aria-pressed]="selectedStatus() === 'up-to-date'">
-        <div class="text-2xl font-bold text-green-600 dark:text-green-400" aria-hidden="true">{{ formatNumber(statusCounts().upToDate) }}</div>
-        <div class="text-xs text-gray-600 dark:text-gray-400">{{ 'cars.upToDate' | translate }}</div>
+        <div class="text-2xl font-bold text-green-400" aria-hidden="true">{{ formatNumber(statusCounts().upToDate) }}</div>
+        <div class="text-xs text-gray-400">{{ 'cars.upToDate' | translate }}</div>
       </div>
-      <div class="text-center" role="button" tabindex="0" 
-           (click)="setStatusFilter('due-soon')" 
+      <div class="text-center" role="button" tabindex="0"
+           (click)="setStatusFilter('due-soon')"
            (keydown)="onStatKeyDown($event, 'due-soon')"
            [attr.aria-label]="'Due soon vehicles: ' + statusCounts().dueSoon + ', click to filter'"
            [attr.aria-pressed]="selectedStatus() === 'due-soon'">
-        <div class="text-2xl font-bold text-amber-600 dark:text-amber-400" aria-hidden="true">{{ formatNumber(statusCounts().dueSoon) }}</div>
-        <div class="text-xs text-gray-600 dark:text-gray-400">{{ 'cars.dueSoon' | translate }}</div>
+        <div class="text-2xl font-bold text-amber-400" aria-hidden="true">{{ formatNumber(statusCounts().dueSoon) }}</div>
+        <div class="text-xs text-gray-400">{{ 'cars.dueSoon' | translate }}</div>
       </div>
-      <div class="text-center" role="button" tabindex="0" 
-           (click)="setStatusFilter('overdue')" 
+      <div class="text-center" role="button" tabindex="0"
+           (click)="setStatusFilter('overdue')"
            (keydown)="onStatKeyDown($event, 'overdue')"
            [attr.aria-label]="'Overdue vehicles: ' + statusCounts().overdue + ', click to filter'"
            [attr.aria-pressed]="selectedStatus() === 'overdue'">
-        <div class="text-2xl font-bold text-red-600 dark:text-red-400" aria-hidden="true">{{ formatNumber(statusCounts().overdue) }}</div>
-        <div class="text-xs text-gray-600 dark:text-gray-400">{{ 'cars.overdue' | translate }}</div>
+        <div class="text-2xl font-bold text-red-400" aria-hidden="true">{{ formatNumber(statusCounts().overdue) }}</div>
+        <div class="text-xs text-gray-400">{{ 'cars.overdue' | translate }}</div>
       </div>
     </div>
   </section>
 
   <!-- Filter Toggle - Mobile Only -->
-  <button class="filter-toggle lg:hidden" 
-          [class.active]="showMobileFilters()" 
+  <button class="filter-toggle lg:hidden"
+          [class.active]="showMobileFilters()"
           (click)="toggleMobileFilters()"
           [attr.aria-expanded]="showMobileFilters()"
           [attr.aria-controls]="'mobile-filters-panel'"
@@ -201,7 +201,7 @@
   </button>
 
   <!-- Mobile Filters Panel -->
-  <div id="mobile-filters-panel" 
+  <div id="mobile-filters-panel"
        [class]="'filters-panel lg:hidden' + (showMobileFilters() ? ' open' : '')"
        [attr.aria-hidden]="!showMobileFilters()"
        [style.display]="showMobileFilters() ? 'block' : 'block'">
@@ -251,9 +251,9 @@
         <!-- Make Filter -->
         <div class="flex items-center gap-2">
           <label for="make-filter-desktop" class="text-sm text-gray-400 whitespace-nowrap">{{ 'cars.make' | translate }}:</label>
-          <select id="make-filter-desktop" 
-                  class="filter-select-desktop" 
-                  [value]="selectedMake()" 
+          <select id="make-filter-desktop"
+                  class="filter-select-desktop"
+                  [value]="selectedMake()"
                   (change)="onMakeChange($event)"
                   [attr.aria-label]="'Filter by vehicle make'">
             <option value="all">{{ 'cars.allMakes' | translate }}</option>
@@ -266,9 +266,9 @@
         <!-- Status Filter -->
         <div class="flex items-center gap-2">
           <label for="status-filter-desktop" class="text-sm text-gray-400 whitespace-nowrap">{{ 'cars.status' | translate }}:</label>
-          <select id="status-filter-desktop" 
-                  class="filter-select-desktop" 
-                  [value]="selectedStatus()" 
+          <select id="status-filter-desktop"
+                  class="filter-select-desktop"
+                  [value]="selectedStatus()"
                   (change)="onStatusChange($event)"
                   [attr.aria-label]="'Filter by service status'">
             <option value="all">{{ 'cars.allStatus' | translate }}</option>
@@ -284,7 +284,7 @@
             <span class="text-xs px-2 py-1 bg-blue-600 text-blue-100 rounded-full font-medium">
               {{ 'common.filtersActive' | translate }}
             </span>
-            <button class="text-xs text-blue-400 hover:text-blue-300 transition-colors" 
+            <button class="text-xs text-blue-400 hover:text-blue-300 transition-colors"
                     (click)="clearFilters()"
                     [attr.aria-label]="'Clear all active filters'">
               {{ 'common.clear' | translate }}
@@ -324,18 +324,18 @@
     <!-- Loading State -->
     <div *ngIf="isLoading()" class="flex flex-col items-center justify-center py-12">
       <div class="loading-spinner"></div>
-      <p class="mt-4 text-gray-600 dark:text-gray-400">{{ 'cars.loadingCars' | translate }}</p>
+      <p class="mt-4 text-gray-400">{{ 'cars.loadingCars' | translate }}</p>
     </div>
 
     <!-- Empty State -->
     <div *ngIf="!isLoading() && filteredCars().length === 0" class="glass-card empty-state">
       <div class="mb-4">
-        <svg class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+        <svg class="w-16 h-16 mx-auto text-gray-500" fill="currentColor" viewBox="0 0 24 24">
           <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.22.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
         </svg>
       </div>
-      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">{{ 'cars.noCarsFound' | translate }}</h3>
-      <p class="text-gray-600 dark:text-gray-400 mb-6">{{ 'cars.noCarsMatchFilters' | translate }}</p>
+      <h3 class="text-lg font-semibold text-white mb-2">{{ 'cars.noCarsFound' | translate }}</h3>
+      <p class="text-gray-400 mb-6">{{ 'cars.noCarsMatchFilters' | translate }}</p>
       <button class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700" (click)="clearFilters()">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -351,7 +351,7 @@
          [attr.aria-label]="'Vehicle list containing ' + filteredCars().length + ' vehicles'"
          [attr.aria-rowcount]="filteredCars().length">
       @for (car of filteredCars(); track car.id; let i = $index) {
-        <div role="gridcell" 
+        <div role="gridcell"
              [attr.aria-rowindex]="i + 1"
              [attr.tabindex]="0"
              (keydown)="onCarKeyDown($event, car)"
