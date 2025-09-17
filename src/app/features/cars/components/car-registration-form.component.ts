@@ -11,8 +11,8 @@ import { TranslationService } from '../../../core/services/translation.service';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   template: `
-    <div class="modal-overlay" (click)="onClose()">
-      <div class="modal-container glass-card" (click)="$event.stopPropagation()">
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" (click)="onClose()">
+      <div class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-xl border border-gray-200 dark:border-gray-700 w-full max-w-2xl max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
         <div class="modal-header">
           <h2 class="modal-title">{{ 'cars.registerNewCar' | translate }}</h2>
           <button type="button" class="close-btn" (click)="onClose()">
@@ -258,34 +258,6 @@ import { TranslationService } from '../../../core/services/translation.service';
     </div>
   `,
   styles: [`
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      backdrop-filter: blur(4px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 50;
-      padding: 1rem;
-    }
-
-    .modal-container {
-      width: 100%;
-      max-width: 600px;
-      max-height: 90vh;
-      overflow-y: auto;
-      overflow-x: hidden;
-      /* Permanent dark glassmorphism theme */
-      background: rgba(17, 24, 39, 0.95);
-      backdrop-filter: blur(20px);
-      border-radius: 20px;
-      border: 1px solid rgba(75, 85, 99, 0.6);
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
-    }
 
     .modal-header {
       display: flex;
