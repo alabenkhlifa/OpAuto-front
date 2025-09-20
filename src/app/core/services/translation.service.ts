@@ -86,6 +86,18 @@ export class TranslationService {
     );
   }
 
+  // Force reload translations (useful for development)
+  forceReloadTranslations(): void {
+    this.loadedLanguages.clear();
+    this.translationsCache.clear();
+    this.loadTranslations(this.languageService.getCurrentLanguage());
+  }
+
+  // Get current translations object
+  getCurrentTranslations(): any {
+    return this.translationsSubject.value;
+  }
+
   // Synchronous version for templates
   instant(key: string, params?: Record<string, any>): string {
     const translations = this.translationsSubject.value;

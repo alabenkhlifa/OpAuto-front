@@ -196,6 +196,7 @@
     "title": "Voitures",
     "subtitle": "Gérer le registre et les informations des véhicules",
     "addCar": "Ajouter une voiture",
+    "addVehicleToGarage": "Ajouter un véhicule au garage et créer un dossier client",
     "editCar": "Modifier la voiture",
     "deleteCar": "Supprimer la voiture",
     "carDetails": "Détails de la voiture",
@@ -204,6 +205,8 @@
     "make": "Marque",
     "model": "Modèle",
     "year": "Année",
+    "currentMileage": "Kilométrage actuel (KM)",
+    "currentMileageRequired": "Kilométrage actuel (KM) *",
     "color": "Couleur",
     "vin": "Numéro de châssis",
     "engineType": "Type de moteur",
@@ -259,6 +262,7 @@
     "newCustomer": "Nouveau client",
     "selectCustomer": "Sélectionner client",
     "selectCustomerRequired": "Sélectionner client *",
+    "chooseCustomer": "Choisir un client",
     "customerNameRequired": "Nom du client *",
     "customerNamePlaceholder": "Entrez le nom du client",
     "phoneNumberRequired": "Numéro de téléphone *",
@@ -473,6 +477,16 @@
       "body": "Carrosserie",
       "accessories": "Accessoires",
       "consumables": "Consommables"
+    },
+    "units": {
+      "piece": "Pièce",
+      "liter": "Litre",
+      "kg": "Kilogramme",
+      "meter": "Mètre",
+      "pair": "Paire",
+      "set": "Ensemble",
+      "bottle": "Bouteille",
+      "box": "Boîte"
     },
     "suppliers": {
       "title": "Fournisseurs",
@@ -816,7 +830,30 @@
       "activeCustomers": "Clients actifs",
       "mechanicUtilization": "Utilisation mécanicien",
       "stockValue": "Valeur du stock",
-      "customerSatisfaction": "Satisfaction client"
+      "customerSatisfaction": "Satisfaction client",
+      "revenue": "Revenus",
+      "newCustomers": "Nouveaux clients",
+      "partsInventory": "Inventaire de pièces",
+      "paidRevenue": "Revenus payés",
+      "pendingRevenue": "Revenus en attente",
+      "overdueRevenue": "Revenus en retard",
+      "averageInvoiceValue": "Valeur moyenne des factures",
+      "taxCollected": "Taxes collectées",
+      "discountsGiven": "Remises accordées",
+      "profitMargin": "Marge bénéficiaire",
+      "revenueGrowth": "Croissance des revenus",
+      "totalAppointments": "Total des rendez-vous",
+      "completionRate": "Taux de completion",
+      "garageCapacity": "Capacité du garage",
+      "avgServiceTime": "Temps de service moyen",
+      "repeatCustomerRate": "Taux de clients récurrents",
+      "garageCapacityUsed": "Capacité du garage utilisée",
+      "totalCustomers": "Total des clients",
+      "avgCustomerValue": "Valeur moyenne des clients",
+      "retentionRate": "Taux de rétention",
+      "totalParts": "Total des pièces",
+      "lowStockItems": "Articles en stock faible",
+      "turnoverRate": "Taux de rotation"
     },
     "charts": {
       "revenueTrends": {
@@ -832,11 +869,17 @@
         "title": "Comparaison mensuelle"
       }
     },
-    "kpis": {
-      "revenue": "Revenus",
-      "newCustomers": "Nouveaux clients",
-      "partsInventory": "Inventaire de pièces"
-    }
+    "sections": {
+      "revenueBreakdown": "Répartition des revenus",
+      "growthAnalysis": "Analyse de croissance",
+      "servicePerformance": "Performance des services",
+      "efficiencyMetrics": "Métriques d'efficacité"
+    },
+    "periods": {
+      "thisMonth": "Ce mois",
+      "lastMonth": "Le mois dernier"
+    },
+    "loading": "Chargement des rapports..."
   },
   "settings": {
     "title": "Paramètres",

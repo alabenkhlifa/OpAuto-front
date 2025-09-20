@@ -284,6 +284,20 @@ export class CarsComponent implements OnInit {
     return null;
   }
 
+  getTierBadgeClass(): string {
+    const tierId = this.subscriptionStatus()?.currentTier.id;
+    switch (tierId) {
+      case 'solo':
+        return 'badge badge-tier-solo';
+      case 'starter':
+        return 'badge badge-tier-starter';
+      case 'professional':
+        return 'badge badge-tier-professional';
+      default:
+        return 'badge badge-info';
+    }
+  }
+
   onCarKeyDown(event: KeyboardEvent, car: CarWithHistory): void {
     switch(event.key) {
       case 'Enter':

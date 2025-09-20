@@ -1,136 +1,103 @@
-import { Component, inject, signal, Output, EventEmitter } from '@angular/core';
+import { Component, inject, signal, Output, EventEmitter, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CarService, CarWithHistory } from '../services/car.service';
 import { Customer } from '../../../core/models/customer.model';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 import { TranslationService } from '../../../core/services/translation.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-car-registration-form',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   template: `
-    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" (click)="onClose()">
-      <div class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-xl border border-gray-200 dark:border-gray-700 w-full max-w-2xl max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
-        <div class="modal-header">
-          <h2 class="modal-title">{{ 'cars.registerNewCar' | translate }}</h2>
-          <button type="button" class="close-btn" (click)="onClose()">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+    <!-- Modal Overlay -->
+    <div class="modal-overlay" (click)="onClose()">
+      <!-- Modal Content -->
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        
+        <!-- Modal Header -->
+        <header class="modal-header">
+          <div class="modal-title-section">
+            <h2 class="modal-title">{{ 'cars.registerNewCar' | translate }}</h2>
+            <p class="modal-subtitle">{{ addVehicleToGarageLabel() || ('cars.addVehicleToGarage' | translate) }}</p>
+          </div>
+          <button class="modal-close-btn" (click)="onClose()">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
-        </div>
+        </header>
 
-        <form [formGroup]="carForm" (ngSubmit)="onSubmit()">
-          <div class="form-grid">
-            <!-- License Plate -->
-            <div class="form-group">
-              <label for="licensePlate" class="form-label">{{ 'cars.licensePlateRequired' | translate }}</label>
-              <input
-                id="licensePlate"
-                type="text"
-                formControlName="licensePlate"
-                class="form-input"
-                placeholder="{{ 'cars.licensePlatePlaceholder' | translate }}"
-                [class.error]="licensePlate?.invalid && (licensePlate?.dirty || licensePlate?.touched)"
-              />
-              @if (licensePlate?.invalid && (licensePlate?.dirty || licensePlate?.touched)) {
-                <div class="error-message">
-                  @if (licensePlate?.errors?.['required']) {
-                    {{ 'cars.licensePlate' | translate }} is required
-                  }
-                  @if (licensePlate?.errors?.['minlength']) {
-                    {{ 'cars.licensePlate' | translate }} must be at least 3 characters
-                  }
-                </div>
-              }
+        <!-- Modal Body -->
+        @if (translationsReady()) {
+          <form [formGroup]="carForm" class="modal-form">
+          
+          <!-- Vehicle Information -->
+          <div class="form-section">
+            <h3 class="section-title">{{ 'cars.vehicleInformation' | translate }}</h3>
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label class="form-label">{{ 'cars.licensePlateRequired' | translate }}</label>
+                <input
+                  type="text"
+                  formControlName="licensePlate"
+                  class="form-input"
+                  placeholder="{{ 'cars.licensePlatePlaceholder' | translate }}"
+                />
+              </div>
             </div>
-
-            <!-- Make -->
-            <div class="form-group">
-              <label for="make" class="form-label">{{ 'cars.makeRequired' | translate }}</label>
-              <input
-                id="make"
-                type="text"
-                formControlName="make"
-                class="form-input"
-                placeholder="{{ 'cars.makePlaceholder' | translate }}"
-                [class.error]="make?.invalid && (make?.dirty || make?.touched)"
-              />
-              @if (make?.invalid && (make?.dirty || make?.touched)) {
-                <div class="error-message">{{ 'cars.make' | translate }} is required</div>
-              }
+            
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label class="form-label">{{ 'cars.makeRequired' | translate }}</label>
+                <input
+                  type="text"
+                  formControlName="make"
+                  class="form-input"
+                  placeholder="{{ 'cars.makePlaceholder' | translate }}"
+                />
+              </div>
+              <div class="form-group flex-1">
+                <label class="form-label">{{ 'cars.modelRequired' | translate }}</label>
+                <input
+                  type="text"
+                  formControlName="model"
+                  class="form-input"
+                  placeholder="{{ 'cars.modelPlaceholder' | translate }}"
+                />
+              </div>
             </div>
-
-            <!-- Model -->
-            <div class="form-group">
-              <label for="model" class="form-label">{{ 'cars.modelRequired' | translate }}</label>
-              <input
-                id="model"
-                type="text"
-                formControlName="model"
-                class="form-input"
-                placeholder="{{ 'cars.modelPlaceholder' | translate }}"
-                [class.error]="model?.invalid && (model?.dirty || model?.touched)"
-              />
-              @if (model?.invalid && (model?.dirty || model?.touched)) {
-                <div class="error-message">{{ 'cars.model' | translate }} is required</div>
-              }
-            </div>
-
-            <!-- Year -->
-            <div class="form-group">
-              <label for="year" class="form-label">{{ 'cars.yearRequired' | translate }}</label>
-              <input
-                id="year"
-                type="number"
-                formControlName="year"
-                class="form-input"
-                [min]="1990"
-                [max]="currentYear + 1"
-                placeholder="e.g., 2020"
-                [class.error]="year?.invalid && (year?.dirty || year?.touched)"
-              />
-              @if (year?.invalid && (year?.dirty || year?.touched)) {
-                <div class="error-message">
-                  @if (year?.errors?.['required']) {
-                    {{ 'cars.year' | translate }} is required
-                  }
-                  @if (year?.errors?.['min'] || year?.errors?.['max']) {
-                    {{ 'cars.year' | translate }} must be between 1990 and {{ currentYear + 1 }}
-                  }
-                </div>
-              }
-            </div>
-
-            <!-- Current Mileage -->
-            <div class="form-group">
-              <label for="currentMileage" class="form-label">{{ 'cars.currentMileageRequired' | translate }}</label>
-              <input
-                id="currentMileage"
-                type="number"
-                formControlName="currentMileage"
-                class="form-input"
-                placeholder="e.g., 45000"
-                min="0"
-                [class.error]="currentMileage?.invalid && (currentMileage?.dirty || currentMileage?.touched)"
-              />
-              @if (currentMileage?.invalid && (currentMileage?.dirty || currentMileage?.touched)) {
-                <div class="error-message">
-                  @if (currentMileage?.errors?.['required']) {
-                    {{ 'cars.currentMileage' | translate }} is required
-                  }
-                  @if (currentMileage?.errors?.['min']) {
-                    {{ 'cars.mileage' | translate }} cannot be negative
-                  }
-                </div>
-              }
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">{{ 'cars.yearRequired' | translate }}</label>
+                <input
+                  type="number"
+                  formControlName="year"
+                  class="form-input"
+                  [min]="1990"
+                  [max]="currentYear + 1"
+                  placeholder="e.g., 2025"
+                />
+              </div>
+              <div class="form-group">
+                <label class="form-label">{{ currentMileageLabel() }}</label>
+                <input
+                  type="number"
+                  formControlName="currentMileage"
+                  class="form-input"
+                  placeholder="e.g., 45000"
+                  min="0"
+                />
+              </div>
             </div>
           </div>
 
-          <!-- Customer Selection Section -->
-          <div class="customer-section">
+
+          <!-- Customer Information -->
+          <div class="form-section">
             <h3 class="section-title">{{ 'cars.customerInformation' | translate }}</h3>
             
             <div class="customer-toggle">
@@ -158,157 +125,205 @@ import { TranslationService } from '../../../core/services/translation.service';
 
             @if (customerType?.value === 'existing') {
               <div class="form-group">
-                <label for="customerId" class="form-label">{{ 'cars.selectCustomerRequired' | translate }}</label>
-                <select
-                  id="customerId"
-                  formControlName="customerId"
-                  class="form-select"
-                  [class.error]="customerId?.invalid && (customerId?.dirty || customerId?.touched)"
-                >
-                  <option value="">{{ 'cars.chooseCustomer' | translate }}</option>
+                <label class="form-label">{{ 'cars.selectCustomerRequired' | translate }}</label>
+                <select formControlName="customerId" class="form-select">
+                  <option value="">{{ chooseCustomerLabel() }}</option>
                   @for (customer of customers(); track customer.id) {
                     <option [value]="customer.id">{{ customer.name }} - {{ customer.phone }}</option>
                   }
                 </select>
-                @if (customerId?.invalid && (customerId?.dirty || customerId?.touched)) {
-                  <div class="error-message">Please select a {{ 'common.customer' | translate }}</div>
-                }
               </div>
             }
 
             @if (customerType?.value === 'new') {
-              <div class="new-customer-form">
-                <div class="form-group">
-                  <label for="customerName" class="form-label">{{ 'cars.customerName' | translate }} *</label>
+              <div class="form-row">
+                <div class="form-group flex-1">
+                  <label class="form-label">{{ 'cars.customerName' | translate }} *</label>
                   <input
-                    id="customerName"
                     type="text"
                     formControlName="customerName"
                     class="form-input"
                     placeholder="e.g., Ahmed Ben Ali"
-                    [class.error]="customerName?.invalid && (customerName?.dirty || customerName?.touched)"
                   />
-                  @if (customerName?.invalid && (customerName?.dirty || customerName?.touched)) {
-                    <div class="error-message">{{ 'cars.customerName' | translate }} is required</div>
-                  }
                 </div>
-
-                <div class="form-group">
-                  <label for="customerPhone" class="form-label">{{ 'cars.phoneNumber' | translate }} *</label>
+                <div class="form-group flex-1">
+                  <label class="form-label">{{ 'cars.phoneNumber' | translate }} *</label>
                   <input
-                    id="customerPhone"
                     type="tel"
                     formControlName="customerPhone"
                     class="form-input"
                     placeholder="e.g., +216-20-123-456"
-                    [class.error]="customerPhone?.invalid && (customerPhone?.dirty || customerPhone?.touched)"
                   />
-                  @if (customerPhone?.invalid && (customerPhone?.dirty || customerPhone?.touched)) {
-                    <div class="error-message">
-                      @if (customerPhone?.errors?.['required']) {
-                        {{ 'cars.phoneNumber' | translate }} is required
-                      }
-                      @if (customerPhone?.errors?.['pattern']) {
-                        Please enter a valid {{ 'cars.phoneNumber' | translate }}
-                      }
-                    </div>
-                  }
                 </div>
-
-                <div class="form-group">
-                  <label for="customerEmail" class="form-label">{{ 'cars.email' | translate }} (Optional)</label>
-                  <input
-                    id="customerEmail"
-                    type="email"
-                    formControlName="customerEmail"
-                    class="form-input"
-                    placeholder="e.g., ahmed.benali@email.tn"
-                    [class.error]="customerEmail?.invalid && (customerEmail?.dirty || customerEmail?.touched)"
-                  />
-                  @if (customerEmail?.invalid && (customerEmail?.dirty || customerEmail?.touched)) {
-                    <div class="error-message">Please enter a valid {{ 'cars.email' | translate }}</div>
-                  }
-                </div>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">{{ 'cars.email' | translate }} (Optional)</label>
+                <input
+                  type="email"
+                  formControlName="customerEmail"
+                  class="form-input"
+                  placeholder="e.g., ahmed.benali@email.tn"
+                />
               </div>
             }
           </div>
 
-          <div class="form-actions">
-            <button type="button" class="btn btn-secondary" (click)="onClose()">
-              {{ 'common.cancel' | translate }}
-            </button>
-            <button 
-              type="submit" 
-              class="btn btn-primary"
-              [disabled]="carForm.invalid || isSubmitting()"
-            >
-              @if (isSubmitting()) {
-                <svg class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                {{ 'cars.registering' | translate }}...
-              } @else {
-                {{ 'cars.registerCar' | translate }}
-              }
-            </button>
-          </div>
         </form>
+        } @else {
+          <!-- Loading state while translations are being initialized -->
+          <div class="modal-form">
+            <div class="loading-container">
+              <div class="loading-spinner"></div>
+              <p class="loading-text">Loading...</p>
+            </div>
+          </div>
+        }
+
+        <!-- Modal Footer -->
+        <footer class="modal-footer">
+          <button type="button" class="modal-btn secondary" (click)="onClose()">
+            {{ 'common.cancel' | translate }}
+          </button>
+          <button type="button" class="modal-btn primary" 
+                  [disabled]="!carForm.valid || isSubmitting()"
+                  (click)="onSubmit()">
+            <span *ngIf="!isSubmitting()">{{ 'cars.registerCar' | translate }}</span>
+            <span *ngIf="isSubmitting()" class="flex items-center gap-2">
+              <div class="submit-spinner"></div>
+              {{ 'cars.registering' | translate }}
+            </span>
+          </button>
+        </footer>
+
       </div>
     </div>
   `,
   styles: [`
+    /* Dark Glassmorphism Modal Styles - Permanent Theme */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      animation: overlayFadeIn 0.2s ease-out;
+    }
+
+    @keyframes overlayFadeIn {
+      from { opacity: 0; backdrop-filter: blur(0px); }
+      to { opacity: 1; backdrop-filter: blur(8px); }
+    }
+
+    .modal-content {
+      background: rgba(17, 24, 39, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      width: 100%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6);
+      animation: modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes modalSlideIn {
+      from { 
+        opacity: 0; 
+        transform: translateY(20px) scale(0.95); 
+      }
+      to { 
+        opacity: 1; 
+        transform: translateY(0) scale(1); 
+      }
+    }
 
     .modal-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      padding: 2rem 2rem 1rem;
-      border-bottom: 1px solid rgba(75, 85, 99, 0.3);
-      margin-bottom: 1.5rem;
+      align-items: flex-start;
+      padding: 2rem 2rem 1rem 2rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     .modal-title {
       font-size: 1.5rem;
       font-weight: 700;
       color: #ffffff;
+      margin: 0 0 0.25rem 0;
+    }
+
+    .modal-subtitle {
+      color: #d1d5db;
+      font-size: 0.875rem;
       margin: 0;
     }
 
-    .close-btn {
-      background: none;
+    .modal-close-btn {
+      width: 2.5rem;
+      height: 2.5rem;
       border: none;
-      color: #9ca3af;
-      cursor: pointer;
-      padding: 0.5rem;
-      border-radius: 8px;
-      transition: all 0.2s ease;
-    }
-
-    .close-btn:hover {
-      color: #ffffff;
       background: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #d1d5db;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    form {
-      padding: 0 2rem 2rem;
-      width: 100%;
-      box-sizing: border-box;
+    .modal-close-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: scale(1.05);
+      color: #ffffff;
     }
 
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1.5rem;
+    /* Form Styles */
+    .modal-form {
+      padding: 2rem;
+    }
+
+    .form-section {
       margin-bottom: 2rem;
-      width: 100%;
-      box-sizing: border-box;
     }
 
-    @media (max-width: 640px) {
-      .form-grid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
+    .section-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #ffffff;
+      margin: 0 0 1rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .section-title:before {
+      content: '';
+      width: 4px;
+      height: 1.5rem;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      border-radius: 2px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-end;
+    }
+
+    @media (max-width: 767px) {
+      .form-row {
+        flex-direction: column;
+        align-items: stretch;
       }
     }
 
@@ -320,60 +335,54 @@ import { TranslationService } from '../../../core/services/translation.service';
 
     .form-label {
       font-size: 0.875rem;
-      font-weight: 600;
+      font-weight: 500;
       color: #d1d5db;
     }
 
-    .form-input {
-      padding: 0.75rem 1rem;
-      border: 2px solid rgba(75, 85, 99, 0.4);
+    .form-input,
+    .form-select,
+    .form-textarea {
+      padding: 0.875rem 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 12px;
-      background: rgba(31, 41, 55, 0.8);
-      color: #ffffff;
-      font-size: 1rem;
-      transition: all 0.2s ease;
-      width: 100%;
-      box-sizing: border-box;
-      min-width: 0;
+      background: rgba(255, 255, 255, 0.05);
       backdrop-filter: blur(10px);
+      color: #ffffff;
+      font-size: 0.875rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .form-input::placeholder {
+    .form-input::placeholder,
+    .form-textarea::placeholder {
       color: #9ca3af;
     }
 
-    .form-input:focus {
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
       outline: none;
       border-color: #3b82f6;
-      background: rgba(31, 41, 55, 0.95);
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      background: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+      transform: translateY(-1px);
     }
 
-    .form-input.error {
-      border-color: #ef4444;
-      background: rgba(127, 29, 29, 0.3);
+    .form-input:hover:not(:focus),
+    .form-select:hover:not(:focus),
+    .form-textarea:hover:not(:focus) {
+      border-color: rgba(255, 255, 255, 0.3);
+      background-color: rgba(255, 255, 255, 0.08);
     }
 
-    .error-message {
-      font-size: 0.75rem;
-      color: #ef4444;
-      margin-top: 0.25rem;
-    }
-
-    .customer-section {
-      margin-bottom: 2rem;
-      padding: 1.5rem;
-      background: rgba(31, 41, 55, 0.6);
-      border: 1px solid rgba(75, 85, 99, 0.6);
-      border-radius: 12px;
-      backdrop-filter: blur(10px);
-    }
-
-    .section-title {
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: #ffffff;
-      margin-bottom: 1rem;
+    .form-select {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+      background-position: right 0.75rem center;
+      background-repeat: no-repeat;
+      background-size: 1.5em 1.5em;
+      padding-right: 2.5rem;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
     }
 
     .customer-toggle {
@@ -415,111 +424,131 @@ import { TranslationService } from '../../../core/services/translation.service';
       backdrop-filter: blur(10px);
     }
 
-    .new-customer-form {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1.5rem;
+    /* Modal Footer */
+    .modal-footer {
+      display: flex;
+      gap: 1rem;
+      padding: 1.5rem 2rem 2rem 2rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
     }
 
-    @media (max-width: 640px) {
-      .new-customer-form {
-        grid-template-columns: 1fr;
-        gap: 1rem;
+    @media (max-width: 767px) {
+      .modal-footer {
+        flex-direction: column;
       }
     }
 
-    .form-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 1rem;
-      margin-top: 2rem;
-      padding-top: 1.5rem;
-      border-top: 1px solid rgba(75, 85, 99, 0.3);
-    }
-
-    .btn {
-      padding: 0.75rem 1.5rem;
+    .modal-btn {
+      flex: 1;
+      padding: 1rem 1.5rem;
       border-radius: 12px;
       font-weight: 600;
-      border: none;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       align-items: center;
       justify-content: center;
-      min-width: 120px;
+      gap: 0.5rem;
+      backdrop-filter: blur(10px);
     }
 
-    .btn:disabled {
+    .modal-btn.secondary {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #d1d5db;
+    }
+
+    .modal-btn.secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-btn.primary {
+      background: linear-gradient(135deg, #059669, #047857);
+      border: 1px solid #059669;
+      color: white;
+      box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+    }
+
+    .modal-btn.primary:hover:not(:disabled) {
+      background: linear-gradient(135deg, #047857, #065f46);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
+    }
+
+    .modal-btn:disabled {
       opacity: 0.5;
       cursor: not-allowed;
+      transform: none !important;
     }
 
-    .btn-secondary {
-      background: rgba(75, 85, 99, 0.6);
-      color: #d1d5db;
-      border: 1px solid rgba(75, 85, 99, 0.4);
-      backdrop-filter: blur(10px);
-    }
-
-    .btn-secondary:hover:not(:disabled) {
-      background: rgba(107, 114, 128, 0.6);
-      border-color: rgba(107, 114, 128, 0.6);
-      color: #ffffff;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(37, 99, 235, 0.8));
-      color: white;
-      border: 1px solid rgba(59, 130, 246, 0.6);
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-      backdrop-filter: blur(10px);
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      background: linear-gradient(135deg, rgba(37, 99, 235, 0.9), rgba(29, 78, 216, 0.9));
-      border-color: rgba(37, 99, 235, 0.7);
-      box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
-      transform: translateY(-1px);
-    }
-
-    .animate-spin {
+    .submit-spinner {
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top: 2px solid white;
+      border-radius: 50%;
       animation: spin 1s linear infinite;
     }
 
     @keyframes spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
 
-    @media (max-width: 640px) {
-      .modal-container {
-        margin: 1rem;
-        max-height: calc(100vh - 2rem);
-      }
+    /* Custom scrollbar for modal */
+    .modal-content::-webkit-scrollbar {
+      width: 6px;
+    }
 
-      .modal-header {
-        padding: 1.5rem 1.5rem 1rem;
-      }
+    .modal-content::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+    }
 
-      form {
-        padding: 0 1.5rem 1.5rem;
-      }
+    .modal-content::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 3px;
+    }
 
-      .form-actions {
-        flex-direction: column;
-      }
+    .modal-content::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
 
-      .btn {
-        width: 100%;
-      }
+    /* Loading state styles */
+    .loading-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+      min-height: 200px;
+    }
+
+    .loading-spinner {
+      width: 2rem;
+      height: 2rem;
+      border: 3px solid rgba(255, 255, 255, 0.2);
+      border-top: 3px solid #3b82f6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 1rem;
+    }
+
+    .loading-text {
+      color: #d1d5db;
+      font-size: 0.875rem;
+      margin: 0;
     }
   `]
 })
-export class CarRegistrationFormComponent {
+export class CarRegistrationFormComponent implements OnInit, OnDestroy {
   private formBuilder = inject(FormBuilder);
   private carService = inject(CarService);
   private translationService = inject(TranslationService);
+  private cdr = inject(ChangeDetectorRef);
 
   @Output() close = new EventEmitter<void>();
   @Output() carRegistered = new EventEmitter<CarWithHistory>();
@@ -527,6 +556,16 @@ export class CarRegistrationFormComponent {
   customers = signal<Customer[]>([]);
   isSubmitting = signal(false);
   currentYear = new Date().getFullYear();
+  
+  // Translation signals for reactive updates
+  currentMileageLabel = signal<string>('');
+  chooseCustomerLabel = signal<string>('');
+  addVehicleToGarageLabel = signal<string>('');
+  
+  // Translation readiness tracking
+  translationsReady = signal<boolean>(false);
+  
+  private translationSubscription?: Subscription;
 
   carForm: FormGroup;
 
@@ -546,6 +585,82 @@ export class CarRegistrationFormComponent {
 
     this.loadCustomers();
     this.setupValidationRules();
+  }
+
+  ngOnInit(): void {
+    this.initializeTranslations();
+  }
+  
+  ngOnDestroy(): void {
+    if (this.translationSubscription) {
+      this.translationSubscription.unsubscribe();
+    }
+  }
+  
+  private initializeTranslations(): void {
+    // First, do an immediate check - translations might already be available
+    const currentTranslations = this.translationService.getCurrentTranslations();
+    if (this.hasRequiredTranslations(currentTranslations)) {
+      // Translations are already loaded! Use them immediately
+      this.updateTranslationSignals();
+      this.translationsReady.set(true);
+      return;
+    }
+    
+    // If specific translations aren't available, show fallbacks immediately
+    // This eliminates any loading delay
+    this.setFallbackTranslations();
+    this.translationsReady.set(true);
+    
+    // In the background, try to load proper translations for next time
+    // Only reload if we have no translations at all
+    if (!currentTranslations || Object.keys(currentTranslations).length === 0) {
+      this.translationService.forceReloadTranslations();
+    }
+    
+    // Listen for translation updates to replace fallbacks with real translations
+    this.translationSubscription = this.translationService.translations$.subscribe(translations => {
+      if (this.hasRequiredTranslations(translations)) {
+        this.updateTranslationSignals();
+      }
+    });
+  }
+  
+  private hasRequiredTranslations(translations: any): boolean {
+    if (!translations || typeof translations !== 'object') return false;
+    
+    // Check for the specific nested structure we need
+    return translations.cars && 
+           typeof translations.cars === 'object' &&
+           translations.cars.currentMileageRequired &&
+           translations.cars.chooseCustomer &&
+           translations.cars.addVehicleToGarage;
+  }
+  
+  private updateTranslationSignals(): void {
+    const currentMileage = this.translationService.instant('cars.currentMileageRequired');
+    const chooseCustomer = this.translationService.instant('cars.chooseCustomer');
+    const addVehicleToGarage = this.translationService.instant('cars.addVehicleToGarage');
+    
+    // Only update if we get actual translations (not the keys back)
+    if (currentMileage !== 'cars.currentMileageRequired') {
+      this.currentMileageLabel.set(currentMileage);
+    }
+    
+    if (chooseCustomer !== 'cars.chooseCustomer') {
+      this.chooseCustomerLabel.set(chooseCustomer);
+    }
+    
+    if (addVehicleToGarage !== 'cars.addVehicleToGarage') {
+      this.addVehicleToGarageLabel.set(addVehicleToGarage);
+    }
+  }
+  
+  private setFallbackTranslations(): void {
+    // Set English fallbacks if translations fail to load
+    this.currentMileageLabel.set('Current Mileage Required *');
+    this.chooseCustomerLabel.set('Choose Customer');
+    this.addVehicleToGarageLabel.set('Add Vehicle to Garage and Create Customer Profile');
   }
 
   get licensePlate() { return this.carForm.get('licensePlate'); }

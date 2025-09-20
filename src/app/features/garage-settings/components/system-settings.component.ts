@@ -283,64 +283,6 @@ import { SystemSettings } from '../../../core/models/garage-settings.model';
           </div>
         </div>
 
-        <!-- Appearance Settings -->
-        <div>
-          <h3 class="text-md font-medium text-white mb-4">{{ 'settings.system.appearance.title' | translate }}</h3>
-          <div formGroupName="appearance" class="space-y-4">
-            <!-- Theme -->
-            <div>
-              <label class="form-label">{{ 'settings.system.appearance.theme' | translate }}</label>
-              <select 
-                class="form-select"
-                formControlName="theme"
-                [class.border-red-500]="isFieldInvalid('appearance.theme')">
-                <option value="light">{{ 'settings.system.appearance.themes.light' | translate }}</option>
-                <option value="dark">{{ 'settings.system.appearance.themes.dark' | translate }}</option>
-                <option value="system">{{ 'settings.system.appearance.themes.system' | translate }}</option>
-              </select>
-              @if (isFieldInvalid('appearance.theme')) {
-                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ 'settings.system.appearance.themeRequired' | translate }}</p>
-              }
-            </div>
-
-            <!-- Color Scheme -->
-            <div>
-              <label class="form-label">{{ 'settings.system.appearance.primaryColor' | translate }}</label>
-              <div class="grid grid-cols-4 gap-3">
-                @for (color of colorOptions; track color.value) {
-                  <div class="flex items-center space-x-2">
-                    <input 
-                      type="radio" 
-                      [id]="'color-' + color.value"
-                      [value]="color.hex"
-                      formControlName="primaryColor"
-                      class="w-4 h-4">
-                    <label [for]="'color-' + color.value" class="flex items-center space-x-2 text-sm">
-                      <div class="w-4 h-4 rounded-full border border-gray-300" [style.background-color]="color.hex"></div>
-                      <span>{{ 'settings.system.appearance.colors.' + color.value | translate }}</span>
-                    </label>
-                  </div>
-                }
-              </div>
-            </div>
-
-            <!-- Language -->
-            <div>
-              <label class="form-label">{{ 'settings.system.appearance.language' | translate }}</label>
-              <select 
-                class="form-select"
-                formControlName="language"
-                [class.border-red-500]="isFieldInvalid('appearance.language')">
-                <option value="en">{{ 'settings.system.appearance.languages.en' | translate }}</option>
-                <option value="fr">{{ 'settings.system.appearance.languages.fr' | translate }}</option>
-                <option value="ar">{{ 'settings.system.appearance.languages.ar' | translate }}</option>
-              </select>
-              @if (isFieldInvalid('appearance.language')) {
-                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ 'settings.system.appearance.languageRequired' | translate }}</p>
-              }
-            </div>
-          </div>
-        </div>
 
         <!-- System Information -->
         <div>
@@ -387,12 +329,6 @@ export class SystemSettingsComponent implements OnInit {
     databaseSize: '45.2 MB'
   };
 
-  colorOptions = [
-    { value: 'blue', name: 'Blue', hex: '#2563eb' },
-    { value: 'green', name: 'Green', hex: '#059669' },
-    { value: 'purple', name: 'Purple', hex: '#7c3aed' },
-    { value: 'red', name: 'Red', hex: '#dc2626' }
-  ];
 
   ngOnInit() {
     this.initializeForm();
@@ -428,11 +364,6 @@ export class SystemSettingsComponent implements OnInit {
         autoBackupEnabled: [false],
         backupFrequency: ['weekly'],
         backupRetentionDays: [30]
-      }),
-      appearance: this.fb.group({
-        theme: ['system', Validators.required],
-        primaryColor: ['#2563eb'],
-        language: ['en']
       })
     });
   }
@@ -460,11 +391,6 @@ export class SystemSettingsComponent implements OnInit {
           autoBackupEnabled: this.settings.backup?.autoBackupEnabled ?? false,
           backupFrequency: this.settings.backup?.backupFrequency ?? 'weekly',
           backupRetentionDays: this.settings.backup?.backupRetentionDays ?? 30
-        },
-        appearance: {
-          theme: this.settings.appearance?.theme ?? 'system',
-          primaryColor: this.settings.appearance?.primaryColor ?? '#2563eb',
-          language: this.settings.appearance?.language ?? 'en'
         }
       });
     }
@@ -516,16 +442,6 @@ export class SystemSettingsComponent implements OnInit {
           includeImages: this.settings?.backup?.includeImages || true,
           cloudBackupEnabled: this.settings?.backup?.cloudBackupEnabled || false,
           lastBackupDate: this.settings?.backup?.lastBackupDate
-        },
-        appearance: {
-          theme: formValue.appearance.theme,
-          primaryColor: formValue.appearance.primaryColor,
-          secondaryColor: this.settings?.appearance?.secondaryColor || '#64748b',
-          accentColor: this.settings?.appearance?.accentColor || '#f59e0b',
-          companyLogo: this.settings?.appearance?.companyLogo,
-          dashboardLayout: this.settings?.appearance?.dashboardLayout || 'standard',
-          showWelcomeMessage: this.settings?.appearance?.showWelcomeMessage ?? true,
-          language: formValue.appearance.language
         }
       };
 

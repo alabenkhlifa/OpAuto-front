@@ -196,6 +196,7 @@
     "title": "السيارات",
     "subtitle": "إدارة سجل المركبات والمعلومات",
     "addCar": "إضافة سيارة",
+    "addVehicleToGarage": "إضافة مركبة إلى الورشة وإنشاء ملف عميل",
     "editCar": "تعديل السيارة",
     "deleteCar": "حذف السيارة",
     "carDetails": "تفاصيل السيارة",
@@ -204,6 +205,8 @@
     "make": "الماركة",
     "model": "الطراز",
     "year": "السنة",
+    "currentMileage": "عداد الكيلومترات الحالي",
+    "currentMileageRequired": "عداد الكيلومترات الحالي *",
     "color": "اللون",
     "vin": "رقم الهيكل",
     "engineType": "نوع المحرك",
@@ -259,6 +262,7 @@
     "newCustomer": "عميل جديد",
     "selectCustomer": "اختيار عميل",
     "selectCustomerRequired": "اختيار عميل *",
+    "chooseCustomer": "اختر عميل",
     "customerNameRequired": "اسم العميل *",
     "customerNamePlaceholder": "أدخل اسم العميل",
     "phoneNumberRequired": "رقم الهاتف *",
@@ -473,6 +477,16 @@
       "body": "الهيكل",
       "accessories": "الملحقات",
       "consumables": "المستهلكات"
+    },
+    "units": {
+      "piece": "قطعة",
+      "liter": "لتر",
+      "kg": "كيلوغرام",
+      "meter": "متر",
+      "pair": "زوج",
+      "set": "مجموعة",
+      "bottle": "زجاجة",
+      "box": "صندوق"
     },
     "suppliers": {
       "title": "الموردون",
@@ -816,7 +830,30 @@
       "activeCustomers": "العملاء النشطين",
       "mechanicUtilization": "استخدام الميكانيكي",
       "stockValue": "قيمة المخزون",
-      "customerSatisfaction": "رضا العملاء"
+      "customerSatisfaction": "رضا العملاء",
+      "revenue": "الإيرادات",
+      "newCustomers": "عملاء جدد",
+      "partsInventory": "مخزون القطع",
+      "paidRevenue": "الإيرادات المدفوعة",
+      "pendingRevenue": "الإيرادات المعلقة",
+      "overdueRevenue": "الإيرادات المتأخرة",
+      "averageInvoiceValue": "متوسط قيمة الفاتورة",
+      "taxCollected": "الضرائب المحصلة",
+      "discountsGiven": "الخصومات الممنوحة",
+      "profitMargin": "هامش الربح",
+      "revenueGrowth": "نمو الإيرادات",
+      "totalAppointments": "إجمالي المواعيد",
+      "completionRate": "معدل الإنجاز",
+      "garageCapacity": "سعة الورشة",
+      "avgServiceTime": "متوسط وقت الخدمة",
+      "repeatCustomerRate": "معدل العملاء المكررين",
+      "garageCapacityUsed": "سعة الورشة المستخدمة",
+      "totalCustomers": "إجمالي العملاء",
+      "avgCustomerValue": "متوسط قيمة العميل",
+      "retentionRate": "معدل الاحتفاظ",
+      "totalParts": "إجمالي القطع",
+      "lowStockItems": "عناصر المخزون المنخفض",
+      "turnoverRate": "معدل الدوران"
     },
     "charts": {
       "revenueTrends": {
@@ -832,11 +869,17 @@
         "title": "المقارنة الشهرية"
       }
     },
-    "kpis": {
-      "revenue": "الإيرادات",
-      "newCustomers": "عملاء جدد",
-      "partsInventory": "مخزون القطع"
-    }
+    "sections": {
+      "revenueBreakdown": "تفصيل الإيرادات",
+      "growthAnalysis": "تحليل النمو",
+      "servicePerformance": "أداء الخدمات",
+      "efficiencyMetrics": "مقاييس الكفاءة"
+    },
+    "periods": {
+      "thisMonth": "هذا الشهر",
+      "lastMonth": "الشهر الماضي"
+    },
+    "loading": "جارِ تحميل التقارير..."
   },
   "settings": {
     "title": "الإعدادات",

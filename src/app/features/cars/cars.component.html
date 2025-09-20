@@ -26,7 +26,8 @@
             </div>
             <div class="flex items-center gap-2">
               <span class="text-sm text-white">{{ 'tiers.plan' | translate }}:</span>
-              <span class="text-sm font-medium text-blue-400">
+              <span [ngClass]="getTierBadgeClass()" 
+                    [attr.aria-label]="'Current subscription tier: ' + currentTier()">
                 {{ currentTier() }}
               </span>
             </div>

@@ -196,6 +196,7 @@
     "title": "Cars",
     "subtitle": "Manage vehicle registry and information",
     "addCar": "Add Car",
+    "addVehicleToGarage": "Add vehicle to garage and create customer record",
     "registerNewCar": "Register New Car",
     "editCar": "Edit Car",
     "deleteCar": "Delete Car",
@@ -440,6 +441,16 @@
       "body": "Body",
       "accessories": "Accessories",
       "consumables": "Consumables"
+    },
+    "units": {
+      "piece": "Piece",
+      "liter": "Liter",
+      "kg": "Kilogram",
+      "meter": "Meter",
+      "pair": "Pair",
+      "set": "Set",
+      "bottle": "Bottle",
+      "box": "Box"
     },
     "stockStatus": {
       "inStock": "In Stock",
@@ -857,7 +868,30 @@
       "activeCustomers": "Active Customers",
       "mechanicUtilization": "Mechanic Utilization",
       "stockValue": "Stock Value",
-      "customerSatisfaction": "Customer Satisfaction"
+      "customerSatisfaction": "Customer Satisfaction",
+      "revenue": "Revenue",
+      "newCustomers": "New Customers",
+      "partsInventory": "Parts Inventory",
+      "paidRevenue": "Paid Revenue",
+      "pendingRevenue": "Pending Revenue",
+      "overdueRevenue": "Overdue Revenue",
+      "averageInvoiceValue": "Average Invoice Value",
+      "taxCollected": "Tax Collected",
+      "discountsGiven": "Discounts Given",
+      "profitMargin": "Profit Margin",
+      "revenueGrowth": "Revenue Growth",
+      "totalAppointments": "Total Appointments",
+      "completionRate": "Completion Rate",
+      "garageCapacity": "Garage Capacity",
+      "avgServiceTime": "Average Service Time",
+      "repeatCustomerRate": "Repeat Customer Rate",
+      "garageCapacityUsed": "Garage Capacity Used",
+      "totalCustomers": "Total Customers",
+      "avgCustomerValue": "Average Customer Value",
+      "retentionRate": "Retention Rate",
+      "totalParts": "Total Parts",
+      "lowStockItems": "Low Stock Items",
+      "turnoverRate": "Turnover Rate"
     },
     "charts": {
       "revenueTrends": {
@@ -873,11 +907,17 @@
         "title": "Monthly Comparison"
       }
     },
-    "kpis": {
-      "revenue": "Revenue",
-      "newCustomers": "New Customers",
-      "partsInventory": "Parts Inventory"
-    }
+    "sections": {
+      "revenueBreakdown": "Revenue Breakdown",
+      "growthAnalysis": "Growth Analysis",
+      "servicePerformance": "Service Performance",
+      "efficiencyMetrics": "Efficiency Metrics"
+    },
+    "periods": {
+      "thisMonth": "This Month",
+      "lastMonth": "Last Month"
+    },
+    "loading": "Loading reports..."
   },
   "settings": {
     "title": "Settings",
