@@ -15,14 +15,14 @@ export class TranslatePipe implements PipeTransform, OnDestroy {
 
   transform(key: string, params?: Record<string, any>): string {
     if (!key) return '';
-    
+
     // Subscribe to translation changes if not already subscribed
     if (!this.subscription) {
       this.subscription = this.translationService.translations$.subscribe(() => {
         this.cdr.markForCheck();
       });
     }
-    
+
     // Get the translation directly from the service
     const translation = this.translationService.instant(key, params);
     this.lastValue = translation;

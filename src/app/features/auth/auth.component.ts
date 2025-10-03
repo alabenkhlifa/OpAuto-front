@@ -155,10 +155,35 @@ import { LanguageToggleComponent } from '../../shared/components/language-toggle
 
           <!-- Demo Credentials -->
           <div class="mt-6 p-4 backdrop-blur-sm bg-blue-900 bg-opacity-20 border border-blue-500 border-opacity-30 rounded-lg">
-            <h3 class="text-sm font-medium text-blue-300 mb-2">{{ 'auth.demo.title' | translate }}</h3>
-            <div class="space-y-1 text-xs text-blue-200">
-              <p><strong>{{ 'auth.demo.owner' | translate }}:</strong> owner&#64;opauto.tn / owner123</p>
-              <p><strong>{{ 'auth.demo.staff' | translate }}:</strong> staff1 / staff123</p>
+            <h3 class="text-sm font-medium text-blue-300 mb-3">{{ 'auth.demo.title' | translate }}</h3>
+
+            <!-- Solo Tier -->
+            <div class="mb-3">
+              <p class="text-xs font-semibold text-blue-400 mb-1">🔵 Solo (1 user, 50 cars)</p>
+              <div class="text-xs text-blue-200 space-y-0.5 pl-3">
+                <p><strong>Owner:</strong> solo&#64;opauto.tn / solo123</p>
+              </div>
+            </div>
+
+            <!-- Starter Tier -->
+            <div class="mb-3">
+              <p class="text-xs font-semibold text-blue-400 mb-1">🟢 Starter (3 users, 200 cars)</p>
+              <div class="text-xs text-blue-200 space-y-0.5 pl-3">
+                <p><strong>Owner:</strong> starter&#64;opauto.tn / starter123</p>
+                <p><strong>Staff:</strong> starter_staff1 / staff123</p>
+                <p><strong>Staff:</strong> starter_staff2 / staff123</p>
+              </div>
+            </div>
+
+            <!-- Professional Tier -->
+            <div>
+              <p class="text-xs font-semibold text-blue-400 mb-1">🟣 Professional (Unlimited)</p>
+              <div class="text-xs text-blue-200 space-y-0.5 pl-3">
+                <p><strong>Owner:</strong> pro&#64;opauto.tn / pro123</p>
+                <p><strong>Mechanic:</strong> pro_mechanic1 / staff123</p>
+                <p><strong>Receptionist:</strong> pro_receptionist / staff123</p>
+                <p><strong>Inventory:</strong> pro_inventory / staff123</p>
+              </div>
             </div>
           </div>
 

@@ -1,0 +1,112 @@
+<!-- Tour Overlay -->
+@if (isActive()) {
+  <!-- Full screen blocking overlay -->
+  <div class="tour-blocking-overlay"></div>
+
+  <!-- Backdrop only for center placement (when no spotlight) -->
+  @if (currentStep()?.placement === 'center') {
+    <div class="tour-backdrop"></div>
+  }
+
+  <!-- Spotlight highlight for target element (creates its own backdrop via box-shadow) -->
+  @if (currentStep()?.placement !== 'center') {
+    <div class="tour-spotlight" [ngStyle]="spotlightStyle()"></div>
+  }
+
+  <!-- Tour Tooltip -->
+  <div
+    class="tour-tooltip glass-card"
+    [ngStyle]="tooltipStyle()"
+    [class.rtl]="isRTL()"
+  >
+    <!-- Arrow -->
+    <div class="tour-arrow" [ngStyle]="arrowStyle()"></div>
+
+    <!-- Progress Bar -->
+    <div class="tour-progress-bar">
+      <div class="tour-progress-fill" [style.width.%]="progress()"></div>
+    </div>
+
+    <!-- Content -->
+    <div class="tour-content">
+      <!-- Step Counter -->
+      <div class="tour-step-counter">
+        <span class="text-primary-400 font-semibold">
+          {{ 'onboarding.step' | translate }} {{ currentStepIndex() + 1 }} {{ 'onboarding.of' | translate }} {{ totalSteps() }}
+        </span>
+      </div>
+
+      <!-- Title -->
+      <h3 class="tour-title">
+        {{ getStepTitle() }}
+      </h3>
+
+      <!-- Description -->
+      <p class="tour-description">
+        {{ getStepDescription() }}
+      </p>
+
+      <!-- Actions -->
+      <div class="tour-actions" [class.rtl]="isRTL()">
+        <!-- Skip Button -->
+        @if (canSkip()) {
+          <button
+            class="tour-btn tour-btn-skip"
+            (click)="onSkip()"
+            type="button"
+          >
+            {{ 'onboarding.skip' | translate }}
+          </button>
+        }
+
+        <div class="tour-actions-right">
+          <!-- Previous Button -->
+          @if (hasPrevious()) {
+            <button
+              class="tour-btn tour-btn-secondary"
+              (click)="onPrevious()"
+              type="button"
+            >
+              <svg class="w-4 h-4" [class.rotate-180]="isRTL()" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+              </svg>
+              {{ 'onboarding.previous' | translate }}
+            </button>
+          }
+
+          <!-- Next/Complete Button -->
+          @if (hasNext()) {
+            <button
+              class="tour-btn tour-btn-primary"
+              (click)="onNext()"
+              type="button"
+            >
+              @if (currentStepIndex() === totalSteps() - 1) {
+                {{ 'onboarding.complete' | translate }}
+                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+              } @else {
+                {{ 'onboarding.next' | translate }}
+                <svg class="w-4 h-4 ml-2" [class.rotate-180]="isRTL()" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              }
+            </button>
+          } @else {
+            <button
+              class="tour-btn tour-btn-primary"
+              (click)="onComplete()"
+              type="button"
+            >
+              {{ 'onboarding.complete' | translate }}
+              <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+}

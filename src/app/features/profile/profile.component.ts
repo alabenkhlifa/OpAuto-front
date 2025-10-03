@@ -4,7 +4,10 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
+import { SubscriptionService } from '../../core/services/subscription.service';
+import { OnboardingService } from '../../core/services/onboarding.service';
 import { User, ChangePasswordRequest, AuthError, UserRole, USER_ROLE_LABELS } from '../../core/models/auth.model';
+import { TOUR_IDS } from '../../core/models/onboarding.model';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 
 @Component({
@@ -246,6 +249,23 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
                             <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                           </label>
                         </div>
+                      </div>
+                    </div>
+
+                    <!-- Onboarding Tour Section -->
+                    <div class="pt-4 border-t border-white/10">
+                      <label class="form-label">{{ 'profile.preferences.onboardingTour' | translate }}</label>
+                      <div class="space-y-3 mt-2">
+                        <p class="text-sm text-gray-400">{{ 'profile.preferences.onboardingTourDescription' | translate }}</p>
+                        <button
+                          type="button"
+                          class="btn-secondary flex items-center gap-2"
+                          (click)="restartOnboardingTour()">
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
+                          {{ 'profile.preferences.restartTour' | translate }}
+                        </button>
                       </div>
                     </div>
 
@@ -496,6 +516,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private authService = inject(AuthService);
+  private subscriptionService = inject(SubscriptionService);
+  private onboardingService = inject(OnboardingService);
   private destroy$ = new Subject<void>();
 
   activeTab = signal<'profile' | 'preferences' | 'security'>('profile');
@@ -731,5 +753,33 @@ export class ProfileComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       this.errorMessage.set('');
     }, 5000);
+  }
+
+  restartOnboardingTour() {
+    // Get current user's tier and role to determine which tour to restart
+    const user = this.currentUser();
+    if (!user) return;
+
+    const tier = this.subscriptionService.currentTier();
+    const role = user.role;
+
+    let tourId: string;
+    if (role === UserRole.STAFF) {
+      tourId = tier === 'starter' ? TOUR_IDS.STARTER_STAFF : TOUR_IDS.PROFESSIONAL_STAFF;
+    } else {
+      tourId = tier === 'solo' ? TOUR_IDS.SOLO_OWNER :
+               tier === 'starter' ? TOUR_IDS.STARTER_OWNER :
+               TOUR_IDS.PROFESSIONAL_OWNER;
+    }
+
+    // Restart the tour
+    this.onboardingService.restartTour(tourId as any);
+
+    // Navigate to dashboard where tour will start
+    this.router.navigate(['/dashboard']);
+
+    // Show success message
+    this.successMessage.set('Onboarding tour restarted! Navigating to dashboard...');
+    this.clearSuccessMessage();
   }
 }

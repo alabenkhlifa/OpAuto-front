@@ -55,12 +55,13 @@
       <ul class="nav-list">
         @for (item of filteredNavItems(); track item.id) {
           <li class="nav-item">
-            <button 
+            <button
               class="nav-link"
               [class.active]="item.isActive"
               [class.has-children]="item.children"
               (click)="item.children ? toggleSubmenu(item, $event) : navigateTo(item.route!); $event.stopPropagation()"
-              [attr.title]="isCollapsed() && !isHovered() ? (item.translationKey | translate) : null">
+              [attr.title]="isCollapsed() && !isHovered() ? (item.translationKey | translate) : null"
+              [attr.data-tour]="item.id">
               
               <!-- Icon -->
               <span class="nav-icon">
@@ -166,11 +167,12 @@
       <ul class="nav-list">
         @for (item of filteredSettingsItems(); track item.id) {
           <li class="nav-item">
-            <button 
+            <button
               class="nav-link"
               [class.active]="item.isActive"
               (click)="navigateTo(item.route!); $event.stopPropagation()"
-              [attr.title]="isCollapsed() && !isHovered() ? (item.translationKey | translate) : null">
+              [attr.title]="isCollapsed() && !isHovered() ? (item.translationKey | translate) : null"
+              [attr.data-tour]="item.id">
               
               <!-- Icon -->
               <span class="nav-icon">

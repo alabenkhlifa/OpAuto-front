@@ -1408,6 +1408,7 @@
   "staff": {
     "title": "Staff Management",
     "subtitle": "Manage staff accounts and permissions",
+    "totalEmployees": "Total Employees",
     "addNew": "Add Staff Member",
     "createAccount": "Create Staff Account",
     "noStaff": "No staff members found",
@@ -1481,7 +1482,10 @@
       "smsNotifications": "SMS Notifications",
       "smsNotificationsDescription": "Receive notifications via SMS",
       "browserNotifications": "Browser Notifications",
-      "browserNotificationsDescription": "Show desktop notifications"
+      "browserNotificationsDescription": "Show desktop notifications",
+      "onboardingTour": "Onboarding Tour",
+      "onboardingTourDescription": "Restart the interactive tour to learn about OpAuto features",
+      "restartTour": "Restart Tour"
     },
     "security": {
       "securityReminderTitle": "Security Reminder",
@@ -1869,6 +1873,138 @@
       "description": "Our team is here to help you find the perfect plan for your garage.",
       "email": "Email Us",
       "phone": "Call Us"
+    }
+  },
+  "onboarding": {
+    "step": "Step",
+    "of": "of",
+    "next": "Next",
+    "previous": "Previous",
+    "skip": "Skip Tour",
+    "complete": "Complete Tour",
+    "solo": {
+      "welcome": {
+        "title": "Welcome to OpAuto Solo!",
+        "description": "Let's take a quick tour of your garage management system. This tour will help you get started with the essential features."
+      },
+      "dashboard": {
+        "title": "Your Dashboard",
+        "description": "This is your command center. Monitor today's appointments, active jobs, and key metrics at a glance."
+      },
+      "addCar": {
+        "title": "Add Your First Car",
+        "description": "Start by registering vehicles. Click here to add customer cars with details like make, model, and license plate."
+      },
+      "maintenance": {
+        "title": "Maintenance Tracking",
+        "description": "Track all service jobs here. Create new jobs, update status, and manage repairs efficiently."
+      },
+      "invoicing": {
+        "title": "Cash Invoicing",
+        "description": "Generate invoices for completed services. Simple cash-based billing for your customers."
+      },
+      "notifications": {
+        "title": "Browser Notifications",
+        "description": "Stay updated with browser notifications for new jobs and important updates."
+      },
+      "upgrade": {
+        "title": "Ready to Grow?",
+        "description": "Upgrade to Starter for multi-user access, email notifications, and approval workflows. Or go Professional for inventory management and advanced features!"
+      }
+    },
+    "starter": {
+      "welcome": {
+        "title": "Welcome to OpAuto Starter!",
+        "description": "You've unlocked powerful team collaboration features. Let's explore what's new for your growing garage."
+      },
+      "dashboard": {
+        "title": "Enhanced Dashboard",
+        "description": "Your dashboard now shows team activities, approval requests, and collaborative workflows."
+      },
+      "multiUser": {
+        "title": "Team Management",
+        "description": "Create staff accounts for your mechanics and assistants. Each member gets their own login and access."
+      },
+      "approvals": {
+        "title": "Approval Workflows",
+        "description": "Staff can request approval for parts and services. You review and approve from this section."
+      },
+      "emailNotifications": {
+        "title": "Email Notifications",
+        "description": "Configure email alerts for job completions, approvals, and important updates."
+      },
+      "customerHistory": {
+        "title": "Customer History",
+        "description": "Access complete service history for each customer. Build better relationships with detailed records."
+      },
+      "reports": {
+        "title": "Business Reports",
+        "description": "View revenue reports, service analytics, and performance metrics to make data-driven decisions."
+      },
+      "upgradePro": {
+        "title": "Go Professional",
+        "description": "Upgrade to Professional for unlimited users, inventory management, SMS notifications, and advanced reporting!"
+      }
+    },
+    "professional": {
+      "welcome": {
+        "title": "Welcome to OpAuto Professional!",
+        "description": "You have full access to all features. Let's explore the advanced capabilities of your Professional plan."
+      },
+      "dashboard": {
+        "title": "Professional Dashboard",
+        "description": "Your complete command center with unlimited scale, advanced analytics, and full feature access."
+      },
+      "inventory": {
+        "title": "Inventory Management",
+        "description": "Track parts, manage stock levels, and monitor supplier orders. Full inventory control at your fingertips."
+      },
+      "photoDocs": {
+        "title": "Photo Documentation",
+        "description": "Upload before/after photos, document repairs, and provide visual evidence to customers."
+      },
+      "advancedReports": {
+        "title": "Advanced Analytics",
+        "description": "Access detailed reports, predictive analytics, and business intelligence tools for strategic planning."
+      },
+      "smsNotifications": {
+        "title": "SMS Notifications",
+        "description": "Send SMS alerts to customers and staff. Keep everyone informed in real-time."
+      },
+      "dataExport": {
+        "title": "Data Export",
+        "description": "Export your data in various formats for accounting, analysis, or backup purposes."
+      },
+      "unlimitedFeatures": {
+        "title": "Unlimited Everything!",
+        "description": "Enjoy unlimited users, cars, service bays, and all premium features. Scale your garage without limits!"
+      }
+    },
+    "staff": {
+      "welcome": {
+        "title": "Welcome to OpAuto!",
+        "description": "Let's get you familiar with your workspace. This quick tour will show you the essential features you'll use daily."
+      },
+      "dashboard": {
+        "title": "Your Dashboard",
+        "description": "See your assigned jobs, today's schedule, and active tasks at a glance."
+      },
+      "maintenance": {
+        "title": "Maintenance Jobs",
+        "description": "View and update service jobs. Track your work progress and mark tasks as complete."
+      },
+      "approvalRequest": {
+        "title": "Request Approvals",
+        "description": "Need to purchase parts? Request approval from the owner using this button."
+      },
+      "profile": {
+        "title": "Your Profile",
+        "description": "Update your personal information and preferences here. You're all set!"
+      },
+      "photoUpload": {
+        "title": "Photo Documentation",
+        "description": "Upload photos of repairs and issues. Visual documentation helps communicate with customers."
+      }
     }
   }
 }

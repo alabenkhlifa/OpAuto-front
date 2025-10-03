@@ -6,6 +6,8 @@ import { LanguageToggleComponent } from '../../shared/components/language-toggle
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { TranslationService } from '../../core/services/translation.service';
 import { AuthService } from '../../core/services/auth.service';
+import { OnboardingService } from '../../core/services/onboarding.service';
+import { OnboardingTourComponent } from '../../shared/components/onboarding-tour/onboarding-tour.component';
 
 interface GarageMetrics {
   totalCarsToday: number;
@@ -46,7 +48,7 @@ interface ActiveJob {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, HttpClientModule, LanguageToggleComponent, TranslatePipe],
+  imports: [CommonModule, HttpClientModule, LanguageToggleComponent, TranslatePipe, OnboardingTourComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
@@ -54,7 +56,8 @@ export class DashboardComponent implements OnInit {
   private router = inject(Router);
   private translationService = inject(TranslationService);
   private authService = inject(AuthService);
-  
+  private onboardingService = inject(OnboardingService);
+
   isOwner = signal(false);
   
   metrics: GarageMetrics = {
@@ -185,6 +188,11 @@ export class DashboardComponent implements OnInit {
   ngOnInit(): void {
     this.loadDashboardData();
     this.isOwner.set(this.authService.isOwner());
+
+    // Start onboarding tour if not completed
+    setTimeout(() => {
+      this.onboardingService.startTourForCurrentUser();
+    }, 1000);
   }
 
   getCurrentDate(): string {

@@ -1399,7 +1399,10 @@
       "smsNotifications": "Notifications SMS",
       "smsNotificationsDescription": "Recevoir des notifications par SMS",
       "browserNotifications": "Notifications du navigateur",
-      "browserNotificationsDescription": "Afficher les notifications sur le bureau"
+      "browserNotificationsDescription": "Afficher les notifications sur le bureau",
+      "onboardingTour": "Visite Guidée",
+      "onboardingTourDescription": "Redémarrer la visite interactive pour découvrir les fonctionnalités d'OpAuto",
+      "restartTour": "Redémarrer la Visite"
     },
     "security": {
       "securityReminderTitle": "Rappel de sécurité",
@@ -1908,6 +1911,138 @@
     "actions": {
       "edit": "Modifier",
       "delete": "Supprimer"
+    }
+  },
+  "onboarding": {
+    "step": "Étape",
+    "of": "sur",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "skip": "Ignorer la visite",
+    "complete": "Terminer la visite",
+    "solo": {
+      "welcome": {
+        "title": "Bienvenue sur OpAuto Solo!",
+        "description": "Faisons un tour rapide de votre système de gestion de garage. Cette visite vous aidera à démarrer avec les fonctionnalités essentielles."
+      },
+      "dashboard": {
+        "title": "Votre Tableau de Bord",
+        "description": "Ceci est votre centre de commande. Surveillez les rendez-vous du jour, les travaux actifs et les indicateurs clés en un coup d'œil."
+      },
+      "addCar": {
+        "title": "Ajouter Votre Première Voiture",
+        "description": "Commencez par enregistrer les véhicules. Cliquez ici pour ajouter les voitures des clients avec des détails comme la marque, le modèle et la plaque d'immatriculation."
+      },
+      "maintenance": {
+        "title": "Suivi de Maintenance",
+        "description": "Suivez tous les travaux de service ici. Créez de nouveaux travaux, mettez à jour le statut et gérez les réparations efficacement."
+      },
+      "invoicing": {
+        "title": "Facturation en Espèces",
+        "description": "Générez des factures pour les services terminés. Facturation simple en espèces pour vos clients."
+      },
+      "notifications": {
+        "title": "Notifications du Navigateur",
+        "description": "Restez informé avec les notifications du navigateur pour les nouveaux travaux et les mises à jour importantes."
+      },
+      "upgrade": {
+        "title": "Prêt à Grandir?",
+        "description": "Passez à Starter pour l'accès multi-utilisateur, les notifications par e-mail et les flux d'approbation. Ou passez à Professional pour la gestion des stocks et les fonctionnalités avancées!"
+      }
+    },
+    "starter": {
+      "welcome": {
+        "title": "Bienvenue sur OpAuto Starter!",
+        "description": "Vous avez débloqué de puissantes fonctionnalités de collaboration d'équipe. Explorons ce qui est nouveau pour votre garage en croissance."
+      },
+      "dashboard": {
+        "title": "Tableau de Bord Amélioré",
+        "description": "Votre tableau de bord affiche maintenant les activités de l'équipe, les demandes d'approbation et les flux de travail collaboratifs."
+      },
+      "multiUser": {
+        "title": "Gestion d'Équipe",
+        "description": "Créez des comptes pour vos mécaniciens et assistants. Chaque membre obtient son propre identifiant et accès."
+      },
+      "approvals": {
+        "title": "Flux d'Approbation",
+        "description": "Le personnel peut demander l'approbation pour les pièces et services. Vous examinez et approuvez depuis cette section."
+      },
+      "emailNotifications": {
+        "title": "Notifications par E-mail",
+        "description": "Configurez les alertes par e-mail pour les achèvements de travaux, les approbations et les mises à jour importantes."
+      },
+      "customerHistory": {
+        "title": "Historique Client",
+        "description": "Accédez à l'historique complet des services pour chaque client. Construisez de meilleures relations avec des dossiers détaillés."
+      },
+      "reports": {
+        "title": "Rapports d'Affaires",
+        "description": "Consultez les rapports de revenus, les analyses de services et les indicateurs de performance pour prendre des décisions basées sur les données."
+      },
+      "upgradePro": {
+        "title": "Passez à Professional",
+        "description": "Passez à Professional pour des utilisateurs illimités, la gestion des stocks, les notifications SMS et les rapports avancés!"
+      }
+    },
+    "professional": {
+      "welcome": {
+        "title": "Bienvenue sur OpAuto Professional!",
+        "description": "Vous avez un accès complet à toutes les fonctionnalités. Explorons les capacités avancées de votre plan Professional."
+      },
+      "dashboard": {
+        "title": "Tableau de Bord Professional",
+        "description": "Votre centre de commande complet avec une échelle illimitée, des analyses avancées et un accès complet aux fonctionnalités."
+      },
+      "inventory": {
+        "title": "Gestion des Stocks",
+        "description": "Suivez les pièces, gérez les niveaux de stock et surveillez les commandes fournisseurs. Contrôle total des stocks à portée de main."
+      },
+      "photoDocs": {
+        "title": "Documentation Photo",
+        "description": "Téléchargez des photos avant/après, documentez les réparations et fournissez des preuves visuelles aux clients."
+      },
+      "advancedReports": {
+        "title": "Analyses Avancées",
+        "description": "Accédez à des rapports détaillés, des analyses prédictives et des outils d'intelligence d'affaires pour la planification stratégique."
+      },
+      "smsNotifications": {
+        "title": "Notifications SMS",
+        "description": "Envoyez des alertes SMS aux clients et au personnel. Gardez tout le monde informé en temps réel."
+      },
+      "dataExport": {
+        "title": "Export de Données",
+        "description": "Exportez vos données dans divers formats pour la comptabilité, l'analyse ou la sauvegarde."
+      },
+      "unlimitedFeatures": {
+        "title": "Tout Illimité!",
+        "description": "Profitez d'utilisateurs illimités, de voitures, de postes de service et de toutes les fonctionnalités premium. Développez votre garage sans limites!"
+      }
+    },
+    "staff": {
+      "welcome": {
+        "title": "Bienvenue sur OpAuto!",
+        "description": "Familiarisons-nous avec votre espace de travail. Cette visite rapide vous montrera les fonctionnalités essentielles que vous utiliserez quotidiennement."
+      },
+      "dashboard": {
+        "title": "Votre Tableau de Bord",
+        "description": "Consultez vos travaux assignés, le planning du jour et les tâches actives en un coup d'œil."
+      },
+      "maintenance": {
+        "title": "Travaux de Maintenance",
+        "description": "Consultez et mettez à jour les travaux de service. Suivez votre progression et marquez les tâches comme terminées."
+      },
+      "approvalRequest": {
+        "title": "Demander des Approbations",
+        "description": "Besoin d'acheter des pièces? Demandez l'approbation du propriétaire en utilisant ce bouton."
+      },
+      "profile": {
+        "title": "Votre Profil",
+        "description": "Mettez à jour vos informations personnelles et vos préférences ici. Vous êtes prêt!"
+      },
+      "photoUpload": {
+        "title": "Documentation Photo",
+        "description": "Téléchargez des photos des réparations et des problèmes. La documentation visuelle aide à communiquer avec les clients."
+      }
     }
   }
 }
