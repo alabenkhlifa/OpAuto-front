@@ -45,6 +45,7 @@
     "customers": "العملاء",
     "reports": "التقارير",
     "employees": "الموظفين",
+    "subscription": "الاشتراك",
     "profile": "الملف الشخصي",
     "logout": "تسجيل خروج",
     "opAuto": "أوب أوتو",
@@ -195,6 +196,13 @@
   "cars": {
     "title": "السيارات",
     "subtitle": "إدارة سجل المركبات والمعلومات",
+    "vehicles": "المركبات",
+    "vehicleUsage": "استخدام المركبات",
+    "vehicleDatabase": "قاعدة بيانات المركبات",
+    "vehicleStatistics": "إحصائيات المركبات",
+    "status": "الحالة:",
+    "unlimitedVehicles": "مركبات غير محدودة",
+    "addVehicle": "إضافة مركبة",
     "addCar": "إضافة سيارة",
     "addVehicleToGarage": "إضافة مركبة إلى الورشة وإنشاء ملف عميل",
     "editCar": "تعديل السيارة",
@@ -540,6 +548,8 @@
   "customers": {
     "title": "العملاء",
     "subtitle": "إدارة معلومات العملاء وتاريخهم",
+    "customerInformation": "معلومات العميل",
+    "notProvided": "غير مقدم",
     "addCustomer": "إضافة عميل",
     "editCustomer": "تعديل العميل",
     "deleteCustomer": "حذف العميل",
@@ -673,6 +683,9 @@
       "silver": "فضي",
       "gold": "ذهبي",
       "platinum": "بلاتيني"
+    },
+    "form": {
+      "newCustomer": "عميل جديد"
     },
     "loading": "جاري تحميل العملاء..."
   },
@@ -873,7 +886,14 @@
       "revenueBreakdown": "تفصيل الإيرادات",
       "growthAnalysis": "تحليل النمو",
       "servicePerformance": "أداء الخدمات",
-      "efficiencyMetrics": "مقاييس الكفاءة"
+      "efficiencyMetrics": "مقاييس الكفاءة",
+      "basicSummary": "ملخص أساسي"
+    },
+    "upgrade": {
+      "title": "ترقية لفتح التقارير المتقدمة",
+      "description": "احصل على تحليلات ورسوم بيانية ورؤى تفصيلية مع باقة المبتدئين أو المحترفين",
+      "cta": "عرض الباقات",
+      "soloMessage": "تتضمن باقة Solo الخاصة بك ملخصات أساسية يومية وأسبوعية. قم بالترقية للوصول إلى لوحات المعلومات والتحليلات التفصيلية."
     },
     "periods": {
       "thisMonth": "هذا الشهر",
@@ -1282,6 +1302,9 @@
     "login": {
       "title": "أهلاً بعودتك",
       "subtitle": "قم بتسجيل الدخول إلى حسابك",
+      "emailOrUsernameLabel": "البريد الإلكتروني / اسم المستخدم",
+      "emailOrUsernamePlaceholder": "أدخل البريد الإلكتروني أو اسم المستخدم",
+      "emailOrUsernameRequired": "البريد الإلكتروني أو اسم المستخدم مطلوب",
       "emailLabel": "عنوان البريد الإلكتروني",
       "emailPlaceholder": "أدخل بريدك الإلكتروني",
       "emailRequired": "عنوان بريد إلكتروني صحيح مطلوب",
@@ -1337,6 +1360,8 @@
     },
     "demo": {
       "title": "بيانات اعتماد التجربة",
+      "owner": "المالك",
+      "staff": "الموظف",
       "admin": "المدير",
       "mechanic": "الميكانيكي",
       "adminCredentials": "admin@opauto.tn / admin123",
@@ -1740,12 +1765,14 @@
       "message": "لا توجد طلبات تحتاج إلى موافقة في الوقت الحالي"
     },
     "type": {
-      "parts_purchase": "شراء القطع",
-      "repair_estimate": "تقدير الإصلاح",
-      "overtime_work": "العمل الإضافي",
-      "custom_work": "عمل مخصص",
-      "refund": "استرداد",
-      "warranty_claim": "مطالبة الضمان"
+      "part_purchase": "شراء قطعة غيار",
+      "service_approval": "الموافقة على خدمة",
+      "customer_credit": "رصيد العميل",
+      "overtime_request": "طلب ساعات إضافية",
+      "expense_claim": "مطالبة بالمصروفات",
+      "discount_request": "طلب خصم",
+      "refund_request": "طلب استرداد",
+      "other": "أخرى"
     },
     "status": {
       "pending": "في الانتظار",
@@ -1759,6 +1786,112 @@
       "medium": "متوسط",
       "high": "عالي",
       "urgent": "عاجل"
+    }
+  },
+  "tiers": {
+    "solo": "سولو",
+    "starter": "المبتدئ",
+    "professional": "المحترف",
+    "pro": "محترف",
+    "plan": "باقة:",
+    "current": "الباقة الحالية",
+    "popular": "الأكثر شعبية",
+    "upgrade": "ترقية",
+    "downgrade": "تراجع",
+    "month": "شهر",
+    "choosePlan": "اختر باقتك",
+    "upgradeTitle": "افتح المزيد من الميزات",
+    "upgradeToPro": "الترقية إلى المحترف",
+    "upgradeForPhotos": "قم بالترقية للوصول إلى توثيق الصور",
+    "unlockFeature": "افتح الميزة المميزة"
+  },
+  "subscription": {
+    "title": "باقات الاشتراك",
+    "subtitle": "اختر الباقة المثالية لورشتك",
+    "current_plan": "الباقة الحالية",
+    "most_popular": "الأكثر شعبية",
+    "compare_plans": "مقارنة الباقات",
+    "upgrade_to": "الترقية إلى {{tier}}",
+    "downgrade_to": "التراجع إلى {{tier}}",
+    "downgrade_blocked": "لا يمكن التراجع",
+    "why_blocked": "أنت تستخدم حاليًا ميزات من باقتك الحالية",
+    "per_year": "سنويًا",
+    "days_left": "{{days}} يومًا متبقيًا في الفترة التجريبية",
+    "next_billing": "الفوترة القادمة: {{date}}",
+    "included_features": "الميزات المتضمنة",
+    "unlimited": "غير محدود",
+    "used": "{{used}} من {{limit}} مستخدم",
+    "usage": {
+      "users": "المستخدمون",
+      "cars": "السيارات",
+      "service_bays": "مواقع الخدمة"
+    },
+    "features": {
+      "single_user": "وصول مستخدم واحد",
+      "unlimited_appointments": "مواعيد غير محدودة",
+      "manual_booking": "حجز يدوي",
+      "cash_invoicing": "فواتير نقدية",
+      "basic_reports": "تقارير أساسية",
+      "browser_notifications": "إشعارات المتصفح",
+      "mobile_responsive": "متوافق مع الهاتف المحمول",
+      "multi_language": "دعم متعدد اللغات",
+      "multi_user": "وصول متعدد المستخدمين",
+      "email_notifications": "إشعارات البريد الإلكتروني",
+      "internal_approvals": "موافقات داخلية",
+      "service_workflow": "سير عمل الخدمة",
+      "customer_history": "سجل العملاء",
+      "photos_documentation": "صور ووثائق",
+      "inventory_management": "إدارة المخزون",
+      "sms_notifications": "إشعارات الرسائل النصية",
+      "advanced_reports": "تقارير متقدمة",
+      "data_export": "تصدير البيانات",
+      "employee_tracking": "تتبع الموظفين",
+      "appointment_management": "إدارة المواعيد",
+      "invoice_discounts": "خصومات الفواتير",
+      "unlimited_users": "مستخدمون غير محدودون",
+      "unlimited_service_bays": "مواقع خدمة غير محدودة",
+      "multi_bay_scheduling": "جدولة متعددة المواقع",
+      "custom_invoice_templates": "قوالب فواتير مخصصة",
+      "supplier_database": "قاعدة بيانات الموردين",
+      "priority_support": "دعم ذو أولوية"
+    },
+    "why_upgrade": {
+      "title": "لماذا الترقية؟"
+    },
+    "benefits": {
+      "growth": {
+        "title": "قم بتوسيع أعمالك",
+        "description": "أضف عددًا غير محدود من المستخدمين، وأدِر المزيد من المركبات، ووسّع عملياتك دون حدود."
+      },
+      "efficiency": {
+        "title": "حسّن الكفاءة",
+        "description": "بسّط سير العمل بميزات متقدمة مثل إدارة المخزون، وتوثيق الصور، وأنظمة الموافقة."
+      },
+      "insights": {
+        "title": "رؤى أفضل",
+        "description": "اتخذ قرارات مستنيرة بالبيانات مع التحليلات المتقدمة والتقارير التفصيلية وإمكانيات التصدير."
+      }
+    },
+    "faq": {
+      "title": "الأسئلة الشائعة",
+      "billing": {
+        "question": "كيف تعمل الفوترة؟",
+        "answer": "يتم إصدار فواتير الباقات سنويًا. يمكنك الترقية أو التراجع في أي وقت، وسيتم تطبيق التغييرات في دورة الفوترة التالية."
+      },
+      "cancellation": {
+        "question": "هل يمكنني الإلغاء في أي وقت؟",
+        "answer": "نعم، يمكنك إلغاء اشتراكك في أي وقت. ستستمر في الوصول حتى نهاية فترة الفوترة الحالية."
+      },
+      "support": {
+        "question": "ما هو الدعم الذي أحصل عليه؟",
+        "answer": "جميع الباقات تشمل الدعم عبر البريد الإلكتروني. تشمل الباقة الاحترافية دعمًا ذا أولوية مع أوقات استجابة أسرع ومساعدة مخصصة."
+      }
+    },
+    "contact": {
+      "title": "هل تحتاج مساعدة في الاختيار؟",
+      "description": "فريقنا هنا لمساعدتك في العثور على الباقة المثالية لورشتك.",
+      "email": "راسلنا عبر البريد",
+      "phone": "اتصل بنا"
     }
   }
 }

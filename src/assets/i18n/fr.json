@@ -46,6 +46,7 @@
     "reports": "Rapports",
     "employees": "Employés",
     "profile": "Profil",
+    "subscription": "Abonnement",
     "logout": "Déconnexion",
     "opAuto": "OpAuto",
     "garageManagement": "Gestion de Garage",
@@ -195,6 +196,13 @@
   "cars": {
     "title": "Voitures",
     "subtitle": "Gérer le registre et les informations des véhicules",
+    "vehicles": "Véhicules",
+    "vehicleUsage": "Utilisation des véhicules",
+    "vehicleDatabase": "Base de données des véhicules",
+    "vehicleStatistics": "Statistiques des véhicules",
+    "status": "Statut:",
+    "unlimitedVehicles": "Véhicules illimités",
+    "addVehicle": "Ajouter un véhicule",
     "addCar": "Ajouter une voiture",
     "addVehicleToGarage": "Ajouter un véhicule au garage et créer un dossier client",
     "editCar": "Modifier la voiture",
@@ -540,6 +548,8 @@
   "customers": {
     "title": "Clients",
     "subtitle": "Gérer les informations et l'historique des clients",
+    "customerInformation": "Informations du client",
+    "notProvided": "Non fourni",
     "addCustomer": "Ajouter un client",
     "editCustomer": "Modifier le client",
     "deleteCustomer": "Supprimer le client",
@@ -671,8 +681,11 @@
     "loyaltyTiers": {
       "bronze": "Bronze",
       "silver": "Argent",
-      "gold": "Or", 
+      "gold": "Or",
       "platinum": "Platine"
+    },
+    "form": {
+      "newCustomer": "Nouveau client"
     },
     "loading": "Chargement des clients..."
   },
@@ -873,7 +886,14 @@
       "revenueBreakdown": "Répartition des revenus",
       "growthAnalysis": "Analyse de croissance",
       "servicePerformance": "Performance des services",
-      "efficiencyMetrics": "Métriques d'efficacité"
+      "efficiencyMetrics": "Métriques d'efficacité",
+      "basicSummary": "Résumé de base"
+    },
+    "upgrade": {
+      "title": "Passer à un forfait supérieur pour débloquer les rapports avancés",
+      "description": "Obtenez des analyses détaillées, des graphiques et des informations avec le forfait Starter ou Professionnel",
+      "cta": "Voir les forfaits",
+      "soloMessage": "Votre forfait Solo comprend des résumés de base quotidiens et hebdomadaires. Passez à un forfait supérieur pour accéder aux tableaux de bord et analyses détaillés."
     },
     "periods": {
       "thisMonth": "Ce mois",
@@ -1606,12 +1626,14 @@
       "message": "Il n'y a actuellement aucune demande nécessitant une approbation"
     },
     "type": {
-      "parts_purchase": "Achat de pièces",
-      "repair_estimate": "Devis de réparation",
-      "overtime_work": "Travail supplémentaire",
-      "custom_work": "Travail personnalisé",
-      "refund": "Remboursement",
-      "warranty_claim": "Réclamation garantie"
+      "part_purchase": "Achat de pièce",
+      "service_approval": "Approbation de service",
+      "customer_credit": "Crédit client",
+      "overtime_request": "Demande d'heures supplémentaires",
+      "expense_claim": "Demande de remboursement",
+      "discount_request": "Demande de remise",
+      "refund_request": "Demande de remboursement",
+      "other": "Autre"
     },
     "status": {
       "pending": "En attente",
@@ -1707,6 +1729,7 @@
     "starter": "Débutant",
     "professional": "Professionnel",
     "pro": "PRO",
+    "plan": "Plan:",
     "current": "Plan Actuel",
     "popular": "Plus Populaire",
     "upgrade": "Mettre à Niveau",
@@ -1743,5 +1766,94 @@
     "priority_support": "Support Client Prioritaire",
     "advanced_reports": "Analyses et Rapports Avancés",
     "data_export": "Export et Sauvegarde des Données"
+  },
+  "subscription": {
+    "title": "Plans d'Abonnement",
+    "subtitle": "Choisissez le plan parfait pour votre garage",
+    "current_plan": "Plan Actuel",
+    "most_popular": "Le Plus Populaire",
+    "compare_plans": "Comparer les Plans",
+    "upgrade_to": "Passer à {{tier}}",
+    "downgrade_to": "Rétrograder vers {{tier}}",
+    "downgrade_blocked": "Impossible de rétrograder",
+    "why_blocked": "Vous utilisez actuellement des fonctionnalités de votre plan actuel",
+    "per_year": "par an",
+    "days_left": "{{days}} jours restants dans l'essai",
+    "next_billing": "Prochaine facturation : {{date}}",
+    "included_features": "Fonctionnalités Incluses",
+    "unlimited": "Illimité",
+    "used": "{{used}} sur {{limit}} utilisés",
+    "usage": {
+      "users": "Utilisateurs",
+      "cars": "Voitures",
+      "service_bays": "Postes de Travail"
+    },
+    "features": {
+      "single_user": "Accès Utilisateur Unique",
+      "unlimited_appointments": "Rendez-vous Illimités",
+      "manual_booking": "Réservation Manuelle",
+      "cash_invoicing": "Facturation Comptant",
+      "basic_reports": "Rapports de Base",
+      "browser_notifications": "Notifications Navigateur",
+      "mobile_responsive": "Responsive Mobile",
+      "multi_language": "Support Multi-langues",
+      "multi_user": "Support Multi-utilisateurs (Jusqu'à 3)",
+      "email_notifications": "Notifications Email",
+      "internal_approvals": "Système d'Approbation Interne",
+      "service_workflow": "Gestion du Flux de Service",
+      "customer_history": "Historique et Notes Client",
+      "photos_documentation": "Documentation Photo",
+      "inventory_management": "Gestion des Stocks",
+      "sms_notifications": "Notifications SMS",
+      "advanced_reports": "Analyses et Rapports Avancés",
+      "data_export": "Export et Sauvegarde des Données",
+      "employee_tracking": "Suivi des Performances des Employés",
+      "appointment_management": "Gestion des Rendez-vous",
+      "invoice_discounts": "Remises sur Factures",
+      "unlimited_users": "Utilisateurs Illimités",
+      "unlimited_service_bays": "Postes de Service Illimités",
+      "multi_bay_scheduling": "Planification Multi-postes",
+      "custom_invoice_templates": "Modèles de Factures Personnalisés",
+      "supplier_database": "Base de Données Fournisseurs",
+      "priority_support": "Support Prioritaire"
+    },
+    "why_upgrade": {
+      "title": "Pourquoi Passer à un Plan Supérieur ?"
+    },
+    "benefits": {
+      "growth": {
+        "title": "Développez Votre Entreprise",
+        "description": "Ajoutez un nombre illimité d'utilisateurs, gérez plus de véhicules et développez vos opérations sans limites."
+      },
+      "efficiency": {
+        "title": "Améliorez l'Efficacité",
+        "description": "Rationalisez les flux de travail avec des fonctionnalités avancées comme la gestion des stocks, la documentation photo et les systèmes d'approbation."
+      },
+      "insights": {
+        "title": "Meilleures Analyses",
+        "description": "Prenez des décisions basées sur les données avec des analyses avancées, des rapports détaillés et des capacités d'exportation."
+      }
+    },
+    "faq": {
+      "title": "Questions Fréquemment Posées",
+      "billing": {
+        "question": "Comment fonctionne la facturation ?",
+        "answer": "Les plans sont facturés annuellement. Vous pouvez passer à un plan supérieur ou inférieur à tout moment, et les changements seront reflétés dans votre prochain cycle de facturation."
+      },
+      "cancellation": {
+        "question": "Puis-je annuler à tout moment ?",
+        "answer": "Oui, vous pouvez annuler votre abonnement à tout moment. Vous continuerez à avoir accès jusqu'à la fin de votre période de facturation actuelle."
+      },
+      "support": {
+        "question": "Quel support est-ce que je reçois ?",
+        "answer": "Tous les plans incluent le support par email. Le plan Professionnel inclut un support prioritaire avec des temps de réponse plus rapides et une assistance dédiée."
+      }
+    },
+    "contact": {
+      "title": "Besoin d'Aide pour Choisir ?",
+      "description": "Notre équipe est là pour vous aider à trouver le plan parfait pour votre garage.",
+      "email": "Nous Envoyer un Email",
+      "phone": "Nous Appeler"
+    }
   }
 }

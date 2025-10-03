@@ -45,6 +45,7 @@
     "customers": "Customers",
     "reports": "Reports",
     "employees": "Employees",
+    "subscription": "Subscription",
     "profile": "Profile",
     "logout": "Logout",
     "opAuto": "OpAuto",
@@ -195,6 +196,13 @@
   "cars": {
     "title": "Cars",
     "subtitle": "Manage vehicle registry and information",
+    "vehicles": "Vehicles",
+    "vehicleUsage": "Vehicle Usage",
+    "vehicleDatabase": "Vehicle Database",
+    "vehicleStatistics": "Vehicle Statistics",
+    "status": "Status:",
+    "unlimitedVehicles": "Unlimited vehicles",
+    "addVehicle": "Add Vehicle",
     "addCar": "Add Car",
     "addVehicleToGarage": "Add vehicle to garage and create customer record",
     "registerNewCar": "Register New Car",
@@ -571,6 +579,8 @@
   "customers": {
     "title": "Customers",
     "subtitle": "Manage customer information and history",
+    "customerInformation": "Customer Information",
+    "notProvided": "Not provided",
     "addCustomer": "Add Customer",
     "editCustomer": "Edit Customer",
     "deleteCustomer": "Delete Customer",
@@ -708,9 +718,12 @@
     },
     "loyaltyTiers": {
       "bronze": "Bronze",
-      "silver": "Silver", 
+      "silver": "Silver",
       "gold": "Gold",
       "platinum": "Platinum"
+    },
+    "form": {
+      "newCustomer": "New Customer"
     },
     "loading": "Loading customers..."
   },
@@ -911,7 +924,14 @@
       "revenueBreakdown": "Revenue Breakdown",
       "growthAnalysis": "Growth Analysis",
       "servicePerformance": "Service Performance",
-      "efficiencyMetrics": "Efficiency Metrics"
+      "efficiencyMetrics": "Efficiency Metrics",
+      "basicSummary": "Basic Summary"
+    },
+    "upgrade": {
+      "title": "Upgrade to Unlock Advanced Reports",
+      "description": "Get detailed analytics, charts, and insights with Starter or Professional tier",
+      "cta": "View Plans",
+      "soloMessage": "Your Solo tier includes basic daily and weekly summaries. Upgrade to access detailed dashboards and analytics."
     },
     "periods": {
       "thisMonth": "This Month",
@@ -1320,6 +1340,9 @@
     "login": {
       "title": "Welcome Back",
       "subtitle": "Sign in to your account",
+      "emailOrUsernameLabel": "Email / Username",
+      "emailOrUsernamePlaceholder": "Enter email or username",
+      "emailOrUsernameRequired": "Email or username is required",
       "emailLabel": "Email Address",
       "emailPlaceholder": "Enter your email",
       "emailRequired": "Valid email is required",
@@ -1375,13 +1398,54 @@
     },
     "demo": {
       "title": "Demo Credentials",
-      "admin": "Admin",
-      "mechanic": "Mechanic",
-      "adminCredentials": "admin@opauto.tn / admin123",
-      "mechanicCredentials": "mechanic@opauto.tn / mech123"
+      "owner": "Owner",
+      "staff": "Staff"
     },
     "footer": {
       "systemName": "OpAuto Garage Management System v1.0"
+    }
+  },
+  "staff": {
+    "title": "Staff Management",
+    "subtitle": "Manage staff accounts and permissions",
+    "addNew": "Add Staff Member",
+    "createAccount": "Create Staff Account",
+    "noStaff": "No staff members found",
+    "form": {
+      "fullName": "Full Name",
+      "fullNamePlaceholder": "Enter staff member name",
+      "nameRequired": "Name is required",
+      "username": "Username",
+      "usernamePlaceholder": "e.g., staff1, staff2",
+      "usernameRequired": "Username is required (3-20 characters, letters/numbers/underscores only)",
+      "phone": "Phone Number",
+      "phonePlaceholder": "+216 XX XXX XXX",
+      "password": "Password",
+      "passwordPlaceholder": "Create password",
+      "passwordMinLength": "Password must be at least 6 characters",
+      "confirmPassword": "Confirm Password",
+      "confirmPasswordPlaceholder": "Confirm password",
+      "confirmPasswordRequired": "Please confirm password",
+      "passwordMismatch": "Passwords do not match",
+      "create": "Create Staff Account",
+      "creating": "Creating...",
+      "cancel": "Cancel"
+    },
+    "table": {
+      "name": "Name",
+      "username": "Username",
+      "role": "Role",
+      "phone": "Phone",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "actions": {
+      "edit": "Edit",
+      "delete": "Delete"
     }
   },
   "profile": {
@@ -1567,12 +1631,14 @@
       "message": "There are currently no requests that need approval"
     },
     "type": {
-      "parts_purchase": "Parts Purchase",
-      "repair_estimate": "Repair Estimate",
-      "overtime_work": "Overtime Work",
-      "custom_work": "Custom Work",
-      "refund": "Refund",
-      "warranty_claim": "Warranty Claim"
+      "part_purchase": "Part Purchase",
+      "service_approval": "Service Approval",
+      "customer_credit": "Customer Credit",
+      "overtime_request": "Overtime Request",
+      "expense_claim": "Expense Claim",
+      "discount_request": "Discount Request",
+      "refund_request": "Refund Request",
+      "other": "Other"
     },
     "status": {
       "pending": "Pending",
@@ -1665,9 +1731,10 @@
   },
   "tiers": {
     "solo": "Solo",
-    "starter": "Starter", 
+    "starter": "Starter",
     "professional": "Professional",
     "pro": "PRO",
+    "plan": "Plan:",
     "current": "Current Plan",
     "popular": "Most Popular",
     "upgrade": "Upgrade",
@@ -1702,7 +1769,96 @@
     "appointment_management": "Advanced Appointment Management",
     "sms_notifications": "SMS Notifications",
     "priority_support": "Priority Customer Support",
-    "advanced_reports": "Advanced Analytics & Reports", 
+    "advanced_reports": "Advanced Analytics & Reports",
     "data_export": "Data Export & Backup"
+  },
+  "subscription": {
+    "title": "Subscription Plans",
+    "subtitle": "Choose the perfect plan for your garage",
+    "current_plan": "Current Plan",
+    "most_popular": "Most Popular",
+    "compare_plans": "Compare Plans",
+    "upgrade_to": "Upgrade to {{tier}}",
+    "downgrade_to": "Downgrade to {{tier}}",
+    "downgrade_blocked": "Cannot downgrade",
+    "why_blocked": "You are currently using features from your current plan",
+    "per_year": "per year",
+    "days_left": "{{days}} days left in trial",
+    "next_billing": "Next billing: {{date}}",
+    "included_features": "Included Features",
+    "unlimited": "Unlimited",
+    "used": "{{used}} of {{limit}} used",
+    "usage": {
+      "users": "Users",
+      "cars": "Cars",
+      "service_bays": "Service Bays"
+    },
+    "features": {
+      "single_user": "Single User Access",
+      "unlimited_appointments": "Unlimited Appointments",
+      "manual_booking": "Manual Booking",
+      "cash_invoicing": "Cash Invoicing",
+      "basic_reports": "Basic Reports",
+      "browser_notifications": "Browser Notifications",
+      "mobile_responsive": "Mobile Responsive",
+      "multi_language": "Multi-Language Support",
+      "multi_user": "Multi-User Support (Up to 3)",
+      "email_notifications": "Email Notifications",
+      "internal_approvals": "Internal Approval System",
+      "service_workflow": "Service Workflow Management",
+      "customer_history": "Customer History & Notes",
+      "photos_documentation": "Photo Documentation",
+      "inventory_management": "Inventory Management",
+      "sms_notifications": "SMS Notifications",
+      "advanced_reports": "Advanced Analytics & Reports",
+      "data_export": "Data Export & Backup",
+      "employee_tracking": "Employee Performance Tracking",
+      "appointment_management": "Appointment Management",
+      "invoice_discounts": "Invoice Discounts",
+      "unlimited_users": "Unlimited Users",
+      "unlimited_service_bays": "Unlimited Service Bays",
+      "multi_bay_scheduling": "Multi-Bay Scheduling",
+      "custom_invoice_templates": "Custom Invoice Templates",
+      "supplier_database": "Supplier Database",
+      "priority_support": "Priority Support"
+    },
+    "why_upgrade": {
+      "title": "Why Upgrade?"
+    },
+    "benefits": {
+      "growth": {
+        "title": "Scale Your Business",
+        "description": "Add unlimited users, manage more vehicles, and expand your operations without limits."
+      },
+      "efficiency": {
+        "title": "Improve Efficiency",
+        "description": "Streamline workflows with advanced features like inventory management, photo documentation, and approval systems."
+      },
+      "insights": {
+        "title": "Better Insights",
+        "description": "Make data-driven decisions with advanced analytics, detailed reports, and export capabilities."
+      }
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "billing": {
+        "question": "How does billing work?",
+        "answer": "Plans are billed annually. You can upgrade or downgrade at any time, and changes will be reflected in your next billing cycle."
+      },
+      "cancellation": {
+        "question": "Can I cancel anytime?",
+        "answer": "Yes, you can cancel your subscription at any time. You'll continue to have access until the end of your current billing period."
+      },
+      "support": {
+        "question": "What support do I get?",
+        "answer": "All plans include email support. Professional plan includes priority support with faster response times and dedicated assistance."
+      }
+    },
+    "contact": {
+      "title": "Need Help Choosing?",
+      "description": "Our team is here to help you find the perfect plan for your garage.",
+      "email": "Email Us",
+      "phone": "Call Us"
+    }
   }
 }
