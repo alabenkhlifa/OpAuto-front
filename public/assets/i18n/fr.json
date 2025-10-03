@@ -199,6 +199,9 @@
     "vehicles": "Véhicules",
     "vehicleUsage": "Utilisation des véhicules",
     "vehicleDatabase": "Base de données des véhicules",
+    "vehicleStatistics": "Statistiques des véhicules",
+    "status": "Statut:",
+    "unlimitedVehicles": "Véhicules illimités",
     "addVehicle": "Ajouter un véhicule",
     "addCar": "Ajouter une voiture",
     "addVehicleToGarage": "Ajouter un véhicule au garage et créer un dossier client",
@@ -545,6 +548,8 @@
   "customers": {
     "title": "Clients",
     "subtitle": "Gérer les informations et l'historique des clients",
+    "customerInformation": "Informations du client",
+    "notProvided": "Non fourni",
     "addCustomer": "Ajouter un client",
     "editCustomer": "Modifier le client",
     "deleteCustomer": "Supprimer le client",
@@ -676,8 +681,11 @@
     "loyaltyTiers": {
       "bronze": "Bronze",
       "silver": "Argent",
-      "gold": "Or", 
+      "gold": "Or",
       "platinum": "Platine"
+    },
+    "form": {
+      "newCustomer": "Nouveau client"
     },
     "loading": "Chargement des clients..."
   },
@@ -1721,6 +1729,7 @@
     "starter": "Débutant",
     "professional": "Professionnel",
     "pro": "PRO",
+    "plan": "Plan:",
     "current": "Plan Actuel",
     "popular": "Plus Populaire",
     "upgrade": "Mettre à Niveau",
@@ -1769,7 +1778,7 @@
     "downgrade_blocked": "Impossible de rétrograder",
     "why_blocked": "Vous utilisez actuellement des fonctionnalités de votre plan actuel",
     "per_year": "par an",
-    "days_left": "{{days}} jours restants dans l'essai",
+    "days_left": "{{days}} jours jusqu'au renouvellement",
     "next_billing": "Prochaine facturation : {{date}}",
     "included_features": "Fonctionnalités Incluses",
     "unlimited": "Illimité",
@@ -1778,6 +1787,16 @@
       "users": "Utilisateurs",
       "cars": "Voitures",
       "service_bays": "Postes de Travail"
+    },
+    "tooltips": {
+      "current_plan_badge": "Votre plan d'abonnement actuel",
+      "price_info": "Facturation annuelle. Comprend toutes les fonctionnalités de votre plan.",
+      "usage_labels": "Suivez votre utilisation actuelle par rapport aux limites du plan",
+      "usage_within_limits": "L'utilisation est dans les limites",
+      "approaching_limit": "Approche de la limite ! Envisagez une mise à niveau.",
+      "upgrade_button": "Cliquez pour passer à un plan supérieur et débloquer plus de fonctionnalités",
+      "downgrade_blocked_section": "Votre utilisation actuelle dépasse les limites de ce plan",
+      "why_blocked_button": "Cliquez pour voir les restrictions de rétrogradation détaillées"
     },
     "features": {
       "single_user": "Accès Utilisateur Unique",

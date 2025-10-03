@@ -6,6 +6,8 @@ import { CustomerService } from '../../core/services/customer.service';
 import { Customer, CustomerStats, CustomerSummary, CustomerStatus } from '../../core/models/customer.model';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { TranslationService } from '../../core/services/translation.service';
+import { AuthService } from '../../core/services/auth.service';
+import { SubscriptionService } from '../../core/services/subscription.service';
 
 @Component({
   selector: 'app-customers',
@@ -18,6 +20,11 @@ export class CustomersComponent implements OnInit {
   private customerService = inject(CustomerService);
   private router = inject(Router);
   private translationService = inject(TranslationService);
+  private authService = inject(AuthService);
+  private subscriptionService = inject(SubscriptionService);
+
+  isOwner = signal(false);
+  customerLimit = signal<number | null>(null);
 
   customers = signal<Customer[]>([]);
   stats = signal<CustomerStats | null>(null);
@@ -57,9 +64,22 @@ export class CustomersComponent implements OnInit {
   currentView = signal<'dashboard' | 'list' | 'analytics'>('dashboard');
 
   ngOnInit() {
+    this.isOwner.set(this.authService.isOwner());
     this.loadCustomers();
     this.loadStats();
     this.loadCities();
+    this.loadCustomerLimit();
+  }
+
+  private loadCustomerLimit() {
+    this.subscriptionService.getCurrentSubscriptionStatus().subscribe({
+      next: (status) => {
+        this.customerLimit.set(status.currentTier.limits.cars);
+      },
+      error: (error) => {
+        console.error('Error loading customer limit:', error);
+      }
+    });
   }
 
   private loadCustomers() {

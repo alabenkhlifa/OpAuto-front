@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { authGuard, guestGuard } from './core/guards/auth.guard';
+import { ownerGuard } from './core/guards/role.guard';
 
 const routes: Routes = [
   // Production: redirect to auth, Development: redirect to dashboard
@@ -34,32 +35,32 @@ const routes: Routes = [
   { 
     path: 'inventory', 
     loadComponent: () => import('./features/inventory/inventory.component').then(m => m.InventoryComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, ownerGuard]
   },
   { 
     path: 'invoices', 
     loadComponent: () => import('./features/invoicing/invoicing.component').then(m => m.InvoicingComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, ownerGuard]
   },
   { 
     path: 'invoices/create', 
     loadComponent: () => import('./features/invoicing/components/invoice-form.component').then(m => m.InvoiceFormComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, ownerGuard]
   },
   { 
     path: 'invoices/edit/:id', 
     loadComponent: () => import('./features/invoicing/components/invoice-form.component').then(m => m.InvoiceFormComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, ownerGuard]
   },
   { 
     path: 'invoices/pending', 
     loadComponent: () => import('./features/invoicing/invoicing.component').then(m => m.InvoicingComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, ownerGuard]
   },
   { 
     path: 'invoices/:id', 
     loadComponent: () => import('./features/invoicing/components/invoice-details.component').then(m => m.InvoiceDetailsComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, ownerGuard]
   },
   { 
     path: 'customers', 
@@ -74,7 +75,7 @@ const routes: Routes = [
   { 
     path: 'reports', 
     loadComponent: () => import('./features/reports/reports.component').then(m => m.ReportsComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, ownerGuard]
   },
   { 
     path: 'maintenance', 
@@ -114,37 +115,37 @@ const routes: Routes = [
   { 
     path: 'employees', 
     loadComponent: () => import('./features/employees/employees.component').then(m => m.EmployeesComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, ownerGuard]
   },
   { 
     path: 'employees/new', 
     loadComponent: () => import('./features/employees/components/employee-form.component').then(m => m.EmployeeFormComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, ownerGuard]
   },
   { 
     path: 'employees/edit/:id', 
     loadComponent: () => import('./features/employees/components/employee-form.component').then(m => m.EmployeeFormComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, ownerGuard]
   },
   { 
     path: 'employees/details/:id', 
     loadComponent: () => import('./features/employees/components/employee-details.component').then(m => m.EmployeeDetailsComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, ownerGuard]
   },
   { 
     path: 'users', 
     loadComponent: () => import('./features/users/users.component').then(m => m.UsersComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, ownerGuard]
   },
   { 
     path: 'settings', 
     loadComponent: () => import('./features/garage-settings/garage-settings.component').then(m => m.GarageSettingsComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, ownerGuard]
   },
   { 
     path: 'approvals', 
     loadComponent: () => import('./features/approvals/approvals.component').then(m => m.ApprovalsComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, ownerGuard]
   },
   { 
     path: 'profile', 
@@ -154,7 +155,7 @@ const routes: Routes = [
   { 
     path: 'subscription', 
     loadComponent: () => import('./features/subscription/subscription.component').then(m => m.SubscriptionComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, ownerGuard]
   },
   { path: '**', redirectTo: '/auth' }
 ];

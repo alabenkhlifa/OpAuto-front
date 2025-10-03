@@ -47,33 +47,13 @@ import { LanguageToggleComponent } from '../../shared/components/language-toggle
             </div>
           </div>
 
-          <!-- Mode Toggle - Enhanced Visibility -->
-          <div class="flex backdrop-blur-sm bg-slate-800 bg-opacity-50 rounded-lg p-1 mb-6 border border-slate-700 relative">
-            <button 
-              type="button"
-              class="flex-1 py-3 px-4 text-sm font-semibold rounded-md transition-all duration-300 relative z-10"
-              [class]="!isRegisterMode() ? 'text-white' : 'text-gray-400 hover:text-gray-200'"
-              (click)="setMode(false)">
+          <!-- Sign In Only - Registration Disabled -->
+          <div class="backdrop-blur-sm bg-slate-800 bg-opacity-50 rounded-lg p-1 mb-6 border border-slate-700">
+            <div class="py-3 px-4 text-sm font-semibold text-white text-center">
               <svg class="w-4 h-4 mr-2 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
               </svg>
               {{ 'auth.signIn' | translate }}
-            </button>
-            <button 
-              type="button"
-              class="flex-1 py-3 px-4 text-sm font-semibold rounded-md transition-all duration-300 relative z-10"
-              [class]="isRegisterMode() ? 'text-white' : 'text-gray-400 hover:text-gray-200'"
-              (click)="setMode(true)">
-              <svg class="w-4 h-4 mr-2 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-              </svg>
-              {{ 'auth.register' | translate }}
-            </button>
-            
-            <!-- Sliding Indicator -->
-            <div class="absolute inset-1 z-0 transition-transform duration-300 ease-in-out"
-                 [style.transform]="isRegisterMode() ? 'translateX(50%)' : 'translateX(0%)'">
-              <div class="w-1/2 h-full bg-gradient-to-r from-blue-600 to-blue-500 rounded-md shadow-lg backdrop-blur-sm border border-blue-400 border-opacity-30"></div>
             </div>
           </div>
 
@@ -90,20 +70,19 @@ import { LanguageToggleComponent } from '../../shared/components/language-toggle
           }
 
           <!-- Login Form -->
-          @if (!isRegisterMode()) {
-            <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="space-y-4">
+          <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="space-y-4">
               
               <div>
-                <label class="form-label">{{ 'auth.login.emailLabel' | translate }}</label>
+                <label class="form-label">{{ 'auth.login.emailOrUsernameLabel' | translate }}</label>
                 <input 
-                  type="email" 
+                  type="text" 
                   class="form-input"
-                  formControlName="email"
-                  placeholder="{{ 'auth.login.emailPlaceholder' | translate }}"
-                  [class.border-red-500]="isFieldInvalid('email', loginForm)"
-                  autocomplete="email">
-                @if (isFieldInvalid('email', loginForm)) {
-                  <p class="mt-1 text-sm text-red-400">{{ 'auth.login.emailRequired' | translate }}</p>
+                  formControlName="emailOrUsername"
+                  placeholder="{{ 'auth.login.emailOrUsernamePlaceholder' | translate }}"
+                  [class.border-red-500]="isFieldInvalid('emailOrUsername', loginForm)"
+                  autocomplete="username">
+                @if (isFieldInvalid('emailOrUsername', loginForm)) {
+                  <p class="mt-1 text-sm text-red-400">{{ 'auth.login.emailOrUsernameRequired' | translate }}</p>
                 }
               </div>
 
@@ -173,183 +152,15 @@ import { LanguageToggleComponent } from '../../shared/components/language-toggle
               </button>
 
             </form>
-          }
-
-          <!-- Registration Form -->
-          @if (isRegisterMode()) {
-            <form [formGroup]="registerForm" (ngSubmit)="onRegister()" class="space-y-4">
-              
-              <!-- Personal Information -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label class="form-label">{{ 'auth.registration.fullNameLabel' | translate }}</label>
-                  <input 
-                    type="text" 
-                    class="form-input"
-                    formControlName="name"
-                    placeholder="{{ 'auth.registration.fullNamePlaceholder' | translate }}"
-                    [class.border-red-500]="isFieldInvalid('name', registerForm)"
-                    autocomplete="name">
-                  @if (isFieldInvalid('name', registerForm)) {
-                    <p class="mt-1 text-sm text-red-400">{{ 'auth.registration.nameRequired' | translate }}</p>
-                  }
-                </div>
-
-                <div>
-                  <label class="form-label">{{ 'auth.registration.phoneLabel' | translate }}</label>
-                  <input 
-                    type="tel" 
-                    class="form-input"
-                    formControlName="phoneNumber"
-                    placeholder="{{ 'auth.registration.phonePlaceholder' | translate }}"
-                    autocomplete="tel">
-                </div>
-              </div>
-
-              <!-- Business Information -->
-              <div>
-                <label class="form-label">{{ 'auth.registration.garageNameLabel' | translate }}</label>
-                <input 
-                  type="text" 
-                  class="form-input"
-                  formControlName="garageName"
-                  placeholder="{{ 'auth.registration.garageNamePlaceholder' | translate }}"
-                  [class.border-red-500]="isFieldInvalid('garageName', registerForm)"
-                  autocomplete="organization">
-                @if (isFieldInvalid('garageName', registerForm)) {
-                  <p class="mt-1 text-sm text-red-400">{{ 'auth.registration.garageNameRequired' | translate }}</p>
-                }
-              </div>
-
-              <!-- Account Information -->
-              <div>
-                <label class="form-label">{{ 'auth.registration.emailLabel' | translate }}</label>
-                <input 
-                  type="email" 
-                  class="form-input"
-                  formControlName="email"
-                  placeholder="{{ 'auth.registration.emailPlaceholder' | translate }}"
-                  [class.border-red-500]="isFieldInvalid('email', registerForm)"
-                  autocomplete="email">
-                @if (isFieldInvalid('email', registerForm)) {
-                  <p class="mt-1 text-sm text-red-400">{{ 'auth.registration.emailRequired' | translate }}</p>
-                }
-              </div>
-
-              <div>
-                <label class="form-label">{{ 'auth.registration.passwordLabel' | translate }}</label>
-                <div class="relative">
-                  <input 
-                    [type]="showPassword() ? 'text' : 'password'"
-                    class="form-input pr-10"
-                    formControlName="password"
-                    placeholder="{{ 'auth.registration.passwordPlaceholder' | translate }}"
-                    [class.border-red-500]="isFieldInvalid('password', registerForm)"
-                    autocomplete="new-password">
-                  <button 
-                    type="button"
-                    class="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    (click)="togglePasswordVisibility()">
-                    <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      @if (showPassword()) {
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                      } @else {
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                      }
-                    </svg>
-                  </button>
-                </div>
-                @if (isFieldInvalid('password', registerForm)) {
-                  <p class="mt-1 text-sm text-red-400">{{ 'auth.registration.passwordMinLength' | translate }}</p>
-                }
-              </div>
-
-              <div>
-                <label class="form-label">{{ 'auth.registration.confirmPasswordLabel' | translate }}</label>
-                <div class="relative">
-                  <input 
-                    [type]="showConfirmPassword() ? 'text' : 'password'"
-                    class="form-input pr-10"
-                    formControlName="confirmPassword"
-                    placeholder="{{ 'auth.registration.confirmPasswordPlaceholder' | translate }}"
-                    [class.border-red-500]="isFieldInvalid('confirmPassword', registerForm) || hasPasswordMismatch()"
-                    autocomplete="new-password">
-                  <button 
-                    type="button"
-                    class="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    (click)="toggleConfirmPasswordVisibility()">
-                    <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      @if (showConfirmPassword()) {
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                      } @else {
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                      }
-                    </svg>
-                  </button>
-                </div>
-                @if (isFieldInvalid('confirmPassword', registerForm)) {
-                  <p class="mt-1 text-sm text-red-400">{{ 'auth.registration.confirmPasswordRequired' | translate }}</p>
-                } @else if (hasPasswordMismatch()) {
-                  <p class="mt-1 text-sm text-red-400">{{ 'auth.registration.passwordMismatch' | translate }}</p>
-                }
-              </div>
-
-              <!-- Terms and Conditions -->
-              <div class="flex items-start space-x-2">
-                <input 
-                  type="checkbox" 
-                  id="acceptTerms"
-                  class="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  formControlName="acceptTerms"
-                  [class.border-red-500]="isFieldInvalid('acceptTerms', registerForm)">
-                <label for="acceptTerms" class="text-sm text-gray-300">
-                  {{ 'auth.registration.agreeToTerms' | translate }}
-                  <button type="button" class="text-blue-400 hover:text-blue-300 hover:underline" (click)="showTerms()">
-                    {{ 'auth.registration.termsAndConditions' | translate }}
-                  </button> 
-                  {{ 'auth.registration.and' | translate }}
-                  <button type="button" class="text-blue-400 hover:text-blue-300 hover:underline" (click)="showPrivacy()">
-                    {{ 'auth.registration.privacyPolicy' | translate }}
-                  </button>
-                </label>
-              </div>
-              @if (isFieldInvalid('acceptTerms', registerForm)) {
-                <p class="mt-1 text-sm text-red-400">{{ 'auth.registration.acceptTermsRequired' | translate }}</p>
-              }
-
-              <button 
-                type="submit"
-                class="w-full btn-primary btn-lg flex items-center justify-center"
-                [disabled]="registerForm.invalid || isLoading()">
-                @if (isLoading()) {
-                  <svg class="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <span>{{ 'auth.registration.creatingAccount' | translate }}</span>
-                } @else {
-                  <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                  </svg>
-                  <span>{{ 'auth.register' | translate }}</span>
-                }
-              </button>
-
-            </form>
-          }
 
           <!-- Demo Credentials -->
-          @if (!isRegisterMode()) {
-            <div class="mt-6 p-4 backdrop-blur-sm bg-blue-900 bg-opacity-20 border border-blue-500 border-opacity-30 rounded-lg">
-              <h3 class="text-sm font-medium text-blue-300 mb-2">{{ 'auth.demo.title' | translate }}</h3>
-              <div class="space-y-1 text-xs text-blue-200">
-                <p><strong>{{ 'auth.demo.admin' | translate }}:</strong> {{ 'auth.demo.adminCredentials' | translate }}</p>
-                <p><strong>{{ 'auth.demo.mechanic' | translate }}:</strong> {{ 'auth.demo.mechanicCredentials' | translate }}</p>
-              </div>
+          <div class="mt-6 p-4 backdrop-blur-sm bg-blue-900 bg-opacity-20 border border-blue-500 border-opacity-30 rounded-lg">
+            <h3 class="text-sm font-medium text-blue-300 mb-2">{{ 'auth.demo.title' | translate }}</h3>
+            <div class="space-y-1 text-xs text-blue-200">
+              <p><strong>{{ 'auth.demo.owner' | translate }}:</strong> owner&#64;opauto.tn / owner123</p>
+              <p><strong>{{ 'auth.demo.staff' | translate }}:</strong> staff1 / staff123</p>
             </div>
-          }
+          </div>
 
           <!-- Footer -->
           <div class="mt-6 text-center">
@@ -504,7 +315,7 @@ export class AuthComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private destroy$ = new Subject<void>();
 
-  isRegisterMode = signal(false);
+  isRegisterMode = signal(false); // Registration is now disabled
   isLoading = signal(false);
   errorMessage = signal<string>('');
   showPassword = signal(false);
@@ -527,7 +338,7 @@ export class AuthComponent implements OnInit, OnDestroy {
 
   private initializeForms() {
     this.loginForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
+      emailOrUsername: ['', [Validators.required]],
       password: ['', [Validators.required]],
       rememberMe: [false]
     });
@@ -576,7 +387,7 @@ export class AuthComponent implements OnInit, OnDestroy {
       this.errorMessage.set('');
 
       const loginRequest: LoginRequest = {
-        email: this.loginForm.get('email')?.value,
+        emailOrUsername: this.loginForm.get('emailOrUsername')?.value,
         password: this.loginForm.get('password')?.value,
         rememberMe: this.loginForm.get('rememberMe')?.value
       };

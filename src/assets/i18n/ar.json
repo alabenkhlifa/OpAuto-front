@@ -1816,7 +1816,7 @@
     "downgrade_blocked": "لا يمكن التراجع",
     "why_blocked": "أنت تستخدم حاليًا ميزات من باقتك الحالية",
     "per_year": "سنويًا",
-    "days_left": "{{days}} يومًا متبقيًا في الفترة التجريبية",
+    "days_left": "{{days}} يومًا حتى التجديد",
     "next_billing": "الفوترة القادمة: {{date}}",
     "included_features": "الميزات المتضمنة",
     "unlimited": "غير محدود",
@@ -1825,6 +1825,16 @@
       "users": "المستخدمون",
       "cars": "السيارات",
       "service_bays": "مواقع الخدمة"
+    },
+    "tooltips": {
+      "current_plan_badge": "باقة اشتراكك الحالية",
+      "price_info": "يتم الدفع سنويًا. تشمل جميع ميزات باقتك.",
+      "usage_labels": "تتبع استخدامك الحالي مقابل حدود الباقة",
+      "usage_within_limits": "الاستخدام ضمن الحدود",
+      "approaching_limit": "تقترب من الحد! فكر في الترقية.",
+      "upgrade_button": "انقر للترقية وفتح المزيد من الميزات",
+      "downgrade_blocked_section": "استخدامك الحالي يتجاوز حدود هذه الباقة",
+      "why_blocked_button": "انقر لمعرفة قيود التراجع التفصيلية"
     },
     "features": {
       "single_user": "وصول مستخدم واحد",
@@ -1892,6 +1902,50 @@
       "description": "فريقنا هنا لمساعدتك في العثور على الباقة المثالية لورشتك.",
       "email": "راسلنا عبر البريد",
       "phone": "اتصل بنا"
+    }
+  },
+  "staff": {
+    "title": "إدارة الموظفين",
+    "subtitle": "إدارة حسابات وصلاحيات الموظفين",
+    "totalEmployees": "إجمالي الموظفين",
+    "addNew": "إضافة موظف",
+    "createAccount": "إنشاء حساب موظف",
+    "noStaff": "لا يوجد موظفون",
+    "form": {
+      "fullName": "الاسم الكامل",
+      "fullNamePlaceholder": "أدخل اسم الموظف",
+      "nameRequired": "الاسم مطلوب",
+      "username": "اسم المستخدم",
+      "usernamePlaceholder": "مثال: staff1، staff2",
+      "usernameRequired": "اسم المستخدم مطلوب (3-20 حرفًا، حروف/أرقام/شرطة سفلية فقط)",
+      "phone": "رقم الهاتف",
+      "phonePlaceholder": "+216 XX XXX XXX",
+      "password": "كلمة المرور",
+      "passwordPlaceholder": "إنشاء كلمة مرور",
+      "passwordMinLength": "يجب أن تتكون كلمة المرور من 6 أحرف على الأقل",
+      "confirmPassword": "تأكيد كلمة المرور",
+      "confirmPasswordPlaceholder": "تأكيد كلمة المرور",
+      "confirmPasswordRequired": "يرجى تأكيد كلمة المرور",
+      "passwordMismatch": "كلمات المرور غير متطابقة",
+      "create": "إنشاء حساب موظف",
+      "creating": "جاري الإنشاء...",
+      "cancel": "إلغاء"
+    },
+    "table": {
+      "name": "الاسم",
+      "username": "اسم المستخدم",
+      "role": "الدور",
+      "phone": "الهاتف",
+      "status": "الحالة",
+      "actions": "الإجراءات"
+    },
+    "status": {
+      "active": "نشط",
+      "inactive": "غير نشط"
+    },
+    "actions": {
+      "edit": "تعديل",
+      "delete": "حذف"
     }
   }
 }

@@ -199,6 +199,9 @@
     "vehicles": "المركبات",
     "vehicleUsage": "استخدام المركبات",
     "vehicleDatabase": "قاعدة بيانات المركبات",
+    "vehicleStatistics": "إحصائيات المركبات",
+    "status": "الحالة:",
+    "unlimitedVehicles": "مركبات غير محدودة",
     "addVehicle": "إضافة مركبة",
     "addCar": "إضافة سيارة",
     "addVehicleToGarage": "إضافة مركبة إلى الورشة وإنشاء ملف عميل",
@@ -545,6 +548,8 @@
   "customers": {
     "title": "العملاء",
     "subtitle": "إدارة معلومات العملاء وتاريخهم",
+    "customerInformation": "معلومات العميل",
+    "notProvided": "غير مقدم",
     "addCustomer": "إضافة عميل",
     "editCustomer": "تعديل العميل",
     "deleteCustomer": "حذف العميل",
@@ -678,6 +683,9 @@
       "silver": "فضي",
       "gold": "ذهبي",
       "platinum": "بلاتيني"
+    },
+    "form": {
+      "newCustomer": "عميل جديد"
     },
     "loading": "جاري تحميل العملاء..."
   },
@@ -1785,6 +1793,7 @@
     "starter": "المبتدئ",
     "professional": "المحترف",
     "pro": "محترف",
+    "plan": "باقة:",
     "current": "الباقة الحالية",
     "popular": "الأكثر شعبية",
     "upgrade": "ترقية",
@@ -1807,7 +1816,7 @@
     "downgrade_blocked": "لا يمكن التراجع",
     "why_blocked": "أنت تستخدم حاليًا ميزات من باقتك الحالية",
     "per_year": "سنويًا",
-    "days_left": "{{days}} يومًا متبقيًا في الفترة التجريبية",
+    "days_left": "{{days}} يومًا حتى التجديد",
     "next_billing": "الفوترة القادمة: {{date}}",
     "included_features": "الميزات المتضمنة",
     "unlimited": "غير محدود",
@@ -1816,6 +1825,16 @@
       "users": "المستخدمون",
       "cars": "السيارات",
       "service_bays": "مواقع الخدمة"
+    },
+    "tooltips": {
+      "current_plan_badge": "باقة اشتراكك الحالية",
+      "price_info": "يتم الدفع سنويًا. تشمل جميع ميزات باقتك.",
+      "usage_labels": "تتبع استخدامك الحالي مقابل حدود الباقة",
+      "usage_within_limits": "الاستخدام ضمن الحدود",
+      "approaching_limit": "تقترب من الحد! فكر في الترقية.",
+      "upgrade_button": "انقر للترقية وفتح المزيد من الميزات",
+      "downgrade_blocked_section": "استخدامك الحالي يتجاوز حدود هذه الباقة",
+      "why_blocked_button": "انقر لمعرفة قيود التراجع التفصيلية"
     },
     "features": {
       "single_user": "وصول مستخدم واحد",

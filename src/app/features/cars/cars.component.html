@@ -25,7 +25,7 @@
               </span>
             </div>
             <div class="flex items-center gap-2">
-              <span class="text-sm text-white">{{ 'tiers.plan' | translate }}:</span>
+              <span class="text-sm text-white">{{ 'tiers.plan' | translate }}</span>
               <span [ngClass]="getTierBadgeClass()" 
                     [attr.aria-label]="'Current subscription tier: ' + currentTier()">
                 {{ currentTier() }}
@@ -266,7 +266,7 @@
 
         <!-- Status Filter -->
         <div class="flex items-center gap-2">
-          <label for="status-filter-desktop" class="text-sm text-gray-400 whitespace-nowrap">{{ 'cars.status' | translate }}:</label>
+          <label for="status-filter-desktop" class="text-sm text-gray-400 whitespace-nowrap">{{ 'cars.status' | translate }}</label>
           <select id="status-filter-desktop"
                   class="filter-select-desktop"
                   [value]="selectedStatus()"

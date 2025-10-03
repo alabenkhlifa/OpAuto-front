@@ -1778,7 +1778,7 @@
     "downgrade_blocked": "Impossible de rétrograder",
     "why_blocked": "Vous utilisez actuellement des fonctionnalités de votre plan actuel",
     "per_year": "par an",
-    "days_left": "{{days}} jours restants dans l'essai",
+    "days_left": "{{days}} jours jusqu'au renouvellement",
     "next_billing": "Prochaine facturation : {{date}}",
     "included_features": "Fonctionnalités Incluses",
     "unlimited": "Illimité",
@@ -1787,6 +1787,16 @@
       "users": "Utilisateurs",
       "cars": "Voitures",
       "service_bays": "Postes de Travail"
+    },
+    "tooltips": {
+      "current_plan_badge": "Votre plan d'abonnement actuel",
+      "price_info": "Facturation annuelle. Comprend toutes les fonctionnalités de votre plan.",
+      "usage_labels": "Suivez votre utilisation actuelle par rapport aux limites du plan",
+      "usage_within_limits": "L'utilisation est dans les limites",
+      "approaching_limit": "Approche de la limite ! Envisagez une mise à niveau.",
+      "upgrade_button": "Cliquez pour passer à un plan supérieur et débloquer plus de fonctionnalités",
+      "downgrade_blocked_section": "Votre utilisation actuelle dépasse les limites de ce plan",
+      "why_blocked_button": "Cliquez pour voir les restrictions de rétrogradation détaillées"
     },
     "features": {
       "single_user": "Accès Utilisateur Unique",
@@ -1854,6 +1864,50 @@
       "description": "Notre équipe est là pour vous aider à trouver le plan parfait pour votre garage.",
       "email": "Nous Envoyer un Email",
       "phone": "Nous Appeler"
+    }
+  },
+  "staff": {
+    "title": "Gestion du Personnel",
+    "subtitle": "Gérer les comptes et permissions du personnel",
+    "totalEmployees": "Total Employés",
+    "addNew": "Ajouter un membre du personnel",
+    "createAccount": "Créer un compte personnel",
+    "noStaff": "Aucun membre du personnel trouvé",
+    "form": {
+      "fullName": "Nom complet",
+      "fullNamePlaceholder": "Entrez le nom du membre du personnel",
+      "nameRequired": "Le nom est requis",
+      "username": "Nom d'utilisateur",
+      "usernamePlaceholder": "ex: staff1, staff2",
+      "usernameRequired": "Le nom d'utilisateur est requis (3-20 caractères, lettres/chiffres/underscores uniquement)",
+      "phone": "Numéro de téléphone",
+      "phonePlaceholder": "+216 XX XXX XXX",
+      "password": "Mot de passe",
+      "passwordPlaceholder": "Créer un mot de passe",
+      "passwordMinLength": "Le mot de passe doit contenir au moins 6 caractères",
+      "confirmPassword": "Confirmer le mot de passe",
+      "confirmPasswordPlaceholder": "Confirmer le mot de passe",
+      "confirmPasswordRequired": "Veuillez confirmer le mot de passe",
+      "passwordMismatch": "Les mots de passe ne correspondent pas",
+      "create": "Créer un compte personnel",
+      "creating": "Création...",
+      "cancel": "Annuler"
+    },
+    "table": {
+      "name": "Nom",
+      "username": "Nom d'utilisateur",
+      "role": "Rôle",
+      "phone": "Téléphone",
+      "status": "Statut",
+      "actions": "Actions"
+    },
+    "status": {
+      "active": "Actif",
+      "inactive": "Inactif"
+    },
+    "actions": {
+      "edit": "Modifier",
+      "delete": "Supprimer"
     }
   }
 }

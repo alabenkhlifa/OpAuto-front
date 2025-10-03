@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { Chart, ChartConfiguration, ChartType, registerables } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
 import { ReportingService } from '../../core/services/reporting.service';
+import { SubscriptionService } from '../../core/services/subscription.service';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { TranslationService } from '../../core/services/translation.service';
 import { 
@@ -30,6 +31,13 @@ Chart.register(...registerables);
 export class ReportsComponent implements OnInit {
   private reportingService = inject(ReportingService);
   private translationService = inject(TranslationService);
+  private subscriptionService = inject(SubscriptionService);
+  
+  hasAdvancedReports = signal(false);
+  hasDataExport = signal(false);
+  hasInventoryReports = signal(false);
+  hasBasicDashboard = signal(false); // STARTER+ have dashboard access
+  tier = signal<'solo' | 'starter' | 'professional'>('solo');
 
   // State signals
   currentView = signal<'dashboard' | 'financial' | 'operational' | 'customer' | 'inventory'>('dashboard');
@@ -75,6 +83,33 @@ export class ReportsComponent implements OnInit {
   ]);
 
   ngOnInit() {
+    // Get current tier
+    this.subscriptionService.currentTier$.subscribe(tier => {
+      this.tier.set(tier);
+
+      // SOLO: Only basic reports
+      // STARTER: Basic dashboard with charts
+      // PROFESSIONAL: Advanced reports + analytics
+      this.hasBasicDashboard.set(tier === 'starter' || tier === 'professional');
+
+      // Set default view based on tier
+      if (tier === 'solo') {
+        this.currentView.set('dashboard'); // Will show basic summaries only
+      }
+    });
+
+    this.subscriptionService.isFeatureEnabled('advanced_reports').subscribe(enabled => {
+      this.hasAdvancedReports.set(enabled);
+    });
+
+    this.subscriptionService.isFeatureEnabled('data_export').subscribe(enabled => {
+      this.hasDataExport.set(enabled);
+    });
+
+    this.subscriptionService.isFeatureEnabled('inventory_management').subscribe(enabled => {
+      this.hasInventoryReports.set(enabled);
+    });
+
     this.loadDashboardData();
   }
 
@@ -82,7 +117,22 @@ export class ReportsComponent implements OnInit {
     this.isLoading.set(true);
     const currentFilters = this.filters();
 
-    // Load KPIs
+    // SOLO tier: Only load basic KPIs for summaries
+    if (this.tier() === 'solo') {
+      this.reportingService.getDashboardKPIs(currentFilters).subscribe({
+        next: (kpis) => {
+          this.kpis.set(kpis);
+          this.isLoading.set(false);
+        },
+        error: (error) => {
+          console.error('Error loading KPIs:', error);
+          this.isLoading.set(false);
+        }
+      });
+      return;
+    }
+
+    // STARTER+ tier: Load full dashboard data
     this.reportingService.getDashboardKPIs(currentFilters).subscribe({
       next: (kpis) => {
         this.kpis.set(kpis);
@@ -90,7 +140,6 @@ export class ReportsComponent implements OnInit {
       error: (error) => console.error('Error loading KPIs:', error)
     });
 
-    // Load metrics
     this.reportingService.getFinancialMetrics(currentFilters).subscribe({
       next: (metrics) => {
         this.financialMetrics.set(metrics);
@@ -112,24 +161,26 @@ export class ReportsComponent implements OnInit {
       error: (error) => console.error('Error loading customer metrics:', error)
     });
 
-    this.reportingService.getInventoryMetrics(currentFilters).subscribe({
-      next: (metrics) => {
-        this.inventoryMetrics.set(metrics);
-      },
-      error: (error) => console.error('Error loading inventory metrics:', error)
-    });
+    if (this.hasInventoryReports()) {
+      this.reportingService.getInventoryMetrics(currentFilters).subscribe({
+        next: (metrics) => {
+          this.inventoryMetrics.set(metrics);
+        },
+        error: (error) => console.error('Error loading inventory metrics:', error)
+      });
+    }
 
-    // Load monthly comparison
-    this.reportingService.getMonthlyComparison().subscribe({
-      next: (comparison) => {
-        this.monthlyComparison.set(comparison);
-      },
-      error: (error) => console.error('Error loading monthly comparison:', error)
-    });
+    if (this.hasAdvancedReports()) {
+      this.reportingService.getMonthlyComparison().subscribe({
+        next: (comparison) => {
+          this.monthlyComparison.set(comparison);
+        },
+        error: (error) => console.error('Error loading monthly comparison:', error)
+      });
+    }
 
-    // Load charts
     this.loadCharts();
-    
+
     this.isLoading.set(false);
   }
 
@@ -258,9 +309,12 @@ export class ReportsComponent implements OnInit {
   }
 
   onExportReport(format: 'pdf' | 'excel' | 'csv') {
+    if (!this.hasDataExport()) {
+      console.log('Data export requires Professional tier');
+      return;
+    }
     const message = this.translationService.instant('reports.export.exporting', { format: format.toUpperCase() });
     console.log(message);
-    // TODO: Implement export functionality
   }
 
   onPrintReport() {

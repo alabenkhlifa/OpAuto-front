@@ -5,6 +5,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { LanguageToggleComponent } from '../../shared/components/language-toggle/language-toggle.component';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { TranslationService } from '../../core/services/translation.service';
+import { AuthService } from '../../core/services/auth.service';
 
 interface GarageMetrics {
   totalCarsToday: number;
@@ -52,6 +53,9 @@ interface ActiveJob {
 export class DashboardComponent implements OnInit {
   private router = inject(Router);
   private translationService = inject(TranslationService);
+  private authService = inject(AuthService);
+  
+  isOwner = signal(false);
   
   metrics: GarageMetrics = {
     totalCarsToday: 12,
@@ -180,6 +184,7 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadDashboardData();
+    this.isOwner.set(this.authService.isOwner());
   }
 
   getCurrentDate(): string {

@@ -199,6 +199,9 @@
     "vehicles": "Vehicles",
     "vehicleUsage": "Vehicle Usage",
     "vehicleDatabase": "Vehicle Database",
+    "vehicleStatistics": "Vehicle Statistics",
+    "status": "Status:",
+    "unlimitedVehicles": "Unlimited vehicles",
     "addVehicle": "Add Vehicle",
     "addCar": "Add Car",
     "addVehicleToGarage": "Add vehicle to garage and create customer record",
@@ -576,6 +579,8 @@
   "customers": {
     "title": "Customers",
     "subtitle": "Manage customer information and history",
+    "customerInformation": "Customer Information",
+    "notProvided": "Not provided",
     "addCustomer": "Add Customer",
     "editCustomer": "Edit Customer",
     "deleteCustomer": "Delete Customer",
@@ -713,9 +718,12 @@
     },
     "loyaltyTiers": {
       "bronze": "Bronze",
-      "silver": "Silver", 
+      "silver": "Silver",
       "gold": "Gold",
       "platinum": "Platinum"
+    },
+    "form": {
+      "newCustomer": "New Customer"
     },
     "loading": "Loading customers..."
   },
@@ -1726,7 +1734,7 @@
     "starter": "Starter",
     "professional": "Professional",
     "pro": "PRO",
-    "plan": "Plan",
+    "plan": "Plan:",
     "current": "Current Plan",
     "popular": "Most Popular",
     "upgrade": "Upgrade",
@@ -1775,7 +1783,7 @@
     "downgrade_blocked": "Cannot downgrade",
     "why_blocked": "You are currently using features from your current plan",
     "per_year": "per year",
-    "days_left": "{{days}} days left in trial",
+    "days_left": "{{days}} days until renewal",
     "next_billing": "Next billing: {{date}}",
     "included_features": "Included Features",
     "unlimited": "Unlimited",
@@ -1784,6 +1792,16 @@
       "users": "Users",
       "cars": "Cars",
       "service_bays": "Service Bays"
+    },
+    "tooltips": {
+      "current_plan_badge": "Your current subscription plan",
+      "price_info": "Billed annually. Includes all features of your tier.",
+      "usage_labels": "Track your current usage against tier limits",
+      "usage_within_limits": "Usage is within limits",
+      "approaching_limit": "Approaching limit! Consider upgrading.",
+      "upgrade_button": "Click to upgrade and unlock more features",
+      "downgrade_blocked_section": "Your current usage exceeds this tier's limits",
+      "why_blocked_button": "Click for detailed downgrade restrictions"
     },
     "features": {
       "single_user": "Single User Access",

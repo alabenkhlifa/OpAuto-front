@@ -1,8 +1,9 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, Input, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { EmployeeStats } from '../../../core/models/employee.model';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 import { TranslationService } from '../../../core/services/translation.service';
+import { SubscriptionService } from '../../../core/services/subscription.service';
 
 @Component({
   selector: 'app-employee-stats',
@@ -16,7 +17,7 @@ import { TranslationService } from '../../../core/services/translation.service';
         <div class="glass-card">
           <div class="flex items-center">
             <div class="flex-shrink-0">
-              <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center" [class]="getUtilizationIconColor()">
                 <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
@@ -24,7 +25,14 @@ import { TranslationService } from '../../../core/services/translation.service';
             </div>
             <div class="ml-4">
               <p class="text-sm font-medium text-gray-400">{{ 'employees.stats.totalEmployees' | translate }}</p>
-              <p class="text-2xl font-semibold text-white">{{ stats.totalEmployees }}</p>
+              <p class="text-2xl font-semibold" [class]="getUtilizationTextColor()">
+                {{ stats.totalEmployees }}
+                @if (maxEmployees() !== null) {
+                  <span class="text-lg" [class]="getUtilizationLimitColor()">/ {{ maxEmployees() }}</span>
+                } @else {
+                  <span class="text-gray-400 text-lg">/ ∞</span>
+                }
+              </p>
             </div>
           </div>
         </div>
@@ -107,8 +115,17 @@ import { TranslationService } from '../../../core/services/translation.service';
     }
   `
 })
-export class EmployeeStatsComponent {
+export class EmployeeStatsComponent implements OnInit {
   @Input() stats: EmployeeStats | null = null;
+
+  private subscriptionService = inject(SubscriptionService);
+  maxEmployees = signal<number | null>(null);
+
+  ngOnInit(): void {
+    this.subscriptionService.getCurrentSubscriptionStatus().subscribe(status => {
+      this.maxEmployees.set(status.currentTier.limits.users);
+    });
+  }
 
   formatCurrency(amount: number): string {
     return new Intl.NumberFormat('fr-TN', {
@@ -153,5 +170,37 @@ export class EmployeeStatsComponent {
 
   getDepartmentTranslation(department: string): string {
     return this.translationService.instant(`employees.departments.${department}`);
+  }
+
+  getUtilizationPercentage(): number {
+    if (!this.stats || this.maxEmployees() === null) return 0;
+    const max = this.maxEmployees()!;
+    return (this.stats.totalEmployees / max) * 100;
+  }
+
+  getUtilizationIconColor(): string {
+    const utilization = this.getUtilizationPercentage();
+    if (this.maxEmployees() === null) return 'bg-blue-500'; // Unlimited
+    if (utilization >= 100) return 'bg-red-500';   // At or over limit
+    if (utilization >= 80) return 'bg-orange-500'; // High usage (80-99%)
+    if (utilization >= 60) return 'bg-yellow-500'; // Medium-high usage (60-79%)
+    return 'bg-green-500';                         // Low-medium usage (0-59%)
+  }
+
+  getUtilizationTextColor(): string {
+    const utilization = this.getUtilizationPercentage();
+    if (this.maxEmployees() === null) return 'text-white';
+    if (utilization >= 100) return 'text-red-400';
+    if (utilization >= 80) return 'text-orange-400';
+    if (utilization >= 60) return 'text-yellow-400';
+    return 'text-white';
+  }
+
+  getUtilizationLimitColor(): string {
+    const utilization = this.getUtilizationPercentage();
+    if (utilization >= 100) return 'text-red-500';
+    if (utilization >= 80) return 'text-orange-500';
+    if (utilization >= 60) return 'text-yellow-500';
+    return 'text-gray-400';
   }
 }

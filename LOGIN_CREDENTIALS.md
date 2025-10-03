@@ -114,10 +114,12 @@ Test accounts for different subscription tiers with owners and staff members.
 ### Key Differences to Test
 
 1. **Solo Tier**: 
-   - Inventory menu item hidden in sidebar
+   - **Employees menu HIDDEN** (cannot add users)
+   - **Approvals menu HIDDEN** (no internal approvals)
+   - **Inventory menu HIDDEN** (no inventory management)
    - Photo upload component shows upgrade prompt
    - SMS settings disabled
-   - Cannot add more users
+   - Single owner account only
 
 2. **Starter Tier**:
    - Can add up to 3 users total
@@ -136,9 +138,10 @@ Test accounts for different subscription tiers with owners and staff members.
 
 **Owners** (login with email):
 - See subscription settings
-- Can manage users/employees
-- Access garage settings
+- Can manage users/employees (Starter/Professional only)
+- Access garage settings  
 - View reports
+- Access approvals (Starter/Professional only)
 - Manage inventory (Professional only)
 
 **Staff** (login with username):

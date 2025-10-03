@@ -1,7 +1,8 @@
-import { Component, Input, Output, EventEmitter, OnInit, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
+import { SubscriptionService } from '../../../core/services/subscription.service';
 import { IntegrationSettings } from '../../../core/models/garage-settings.model';
 
 @Component({
@@ -47,8 +48,12 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
               type="checkbox" 
               id="smsEnabled"
               class="form-checkbox"
-              formControlName="smsEnabled">
+              formControlName="smsEnabled"
+              [disabled]="!hasSmsAccess()">
             <h3 class="text-md font-medium text-white">{{ 'settings.integrations.sms.title' | translate }}</h3>
+            @if (!hasSmsAccess()) {
+              <span class="badge badge-warning text-xs">{{ 'tiers.pro' | translate }}</span>
+            }
           </div>
           
           <div formGroupName="sms" class="grid grid-cols-1 md:grid-cols-2 gap-4" [class.opacity-50]="!integrationForm.get('smsEnabled')?.value">
@@ -494,6 +499,9 @@ import { IntegrationSettings } from '../../../core/models/garage-settings.model'
 })
 export class IntegrationSettingsComponent implements OnInit {
   private fb = inject(FormBuilder);
+  private subscriptionService = inject(SubscriptionService);
+  
+  hasSmsAccess = signal(false);
 
   @Input() settings!: IntegrationSettings;
   @Output() save = new EventEmitter<Partial<IntegrationSettings>>();
@@ -552,6 +560,13 @@ export class IntegrationSettingsComponent implements OnInit {
   ];
 
   ngOnInit() {
+    this.subscriptionService.isFeatureEnabled('sms_notifications').subscribe(enabled => {
+      this.hasSmsAccess.set(enabled);
+      if (!enabled) {
+        this.integrationForm?.get('smsEnabled')?.disable();
+      }
+    });
+    
     this.initializeForm();
     this.populateForm();
   }

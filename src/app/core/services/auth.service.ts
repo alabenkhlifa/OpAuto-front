@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable, BehaviorSubject, of, throwError } from 'rxjs';
 import { delay, map, tap } from 'rxjs/operators';
 import { 
@@ -9,6 +9,7 @@ import {
   ForgotPasswordRequest,
   ResetPasswordRequest,
   ChangePasswordRequest,
+  CreateStaffRequest,
   UserRole,
   AuthError,
   AUTH_ERRORS 
@@ -32,20 +33,36 @@ export class AuthService {
   public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
 
   constructor() {
-    // Clear any existing auth data for demo purposes and initialize
-    this.clearAuthData();
-    this.currentUserSubject.next(null);
-    this.isAuthenticatedSubject.next(false);
+    // Load persisted auth data from storage instead of clearing it
+    const user = this.getUserFromStorage();
+    const hasToken = this.hasValidToken();
+
+    if (user && hasToken) {
+      this.currentUserSubject.next(user);
+      this.isAuthenticatedSubject.next(true);
+    } else {
+      this.currentUserSubject.next(null);
+      this.isAuthenticatedSubject.next(false);
+    }
   }
 
   login(request: LoginRequest): Observable<AuthResponse> {
-    // Simulate API call with validation
     return this.validateLoginCredentials(request).pipe(
       delay(1500),
       tap(response => {
         this.storeAuthData(response, request.rememberMe);
         this.currentUserSubject.next(response.user);
         this.isAuthenticatedSubject.next(true);
+        
+        if (response.user.subscriptionTier) {
+          setTimeout(() => {
+            window.dispatchEvent(new StorageEvent('storage', {
+              key: 'opauth_user',
+              newValue: JSON.stringify(response.user),
+              storageArea: request.rememberMe ? localStorage : sessionStorage
+            }));
+          }, 0);
+        }
       })
     );
   }
@@ -165,18 +182,174 @@ export class AuthService {
     return user ? user.role === role : false;
   }
 
-  isAdmin(): boolean {
-    return this.hasRole(UserRole.ADMIN);
+  isOwner(): boolean {
+    return this.hasRole(UserRole.OWNER);
+  }
+
+  isStaff(): boolean {
+    return this.hasRole(UserRole.STAFF);
+  }
+
+  createStaffAccount(request: CreateStaffRequest): Observable<User> {
+    // Only owner can create staff accounts
+    if (!this.isOwner()) {
+      return throwError(() => ({
+        code: 'UNAUTHORIZED',
+        message: AUTH_ERRORS['UNAUTHORIZED']
+      } as AuthError));
+    }
+
+    // Validate request
+    if (request.password !== request.confirmPassword) {
+      return throwError(() => ({
+        code: 'PASSWORDS_DONT_MATCH',
+        message: 'Passwords do not match'
+      } as AuthError));
+    }
+
+    // Validate username
+    const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+    if (!usernameRegex.test(request.username)) {
+      return throwError(() => ({
+        code: 'INVALID_USERNAME',
+        message: AUTH_ERRORS['INVALID_USERNAME']
+      } as AuthError));
+    }
+
+    // Create new staff user
+    const newStaffUser: User = {
+      id: `user_${Date.now()}`,
+      username: request.username,
+      name: request.name,
+      role: request.role,
+      garageName: this.getCurrentUser()?.garageName || 'OpAuto Garage',
+      phoneNumber: request.phoneNumber,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      preferences: {
+        theme: 'system',
+        language: 'en',
+        notifications: {
+          email: false, // Staff don't have email
+          sms: false,
+          browser: true
+        },
+        dashboardLayout: 'standard'
+      }
+    };
+
+    return of(newStaffUser).pipe(delay(1000));
   }
 
   private validateLoginCredentials(request: LoginRequest): Observable<AuthResponse> {
-    // Mock validation
     const mockUsers = [
-      { email: 'admin@opauto.tn', password: 'admin123', name: 'Ahmed Ben Salah', role: UserRole.ADMIN, garageName: 'OpAuto Garage Tunis' },
-      { email: 'mechanic@opauto.tn', password: 'mech123', name: 'Fatma Slimani', role: UserRole.MECHANIC, garageName: 'OpAuto Garage Tunis' }
+      // SOLO TIER - 1 Owner only
+      { 
+        email: 'solo@opauto.tn', 
+        username: null, 
+        password: 'solo123', 
+        name: 'Mohammed Karim', 
+        role: UserRole.OWNER, 
+        garageName: 'Garage Solo Mécanique',
+        subscriptionTier: 'solo'
+      },
+      
+      // STARTER TIER - 1 Owner + 2 Staff
+      { 
+        email: 'starter@opauto.tn', 
+        username: null, 
+        password: 'starter123', 
+        name: 'Ahmed Ben Salah', 
+        role: UserRole.OWNER, 
+        garageName: 'Garage Starter Auto',
+        subscriptionTier: 'starter'
+      },
+      { 
+        email: null, 
+        username: 'starter_staff1', 
+        password: 'staff123', 
+        name: 'Sara Mansouri', 
+        role: UserRole.STAFF, 
+        garageName: 'Garage Starter Auto',
+        subscriptionTier: 'starter'
+      },
+      { 
+        email: null, 
+        username: 'starter_staff2', 
+        password: 'staff123', 
+        name: 'Youssef Trabelsi', 
+        role: UserRole.STAFF, 
+        garageName: 'Garage Starter Auto',
+        subscriptionTier: 'starter'
+      },
+      
+      // PROFESSIONAL TIER - 1 Owner + 5 Staff
+      { 
+        email: 'pro@opauto.tn', 
+        username: null, 
+        password: 'pro123', 
+        name: 'Karim Gharbi', 
+        role: UserRole.OWNER, 
+        garageName: 'Garage Professional Motors',
+        subscriptionTier: 'professional'
+      },
+      { 
+        email: null, 
+        username: 'pro_mechanic1', 
+        password: 'staff123', 
+        name: 'Fatma Slimani', 
+        role: UserRole.STAFF, 
+        garageName: 'Garage Professional Motors',
+        subscriptionTier: 'professional'
+      },
+      { 
+        email: null, 
+        username: 'pro_mechanic2', 
+        password: 'staff123', 
+        name: 'Ali Bouzid', 
+        role: UserRole.STAFF, 
+        garageName: 'Garage Professional Motors',
+        subscriptionTier: 'professional'
+      },
+      { 
+        email: null, 
+        username: 'pro_mechanic3', 
+        password: 'staff123', 
+        name: 'Leila Mabrouk', 
+        role: UserRole.STAFF, 
+        garageName: 'Garage Professional Motors',
+        subscriptionTier: 'professional'
+      },
+      { 
+        email: null, 
+        username: 'pro_receptionist', 
+        password: 'staff123', 
+        name: 'Nadia Hamdi', 
+        role: UserRole.STAFF, 
+        garageName: 'Garage Professional Motors',
+        subscriptionTier: 'professional'
+      },
+      { 
+        email: null, 
+        username: 'pro_inventory', 
+        password: 'staff123', 
+        name: 'Hichem Louati', 
+        role: UserRole.STAFF, 
+        garageName: 'Garage Professional Motors',
+        subscriptionTier: 'professional'
+      }
     ];
 
-    const user = mockUsers.find(u => u.email === request.email && u.password === request.password);
+    // Check if input is email or username
+    const isEmail = request.emailOrUsername.includes('@');
+    const user = mockUsers.find(u => {
+      if (isEmail) {
+        return u.email === request.emailOrUsername && u.password === request.password;
+      } else {
+        return u.username === request.emailOrUsername && u.password === request.password;
+      }
+    });
     
     if (!user) {
       return throwError(() => ({
@@ -187,7 +360,8 @@ export class AuthService {
 
     const authUser: User = {
       id: `user_${Date.now()}`,
-      email: user.email,
+      email: user.email || undefined,
+      username: user.username || undefined,
       name: user.name,
       role: user.role,
       garageName: user.garageName,
@@ -195,11 +369,12 @@ export class AuthService {
       createdAt: new Date('2024-01-01'),
       updatedAt: new Date(),
       lastLogin: new Date(),
+      subscriptionTier: (user as any).subscriptionTier,
       preferences: {
         theme: 'system',
         language: 'en',
         notifications: {
-          email: true,
+          email: !!user.email,
           sms: false,
           browser: true
         },
@@ -218,11 +393,14 @@ export class AuthService {
   }
 
   private validateRegistrationData(request: RegisterRequest): Observable<AuthResponse> {
-    // Mock validation
-    if (request.email === 'admin@opauto.tn') {
+    // Public registration is disabled - only for initial owner setup
+    // Check if owner already exists (in real app, check database)
+    const ownerExists = false; // In mock, assume no owner exists initially
+    
+    if (ownerExists) {
       return throwError(() => ({
-        code: 'EMAIL_ALREADY_EXISTS',
-        message: AUTH_ERRORS['EMAIL_ALREADY_EXISTS']
+        code: 'UNAUTHORIZED',
+        message: 'Public registration is disabled. Contact your garage owner to create an account.'
       } as AuthError));
     }
 
@@ -244,7 +422,7 @@ export class AuthService {
       id: `user_${Date.now()}`,
       email: request.email,
       name: request.name,
-      role: UserRole.ADMIN, // First user is always admin
+      role: UserRole.OWNER, // First registration is always the owner
       garageName: request.garageName,
       phoneNumber: request.phoneNumber,
       isActive: true,

@@ -1,10 +1,11 @@
 import { Component, OnInit, ChangeDetectionStrategy, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Observable } from 'rxjs';
 
 import { SubscriptionService } from '../../../core/services/subscription.service';
 import { LanguageService } from '../../../core/services/language.service';
+import { TranslationService } from '../../../core/services/translation.service';
 import {
   SubscriptionStatus,
   SubscriptionTier,
@@ -12,11 +13,12 @@ import {
   FeatureConfig
 } from '../../../core/models/subscription.model';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
+import { TooltipDirective } from '../../../shared/directives/tooltip.directive';
 
 @Component({
   selector: 'app-subscription-display',
   standalone: true,
-  imports: [CommonModule, TranslatePipe],
+  imports: [CommonModule, TranslatePipe, TooltipDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="subscription-display" [attr.dir]="isRtl() ? 'rtl' : 'ltr'">
@@ -37,14 +39,21 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
         <div class="glass-card">
           <div class="current-header">
             <div class="tier-info">
-              <div class="tier-badge" [ngClass]="getTierBadgeClass(subscriptionStatus()!.currentTier.id)">
+              <div
+                class="tier-badge"
+                [ngClass]="getTierBadgeClass(subscriptionStatus()!.currentTier.id)"
+                [appTooltip]="tooltipCurrentPlan()"
+                tooltipPosition="top">
                 {{ subscriptionStatus()!.currentTier.name | translate }}
               </div>
               <div class="tier-details">
                 <h2 class="tier-title">
                   {{ 'subscription.current_plan' | translate }}
                 </h2>
-                <p class="tier-price">
+                <p
+                  class="tier-price"
+                  [appTooltip]="tooltipPriceInfo()"
+                  tooltipPosition="bottom">
                   {{ formatCurrency(subscriptionStatus()!.currentTier.price) }}
                   {{ 'subscription.per_year' | translate }}
                 </p>
@@ -53,13 +62,10 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 
             <div class="renewal-info" [class.rtl-align]="isRtl()">
               <p class="renewal-label">
-                {{ 'subscription.next_billing' | translate }}
-              </p>
-              <p class="renewal-date">
-                {{ formatDate(subscriptionStatus()!.renewalDate) }}
+                {{ 'subscription.next_billing' | translate: { date: formatDate(subscriptionStatus()!.renewalDate) } }}
               </p>
               <p class="renewal-days" [ngClass]="getRenewalStatusClass(subscriptionStatus()!.daysUntilRenewal)">
-                {{ subscriptionStatus()!.daysUntilRenewal }} {{ 'subscription.days_left' | translate }}
+                {{ 'subscription.days_left' | translate: { days: subscriptionStatus()!.daysUntilRenewal } }}
               </p>
             </div>
           </div>
@@ -68,16 +74,24 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
           <div class="usage-stats">
             <div class="usage-item" *ngFor="let usage of getUsageStats(); trackBy: trackByUsageType">
               <div class="usage-header">
-                <span class="usage-label">{{ usage.label | translate }}</span>
+                <span
+                  class="usage-label"
+                  [appTooltip]="tooltipUsageLabels()"
+                  tooltipPosition="right">
+                  {{ usage.label | translate }}
+                </span>
                 <span class="usage-numbers">
                   {{ usage.current }} / {{ usage.limit === null ? ('subscription.unlimited' | translate) : usage.limit }}
                 </span>
               </div>
-              <div class="progress-bar">
+              <div
+                class="progress-bar"
+                [appTooltip]="getUsageTooltip(usage.percentage)"
+                tooltipPosition="top">
                 <div class="progress-fill" [style.width.%]="usage.percentage" [ngClass]="getProgressClass(usage.percentage)"></div>
               </div>
               <div class="usage-percent" [ngClass]="getUsageTextClass(usage.percentage)">
-                {{ usage.percentage }}% {{ 'subscription.used' | translate }}
+                {{ 'subscription.used' | translate: { used: usage.current, limit: usage.limit === null ? ('subscription.unlimited' | translate) : usage.limit } }}
               </div>
             </div>
           </div>
@@ -109,7 +123,7 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
               <div class="feature-content">
                 <span class="feature-name">{{ ('subscription.features.' + feature.key) | translate }}</span>
                 <div *ngIf="!feature.enabled && feature.requiresUpgrade" class="upgrade-hint">
-                  {{ 'subscription.upgrade_to' | translate }} {{ feature.requiresUpgrade | translate }}
+                  {{ getUpgradeHintText(feature.requiresUpgrade) }}
                 </div>
               </div>
             </div>
@@ -178,9 +192,11 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
                   class="btn-primary upgrade-btn"
                   [disabled]="isLoading()"
                   (click)="changeTier(tier.id)"
-                  [attr.aria-label]="('subscription.upgrade_to' | translate) + ' ' + (tier.name | translate)"
+                  [attr.aria-label]="getUpgradeButtonText(tier.id)"
+                  [appTooltip]="tooltipUpgradeButton()"
+                  tooltipPosition="top"
                 >
-                  {{ 'subscription.upgrade_to' | translate }} {{ tier.name | translate }}
+                  {{ getUpgradeButtonText(tier.id) }}
                 </button>
                 
                 <!-- Downgrade Button (when allowed) -->
@@ -198,6 +214,8 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
                 <div
                   *ngIf="tier.id !== tierComparison()!.currentTierId && isDowngradeTier(tier.id) && !canDowngradeToTier(tier.id)"
                   class="downgrade-blocked"
+                  [appTooltip]="tooltipDowngradeBlocked()"
+                  tooltipPosition="top"
                 >
                   <div class="blocked-indicator">
                     <svg class="block-icon" fill="currentColor" viewBox="0 0 20 20">
@@ -208,6 +226,8 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
                   <button
                     class="btn-tertiary btn-sm blocked-details-btn"
                     (click)="showDowngradeBlockedDetails(tier.id)"
+                    [appTooltip]="tooltipWhyBlocked()"
+                    tooltipPosition="bottom"
                   >
                     {{ 'subscription.why_blocked' | translate }}
                   </button>
@@ -681,13 +701,52 @@ export class SubscriptionDisplayComponent implements OnInit {
   // Signals for reactive state
   subscriptionStatus = signal<SubscriptionStatus | null>(null);
   tierComparison = signal<TierComparison | null>(null);
+
+  // Computed tooltip texts that reactively update with translations
+  tooltipCurrentPlan!: ReturnType<typeof computed<string>>;
+  tooltipPriceInfo!: ReturnType<typeof computed<string>>;
+  tooltipUsageLabels!: ReturnType<typeof computed<string>>;
+  tooltipUpgradeButton!: ReturnType<typeof computed<string>>;
+  tooltipDowngradeBlocked!: ReturnType<typeof computed<string>>;
+  tooltipWhyBlocked!: ReturnType<typeof computed<string>>;
+
   isLoading = computed(() => this.subscriptionService.isLoading());
   isRtl = computed(() => this.languageService.isRTL());
 
   constructor(
     private subscriptionService: SubscriptionService,
-    private languageService: LanguageService
+    private languageService: LanguageService,
+    private translationService: TranslationService
   ) {
+    // Convert translations observable to signal for reactivity
+    const translations = toSignal(this.translationService.translations$, { initialValue: {} });
+
+    // Initialize computed tooltip texts that reactively update with translations
+    this.tooltipCurrentPlan = computed(() => {
+      translations(); // trigger on translation changes
+      return this.getTooltip('current_plan_badge');
+    });
+    this.tooltipPriceInfo = computed(() => {
+      translations();
+      return this.getTooltip('price_info');
+    });
+    this.tooltipUsageLabels = computed(() => {
+      translations();
+      return this.getTooltip('usage_labels');
+    });
+    this.tooltipUpgradeButton = computed(() => {
+      translations();
+      return this.getTooltip('upgrade_button');
+    });
+    this.tooltipDowngradeBlocked = computed(() => {
+      translations();
+      return this.getTooltip('downgrade_blocked_section');
+    });
+    this.tooltipWhyBlocked = computed(() => {
+      translations();
+      return this.getTooltip('why_blocked_button');
+    });
+
     // Load subscription data
     this.loadSubscriptionData();
   }
@@ -907,6 +966,36 @@ export class SubscriptionDisplayComponent implements OnInit {
     if (daysLeft > 7) return 'text-green-400';
     if (daysLeft > 3) return 'text-yellow-400';
     return 'text-red-400';
+  }
+
+  getUpgradeHintText(requiredTier: string): string {
+    // Get translated tier name
+    const tierName = this.translationService.instant(`tiers.${requiredTier}`);
+    // Get upgrade_to template and replace {{tier}} with translated tier name
+    return this.translationService.instant('subscription.upgrade_to', { tier: tierName });
+  }
+
+  getUpgradeButtonText(tierId: string): string {
+    // Get translated tier name
+    const tierName = this.translationService.instant(`tiers.${tierId}`);
+    // Get upgrade_to template and replace {{tier}} with translated tier name
+    return this.translationService.instant('subscription.upgrade_to', { tier: tierName });
+  }
+
+  // Tooltip translation methods - now reactive by accessing translation service on each call
+  getTooltip(key: string): string {
+    const fullKey = `subscription.tooltips.${key}`;
+    const translated = this.translationService.instant(fullKey);
+    // Return empty string if translation not found (returns key when not found)
+    return translated === fullKey ? '' : translated;
+  }
+
+  getUsageTooltip(percentage: number): string {
+    const key = percentage >= 90 ? 'approaching_limit' : 'usage_within_limits';
+    const fullKey = `subscription.tooltips.${key}`;
+    const translated = this.translationService.instant(fullKey);
+    // Return empty string if translation not found (returns key when not found)
+    return translated === fullKey ? '' : translated;
   }
 
   // TrackBy functions for performance

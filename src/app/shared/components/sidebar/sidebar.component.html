@@ -53,7 +53,7 @@
       <h3 class="nav-section-title" 
           [class.hidden]="!shouldShowExpanded()">{{ 'navigation.main' | translate }}</h3>
       <ul class="nav-list">
-        @for (item of navItems; track item.id) {
+        @for (item of filteredNavItems(); track item.id) {
           <li class="nav-item">
             <button 
               class="nav-link"
@@ -164,7 +164,7 @@
     <div class="nav-section">
       <h3 class="nav-section-title" [class.hidden]="!shouldShowExpanded()">{{ 'navigation.settings' | translate }}</h3>
       <ul class="nav-list">
-        @for (item of settingsItems; track item.id) {
+        @for (item of filteredSettingsItems(); track item.id) {
           <li class="nav-item">
             <button 
               class="nav-link"

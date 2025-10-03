@@ -1,10 +1,11 @@
-import { Component, Input, Output, EventEmitter, inject, signal, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 import { TranslationService } from '../../../core/services/translation.service';
 import { PartService } from '../../../core/services/part.service';
 import { Part, PartWithStock, Supplier, PartCategory, PartUnit } from '../../../core/models/part.model';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-part-modal',
@@ -19,8 +20,8 @@ import { Part, PartWithStock, Supplier, PartCategory, PartUnit } from '../../../
         <!-- Modal Header -->
         <header class="modal-header">
           <div class="modal-title-section">
-            <h2 class="modal-title">{{ isEditMode() ? ('inventory.parts.editPart' | translate) : ('inventory.parts.addNewPart' | translate) }}</h2>
-            <p class="modal-subtitle">{{ 'inventory.parts.managePartInventory' | translate }}</p>
+            <h2 class="modal-title">{{ isEditMode() ? editPartText() : addNewPartText() }}</h2>
+            <p class="modal-subtitle">{{ managePartInventoryText() }}</p>
           </div>
           <button class="modal-close-btn" (click)="onClose()">
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -34,29 +35,29 @@ import { Part, PartWithStock, Supplier, PartCategory, PartUnit } from '../../../
           
           <!-- Basic Information -->
           <div class="form-section">
-            <h3 class="section-title">{{ 'inventory.parts.basicInformation' | translate }}</h3>
+            <h3 class="section-title">{{ basicInformationText() }}</h3>
             <div class="form-row">
               <div class="form-group flex-1">
-                <label class="form-label">{{ 'inventory.parts.partName' | translate }} *</label>
+                <label class="form-label">{{ partNameText() }} *</label>
                 <input type="text" 
                        formControlName="name"
                        class="form-input"
-                       [placeholder]="'inventory.parts.enterPartName' | translate">
+                       [placeholder]="enterPartNameText()">
               </div>
               <div class="form-group flex-1">
-                <label class="form-label">{{ 'inventory.parts.partNumber' | translate }} *</label>
+                <label class="form-label">{{ partNumberText() }} *</label>
                 <input type="text" 
                        formControlName="partNumber"
                        class="form-input"
-                       [placeholder]="'inventory.parts.enterPartNumber' | translate">
+                       [placeholder]="enterPartNumberText()">
               </div>
             </div>
             
             <div class="form-group">
-              <label class="form-label">{{ 'inventory.parts.description' | translate }}</label>
+              <label class="form-label">{{ descriptionText() }}</label>
               <textarea formControlName="description"
                         class="form-textarea"
-                        [placeholder]="'inventory.parts.enterDescription' | translate"
+                        [placeholder]="enterDescriptionText()"
                         rows="3">
               </textarea>
             </div>
@@ -64,51 +65,51 @@ import { Part, PartWithStock, Supplier, PartCategory, PartUnit } from '../../../
 
           <!-- Category and Classification -->
           <div class="form-section">
-            <h3 class="section-title">{{ 'inventory.parts.categoryAndClassification' | translate }}</h3>
+            <h3 class="section-title">{{ categoryAndClassificationText() }}</h3>
             <div class="form-row">
               <div class="form-group flex-1">
-                <label class="form-label">{{ 'inventory.parts.category' | translate }} *</label>
+                <label class="form-label">{{ categoryText() }} *</label>
                 <select formControlName="category" class="form-select">
-                  <option value="">{{ 'inventory.parts.selectCategory' | translate }}</option>
+                  <option value="">{{ selectCategoryText() }}</option>
                   <option *ngFor="let category of availableCategories" [value]="category">
                     {{ getCategoryLabel(category) }}
                   </option>
                 </select>
               </div>
               <div class="form-group flex-1">
-                <label class="form-label">{{ 'inventory.parts.brand' | translate }} *</label>
+                <label class="form-label">{{ brandText() }} *</label>
                 <input type="text" 
                        formControlName="brand"
                        class="form-input"
-                       [placeholder]="'inventory.parts.enterBrand' | translate">
+                       [placeholder]="enterBrandText()">
               </div>
             </div>
           </div>
 
           <!-- Supplier and Pricing -->
           <div class="form-section">
-            <h3 class="section-title">{{ 'inventory.parts.supplierAndPricing' | translate }}</h3>
+            <h3 class="section-title">{{ supplierAndPricingText() }}</h3>
             <div class="form-row">
               <div class="form-group flex-1">
-                <label class="form-label">{{ 'inventory.parts.supplier' | translate }} *</label>
+                <label class="form-label">{{ supplierText() }} *</label>
                 <select formControlName="supplierId" class="form-select">
-                  <option value="">{{ 'inventory.parts.selectSupplier' | translate }}</option>
+                  <option value="">{{ selectSupplierText() }}</option>
                   <option *ngFor="let supplier of suppliers()" [value]="supplier.id">
                     {{ supplier.name }}
                   </option>
                 </select>
               </div>
               <div class="form-group">
-                <label class="form-label">{{ 'inventory.parts.unit' | translate }} *</label>
+                <label class="form-label">{{ unitText() }} *</label>
                 <select formControlName="unit" class="form-select">
-                  <option value="">{{ 'inventory.parts.selectUnit' | translate }}</option>
+                  <option value="">{{ selectUnitText() }}</option>
                   <option *ngFor="let unit of availableUnits" [value]="unit">
                     {{ getUnitLabel(unit) }}
                   </option>
                 </select>
               </div>
               <div class="form-group">
-                <label class="form-label">{{ 'inventory.parts.price' | translate }} (TND) *</label>
+                <label class="form-label">{{ priceText() }} (TND) *</label>
                 <input type="number" 
                        formControlName="price"
                        class="form-input"
@@ -121,10 +122,10 @@ import { Part, PartWithStock, Supplier, PartCategory, PartUnit } from '../../../
 
           <!-- Stock Management -->
           <div class="form-section">
-            <h3 class="section-title">{{ 'inventory.parts.stockManagement' | translate }}</h3>
+            <h3 class="section-title">{{ stockManagementText() }}</h3>
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">{{ 'inventory.parts.currentStock' | translate }} *</label>
+                <label class="form-label">{{ currentStockText() }} *</label>
                 <input type="number" 
                        formControlName="stockLevel"
                        class="form-input"
@@ -132,7 +133,7 @@ import { Part, PartWithStock, Supplier, PartCategory, PartUnit } from '../../../
                        min="0">
               </div>
               <div class="form-group">
-                <label class="form-label">{{ 'inventory.parts.minStockLevel' | translate }} *</label>
+                <label class="form-label">{{ minStockLevelText() }} *</label>
                 <input type="number" 
                        formControlName="minStockLevel"
                        class="form-input"
@@ -140,32 +141,32 @@ import { Part, PartWithStock, Supplier, PartCategory, PartUnit } from '../../../
                        min="0">
               </div>
               <div class="form-group">
-                <label class="form-label">{{ 'inventory.parts.maxStockLevel' | translate }}</label>
+                <label class="form-label">{{ maxStockLevelText() }}</label>
                 <input type="number" 
                        formControlName="maxStockLevel"
                        class="form-input"
-                       [placeholder]="'inventory.parts.optional' | translate"
+                       [placeholder]="optionalText()"
                        min="0">
               </div>
             </div>
             
             <div class="form-row">
               <div class="form-group flex-1">
-                <label class="form-label">{{ 'inventory.parts.storageLocation' | translate }}</label>
+                <label class="form-label">{{ storageLocationText() }}</label>
                 <input type="text" 
                        formControlName="location"
                        class="form-input"
-                       [placeholder]="'inventory.parts.locationPlaceholder' | translate">
+                       [placeholder]="locationPlaceholderText()">
               </div>
               <div class="form-group">
-                <label class="form-label">{{ 'inventory.parts.status' | translate }}</label>
+                <label class="form-label">{{ statusText() }}</label>
                 <div class="flex items-center gap-3 mt-2">
                   <input type="checkbox" 
                          id="isActive"
                          formControlName="isActive"
                          class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded">
                   <label for="isActive" class="text-sm font-medium text-white">
-                    {{ 'inventory.parts.activePart' | translate }}
+                    {{ activePartText() }}
                   </label>
                 </div>
               </div>
@@ -177,15 +178,15 @@ import { Part, PartWithStock, Supplier, PartCategory, PartUnit } from '../../../
         <!-- Modal Footer -->
         <footer class="modal-footer">
           <button type="button" class="modal-btn secondary" (click)="onClose()">
-            {{ 'common.cancel' | translate }}
+            {{ cancelText() }}
           </button>
           <button type="button" class="modal-btn primary" 
                   [disabled]="!partForm.valid || isSubmitting()"
                   (click)="onSubmit()">
-            <span *ngIf="!isSubmitting()">{{ isEditMode() ? ('inventory.parts.updatePart' | translate) : ('inventory.parts.createPart' | translate) }}</span>
+            <span *ngIf="!isSubmitting()">{{ isEditMode() ? updatePartText() : createPartText() }}</span>
             <span *ngIf="isSubmitting()" class="flex items-center gap-2">
               <div class="submit-spinner"></div>
-              {{ isEditMode() ? ('inventory.parts.updating' | translate) : ('inventory.parts.creating' | translate) }}
+              {{ isEditMode() ? updatingText() : creatingText() }}
             </span>
           </button>
         </footer>
@@ -473,7 +474,7 @@ import { Part, PartWithStock, Supplier, PartCategory, PartUnit } from '../../../
     }
   `]
 })
-export class PartModalComponent implements OnInit {
+export class PartModalComponent implements OnInit, OnDestroy {
   @Input() part: PartWithStock | null = null;
   @Input() isOpen = false;
   @Output() close = new EventEmitter<void>();
@@ -485,6 +486,46 @@ export class PartModalComponent implements OnInit {
 
   suppliers = signal<Supplier[]>([]);
   isSubmitting = signal(false);
+  translationsReady = signal(false);
+  
+  // Translation signals for ultra-fast UI
+  addNewPartText = signal('Add New Part');
+  editPartText = signal('Edit Part');
+  managePartInventoryText = signal('Manage part inventory');
+  basicInformationText = signal('Basic Information');
+  partNameText = signal('Part Name');
+  enterPartNameText = signal('Enter part name');
+  partNumberText = signal('Part Number');
+  enterPartNumberText = signal('Enter part number');
+  descriptionText = signal('Description');
+  enterDescriptionText = signal('Enter description');
+  categoryAndClassificationText = signal('Category and Classification');
+  categoryText = signal('Category');
+  selectCategoryText = signal('Select category');
+  brandText = signal('Brand');
+  enterBrandText = signal('Enter brand');
+  supplierAndPricingText = signal('Supplier and Pricing');
+  supplierText = signal('Supplier');
+  selectSupplierText = signal('Select supplier');
+  unitText = signal('Unit');
+  selectUnitText = signal('Select unit');
+  priceText = signal('Price');
+  stockManagementText = signal('Stock Management');
+  currentStockText = signal('Current Stock');
+  minStockLevelText = signal('Min Stock Level');
+  maxStockLevelText = signal('Max Stock Level');
+  optionalText = signal('Optional');
+  storageLocationText = signal('Storage Location');
+  locationPlaceholderText = signal('e.g., Shelf A-1, Row B, etc.');
+  statusText = signal('Status');
+  activePartText = signal('Active part');
+  cancelText = signal('Cancel');
+  createPartText = signal('Create Part');
+  updatePartText = signal('Update Part');
+  creatingText = signal('Creating...');
+  updatingText = signal('Updating...');
+  
+  private translationSubscription?: Subscription;
   
   partForm: FormGroup;
 
@@ -516,11 +557,132 @@ export class PartModalComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.initializeTranslations();
     this.loadSuppliers();
     
     if (this.part) {
       this.populateForm();
     }
+  }
+
+  ngOnDestroy(): void {
+    this.translationSubscription?.unsubscribe();
+  }
+
+  private initializeTranslations(): void {
+    // First, do an immediate check - translations might already be available
+    const currentTranslations = this.translationService.getCurrentTranslations();
+    if (this.hasRequiredTranslations(currentTranslations)) {
+      // Translations are already loaded! Use them immediately
+      this.updateTranslationSignals();
+      this.translationsReady.set(true);
+      return;
+    }
+    
+    // If specific translations aren't available, show fallbacks immediately
+    // This eliminates any loading delay
+    this.setFallbackTranslations();
+    this.translationsReady.set(true);
+    
+    // In the background, try to load proper translations for next time
+    // Only reload if we have no translations at all
+    if (!currentTranslations || Object.keys(currentTranslations).length === 0) {
+      this.translationService.forceReloadTranslations();
+    }
+    
+    // Listen for translation updates to replace fallbacks with real translations
+    this.translationSubscription = this.translationService.translations$.subscribe(translations => {
+      if (this.hasRequiredTranslations(translations)) {
+        this.updateTranslationSignals();
+      }
+    });
+  }
+
+  private hasRequiredTranslations(translations: any): boolean {
+    return translations && 
+           translations.inventory &&
+           translations.inventory.parts &&
+           translations.common &&
+           translations.inventory.categories &&
+           translations.inventory.units;
+  }
+
+  private setFallbackTranslations(): void {
+    // Set English fallbacks for instant display
+    this.addNewPartText.set('Add New Part');
+    this.editPartText.set('Edit Part');
+    this.managePartInventoryText.set('Manage part inventory');
+    this.basicInformationText.set('Basic Information');
+    this.partNameText.set('Part Name');
+    this.enterPartNameText.set('Enter part name');
+    this.partNumberText.set('Part Number');
+    this.enterPartNumberText.set('Enter part number');
+    this.descriptionText.set('Description');
+    this.enterDescriptionText.set('Enter description');
+    this.categoryAndClassificationText.set('Category and Classification');
+    this.categoryText.set('Category');
+    this.selectCategoryText.set('Select category');
+    this.brandText.set('Brand');
+    this.enterBrandText.set('Enter brand');
+    this.supplierAndPricingText.set('Supplier and Pricing');
+    this.supplierText.set('Supplier');
+    this.selectSupplierText.set('Select supplier');
+    this.unitText.set('Unit');
+    this.selectUnitText.set('Select unit');
+    this.priceText.set('Price');
+    this.stockManagementText.set('Stock Management');
+    this.currentStockText.set('Current Stock');
+    this.minStockLevelText.set('Min Stock Level');
+    this.maxStockLevelText.set('Max Stock Level');
+    this.optionalText.set('Optional');
+    this.storageLocationText.set('Storage Location');
+    this.locationPlaceholderText.set('e.g., Shelf A-1, Row B, etc.');
+    this.statusText.set('Status');
+    this.activePartText.set('Active part');
+    this.cancelText.set('Cancel');
+    this.createPartText.set('Create Part');
+    this.updatePartText.set('Update Part');
+    this.creatingText.set('Creating...');
+    this.updatingText.set('Updating...');
+  }
+
+  private updateTranslationSignals(): void {
+    // Update all translation signals with proper translations
+    this.addNewPartText.set(this.translationService.instant('inventory.parts.addNewPart'));
+    this.editPartText.set(this.translationService.instant('inventory.parts.editPart'));
+    this.managePartInventoryText.set(this.translationService.instant('inventory.parts.managePartInventory'));
+    this.basicInformationText.set(this.translationService.instant('inventory.parts.basicInformation'));
+    this.partNameText.set(this.translationService.instant('inventory.parts.partName'));
+    this.enterPartNameText.set(this.translationService.instant('inventory.parts.enterPartName'));
+    this.partNumberText.set(this.translationService.instant('inventory.parts.partNumber'));
+    this.enterPartNumberText.set(this.translationService.instant('inventory.parts.enterPartNumber'));
+    this.descriptionText.set(this.translationService.instant('inventory.parts.description'));
+    this.enterDescriptionText.set(this.translationService.instant('inventory.parts.enterDescription'));
+    this.categoryAndClassificationText.set(this.translationService.instant('inventory.parts.categoryAndClassification'));
+    this.categoryText.set(this.translationService.instant('inventory.parts.category'));
+    this.selectCategoryText.set(this.translationService.instant('inventory.parts.selectCategory'));
+    this.brandText.set(this.translationService.instant('inventory.parts.brand'));
+    this.enterBrandText.set(this.translationService.instant('inventory.parts.enterBrand'));
+    this.supplierAndPricingText.set(this.translationService.instant('inventory.parts.supplierAndPricing'));
+    this.supplierText.set(this.translationService.instant('inventory.parts.supplier'));
+    this.selectSupplierText.set(this.translationService.instant('inventory.parts.selectSupplier'));
+    this.unitText.set(this.translationService.instant('inventory.parts.unit'));
+    this.selectUnitText.set(this.translationService.instant('inventory.parts.selectUnit'));
+    this.priceText.set(this.translationService.instant('inventory.parts.price'));
+    this.stockManagementText.set(this.translationService.instant('inventory.parts.stockManagement'));
+    this.currentStockText.set(this.translationService.instant('inventory.parts.currentStock'));
+    this.minStockLevelText.set(this.translationService.instant('inventory.parts.minStockLevel'));
+    this.maxStockLevelText.set(this.translationService.instant('inventory.parts.maxStockLevel'));
+    this.optionalText.set(this.translationService.instant('inventory.parts.optional'));
+    this.storageLocationText.set(this.translationService.instant('inventory.parts.storageLocation'));
+    this.locationPlaceholderText.set(this.translationService.instant('inventory.parts.locationPlaceholder'));
+    this.statusText.set(this.translationService.instant('inventory.parts.status'));
+    this.activePartText.set(this.translationService.instant('inventory.parts.activePart'));
+    this.cancelText.set(this.translationService.instant('common.cancel'));
+    this.createPartText.set(this.translationService.instant('inventory.parts.createPart'));
+    this.updatePartText.set(this.translationService.instant('inventory.parts.updatePart'));
+    this.creatingText.set(this.translationService.instant('inventory.parts.creating'));
+    this.updatingText.set(this.translationService.instant('inventory.parts.updating'));
   }
 
   isEditMode(): boolean {

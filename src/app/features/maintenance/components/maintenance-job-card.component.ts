@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MaintenanceJob, MaintenanceStatus } from '../../../core/models/maintenance.model';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 import { TranslationService } from '../../../core/services/translation.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-maintenance-job-card',
@@ -71,16 +72,25 @@ import { TranslationService } from '../../../core/services/translation.service';
       }
 
       <!-- Time & Cost Info -->
-      <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
-        <div>
-          <p class="text-gray-500 dark:text-gray-400">{{ 'maintenance.mileage' | translate }}</p>
-          <p class="font-medium text-gray-900 dark:text-white">{{ job.currentMileage | number }} km</p>
+      @if (authService.isOwner()) {
+        <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
+          <div>
+            <p class="text-gray-500 dark:text-gray-400">{{ 'maintenance.mileage' | translate }}</p>
+            <p class="font-medium text-gray-900 dark:text-white">{{ job.currentMileage | number }} km</p>
+          </div>
+          <div>
+            <p class="text-gray-500 dark:text-gray-400">{{ 'maintenance.estimatedCost' | translate }}</p>
+            <p class="font-medium text-gray-900 dark:text-white">{{ formatCurrency(job.estimatedCost) }}</p>
+          </div>
         </div>
-        <div>
-          <p class="text-gray-500 dark:text-gray-400">{{ 'maintenance.estimatedCost' | translate }}</p>
-          <p class="font-medium text-gray-900 dark:text-white">{{ formatCurrency(job.estimatedCost) }}</p>
+      } @else {
+        <div class="mb-4 text-sm">
+          <div>
+            <p class="text-gray-500 dark:text-gray-400">{{ 'maintenance.mileage' | translate }}</p>
+            <p class="font-medium text-gray-900 dark:text-white">{{ job.currentMileage | number }} km</p>
+          </div>
         </div>
-      </div>
+      }
 
       <!-- Description -->
       @if (view === 'list' || job.description.length < 100) {
@@ -195,6 +205,7 @@ import { TranslationService } from '../../../core/services/translation.service';
 })
 export class MaintenanceJobCardComponent {
   private translationService = inject(TranslationService);
+  authService = inject(AuthService);
   
   @Input() job!: MaintenanceJob;
   @Input() view: 'list' | 'grid' = 'grid';

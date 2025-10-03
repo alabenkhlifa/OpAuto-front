@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 import { Observable, of, BehaviorSubject } from 'rxjs';
 import { map, delay } from 'rxjs/operators';
 import {
@@ -22,20 +22,29 @@ export class SubscriptionService {
       currency: 'TND',
       features: [
         { key: 'single_user', enabled: true },
-        { key: 'basic_appointments', enabled: true },
+        { key: 'unlimited_appointments', enabled: true },
+        { key: 'manual_booking', enabled: true },
         { key: 'cash_invoicing', enabled: true },
         { key: 'basic_reports', enabled: true },
         { key: 'browser_notifications', enabled: true },
+        { key: 'mobile_responsive', enabled: true },
+        { key: 'multi_language', enabled: true },
         { key: 'multi_user', enabled: false, requiresUpgrade: 'starter' },
         { key: 'email_notifications', enabled: false, requiresUpgrade: 'starter' },
         { key: 'internal_approvals', enabled: false, requiresUpgrade: 'starter' },
+        { key: 'service_workflow', enabled: false, requiresUpgrade: 'starter' },
+        { key: 'customer_history', enabled: false, requiresUpgrade: 'starter' },
         { key: 'photos_documentation', enabled: false, requiresUpgrade: 'professional' },
-        { key: 'inventory_management', enabled: false, requiresUpgrade: 'professional' }
+        { key: 'inventory_management', enabled: false, requiresUpgrade: 'professional' },
+        { key: 'sms_notifications', enabled: false, requiresUpgrade: 'professional' },
+        { key: 'advanced_reports', enabled: false, requiresUpgrade: 'professional' },
+        { key: 'data_export', enabled: false, requiresUpgrade: 'professional' },
+        { key: 'employee_tracking', enabled: false, requiresUpgrade: 'professional' }
       ],
       limits: {
         users: 1,
         cars: 50,
-        serviceBays: 2
+        serviceBays: 1
       }
     },
     {
@@ -45,15 +54,25 @@ export class SubscriptionService {
       currency: 'TND',
       features: [
         { key: 'multi_user', enabled: true },
+        { key: 'unlimited_appointments', enabled: true },
         { key: 'appointment_management', enabled: true },
         { key: 'cash_invoicing', enabled: true },
+        { key: 'invoice_discounts', enabled: true },
         { key: 'basic_reports', enabled: true },
         { key: 'email_notifications', enabled: true },
         { key: 'internal_approvals', enabled: true },
+        { key: 'service_workflow', enabled: true },
+        { key: 'customer_history', enabled: true },
+        { key: 'browser_notifications', enabled: true },
+        { key: 'mobile_responsive', enabled: true },
+        { key: 'multi_language', enabled: true },
         { key: 'photos_documentation', enabled: false, requiresUpgrade: 'professional' },
         { key: 'inventory_management', enabled: false, requiresUpgrade: 'professional' },
         { key: 'sms_notifications', enabled: false, requiresUpgrade: 'professional' },
-        { key: 'priority_support', enabled: false, requiresUpgrade: 'professional' }
+        { key: 'advanced_reports', enabled: false, requiresUpgrade: 'professional' },
+        { key: 'data_export', enabled: false, requiresUpgrade: 'professional' },
+        { key: 'employee_tracking', enabled: false, requiresUpgrade: 'professional' },
+        { key: 'custom_invoice_templates', enabled: false, requiresUpgrade: 'professional' }
       ],
       limits: {
         users: 3,
@@ -69,22 +88,34 @@ export class SubscriptionService {
       currency: 'TND',
       features: [
         { key: 'unlimited_users', enabled: true },
+        { key: 'unlimited_appointments', enabled: true },
+        { key: 'unlimited_service_bays', enabled: true },
         { key: 'appointment_management', enabled: true },
+        { key: 'multi_bay_scheduling', enabled: true },
         { key: 'cash_invoicing', enabled: true },
+        { key: 'invoice_discounts', enabled: true },
+        { key: 'custom_invoice_templates', enabled: true },
         { key: 'basic_reports', enabled: true },
+        { key: 'advanced_reports', enabled: true },
         { key: 'email_notifications', enabled: true },
+        { key: 'sms_notifications', enabled: true },
         { key: 'internal_approvals', enabled: true },
+        { key: 'service_workflow', enabled: true },
+        { key: 'customer_history', enabled: true },
         { key: 'photos_documentation', enabled: true },
         { key: 'inventory_management', enabled: true },
-        { key: 'sms_notifications', enabled: true },
+        { key: 'supplier_database', enabled: true },
+        { key: 'employee_tracking', enabled: true },
+        { key: 'data_export', enabled: true },
         { key: 'priority_support', enabled: true },
-        { key: 'advanced_reports', enabled: true },
-        { key: 'data_export', enabled: true }
+        { key: 'browser_notifications', enabled: true },
+        { key: 'mobile_responsive', enabled: true },
+        { key: 'multi_language', enabled: true }
       ],
       limits: {
-        users: null, // unlimited
-        cars: null, // unlimited
-        serviceBays: null // unlimited
+        users: null,
+        cars: null,
+        serviceBays: null
       }
     }
   ];
@@ -98,11 +129,43 @@ export class SubscriptionService {
   private currentTierSubject = new BehaviorSubject<SubscriptionTierId>('starter');
   private loadingSubject = new BehaviorSubject<boolean>(false);
 
-  // Signals for reactive state management
   isLoading = signal(false);
   currentTier = signal<SubscriptionTierId>('starter');
 
-  constructor() {}
+  constructor() {
+    this.initializeFromAuth();
+    
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', (e) => {
+        if (e.key === 'opauth_user') {
+          this.initializeFromAuth();
+        }
+      });
+    }
+  }
+  
+  private initializeFromAuth(): void {
+    try {
+      const userStr = localStorage.getItem('opauth_user') || sessionStorage.getItem('opauth_user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        if (user.subscriptionTier) {
+          this.currentTierSubject.next(user.subscriptionTier);
+          this.currentTier.set(user.subscriptionTier);
+        }
+      } else {
+        this.currentTierSubject.next('solo');
+        this.currentTier.set('solo');
+      }
+    } catch (error) {
+      console.error('Error loading subscription from auth:', error);
+    }
+  }
+  
+  setTierFromUser(tier: SubscriptionTierId): void {
+    this.currentTierSubject.next(tier);
+    this.currentTier.set(tier);
+  }
 
   /**
    * Get all available subscription tiers

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MaintenanceFilters, MaintenanceStatus, MaintenancePriority } from '../../../core/models/maintenance.model';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 import { TranslationService } from '../../../core/services/translation.service';
+import { SubscriptionService } from '../../../core/services/subscription.service';
 import { inject } from '@angular/core';
 
 @Component({
@@ -71,21 +72,23 @@ import { inject } from '@angular/core';
           </select>
         </div>
 
-        <!-- Mechanic Filter -->
-        <div>
-          <label class="block text-sm font-medium text-gray-300 mb-1">
-            {{ 'maintenance.filters.mechanic' | translate }}
-          </label>
-          <select
-            [(ngModel)]="localFilters.mechanicId"
-            (ngModelChange)="onFilterChange()"
-            class="form-select">
-            <option value="">{{ 'maintenance.filters.allMechanics' | translate }}</option>
-            @for (mechanic of mechanicOptions; track mechanic.id) {
-              <option [value]="mechanic.id">{{ mechanic.name }}</option>
-            }
-          </select>
-        </div>
+        <!-- Mechanic Filter - Hidden for Solo tier -->
+        @if (subscriptionService.currentTier() !== 'solo') {
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">
+              {{ 'maintenance.filters.mechanic' | translate }}
+            </label>
+            <select
+              [(ngModel)]="localFilters.mechanicId"
+              (ngModelChange)="onFilterChange()"
+              class="form-select">
+              <option value="">{{ 'maintenance.filters.allMechanics' | translate }}</option>
+              @for (mechanic of mechanicOptions; track mechanic.id) {
+                <option [value]="mechanic.id">{{ mechanic.name }}</option>
+              }
+            </select>
+          </div>
+        }
 
       </div>
 
@@ -166,7 +169,8 @@ import { inject } from '@angular/core';
 })
 export class MaintenanceFiltersComponent {
   private translationService = inject(TranslationService);
-  
+  subscriptionService = inject(SubscriptionService);
+
   @Input() filters: MaintenanceFilters = {};
   @Output() filtersChange = new EventEmitter<MaintenanceFilters>();
 

@@ -2,6 +2,7 @@ import { Component, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MaintenanceStats } from '../../../core/models/maintenance.model';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-maintenance-stats',
@@ -69,12 +70,14 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
         </div>
 
         <!-- Revenue Today -->
-        <div class="glass-card">
-          <div class="text-center">
-            <p class="text-sm font-medium text-gray-300">{{ 'maintenance.revenueToday' | translate }}</p>
-            <p class="text-xl font-bold text-white">{{ formatCurrency(stats?.revenueToday || 0) }}</p>
+        @if (authService.isOwner()) {
+          <div class="glass-card">
+            <div class="text-center">
+              <p class="text-sm font-medium text-gray-300">{{ 'maintenance.revenueToday' | translate }}</p>
+              <p class="text-xl font-bold text-white">{{ formatCurrency(stats?.revenueToday || 0) }}</p>
+            </div>
           </div>
-        </div>
+        }
 
         <!-- Efficiency -->
         <div class="glass-card">
@@ -93,6 +96,8 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
   `]
 })
 export class MaintenanceStatsComponent {
+  
+  authService = inject(AuthService);
   
   @Input() stats: MaintenanceStats | null = null;
   @Input() view: string = 'grid';

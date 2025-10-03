@@ -1,8 +1,10 @@
-import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { SidebarService } from '../../../core/services/sidebar.service';
 import { TranslationService } from '../../../core/services/translation.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { SubscriptionService } from '../../../core/services/subscription.service';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { filter, Subscription } from 'rxjs';
 
@@ -16,6 +18,8 @@ interface NavItem {
   children?: NavItem[];
   isActive?: boolean;
   isExpanded?: boolean;
+  ownerOnly?: boolean;
+  requiresFeature?: string;
 }
 
 @Component({
@@ -29,7 +33,15 @@ export class SidebarComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private sidebarService = inject(SidebarService);
   private translationService = inject(TranslationService);
+  private authService = inject(AuthService);
+  private subscriptionService = inject(SubscriptionService);
   private routerSubscription?: Subscription;
+  private featureSubscription = new Subscription();
+  
+  hasInventoryAccess = signal(false);
+  hasAdvancedReports = signal(false);
+  hasMultiUserAccess = signal(false);
+  hasInternalApprovals = signal(false);
   
   isCollapsed = this.sidebarService.isCollapsed;
   isMobileMenuOpen = signal(false);
@@ -76,7 +88,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
       label: 'Parts & Inventory',
       translationKey: 'navigation.inventory',
       icon: 'package',
-      route: '/inventory'
+      route: '/inventory',
+      ownerOnly: true,
+      requiresFeature: 'inventory_management'
     },
     {
       id: 'invoices',
@@ -84,6 +98,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       translationKey: 'navigation.invoicing',
       icon: 'receipt',
       isExpanded: false,
+      ownerOnly: true,
       children: [
         { id: 'invoices-list', label: 'All Invoices', translationKey: 'invoicing.navigation.allInvoices', icon: 'list', route: '/invoices' },
         { id: 'invoices-create', label: 'Create Invoice', translationKey: 'invoicing.navigation.createInvoice', icon: 'plus', route: '/invoices/create' },
@@ -102,7 +117,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
       label: 'Reports',
       translationKey: 'navigation.reports',
       icon: 'chart',
-      route: '/reports'
+      route: '/reports',
+      ownerOnly: true,
+      requiresFeature: 'basic_reports'
     },
     {
       id: 'approvals',
@@ -110,7 +127,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
       translationKey: 'maintenance.pendingApproval',
       icon: 'check-circle',
       route: '/approvals',
-      badge: 3
+      badge: 3,
+      ownerOnly: true,
+      requiresFeature: 'internal_approvals'
     }
   ];
 
@@ -120,21 +139,25 @@ export class SidebarComponent implements OnInit, OnDestroy {
       label: 'Settings',
       translationKey: 'navigation.settings',
       icon: 'settings',
-      route: '/settings'
+      route: '/settings',
+      ownerOnly: true
     },
     {
       id: 'employees',
       label: 'Employees',
       translationKey: 'navigation.employees',
       icon: 'team',
-      route: '/employees'
+      route: '/employees',
+      ownerOnly: true,
+      requiresFeature: 'multi_user'
     },
     {
       id: 'subscription',
       label: 'Subscription',
       translationKey: 'navigation.subscription',
       icon: 'credit-card',
-      route: '/subscription'
+      route: '/subscription',
+      ownerOnly: true
     },
     {
       id: 'profile',
@@ -145,27 +168,92 @@ export class SidebarComponent implements OnInit, OnDestroy {
     }
   ];
 
-  // Helper method to get translated label
+  filteredNavItems = computed(() => {
+    const isOwner = this.authService.isOwner();
+    return this.filterItemsByRoleAndFeature(this.navItems, isOwner);
+  });
+
+  filteredSettingsItems = computed(() => {
+    const isOwner = this.authService.isOwner();
+    return this.filterItemsByRoleAndFeature(this.settingsItems, isOwner);
+  });
+
+  private filterItemsByRoleAndFeature(items: NavItem[], isOwner: boolean): NavItem[] {
+    return items.filter(item => {
+      if (item.ownerOnly && !isOwner) {
+        return false;
+      }
+      if (item.requiresFeature) {
+        if (item.requiresFeature === 'inventory_management') {
+          return this.hasInventoryAccess();
+        }
+        if (item.requiresFeature === 'multi_user') {
+          return this.hasMultiUserAccess();
+        }
+        if (item.requiresFeature === 'internal_approvals') {
+          return this.hasInternalApprovals();
+        }
+        if (item.requiresFeature === 'advanced_reports' && !this.hasAdvancedReports()) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }
+
   getTranslatedLabel(translationKey: string, fallback: string): string {
     return this.translationService.instant(translationKey) || fallback;
   }
 
   ngOnInit() {
-    // Set initial active state based on current URL
     this.updateActiveStates(this.router.url);
     
-    // Subscribe to router events to update active state when URL changes
     this.routerSubscription = this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event: NavigationEnd) => {
         this.updateActiveStates(event.url);
       });
+    
+    this.loadFeatureAccess();
+    
+    this.featureSubscription.add(
+      this.subscriptionService.currentTier$.subscribe(() => {
+        this.loadFeatureAccess();
+      })
+    );
+  }
+  
+  private loadFeatureAccess(): void {
+    this.featureSubscription.add(
+      this.subscriptionService.isFeatureEnabled('inventory_management').subscribe(enabled => {
+        this.hasInventoryAccess.set(enabled);
+      })
+    );
+    
+    this.featureSubscription.add(
+      this.subscriptionService.isFeatureEnabled('advanced_reports').subscribe(enabled => {
+        this.hasAdvancedReports.set(enabled);
+      })
+    );
+    
+    this.featureSubscription.add(
+      this.subscriptionService.isFeatureEnabled('multi_user').subscribe(enabled => {
+        this.hasMultiUserAccess.set(enabled);
+      })
+    );
+    
+    this.featureSubscription.add(
+      this.subscriptionService.isFeatureEnabled('internal_approvals').subscribe(enabled => {
+        this.hasInternalApprovals.set(enabled);
+      })
+    );
   }
 
   ngOnDestroy() {
     if (this.routerSubscription) {
       this.routerSubscription.unsubscribe();
     }
+    this.featureSubscription.unsubscribe();
   }
 
   toggleSidebar() {
@@ -187,11 +275,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   private updateActiveStates(activeRoute: string) {
-    // Reset all active states
+    // Reset all active states (work on original arrays)
     this.resetActiveStates(this.navItems);
     this.resetActiveStates(this.settingsItems);
     
-    // Set new active state
+    // Set new active state (work on original arrays)
     this.setActiveState(this.navItems, activeRoute);
     this.setActiveState(this.settingsItems, activeRoute);
   }

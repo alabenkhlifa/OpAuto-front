@@ -4,7 +4,7 @@
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
       <div>
         <h1 class="text-2xl lg:text-3xl font-bold text-white">{{ 'reports.title' | translate }}</h1>
-        <p class="text-gray-300 mt-1">{{ 'reports.subtitle' | translate: {dateRange: getCurrentDateRangeLabel()} }}</p>
+        <p class="text-gray-300 mt-1">{{ 'reports.subtitle' | translate }}</p>
       </div>
       
       <!-- Controls -->
@@ -55,8 +55,8 @@
       </div>
     </div>
 
-    <!-- Navigation Buttons -->
-    <div class="flex items-center gap-2 justify-start flex-wrap">
+    <!-- Navigation Buttons (only for STARTER+ tiers) -->
+    <div *ngIf="hasBasicDashboard()" class="flex items-center gap-2 justify-start flex-wrap">
       <button (click)="onViewChange('dashboard')"
               class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105"
               [class]="currentView() === 'dashboard' ? 'nav-button-active' : 'nav-button-inactive'">
@@ -90,7 +90,7 @@
         </svg>
         <span class="text-sm">{{ 'reports.navigation.customer' | translate }}</span>
       </button>
-      <button (click)="onViewChange('inventory')"
+      <button *ngIf="hasInventoryReports()" (click)="onViewChange('inventory')"
               class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105"
               [class]="currentView() === 'inventory' ? 'nav-button-active' : 'nav-button-inactive'">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -103,26 +103,58 @@
 
   <!-- Dashboard View -->
   <div *ngIf="currentView() === 'dashboard'" class="p-4 lg:p-6 space-y-6">
-    
-    <!-- KPI Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 lg:gap-6">
-      <div *ngFor="let kpi of kpis()" class="glass-card">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-medium text-gray-300">{{ getKpiTranslationKey(kpi) | translate }}</p>
-            <p class="text-2xl font-bold text-white">{{ formatKpiValue(kpi) }}</p>
-            <div class="flex items-center gap-1 mt-1">
-              <span>{{ getKpiChangeIcon(kpi) }}</span>
-              <span [class]="getKpiChangeClass(kpi)">{{ formatChange(kpi.change) }}</span>
+
+    <!-- SOLO Tier: Basic Summaries Only -->
+    <div *ngIf="tier() === 'solo'">
+      <div class="glass-card mb-6">
+        <h3 class="text-lg font-semibold text-white mb-4">{{ 'reports.sections.basicSummary' | translate }}</h3>
+        <p class="text-gray-300 mb-4">{{ 'reports.upgrade.soloMessage' | translate }}</p>
+      </div>
+
+      <!-- Simple KPI Summary for SOLO -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+        <div *ngFor="let kpi of kpis()" class="glass-card">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-300">{{ getKpiTranslationKey(kpi) | translate }}</p>
+              <p class="text-2xl font-bold text-white">{{ formatKpiValue(kpi) }}</p>
             </div>
+            <div class="text-2xl">{{ kpi.icon }}</div>
           </div>
-          <div class="text-2xl">{{ kpi.icon }}</div>
+        </div>
+      </div>
+
+      <!-- Upgrade CTA for SOLO -->
+      <div class="glass-card mt-6 border-2 border-blue-500">
+        <div class="text-center">
+          <h3 class="text-xl font-bold text-white mb-2">{{ 'reports.upgrade.title' | translate }}</h3>
+          <p class="text-gray-300 mb-4">{{ 'reports.upgrade.description' | translate }}</p>
+          <button class="btn-primary">{{ 'reports.upgrade.cta' | translate }}</button>
         </div>
       </div>
     </div>
 
-    <!-- Charts Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- STARTER+ Tier: Full Dashboard -->
+    <div *ngIf="tier() !== 'solo'">
+      <!-- KPI Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 lg:gap-6">
+        <div *ngFor="let kpi of kpis()" class="glass-card">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-300">{{ getKpiTranslationKey(kpi) | translate }}</p>
+              <p class="text-2xl font-bold text-white">{{ formatKpiValue(kpi) }}</p>
+              <div class="flex items-center gap-1 mt-1">
+                <span>{{ getKpiChangeIcon(kpi) }}</span>
+                <span [class]="getKpiChangeClass(kpi)">{{ formatChange(kpi.change) }}</span>
+              </div>
+            </div>
+            <div class="text-2xl">{{ kpi.icon }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       
       <!-- Revenue Trends Chart -->
       <div class="glass-card">
@@ -212,22 +244,23 @@
       </div>
     </div>
 
-    <!-- Appointment Status Chart -->
-    <div class="glass-card">
-      <h3 class="text-lg font-semibold text-white mb-4">{{ 'reports.charts.appointmentStatus.title' | translate }}</h3>
-      <div class="h-80">
-        <canvas *ngIf="appointmentStatusChartConfig()" 
-                baseChart
-                [type]="appointmentStatusChartConfig()!.type"
-                [data]="appointmentStatusChartConfig()!.data"
-                [options]="appointmentStatusChartConfig()!.options">
-        </canvas>
+      <!-- Appointment Status Chart -->
+      <div class="glass-card">
+        <h3 class="text-lg font-semibold text-white mb-4">{{ 'reports.charts.appointmentStatus.title' | translate }}</h3>
+        <div class="h-80">
+          <canvas *ngIf="appointmentStatusChartConfig()"
+                  baseChart
+                  [type]="appointmentStatusChartConfig()!.type"
+                  [data]="appointmentStatusChartConfig()!.data"
+                  [options]="appointmentStatusChartConfig()!.options">
+          </canvas>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Financial View -->
-  <div *ngIf="currentView() === 'financial'" class="p-4 lg:p-6 space-y-6">
+  <!-- Financial View (STARTER+ only) -->
+  <div *ngIf="currentView() === 'financial' && hasBasicDashboard()" class="p-4 lg:p-6 space-y-6">
     
     <!-- Financial KPIs -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
@@ -364,8 +397,8 @@
     </div>
   </div>
 
-  <!-- Operational View -->
-  <div *ngIf="currentView() === 'operational'" class="p-4 lg:p-6 space-y-6">
+  <!-- Operational View (STARTER+ only) -->
+  <div *ngIf="currentView() === 'operational' && hasBasicDashboard()" class="p-4 lg:p-6 space-y-6">
     
     <!-- Operational KPIs -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
@@ -469,8 +502,8 @@
     </div>
   </div>
 
-  <!-- Customer View -->
-  <div *ngIf="currentView() === 'customer'" class="p-4 lg:p-6 space-y-6">
+  <!-- Customer View (STARTER+ only) -->
+  <div *ngIf="currentView() === 'customer' && hasBasicDashboard()" class="p-4 lg:p-6 space-y-6">
     
     <!-- Customer KPIs -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
@@ -520,8 +553,8 @@
     </div>
   </div>
 
-  <!-- Inventory View -->
-  <div *ngIf="currentView() === 'inventory'" class="p-4 lg:p-6 space-y-6">
+  <!-- Inventory View (PROFESSIONAL only) -->
+  <div *ngIf="currentView() === 'inventory' && hasInventoryReports()" class="p-4 lg:p-6 space-y-6">
     
     <!-- Inventory KPIs -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
