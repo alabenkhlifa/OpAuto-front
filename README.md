@@ -67,82 +67,107 @@
 
 ## ✨ Features
 
-### 🏠 **Intelligent Dashboard**
-- **Real-time metrics** - Live garage performance indicators
-- **Today's schedule** - Complete appointment timeline
-- **Active job monitoring** - Progress tracking with visual indicators
-- **Quick actions** - One-click access to common tasks
-- **Urgent alerts** - Approval requests and critical notifications
+OpAuto offers three subscription tiers to match your garage's needs:
 
-### 🚗 **Vehicle Management**
-- **Complete car profiles** - Registration with customer linking
-- **Service history** - Comprehensive maintenance records
-- **Status tracking** - Up-to-date, due soon, overdue indicators
-- **Smart filtering** - By make, model, status, and customer
-- **Maintenance scheduling** - Direct appointment booking
+### 🔵 **SOLO Tier** - 500 TND/year
+*Perfect for independent mechanics and single-owner garages*
 
-### 🔧 **Maintenance Operations**
-- **Job lifecycle management** - From creation to completion
-- **Multi-status workflow** - Waiting, in-progress, approval, completed
-- **Progress tracking** - Real-time job completion percentages
-- **Photo attachments** - Visual documentation support
-- **Priority levels** - Low, medium, high, urgent classification
+- ✅ **1 user account** - Owner-only access
+- ✅ **Up to 50 cars** in database
+- ✅ **Unlimited appointments** - Full scheduling system
+- ✅ **Text-based maintenance logs** - Service tracking
+- ✅ **Simple cash invoicing** - Basic billing
+- ✅ **Browser notifications** - Real-time alerts
+- ✅ **Basic reporting** - Daily/weekly summaries
+- ✅ **Mobile responsive interface**
+- ✅ **Multilingual support** - English, French, Arabic with RTL
 
-### 📅 **Appointment System**
-- **Smart calendar** - Daily, weekly, monthly views
-- **Touch-friendly scheduling** - Mobile-optimized interface
-- **Mechanic assignment** - Resource allocation tracking
-- **Status management** - Scheduled, in-progress, completed, delayed
-- **Swipe gestures** - Mobile navigation support
+---
 
-### 📦 **Inventory Management**
-- **Smart stock tracking** - Real-time inventory levels
-- **Low stock alerts** - Automated reorder notifications
-- **Category organization** - Engine, transmission, brakes, etc.
-- **Usage analytics** - Most used parts tracking
-- **Supplier management** - Vendor information and performance
+### 🟢 **STARTER Tier** ⭐ *Most Popular* - 2,000 TND/year
+*Ideal for small garages with 1-3 employees*
 
-### 🧾 **Financial Management**
-- **Professional invoicing** - Automated bill generation
-- **Multi-payment support** - Cash, card, bank transfer, check
-- **Payment tracking** - Status monitoring and overdue alerts
-- **Revenue analytics** - Daily, weekly, monthly reports
-- **Cost breakdown** - Parts and labor separation
+**Everything from SOLO, plus:**
+- ✅ **Up to 3 user accounts** - Owner + 2 employees
+- ✅ **Up to 200 cars** in database
+- ✅ **Internal approval system** - Cost control workflow
+- ✅ **Email notifications** - Daily summaries
+- ✅ **Customer history tracking** - Complete service records
+- ✅ **Multi-bay management** - Up to 2 service bays
+- ✅ **Cash invoicing with discounts**
+- ✅ **Service workflow** - Waiting → In Progress → Done
 
-### 👥 **Customer Relations**
-- **Complete profiles** - Personal and vehicle information
-- **Service history** - Comprehensive customer records
-- **Loyalty tiers** - Bronze, silver, gold, platinum
-- **Communication logs** - Interaction history tracking
-- **Status management** - Active, VIP, inactive, blocked
+---
 
-### 👨‍🔧 **Employee Management**
-- **Staff profiles** - Skills, certifications, experience
-- **Performance tracking** - Productivity and quality metrics
-- **Availability management** - Real-time status updates
-- **Workload balancing** - Fair task distribution
-- **Training records** - Certification and skill development
+### 🟣 **PROFESSIONAL Tier** - 6,000 TND/year
+*For medium to large garages with 4+ employees*
 
-### ✅ **Approval System**
-- **Multi-level workflow** - Parts purchasing and service approvals
-- **Priority classification** - Urgent to low priority requests
-- **Bulk operations** - Mass approval/rejection capabilities
-- **Request tracking** - Complete approval history
-- **Cost validation** - Estimated vs actual cost monitoring
+**Everything from STARTER, plus:**
+- ✅ **Unlimited user accounts** - Scale your team
+- ✅ **Unlimited cars** - No database limits
+- ✅ **Unlimited service bays** - Full capacity management
+- ✅ **Photo documentation** - Visual maintenance logs
+- ✅ **Parts inventory management** - Stock tracking & alerts
+- ✅ **Supplier database integration** - Vendor management
+- ✅ **SMS notifications** - Customer communications
+- ✅ **Advanced reporting & analytics** - Business insights
+- ✅ **Employee performance tracking** - Productivity metrics
+- ✅ **Data export** - Excel/PDF reports
+- ✅ **Priority email support** - Fast response times
+- ✅ **Custom invoice templates**
 
-### 📊 **Advanced Analytics**
-- **Financial reports** - Revenue, profit, cost analysis
-- **Operational metrics** - Efficiency and performance KPIs
-- **Customer analytics** - Retention and satisfaction metrics
-- **Inventory reports** - Stock optimization insights
-- **Interactive charts** - Visual data representation
+---
 
-### ⚙️ **System Configuration**
-- **Garage setup** - Business information and branding
-- **Operational settings** - Hours, slots, capacity planning
-- **User management** - Access control and permissions
-- **Integration options** - Third-party service connections
-- **Backup and sync** - Data protection and recovery
+### 🎯 **Core Features Across All Tiers**
+
+#### 🏠 **Intelligent Dashboard**
+- Real-time garage performance indicators
+- Today's schedule with appointment timeline
+- Active job monitoring with progress tracking
+- Quick actions for common tasks
+- Urgent alerts for approval requests
+
+#### 🚗 **Vehicle Management**
+- Complete car profiles with customer linking
+- Service history and maintenance records
+- Status tracking (up-to-date, due soon, overdue)
+- Smart filtering by make, model, status, customer
+- Direct appointment booking from car profiles
+
+#### 🔧 **Maintenance Operations**
+- Job lifecycle management from creation to completion
+- Multi-status workflow tracking
+- Real-time progress percentages
+- Priority levels (low, medium, high, urgent)
+- Detailed service descriptions and notes
+
+#### 📅 **Appointment System**
+- Smart calendar with daily, weekly, monthly views
+- Touch-friendly mobile-optimized scheduling
+- Mechanic assignment and resource allocation
+- Status management and tracking
+- Swipe gestures for mobile navigation
+
+#### 🧾 **Financial Management**
+- Professional invoice generation
+- Multi-payment support (cash, card, transfer, check)
+- Payment status tracking
+- Revenue analytics and reports
+- Parts and labor cost breakdown
+
+#### 👥 **Customer Relations**
+- Complete customer profiles
+- Service history tracking
+- Loyalty tier management
+- Communication logs
+- Customer status management
+
+#### ⚙️ **System Configuration**
+- Garage business information setup
+- Operational hours and capacity planning
+- User access control and permissions
+- Backup and data protection
+- Multi-language interface
 
 ---
 
