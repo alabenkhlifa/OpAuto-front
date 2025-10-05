@@ -31,11 +31,7 @@
     "price": "السعر",
     "quantity": "الكمية",
     "notes": "ملاحظات",
-    "clearFilters": "مسح المرشحات",
-    "filtersActive": "المرشحات نشطة",
-    "optional": "اختياري",
-    "month": "شهر",
-    "year": "سنة"
+    "clearFilters": "مسح المرشحات"
   },
   "navigation": {
     "main": "الرئيسي",
@@ -49,7 +45,6 @@
     "customers": "العملاء",
     "reports": "التقارير",
     "employees": "الموظفين",
-    "users": "إدارة الفريق",
     "subscription": "الاشتراك",
     "profile": "الملف الشخصي",
     "logout": "تسجيل خروج",
@@ -201,7 +196,15 @@
   "cars": {
     "title": "السيارات",
     "subtitle": "إدارة سجل المركبات والمعلومات",
+    "vehicles": "المركبات",
+    "vehicleUsage": "استخدام المركبات",
+    "vehicleDatabase": "قاعدة بيانات المركبات",
+    "vehicleStatistics": "إحصائيات المركبات",
+    "status": "الحالة:",
+    "unlimitedVehicles": "مركبات غير محدودة",
+    "addVehicle": "إضافة مركبة",
     "addCar": "إضافة سيارة",
+    "addVehicleToGarage": "إضافة مركبة إلى الورشة وإنشاء ملف عميل",
     "editCar": "تعديل السيارة",
     "deleteCar": "حذف السيارة",
     "carDetails": "تفاصيل السيارة",
@@ -210,6 +213,8 @@
     "make": "الماركة",
     "model": "الطراز",
     "year": "السنة",
+    "currentMileage": "عداد الكيلومترات الحالي",
+    "currentMileageRequired": "عداد الكيلومترات الحالي *",
     "color": "اللون",
     "vin": "رقم الهيكل",
     "engineType": "نوع المحرك",
@@ -232,7 +237,6 @@
     "upToDate": "محدث",
     "dueSoon": "مستحق قريباً",
     "overdue": "متأخر",
-    "status": "الحالة",
     "allMakes": "جميع الماركات",
     "allStatus": "جميع الحالات",
     "statusLegend": "دليل الحالات",
@@ -245,16 +249,6 @@
     "nextDue": "الاستحقاق التالي",
     "schedule": "جدولة",
     "history": "التاريخ",
-    "vehicleDatabase": "قاعدة بيانات المركبات",
-    "vehicleStatistics": "إحصائيات المركبات",
-    "vehicles": "المركبات",
-    "addVehicle": "إضافة مركبة",
-    "limitReached": "تم الوصول لحد المركبات",
-    "limitReachedDescription": "لقد وصلت إلى حد {{limit}} مركبة لخطة {{tier}}. ترقية للحصول على المزيد من المركبات.",
-    "approachingLimit": "متبقي لديك {{remaining}} مساحة للمركبات",
-    "approachingLimitDescription": "فكر في ترقية خطتك لتجنب الوصول لحد المركبات.",
-    "vehicleUsage": "استخدام المركبات",
-    "unlimitedVehicles": "مركبات غير محدودة",
     "registerNewCar": "تسجيل سيارة جديدة",
     "registerCar": "تسجيل سيارة",
     "registering": "جاري التسجيل...",
@@ -276,6 +270,7 @@
     "newCustomer": "عميل جديد",
     "selectCustomer": "اختيار عميل",
     "selectCustomerRequired": "اختيار عميل *",
+    "chooseCustomer": "اختر عميل",
     "customerNameRequired": "اسم العميل *",
     "customerNamePlaceholder": "أدخل اسم العميل",
     "phoneNumberRequired": "رقم الهاتف *",
@@ -392,31 +387,6 @@
         "today": "اليوم",
         "thisWeek": "هذا الأسبوع"
       }
-    },
-    "new": {
-      "title": "مهمة صيانة جديدة",
-      "editTitle": "تعديل مهمة الصيانة",
-      "subtitle": "إنشاء مهمة صيانة أو إصلاح جديدة",
-      "basicInfo": "المعلومات الأساسية",
-      "vehicle": "المركبة",
-      "selectVehicle": "اختر مركبة",
-      "assignedMechanic": "الميكانيكي المكلف",
-      "selectMechanic": "اختر ميكانيكي",
-      "jobTitle": "عنوان المهمة",
-      "jobTitlePlaceholder": "مثل: إصلاح الفرامل، تغيير الزيت",
-      "priority": "الأولوية",
-      "currentMileage": "المسافة الحالية (كم)",
-      "estimatedCost": "التكلفة المقدرة (د.ت)",
-      "description": "الوصف",
-      "descriptionPlaceholder": "وصف المشكلة أو الأعراض أو الصيانة المطلوبة...",
-      "additionalNotes": "ملاحظات إضافية",
-      "additionalNotesPlaceholder": "أي معلومات إضافية أو تعليمات خاصة...",
-      "tasks": "المهام",
-      "addTask": "إضافة مهمة",
-      "noTasks": "لم يتم إضافة مهام بعد. انقر على \"إضافة مهمة\" للبدء.",
-      "cancel": "إلغاء",
-      "createJob": "إنشاء المهمة",
-      "updateJob": "تحديث المهمة"
     }
   },
   "inventory": {
@@ -516,43 +486,15 @@
       "accessories": "الملحقات",
       "consumables": "المستهلكات"
     },
-    "parts": {
-      "addNewPart": "إضافة قطعة جديدة",
-      "editPart": "تعديل القطعة",
-      "createPart": "إنشاء القطعة",
-      "updatePart": "تحديث القطعة",
-      "partName": "اسم القطعة",
-      "partNumber": "رقم القطعة",
-      "description": "الوصف",
-      "category": "الفئة",
-      "brand": "العلامة التجارية",
-      "supplier": "المورد",
-      "unit": "الوحدة",
-      "price": "السعر",
-      "currency": "العملة",
-      "currentStock": "المخزون الحالي",
-      "minStockLevel": "الحد الأدنى للمخزون",
-      "maxStockLevel": "الحد الأقصى للمخزون",
-      "storageLocation": "موقع التخزين",
-      "activePart": "قطعة نشطة (متاحة للاستخدام)",
-      "enterPartName": "أدخل اسم القطعة",
-      "enterPartNumber": "أدخل رقم القطعة",
-      "enterDescription": "أدخل وصف القطعة",
-      "selectCategory": "اختر الفئة",
-      "enterBrand": "أدخل اسم العلامة التجارية",
-      "selectSupplier": "اختر المورد",
-      "selectUnit": "اختر الوحدة",
-      "optional": "اختياري",
-      "locationPlaceholder": "مثال: رف أ-1، حامل إطارات 2",
-      "partNameRequired": "اسم القطعة مطلوب",
-      "partNumberRequired": "رقم القطعة مطلوب",
-      "categoryRequired": "الفئة مطلوبة",
-      "brandRequired": "العلامة التجارية مطلوبة",
-      "supplierRequired": "المورد مطلوب",
-      "unitRequired": "الوحدة مطلوبة",
-      "priceRequired": "سعر صحيح مطلوب",
-      "stockLevelRequired": "مستوى المخزون مطلوب",
-      "minStockLevelRequired": "الحد الأدنى للمخزون مطلوب"
+    "units": {
+      "piece": "قطعة",
+      "liter": "لتر",
+      "kg": "كيلوغرام",
+      "meter": "متر",
+      "pair": "زوج",
+      "set": "مجموعة",
+      "bottle": "زجاجة",
+      "box": "صندوق"
     },
     "suppliers": {
       "title": "الموردون",
@@ -606,6 +548,8 @@
   "customers": {
     "title": "العملاء",
     "subtitle": "إدارة معلومات العملاء وتاريخهم",
+    "customerInformation": "معلومات العميل",
+    "notProvided": "غير مقدم",
     "addCustomer": "إضافة عميل",
     "editCustomer": "تعديل العميل",
     "deleteCustomer": "حذف العميل",
@@ -740,6 +684,9 @@
       "gold": "ذهبي",
       "platinum": "بلاتيني"
     },
+    "form": {
+      "newCustomer": "عميل جديد"
+    },
     "loading": "جاري تحميل العملاء..."
   },
   "employees": {
@@ -834,6 +781,20 @@
   "reports": {
     "title": "التقارير",
     "subtitle": "رؤى الأعمال والتحليلات",
+    "navigation": {
+      "dashboard": "لوحة القيادة",
+      "financial": "المالية",
+      "operational": "التشغيلية",
+      "customer": "العملاء",
+      "inventory": "المخزون"
+    },
+    "actions": {
+      "refresh": "تحديث",
+      "export": "تصدير"
+    },
+    "filters": {
+      "to": "إلى"
+    },
     "salesReport": "تقرير المبيعات",
     "serviceReport": "تقرير الخدمة",
     "inventoryReport": "تقرير المخزون",
@@ -856,7 +817,89 @@
     "topServices": "أهم الخدمات",
     "topCustomers": "أهم العملاء",
     "partsUsage": "استخدام القطع",
-    "noReports": "لا توجد تقارير متاحة"
+    "noReports": "لا توجد تقارير متاحة",
+    "datePresets": {
+      "today": "اليوم",
+      "yesterday": "أمس",
+      "thisWeek": "هذا الأسبوع",
+      "lastWeek": "الأسبوع الماضي",
+      "thisMonth": "هذا الشهر",
+      "lastMonth": "الشهر الماضي",
+      "thisQuarter": "هذا الربع",
+      "lastQuarter": "الربع الماضي",
+      "thisYear": "هذا العام",
+      "lastYear": "العام الماضي",
+      "last30Days": "آخر 30 يوم",
+      "last90Days": "آخر 90 يوم",
+      "last365Days": "آخر 365 يوم",
+      "custom": "مخصص"
+    },
+    "export": {
+      "exporting": "جارِ التصدير إلى {{format}}..."
+    },
+    "kpis": {
+      "totalRevenue": "إجمالي الإيرادات",
+      "appointments": "المواعيد",
+      "activeCustomers": "العملاء النشطين",
+      "mechanicUtilization": "استخدام الميكانيكي",
+      "stockValue": "قيمة المخزون",
+      "customerSatisfaction": "رضا العملاء",
+      "revenue": "الإيرادات",
+      "newCustomers": "عملاء جدد",
+      "partsInventory": "مخزون القطع",
+      "paidRevenue": "الإيرادات المدفوعة",
+      "pendingRevenue": "الإيرادات المعلقة",
+      "overdueRevenue": "الإيرادات المتأخرة",
+      "averageInvoiceValue": "متوسط قيمة الفاتورة",
+      "taxCollected": "الضرائب المحصلة",
+      "discountsGiven": "الخصومات الممنوحة",
+      "profitMargin": "هامش الربح",
+      "revenueGrowth": "نمو الإيرادات",
+      "totalAppointments": "إجمالي المواعيد",
+      "completionRate": "معدل الإنجاز",
+      "garageCapacity": "سعة الورشة",
+      "avgServiceTime": "متوسط وقت الخدمة",
+      "repeatCustomerRate": "معدل العملاء المكررين",
+      "garageCapacityUsed": "سعة الورشة المستخدمة",
+      "totalCustomers": "إجمالي العملاء",
+      "avgCustomerValue": "متوسط قيمة العميل",
+      "retentionRate": "معدل الاحتفاظ",
+      "totalParts": "إجمالي القطع",
+      "lowStockItems": "عناصر المخزون المنخفض",
+      "turnoverRate": "معدل الدوران"
+    },
+    "charts": {
+      "revenueTrends": {
+        "title": "اتجاهات الإيرادات"
+      },
+      "serviceDistribution": {
+        "title": "توزيع الخدمات"
+      },
+      "appointmentStatus": {
+        "title": "حالة المواعيد"
+      },
+      "monthlyComparison": {
+        "title": "المقارنة الشهرية"
+      }
+    },
+    "sections": {
+      "revenueBreakdown": "تفصيل الإيرادات",
+      "growthAnalysis": "تحليل النمو",
+      "servicePerformance": "أداء الخدمات",
+      "efficiencyMetrics": "مقاييس الكفاءة",
+      "basicSummary": "ملخص أساسي"
+    },
+    "upgrade": {
+      "title": "ترقية لفتح التقارير المتقدمة",
+      "description": "احصل على تحليلات ورسوم بيانية ورؤى تفصيلية مع باقة المبتدئين أو المحترفين",
+      "cta": "عرض الباقات",
+      "soloMessage": "تتضمن باقة Solo الخاصة بك ملخصات أساسية يومية وأسبوعية. قم بالترقية للوصول إلى لوحات المعلومات والتحليلات التفصيلية."
+    },
+    "periods": {
+      "thisMonth": "هذا الشهر",
+      "lastMonth": "الشهر الماضي"
+    },
+    "loading": "جارِ تحميل التقارير..."
   },
   "settings": {
     "title": "الإعدادات",
@@ -1259,6 +1302,9 @@
     "login": {
       "title": "أهلاً بعودتك",
       "subtitle": "قم بتسجيل الدخول إلى حسابك",
+      "emailOrUsernameLabel": "البريد الإلكتروني / اسم المستخدم",
+      "emailOrUsernamePlaceholder": "أدخل البريد الإلكتروني أو اسم المستخدم",
+      "emailOrUsernameRequired": "البريد الإلكتروني أو اسم المستخدم مطلوب",
       "emailLabel": "عنوان البريد الإلكتروني",
       "emailPlaceholder": "أدخل بريدك الإلكتروني",
       "emailRequired": "عنوان بريد إلكتروني صحيح مطلوب",
@@ -1314,6 +1360,8 @@
     },
     "demo": {
       "title": "بيانات اعتماد التجربة",
+      "owner": "المالك",
+      "staff": "الموظف",
       "admin": "المدير",
       "mechanic": "الميكانيكي",
       "adminCredentials": "admin@opauto.tn / admin123",
@@ -1356,7 +1404,10 @@
       "smsNotifications": "إشعارات الرسائل النصية",
       "smsNotificationsDescription": "تلقي الإشعارات عبر الرسائل النصية",
       "browserNotifications": "إشعارات المتصفح",
-      "browserNotificationsDescription": "عرض إشعارات سطح المكتب"
+      "browserNotificationsDescription": "عرض إشعارات سطح المكتب",
+      "onboardingTour": "جولة التعريف",
+      "onboardingTourDescription": "إعادة تشغيل الجولة التفاعلية للتعرف على ميزات OpAuto",
+      "restartTour": "إعادة تشغيل الجولة"
     },
     "security": {
       "securityReminderTitle": "تذكير أمني",
@@ -1393,6 +1444,40 @@
   "invoicing": {
     "title": "الفواتير",
     "subtitle": "إنشاء وإدارة الفواتير",
+    "allInvoices": "جميع الفواتير",
+    "createInvoice": "إنشاء فاتورة",
+    "pendingPayment": "الدفع المعلق",
+    "editInvoice": "تعديل الفاتورة",
+    "deleteInvoice": "حذف الفاتورة",
+    "viewInvoice": "عرض الفاتورة",
+    "printInvoice": "طباعة الفاتورة",
+    "invoiceNumber": "رقم الفاتورة",
+    "invoiceDate": "تاريخ الفاتورة",
+    "dueDate": "تاريخ الاستحقاق",
+    "customerInfo": "معلومات العميل",
+    "billTo": "فاتورة لـ",
+    "items": "البنود",
+    "services": "الخدمات",
+    "addItem": "إضافة بند",
+    "itemDescription": "وصف البند",
+    "unitPrice": "سعر الوحدة",
+    "quantity": "الكمية",
+    "total": "المجموع",
+    "subtotal": "المجموع الفرعي",
+    "tax": "الضريبة",
+    "discount": "الخصم",
+    "grandTotal": "الإجمالي العام",
+    "paid": "مدفوع",
+    "unpaid": "غير مدفوع",
+    "overdue": "متأخر",
+    "paymentStatus": "حالة الدفع",
+    "paymentMethod": "طريقة الدفع",
+    "cash": "نقداً",
+    "card": "بطاقة",
+    "bankTransfer": "حوالة بنكية",
+    "notes": "ملاحظات",
+    "terms": "الشروط والأحكام",
+    "noInvoices": "لا توجد فواتير",
     "navigation": {
       "dashboard": "لوحة القيادة",
       "allInvoices": "جميع الفواتير",
@@ -1413,17 +1498,56 @@
       "invoices": "فواتير"
     },
     "status": {
-      "sent": "مرسل",
-      "paid": "مدفوع",
-      "overdue": "متأخر",
       "draft": "مسودة",
-      "cancelled": "ملغي"
+      "sent": "مرسل",
+      "viewed": "تم عرضها",
+      "paid": "مدفوع",
+      "partiallyPaid": "مدفوع جزئياً",
+      "overdue": "متأخر",
+      "cancelled": "ملغي",
+      "refunded": "مُسترد"
     },
     "paymentMethods": {
       "cash": "نقداً",
       "card": "بطاقة",
       "transfer": "تحويل",
-      "check": "شيك"
+      "bankTransfer": "حوالة بنكية",
+      "check": "شيك",
+      "credit": "ائتمان"
+    },
+    "list": {
+      "hideFilters": "إخفاء المرشحات",
+      "showFilters": "عرض المرشحات",
+      "searchPlaceholder": "البحث عن الفواتير...",
+      "allStatus": "جميع الحالات",
+      "allPaymentMethods": "جميع الطرق",
+      "clearFilters": "مسح المرشحات",
+      "customer": "العميل",
+      "vehicle": "المركبة",
+      "license": "اللوحة",
+      "service": "الخدمة",
+      "multipleServices": "خدمات متعددة",
+      "total": "المجموع",
+      "paid": "مدفوع",
+      "remaining": "المتبقي",
+      "paymentProgress": "تقدم الدفع",
+      "dueDate": "تاريخ الاستحقاق",
+      "daysOverdue": "أيام متأخرة",
+      "send": "إرسال",
+      "markPaid": "وضع علامة مدفوع",
+      "print": "طباعة",
+      "noInvoicesFound": "لم يتم العثور على فواتير",
+      "noInvoicesDescription": "حاول تعديل البحث أو المرشحات",
+      "createFirstInvoice": "إنشاء أول فاتورة لك"
+    },
+    "pending": {
+      "title": "المدفوعات المعلقة",
+      "invoices": "فواتير",
+      "due": "الاستحقاق",
+      "viewDetails": "عرض التفاصيل",
+      "recordPayment": "تسجيل الدفع",
+      "allCaughtUp": "كل شيء محدث!",
+      "noPendingPayments": "لا توجد مدفوعات معلقة حالياً"
     },
     "create": {
       "title": "إنشاء فاتورة",
@@ -1467,258 +1591,496 @@
       "saveAsDraft": "حفظ كمسودة",
       "loadingFormData": "جارِ تحميل بيانات النموذج..."
     },
-    "pending": {
-      "title": "المدفوعات المعلقة",
-      "invoices": "فواتير",
-      "due": "الاستحقاق",
-      "viewDetails": "عرض التفاصيل",
-      "recordPayment": "تسجيل الدفع",
-      "allCaughtUp": "كل شيء محدث!",
-      "noPendingPayments": "لا توجد مدفوعات معلقة حالياً"
+    "loading": "جارِ التحميل..."
+  },
+  "photo": {
+    "title": "الصور",
+    "upload": {
+      "title": "رفع الصور",
+      "description": "ارفع صور السيارة أو إثباتات العمل",
+      "dropZone": "اسحب واترك الصور هنا، أو اضغط للاختيار",
+      "dropFiles": "اترك الملفات هنا لرفعها",
+      "chooseFiles": "اختر الصور",
+      "maxFiles": "بحد أقصى {{max}} صور",
+      "maxSize": "بحجم أقصى {{size}}",
+      "supportedFormats": "صيغ مدعومة: {{formats}}",
+      "uploadProgress": "جاري الرفع {{progress}}%",
+      "uploadComplete": "تم الرفع بنجاح",
+      "uploadFailed": "فشل في الرفع",
+      "restrictions": {
+        "professionalOnly": "هذه الميزة متاحة فقط للباقة المحترفة",
+        "upgradeRequired": "يتطلب ترقية إلى الباقة المحترفة",
+        "limitReached": "تم الوصول للحد الأقصى من الصور",
+        "fileTooBig": "حجم الملف كبير جداً",
+        "unsupportedFormat": "صيغة الملف غير مدعومة"
+      }
     },
-    "list": {
-      "hideFilters": "إخفاء المرشحات",
-      "showFilters": "عرض المرشحات",
-      "searchPlaceholder": "البحث عن الفواتير...",
-      "allStatus": "جميع الحالات",
-      "allPaymentMethods": "جميع الطرق",
-      "clearFilters": "مسح المرشحات",
-      "customer": "العميل",
-      "vehicle": "المركبة",
-      "license": "اللوحة",
-      "service": "الخدمة",
-      "multipleServices": "خدمات متعددة",
-      "total": "المجموع",
-      "paid": "مدفوع",
-      "remaining": "المتبقي",
-      "paymentProgress": "تقدم الدفع",
-      "dueDate": "تاريخ الاستحقاق",
-      "daysOverdue": "أيام متأخرة",
-      "send": "إرسال",
-      "markPaid": "وضع علامة مدفوع",
-      "print": "طباعة",
-      "noInvoicesFound": "لم يتم العثور على فواتير",
-      "noInvoicesDescription": "حاول تعديل البحث أو المرشحات",
-      "createFirstInvoice": "إنشاء أول فاتورة لك"
+    "gallery": {
+      "title": "معرض الصور",
+      "emptyState": "لا توجد صور حتى الآن",
+      "addPhotos": "أضف صور",
+      "viewPhoto": "عرض الصورة",
+      "editPhoto": "تعديل الصورة",
+      "deletePhoto": "حذف الصورة",
+      "downloadPhoto": "تحميل الصورة",
+      "categories": {
+        "all": "جميع الصور",
+        "before": "قبل",
+        "during": "أثناء العمل", 
+        "after": "بعد",
+        "damage": "الضرر",
+        "parts": "القطع",
+        "general": "عامة",
+        "documents": "وثائق"
+      },
+      "filters": {
+        "category": "الفئة",
+        "date": "التاريخ",
+        "sortBy": "ترتيب حسب",
+        "newest": "الأحدث",
+        "oldest": "الأقدم",
+        "name": "الاسم"
+      }
+    },
+    "modal": {
+      "title": "تفاصيل الصورة",
+      "description": "الوصف",
+      "category": "الفئة",
+      "uploadedOn": "تم الرفع في",
+      "size": "الحجم",
+      "dimensions": "الأبعاد",
+      "close": "إغلاق",
+      "previous": "السابق",
+      "next": "التالي"
+    },
+    "edit": {
+      "title": "تعديل الصورة",
+      "description": "وصف الصورة",
+      "descriptionPlaceholder": "أضف وصف للصورة...",
+      "category": "الفئة",
+      "selectCategory": "اختر الفئة",
+      "save": "حفظ",
+      "cancel": "إلغاء"
+    },
+    "actions": {
+      "upload": "رفع صور",
+      "view": "عرض",
+      "edit": "تعديل",
+      "delete": "حذف",
+      "download": "تحميل",
+      "share": "مشاركة",
+      "addToReport": "أضف للتقرير"
+    },
+    "messages": {
+      "uploadSuccess": "تم رفع الصور بنجاح",
+      "uploadError": "فشل في رفع الصور",
+      "deleteSuccess": "تم حذف الصورة بنجاح",
+      "deleteError": "فشل في حذف الصورة",
+      "editSuccess": "تم تحديث الصورة بنجاح",
+      "editError": "فشل في تحديث الصورة"
     }
   },
+  "tier": {
+    "solo": "أساسي",
+    "starter": "مبتدئ", 
+    "professional": "محترف",
+    "current": "الباقة الحالية",
+    "upgrade": {
+      "title": "ترقية الباقة",
+      "description": "احصل على ميزات أكثر مع الباقة المحترفة",
+      "benefits": {
+        "photos": "رفع وإدارة صور غير محدودة",
+        "documentation": "توثيق كامل للأعمال", 
+        "reports": "تقارير مفصلة مع الصور",
+        "storage": "مساحة تخزين أكبر",
+        "support": "دعم فني مميز"
+      },
+      "button": "ترقية الآن",
+      "features": {
+        "unlimited": "غير محدود",
+        "premium": "مميز",
+        "advanced": "متقدم"
+      }
+    },
+    "badges": {
+      "professionalOnly": "للمحترفين فقط",
+      "upgradeRequired": "يتطلب ترقية",
+      "comingSoon": "قريباً",
+      "locked": "مقفل"
+    },
+    "restrictions": {
+      "photoUpload": "رفع الصور متاح فقط في الباقة المحترفة",
+      "unlimitedPhotos": "صور غير محدودة للمحترفين فقط",
+      "advancedFeatures": "الميزات المتقدمة تتطلب ترقية"
+    }
+  },
+  "feature": {
+    "locked": {
+      "title": "ميزة مقفلة",
+      "description": "هذه الميزة متاحة فقط في الباقات المدفوعة",
+      "upgradeMessage": "ترقى إلى باقة أعلى للوصول لهذه الميزة",
+      "contactSupport": "تواصل مع الدعم الفني"
+    },
+    "coming": {
+      "title": "قريباً",
+      "description": "نعمل على إضافة هذه الميزة",
+      "stayTuned": "ترقب التحديثات القادمة"
+    }
+  },
+  "approvals": {
+    "title": "الموافقات",
+    "subtitle": "إدارة طلبات الموافقة والتصاريح",
+    "actions": {
+      "refresh": "تحديث",
+      "approve": "موافق",
+      "reject": "رفض",
+      "resetFilters": "إعادة تعيين المرشحات",
+      "selectAll": "اختيار الكل",
+      "requestInfo": "طلب معلومات إضافية",
+      "viewDetails": "عرض التفاصيل"
+    },
+    "stats": {
+      "pending": "في انتظار",
+      "overdue": "متأخر",
+      "approved": "موافق عليه",
+      "total": "الإجمالي"
+    },
+    "filters": {
+      "search": "البحث",
+      "searchPlaceholder": "البحث في الطلبات...",
+      "status": "الحالة",
+      "allStatuses": "جميع الحالات",
+      "type": "النوع",
+      "allTypes": "جميع الأنواع",
+      "priority": "الأولوية",
+      "allPriorities": "جميع الأولويات"
+    },
+    "labels": {
+      "showing": "عرض {{current}} من {{total}}",
+      "listTitle": "قائمة الطلبات",
+      "approvedBy": "موافق عليه بواسطة",
+      "rejectedBy": "مرفوض بواسطة",
+      "on": "في"
+    },
+    "loading": "جارِ التحميل...",
+    "emptyState": {
+      "title": "لا توجد طلبات موافقة",
+      "message": "لا توجد طلبات تحتاج إلى موافقة في الوقت الحالي"
+    },
+    "type": {
+      "part_purchase": "شراء قطعة غيار",
+      "service_approval": "الموافقة على خدمة",
+      "customer_credit": "رصيد العميل",
+      "overtime_request": "طلب ساعات إضافية",
+      "expense_claim": "مطالبة بالمصروفات",
+      "discount_request": "طلب خصم",
+      "refund_request": "طلب استرداد",
+      "other": "أخرى"
+    },
+    "status": {
+      "pending": "في الانتظار",
+      "approved": "موافق عليه",
+      "rejected": "مرفوض",
+      "info_requested": "معلومات مطلوبة",
+      "cancelled": "ملغي"
+    },
+    "priority": {
+      "low": "منخفض",
+      "medium": "متوسط",
+      "high": "عالي",
+      "urgent": "عاجل"
+    }
+  },
+  "tiers": {
+    "solo": "سولو",
+    "starter": "المبتدئ",
+    "professional": "المحترف",
+    "pro": "محترف",
+    "plan": "باقة:",
+    "current": "الباقة الحالية",
+    "popular": "الأكثر شعبية",
+    "upgrade": "ترقية",
+    "downgrade": "تراجع",
+    "month": "شهر",
+    "choosePlan": "اختر باقتك",
+    "upgradeTitle": "افتح المزيد من الميزات",
+    "upgradeToPro": "الترقية إلى المحترف",
+    "upgradeForPhotos": "قم بالترقية للوصول إلى توثيق الصور",
+    "unlockFeature": "افتح الميزة المميزة"
+  },
   "subscription": {
-    "title": "خطط الاشتراك",
-    "subtitle": "اختر الخطة المثالية لاحتياجات إدارة الكراج الخاص بك",
-    "current_plan": "الخطة الحالية",
-    "per_year": "/سنوياً",
-    "next_billing": "الفوترة التالية",
-    "days_left": "أيام متبقية",
-    "unlimited": "غير محدود",
-    "used": "مستخدم",
-    "included_features": "المميزات المشمولة",
-    "compare_plans": "مقارنة الخطط",
+    "title": "باقات الاشتراك",
+    "subtitle": "اختر الباقة المثالية لورشتك",
+    "current_plan": "الباقة الحالية",
     "most_popular": "الأكثر شعبية",
-    "upgrade_to": "ترقية إلى",
-    "downgrade_to": "تراجع إلى",
-    "downgrade_blocked": "التراجع غير متاح",
-    "why_blocked": "لماذا؟",
-    "solo": "فردي",
-    "starter": "مبتدئ",
-    "professional": "احترافي",
+    "compare_plans": "مقارنة الباقات",
+    "upgrade_to": "الترقية إلى {{tier}}",
+    "downgrade_to": "التراجع إلى {{tier}}",
+    "downgrade_blocked": "لا يمكن التراجع",
+    "why_blocked": "أنت تستخدم حاليًا ميزات من باقتك الحالية",
+    "per_year": "سنويًا",
+    "days_left": "{{days}} يومًا حتى التجديد",
+    "next_billing": "الفوترة القادمة: {{date}}",
+    "included_features": "الميزات المتضمنة",
+    "unlimited": "غير محدود",
+    "used": "{{used}} من {{limit}} مستخدم",
     "usage": {
-      "users": "المستخدمين",
+      "users": "المستخدمون",
       "cars": "السيارات",
-      "service_bays": "أماكن العمل"
+      "service_bays": "مواقع الخدمة"
+    },
+    "tooltips": {
+      "current_plan_badge": "باقة اشتراكك الحالية",
+      "price_info": "يتم الدفع سنويًا. تشمل جميع ميزات باقتك.",
+      "usage_labels": "تتبع استخدامك الحالي مقابل حدود الباقة",
+      "usage_within_limits": "الاستخدام ضمن الحدود",
+      "approaching_limit": "تقترب من الحد! فكر في الترقية.",
+      "upgrade_button": "انقر للترقية وفتح المزيد من الميزات",
+      "downgrade_blocked_section": "استخدامك الحالي يتجاوز حدود هذه الباقة",
+      "why_blocked_button": "انقر لمعرفة قيود التراجع التفصيلية"
     },
     "features": {
-      "single_user": "حساب مستخدم واحد فقط",
-      "basic_appointments": "مواعيد غير محدودة (عرض التقويم)",
-      "cash_invoicing": "فواتير نقدية بسيطة",
-      "basic_reports": "تقارير أساسية (يومية/أسبوعية)",
+      "single_user": "وصول مستخدم واحد",
+      "unlimited_appointments": "مواعيد غير محدودة",
+      "manual_booking": "حجز يدوي",
+      "cash_invoicing": "فواتير نقدية",
+      "basic_reports": "تقارير أساسية",
       "browser_notifications": "إشعارات المتصفح",
-      "multi_user": "حتى 3 حسابات مستخدمين",
-      "unlimited_users": "حسابات مستخدمين غير محدودة",
-      "appointment_management": "إدارة متقدمة للمواعيد",
-      "email_notifications": "بريد إلكتروني يومي ملخص",
-      "internal_approvals": "نظام الموافقات الداخلية",
-      "photos_documentation": "توثيق بالصور للصيانة",
-      "inventory_management": "إدارة مخزون قطع الغيار",
-      "sms_notifications": "إشعارات رسائل نصية للعملاء",
-      "priority_support": "دعم بريد إلكتروني مميز",
-      "advanced_reports": "تقارير وتحليلات متقدمة",
-      "data_export": "تصدير البيانات (Excel/PDF)"
-    },
-    "tiers": {
-      "solo": {
-        "name": "فردي",
-        "description": "مثالي للميكانيكيين المستقلين الصغار"
-      },
-      "starter": {
-        "name": "مبتدئ",
-        "description": "مناسب للكراجات النامية مع فريق صغير"
-      },
-      "professional": {
-        "name": "احترافي",
-        "description": "الحل الشامل للكراجات الراسخة"
-      },
-      "featureLocked": "هذه الميزة غير متوفرة في خطتك الحالية",
-      "featureLockedWithTier": "هذه الميزة متوفرة في خطة {{tier}}",
-      "availableIn": "متوفر في خطة {{tier}}",
-      "upgrade": "ترقية",
-      "upgradeNow": "ترقية الآن",
-      "upgradeTitle": "فتح الميزات المتقدمة",
-      "upgradeMessage": "قم بترقية خطتك للوصول إلى الميزات المتقدمة وتنمية عملك",
-      "upgradeForFeatureMessage": "قم بترقية خطتك لفتح هذه الميزة وتحسين تجربة إدارة الكراج",
-      "unlockFeature": "فتح هذه الميزة",
-      "choosePlan": "اختر خطتك",
-      "popular": "الأكثر شعبية",
-      "current": "الخطة الحالية",
-      "currentPlan": "الخطة الحالية",
-      "month": "شهر",
-      "downgrade": "اتصل بالدعم",
-      "usageLimitReached": "تم الوصول إلى حد الاستخدام لخطتك الحالية",
-      "usageLimitExceeded": "لقد تجاوزت حد {{type}} لخطة {{tier}}",
-      "upgradeToAddMore": "ترقية إلى {{tier}} لإضافة المزيد من {{type}}"
-    },
-    "downgrade": {
-      "blocked": {
-        "users_exceed_limit": "عدد المستخدمين الحالي يتجاوز حد الخطة المستهدفة. قم بإزالة المستخدمين قبل التراجع.",
-        "cars_exceed_limit": "عدد المركبات الحالي يتجاوز حد الخطة المستهدفة. قم بإزالة المركبات قبل التراجع.",
-        "service_bays_exceed_limit": "عدد أماكن العمل الحالي يتجاوز حد الخطة المستهدفة. اضبط إعدادك قبل التراجع.",
-        "features_in_use": "تستخدم حاليًا ميزات غير متوفرة في المستوى الأدنى. اتصل بالدعم للمساعدة."
-      },
-      "title": "قيود التراجع",
-      "explanation": "لحماية بياناتك وضمان التشغيل السلس، يتم تقييد التراجع عندما يتجاوز استخدامك الحالي حدود الخطة الأدنى.",
-      "contact_support": "اتصل بفريق الدعم للحصول على المساعدة في تراجع خطتك."
-    },
-    "errors": {
-      "invalid_downgrade": "اختيار تراجع غير صحيح",
-      "same_tier": "أنت بالفعل على هذه الخطة"
+      "mobile_responsive": "متوافق مع الهاتف المحمول",
+      "multi_language": "دعم متعدد اللغات",
+      "multi_user": "وصول متعدد المستخدمين",
+      "email_notifications": "إشعارات البريد الإلكتروني",
+      "internal_approvals": "موافقات داخلية",
+      "service_workflow": "سير عمل الخدمة",
+      "customer_history": "سجل العملاء",
+      "photos_documentation": "صور ووثائق",
+      "inventory_management": "إدارة المخزون",
+      "sms_notifications": "إشعارات الرسائل النصية",
+      "advanced_reports": "تقارير متقدمة",
+      "data_export": "تصدير البيانات",
+      "employee_tracking": "تتبع الموظفين",
+      "appointment_management": "إدارة المواعيد",
+      "invoice_discounts": "خصومات الفواتير",
+      "unlimited_users": "مستخدمون غير محدودون",
+      "unlimited_service_bays": "مواقع خدمة غير محدودة",
+      "multi_bay_scheduling": "جدولة متعددة المواقع",
+      "custom_invoice_templates": "قوالب فواتير مخصصة",
+      "supplier_database": "قاعدة بيانات الموردين",
+      "priority_support": "دعم ذو أولوية"
     },
     "why_upgrade": {
-      "title": "لماذا تختار OpAuto المميز؟"
+      "title": "لماذا الترقية؟"
     },
     "benefits": {
       "growth": {
-        "title": "توسيع أعمالك",
-        "description": "تعامل مع المزيد من العملاء والسيارات وطور فريقك مع المميزات المتقدمة"
+        "title": "قم بتوسيع أعمالك",
+        "description": "أضف عددًا غير محدود من المستخدمين، وأدِر المزيد من المركبات، ووسّع عملياتك دون حدود."
       },
       "efficiency": {
-        "title": "تحسين الكفاءة",
-        "description": "بسط العمليات بأدوات الأتمتة والتعاون الجماعي"
+        "title": "حسّن الكفاءة",
+        "description": "بسّط سير العمل بميزات متقدمة مثل إدارة المخزون، وتوثيق الصور، وأنظمة الموافقة."
       },
       "insights": {
-        "title": "رؤى مبنية على البيانات",
-        "description": "اتخذ قرارات مدروسة بالتقارير والتحليلات الشاملة"
+        "title": "رؤى أفضل",
+        "description": "اتخذ قرارات مستنيرة بالبيانات مع التحليلات المتقدمة والتقارير التفصيلية وإمكانيات التصدير."
       }
     },
     "faq": {
       "title": "الأسئلة الشائعة",
       "billing": {
         "question": "كيف تعمل الفوترة؟",
-        "answer": "نقوم بالفوترة سنوياً مقدماً. يمكنك الترقية في أي وقت مع فوترة تناسبية، والتغييرات تصبح سارية فوراً."
+        "answer": "يتم إصدار فواتير الباقات سنويًا. يمكنك الترقية أو التراجع في أي وقت، وسيتم تطبيق التغييرات في دورة الفوترة التالية."
       },
       "cancellation": {
         "question": "هل يمكنني الإلغاء في أي وقت؟",
-        "answer": "نعم، يمكنك إلغاء اشتراكك في أي وقت. سيبقى حسابك نشطاً حتى نهاية فترة الفوترة الحالية."
+        "answer": "نعم، يمكنك إلغاء اشتراكك في أي وقت. ستستمر في الوصول حتى نهاية فترة الفوترة الحالية."
       },
       "support": {
         "question": "ما هو الدعم الذي أحصل عليه؟",
-        "answer": "جميع الخطط تشمل دعم البريد الإلكتروني. الخطط الاحترافية تحصل على دعم مميز مع أوقات استجابة أسرع ودعم هاتفي."
+        "answer": "جميع الباقات تشمل الدعم عبر البريد الإلكتروني. تشمل الباقة الاحترافية دعمًا ذا أولوية مع أوقات استجابة أسرع ومساعدة مخصصة."
       }
     },
     "contact": {
-      "title": "تحتاج مساعدة في الاختيار؟",
-      "description": "فريقنا هنا لمساعدتك في العثور على الخطة المثالية لكراجك.",
-      "email": "التواصل عبر البريد الإلكتروني",
+      "title": "هل تحتاج مساعدة في الاختيار؟",
+      "description": "فريقنا هنا لمساعدتك في العثور على الباقة المثالية لورشتك.",
+      "email": "راسلنا عبر البريد",
       "phone": "اتصل بنا"
     }
   },
-  "users": {
-    "teamManagement": "إدارة الفريق",
-    "manageTeamMembers": "إدارة أعضاء الفريق والوصول للمستخدمين",
-    "tierInfo": "معلومات الخطة",
-    "inviteUser": "دعوة مستخدم",
-    "teamMembers": "أعضاء الفريق",
-    "totalUsers": "إجمالي المستخدمين",
-    "activeUsers": "المستخدمون النشطون",
-    "pendingInvitations": "الدعوات المعلقة",
-    "roleDistribution": "توزيع الأدوار",
-    "recentJoins": "المنضمون حديثاً",
-    "currentUsage": "يتم استخدام {{current}} من {{limit}} مستخدم حالياً",
-    "remaining": "متبقي",
-    "limitReached": "تم الوصول إلى حد المستخدمين",
-    "limitReachedDescription": "لقد وصلت إلى العدد الأقصى للمستخدمين لخطة {{tier}}.",
-    "searchUsers": "البحث في أعضاء الفريق...",
-    "noUsersFound": "لم يتم العثور على أعضاء فريق",
-    "noUsersDescription": "ابدأ بدعوة عضو الفريق الأول.",
-    "inviteFirstUser": "دعوة المستخدم الأول",
-    "users": "مستخدمين",
-    "joinedOn": "انضم في {{date}}",
-    "lastActive": "آخر نشاط {{date}}",
-    "permissions": "الصلاحيات",
-    "invitedAs": "مدعو كـ {{role}}",
-    "changeRole": "تغيير الدور",
-    "changeStatus": "تغيير الحالة",
-    "removeUser": "إزالة المستخدم",
-    "inviteTeamMember": "دعوة عضو فريق",
-    "inviteLimit": "{{remaining}} من {{total}} مكان للمستخدمين متبقي",
-    "unlimitedInvites": "دعوات مستخدمين غير محدودة متاحة",
-    "emailAddress": "عنوان البريد الإلكتروني",
-    "emailPlaceholder": "أدخل عنوان البريد الإلكتروني",
-    "firstName": "الاسم الأول",
-    "firstNamePlaceholder": "أدخل الاسم الأول",
-    "lastName": "اسم العائلة",
-    "lastNamePlaceholder": "أدخل اسم العائلة",
-    "role": "الدور",
-    "selectRole": "اختر دوراً",
-    "personalMessage": "رسالة شخصية",
-    "messagePlaceholder": "أضف رسالة شخصية للدعوة...",
-    "sendInvitation": "إرسال دعوة",
-    "sending": "جاري الإرسال...",
-    "resend": "إعادة إرسال",
-    "maxUsers": "الحد الأقصى للمستخدمين"
+  "staff": {
+    "title": "إدارة الموظفين",
+    "subtitle": "إدارة حسابات وصلاحيات الموظفين",
+    "totalEmployees": "إجمالي الموظفين",
+    "addNew": "إضافة موظف",
+    "createAccount": "إنشاء حساب موظف",
+    "noStaff": "لا يوجد موظفون",
+    "form": {
+      "fullName": "الاسم الكامل",
+      "fullNamePlaceholder": "أدخل اسم الموظف",
+      "nameRequired": "الاسم مطلوب",
+      "username": "اسم المستخدم",
+      "usernamePlaceholder": "مثال: staff1، staff2",
+      "usernameRequired": "اسم المستخدم مطلوب (3-20 حرفًا، حروف/أرقام/شرطة سفلية فقط)",
+      "phone": "رقم الهاتف",
+      "phonePlaceholder": "+216 XX XXX XXX",
+      "password": "كلمة المرور",
+      "passwordPlaceholder": "إنشاء كلمة مرور",
+      "passwordMinLength": "يجب أن تتكون كلمة المرور من 6 أحرف على الأقل",
+      "confirmPassword": "تأكيد كلمة المرور",
+      "confirmPasswordPlaceholder": "تأكيد كلمة المرور",
+      "confirmPasswordRequired": "يرجى تأكيد كلمة المرور",
+      "passwordMismatch": "كلمات المرور غير متطابقة",
+      "create": "إنشاء حساب موظف",
+      "creating": "جاري الإنشاء...",
+      "cancel": "إلغاء"
+    },
+    "table": {
+      "name": "الاسم",
+      "username": "اسم المستخدم",
+      "role": "الدور",
+      "phone": "الهاتف",
+      "status": "الحالة",
+      "actions": "الإجراءات"
+    },
+    "status": {
+      "active": "نشط",
+      "inactive": "غير نشط"
+    },
+    "actions": {
+      "edit": "تعديل",
+      "delete": "حذف"
+    }
   },
-  "roles": {
-    "owner": "المالك",
-    "admin": "مدير",
-    "mechanic": "ميكانيكي",
-    "viewer": "مشاهد"
-  },
-  "permissions": {
-    "manageUsers": "إدارة المستخدمين",
-    "manageSettings": "إدارة الإعدادات",
-    "viewReports": "عرض التقارير",
-    "manageInventory": "إدارة المخزون",
-    "manageAppointments": "إدارة المواعيد",
-    "manageInvoices": "إدارة الفواتير",
-    "manageMaintenance": "إدارة الصيانة"
-  },
-  "status": {
-    "active": "نشط",
-    "pending": "معلق",
-    "inactive": "غير نشط",
-    "suspended": "موقوف"
-  },
-  "validation": {
-    "emailRequired": "عنوان البريد الإلكتروني مطلوب",
-    "emailInvalid": "يرجى إدخال عنوان بريد إلكتروني صحيح",
-    "roleRequired": "يرجى اختيار دور"
-  },
-  "tiers": {
-    "currentPlan": "الخطة الحالية",
-    "plan": "خطة",
-    "upgrade": "ترقية",
-    "upgradeTo": "ترقية إلى {{tier}}",
-    "upgradeRequired": "ترقية مطلوبة",
-    "upgradeToAddMoreUsers": "قم بترقية خطتك لإضافة المزيد من أعضاء الفريق",
-    "recommended": "موصى به",
-    "whatsIncluded": "ما هو مشمول",
-    "upgradeMessage": "قم بالترقية الآن لإضافة المزيد من أعضاء الفريق وفتح ميزات إضافية",
-    "maybeLater": "ربما لاحقاً",
-    "considerUpgrade": "فكر في الترقية",
-    "upgradeNow": "ترقية الآن",
-    "upgrading": "جاري الترقية...",
-    "upgradeNote": "سيتم حساب الفوترة تناسبياً بناءً على دورتك الحالية.",
-    "unlimited": "غير محدود",
-    "solo": "فردي",
-    "starter": "مبتدئ",
-    "professional": "محترف"
+  "onboarding": {
+    "step": "خطوة",
+    "of": "من",
+    "next": "التالي",
+    "previous": "السابق",
+    "skip": "تخطي الجولة",
+    "complete": "إنهاء الجولة",
+    "solo": {
+      "welcome": {
+        "title": "مرحبًا بك في OpAuto Solo!",
+        "description": "لنقم بجولة سريعة في نظام إدارة الورشة الخاص بك. ستساعدك هذه الجولة على البدء بالميزات الأساسية."
+      },
+      "dashboard": {
+        "title": "لوحة التحكم الخاصة بك",
+        "description": "هذا هو مركز القيادة الخاص بك. راقب مواعيد اليوم والأعمال النشطة والمؤشرات الرئيسية في لمحة."
+      },
+      "addCar": {
+        "title": "أضف سيارتك الأولى",
+        "description": "ابدأ بتسجيل المركبات. انقر هنا لإضافة سيارات العملاء مع تفاصيل مثل العلامة التجارية والطراز ولوحة الترخيص."
+      },
+      "maintenance": {
+        "title": "تتبع الصيانة",
+        "description": "تتبع جميع أعمال الخدمة هنا. قم بإنشاء أعمال جديدة وتحديث الحالة وإدارة الإصلاحات بكفاءة."
+      },
+      "invoicing": {
+        "title": "الفواتير النقدية",
+        "description": "إنشاء فواتير للخدمات المكتملة. فوترة نقدية بسيطة لعملائك."
+      },
+      "notifications": {
+        "title": "إشعارات المتصفح",
+        "description": "ابق على اطلاع بإشعارات المتصفح للأعمال الجديدة والتحديثات المهمة."
+      },
+      "upgrade": {
+        "title": "هل أنت مستعد للنمو؟",
+        "description": "قم بالترقية إلى Starter للوصول متعدد المستخدمين وإشعارات البريد الإلكتروني وسير عمل الموافقة. أو انتقل إلى Professional لإدارة المخزون والميزات المتقدمة!"
+      }
+    },
+    "starter": {
+      "welcome": {
+        "title": "مرحبًا بك في OpAuto Starter!",
+        "description": "لقد فتحت ميزات تعاون الفريق القوية. لنستكشف ما الجديد لورشتك المتنامية."
+      },
+      "dashboard": {
+        "title": "لوحة التحكم المحسنة",
+        "description": "تعرض لوحة التحكم الآن أنشطة الفريق وطلبات الموافقة وسير العمل التعاوني."
+      },
+      "multiUser": {
+        "title": "إدارة الفريق",
+        "description": "أنشئ حسابات للميكانيكيين والمساعدين. يحصل كل عضو على تسجيل دخول ووصول خاص به."
+      },
+      "approvals": {
+        "title": "سير عمل الموافقة",
+        "description": "يمكن للموظفين طلب الموافقة على القطع والخدمات. يمكنك المراجعة والموافقة من هذا القسم."
+      },
+      "emailNotifications": {
+        "title": "إشعارات البريد الإلكتروني",
+        "description": "قم بتكوين تنبيهات البريد الإلكتروني لإكمال الأعمال والموافقات والتحديثات المهمة."
+      },
+      "customerHistory": {
+        "title": "سجل العملاء",
+        "description": "الوصول إلى سجل الخدمة الكامل لكل عميل. بناء علاقات أفضل مع سجلات مفصلة."
+      },
+      "reports": {
+        "title": "تقارير الأعمال",
+        "description": "عرض تقارير الإيرادات وتحليلات الخدمة ومقاييس الأداء لاتخاذ قرارات مبنية على البيانات."
+      },
+      "upgradePro": {
+        "title": "انتقل إلى Professional",
+        "description": "قم بالترقية إلى Professional للحصول على مستخدمين غير محدودين وإدارة المخزون وإشعارات الرسائل القصيرة والتقارير المتقدمة!"
+      }
+    },
+    "professional": {
+      "welcome": {
+        "title": "مرحبًا بك في OpAuto Professional!",
+        "description": "لديك وصول كامل إلى جميع الميزات. لنستكشف القدرات المتقدمة لخطتك Professional."
+      },
+      "dashboard": {
+        "title": "لوحة التحكم Professional",
+        "description": "مركز القيادة الكامل الخاص بك مع نطاق غير محدود وتحليلات متقدمة ووصول كامل للميزات."
+      },
+      "inventory": {
+        "title": "إدارة المخزون",
+        "description": "تتبع القطع وإدارة مستويات المخزون ومراقبة طلبات الموردين. تحكم كامل في المخزون في متناول يدك."
+      },
+      "photoDocs": {
+        "title": "توثيق الصور",
+        "description": "قم بتحميل صور قبل/بعد وتوثيق الإصلاحات وتقديم أدلة بصرية للعملاء."
+      },
+      "advancedReports": {
+        "title": "التحليلات المتقدمة",
+        "description": "الوصول إلى تقارير مفصلة وتحليلات تنبؤية وأدوات ذكاء الأعمال للتخطيط الاستراتيجي."
+      },
+      "smsNotifications": {
+        "title": "إشعارات الرسائل القصيرة",
+        "description": "إرسال تنبيهات الرسائل القصيرة للعملاء والموظفين. إبقاء الجميع على اطلاع في الوقت الفعلي."
+      },
+      "dataExport": {
+        "title": "تصدير البيانات",
+        "description": "قم بتصدير بياناتك بتنسيقات مختلفة للمحاسبة أو التحليل أو النسخ الاحتياطي."
+      },
+      "unlimitedFeatures": {
+        "title": "كل شيء غير محدود!",
+        "description": "استمتع بمستخدمين غير محدودين وسيارات ومواقف خدمة وجميع الميزات المميزة. قم بتوسيع ورشتك دون قيود!"
+      }
+    },
+    "staff": {
+      "welcome": {
+        "title": "مرحبًا بك في OpAuto!",
+        "description": "لنتعرف على مساحة العمل الخاصة بك. ستوضح لك هذه الجولة السريعة الميزات الأساسية التي ستستخدمها يوميًا."
+      },
+      "dashboard": {
+        "title": "لوحة التحكم الخاصة بك",
+        "description": "شاهد أعمالك المعينة وجدول اليوم والمهام النشطة في لمحة."
+      },
+      "maintenance": {
+        "title": "أعمال الصيانة",
+        "description": "عرض وتحديث أعمال الخدمة. تتبع تقدم عملك وقم بوضع علامة على المهام كمكتملة."
+      },
+      "approvalRequest": {
+        "title": "طلب الموافقات",
+        "description": "هل تحتاج إلى شراء قطع؟ اطلب الموافقة من المالك باستخدام هذا الزر."
+      },
+      "profile": {
+        "title": "ملفك الشخصي",
+        "description": "قم بتحديث معلوماتك الشخصية وتفضيلاتك هنا. أنت جاهز!"
+      },
+      "photoUpload": {
+        "title": "توثيق الصور",
+        "description": "قم بتحميل صور الإصلاحات والمشاكل. يساعد التوثيق البصري في التواصل مع العملاء."
+      }
+    }
   }
 }

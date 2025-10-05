@@ -31,11 +31,7 @@
     "price": "Prix",
     "quantity": "Quantité",
     "notes": "Notes",
-    "clearFilters": "Effacer les filtres",
-    "filtersActive": "Filtres Actifs",
-    "optional": "Optionnel",
-    "month": "mois",
-    "year": "an"
+    "clearFilters": "Effacer les filtres"
   },
   "navigation": {
     "main": "Principal",
@@ -49,9 +45,8 @@
     "customers": "Clients",
     "reports": "Rapports",
     "employees": "Employés",
-    "users": "Gestion d'Équipe",
-    "subscription": "Abonnement",
     "profile": "Profil",
+    "subscription": "Abonnement",
     "logout": "Déconnexion",
     "opAuto": "OpAuto",
     "garageManagement": "Gestion de Garage",
@@ -201,7 +196,15 @@
   "cars": {
     "title": "Voitures",
     "subtitle": "Gérer le registre et les informations des véhicules",
+    "vehicles": "Véhicules",
+    "vehicleUsage": "Utilisation des véhicules",
+    "vehicleDatabase": "Base de données des véhicules",
+    "vehicleStatistics": "Statistiques des véhicules",
+    "status": "Statut:",
+    "unlimitedVehicles": "Véhicules illimités",
+    "addVehicle": "Ajouter un véhicule",
     "addCar": "Ajouter une voiture",
+    "addVehicleToGarage": "Ajouter un véhicule au garage et créer un dossier client",
     "editCar": "Modifier la voiture",
     "deleteCar": "Supprimer la voiture",
     "carDetails": "Détails de la voiture",
@@ -210,6 +213,8 @@
     "make": "Marque",
     "model": "Modèle",
     "year": "Année",
+    "currentMileage": "Kilométrage actuel (KM)",
+    "currentMileageRequired": "Kilométrage actuel (KM) *",
     "color": "Couleur",
     "vin": "Numéro de châssis",
     "engineType": "Type de moteur",
@@ -232,7 +237,6 @@
     "upToDate": "À jour",
     "dueSoon": "Bientôt dû",
     "overdue": "En retard",
-    "status": "Statut",
     "allMakes": "Toutes les marques",
     "allStatus": "Tous les statuts",
     "statusLegend": "Légende des statuts",
@@ -245,16 +249,6 @@
     "nextDue": "Prochaine échéance",
     "schedule": "Planifier",
     "history": "Historique",
-    "vehicleDatabase": "Base de données des véhicules",
-    "vehicleStatistics": "Statistiques des véhicules",
-    "vehicles": "Véhicules",
-    "addVehicle": "Ajouter un véhicule",
-    "limitReached": "Limite de véhicules atteinte",
-    "limitReachedDescription": "Vous avez atteint la limite de {{limit}} véhicules pour votre plan {{tier}}. Effectuez une mise à niveau pour ajouter plus de véhicules.",
-    "approachingLimit": "Il vous reste {{remaining}} emplacements de véhicules",
-    "approachingLimitDescription": "Envisagez de mettre à niveau votre plan pour éviter d'atteindre la limite de véhicules.",
-    "vehicleUsage": "Utilisation des véhicules",
-    "unlimitedVehicles": "Véhicules illimités",
     "registerNewCar": "Enregistrer nouvelle voiture",
     "registerCar": "Enregistrer voiture",
     "registering": "Enregistrement en cours...",
@@ -276,6 +270,7 @@
     "newCustomer": "Nouveau client",
     "selectCustomer": "Sélectionner client",
     "selectCustomerRequired": "Sélectionner client *",
+    "chooseCustomer": "Choisir un client",
     "customerNameRequired": "Nom du client *",
     "customerNamePlaceholder": "Entrez le nom du client",
     "phoneNumberRequired": "Numéro de téléphone *",
@@ -392,31 +387,6 @@
         "today": "Aujourd'hui",
         "thisWeek": "Cette Semaine"
       }
-    },
-    "new": {
-      "title": "Nouveau Travail de Maintenance",
-      "editTitle": "Modifier le Travail de Maintenance",
-      "subtitle": "Créer un nouveau travail de maintenance ou de réparation",
-      "basicInfo": "Informations de Base",
-      "vehicle": "Véhicule",
-      "selectVehicle": "Sélectionner un véhicule",
-      "assignedMechanic": "Mécanicien Assigné",
-      "selectMechanic": "Sélectionner un mécanicien",
-      "jobTitle": "Titre du Travail",
-      "jobTitlePlaceholder": "ex: Réparation de freins, Vidange",
-      "priority": "Priorité",
-      "currentMileage": "Kilométrage Actuel (km)",
-      "estimatedCost": "Coût Estimé (TND)",
-      "description": "Description",
-      "descriptionPlaceholder": "Décrivez le problème, les symptômes, ou la maintenance requise...",
-      "additionalNotes": "Notes Additionnelles",
-      "additionalNotesPlaceholder": "Toute information supplémentaire ou instructions spéciales...",
-      "tasks": "Tâches",
-      "addTask": "Ajouter une Tâche",
-      "noTasks": "Aucune tâche ajoutée. Cliquez sur \"Ajouter une Tâche\" pour commencer.",
-      "cancel": "Annuler",
-      "createJob": "Créer le Travail",
-      "updateJob": "Mettre à Jour le Travail"
     }
   },
   "inventory": {
@@ -516,43 +486,15 @@
       "accessories": "Accessoires",
       "consumables": "Consommables"
     },
-    "parts": {
-      "addNewPart": "Ajouter une nouvelle pièce",
-      "editPart": "Modifier la pièce",
-      "createPart": "Créer la pièce",
-      "updatePart": "Mettre à jour la pièce",
-      "partName": "Nom de la pièce",
-      "partNumber": "Numéro de pièce",
-      "description": "Description",
-      "category": "Catégorie",
-      "brand": "Marque",
-      "supplier": "Fournisseur",
-      "unit": "Unité",
-      "price": "Prix",
-      "currency": "Devise",
-      "currentStock": "Stock actuel",
-      "minStockLevel": "Niveau de stock minimum",
-      "maxStockLevel": "Niveau de stock maximum",
-      "storageLocation": "Emplacement de stockage",
-      "activePart": "Pièce active (disponible à l'utilisation)",
-      "enterPartName": "Saisir le nom de la pièce",
-      "enterPartNumber": "Saisir le numéro de pièce",
-      "enterDescription": "Saisir la description de la pièce",
-      "selectCategory": "Sélectionner une catégorie",
-      "enterBrand": "Saisir le nom de la marque",
-      "selectSupplier": "Sélectionner un fournisseur",
-      "selectUnit": "Sélectionner une unité",
-      "optional": "Optionnel",
-      "locationPlaceholder": "ex: Étagère A-1, Rack de pneus 2",
-      "partNameRequired": "Le nom de la pièce est requis",
-      "partNumberRequired": "Le numéro de pièce est requis",
-      "categoryRequired": "La catégorie est requise",
-      "brandRequired": "La marque est requise",
-      "supplierRequired": "Le fournisseur est requis",
-      "unitRequired": "L'unité est requise",
-      "priceRequired": "Un prix valide est requis",
-      "stockLevelRequired": "Le niveau de stock est requis",
-      "minStockLevelRequired": "Le niveau de stock minimum est requis"
+    "units": {
+      "piece": "Pièce",
+      "liter": "Litre",
+      "kg": "Kilogramme",
+      "meter": "Mètre",
+      "pair": "Paire",
+      "set": "Ensemble",
+      "bottle": "Bouteille",
+      "box": "Boîte"
     },
     "suppliers": {
       "title": "Fournisseurs",
@@ -606,6 +548,8 @@
   "customers": {
     "title": "Clients",
     "subtitle": "Gérer les informations et l'historique des clients",
+    "customerInformation": "Informations du client",
+    "notProvided": "Non fourni",
     "addCustomer": "Ajouter un client",
     "editCustomer": "Modifier le client",
     "deleteCustomer": "Supprimer le client",
@@ -737,8 +681,11 @@
     "loyaltyTiers": {
       "bronze": "Bronze",
       "silver": "Argent",
-      "gold": "Or", 
+      "gold": "Or",
       "platinum": "Platine"
+    },
+    "form": {
+      "newCustomer": "Nouveau client"
     },
     "loading": "Chargement des clients..."
   },
@@ -834,6 +781,20 @@
   "reports": {
     "title": "Rapports",
     "subtitle": "Analyses et insights métier",
+    "navigation": {
+      "dashboard": "Tableau de bord",
+      "financial": "Financier",
+      "operational": "Opérationnel",
+      "customer": "Client",
+      "inventory": "Inventaire"
+    },
+    "actions": {
+      "refresh": "Actualiser",
+      "export": "Exporter"
+    },
+    "filters": {
+      "to": "à"
+    },
     "salesReport": "Rapport des ventes",
     "serviceReport": "Rapport de service",
     "inventoryReport": "Rapport d'inventaire",
@@ -856,7 +817,89 @@
     "topServices": "Services les plus demandés",
     "topCustomers": "Meilleurs clients",
     "partsUsage": "Utilisation des pièces",
-    "noReports": "Aucun rapport disponible"
+    "noReports": "Aucun rapport disponible",
+    "datePresets": {
+      "today": "Aujourd'hui",
+      "yesterday": "Hier",
+      "thisWeek": "Cette semaine",
+      "lastWeek": "La semaine dernière",
+      "thisMonth": "Ce mois",
+      "lastMonth": "Le mois dernier",
+      "thisQuarter": "Ce trimestre",
+      "lastQuarter": "Le trimestre dernier",
+      "thisYear": "Cette année",
+      "lastYear": "L'année dernière",
+      "last30Days": "30 derniers jours",
+      "last90Days": "90 derniers jours",
+      "last365Days": "365 derniers jours",
+      "custom": "Personnalisé"
+    },
+    "export": {
+      "exporting": "Export vers {{format}} en cours..."
+    },
+    "kpis": {
+      "totalRevenue": "Chiffre d'affaires total",
+      "appointments": "Rendez-vous",
+      "activeCustomers": "Clients actifs",
+      "mechanicUtilization": "Utilisation mécanicien",
+      "stockValue": "Valeur du stock",
+      "customerSatisfaction": "Satisfaction client",
+      "revenue": "Revenus",
+      "newCustomers": "Nouveaux clients",
+      "partsInventory": "Inventaire de pièces",
+      "paidRevenue": "Revenus payés",
+      "pendingRevenue": "Revenus en attente",
+      "overdueRevenue": "Revenus en retard",
+      "averageInvoiceValue": "Valeur moyenne des factures",
+      "taxCollected": "Taxes collectées",
+      "discountsGiven": "Remises accordées",
+      "profitMargin": "Marge bénéficiaire",
+      "revenueGrowth": "Croissance des revenus",
+      "totalAppointments": "Total des rendez-vous",
+      "completionRate": "Taux de completion",
+      "garageCapacity": "Capacité du garage",
+      "avgServiceTime": "Temps de service moyen",
+      "repeatCustomerRate": "Taux de clients récurrents",
+      "garageCapacityUsed": "Capacité du garage utilisée",
+      "totalCustomers": "Total des clients",
+      "avgCustomerValue": "Valeur moyenne des clients",
+      "retentionRate": "Taux de rétention",
+      "totalParts": "Total des pièces",
+      "lowStockItems": "Articles en stock faible",
+      "turnoverRate": "Taux de rotation"
+    },
+    "charts": {
+      "revenueTrends": {
+        "title": "Tendances des revenus"
+      },
+      "serviceDistribution": {
+        "title": "Distribution des services"
+      },
+      "appointmentStatus": {
+        "title": "Statut des rendez-vous"
+      },
+      "monthlyComparison": {
+        "title": "Comparaison mensuelle"
+      }
+    },
+    "sections": {
+      "revenueBreakdown": "Répartition des revenus",
+      "growthAnalysis": "Analyse de croissance",
+      "servicePerformance": "Performance des services",
+      "efficiencyMetrics": "Métriques d'efficacité",
+      "basicSummary": "Résumé de base"
+    },
+    "upgrade": {
+      "title": "Passer à un forfait supérieur pour débloquer les rapports avancés",
+      "description": "Obtenez des analyses détaillées, des graphiques et des informations avec le forfait Starter ou Professionnel",
+      "cta": "Voir les forfaits",
+      "soloMessage": "Votre forfait Solo comprend des résumés de base quotidiens et hebdomadaires. Passez à un forfait supérieur pour accéder aux tableaux de bord et analyses détaillés."
+    },
+    "periods": {
+      "thisMonth": "Ce mois",
+      "lastMonth": "Le mois dernier"
+    },
+    "loading": "Chargement des rapports..."
   },
   "settings": {
     "title": "Paramètres",
@@ -1356,7 +1399,10 @@
       "smsNotifications": "Notifications SMS",
       "smsNotificationsDescription": "Recevoir des notifications par SMS",
       "browserNotifications": "Notifications du navigateur",
-      "browserNotificationsDescription": "Afficher les notifications sur le bureau"
+      "browserNotificationsDescription": "Afficher les notifications sur le bureau",
+      "onboardingTour": "Visite Guidée",
+      "onboardingTourDescription": "Redémarrer la visite interactive pour découvrir les fonctionnalités d'OpAuto",
+      "restartTour": "Redémarrer la Visite"
     },
     "security": {
       "securityReminderTitle": "Rappel de sécurité",
@@ -1393,6 +1439,40 @@
   "invoicing": {
     "title": "Facturation",
     "subtitle": "Générer et gérer les factures",
+    "allInvoices": "Toutes les factures",
+    "createInvoice": "Créer une facture",
+    "pendingPayment": "Paiement en attente",
+    "editInvoice": "Modifier la facture",
+    "deleteInvoice": "Supprimer la facture",
+    "viewInvoice": "Voir la facture",
+    "printInvoice": "Imprimer la facture",
+    "invoiceNumber": "Numéro de facture",
+    "invoiceDate": "Date de facture",
+    "dueDate": "Date d'échéance",
+    "customerInfo": "Informations du client",
+    "billTo": "Facturer à",
+    "items": "Articles",
+    "services": "Services",
+    "addItem": "Ajouter un article",
+    "itemDescription": "Description de l'article",
+    "unitPrice": "Prix unitaire",
+    "quantity": "Quantité",
+    "total": "Total",
+    "subtotal": "Sous-total",
+    "tax": "Taxe",
+    "discount": "Remise",
+    "grandTotal": "Total général",
+    "paid": "Payé",
+    "unpaid": "Non payé",
+    "overdue": "En retard",
+    "paymentStatus": "Statut de paiement",
+    "paymentMethod": "Méthode de paiement",
+    "cash": "Espèces",
+    "card": "Carte",
+    "bankTransfer": "Virement bancaire",
+    "notes": "Notes",
+    "terms": "Termes et conditions",
+    "noInvoices": "Aucune facture trouvée",
     "navigation": {
       "dashboard": "Tableau de bord",
       "allInvoices": "Toutes les factures",
@@ -1413,17 +1493,56 @@
       "invoices": "factures"
     },
     "status": {
-      "sent": "Envoyé",
-      "paid": "Payé",
-      "overdue": "En retard",
       "draft": "Brouillon",
-      "cancelled": "Annulé"
+      "sent": "Envoyé",
+      "viewed": "Consultée",
+      "paid": "Payé",
+      "partiallyPaid": "Partiellement payé",
+      "overdue": "En retard",
+      "cancelled": "Annulé",
+      "refunded": "Remboursé"
     },
     "paymentMethods": {
       "cash": "Espèces",
       "card": "Carte",
       "transfer": "Virement",
-      "check": "Chèque"
+      "bankTransfer": "Virement bancaire",
+      "check": "Chèque",
+      "credit": "Crédit"
+    },
+    "list": {
+      "hideFilters": "Masquer les filtres",
+      "showFilters": "Afficher les filtres",
+      "searchPlaceholder": "Rechercher des factures...",
+      "allStatus": "Tous les statuts",
+      "allPaymentMethods": "Toutes les méthodes",
+      "clearFilters": "Effacer les filtres",
+      "customer": "Client",
+      "vehicle": "Véhicule",
+      "license": "Plaque",
+      "service": "Service",
+      "multipleServices": "Services multiples",
+      "total": "Total",
+      "paid": "Payé",
+      "remaining": "Restant",
+      "paymentProgress": "Progression du paiement",
+      "dueDate": "Date d'échéance",
+      "daysOverdue": "jours de retard",
+      "send": "Envoyer",
+      "markPaid": "Marquer payé",
+      "print": "Imprimer",
+      "noInvoicesFound": "Aucune facture trouvée",
+      "noInvoicesDescription": "Essayez d'ajuster votre recherche ou vos filtres",
+      "createFirstInvoice": "Créer votre première facture"
+    },
+    "pending": {
+      "title": "Paiements en attente",
+      "invoices": "factures",
+      "due": "Échéance",
+      "viewDetails": "Voir détails",
+      "recordPayment": "Enregistrer paiement",
+      "allCaughtUp": "Tout est à jour !",
+      "noPendingPayments": "Aucun paiement en attente actuellement"
     },
     "create": {
       "title": "Créer une facture",
@@ -1467,258 +1586,463 @@
       "saveAsDraft": "Enregistrer comme brouillon",
       "loadingFormData": "Chargement des données du formulaire..."
     },
-    "pending": {
-      "title": "Paiements en attente",
-      "invoices": "factures",
-      "due": "Échéance",
-      "viewDetails": "Voir détails",
-      "recordPayment": "Enregistrer paiement",
-      "allCaughtUp": "Tout est à jour !",
-      "noPendingPayments": "Aucun paiement en attente actuellement"
+    "loading": "Chargement..."
+  },
+  "approvals": {
+    "title": "Approbations",
+    "subtitle": "Gestion des demandes d'approbation et autorisations",
+    "actions": {
+      "refresh": "Actualiser",
+      "approve": "Approuver",
+      "reject": "Rejeter",
+      "resetFilters": "Réinitialiser les filtres",
+      "selectAll": "Tout sélectionner",
+      "requestInfo": "Demander des informations",
+      "viewDetails": "Voir les détails"
     },
-    "list": {
-      "hideFilters": "Masquer les filtres",
-      "showFilters": "Afficher les filtres",
-      "searchPlaceholder": "Rechercher des factures...",
-      "allStatus": "Tous les statuts",
-      "allPaymentMethods": "Toutes les méthodes",
-      "clearFilters": "Effacer les filtres",
-      "customer": "Client",
-      "vehicle": "Véhicule",
-      "license": "Plaque",
-      "service": "Service",
-      "multipleServices": "Services multiples",
-      "total": "Total",
-      "paid": "Payé",
-      "remaining": "Restant",
-      "paymentProgress": "Progression du paiement",
-      "dueDate": "Date d'échéance",
-      "daysOverdue": "jours de retard",
-      "send": "Envoyer",
-      "markPaid": "Marquer payé",
-      "print": "Imprimer",
-      "noInvoicesFound": "Aucune facture trouvée",
-      "noInvoicesDescription": "Essayez d'ajuster votre recherche ou vos filtres",
-      "createFirstInvoice": "Créer votre première facture"
+    "stats": {
+      "pending": "En attente",
+      "overdue": "En retard",
+      "approved": "Approuvé",
+      "total": "Total"
+    },
+    "filters": {
+      "search": "Recherche",
+      "searchPlaceholder": "Rechercher dans les demandes...",
+      "status": "Statut",
+      "allStatuses": "Tous les statuts",
+      "type": "Type",
+      "allTypes": "Tous les types",
+      "priority": "Priorité",
+      "allPriorities": "Toutes les priorités"
+    },
+    "labels": {
+      "showing": "Affichage de {{current}} sur {{total}}",
+      "listTitle": "Liste des demandes",
+      "approvedBy": "Approuvé par",
+      "rejectedBy": "Rejeté par",
+      "on": "le"
+    },
+    "loading": "Chargement...",
+    "emptyState": {
+      "title": "Aucune demande d'approbation",
+      "message": "Il n'y a actuellement aucune demande nécessitant une approbation"
+    },
+    "type": {
+      "part_purchase": "Achat de pièce",
+      "service_approval": "Approbation de service",
+      "customer_credit": "Crédit client",
+      "overtime_request": "Demande d'heures supplémentaires",
+      "expense_claim": "Demande de remboursement",
+      "discount_request": "Demande de remise",
+      "refund_request": "Demande de remboursement",
+      "other": "Autre"
+    },
+    "status": {
+      "pending": "En attente",
+      "approved": "Approuvé",
+      "rejected": "Rejeté",
+      "info_requested": "Informations demandées",
+      "cancelled": "Annulé"
+    },
+    "priority": {
+      "low": "Faible",
+      "medium": "Moyen",
+      "high": "Élevé",
+      "urgent": "Urgent"
     }
   },
-  "subscription": {
-    "title": "Plans d'Abonnement",
-    "subtitle": "Choisissez le plan parfait pour vos besoins de gestion de garage",
-    "current_plan": "Plan Actuel",
-    "per_year": "/an",
-    "next_billing": "Prochaine Facturation",
-    "days_left": "jours restants",
-    "unlimited": "Illimité",
-    "used": "utilisé",
-    "included_features": "Fonctionnalités Incluses",
-    "compare_plans": "Comparer les Plans",
-    "most_popular": "Plus Populaire",
-    "upgrade_to": "Passer à",
-    "downgrade_to": "Rétrograder vers",
-    "downgrade_blocked": "Rétrogradation Non Disponible",
-    "why_blocked": "Pourquoi?",
+  "photos": {
+    "uploadTitle": "Documentation Photo",
+    "uploadSubtitle": "Télécharger des photos de maintenance",
+    "professionalOnly": "Fonctionnalité Professionnelle Uniquement",
+    "professionalDescription": "La documentation photo est disponible exclusivement pour les utilisateurs du plan Professionnel. Passez au niveau supérieur pour documenter votre travail professionnel avec des photos de haute qualité.",
+    "category": "Catégorie",
+    "description": "Description",
+    "selectCategory": "Sélectionner la catégorie de photo",
+    "selectFiles": "Sélectionner les fichiers",
+    "descriptionPlaceholder": "Saisir la description de la photo",
+    "dragAndDrop": "Glisser & Déposer les Photos",
+    "uploadInstructions": "Glissez et déposez vos photos ici, ou cliquez pour parcourir les fichiers",
+    "fileLimits": "Max {{maxSize}}MB par fichier, jusqu'à {{maxCount}} photos au total",
+    "uploadFiles": "Télécharger les Photos",
+    "uploading": "Téléchargement des photos...",
+    "uploadZoneAriaLabel": "Zone de téléchargement de photos - glisser-déposer ou cliquer pour sélectionner les fichiers",
+    "uploadSelectedFiles": "Télécharger les photos sélectionnées",
+    "closeError": "Fermer le message d'erreur",
+    "galleryTitle": "Photos de Maintenance",
+    "photoCount": "photo(s)",
+    "allCategories": "Toutes les Catégories",
+    "filterByCategory": "Filtrer les photos par catégorie",
+    "galleryAriaLabel": "Galerie photo montrant les photos de maintenance",
+    "photoAlt": "Photo de maintenance {{category}}",
+    "openPhoto": "Cliquer pour voir la photo en taille réelle",
+    "viewPhoto": "Voir les détails de la photo",
+    "editPhoto": "Modifier les informations de la photo",
+    "deletePhoto": "Supprimer cette photo",
+    "noPhotos": "Aucune photo téléchargée",
+    "noCategoryPhotos": "Aucune photo dans cette catégorie",
+    "noPhotosYet": "Aucune Photo Pour L'instant",
+    "startUploading": "Commencez par télécharger votre première photo de maintenance pour documenter l'avancement du travail.",
+    "loadingPhotos": "Chargement des photos...",
+    "photoModal": "Fenêtre des détails de la photo",
+    "photoDetails": "Détails de la Photo",
+    "closeModal": "Fermer la fenêtre photo",
+    "filename": "Nom de fichier",
+    "uploaded": "Téléchargé",
+    "confirmDelete": "Confirmer la Suppression",
+    "deleteWarning": "Êtes-vous sûr de vouloir supprimer cette photo ? Cette action ne peut pas être annulée.",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "upgradeToGet": "Passez au plan Professionnel pour obtenir :",
+    "sampleGallery": "Galerie Photo Exemple",
+    "upgradeToSeePhotos": "Passez au plan Professionnel pour voir et gérer les photos de maintenance",
+    "maintenancePhotos": "Photos de Maintenance",
+    "count": "photos",
+    "benefit1": "Documenter votre travail professionnel avec des photos",
+    "benefit2": "Renforcer la confiance des clients avec des preuves visuelles",
+    "benefit3": "Se protéger contre les litiges avec des preuves photographiques",
+    "benefit4": "Montrer les résultats avant/après aux clients",
+    "benefit5": "Maintenir des enregistrements d'assurance qualité",
+    "categories": {
+      "before": "Avant",
+      "during": "En Cours",
+      "after": "Terminé",
+      "diagnostic": "Diagnostic",
+      "damage": "Dommage",
+      "parts": "Pièces"
+    },
+    "placeholders": {
+      "before": "Avant Travaux",
+      "during": "Travaux en Cours",
+      "after": "Travaux Terminés",
+      "parts": "Pièces & Composants"
+    },
+    "errors": {
+      "tierRequired": "Plan Professionnel requis pour l'accès aux photos",
+      "fileTooLarge": "La taille du fichier dépasse la limite maximale",
+      "invalidFormat": "Format de fichier non pris en charge",
+      "limitExceeded": "Limite maximale de photos dépassée",
+      "someFilesInvalid": "Certains fichiers étaient invalides et n'ont pas été téléchargés",
+      "uploadFailed": "Échec du téléchargement des photos. Veuillez réessayer."
+    }
+  },
+  "tiers": {
     "solo": "Solo",
     "starter": "Débutant",
     "professional": "Professionnel",
+    "pro": "PRO",
+    "plan": "Plan:",
+    "current": "Plan Actuel",
+    "popular": "Plus Populaire",
+    "upgrade": "Mettre à Niveau",
+    "downgrade": "Rétrograder",
+    "month": "mois",
+    "choosePlan": "Choisissez Votre Plan",
+    "upgradeTitle": "Débloquer Plus de Fonctionnalités",
+    "upgradeToPro": "Passer au Professionnel",
+    "upgradeForPhotos": "Passer au niveau supérieur pour accéder à la documentation photo",
+    "unlockFeature": "Débloquer la Fonctionnalité Premium",
+    "upgradeMessage": "Mettez à niveau votre plan pour débloquer des fonctionnalités avancées et développer votre entreprise.",
+    "upgradeForFeatureMessage": "Cette fonctionnalité nécessite un plan d'abonnement de niveau supérieur.",
+    "upgradeNow": "Mettre à Niveau Maintenant",
+    "currentPlan": "Plan Actuel",
+    "availableIn": "Disponible dans le plan {{tier}}",
+    "professionalFeature": "Cette fonctionnalité est exclusive aux utilisateurs du plan Professionnel",
+    "featureLocked": "Fonctionnalité Verrouillée",
+    "featureLockedWithTier": "Cette fonctionnalité nécessite un abonnement au plan {{tier}}"
+  },
+  "features": {
+    "single_user": "Accès Utilisateur Unique",
+    "basic_appointments": "Gestion de Rendez-vous de Base",
+    "cash_invoicing": "Facturation Comptant",
+    "basic_reports": "Rapports de Base",
+    "browser_notifications": "Notifications Navigateur",
+    "multi_user": "Support Multi-utilisateurs",
+    "email_notifications": "Notifications Email",
+    "internal_approvals": "Système d'Approbation Interne",
+    "photos_documentation": "Documentation Photo",
+    "inventory_management": "Gestion des Stocks",
+    "unlimited_users": "Utilisateurs Illimités",
+    "appointment_management": "Gestion Avancée des Rendez-vous",
+    "sms_notifications": "Notifications SMS",
+    "priority_support": "Support Client Prioritaire",
+    "advanced_reports": "Analyses et Rapports Avancés",
+    "data_export": "Export et Sauvegarde des Données"
+  },
+  "subscription": {
+    "title": "Plans d'Abonnement",
+    "subtitle": "Choisissez le plan parfait pour votre garage",
+    "current_plan": "Plan Actuel",
+    "most_popular": "Le Plus Populaire",
+    "compare_plans": "Comparer les Plans",
+    "upgrade_to": "Passer à {{tier}}",
+    "downgrade_to": "Rétrograder vers {{tier}}",
+    "downgrade_blocked": "Impossible de rétrograder",
+    "why_blocked": "Vous utilisez actuellement des fonctionnalités de votre plan actuel",
+    "per_year": "par an",
+    "days_left": "{{days}} jours jusqu'au renouvellement",
+    "next_billing": "Prochaine facturation : {{date}}",
+    "included_features": "Fonctionnalités Incluses",
+    "unlimited": "Illimité",
+    "used": "{{used}} sur {{limit}} utilisés",
     "usage": {
       "users": "Utilisateurs",
       "cars": "Voitures",
       "service_bays": "Postes de Travail"
     },
+    "tooltips": {
+      "current_plan_badge": "Votre plan d'abonnement actuel",
+      "price_info": "Facturation annuelle. Comprend toutes les fonctionnalités de votre plan.",
+      "usage_labels": "Suivez votre utilisation actuelle par rapport aux limites du plan",
+      "usage_within_limits": "L'utilisation est dans les limites",
+      "approaching_limit": "Approche de la limite ! Envisagez une mise à niveau.",
+      "upgrade_button": "Cliquez pour passer à un plan supérieur et débloquer plus de fonctionnalités",
+      "downgrade_blocked_section": "Votre utilisation actuelle dépasse les limites de ce plan",
+      "why_blocked_button": "Cliquez pour voir les restrictions de rétrogradation détaillées"
+    },
     "features": {
-      "single_user": "1 Compte Utilisateur Seulement",
-      "basic_appointments": "Rendez-vous Illimités (Vue Calendrier)",
-      "cash_invoicing": "Facturation Simple en Espèces",
-      "basic_reports": "Rapports Basiques (Quotidiens/Hebdomadaires)",
+      "single_user": "Accès Utilisateur Unique",
+      "unlimited_appointments": "Rendez-vous Illimités",
+      "manual_booking": "Réservation Manuelle",
+      "cash_invoicing": "Facturation Comptant",
+      "basic_reports": "Rapports de Base",
       "browser_notifications": "Notifications Navigateur",
-      "multi_user": "Jusqu'à 3 Comptes Utilisateurs",
-      "unlimited_users": "Comptes Utilisateurs Illimités",
-      "appointment_management": "Gestion Avancée des Rendez-vous",
-      "email_notifications": "Email Récapitulatif Quotidien",
+      "mobile_responsive": "Responsive Mobile",
+      "multi_language": "Support Multi-langues",
+      "multi_user": "Support Multi-utilisateurs (Jusqu'à 3)",
+      "email_notifications": "Notifications Email",
       "internal_approvals": "Système d'Approbation Interne",
-      "photos_documentation": "Documentation Photo pour Maintenance",
-      "inventory_management": "Gestion Stock de Pièces",
-      "sms_notifications": "Notifications SMS aux Clients",
-      "priority_support": "Support Email Prioritaire",
-      "advanced_reports": "Rapports et Analyses Avancés",
-      "data_export": "Export de Données (Excel/PDF)"
-    },
-    "tiers": {
-      "solo": {
-        "name": "Solo",
-        "description": "Parfait pour les petits mécaniciens indépendants"
-      },
-      "starter": {
-        "name": "Débutant",
-        "description": "Idéal pour les garages en croissance avec une petite équipe"
-      },
-      "professional": {
-        "name": "Professionnel",
-        "description": "Solution complète pour les garages établis"
-      },
-      "featureLocked": "Cette fonctionnalité n'est pas disponible dans votre plan actuel",
-      "featureLockedWithTier": "Cette fonctionnalité est disponible dans le plan {{tier}}",
-      "availableIn": "Disponible dans le plan {{tier}}",
-      "upgrade": "Mettre à niveau",
-      "upgradeNow": "Mettre à niveau maintenant",
-      "upgradeTitle": "Débloquer les fonctionnalités premium",
-      "upgradeMessage": "Améliorez votre plan pour accéder aux fonctionnalités avancées et développer votre entreprise",
-      "upgradeForFeatureMessage": "Améliorez votre plan pour débloquer cette fonctionnalité et améliorer votre expérience de gestion de garage",
-      "unlockFeature": "Débloquer cette fonctionnalité",
-      "choosePlan": "Choisissez votre plan",
-      "popular": "Le plus populaire",
-      "current": "Plan actuel",
-      "currentPlan": "Plan actuel",
-      "month": "mois",
-      "downgrade": "Contacter le support",
-      "usageLimitReached": "Limite d'utilisation atteinte pour votre plan actuel",
-      "usageLimitExceeded": "Vous avez dépassé la limite de {{type}} pour votre plan {{tier}}",
-      "upgradeToAddMore": "Passez au plan {{tier}} pour ajouter plus de {{type}}"
-    },
-    "downgrade": {
-      "blocked": {
-        "users_exceed_limit": "Votre nombre d'utilisateurs actuel dépasse la limite du plan cible. Supprimez des utilisateurs avant de rétrograder.",
-        "cars_exceed_limit": "Votre nombre de véhicules actuel dépasse la limite du plan cible. Supprimez des véhicules avant de rétrograder.",
-        "service_bays_exceed_limit": "Votre nombre de postes de travail actuel dépasse la limite du plan cible. Ajustez votre configuration avant de rétrograder.",
-        "features_in_use": "Vous utilisez actuellement des fonctionnalités non disponibles dans le niveau inférieur. Contactez le support pour assistance."
-      },
-      "title": "Restrictions de Rétrogradation",
-      "explanation": "Pour protéger vos données et assurer un fonctionnement fluide, les rétrogradations sont restreintes lorsque votre utilisation actuelle dépasse les limites du plan inférieur.",
-      "contact_support": "Contactez notre équipe de support pour obtenir de l'aide avec la rétrogradation de votre plan."
-    },
-    "errors": {
-      "invalid_downgrade": "Sélection de rétrogradation invalide",
-      "same_tier": "Vous êtes déjà sur ce plan"
+      "service_workflow": "Gestion du Flux de Service",
+      "customer_history": "Historique et Notes Client",
+      "photos_documentation": "Documentation Photo",
+      "inventory_management": "Gestion des Stocks",
+      "sms_notifications": "Notifications SMS",
+      "advanced_reports": "Analyses et Rapports Avancés",
+      "data_export": "Export et Sauvegarde des Données",
+      "employee_tracking": "Suivi des Performances des Employés",
+      "appointment_management": "Gestion des Rendez-vous",
+      "invoice_discounts": "Remises sur Factures",
+      "unlimited_users": "Utilisateurs Illimités",
+      "unlimited_service_bays": "Postes de Service Illimités",
+      "multi_bay_scheduling": "Planification Multi-postes",
+      "custom_invoice_templates": "Modèles de Factures Personnalisés",
+      "supplier_database": "Base de Données Fournisseurs",
+      "priority_support": "Support Prioritaire"
     },
     "why_upgrade": {
-      "title": "Pourquoi Choisir OpAuto Premium ?"
+      "title": "Pourquoi Passer à un Plan Supérieur ?"
     },
     "benefits": {
       "growth": {
-        "title": "Développer Votre Entreprise",
-        "description": "Gérez plus de clients, voitures et développez votre équipe avec des fonctionnalités avancées"
+        "title": "Développez Votre Entreprise",
+        "description": "Ajoutez un nombre illimité d'utilisateurs, gérez plus de véhicules et développez vos opérations sans limites."
       },
       "efficiency": {
-        "title": "Améliorer l'Efficacité",
-        "description": "Rationalisez les opérations avec des outils d'automatisation et de collaboration d'équipe"
+        "title": "Améliorez l'Efficacité",
+        "description": "Rationalisez les flux de travail avec des fonctionnalités avancées comme la gestion des stocks, la documentation photo et les systèmes d'approbation."
       },
       "insights": {
-        "title": "Insights Basés sur les Données",
-        "description": "Prenez des décisions éclairées avec des rapports et analyses complets"
+        "title": "Meilleures Analyses",
+        "description": "Prenez des décisions basées sur les données avec des analyses avancées, des rapports détaillés et des capacités d'exportation."
       }
     },
     "faq": {
       "title": "Questions Fréquemment Posées",
       "billing": {
         "question": "Comment fonctionne la facturation ?",
-        "answer": "Nous facturons annuellement à l'avance. Vous pouvez passer à un plan supérieur à tout moment avec facturation au prorata, et les changements prennent effet immédiatement."
+        "answer": "Les plans sont facturés annuellement. Vous pouvez passer à un plan supérieur ou inférieur à tout moment, et les changements seront reflétés dans votre prochain cycle de facturation."
       },
       "cancellation": {
         "question": "Puis-je annuler à tout moment ?",
-        "answer": "Oui, vous pouvez annuler votre abonnement à tout moment. Votre compte restera actif jusqu'à la fin de votre période de facturation actuelle."
+        "answer": "Oui, vous pouvez annuler votre abonnement à tout moment. Vous continuerez à avoir accès jusqu'à la fin de votre période de facturation actuelle."
       },
       "support": {
-        "question": "Quel support obtiens-je ?",
-        "answer": "Tous les plans incluent le support par email. Les plans professionnels bénéficient d'un support prioritaire avec des temps de réponse plus rapides et un support téléphonique."
+        "question": "Quel support est-ce que je reçois ?",
+        "answer": "Tous les plans incluent le support par email. Le plan Professionnel inclut un support prioritaire avec des temps de réponse plus rapides et une assistance dédiée."
       }
     },
     "contact": {
       "title": "Besoin d'Aide pour Choisir ?",
       "description": "Notre équipe est là pour vous aider à trouver le plan parfait pour votre garage.",
-      "email": "Contacter par Email",
+      "email": "Nous Envoyer un Email",
       "phone": "Nous Appeler"
     }
   },
-  "users": {
-    "teamManagement": "Gestion d'Équipe",
-    "manageTeamMembers": "Gérer les membres de l'équipe et l'accès utilisateur",
-    "tierInfo": "Info Plan",
-    "inviteUser": "Inviter Utilisateur",
-    "teamMembers": "Membres de l'Équipe",
-    "totalUsers": "Total Utilisateurs",
-    "activeUsers": "Utilisateurs Actifs",
-    "pendingInvitations": "Invitations en Attente",
-    "roleDistribution": "Distribution des Rôles",
-    "recentJoins": "Nouveaux Membres",
-    "currentUsage": "Actuellement {{current}} sur {{limit}} utilisateurs",
-    "remaining": "Restant",
-    "limitReached": "Limite d'Utilisateurs Atteinte",
-    "limitReachedDescription": "Vous avez atteint le nombre maximum d'utilisateurs pour le plan {{tier}}.",
-    "searchUsers": "Rechercher membres d'équipe...",
-    "noUsersFound": "Aucun membre d'équipe trouvé",
-    "noUsersDescription": "Commencez par inviter votre premier membre d'équipe.",
-    "inviteFirstUser": "Inviter Premier Utilisateur",
-    "users": "utilisateurs",
-    "joinedOn": "Rejoint le {{date}}",
-    "lastActive": "Dernière activité {{date}}",
-    "permissions": "Permissions",
-    "invitedAs": "Invité comme {{role}}",
-    "changeRole": "Changer le Rôle",
-    "changeStatus": "Changer le Statut",
-    "removeUser": "Supprimer Utilisateur",
-    "inviteTeamMember": "Inviter Membre d'Équipe",
-    "inviteLimit": "{{remaining}} sur {{total}} emplacements d'utilisateurs restants",
-    "unlimitedInvites": "Invitations utilisateur illimitées disponibles",
-    "emailAddress": "Adresse Email",
-    "emailPlaceholder": "Entrer l'adresse email",
-    "firstName": "Prénom",
-    "firstNamePlaceholder": "Entrer le prénom",
-    "lastName": "Nom de Famille",
-    "lastNamePlaceholder": "Entrer le nom de famille",
-    "role": "Rôle",
-    "selectRole": "Sélectionner un rôle",
-    "personalMessage": "Message Personnel",
-    "messagePlaceholder": "Ajouter un message personnel à l'invitation...",
-    "sendInvitation": "Envoyer Invitation",
-    "sending": "Envoi en cours...",
-    "resend": "Renvoyer",
-    "maxUsers": "Max Utilisateurs"
+  "staff": {
+    "title": "Gestion du Personnel",
+    "subtitle": "Gérer les comptes et permissions du personnel",
+    "totalEmployees": "Total Employés",
+    "addNew": "Ajouter un membre du personnel",
+    "createAccount": "Créer un compte personnel",
+    "noStaff": "Aucun membre du personnel trouvé",
+    "form": {
+      "fullName": "Nom complet",
+      "fullNamePlaceholder": "Entrez le nom du membre du personnel",
+      "nameRequired": "Le nom est requis",
+      "username": "Nom d'utilisateur",
+      "usernamePlaceholder": "ex: staff1, staff2",
+      "usernameRequired": "Le nom d'utilisateur est requis (3-20 caractères, lettres/chiffres/underscores uniquement)",
+      "phone": "Numéro de téléphone",
+      "phonePlaceholder": "+216 XX XXX XXX",
+      "password": "Mot de passe",
+      "passwordPlaceholder": "Créer un mot de passe",
+      "passwordMinLength": "Le mot de passe doit contenir au moins 6 caractères",
+      "confirmPassword": "Confirmer le mot de passe",
+      "confirmPasswordPlaceholder": "Confirmer le mot de passe",
+      "confirmPasswordRequired": "Veuillez confirmer le mot de passe",
+      "passwordMismatch": "Les mots de passe ne correspondent pas",
+      "create": "Créer un compte personnel",
+      "creating": "Création...",
+      "cancel": "Annuler"
+    },
+    "table": {
+      "name": "Nom",
+      "username": "Nom d'utilisateur",
+      "role": "Rôle",
+      "phone": "Téléphone",
+      "status": "Statut",
+      "actions": "Actions"
+    },
+    "status": {
+      "active": "Actif",
+      "inactive": "Inactif"
+    },
+    "actions": {
+      "edit": "Modifier",
+      "delete": "Supprimer"
+    }
   },
-  "roles": {
-    "owner": "Propriétaire",
-    "admin": "Administrateur",
-    "mechanic": "Mécanicien",
-    "viewer": "Observateur"
-  },
-  "permissions": {
-    "manageUsers": "Gérer les Utilisateurs",
-    "manageSettings": "Gérer les Paramètres",
-    "viewReports": "Voir les Rapports",
-    "manageInventory": "Gérer l'Inventaire",
-    "manageAppointments": "Gérer les Rendez-vous",
-    "manageInvoices": "Gérer les Factures",
-    "manageMaintenance": "Gérer la Maintenance"
-  },
-  "status": {
-    "active": "Actif",
-    "pending": "En Attente",
-    "inactive": "Inactif",
-    "suspended": "Suspendu"
-  },
-  "validation": {
-    "emailRequired": "L'adresse email est requise",
-    "emailInvalid": "Veuillez entrer une adresse email valide",
-    "roleRequired": "Veuillez sélectionner un rôle"
-  },
-  "tiers": {
-    "currentPlan": "Plan Actuel",
-    "plan": "Plan",
-    "upgrade": "Mettre à Niveau",
-    "upgradeTo": "Passer à {{tier}}",
-    "upgradeRequired": "Mise à Niveau Requise",
-    "upgradeToAddMoreUsers": "Mettez à niveau votre plan pour ajouter plus de membres d'équipe",
-    "recommended": "Recommandé",
-    "whatsIncluded": "Ce qui est Inclus",
-    "upgradeMessage": "Mettez à niveau maintenant pour ajouter plus de membres d'équipe et débloquer des fonctionnalités supplémentaires",
-    "maybeLater": "Peut-être Plus Tard",
-    "considerUpgrade": "Considérer la Mise à Niveau",
-    "upgradeNow": "Mettre à Niveau Maintenant",
-    "upgrading": "Mise à niveau...",
-    "upgradeNote": "La facturation sera calculée au prorata en fonction de votre cycle actuel.",
-    "unlimited": "Illimité",
-    "solo": "Solo",
-    "starter": "Débutant",
-    "professional": "Professionnel"
+  "onboarding": {
+    "step": "Étape",
+    "of": "sur",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "skip": "Ignorer la visite",
+    "complete": "Terminer la visite",
+    "solo": {
+      "welcome": {
+        "title": "Bienvenue sur OpAuto Solo!",
+        "description": "Faisons un tour rapide de votre système de gestion de garage. Cette visite vous aidera à démarrer avec les fonctionnalités essentielles."
+      },
+      "dashboard": {
+        "title": "Votre Tableau de Bord",
+        "description": "Ceci est votre centre de commande. Surveillez les rendez-vous du jour, les travaux actifs et les indicateurs clés en un coup d'œil."
+      },
+      "addCar": {
+        "title": "Ajouter Votre Première Voiture",
+        "description": "Commencez par enregistrer les véhicules. Cliquez ici pour ajouter les voitures des clients avec des détails comme la marque, le modèle et la plaque d'immatriculation."
+      },
+      "maintenance": {
+        "title": "Suivi de Maintenance",
+        "description": "Suivez tous les travaux de service ici. Créez de nouveaux travaux, mettez à jour le statut et gérez les réparations efficacement."
+      },
+      "invoicing": {
+        "title": "Facturation en Espèces",
+        "description": "Générez des factures pour les services terminés. Facturation simple en espèces pour vos clients."
+      },
+      "notifications": {
+        "title": "Notifications du Navigateur",
+        "description": "Restez informé avec les notifications du navigateur pour les nouveaux travaux et les mises à jour importantes."
+      },
+      "upgrade": {
+        "title": "Prêt à Grandir?",
+        "description": "Passez à Starter pour l'accès multi-utilisateur, les notifications par e-mail et les flux d'approbation. Ou passez à Professional pour la gestion des stocks et les fonctionnalités avancées!"
+      }
+    },
+    "starter": {
+      "welcome": {
+        "title": "Bienvenue sur OpAuto Starter!",
+        "description": "Vous avez débloqué de puissantes fonctionnalités de collaboration d'équipe. Explorons ce qui est nouveau pour votre garage en croissance."
+      },
+      "dashboard": {
+        "title": "Tableau de Bord Amélioré",
+        "description": "Votre tableau de bord affiche maintenant les activités de l'équipe, les demandes d'approbation et les flux de travail collaboratifs."
+      },
+      "multiUser": {
+        "title": "Gestion d'Équipe",
+        "description": "Créez des comptes pour vos mécaniciens et assistants. Chaque membre obtient son propre identifiant et accès."
+      },
+      "approvals": {
+        "title": "Flux d'Approbation",
+        "description": "Le personnel peut demander l'approbation pour les pièces et services. Vous examinez et approuvez depuis cette section."
+      },
+      "emailNotifications": {
+        "title": "Notifications par E-mail",
+        "description": "Configurez les alertes par e-mail pour les achèvements de travaux, les approbations et les mises à jour importantes."
+      },
+      "customerHistory": {
+        "title": "Historique Client",
+        "description": "Accédez à l'historique complet des services pour chaque client. Construisez de meilleures relations avec des dossiers détaillés."
+      },
+      "reports": {
+        "title": "Rapports d'Affaires",
+        "description": "Consultez les rapports de revenus, les analyses de services et les indicateurs de performance pour prendre des décisions basées sur les données."
+      },
+      "upgradePro": {
+        "title": "Passez à Professional",
+        "description": "Passez à Professional pour des utilisateurs illimités, la gestion des stocks, les notifications SMS et les rapports avancés!"
+      }
+    },
+    "professional": {
+      "welcome": {
+        "title": "Bienvenue sur OpAuto Professional!",
+        "description": "Vous avez un accès complet à toutes les fonctionnalités. Explorons les capacités avancées de votre plan Professional."
+      },
+      "dashboard": {
+        "title": "Tableau de Bord Professional",
+        "description": "Votre centre de commande complet avec une échelle illimitée, des analyses avancées et un accès complet aux fonctionnalités."
+      },
+      "inventory": {
+        "title": "Gestion des Stocks",
+        "description": "Suivez les pièces, gérez les niveaux de stock et surveillez les commandes fournisseurs. Contrôle total des stocks à portée de main."
+      },
+      "photoDocs": {
+        "title": "Documentation Photo",
+        "description": "Téléchargez des photos avant/après, documentez les réparations et fournissez des preuves visuelles aux clients."
+      },
+      "advancedReports": {
+        "title": "Analyses Avancées",
+        "description": "Accédez à des rapports détaillés, des analyses prédictives et des outils d'intelligence d'affaires pour la planification stratégique."
+      },
+      "smsNotifications": {
+        "title": "Notifications SMS",
+        "description": "Envoyez des alertes SMS aux clients et au personnel. Gardez tout le monde informé en temps réel."
+      },
+      "dataExport": {
+        "title": "Export de Données",
+        "description": "Exportez vos données dans divers formats pour la comptabilité, l'analyse ou la sauvegarde."
+      },
+      "unlimitedFeatures": {
+        "title": "Tout Illimité!",
+        "description": "Profitez d'utilisateurs illimités, de voitures, de postes de service et de toutes les fonctionnalités premium. Développez votre garage sans limites!"
+      }
+    },
+    "staff": {
+      "welcome": {
+        "title": "Bienvenue sur OpAuto!",
+        "description": "Familiarisons-nous avec votre espace de travail. Cette visite rapide vous montrera les fonctionnalités essentielles que vous utiliserez quotidiennement."
+      },
+      "dashboard": {
+        "title": "Votre Tableau de Bord",
+        "description": "Consultez vos travaux assignés, le planning du jour et les tâches actives en un coup d'œil."
+      },
+      "maintenance": {
+        "title": "Travaux de Maintenance",
+        "description": "Consultez et mettez à jour les travaux de service. Suivez votre progression et marquez les tâches comme terminées."
+      },
+      "approvalRequest": {
+        "title": "Demander des Approbations",
+        "description": "Besoin d'acheter des pièces? Demandez l'approbation du propriétaire en utilisant ce bouton."
+      },
+      "profile": {
+        "title": "Votre Profil",
+        "description": "Mettez à jour vos informations personnelles et vos préférences ici. Vous êtes prêt!"
+      },
+      "photoUpload": {
+        "title": "Documentation Photo",
+        "description": "Téléchargez des photos des réparations et des problèmes. La documentation visuelle aide à communiquer avec les clients."
+      }
+    }
   }
 }

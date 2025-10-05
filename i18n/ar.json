@@ -45,6 +45,7 @@
     "customers": "العملاء",
     "reports": "التقارير",
     "employees": "الموظفين",
+    "subscription": "الاشتراك",
     "profile": "الملف الشخصي",
     "logout": "تسجيل خروج",
     "opAuto": "أوب أوتو",
@@ -195,7 +196,15 @@
   "cars": {
     "title": "السيارات",
     "subtitle": "إدارة سجل المركبات والمعلومات",
+    "vehicles": "المركبات",
+    "vehicleUsage": "استخدام المركبات",
+    "vehicleDatabase": "قاعدة بيانات المركبات",
+    "vehicleStatistics": "إحصائيات المركبات",
+    "status": "الحالة:",
+    "unlimitedVehicles": "مركبات غير محدودة",
+    "addVehicle": "إضافة مركبة",
     "addCar": "إضافة سيارة",
+    "addVehicleToGarage": "إضافة مركبة إلى الورشة وإنشاء ملف عميل",
     "editCar": "تعديل السيارة",
     "deleteCar": "حذف السيارة",
     "carDetails": "تفاصيل السيارة",
@@ -539,6 +548,8 @@
   "customers": {
     "title": "العملاء",
     "subtitle": "إدارة معلومات العملاء وتاريخهم",
+    "customerInformation": "معلومات العميل",
+    "notProvided": "غير مقدم",
     "addCustomer": "إضافة عميل",
     "editCustomer": "تعديل العميل",
     "deleteCustomer": "حذف العميل",
@@ -672,6 +683,9 @@
       "silver": "فضي",
       "gold": "ذهبي",
       "platinum": "بلاتيني"
+    },
+    "form": {
+      "newCustomer": "عميل جديد"
     },
     "loading": "جاري تحميل العملاء..."
   },
@@ -829,7 +843,30 @@
       "activeCustomers": "العملاء النشطين",
       "mechanicUtilization": "استخدام الميكانيكي",
       "stockValue": "قيمة المخزون",
-      "customerSatisfaction": "رضا العملاء"
+      "customerSatisfaction": "رضا العملاء",
+      "revenue": "الإيرادات",
+      "newCustomers": "عملاء جدد",
+      "partsInventory": "مخزون القطع",
+      "paidRevenue": "الإيرادات المدفوعة",
+      "pendingRevenue": "الإيرادات المعلقة",
+      "overdueRevenue": "الإيرادات المتأخرة",
+      "averageInvoiceValue": "متوسط قيمة الفاتورة",
+      "taxCollected": "الضرائب المحصلة",
+      "discountsGiven": "الخصومات الممنوحة",
+      "profitMargin": "هامش الربح",
+      "revenueGrowth": "نمو الإيرادات",
+      "totalAppointments": "إجمالي المواعيد",
+      "completionRate": "معدل الإنجاز",
+      "garageCapacity": "سعة الورشة",
+      "avgServiceTime": "متوسط وقت الخدمة",
+      "repeatCustomerRate": "معدل العملاء المكررين",
+      "garageCapacityUsed": "سعة الورشة المستخدمة",
+      "totalCustomers": "إجمالي العملاء",
+      "avgCustomerValue": "متوسط قيمة العميل",
+      "retentionRate": "معدل الاحتفاظ",
+      "totalParts": "إجمالي القطع",
+      "lowStockItems": "عناصر المخزون المنخفض",
+      "turnoverRate": "معدل الدوران"
     },
     "charts": {
       "revenueTrends": {
@@ -845,11 +882,24 @@
         "title": "المقارنة الشهرية"
       }
     },
-    "kpis": {
-      "revenue": "الإيرادات",
-      "newCustomers": "عملاء جدد",
-      "partsInventory": "مخزون القطع"
-    }
+    "sections": {
+      "revenueBreakdown": "تفصيل الإيرادات",
+      "growthAnalysis": "تحليل النمو",
+      "servicePerformance": "أداء الخدمات",
+      "efficiencyMetrics": "مقاييس الكفاءة",
+      "basicSummary": "ملخص أساسي"
+    },
+    "upgrade": {
+      "title": "ترقية لفتح التقارير المتقدمة",
+      "description": "احصل على تحليلات ورسوم بيانية ورؤى تفصيلية مع باقة المبتدئين أو المحترفين",
+      "cta": "عرض الباقات",
+      "soloMessage": "تتضمن باقة Solo الخاصة بك ملخصات أساسية يومية وأسبوعية. قم بالترقية للوصول إلى لوحات المعلومات والتحليلات التفصيلية."
+    },
+    "periods": {
+      "thisMonth": "هذا الشهر",
+      "lastMonth": "الشهر الماضي"
+    },
+    "loading": "جارِ تحميل التقارير..."
   },
   "settings": {
     "title": "الإعدادات",
@@ -1252,6 +1302,9 @@
     "login": {
       "title": "أهلاً بعودتك",
       "subtitle": "قم بتسجيل الدخول إلى حسابك",
+      "emailOrUsernameLabel": "البريد الإلكتروني / اسم المستخدم",
+      "emailOrUsernamePlaceholder": "أدخل البريد الإلكتروني أو اسم المستخدم",
+      "emailOrUsernameRequired": "البريد الإلكتروني أو اسم المستخدم مطلوب",
       "emailLabel": "عنوان البريد الإلكتروني",
       "emailPlaceholder": "أدخل بريدك الإلكتروني",
       "emailRequired": "عنوان بريد إلكتروني صحيح مطلوب",
@@ -1307,6 +1360,8 @@
     },
     "demo": {
       "title": "بيانات اعتماد التجربة",
+      "owner": "المالك",
+      "staff": "الموظف",
       "admin": "المدير",
       "mechanic": "الميكانيكي",
       "adminCredentials": "admin@opauto.tn / admin123",
@@ -1349,7 +1404,10 @@
       "smsNotifications": "إشعارات الرسائل النصية",
       "smsNotificationsDescription": "تلقي الإشعارات عبر الرسائل النصية",
       "browserNotifications": "إشعارات المتصفح",
-      "browserNotificationsDescription": "عرض إشعارات سطح المكتب"
+      "browserNotificationsDescription": "عرض إشعارات سطح المكتب",
+      "onboardingTour": "جولة التعريف",
+      "onboardingTourDescription": "إعادة تشغيل الجولة التفاعلية للتعرف على ميزات OpAuto",
+      "restartTour": "إعادة تشغيل الجولة"
     },
     "security": {
       "securityReminderTitle": "تذكير أمني",
@@ -1710,12 +1768,14 @@
       "message": "لا توجد طلبات تحتاج إلى موافقة في الوقت الحالي"
     },
     "type": {
-      "parts_purchase": "شراء القطع",
-      "repair_estimate": "تقدير الإصلاح",
-      "overtime_work": "العمل الإضافي",
-      "custom_work": "عمل مخصص",
-      "refund": "استرداد",
-      "warranty_claim": "مطالبة الضمان"
+      "part_purchase": "شراء قطعة غيار",
+      "service_approval": "الموافقة على خدمة",
+      "customer_credit": "رصيد العميل",
+      "overtime_request": "طلب ساعات إضافية",
+      "expense_claim": "مطالبة بالمصروفات",
+      "discount_request": "طلب خصم",
+      "refund_request": "طلب استرداد",
+      "other": "أخرى"
     },
     "status": {
       "pending": "في الانتظار",
@@ -1729,6 +1789,298 @@
       "medium": "متوسط",
       "high": "عالي",
       "urgent": "عاجل"
+    }
+  },
+  "tiers": {
+    "solo": "سولو",
+    "starter": "المبتدئ",
+    "professional": "المحترف",
+    "pro": "محترف",
+    "plan": "باقة:",
+    "current": "الباقة الحالية",
+    "popular": "الأكثر شعبية",
+    "upgrade": "ترقية",
+    "downgrade": "تراجع",
+    "month": "شهر",
+    "choosePlan": "اختر باقتك",
+    "upgradeTitle": "افتح المزيد من الميزات",
+    "upgradeToPro": "الترقية إلى المحترف",
+    "upgradeForPhotos": "قم بالترقية للوصول إلى توثيق الصور",
+    "unlockFeature": "افتح الميزة المميزة"
+  },
+  "subscription": {
+    "title": "باقات الاشتراك",
+    "subtitle": "اختر الباقة المثالية لورشتك",
+    "current_plan": "الباقة الحالية",
+    "most_popular": "الأكثر شعبية",
+    "compare_plans": "مقارنة الباقات",
+    "upgrade_to": "الترقية إلى {{tier}}",
+    "downgrade_to": "التراجع إلى {{tier}}",
+    "downgrade_blocked": "لا يمكن التراجع",
+    "why_blocked": "أنت تستخدم حاليًا ميزات من باقتك الحالية",
+    "per_year": "سنويًا",
+    "days_left": "{{days}} يومًا حتى التجديد",
+    "next_billing": "الفوترة القادمة: {{date}}",
+    "included_features": "الميزات المتضمنة",
+    "unlimited": "غير محدود",
+    "used": "{{used}} من {{limit}} مستخدم",
+    "usage": {
+      "users": "المستخدمون",
+      "cars": "السيارات",
+      "service_bays": "مواقع الخدمة"
+    },
+    "tooltips": {
+      "current_plan_badge": "باقة اشتراكك الحالية",
+      "price_info": "يتم الدفع سنويًا. تشمل جميع ميزات باقتك.",
+      "usage_labels": "تتبع استخدامك الحالي مقابل حدود الباقة",
+      "usage_within_limits": "الاستخدام ضمن الحدود",
+      "approaching_limit": "تقترب من الحد! فكر في الترقية.",
+      "upgrade_button": "انقر للترقية وفتح المزيد من الميزات",
+      "downgrade_blocked_section": "استخدامك الحالي يتجاوز حدود هذه الباقة",
+      "why_blocked_button": "انقر لمعرفة قيود التراجع التفصيلية"
+    },
+    "features": {
+      "single_user": "وصول مستخدم واحد",
+      "unlimited_appointments": "مواعيد غير محدودة",
+      "manual_booking": "حجز يدوي",
+      "cash_invoicing": "فواتير نقدية",
+      "basic_reports": "تقارير أساسية",
+      "browser_notifications": "إشعارات المتصفح",
+      "mobile_responsive": "متوافق مع الهاتف المحمول",
+      "multi_language": "دعم متعدد اللغات",
+      "multi_user": "وصول متعدد المستخدمين",
+      "email_notifications": "إشعارات البريد الإلكتروني",
+      "internal_approvals": "موافقات داخلية",
+      "service_workflow": "سير عمل الخدمة",
+      "customer_history": "سجل العملاء",
+      "photos_documentation": "صور ووثائق",
+      "inventory_management": "إدارة المخزون",
+      "sms_notifications": "إشعارات الرسائل النصية",
+      "advanced_reports": "تقارير متقدمة",
+      "data_export": "تصدير البيانات",
+      "employee_tracking": "تتبع الموظفين",
+      "appointment_management": "إدارة المواعيد",
+      "invoice_discounts": "خصومات الفواتير",
+      "unlimited_users": "مستخدمون غير محدودون",
+      "unlimited_service_bays": "مواقع خدمة غير محدودة",
+      "multi_bay_scheduling": "جدولة متعددة المواقع",
+      "custom_invoice_templates": "قوالب فواتير مخصصة",
+      "supplier_database": "قاعدة بيانات الموردين",
+      "priority_support": "دعم ذو أولوية"
+    },
+    "why_upgrade": {
+      "title": "لماذا الترقية؟"
+    },
+    "benefits": {
+      "growth": {
+        "title": "قم بتوسيع أعمالك",
+        "description": "أضف عددًا غير محدود من المستخدمين، وأدِر المزيد من المركبات، ووسّع عملياتك دون حدود."
+      },
+      "efficiency": {
+        "title": "حسّن الكفاءة",
+        "description": "بسّط سير العمل بميزات متقدمة مثل إدارة المخزون، وتوثيق الصور، وأنظمة الموافقة."
+      },
+      "insights": {
+        "title": "رؤى أفضل",
+        "description": "اتخذ قرارات مستنيرة بالبيانات مع التحليلات المتقدمة والتقارير التفصيلية وإمكانيات التصدير."
+      }
+    },
+    "faq": {
+      "title": "الأسئلة الشائعة",
+      "billing": {
+        "question": "كيف تعمل الفوترة؟",
+        "answer": "يتم إصدار فواتير الباقات سنويًا. يمكنك الترقية أو التراجع في أي وقت، وسيتم تطبيق التغييرات في دورة الفوترة التالية."
+      },
+      "cancellation": {
+        "question": "هل يمكنني الإلغاء في أي وقت؟",
+        "answer": "نعم، يمكنك إلغاء اشتراكك في أي وقت. ستستمر في الوصول حتى نهاية فترة الفوترة الحالية."
+      },
+      "support": {
+        "question": "ما هو الدعم الذي أحصل عليه؟",
+        "answer": "جميع الباقات تشمل الدعم عبر البريد الإلكتروني. تشمل الباقة الاحترافية دعمًا ذا أولوية مع أوقات استجابة أسرع ومساعدة مخصصة."
+      }
+    },
+    "contact": {
+      "title": "هل تحتاج مساعدة في الاختيار؟",
+      "description": "فريقنا هنا لمساعدتك في العثور على الباقة المثالية لورشتك.",
+      "email": "راسلنا عبر البريد",
+      "phone": "اتصل بنا"
+    }
+  },
+  "staff": {
+    "title": "إدارة الموظفين",
+    "subtitle": "إدارة حسابات وصلاحيات الموظفين",
+    "totalEmployees": "إجمالي الموظفين",
+    "addNew": "إضافة موظف",
+    "createAccount": "إنشاء حساب موظف",
+    "noStaff": "لا يوجد موظفون",
+    "form": {
+      "fullName": "الاسم الكامل",
+      "fullNamePlaceholder": "أدخل اسم الموظف",
+      "nameRequired": "الاسم مطلوب",
+      "username": "اسم المستخدم",
+      "usernamePlaceholder": "مثال: staff1، staff2",
+      "usernameRequired": "اسم المستخدم مطلوب (3-20 حرفًا، حروف/أرقام/شرطة سفلية فقط)",
+      "phone": "رقم الهاتف",
+      "phonePlaceholder": "+216 XX XXX XXX",
+      "password": "كلمة المرور",
+      "passwordPlaceholder": "إنشاء كلمة مرور",
+      "passwordMinLength": "يجب أن تتكون كلمة المرور من 6 أحرف على الأقل",
+      "confirmPassword": "تأكيد كلمة المرور",
+      "confirmPasswordPlaceholder": "تأكيد كلمة المرور",
+      "confirmPasswordRequired": "يرجى تأكيد كلمة المرور",
+      "passwordMismatch": "كلمات المرور غير متطابقة",
+      "create": "إنشاء حساب موظف",
+      "creating": "جاري الإنشاء...",
+      "cancel": "إلغاء"
+    },
+    "table": {
+      "name": "الاسم",
+      "username": "اسم المستخدم",
+      "role": "الدور",
+      "phone": "الهاتف",
+      "status": "الحالة",
+      "actions": "الإجراءات"
+    },
+    "status": {
+      "active": "نشط",
+      "inactive": "غير نشط"
+    },
+    "actions": {
+      "edit": "تعديل",
+      "delete": "حذف"
+    }
+  },
+  "onboarding": {
+    "step": "خطوة",
+    "of": "من",
+    "next": "التالي",
+    "previous": "السابق",
+    "skip": "تخطي الجولة",
+    "complete": "إنهاء الجولة",
+    "solo": {
+      "welcome": {
+        "title": "مرحبًا بك في OpAuto Solo!",
+        "description": "لنقم بجولة سريعة في نظام إدارة الورشة الخاص بك. ستساعدك هذه الجولة على البدء بالميزات الأساسية."
+      },
+      "dashboard": {
+        "title": "لوحة التحكم الخاصة بك",
+        "description": "هذا هو مركز القيادة الخاص بك. راقب مواعيد اليوم والأعمال النشطة والمؤشرات الرئيسية في لمحة."
+      },
+      "addCar": {
+        "title": "أضف سيارتك الأولى",
+        "description": "ابدأ بتسجيل المركبات. انقر هنا لإضافة سيارات العملاء مع تفاصيل مثل العلامة التجارية والطراز ولوحة الترخيص."
+      },
+      "maintenance": {
+        "title": "تتبع الصيانة",
+        "description": "تتبع جميع أعمال الخدمة هنا. قم بإنشاء أعمال جديدة وتحديث الحالة وإدارة الإصلاحات بكفاءة."
+      },
+      "invoicing": {
+        "title": "الفواتير النقدية",
+        "description": "إنشاء فواتير للخدمات المكتملة. فوترة نقدية بسيطة لعملائك."
+      },
+      "notifications": {
+        "title": "إشعارات المتصفح",
+        "description": "ابق على اطلاع بإشعارات المتصفح للأعمال الجديدة والتحديثات المهمة."
+      },
+      "upgrade": {
+        "title": "هل أنت مستعد للنمو؟",
+        "description": "قم بالترقية إلى Starter للوصول متعدد المستخدمين وإشعارات البريد الإلكتروني وسير عمل الموافقة. أو انتقل إلى Professional لإدارة المخزون والميزات المتقدمة!"
+      }
+    },
+    "starter": {
+      "welcome": {
+        "title": "مرحبًا بك في OpAuto Starter!",
+        "description": "لقد فتحت ميزات تعاون الفريق القوية. لنستكشف ما الجديد لورشتك المتنامية."
+      },
+      "dashboard": {
+        "title": "لوحة التحكم المحسنة",
+        "description": "تعرض لوحة التحكم الآن أنشطة الفريق وطلبات الموافقة وسير العمل التعاوني."
+      },
+      "multiUser": {
+        "title": "إدارة الفريق",
+        "description": "أنشئ حسابات للميكانيكيين والمساعدين. يحصل كل عضو على تسجيل دخول ووصول خاص به."
+      },
+      "approvals": {
+        "title": "سير عمل الموافقة",
+        "description": "يمكن للموظفين طلب الموافقة على القطع والخدمات. يمكنك المراجعة والموافقة من هذا القسم."
+      },
+      "emailNotifications": {
+        "title": "إشعارات البريد الإلكتروني",
+        "description": "قم بتكوين تنبيهات البريد الإلكتروني لإكمال الأعمال والموافقات والتحديثات المهمة."
+      },
+      "customerHistory": {
+        "title": "سجل العملاء",
+        "description": "الوصول إلى سجل الخدمة الكامل لكل عميل. بناء علاقات أفضل مع سجلات مفصلة."
+      },
+      "reports": {
+        "title": "تقارير الأعمال",
+        "description": "عرض تقارير الإيرادات وتحليلات الخدمة ومقاييس الأداء لاتخاذ قرارات مبنية على البيانات."
+      },
+      "upgradePro": {
+        "title": "انتقل إلى Professional",
+        "description": "قم بالترقية إلى Professional للحصول على مستخدمين غير محدودين وإدارة المخزون وإشعارات الرسائل القصيرة والتقارير المتقدمة!"
+      }
+    },
+    "professional": {
+      "welcome": {
+        "title": "مرحبًا بك في OpAuto Professional!",
+        "description": "لديك وصول كامل إلى جميع الميزات. لنستكشف القدرات المتقدمة لخطتك Professional."
+      },
+      "dashboard": {
+        "title": "لوحة التحكم Professional",
+        "description": "مركز القيادة الكامل الخاص بك مع نطاق غير محدود وتحليلات متقدمة ووصول كامل للميزات."
+      },
+      "inventory": {
+        "title": "إدارة المخزون",
+        "description": "تتبع القطع وإدارة مستويات المخزون ومراقبة طلبات الموردين. تحكم كامل في المخزون في متناول يدك."
+      },
+      "photoDocs": {
+        "title": "توثيق الصور",
+        "description": "قم بتحميل صور قبل/بعد وتوثيق الإصلاحات وتقديم أدلة بصرية للعملاء."
+      },
+      "advancedReports": {
+        "title": "التحليلات المتقدمة",
+        "description": "الوصول إلى تقارير مفصلة وتحليلات تنبؤية وأدوات ذكاء الأعمال للتخطيط الاستراتيجي."
+      },
+      "smsNotifications": {
+        "title": "إشعارات الرسائل القصيرة",
+        "description": "إرسال تنبيهات الرسائل القصيرة للعملاء والموظفين. إبقاء الجميع على اطلاع في الوقت الفعلي."
+      },
+      "dataExport": {
+        "title": "تصدير البيانات",
+        "description": "قم بتصدير بياناتك بتنسيقات مختلفة للمحاسبة أو التحليل أو النسخ الاحتياطي."
+      },
+      "unlimitedFeatures": {
+        "title": "كل شيء غير محدود!",
+        "description": "استمتع بمستخدمين غير محدودين وسيارات ومواقف خدمة وجميع الميزات المميزة. قم بتوسيع ورشتك دون قيود!"
+      }
+    },
+    "staff": {
+      "welcome": {
+        "title": "مرحبًا بك في OpAuto!",
+        "description": "لنتعرف على مساحة العمل الخاصة بك. ستوضح لك هذه الجولة السريعة الميزات الأساسية التي ستستخدمها يوميًا."
+      },
+      "dashboard": {
+        "title": "لوحة التحكم الخاصة بك",
+        "description": "شاهد أعمالك المعينة وجدول اليوم والمهام النشطة في لمحة."
+      },
+      "maintenance": {
+        "title": "أعمال الصيانة",
+        "description": "عرض وتحديث أعمال الخدمة. تتبع تقدم عملك وقم بوضع علامة على المهام كمكتملة."
+      },
+      "approvalRequest": {
+        "title": "طلب الموافقات",
+        "description": "هل تحتاج إلى شراء قطع؟ اطلب الموافقة من المالك باستخدام هذا الزر."
+      },
+      "profile": {
+        "title": "ملفك الشخصي",
+        "description": "قم بتحديث معلوماتك الشخصية وتفضيلاتك هنا. أنت جاهز!"
+      },
+      "photoUpload": {
+        "title": "توثيق الصور",
+        "description": "قم بتحميل صور الإصلاحات والمشاكل. يساعد التوثيق البصري في التواصل مع العملاء."
+      }
     }
   }
 }

@@ -31,11 +31,7 @@
     "price": "Price",
     "quantity": "Quantity",
     "notes": "Notes",
-    "clearFilters": "Clear Filters",
-    "filtersActive": "Filters Active",
-    "optional": "Optional",
-    "month": "month",
-    "year": "year"
+    "clearFilters": "Clear Filters"
   },
   "navigation": {
     "main": "Main",
@@ -49,7 +45,6 @@
     "customers": "Customers",
     "reports": "Reports",
     "employees": "Employees",
-    "users": "Team Management",
     "subscription": "Subscription",
     "profile": "Profile",
     "logout": "Logout",
@@ -201,7 +196,15 @@
   "cars": {
     "title": "Cars",
     "subtitle": "Manage vehicle registry and information",
+    "vehicles": "Vehicles",
+    "vehicleUsage": "Vehicle Usage",
+    "vehicleDatabase": "Vehicle Database",
+    "vehicleStatistics": "Vehicle Statistics",
+    "status": "Status:",
+    "unlimitedVehicles": "Unlimited vehicles",
+    "addVehicle": "Add Vehicle",
     "addCar": "Add Car",
+    "addVehicleToGarage": "Add vehicle to garage and create customer record",
     "registerNewCar": "Register New Car",
     "editCar": "Edit Car",
     "deleteCar": "Delete Car",
@@ -251,7 +254,6 @@
     "upToDate": "Up to Date",
     "dueSoon": "Due Soon",
     "overdue": "Overdue",
-    "status": "Status",
     "allMakes": "All Makes",
     "allStatus": "All Status",
     "statusLegend": "Status Legend",
@@ -263,17 +265,7 @@
     "totalServices": "Total Services",
     "nextDue": "Next Due",
     "schedule": "Schedule",
-    "history": "History",
-    "vehicleDatabase": "Vehicle Database",
-    "vehicleStatistics": "Vehicle Statistics",
-    "vehicles": "Vehicles",
-    "addVehicle": "Add Vehicle",
-    "limitReached": "Vehicle Limit Reached",
-    "limitReachedDescription": "You've reached the {{limit}} vehicle limit for your {{tier}} plan. Upgrade to add more vehicles.",
-    "approachingLimit": "You have {{remaining}} vehicle slots remaining",
-    "approachingLimitDescription": "Consider upgrading your plan to avoid hitting the vehicle limit.",
-    "vehicleUsage": "Vehicle Usage",
-    "unlimitedVehicles": "Unlimited Vehicles"
+    "history": "History"
   },
   "maintenance": {
     "title": "Maintenance",
@@ -384,31 +376,6 @@
         "today": "Today",
         "thisWeek": "This Week"
       }
-    },
-    "new": {
-      "title": "New Maintenance Job",
-      "editTitle": "Edit Maintenance Job",
-      "subtitle": "Create a new maintenance or repair job",
-      "basicInfo": "Basic Information",
-      "vehicle": "Vehicle",
-      "selectVehicle": "Select a vehicle",
-      "assignedMechanic": "Assigned Mechanic",
-      "selectMechanic": "Select a mechanic",
-      "jobTitle": "Job Title",
-      "jobTitlePlaceholder": "e.g., Brake Repair, Oil Change",
-      "priority": "Priority",
-      "currentMileage": "Current Mileage (km)",
-      "estimatedCost": "Estimated Cost (TND)",
-      "description": "Description",
-      "descriptionPlaceholder": "Describe the issue, symptoms, or maintenance required...",
-      "additionalNotes": "Additional Notes",
-      "additionalNotesPlaceholder": "Any additional information or special instructions...",
-      "tasks": "Tasks",
-      "addTask": "Add Task",
-      "noTasks": "No tasks added yet. Click \"Add Task\" to get started.",
-      "cancel": "Cancel",
-      "createJob": "Create Job",
-      "updateJob": "Update Job"
     }
   },
   "inventory": {
@@ -483,49 +450,21 @@
       "accessories": "Accessories",
       "consumables": "Consumables"
     },
+    "units": {
+      "piece": "Piece",
+      "liter": "Liter",
+      "kg": "Kilogram",
+      "meter": "Meter",
+      "pair": "Pair",
+      "set": "Set",
+      "bottle": "Bottle",
+      "box": "Box"
+    },
     "stockStatus": {
       "inStock": "In Stock",
       "lowStock": "Low Stock",
       "outOfStock": "Out of Stock",
       "ordered": "Ordered"
-    },
-    "parts": {
-      "addNewPart": "Add New Part",
-      "editPart": "Edit Part",
-      "createPart": "Create Part",
-      "updatePart": "Update Part",
-      "partName": "Part Name",
-      "partNumber": "Part Number",
-      "description": "Description",
-      "category": "Category",
-      "brand": "Brand",
-      "supplier": "Supplier",
-      "unit": "Unit",
-      "price": "Price",
-      "currency": "Currency",
-      "currentStock": "Current Stock",
-      "minStockLevel": "Min Stock Level",
-      "maxStockLevel": "Max Stock Level",
-      "storageLocation": "Storage Location",
-      "activePart": "Active part (available for use)",
-      "enterPartName": "Enter part name",
-      "enterPartNumber": "Enter part number",
-      "enterDescription": "Enter part description",
-      "selectCategory": "Select category",
-      "enterBrand": "Enter brand name",
-      "selectSupplier": "Select supplier",
-      "selectUnit": "Select unit",
-      "optional": "Optional",
-      "locationPlaceholder": "e.g., Shelf A-1, Tire Rack 2",
-      "partNameRequired": "Part name is required",
-      "partNumberRequired": "Part number is required",
-      "categoryRequired": "Category is required",
-      "brandRequired": "Brand is required",
-      "supplierRequired": "Supplier is required",
-      "unitRequired": "Unit is required",
-      "priceRequired": "Valid price is required",
-      "stockLevelRequired": "Stock level is required",
-      "minStockLevelRequired": "Minimum stock level is required"
     },
     "partsCatalog": {
       "hideFilters": "Hide Filters",
@@ -593,11 +532,55 @@
     "bankTransfer": "Bank Transfer",
     "notes": "Notes",
     "terms": "Terms & Conditions",
-    "noInvoices": "No invoices found"
+    "noInvoices": "No invoices found",
+    "create": {
+      "title": "Create Invoice",
+      "editTitle": "Edit Invoice",
+      "subtitle": "Generate a new invoice for completed services",
+      "editSubtitle": "Update invoice details",
+      "invoiceDetails": "Invoice Details",
+      "customer": "Customer",
+      "selectCustomer": "Select Customer",
+      "customerRequired": "Customer is required",
+      "vehicle": "Vehicle",
+      "selectVehicle": "Select Vehicle", 
+      "vehicleRequired": "Vehicle is required",
+      "issueDate": "Issue Date",
+      "dueDate": "Due Date",
+      "paymentTerms": "Payment Terms",
+      "paymentTermsPlaceholder": "e.g., Net 30 days",
+      "lineItems": "Line Items",
+      "addItem": "Add Item",
+      "item": "Item",
+      "type": "Type",
+      "description": "Description",
+      "itemDescription": "Enter item description",
+      "selectPart": "Select Part",
+      "selectPartOptional": "Select a part (optional)",
+      "selectService": "Select Service",
+      "selectServiceOptional": "Select a service (optional)",
+      "quantity": "Quantity",
+      "unit": "Unit",
+      "unitPlaceholder": "e.g., pcs, hours",
+      "unitPrice": "Unit Price",
+      "total": "Total",
+      "additionalNotes": "Additional Notes",
+      "notesPlaceholder": "Enter any additional notes or terms",
+      "invoiceSummary": "Invoice Summary",
+      "subtotal": "Subtotal",
+      "discount": "Discount",
+      "tax": "Tax",
+      "createInvoice": "Create Invoice",
+      "updateInvoice": "Update Invoice",
+      "saveAsDraft": "Save as Draft",
+      "loadingFormData": "Loading form data..."
+    }
   },
   "customers": {
     "title": "Customers",
     "subtitle": "Manage customer information and history",
+    "customerInformation": "Customer Information",
+    "notProvided": "Not provided",
     "addCustomer": "Add Customer",
     "editCustomer": "Edit Customer",
     "deleteCustomer": "Delete Customer",
@@ -735,9 +718,12 @@
     },
     "loyaltyTiers": {
       "bronze": "Bronze",
-      "silver": "Silver", 
+      "silver": "Silver",
       "gold": "Gold",
       "platinum": "Platinum"
+    },
+    "form": {
+      "newCustomer": "New Customer"
     },
     "loading": "Loading customers..."
   },
@@ -833,6 +819,20 @@
   "reports": {
     "title": "Reports",
     "subtitle": "Business insights and analytics",
+    "navigation": {
+      "dashboard": "Dashboard",
+      "financial": "Financial",
+      "operational": "Operational",
+      "customer": "Customer",
+      "inventory": "Inventory"
+    },
+    "actions": {
+      "refresh": "Refresh",
+      "export": "Export"
+    },
+    "filters": {
+      "to": "to"
+    },
     "salesReport": "Sales Report",
     "serviceReport": "Service Report",
     "inventoryReport": "Inventory Report",
@@ -855,7 +855,89 @@
     "topServices": "Top Services",
     "topCustomers": "Top Customers",
     "partsUsage": "Parts Usage",
-    "noReports": "No reports available"
+    "noReports": "No reports available",
+    "datePresets": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "thisWeek": "This Week",
+      "lastWeek": "Last Week",
+      "thisMonth": "This Month",
+      "lastMonth": "Last Month",
+      "thisQuarter": "This Quarter",
+      "lastQuarter": "Last Quarter",
+      "thisYear": "This Year",
+      "lastYear": "Last Year",
+      "last30Days": "Last 30 Days",
+      "last90Days": "Last 90 Days",
+      "last365Days": "Last 365 Days",
+      "custom": "Custom"
+    },
+    "export": {
+      "exporting": "Exporting to {{format}}..."
+    },
+    "kpis": {
+      "totalRevenue": "Total Revenue",
+      "appointments": "Appointments",
+      "activeCustomers": "Active Customers",
+      "mechanicUtilization": "Mechanic Utilization",
+      "stockValue": "Stock Value",
+      "customerSatisfaction": "Customer Satisfaction",
+      "revenue": "Revenue",
+      "newCustomers": "New Customers",
+      "partsInventory": "Parts Inventory",
+      "paidRevenue": "Paid Revenue",
+      "pendingRevenue": "Pending Revenue",
+      "overdueRevenue": "Overdue Revenue",
+      "averageInvoiceValue": "Average Invoice Value",
+      "taxCollected": "Tax Collected",
+      "discountsGiven": "Discounts Given",
+      "profitMargin": "Profit Margin",
+      "revenueGrowth": "Revenue Growth",
+      "totalAppointments": "Total Appointments",
+      "completionRate": "Completion Rate",
+      "garageCapacity": "Garage Capacity",
+      "avgServiceTime": "Average Service Time",
+      "repeatCustomerRate": "Repeat Customer Rate",
+      "garageCapacityUsed": "Garage Capacity Used",
+      "totalCustomers": "Total Customers",
+      "avgCustomerValue": "Average Customer Value",
+      "retentionRate": "Retention Rate",
+      "totalParts": "Total Parts",
+      "lowStockItems": "Low Stock Items",
+      "turnoverRate": "Turnover Rate"
+    },
+    "charts": {
+      "revenueTrends": {
+        "title": "Revenue Trends"
+      },
+      "serviceDistribution": {
+        "title": "Services by Type"
+      },
+      "appointmentStatus": {
+        "title": "Appointments by Status"
+      },
+      "monthlyComparison": {
+        "title": "Monthly Comparison"
+      }
+    },
+    "sections": {
+      "revenueBreakdown": "Revenue Breakdown",
+      "growthAnalysis": "Growth Analysis",
+      "servicePerformance": "Service Performance",
+      "efficiencyMetrics": "Efficiency Metrics",
+      "basicSummary": "Basic Summary"
+    },
+    "upgrade": {
+      "title": "Upgrade to Unlock Advanced Reports",
+      "description": "Get detailed analytics, charts, and insights with Starter or Professional tier",
+      "cta": "View Plans",
+      "soloMessage": "Your Solo tier includes basic daily and weekly summaries. Upgrade to access detailed dashboards and analytics."
+    },
+    "periods": {
+      "thisMonth": "This Month",
+      "lastMonth": "Last Month"
+    },
+    "loading": "Loading reports..."
   },
   "settings": {
     "title": "Settings",
@@ -1258,6 +1340,9 @@
     "login": {
       "title": "Welcome Back",
       "subtitle": "Sign in to your account",
+      "emailOrUsernameLabel": "Email / Username",
+      "emailOrUsernamePlaceholder": "Enter email or username",
+      "emailOrUsernameRequired": "Email or username is required",
       "emailLabel": "Email Address",
       "emailPlaceholder": "Enter your email",
       "emailRequired": "Valid email is required",
@@ -1313,13 +1398,55 @@
     },
     "demo": {
       "title": "Demo Credentials",
-      "admin": "Admin",
-      "mechanic": "Mechanic",
-      "adminCredentials": "admin@opauto.tn / admin123",
-      "mechanicCredentials": "mechanic@opauto.tn / mech123"
+      "owner": "Owner",
+      "staff": "Staff"
     },
     "footer": {
       "systemName": "OpAuto Garage Management System v1.0"
+    }
+  },
+  "staff": {
+    "title": "Staff Management",
+    "subtitle": "Manage staff accounts and permissions",
+    "totalEmployees": "Total Employees",
+    "addNew": "Add Staff Member",
+    "createAccount": "Create Staff Account",
+    "noStaff": "No staff members found",
+    "form": {
+      "fullName": "Full Name",
+      "fullNamePlaceholder": "Enter staff member name",
+      "nameRequired": "Name is required",
+      "username": "Username",
+      "usernamePlaceholder": "e.g., staff1, staff2",
+      "usernameRequired": "Username is required (3-20 characters, letters/numbers/underscores only)",
+      "phone": "Phone Number",
+      "phonePlaceholder": "+216 XX XXX XXX",
+      "password": "Password",
+      "passwordPlaceholder": "Create password",
+      "passwordMinLength": "Password must be at least 6 characters",
+      "confirmPassword": "Confirm Password",
+      "confirmPasswordPlaceholder": "Confirm password",
+      "confirmPasswordRequired": "Please confirm password",
+      "passwordMismatch": "Passwords do not match",
+      "create": "Create Staff Account",
+      "creating": "Creating...",
+      "cancel": "Cancel"
+    },
+    "table": {
+      "name": "Name",
+      "username": "Username",
+      "role": "Role",
+      "phone": "Phone",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "actions": {
+      "edit": "Edit",
+      "delete": "Delete"
     }
   },
   "profile": {
@@ -1355,7 +1482,10 @@
       "smsNotifications": "SMS Notifications",
       "smsNotificationsDescription": "Receive notifications via SMS",
       "browserNotifications": "Browser Notifications",
-      "browserNotificationsDescription": "Show desktop notifications"
+      "browserNotificationsDescription": "Show desktop notifications",
+      "onboardingTour": "Onboarding Tour",
+      "onboardingTourDescription": "Restart the interactive tour to learn about OpAuto features",
+      "restartTour": "Restart Tour"
     },
     "security": {
       "securityReminderTitle": "Security Reminder",
@@ -1392,6 +1522,40 @@
   "invoicing": {
     "title": "Invoicing",
     "subtitle": "Generate and manage invoices",
+    "allInvoices": "All Invoices",
+    "createInvoice": "Create Invoice",
+    "pendingPayment": "Pending Payment",
+    "editInvoice": "Edit Invoice",
+    "deleteInvoice": "Delete Invoice",
+    "viewInvoice": "View Invoice",
+    "printInvoice": "Print Invoice",
+    "invoiceNumber": "Invoice Number",
+    "invoiceDate": "Invoice Date",
+    "dueDate": "Due Date",
+    "customerInfo": "Customer Information",
+    "billTo": "Bill To",
+    "items": "Items",
+    "services": "Services",
+    "addItem": "Add Item",
+    "itemDescription": "Item Description",
+    "unitPrice": "Unit Price",
+    "quantity": "Quantity",
+    "total": "Total",
+    "subtotal": "Subtotal",
+    "tax": "Tax",
+    "discount": "Discount",
+    "grandTotal": "Grand Total",
+    "paid": "Paid",
+    "unpaid": "Unpaid",
+    "overdue": "Overdue",
+    "paymentStatus": "Payment Status",
+    "paymentMethod": "Payment Method",
+    "cash": "Cash",
+    "card": "Card",
+    "bankTransfer": "Bank Transfer",
+    "notes": "Notes",
+    "terms": "Terms & Conditions",
+    "noInvoices": "No invoices found",
     "navigation": {
       "dashboard": "Dashboard",
       "allInvoices": "All Invoices",
@@ -1412,312 +1576,435 @@
       "invoices": "invoices"
     },
     "status": {
-      "sent": "Sent",
-      "paid": "Paid",
-      "overdue": "Overdue",
       "draft": "Draft",
-      "cancelled": "Cancelled"
+      "sent": "Sent",
+      "viewed": "Viewed",
+      "paid": "Paid",
+      "partiallyPaid": "Partially Paid",
+      "overdue": "Overdue",
+      "cancelled": "Cancelled",
+      "refunded": "Refunded"
     },
     "paymentMethods": {
       "cash": "Cash",
       "card": "Card",
       "transfer": "Transfer",
-      "check": "Check"
-    },
-    "create": {
-      "title": "Create Invoice",
-      "editTitle": "Edit Invoice",
-      "subtitle": "Generate a new invoice for completed services",
-      "editSubtitle": "Modify existing invoice details",
-      "invoiceDetails": "Invoice Details",
-      "customer": "Customer",
-      "selectCustomer": "Select Customer",
-      "customerRequired": "Customer is required",
-      "vehicle": "Vehicle",
-      "selectVehicle": "Select Vehicle",
-      "vehicleRequired": "Vehicle is required",
-      "issueDate": "Issue Date",
-      "dueDate": "Due Date",
-      "paymentTerms": "Payment Terms",
-      "paymentTermsPlaceholder": "e.g., Net 30 days",
-      "lineItems": "Line Items",
-      "addItem": "Add Item",
-      "item": "Item",
-      "type": "Type",
-      "description": "Description",
-      "itemDescription": "Item description",
-      "selectPart": "Select Part",
-      "selectPartOptional": "Select part (optional)",
-      "selectService": "Select Service",
-      "selectServiceOptional": "Select service (optional)",
-      "quantity": "Quantity",
-      "unit": "Unit",
-      "unitPlaceholder": "e.g., pcs, hours",
-      "unitPrice": "Unit Price",
-      "total": "Total",
-      "additionalNotes": "Additional Notes",
-      "notesPlaceholder": "Add any special notes or conditions...",
-      "invoiceSummary": "Invoice Summary",
-      "subtotal": "Subtotal",
-      "discount": "Discount",
-      "tax": "Tax",
-      "createInvoice": "Create Invoice",
-      "updateInvoice": "Update Invoice",
-      "saveAsDraft": "Save as Draft",
-      "loadingFormData": "Loading form data..."
-    },
-    "pending": {
-      "title": "Pending Payments",
-      "invoices": "invoices",
-      "due": "Due",
-      "viewDetails": "View Details",
-      "recordPayment": "Record Payment",
-      "allCaughtUp": "All caught up!",
-      "noPendingPayments": "No pending payments at the moment"
-    },
-    "list": {
-      "hideFilters": "Hide Filters",
-      "showFilters": "Show Filters",
-      "searchPlaceholder": "Search for invoices...",
-      "allStatus": "All Statuses",
-      "allPaymentMethods": "All Methods",
-      "clearFilters": "Clear Filters",
-      "customer": "Customer",
-      "vehicle": "Vehicle",
-      "license": "License",
-      "service": "Service",
-      "multipleServices": "Multiple Services",
-      "total": "Total",
-      "paid": "Paid",
-      "remaining": "Remaining",
-      "paymentProgress": "Payment Progress",
-      "dueDate": "Due Date",
-      "daysOverdue": "Days Overdue",
-      "send": "Send",
-      "markPaid": "Mark Paid",
-      "print": "Print",
-      "noInvoicesFound": "No invoices found",
-      "noInvoicesDescription": "Try adjusting your search or filters",
-      "createFirstInvoice": "Create your first invoice"
+      "bankTransfer": "Bank Transfer",
+      "check": "Check",
+      "credit": "Credit"
     }
   },
-  "subscription": {
-    "title": "Subscription Plans",
-    "subtitle": "Choose the perfect plan for your garage management needs",
-    "current_plan": "Current Plan",
-    "per_year": "/year",
-    "next_billing": "Next Billing",
-    "days_left": "days left",
-    "unlimited": "Unlimited",
-    "used": "used",
-    "included_features": "Included Features",
-    "compare_plans": "Compare Plans",
-    "most_popular": "Most Popular",
-    "upgrade_to": "Upgrade to",
-    "downgrade_to": "Downgrade to",
-    "downgrade_blocked": "Downgrade Not Available",
-    "why_blocked": "Why?",
+  "approvals": {
+    "title": "Approvals",
+    "subtitle": "Manage approval requests and authorizations",
+    "actions": {
+      "refresh": "Refresh",
+      "approve": "Approve",
+      "reject": "Reject",
+      "resetFilters": "Reset Filters",
+      "selectAll": "Select All",
+      "requestInfo": "Request More Info",
+      "viewDetails": "View Details"
+    },
+    "stats": {
+      "pending": "Pending",
+      "overdue": "Overdue",
+      "approved": "Approved",
+      "total": "Total"
+    },
+    "filters": {
+      "search": "Search",
+      "searchPlaceholder": "Search requests...",
+      "status": "Status",
+      "allStatuses": "All Statuses",
+      "type": "Type",
+      "allTypes": "All Types",
+      "priority": "Priority",
+      "allPriorities": "All Priorities"
+    },
+    "labels": {
+      "showing": "Showing {{current}} of {{total}}",
+      "listTitle": "Requests List",
+      "approvedBy": "Approved by",
+      "rejectedBy": "Rejected by",
+      "on": "on"
+    },
+    "loading": "Loading...",
+    "emptyState": {
+      "title": "No approval requests",
+      "message": "There are currently no requests that need approval"
+    },
+    "type": {
+      "part_purchase": "Part Purchase",
+      "service_approval": "Service Approval",
+      "customer_credit": "Customer Credit",
+      "overtime_request": "Overtime Request",
+      "expense_claim": "Expense Claim",
+      "discount_request": "Discount Request",
+      "refund_request": "Refund Request",
+      "other": "Other"
+    },
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "info_requested": "Info Requested",
+      "cancelled": "Cancelled"
+    },
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "urgent": "Urgent"
+    }
+  },
+  "photos": {
+    "uploadTitle": "Photo Documentation",
+    "uploadSubtitle": "Upload maintenance photos",
+    "professionalOnly": "Professional Feature Only",
+    "professionalDescription": "Photo documentation is available exclusively for Professional tier users. Upgrade to document your professional work with high-quality photos.",
+    "category": "Category",
+    "description": "Description",
+    "selectCategory": "Select photo category",
+    "selectFiles": "Select Files",
+    "descriptionPlaceholder": "Enter photo description",
+    "dragAndDrop": "Drag & Drop Photos",
+    "uploadInstructions": "Drag and drop your photos here, or click to browse files",
+    "fileLimits": "Max {{maxSize}}MB per file, up to {{maxCount}} photos total",
+    "uploadFiles": "Upload Photos",
+    "uploading": "Uploading photos...",
+    "uploadZoneAriaLabel": "Photo upload area - drag and drop or click to select files",
+    "uploadSelectedFiles": "Upload selected photos",
+    "closeError": "Close error message",
+    "galleryTitle": "Maintenance Photos",
+    "photoCount": "photo(s)",
+    "allCategories": "All Categories",
+    "filterByCategory": "Filter photos by category",
+    "galleryAriaLabel": "Photo gallery showing maintenance photos",
+    "photoAlt": "{{category}} maintenance photo",
+    "openPhoto": "Click to view full size photo",
+    "viewPhoto": "View photo details",
+    "editPhoto": "Edit photo information",
+    "deletePhoto": "Delete this photo",
+    "noPhotos": "No photos uploaded yet",
+    "noCategoryPhotos": "No photos in this category",
+    "noPhotosYet": "No Photos Yet",
+    "startUploading": "Start by uploading your first maintenance photo to document work progress.",
+    "loadingPhotos": "Loading photos...",
+    "photoModal": "Photo details modal",
+    "photoDetails": "Photo Details",
+    "closeModal": "Close photo modal",
+    "filename": "Filename",
+    "uploaded": "Uploaded",
+    "confirmDelete": "Confirm Deletion",
+    "deleteWarning": "Are you sure you want to delete this photo? This action cannot be undone.",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "upgradeToGet": "Upgrade to Professional to get:",
+    "sampleGallery": "Sample Photo Gallery",
+    "upgradeToSeePhotos": "Upgrade to Professional tier to view and manage maintenance photos",
+    "maintenancePhotos": "Maintenance Photos",
+    "count": "photos",
+    "benefit1": "Document your professional work with photos",
+    "benefit2": "Build customer trust with visual proof",
+    "benefit3": "Protect against disputes with photo evidence",
+    "benefit4": "Show before/after results to customers",
+    "benefit5": "Maintain quality assurance records",
+    "categories": {
+      "before": "Before",
+      "during": "In Progress", 
+      "after": "Completed",
+      "diagnostic": "Diagnostic",
+      "damage": "Damage",
+      "parts": "Parts"
+    },
+    "placeholders": {
+      "before": "Before Work",
+      "during": "Work in Progress",
+      "after": "Work Complete",
+      "parts": "Parts & Components"
+    },
+    "errors": {
+      "tierRequired": "Professional tier required for photo access",
+      "fileTooLarge": "File size exceeds maximum limit",
+      "invalidFormat": "Unsupported file format",
+      "limitExceeded": "Maximum photo limit exceeded",
+      "someFilesInvalid": "Some files were invalid and not uploaded",
+      "uploadFailed": "Failed to upload photos. Please try again."
+    }
+  },
+  "tiers": {
     "solo": "Solo",
     "starter": "Starter",
     "professional": "Professional",
+    "pro": "PRO",
+    "plan": "Plan:",
+    "current": "Current Plan",
+    "popular": "Most Popular",
+    "upgrade": "Upgrade",
+    "downgrade": "Downgrade",
+    "month": "month",
+    "choosePlan": "Choose Your Plan",
+    "upgradeTitle": "Unlock More Features",
+    "upgradeToPro": "Upgrade to Professional",
+    "upgradeForPhotos": "Upgrade to access photo documentation",
+    "unlockFeature": "Unlock Premium Feature",
+    "upgradeMessage": "Upgrade your plan to unlock advanced features and grow your business.",
+    "upgradeForFeatureMessage": "This feature requires a higher tier subscription plan.",
+    "upgradeNow": "Upgrade Now",
+    "currentPlan": "Current Plan",
+    "availableIn": "Available in {{tier}} tier",
+    "professionalFeature": "This feature is exclusive to Professional tier users",
+    "featureLocked": "Feature Locked",
+    "featureLockedWithTier": "This feature requires {{tier}} tier subscription"
+  },
+  "features": {
+    "single_user": "Single User Access",
+    "basic_appointments": "Basic Appointment Management", 
+    "cash_invoicing": "Cash Invoicing",
+    "basic_reports": "Basic Reports",
+    "browser_notifications": "Browser Notifications",
+    "multi_user": "Multi-User Support",
+    "email_notifications": "Email Notifications",
+    "internal_approvals": "Internal Approval System",
+    "photos_documentation": "Photo Documentation",
+    "inventory_management": "Inventory Management",
+    "unlimited_users": "Unlimited Users",
+    "appointment_management": "Advanced Appointment Management",
+    "sms_notifications": "SMS Notifications",
+    "priority_support": "Priority Customer Support",
+    "advanced_reports": "Advanced Analytics & Reports",
+    "data_export": "Data Export & Backup"
+  },
+  "subscription": {
+    "title": "Subscription Plans",
+    "subtitle": "Choose the perfect plan for your garage",
+    "current_plan": "Current Plan",
+    "most_popular": "Most Popular",
+    "compare_plans": "Compare Plans",
+    "upgrade_to": "Upgrade to {{tier}}",
+    "downgrade_to": "Downgrade to {{tier}}",
+    "downgrade_blocked": "Cannot downgrade",
+    "why_blocked": "You are currently using features from your current plan",
+    "per_year": "per year",
+    "days_left": "{{days}} days until renewal",
+    "next_billing": "Next billing: {{date}}",
+    "included_features": "Included Features",
+    "unlimited": "Unlimited",
+    "used": "{{used}} of {{limit}} used",
     "usage": {
       "users": "Users",
       "cars": "Cars",
       "service_bays": "Service Bays"
     },
+    "tooltips": {
+      "current_plan_badge": "Your current subscription plan",
+      "price_info": "Billed annually. Includes all features of your tier.",
+      "usage_labels": "Track your current usage against tier limits",
+      "usage_within_limits": "Usage is within limits",
+      "approaching_limit": "Approaching limit! Consider upgrading.",
+      "upgrade_button": "Click to upgrade and unlock more features",
+      "downgrade_blocked_section": "Your current usage exceeds this tier's limits",
+      "why_blocked_button": "Click for detailed downgrade restrictions"
+    },
     "features": {
-      "single_user": "1 User Account Only",
-      "basic_appointments": "Unlimited Appointments (Calendar View)",
-      "cash_invoicing": "Simple Cash Invoicing",
-      "basic_reports": "Basic Reporting (Daily/Weekly)",
+      "single_user": "Single User Access",
+      "unlimited_appointments": "Unlimited Appointments",
+      "manual_booking": "Manual Booking",
+      "cash_invoicing": "Cash Invoicing",
+      "basic_reports": "Basic Reports",
       "browser_notifications": "Browser Notifications",
-      "multi_user": "Up to 3 User Accounts",
-      "unlimited_users": "Unlimited User Accounts",
-      "appointment_management": "Advanced Appointment Management",
-      "email_notifications": "Daily Summary Email",
+      "mobile_responsive": "Mobile Responsive",
+      "multi_language": "Multi-Language Support",
+      "multi_user": "Multi-User Support (Up to 3)",
+      "email_notifications": "Email Notifications",
       "internal_approvals": "Internal Approval System",
-      "photos_documentation": "Photo Documentation for Maintenance",
-      "inventory_management": "Parts Inventory Management",
-      "sms_notifications": "SMS Notifications to Customers",
-      "priority_support": "Priority Email Support",
-      "advanced_reports": "Advanced Reporting & Analytics",
-      "data_export": "Data Export (Excel/PDF)"
-    },
-    "tiers": {
-      "solo": {
-        "name": "Solo",
-        "description": "Perfect for small independent mechanics"
-      },
-      "starter": {
-        "name": "Starter",
-        "description": "Ideal for growing garages with a small team"
-      },
-      "professional": {
-        "name": "Professional",
-        "description": "Complete solution for established garages"
-      },
-      "featureLocked": "This feature is not available in your current plan",
-      "featureLockedWithTier": "This feature is available in {{tier}} plan",
-      "availableIn": "Available in {{tier}} plan",
-      "upgrade": "Upgrade",
-      "upgradeNow": "Upgrade Now",
-      "upgradeTitle": "Unlock Premium Features",
-      "upgradeMessage": "Upgrade your plan to access advanced features and grow your business",
-      "upgradeForFeatureMessage": "Upgrade your plan to unlock this feature and enhance your garage management experience",
-      "unlockFeature": "Unlock This Feature",
-      "choosePlan": "Choose Your Plan",
-      "popular": "Most Popular",
-      "current": "Current Plan",
-      "currentPlan": "Current Plan",
-      "month": "month",
-      "downgrade": "Contact Support",
-      "usageLimitReached": "Usage limit reached for your current plan",
-      "usageLimitExceeded": "You have exceeded the {{type}} limit for your {{tier}} plan",
-      "upgradeToAddMore": "Upgrade to {{tier}} to add more {{type}}"
-    },
-    "downgrade": {
-      "blocked": {
-        "users_exceed_limit": "Your current user count exceeds the target plan's limit. Remove users before downgrading.",
-        "cars_exceed_limit": "Your current vehicle count exceeds the target plan's limit. Remove vehicles before downgrading.",
-        "service_bays_exceed_limit": "Your current service bay count exceeds the target plan's limit. Adjust your setup before downgrading.",
-        "features_in_use": "You are currently using features not available in the lower tier. Contact support for assistance."
-      },
-      "title": "Downgrade Restrictions",
-      "explanation": "To protect your data and ensure smooth operations, downgrades are restricted when your current usage exceeds the lower plan's limits.",
-      "contact_support": "Contact our support team for help with downgrading your plan."
-    },
-    "errors": {
-      "invalid_downgrade": "Invalid downgrade selection",
-      "same_tier": "You are already on this plan"
+      "service_workflow": "Service Workflow Management",
+      "customer_history": "Customer History & Notes",
+      "photos_documentation": "Photo Documentation",
+      "inventory_management": "Inventory Management",
+      "sms_notifications": "SMS Notifications",
+      "advanced_reports": "Advanced Analytics & Reports",
+      "data_export": "Data Export & Backup",
+      "employee_tracking": "Employee Performance Tracking",
+      "appointment_management": "Appointment Management",
+      "invoice_discounts": "Invoice Discounts",
+      "unlimited_users": "Unlimited Users",
+      "unlimited_service_bays": "Unlimited Service Bays",
+      "multi_bay_scheduling": "Multi-Bay Scheduling",
+      "custom_invoice_templates": "Custom Invoice Templates",
+      "supplier_database": "Supplier Database",
+      "priority_support": "Priority Support"
     },
     "why_upgrade": {
-      "title": "Why Choose OpAuto Premium?"
+      "title": "Why Upgrade?"
     },
     "benefits": {
       "growth": {
         "title": "Scale Your Business",
-        "description": "Handle more customers, cars, and grow your team with advanced features"
+        "description": "Add unlimited users, manage more vehicles, and expand your operations without limits."
       },
       "efficiency": {
-        "title": "Boost Efficiency",
-        "description": "Streamline operations with automation and team collaboration tools"
+        "title": "Improve Efficiency",
+        "description": "Streamline workflows with advanced features like inventory management, photo documentation, and approval systems."
       },
       "insights": {
-        "title": "Data-Driven Insights",
-        "description": "Make informed decisions with comprehensive reports and analytics"
+        "title": "Better Insights",
+        "description": "Make data-driven decisions with advanced analytics, detailed reports, and export capabilities."
       }
     },
     "faq": {
       "title": "Frequently Asked Questions",
       "billing": {
         "question": "How does billing work?",
-        "answer": "We bill annually in advance. You can upgrade at any time with pro-rated billing, and changes take effect immediately."
+        "answer": "Plans are billed annually. You can upgrade or downgrade at any time, and changes will be reflected in your next billing cycle."
       },
       "cancellation": {
         "question": "Can I cancel anytime?",
-        "answer": "Yes, you can cancel your subscription at any time. Your account will remain active until the end of your current billing period."
+        "answer": "Yes, you can cancel your subscription at any time. You'll continue to have access until the end of your current billing period."
       },
       "support": {
         "question": "What support do I get?",
-        "answer": "All plans include email support. Professional plans get priority support with faster response times and phone support."
+        "answer": "All plans include email support. Professional plan includes priority support with faster response times and dedicated assistance."
       }
     },
     "contact": {
       "title": "Need Help Choosing?",
       "description": "Our team is here to help you find the perfect plan for your garage.",
-      "email": "Contact via Email",
+      "email": "Email Us",
       "phone": "Call Us"
     }
   },
-  "users": {
-    "teamManagement": "Team Management",
-    "manageTeamMembers": "Manage team members and user access",
-    "tierInfo": "Plan Info",
-    "inviteUser": "Invite User",
-    "teamMembers": "Team Members",
-    "totalUsers": "Total Users",
-    "activeUsers": "Active Users",
-    "pendingInvitations": "Pending Invitations",
-    "roleDistribution": "Role Distribution",
-    "recentJoins": "Recent Joins",
-    "currentUsage": "Currently using {{current}} of {{limit}} users",
-    "remaining": "Remaining",
-    "limitReached": "User Limit Reached",
-    "limitReachedDescription": "You've reached the maximum number of users for the {{tier}} plan.",
-    "searchUsers": "Search team members...",
-    "noUsersFound": "No team members found",
-    "noUsersDescription": "Get started by inviting your first team member.",
-    "inviteFirstUser": "Invite First User",
-    "users": "users",
-    "joinedOn": "Joined on {{date}}",
-    "lastActive": "Last active {{date}}",
-    "permissions": "Permissions",
-    "invitedAs": "Invited as {{role}}",
-    "changeRole": "Change Role",
-    "changeStatus": "Change Status",
-    "removeUser": "Remove User",
-    "inviteTeamMember": "Invite Team Member",
-    "inviteLimit": "{{remaining}} of {{total}} user slots remaining",
-    "unlimitedInvites": "Unlimited user invitations available",
-    "emailAddress": "Email Address",
-    "emailPlaceholder": "Enter email address",
-    "firstName": "First Name",
-    "firstNamePlaceholder": "Enter first name",
-    "lastName": "Last Name",
-    "lastNamePlaceholder": "Enter last name",
-    "role": "Role",
-    "selectRole": "Select a role",
-    "personalMessage": "Personal Message",
-    "messagePlaceholder": "Add a personal message to the invitation...",
-    "sendInvitation": "Send Invitation",
-    "sending": "Sending...",
-    "resend": "Resend",
-    "maxUsers": "Max Users"
-  },
-  "roles": {
-    "owner": "Owner",
-    "admin": "Admin",
-    "mechanic": "Mechanic",
-    "viewer": "Viewer"
-  },
-  "permissions": {
-    "manageUsers": "Manage Users",
-    "manageSettings": "Manage Settings",
-    "viewReports": "View Reports",
-    "manageInventory": "Manage Inventory",
-    "manageAppointments": "Manage Appointments",
-    "manageInvoices": "Manage Invoices",
-    "manageMaintenance": "Manage Maintenance"
-  },
-  "status": {
-    "active": "Active",
-    "pending": "Pending",
-    "inactive": "Inactive",
-    "suspended": "Suspended"
-  },
-  "validation": {
-    "emailRequired": "Email address is required",
-    "emailInvalid": "Please enter a valid email address",
-    "roleRequired": "Please select a role"
-  },
-  "tiers": {
-    "currentPlan": "Current Plan",
-    "plan": "Plan",
-    "upgrade": "Upgrade",
-    "upgradeTo": "Upgrade to {{tier}}",
-    "upgradeRequired": "Upgrade Required",
-    "upgradeToAddMoreUsers": "Upgrade your plan to add more team members",
-    "recommended": "Recommended",
-    "whatsIncluded": "What's Included",
-    "upgradeMessage": "Upgrade now to add more team members and unlock additional features",
-    "maybeLater": "Maybe Later",
-    "considerUpgrade": "Consider Upgrade",
-    "upgradeNow": "Upgrade Now",
-    "upgrading": "Upgrading...",
-    "upgradeNote": "Billing will be prorated based on your current cycle.",
-    "unlimited": "Unlimited",
-    "solo": "Solo",
-    "starter": "Starter", 
-    "professional": "Professional"
+  "onboarding": {
+    "step": "Step",
+    "of": "of",
+    "next": "Next",
+    "previous": "Previous",
+    "skip": "Skip Tour",
+    "complete": "Complete Tour",
+    "solo": {
+      "welcome": {
+        "title": "Welcome to OpAuto Solo!",
+        "description": "Let's take a quick tour of your garage management system. This tour will help you get started with the essential features."
+      },
+      "dashboard": {
+        "title": "Your Dashboard",
+        "description": "This is your command center. Monitor today's appointments, active jobs, and key metrics at a glance."
+      },
+      "addCar": {
+        "title": "Add Your First Car",
+        "description": "Start by registering vehicles. Click here to add customer cars with details like make, model, and license plate."
+      },
+      "maintenance": {
+        "title": "Maintenance Tracking",
+        "description": "Track all service jobs here. Create new jobs, update status, and manage repairs efficiently."
+      },
+      "invoicing": {
+        "title": "Cash Invoicing",
+        "description": "Generate invoices for completed services. Simple cash-based billing for your customers."
+      },
+      "notifications": {
+        "title": "Browser Notifications",
+        "description": "Stay updated with browser notifications for new jobs and important updates."
+      },
+      "upgrade": {
+        "title": "Ready to Grow?",
+        "description": "Upgrade to Starter for multi-user access, email notifications, and approval workflows. Or go Professional for inventory management and advanced features!"
+      }
+    },
+    "starter": {
+      "welcome": {
+        "title": "Welcome to OpAuto Starter!",
+        "description": "You've unlocked powerful team collaboration features. Let's explore what's new for your growing garage."
+      },
+      "dashboard": {
+        "title": "Enhanced Dashboard",
+        "description": "Your dashboard now shows team activities, approval requests, and collaborative workflows."
+      },
+      "multiUser": {
+        "title": "Team Management",
+        "description": "Create staff accounts for your mechanics and assistants. Each member gets their own login and access."
+      },
+      "approvals": {
+        "title": "Approval Workflows",
+        "description": "Staff can request approval for parts and services. You review and approve from this section."
+      },
+      "emailNotifications": {
+        "title": "Email Notifications",
+        "description": "Configure email alerts for job completions, approvals, and important updates."
+      },
+      "customerHistory": {
+        "title": "Customer History",
+        "description": "Access complete service history for each customer. Build better relationships with detailed records."
+      },
+      "reports": {
+        "title": "Business Reports",
+        "description": "View revenue reports, service analytics, and performance metrics to make data-driven decisions."
+      },
+      "upgradePro": {
+        "title": "Go Professional",
+        "description": "Upgrade to Professional for unlimited users, inventory management, SMS notifications, and advanced reporting!"
+      }
+    },
+    "professional": {
+      "welcome": {
+        "title": "Welcome to OpAuto Professional!",
+        "description": "You have full access to all features. Let's explore the advanced capabilities of your Professional plan."
+      },
+      "dashboard": {
+        "title": "Professional Dashboard",
+        "description": "Your complete command center with unlimited scale, advanced analytics, and full feature access."
+      },
+      "inventory": {
+        "title": "Inventory Management",
+        "description": "Track parts, manage stock levels, and monitor supplier orders. Full inventory control at your fingertips."
+      },
+      "photoDocs": {
+        "title": "Photo Documentation",
+        "description": "Upload before/after photos, document repairs, and provide visual evidence to customers."
+      },
+      "advancedReports": {
+        "title": "Advanced Analytics",
+        "description": "Access detailed reports, predictive analytics, and business intelligence tools for strategic planning."
+      },
+      "smsNotifications": {
+        "title": "SMS Notifications",
+        "description": "Send SMS alerts to customers and staff. Keep everyone informed in real-time."
+      },
+      "dataExport": {
+        "title": "Data Export",
+        "description": "Export your data in various formats for accounting, analysis, or backup purposes."
+      },
+      "unlimitedFeatures": {
+        "title": "Unlimited Everything!",
+        "description": "Enjoy unlimited users, cars, service bays, and all premium features. Scale your garage without limits!"
+      }
+    },
+    "staff": {
+      "welcome": {
+        "title": "Welcome to OpAuto!",
+        "description": "Let's get you familiar with your workspace. This quick tour will show you the essential features you'll use daily."
+      },
+      "dashboard": {
+        "title": "Your Dashboard",
+        "description": "See your assigned jobs, today's schedule, and active tasks at a glance."
+      },
+      "maintenance": {
+        "title": "Maintenance Jobs",
+        "description": "View and update service jobs. Track your work progress and mark tasks as complete."
+      },
+      "approvalRequest": {
+        "title": "Request Approvals",
+        "description": "Need to purchase parts? Request approval from the owner using this button."
+      },
+      "profile": {
+        "title": "Your Profile",
+        "description": "Update your personal information and preferences here. You're all set!"
+      },
+      "photoUpload": {
+        "title": "Photo Documentation",
+        "description": "Upload photos of repairs and issues. Visual documentation helps communicate with customers."
+      }
+    }
   }
 }
