@@ -54,14 +54,13 @@
           [class.hidden]="!shouldShowExpanded()">{{ 'navigation.main' | translate }}</h3>
       <ul class="nav-list">
         @for (item of filteredNavItems(); track item.id) {
-          <li class="nav-item">
+          <li class="nav-item" [attr.data-tour]="item.id">
             <button
               class="nav-link"
               [class.active]="item.isActive"
               [class.has-children]="item.children"
               (click)="item.children ? toggleSubmenu(item, $event) : navigateTo(item.route!); $event.stopPropagation()"
-              [attr.title]="isCollapsed() && !isHovered() ? (item.translationKey | translate) : null"
-              [attr.data-tour]="item.id">
+              [attr.title]="isCollapsed() && !isHovered() ? (item.translationKey | translate) : null">
               
               <!-- Icon -->
               <span class="nav-icon">
@@ -166,13 +165,12 @@
       <h3 class="nav-section-title" [class.hidden]="!shouldShowExpanded()">{{ 'navigation.settings' | translate }}</h3>
       <ul class="nav-list">
         @for (item of filteredSettingsItems(); track item.id) {
-          <li class="nav-item">
+          <li class="nav-item" [attr.data-tour]="item.id">
             <button
               class="nav-link"
               [class.active]="item.isActive"
               (click)="navigateTo(item.route!); $event.stopPropagation()"
-              [attr.title]="isCollapsed() && !isHovered() ? (item.translationKey | translate) : null"
-              [attr.data-tour]="item.id">
+              [attr.title]="isCollapsed() && !isHovered() ? (item.translationKey | translate) : null">
               
               <!-- Icon -->
               <span class="nav-icon">

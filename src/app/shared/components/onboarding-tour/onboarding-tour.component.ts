@@ -119,6 +119,12 @@ export class OnboardingTourComponent implements OnInit, OnDestroy {
         targetElement.style.zIndex = '';
       }
     }
+
+    // Restore overflow on sidebar
+    const sidebar = document.querySelector('.sidebar') as HTMLElement;
+    if (sidebar) {
+      sidebar.style.overflow = '';
+    }
   }
 
   private updatePosition(): void {
@@ -156,29 +162,63 @@ export class OnboardingTourComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const rect = targetElement.getBoundingClientRect();
-    const padding = 8; // Padding around the highlighted element
+    // Force a reflow to ensure accurate measurements
+    targetElement.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+
+    let rect = targetElement.getBoundingClientRect();
+    const padding = 6; // Padding around the highlighted element
 
     // Elevate the target element above the blocking overlay
     (targetElement as HTMLElement).style.position = 'relative';
     (targetElement as HTMLElement).style.zIndex = '10000';
 
-    // Set spotlight position to highlight the target element
+    // Remove overflow hidden from sidebar to allow spotlight to show properly
+    const sidebar = document.querySelector('.sidebar') as HTMLElement;
+    if (sidebar) {
+      sidebar.style.overflow = 'visible';
+    }
+
+    // Get computed style to account for all borders and padding
+    const computedStyle = window.getComputedStyle(targetElement as HTMLElement);
+
+    // Check if this is a nav-item in the sidebar - if so, extend to full sidebar width
+    let fullWidth = rect.width;
+    let leftPosition = rect.left;
+
+    if ((targetElement as HTMLElement).classList.contains('nav-item')) {
+      // For nav items, extend the highlight to the full sidebar width
+      const sidebarRect = sidebar ? sidebar.getBoundingClientRect() : null;
+      if (sidebarRect) {
+        fullWidth = sidebarRect.width;
+        leftPosition = sidebarRect.left;
+      }
+    }
+
+    const fullHeight = rect.height;
+
+    // Set spotlight position to highlight the entire element including all padding/borders
     this.spotlightStyle.set({
       top: `${rect.top - padding}px`,
-      left: `${rect.left - padding}px`,
-      width: `${rect.width + padding * 2}px`,
-      height: `${rect.height + padding * 2}px`
+      left: `${leftPosition - padding}px`,
+      width: `${fullWidth + (padding * 2)}px`,
+      height: `${fullHeight + (padding * 2)}px`,
+      display: 'block',
+      boxSizing: 'border-box'
     });
-    const tooltipWidth = 360;
+
+    const isMobile = window.innerWidth < 1024;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const tooltipWidth = isMobile ? Math.min(viewportWidth - 32, 360) : 360;
     const tooltipHeight = 200; // Approximate
     const offset = 16; // Space between target and tooltip
     const arrowSize = 12;
+    const margin = 16; // Margin from viewport edges
 
     let style: any = {
       position: 'fixed',
       maxWidth: `${tooltipWidth}px`,
-      zIndex: '10000'
+      zIndex: '10001'
     };
 
     let arrow: any = {
@@ -188,7 +228,12 @@ export class OnboardingTourComponent implements OnInit, OnDestroy {
       borderStyle: 'solid'
     };
 
-    switch (step.placement) {
+    // On mobile, prefer bottom placement for better visibility
+    let placement = isMobile && (step.placement === 'left' || step.placement === 'right')
+      ? 'bottom'
+      : step.placement;
+
+    switch (placement) {
       case 'top':
         style.left = `${rect.left + rect.width / 2}px`;
         style.top = `${rect.top - offset}px`;
@@ -238,11 +283,62 @@ export class OnboardingTourComponent implements OnInit, OnDestroy {
         break;
     }
 
+    // Adjust position to keep tooltip within viewport bounds
+    const tooltipRect = this.calculateTooltipRect(style, tooltipWidth, tooltipHeight);
+
+    if (tooltipRect.right > viewportWidth - margin) {
+      const overflow = tooltipRect.right - (viewportWidth - margin);
+      style.left = `${parseFloat(style.left) - overflow}px`;
+    }
+
+    if (tooltipRect.left < margin) {
+      style.left = `${margin}px`;
+      style.transform = style.transform.replace('translateX(-50%)', '');
+    }
+
+    if (tooltipRect.bottom > viewportHeight - margin) {
+      const overflow = tooltipRect.bottom - (viewportHeight - margin);
+      style.top = `${parseFloat(style.top) - overflow}px`;
+    }
+
+    if (tooltipRect.top < margin) {
+      style.top = `${margin}px`;
+      style.transform = style.transform.replace('translateY(-50%)', '').replace('translate(-50%, -100%)', 'translateX(-50%)');
+    }
+
     this.tooltipStyle.set(style);
     this.arrowStyle.set(arrow);
 
     // Highlight target element
     this.highlightElement(targetElement);
+  }
+
+  private calculateTooltipRect(style: any, width: number, height: number): { top: number; left: number; right: number; bottom: number } {
+    let left = parseFloat(style.left);
+    let top = parseFloat(style.top);
+
+    // Adjust for transforms
+    if (style.transform.includes('translateX(-50%)')) {
+      left -= width / 2;
+    }
+    if (style.transform.includes('translateY(-50%)')) {
+      top -= height / 2;
+    }
+    if (style.transform.includes('translate(-50%, -100%)')) {
+      left -= width / 2;
+      top -= height;
+    }
+    if (style.transform.includes('translate(-100%, -50%)')) {
+      left -= width;
+      top -= height / 2;
+    }
+
+    return {
+      top,
+      left,
+      right: left + width,
+      bottom: top + height
+    };
   }
 
   private highlightElement(element: Element): void {

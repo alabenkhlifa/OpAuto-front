@@ -44,7 +44,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   hasInternalApprovals = signal(false);
   
   isCollapsed = this.sidebarService.isCollapsed;
-  isMobileMenuOpen = signal(false);
+  isMobileMenuOpen = this.sidebarService.isMobileMenuOpen;
   isHovered = signal(false);
 
   navItems: NavItem[] = [
@@ -261,7 +261,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   toggleMobileMenu() {
-    this.isMobileMenuOpen.set(!this.isMobileMenuOpen());
+    this.sidebarService.toggleMobileMenu();
   }
 
   navigateTo(route: string) {
@@ -270,7 +270,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       this.updateActiveStates(route);
       this.router.navigate([route]);
       // Close mobile menu if open
-      this.isMobileMenuOpen.set(false);
+      this.sidebarService.closeMobileMenu();
     }
   }
 

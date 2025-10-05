@@ -12,6 +12,7 @@ import { SubscriptionTierId } from '../models/subscription.model';
 import { UserRole } from '../models/auth.model';
 import { AuthService } from './auth.service';
 import { SubscriptionService } from './subscription.service';
+import { SidebarService } from './sidebar.service';
 
 @Injectable({
   providedIn: 'root'
@@ -19,6 +20,7 @@ import { SubscriptionService } from './subscription.service';
 export class OnboardingService {
   private authService = inject(AuthService);
   private subscriptionService = inject(SubscriptionService);
+  private sidebarService = inject(SidebarService);
 
   private readonly STORAGE_KEY = 'opauth_onboarding_progress';
 
@@ -82,7 +84,7 @@ export class OnboardingService {
           target: '[data-tour="maintenance"]',
           title: 'onboarding.solo.maintenance.title',
           description: 'onboarding.solo.maintenance.description',
-          placement: 'right',
+          placement: 'bottom',
           order: 4,
           showNext: true,
           showPrevious: true,
@@ -248,7 +250,7 @@ export class OnboardingService {
           target: '[data-tour="maintenance"]',
           title: 'onboarding.staff.maintenance.title',
           description: 'onboarding.staff.maintenance.description',
-          placement: 'right',
+          placement: 'bottom',
           order: 3,
           showNext: true,
           showPrevious: true,
@@ -403,7 +405,7 @@ export class OnboardingService {
           target: '[data-tour="maintenance"]',
           title: 'onboarding.staff.maintenance.title',
           description: 'onboarding.staff.maintenance.description',
-          placement: 'right',
+          placement: 'bottom',
           order: 3,
           showNext: true,
           showPrevious: true,
@@ -466,6 +468,11 @@ export class OnboardingService {
       return;
     }
 
+    // On mobile, minimize sidebar at the start of the tour
+    if (this.isMobile()) {
+      this.sidebarService.closeMobileMenu();
+    }
+
     // Start from last saved step or beginning
     const startStep = progress.currentTour === tourId ? (progress.currentStep || 0) : 0;
 
@@ -494,6 +501,15 @@ export class OnboardingService {
       return;
     }
 
+    // Check if we're moving past the "add-car" step on mobile
+    const currentStep = state.currentTour.steps[state.currentStepIndex];
+    const nextStep = state.currentTour.steps[nextIndex];
+
+    if (this.isMobile() && currentStep.id === 'add-car' && nextStep) {
+      // Expand sidebar after "add-car" step for navigation items
+      this.sidebarService.openMobileMenu();
+    }
+
     this.tourStateSubject.next({
       ...state,
       currentStepIndex: nextIndex
@@ -514,6 +530,14 @@ export class OnboardingService {
     if (!state.currentTour || !state.isActive || state.currentStepIndex === 0) return;
 
     const prevIndex = state.currentStepIndex - 1;
+
+    // Check if we're moving back to or before the "add-car" step on mobile
+    const prevStep = state.currentTour.steps[prevIndex];
+
+    if (this.isMobile() && prevStep.id === 'add-car') {
+      // Minimize sidebar when going back to "add-car" or earlier
+      this.sidebarService.closeMobileMenu();
+    }
 
     this.tourStateSubject.next({
       ...state,
@@ -542,6 +566,11 @@ export class OnboardingService {
 
     this.saveProgressToStorage(progress);
     this.endTour();
+
+    // Close sidebar on mobile after tour is dismissed
+    if (this.isMobile()) {
+      this.sidebarService.closeMobileMenu();
+    }
   }
 
   /**
@@ -561,6 +590,11 @@ export class OnboardingService {
 
     this.saveProgressToStorage(progress);
     this.endTour();
+
+    // Close sidebar on mobile after tour is completed
+    if (this.isMobile()) {
+      this.sidebarService.closeMobileMenu();
+    }
   }
 
   /**
@@ -714,5 +748,12 @@ export class OnboardingService {
   resetAllProgress(): void {
     localStorage.removeItem(this.STORAGE_KEY);
     this.endTour();
+  }
+
+  /**
+   * Check if on mobile device
+   */
+  private isMobile(): boolean {
+    return typeof window !== 'undefined' && window.innerWidth < 1024;
   }
 }
