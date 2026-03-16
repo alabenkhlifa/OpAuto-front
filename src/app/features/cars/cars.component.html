@@ -20,6 +20,8 @@
                     [class.text-amber-400]="isNearLimit() && !isAtCarLimit()"
                     [class.text-red-400]="isAtCarLimit()"
                     [class.text-gray-300]="!isNearLimit() && !isAtCarLimit()"
+                    [appTooltip]="tooltipLimitInfo()"
+                    tooltipPosition="right"
                     [attr.aria-label]="'Current vehicle count: ' + carLimitDisplay()">
                 {{ carLimitDisplay() }}
               </span>
@@ -90,6 +92,8 @@
                 [class.opacity-50]="isAtCarLimit()"
                 [class.cursor-not-allowed]="isAtCarLimit()"
                 (click)="openRegistrationForm()"
+                [appTooltip]="tooltipAddCar()"
+                tooltipPosition="left"
                 [attr.aria-label]="isAtCarLimit() ? 'Cannot add vehicle - limit of ' + carLimit() + ' reached' : 'Add new vehicle to database'"
                 [attr.aria-describedby]="isAtCarLimit() ? 'limit-reached-notice' : null"
                 type="button">
@@ -192,6 +196,8 @@
   <button class="filter-toggle lg:hidden"
           [class.active]="showMobileFilters()"
           (click)="toggleMobileFilters()"
+          [appTooltip]="tooltipFilters()"
+          tooltipPosition="right"
           [attr.aria-expanded]="showMobileFilters()"
           [attr.aria-controls]="'mobile-filters-panel'"
           type="button">

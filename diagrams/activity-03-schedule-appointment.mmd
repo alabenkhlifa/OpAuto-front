@@ -1,0 +1,42 @@
+flowchart TD
+    START(("Start"))
+    END_SUCCESS(("Appointment Scheduled"))
+    END_CANCEL(("Cancelled"))
+
+    START --> MODAL["Appointment Modal Opens"]
+    MODAL -->|"Cancel"| END_CANCEL
+    MODAL --> SELECT_CAR["Select Car from Dropdown"]
+    SELECT_CAR --> FILL_SERVICE["Fill Service Details
+    (Type, Name, Duration)"]
+    FILL_SERVICE --> SELECT_DATE["Select Scheduled Date"]
+    SELECT_DATE --> SELECT_TIME["Select Time Slot
+    (8:00 AM - 5:00 PM)"]
+    SELECT_TIME --> CHECK_SLOT{"Slot Available?"}
+    CHECK_SLOT -->|"No"| SELECT_TIME
+    CHECK_SLOT -->|"Yes"| MECHANIC{"Assign Mechanic"}
+    MECHANIC -->|"Auto-Assign"| AUTO["System Assigns Mechanic"]
+    MECHANIC -->|"Manual"| PICK["Select from List"]
+    AUTO --> PRIORITY
+    PICK --> PRIORITY
+    PRIORITY["Set Priority
+    (Low / Medium / High)"]
+    PRIORITY --> NOTES["Add Notes (Optional)"]
+    NOTES --> VALIDATE{"Form Valid?"}
+    VALIDATE -->|"No"| FILL_SERVICE
+    VALIDATE -->|"Yes"| SAVE["Click 'Schedule Appointment'"]
+    SAVE --> CREATED["Appointment Created
+    (Status: Scheduled)"]
+    CREATED --> REFRESH["Refresh Appointments List"]
+    REFRESH --> END_SUCCESS
+
+    classDef startEnd fill:#4a90d9,stroke:#2c5f8a,color:#fff,stroke-width:3px
+    classDef cancel fill:#dc2626,stroke:#b91c1c,color:#fff,stroke-width:2px
+    classDef decision fill:#7c3aed,stroke:#5b21b6,color:#fff,stroke-width:2px
+    classDef action fill:#1e293b,stroke:#475569,color:#e2e8f0,stroke-width:1px
+    classDef success fill:#059669,stroke:#047857,color:#fff,stroke-width:2px
+
+    class START startEnd
+    class END_SUCCESS success
+    class END_CANCEL cancel
+    class CHECK_SLOT,MECHANIC,VALIDATE decision
+    class CREATED success

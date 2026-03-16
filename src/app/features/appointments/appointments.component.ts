@@ -8,11 +8,12 @@ import { Appointment, AppointmentStatus } from '../../core/models/appointment.mo
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { LanguageService } from '../../core/services/language.service';
 import { TranslationService } from '../../core/services/translation.service';
+import { TooltipDirective } from '../../shared/directives/tooltip.directive';
 
 @Component({
   selector: 'app-appointments',
   standalone: true,
-  imports: [CommonModule, FormsModule, AppointmentModalComponent, SwipeDirective, TranslatePipe],
+  imports: [CommonModule, FormsModule, AppointmentModalComponent, SwipeDirective, TranslatePipe, TooltipDirective],
   templateUrl: './appointments.component.html',
   styleUrl: './appointments.component.css'
 })
@@ -45,7 +46,12 @@ export class AppointmentsComponent implements AfterViewInit {
   
   // Navigation state
   currentView = signal<'calendar' | 'list' | 'today'>('list');
-  
+
+  // Computed tooltip texts that reactively update with translations
+  tooltipFilters = computed(() => this.getTooltip('filters'));
+  tooltipViewMode = computed(() => this.getTooltip('view_mode'));
+  tooltipAddAppointment = computed(() => this.getTooltip('add_appointment'));
+
   // Computed values
   todayAppointments = computed(() => {
     const today = new Date();
@@ -67,11 +73,19 @@ export class AppointmentsComponent implements AfterViewInit {
     this.appointments().filter(apt => apt.status === 'in-progress').length
   );
 
+  // Tooltip translation methods - defined before constructor
+  getTooltip(key: string): string {
+    const fullKey = `appointments.tooltips.${key}`;
+    const translated = this.translationService.instant(fullKey);
+    // Return empty string if translation not found (returns key when not found)
+    return translated === fullKey ? '' : translated;
+  }
+
   constructor() {
     this.checkMobileView();
     this.loadAppointments();
     this.setupFilters();
-    
+
     // Listen for window resize
     if (typeof window !== 'undefined') {
       window.addEventListener('resize', () => this.checkMobileView());

@@ -1,0 +1,26 @@
+flowchart TD
+    START(("Start"))
+    END_SUCCESS(("Customer Created"))
+    END_CANCEL(("Cancelled"))
+
+    START --> NAV["Navigate to Customers Page"]
+    NAV --> CLICK["Click 'Add Customer'"]
+    CLICK --> FORM["Customer Form Opens"]
+    FORM -->|"Cancel"| END_CANCEL
+    FORM --> FILL["Fill Customer Details
+    (Name, Phone, Email, Address)"]
+    FILL --> VALIDATE{"Form Valid?"}
+    VALIDATE -->|"No"| FILL
+    VALIDATE -->|"Yes"| SAVE["Save Customer"]
+    SAVE --> END_SUCCESS
+
+    classDef startEnd fill:#4a90d9,stroke:#2c5f8a,color:#fff,stroke-width:3px
+    classDef cancel fill:#dc2626,stroke:#b91c1c,color:#fff,stroke-width:2px
+    classDef decision fill:#7c3aed,stroke:#5b21b6,color:#fff,stroke-width:2px
+    classDef action fill:#1e293b,stroke:#475569,color:#e2e8f0,stroke-width:1px
+    classDef success fill:#059669,stroke:#047857,color:#fff,stroke-width:2px
+
+    class START startEnd
+    class END_SUCCESS success
+    class END_CANCEL cancel
+    class VALIDATE decision

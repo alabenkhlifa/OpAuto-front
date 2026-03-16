@@ -1,0 +1,65 @@
+OpAuto ERP — AI-Powered Features Brainstorm
+=============================================
+
+1. AI Diagnostic Assistant (Chatbot)
+   Mechanic inputs symptoms (strange noise, vibration, warning light code) → AI suggests
+   probable causes, required parts, and estimated repair time. Uses Claude API.
+   This is the hero AI feature — very domain-specific and visually impressive.
+
+2. RAG-Powered Technical Knowledge Base
+   Upload repair manuals, technical bulletins, OEM docs → mechanics ask natural language
+   questions → get answers with source citations.
+   Example: "How do I replace the timing belt on a 2019 Peugeot 308?"
+
+3. Predictive Maintenance Alerts
+   Based on car history, mileage, and manufacturer intervals → AI predicts when each car
+   needs its next service. Dashboard shows "3 cars due for brake inspection this month."
+   Classic predictive model showcase.
+
+4. Smart Scheduling Optimizer
+   AI suggests optimal appointment slots considering: mechanic skills, job duration estimates,
+   workload balancing, and bay availability. Drag an appointment → AI warns "This mechanic
+   is overloaded, suggest moving Job X to 3pm."
+
+5. AI Analytics Narrator
+   Instead of just showing charts, AI generates natural language insights:
+   "Revenue is up 15% this month, driven by bodywork repairs. Tuesdays are your busiest day.
+   Mechanic Ahmed has the highest completion rate."
+   Turns data into storytelling.
+
+6. Intelligent Invoice Generation
+   Auto-generate invoice line items and descriptions from a job card. AI suggests pricing
+   based on job type, parts used, and labor time. Detects anomalies: "This brake job is
+   priced 40% below your average — confirm?"
+
+7. Image-Based Damage Assessment (Computer Vision)
+   Customer uploads car damage photos → AI estimates damage severity, suggests repair type
+   (bodywork vs. paint only), and gives rough cost estimate. Very visual and impressive
+   for a demo.
+
+8. Customer Churn Prediction & Smart Segmentation
+   AI clusters customers by behavior (visit frequency, spend, car age) → identifies VIPs,
+   at-risk customers, and upsell opportunities.
+   "Customer Dupont hasn't visited in 6 months — send a reminder?"
+
+9. Demand Forecasting for Inventory
+   Predict parts demand based on seasonal patterns, upcoming appointments, and car types
+   in the fleet. "Order 20 oil filters — 12 oil changes scheduled next week + seasonal trend."
+   Classic time-series prediction.
+
+10. AI-Powered Work Order Copilot
+    When creating a maintenance job, AI auto-suggests: related jobs to bundle ("Add wheel
+    alignment? 70% of tire changes include it"), required parts from inventory, and estimated
+    duration. Speeds up the workflow.
+
+
+Bonus Ideas
+-----------
+- Voice-to-Work-Order — speech recognition to create jobs hands-free
+- Sentiment analysis on customer notes/feedback
+- Anomaly detection on financial transactions
+
+
+Recommended Core Four (maximum impact)
+---------------------------------------
+#1 + #2 + #3 + #5 — covers chatbot, RAG, predictive models, and generative AI.

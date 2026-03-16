@@ -1,0 +1,101 @@
+flowchart TD
+    START(("Start"))
+    END_SUCCESS(("End - Appointment Created"))
+    END_CANCEL(("End - Cancelled"))
+
+    START --> OPEN_APPTS["Open Appointments Page"]
+    OPEN_APPTS --> CLICK_ADD["Click 'Add Appointment'"]
+    CLICK_ADD --> MODAL_OPENS["Appointment Modal Opens"]
+    MODAL_OPENS --> SELECT_CAR{"Select Car"}
+
+    SELECT_CAR -->|"Existing Car"| PICK_CAR["Select Car from Dropdown"]
+    SELECT_CAR -->|"New Car Needed"| NEED_CUSTOMER{"Customer Exists?"}
+
+    %% ===== NEW CUSTOMER FLOW =====
+    NEED_CUSTOMER -->|"No - Create New Customer"| NAV_CUSTOMERS["Navigate to Customers Page"]
+    NAV_CUSTOMERS --> CLICK_ADD_CUST["Click 'Add Customer'"]
+    CLICK_ADD_CUST --> CUST_FORM["Customer Form Opens"]
+    CUST_FORM --> FILL_CUST["Fill Customer Details
+    (Name, Phone, Email, Address)"]
+    FILL_CUST --> VALIDATE_CUST{"Validate Customer Form"}
+    VALIDATE_CUST -->|"Invalid"| FILL_CUST
+    VALIDATE_CUST -->|"Valid"| SAVE_CUSTOMER["Save Customer"]
+    SAVE_CUSTOMER --> CUSTOMER_CREATED["Customer Created Successfully"]
+
+    %% ===== NEW CAR FLOW =====
+    NEED_CUSTOMER -->|"Yes - Customer Exists"| NAV_CARS["Navigate to Cars Page"]
+    CUSTOMER_CREATED --> NAV_CARS
+
+    NAV_CARS --> CLICK_ADD_CAR["Click 'Add Car'"]
+    CLICK_ADD_CAR --> CAR_FORM["Car Registration Form Opens"]
+    CAR_FORM --> FILL_CAR["Fill Car Details
+    (License Plate, Make, Model, Year)"]
+    FILL_CAR --> SELECT_OWNER["Select Customer as Car Owner"]
+    SELECT_OWNER --> CHECK_CAR_LIMIT{"Car Limit Reached?
+    (Subscription Check)"}
+    CHECK_CAR_LIMIT -->|"Yes - Limit Exceeded"| SHOW_UPGRADE["Show Upgrade Subscription Prompt"]
+    SHOW_UPGRADE --> UPGRADE_DECISION{"Upgrade Subscription?"}
+    UPGRADE_DECISION -->|"No"| END_CANCEL
+    UPGRADE_DECISION -->|"Yes"| UPGRADE_SUB["Upgrade Subscription"]
+    UPGRADE_SUB --> FILL_CAR
+    CHECK_CAR_LIMIT -->|"No - Within Limit"| VALIDATE_CAR{"Validate Car Form"}
+    VALIDATE_CAR -->|"Invalid"| FILL_CAR
+    VALIDATE_CAR -->|"Valid"| SAVE_CAR["Save Car"]
+    SAVE_CAR --> CAR_CREATED["Car Registered Successfully"]
+
+    %% ===== BACK TO APPOINTMENT FLOW =====
+    CAR_CREATED --> NAV_BACK_APPTS["Navigate Back to Appointments"]
+    NAV_BACK_APPTS --> CLICK_ADD_2["Click 'Add Appointment'"]
+    CLICK_ADD_2 --> MODAL_REOPENS["Appointment Modal Opens"]
+    MODAL_REOPENS --> SELECT_NEW_CAR["Select Newly Created Car"]
+
+    PICK_CAR --> FILL_SERVICE
+    SELECT_NEW_CAR --> FILL_SERVICE
+
+    %% ===== FILL APPOINTMENT DETAILS =====
+    FILL_SERVICE["Fill Service Details
+    (Service Type, Service Name, Duration)"]
+    FILL_SERVICE --> SELECT_DATE["Select Scheduled Date"]
+    SELECT_DATE --> SELECT_TIME["Select Time Slot
+    (8:00 AM - 5:00 PM, 30-min intervals)"]
+    SELECT_TIME --> CHECK_SLOT{"Time Slot Available?"}
+    CHECK_SLOT -->|"No"| SELECT_TIME
+    CHECK_SLOT -->|"Yes"| SELECT_MECHANIC{"Assign Mechanic"}
+
+    SELECT_MECHANIC -->|"Auto-Assign"| AUTO_ASSIGN["System Auto-Assigns Mechanic"]
+    SELECT_MECHANIC -->|"Manual"| PICK_MECHANIC["Select Mechanic from List"]
+
+    AUTO_ASSIGN --> SET_PRIORITY
+    PICK_MECHANIC --> SET_PRIORITY
+
+    SET_PRIORITY["Set Priority
+    (Low / Medium / High)"]
+    SET_PRIORITY --> ADD_NOTES["Add Notes (Optional)"]
+    ADD_NOTES --> VALIDATE_APPT{"Validate Appointment Form"}
+    VALIDATE_APPT -->|"Invalid"| FILL_SERVICE
+    VALIDATE_APPT -->|"Valid"| CONFIRM["Click 'Schedule Appointment'"]
+    CONFIRM --> SAVE_APPT["Save Appointment
+    (Status: Scheduled)"]
+    SAVE_APPT --> CLOSE_MODAL["Close Modal"]
+    CLOSE_MODAL --> REFRESH_LIST["Refresh Appointments List"]
+    REFRESH_LIST --> END_SUCCESS
+
+    %% ===== CANCEL FLOWS =====
+    MODAL_OPENS -->|"Cancel"| END_CANCEL
+    CUST_FORM -->|"Cancel"| END_CANCEL
+    CAR_FORM -->|"Cancel"| END_CANCEL
+    MODAL_REOPENS -->|"Cancel"| END_CANCEL
+
+    %% ===== STYLING =====
+    classDef startEnd fill:#4a90d9,stroke:#2c5f8a,color:#fff,stroke-width:3px
+    classDef action fill:#1e293b,stroke:#475569,color:#e2e8f0,stroke-width:1px
+    classDef decision fill:#7c3aed,stroke:#5b21b6,color:#fff,stroke-width:2px
+    classDef success fill:#059669,stroke:#047857,color:#fff,stroke-width:2px
+    classDef warning fill:#d97706,stroke:#b45309,color:#fff,stroke-width:2px
+    classDef cancel fill:#dc2626,stroke:#b91c1c,color:#fff,stroke-width:2px
+
+    class START,END_SUCCESS startEnd
+    class END_CANCEL cancel
+    class SELECT_CAR,NEED_CUSTOMER,VALIDATE_CUST,CHECK_CAR_LIMIT,UPGRADE_DECISION,VALIDATE_CAR,CHECK_SLOT,SELECT_MECHANIC,VALIDATE_APPT decision
+    class CUSTOMER_CREATED,CAR_CREATED success
+    class SHOW_UPGRADE warning

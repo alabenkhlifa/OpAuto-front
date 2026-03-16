@@ -1,0 +1,192 @@
+graph TB
+    subgraph OpAuto["🏗️ OpAuto - Garage Management System"]
+
+        subgraph Auth["Authentication"]
+            UC_LOGIN["Login"]
+            UC_LOGOUT["Logout"]
+        end
+
+        subgraph AppointmentMgmt["Appointment Management"]
+            UC_CREATE_APPT["Create Appointment"]
+            UC_VIEW_APPTS["View Appointments"]
+            UC_EDIT_APPT["Edit Appointment"]
+            UC_DELETE_APPT["Delete Appointment"]
+            UC_SEARCH_APPTS["Search Appointments"]
+            UC_CHANGE_APPT_STATUS["Change Appointment Status"]
+        end
+
+        subgraph CarMgmt["Car Management"]
+            UC_REGISTER_CAR["Register Car"]
+            UC_VIEW_CARS["View Cars"]
+            UC_EDIT_CAR["Edit Car"]
+            UC_DELETE_CAR["Delete Car"]
+            UC_SEARCH_CARS["Search Cars"]
+            UC_VIEW_CAR_HISTORY["View Car Service History"]
+        end
+
+        subgraph CustomerMgmt["Customer Management"]
+            UC_ADD_CUSTOMER["Add Customer"]
+            UC_VIEW_CUSTOMERS["View Customers"]
+            UC_EDIT_CUSTOMER["Edit Customer"]
+            UC_DELETE_CUSTOMER["Delete Customer"]
+            UC_SEARCH_CUSTOMERS["Search Customers"]
+            UC_VIEW_CUST_HISTORY["View Customer History"]
+        end
+
+        subgraph MaintenanceMgmt["Maintenance Management"]
+            UC_CREATE_JOB["Create Maintenance Job"]
+            UC_VIEW_JOBS["View Maintenance Jobs"]
+            UC_UPDATE_JOB_STATUS["Update Job Status"]
+            UC_ADD_PHOTOS["Add Before/After Photos"]
+            UC_REQUEST_APPROVAL["Request Approval"]
+        end
+
+        subgraph InvoiceMgmt["Invoice Management"]
+            UC_CREATE_INVOICE["Create Invoice"]
+            UC_VIEW_INVOICES["View Invoices"]
+            UC_RECORD_PAYMENT["Record Payment"]
+            UC_SEND_INVOICE["Send Invoice"]
+        end
+
+        subgraph EmployeeMgmt["Employee Management"]
+            UC_ADD_EMPLOYEE["Add Employee"]
+            UC_VIEW_EMPLOYEES["View Employees"]
+            UC_EDIT_EMPLOYEE["Edit Employee"]
+            UC_VIEW_PERFORMANCE["View Performance Metrics"]
+        end
+
+        subgraph ApprovalMgmt["Approval Management"]
+            UC_VIEW_APPROVALS["View Approvals"]
+            UC_APPROVE["Approve Request"]
+            UC_REJECT["Reject Request"]
+        end
+
+        subgraph InventoryMgmt["Inventory Management"]
+            UC_ADD_PART["Add Part"]
+            UC_VIEW_INVENTORY["View Inventory"]
+            UC_UPDATE_STOCK["Update Stock"]
+            UC_STOCK_ALERTS["View Stock Alerts"]
+        end
+
+        subgraph Settings["Settings & Subscription"]
+            UC_GARAGE_SETTINGS["Configure Garage Settings"]
+            UC_MANAGE_SUBSCRIPTION["Manage Subscription"]
+            UC_VIEW_DASHBOARD["View Dashboard Analytics"]
+        end
+
+    end
+
+    OWNER(("👤 Owner"))
+    STAFF(("👤 Staff"))
+
+    %% Auth - Both roles
+    OWNER --> UC_LOGIN
+    OWNER --> UC_LOGOUT
+    STAFF --> UC_LOGIN
+    STAFF --> UC_LOGOUT
+
+    %% Appointments - Both roles
+    OWNER --> UC_CREATE_APPT
+    OWNER --> UC_VIEW_APPTS
+    OWNER --> UC_EDIT_APPT
+    OWNER --> UC_DELETE_APPT
+    OWNER --> UC_SEARCH_APPTS
+    OWNER --> UC_CHANGE_APPT_STATUS
+    STAFF --> UC_CREATE_APPT
+    STAFF --> UC_VIEW_APPTS
+    STAFF --> UC_EDIT_APPT
+    STAFF --> UC_DELETE_APPT
+    STAFF --> UC_SEARCH_APPTS
+    STAFF --> UC_CHANGE_APPT_STATUS
+
+    %% Cars - Both roles
+    OWNER --> UC_REGISTER_CAR
+    OWNER --> UC_VIEW_CARS
+    OWNER --> UC_EDIT_CAR
+    OWNER --> UC_DELETE_CAR
+    OWNER --> UC_SEARCH_CARS
+    OWNER --> UC_VIEW_CAR_HISTORY
+    STAFF --> UC_REGISTER_CAR
+    STAFF --> UC_VIEW_CARS
+    STAFF --> UC_EDIT_CAR
+    STAFF --> UC_DELETE_CAR
+    STAFF --> UC_SEARCH_CARS
+    STAFF --> UC_VIEW_CAR_HISTORY
+
+    %% Customers - Both roles
+    OWNER --> UC_ADD_CUSTOMER
+    OWNER --> UC_VIEW_CUSTOMERS
+    OWNER --> UC_EDIT_CUSTOMER
+    OWNER --> UC_DELETE_CUSTOMER
+    OWNER --> UC_SEARCH_CUSTOMERS
+    OWNER --> UC_VIEW_CUST_HISTORY
+    STAFF --> UC_ADD_CUSTOMER
+    STAFF --> UC_VIEW_CUSTOMERS
+    STAFF --> UC_EDIT_CUSTOMER
+    STAFF --> UC_DELETE_CUSTOMER
+    STAFF --> UC_SEARCH_CUSTOMERS
+    STAFF --> UC_VIEW_CUST_HISTORY
+
+    %% Maintenance - Both roles
+    OWNER --> UC_CREATE_JOB
+    OWNER --> UC_VIEW_JOBS
+    OWNER --> UC_UPDATE_JOB_STATUS
+    OWNER --> UC_ADD_PHOTOS
+    STAFF --> UC_CREATE_JOB
+    STAFF --> UC_VIEW_JOBS
+    STAFF --> UC_UPDATE_JOB_STATUS
+    STAFF --> UC_ADD_PHOTOS
+    STAFF --> UC_REQUEST_APPROVAL
+
+    %% Owner-only features
+    OWNER --> UC_CREATE_INVOICE
+    OWNER --> UC_VIEW_INVOICES
+    OWNER --> UC_RECORD_PAYMENT
+    OWNER --> UC_SEND_INVOICE
+
+    OWNER --> UC_ADD_EMPLOYEE
+    OWNER --> UC_VIEW_EMPLOYEES
+    OWNER --> UC_EDIT_EMPLOYEE
+    OWNER --> UC_VIEW_PERFORMANCE
+
+    OWNER --> UC_VIEW_APPROVALS
+    OWNER --> UC_APPROVE
+    OWNER --> UC_REJECT
+
+    OWNER --> UC_ADD_PART
+    OWNER --> UC_VIEW_INVENTORY
+    OWNER --> UC_UPDATE_STOCK
+    OWNER --> UC_STOCK_ALERTS
+
+    OWNER --> UC_GARAGE_SETTINGS
+    OWNER --> UC_MANAGE_SUBSCRIPTION
+    OWNER --> UC_VIEW_DASHBOARD
+    STAFF --> UC_VIEW_DASHBOARD
+
+    %% Include relationships
+    UC_CREATE_APPT -.->|"<<include>>"| UC_VIEW_CARS
+    UC_REGISTER_CAR -.->|"<<include>>"| UC_VIEW_CUSTOMERS
+    UC_CREATE_JOB -.->|"<<include>>"| UC_VIEW_CARS
+    UC_CREATE_INVOICE -.->|"<<include>>"| UC_VIEW_CUSTOMERS
+
+    %% Extend relationships
+    UC_CREATE_APPT -.->|"<<extend>>"| UC_REGISTER_CAR
+    UC_REGISTER_CAR -.->|"<<extend>>"| UC_ADD_CUSTOMER
+    UC_UPDATE_JOB_STATUS -.->|"<<extend>>"| UC_REQUEST_APPROVAL
+    UC_VIEW_INVENTORY -.->|"<<extend>>"| UC_STOCK_ALERTS
+
+    %% Styling
+    classDef actor fill:#4a90d9,stroke:#2c5f8a,color:#fff,stroke-width:2px
+    classDef usecase fill:#1e293b,stroke:#475569,color:#e2e8f0,stroke-width:1px
+    classDef system fill:#0f172a,stroke:#334155,color:#94a3b8
+
+    class OWNER,STAFF actor
+    class UC_LOGIN,UC_LOGOUT,UC_CREATE_APPT,UC_VIEW_APPTS,UC_EDIT_APPT,UC_DELETE_APPT,UC_SEARCH_APPTS,UC_CHANGE_APPT_STATUS usecase
+    class UC_REGISTER_CAR,UC_VIEW_CARS,UC_EDIT_CAR,UC_DELETE_CAR,UC_SEARCH_CARS,UC_VIEW_CAR_HISTORY usecase
+    class UC_ADD_CUSTOMER,UC_VIEW_CUSTOMERS,UC_EDIT_CUSTOMER,UC_DELETE_CUSTOMER,UC_SEARCH_CUSTOMERS,UC_VIEW_CUST_HISTORY usecase
+    class UC_CREATE_JOB,UC_VIEW_JOBS,UC_UPDATE_JOB_STATUS,UC_ADD_PHOTOS,UC_REQUEST_APPROVAL usecase
+    class UC_CREATE_INVOICE,UC_VIEW_INVOICES,UC_RECORD_PAYMENT,UC_SEND_INVOICE usecase
+    class UC_ADD_EMPLOYEE,UC_VIEW_EMPLOYEES,UC_EDIT_EMPLOYEE,UC_VIEW_PERFORMANCE usecase
+    class UC_VIEW_APPROVALS,UC_APPROVE,UC_REJECT usecase
+    class UC_ADD_PART,UC_VIEW_INVENTORY,UC_UPDATE_STOCK,UC_STOCK_ALERTS usecase
+    class UC_GARAGE_SETTINGS,UC_MANAGE_SUBSCRIPTION,UC_VIEW_DASHBOARD usecase

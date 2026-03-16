@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { HttpClientModule } from '@angular/common/http';
@@ -8,6 +8,7 @@ import { TranslationService } from '../../core/services/translation.service';
 import { AuthService } from '../../core/services/auth.service';
 import { OnboardingService } from '../../core/services/onboarding.service';
 import { OnboardingTourComponent } from '../../shared/components/onboarding-tour/onboarding-tour.component';
+import { TooltipDirective } from '../../shared/directives/tooltip.directive';
 
 interface GarageMetrics {
   totalCarsToday: number;
@@ -48,7 +49,7 @@ interface ActiveJob {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, HttpClientModule, LanguageToggleComponent, TranslatePipe, OnboardingTourComponent],
+  imports: [CommonModule, HttpClientModule, LanguageToggleComponent, TranslatePipe, OnboardingTourComponent, TooltipDirective],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
@@ -59,6 +60,12 @@ export class DashboardComponent implements OnInit {
   private onboardingService = inject(OnboardingService);
 
   isOwner = signal(false);
+
+  // Computed tooltip texts that reactively update with translations
+  tooltipQuickActions = computed(() => this.getTooltip('quick_actions'));
+  tooltipMetrics = computed(() => this.getTooltip('metrics'));
+  tooltipSchedule = computed(() => this.getTooltip('schedule'));
+  tooltipActiveJobs = computed(() => this.getTooltip('active_jobs'));
   
   metrics: GarageMetrics = {
     totalCarsToday: 12,
@@ -185,6 +192,9 @@ export class DashboardComponent implements OnInit {
     }
   ];
 
+  constructor() {
+  }
+
   ngOnInit(): void {
     this.loadDashboardData();
     this.isOwner.set(this.authService.isOwner());
@@ -287,6 +297,14 @@ export class DashboardComponent implements OnInit {
       'delayed': 'delayed'
     };
     return statusMap[status as keyof typeof statusMap] || 'scheduled';
+  }
+
+  // Tooltip translation methods - now reactive by accessing translation service on each call
+  getTooltip(key: string): string {
+    const fullKey = `dashboard.tooltips.${key}`;
+    const translated = this.translationService.instant(fullKey);
+    // Return empty string if translation not found (returns key when not found)
+    return translated === fullKey ? '' : translated;
   }
 
 }

@@ -13,7 +13,7 @@
 
   <!-- Quick Actions - Top Priority -->
   <div class="section-container mb-8">
-    <h2 class="section-title text-primary-themed">{{ 'dashboard.quickActions.title' | translate }}</h2>
+    <h2 class="section-title text-primary-themed" [appTooltip]="tooltipQuickActions()" tooltipPosition="right">{{ 'dashboard.quickActions.title' | translate }}</h2>
     <div class="quick-actions-grid">
       <button class="action-card glass-card" data-tour="add-car" (click)="navigateToNewCar()">
         <div class="action-icon action-icon-primary">
@@ -99,7 +99,7 @@
       <!-- Header with Icon -->
       <div class="card-header-redesigned">
         <div class="header-left">
-          <div class="schedule-icon">
+          <div class="schedule-icon" [appTooltip]="tooltipSchedule()" tooltipPosition="right">
             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
               <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
             </svg>
@@ -147,7 +147,7 @@
 
   <!-- Active Jobs Section -->
   <div class="section-container mb-8">
-    <h2 class="section-title text-primary-themed">{{ 'dashboard.activeJobs.title' | translate }}</h2>
+    <h2 class="section-title text-primary-themed" [appTooltip]="tooltipActiveJobs()" tooltipPosition="right">{{ 'dashboard.activeJobs.title' | translate }}</h2>
     <div class="active-jobs-grid">
       @for (job of activeJobs; track job.id) {
         <div class="glass-card job-card">

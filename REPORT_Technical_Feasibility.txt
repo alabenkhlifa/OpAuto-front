@@ -1,0 +1,47 @@
+Technical Feasibility and Architecture
+
+Solution Architecture
+
+The automotive aftermarket in Tunisia, and across much of the MENA region, remains largely underserved by modern management tools. Most garage owners still rely on paper notebooks, phone calls, and scattered spreadsheets to track appointments, parts, and customer histories. This leads to a recurring set of problems: double-booked time slots, forgotten follow-ups, poor inventory visibility, and an almost total absence of business analytics. OpAuto was designed specifically to address these pain points by offering a modular, web-based enterprise resource planning (ERP) platform tailored to multi-specialty automotive workshops.
+
+From an architectural standpoint, OpAuto follows a classic client-server model with a clear separation between the presentation layer and the business logic layer. The frontend is a single-page application (SPA) that communicates with a RESTful backend through standard HTTP requests. Both layers live in the same Git repository as a monorepo, which simplifies version control and keeps the frontend and backend contracts in sync during development.
+
+The system is organized around domain-driven modules. Each business domain, whether it is customer management, appointment scheduling, invoicing, or inventory tracking, maps to a self-contained module on both the frontend and the backend. On the frontend, every module is a lazy-loaded standalone Angular component with its own routing, services, and sub-components. On the backend, each module is a NestJS module with its own controller, service, and data-transfer objects. This mirroring is intentional: it keeps the mental model consistent across the full stack and makes it straightforward for either team member to trace a feature from the database up to the user interface.
+
+Authentication uses JSON Web Tokens with access and refresh tokens. Two roles are enforced at both layers: an Owner role with full privileges and a Staff role limited to day-to-day operations. Role-based guards on the backend mirror the route guards on the frontend, so unauthorized access is blocked regardless of whether someone manipulates the client-side code.
+
+Technical Stack
+
+One of the first decisions we made was to standardize on TypeScript across the entire stack. The frontend uses Angular, and the backend uses NestJS, which means both sides share the same language, the same type system, and in many cases the same interface definitions for data models. This eliminates an entire category of bugs that arise when a frontend developer assumes one shape for an API response while the backend returns something slightly different. For a two-person team working under academic deadlines, this kind of consistency is not a luxury; it is a practical necessity.
+
+Angular was chosen over React or Vue because of its opinionated structure. An ERP system touches many domains at once, and Angular's conventions for modules, services, dependency injection, and routing impose a discipline that keeps the codebase organized as it grows. NestJS was the natural counterpart: it borrows Angular's modular architecture and decorators, so the patterns feel familiar across both codebases.
+
+For the database layer, we selected PostgreSQL with the Prisma ORM. ERP data is inherently relational; a customer owns multiple cars, each car has a maintenance history, each maintenance job may generate an invoice, and each invoice references parts from inventory. PostgreSQL handles these relationships gracefully. Prisma was chosen over TypeORM for its developer experience: auto-generated types, a readable schema file, and a migration workflow that two developers can coordinate without stepping on each other's changes.
+
+The frontend follows a dark glassmorphism design system with internationalization for English, French, and Arabic including right-to-left layout. The calendar module uses the FullCalendar library for month, week, and day views with drag-and-drop rescheduling. Dashboard analytics are rendered using Chart.js. For AI features, the backend proxies requests to large language model APIs from Anthropic and OpenAI, keeping credentials server-side.
+
+MVP Definition
+
+Rather than building every conceivable feature before shipping, we adopted a freemium, per-module pricing model that naturally defines the MVP boundary. The minimum viable product includes everything a garage needs to operate day-to-day at no cost, plus a set of paid modules that unlock advanced capabilities.
+
+The free tier covers four modules: customer management, car management, a basic dashboard with key performance indicators, and appointment scheduling in list view. These four modules represent the core workflow loop: a customer walks in, their car is registered, an appointment is created, and the owner can see the day's agenda at a glance. This is already a significant upgrade over the paper-based status quo.
+
+Paid modules extend this foundation. The calendar module adds visual month, week, and day views with drag-and-drop. The maintenance module enables job tracking with mechanic assignments and status workflows. Invoicing and inventory modules handle the financial and supply-chain sides. Reporting and analytics give owners data-driven insights into revenue trends, mechanic utilization, and job-type distribution. An AI module introduces three intelligent features: smart scheduling that recommends optimal appointment slots, an analytics narrator that generates natural-language summaries of dashboard data, and predictive maintenance that estimates when a vehicle will need its next service based on mileage and history.
+
+Several features were deliberately excluded from the MVP: VIN-based auto-decoding, real WhatsApp and SMS delivery, and additional AI capabilities such as a diagnostic chatbot, a knowledge base, and image-based damage assessment. These carry higher complexity and are not required to demonstrate the core value proposition.
+
+Product Roadmap
+
+Development Phases
+
+Development is structured into five phases spanning approximately ten weeks. The first phase, estimated at two weeks, builds the module system itself. This is the architectural prerequisite for everything that follows: the module model, the module service, the access-control guard, and a marketplace page where garage owners can browse and activate modules. It also involves updating the sidebar navigation and the existing feature-lock components to work with the new per-module logic instead of the legacy tier-based subscription system.
+
+Phases two and three can run in parallel once the module foundation is in place. Phase two, also two weeks, delivers the calendar view using FullCalendar with glassmorphism styling, mechanic color-coding, and integration with the existing appointment creation modal. Phase three focuses on the notification system and dashboard enhancements: a bell icon with a dropdown in the header, a dedicated notifications page, simulated WhatsApp message previews, and the addition of KPI sparklines and interactive charts to the dashboard.
+
+Phase four covers backend scaffolding and core API development over two weeks. This includes setting up the NestJS project, defining the PostgreSQL schema with Prisma, implementing JWT authentication, and building RESTful endpoints for every domain module. Once the backend endpoints are stable, the frontend services are migrated from in-memory mock data to real HTTP calls.
+
+The fifth and final phase integrates the AI features. The backend exposes a proxy endpoint that forwards prompts to Claude or OpenAI, keeping API keys server-side. The frontend surfaces three AI-powered interactions: smart scheduling suggestions inside the appointment form, natural-language dashboard insights, and predictive maintenance timelines on car detail pages. A mock-fallback mode ensures the demo remains functional even without a live API key.
+
+Feature Backlog
+
+Beyond the MVP, the backlog is prioritized by business value and readiness. Near-term items include VIN auto-decoding using the free NHTSA API, real WhatsApp notifications via the WhatsApp Business API, and a diagnostic chatbot. Medium-term goals cover a mobile companion app, payment processing, and a customer-facing portal for service history and upcoming appointments. Longer-term ambitions include a knowledge base for technician training, AI-driven inventory forecasting, and third-party add-ons in the module marketplace. The initial test market is Tunisia, with planned expansion to Saudi Arabia once the product has been validated locally.

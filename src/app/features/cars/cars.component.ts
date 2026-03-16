@@ -11,11 +11,13 @@ import { SubscriptionService } from '../../core/services/subscription.service';
 import { UpgradePromptComponent } from '../../shared/components/upgrade-prompt/upgrade-prompt.component';
 import { SubscriptionTierId, SubscriptionStatus } from '../../core/models/subscription.model';
 import { LanguageService } from '../../core/services/language.service';
+import { TooltipDirective } from '../../shared/directives/tooltip.directive';
+import { TranslationService } from '../../core/services/translation.service';
 
 @Component({
   selector: 'app-cars',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, CarCardComponent, CarRegistrationFormComponent, TranslatePipe, UpgradePromptComponent],
+  imports: [CommonModule, FormsModule, RouterModule, CarCardComponent, CarRegistrationFormComponent, TranslatePipe, UpgradePromptComponent, TooltipDirective],
   templateUrl: './cars.component.html',
   styleUrl: './cars.component.css'
 })
@@ -23,20 +25,33 @@ export class CarsComponent implements OnInit {
   private carService = inject(CarService);
   private subscriptionService = inject(SubscriptionService);
   private languageService = inject(LanguageService);
+  private translationService = inject(TranslationService);
   private router = inject(Router);
-  
+
   cars = signal<CarWithHistory[]>([]);
   subscriptionStatus = signal<SubscriptionStatus | null>(null);
   isLoading = signal(false);
   showRegistrationForm = signal(false);
   showUpgradePrompt = signal(false);
-  
+
   searchQuery = signal('');
   selectedMake = signal('all');
   selectedStatus = signal('all');
   showMobileFilters = signal(false);
-  
+
   availableMakes = computed(() => this.carService.getAvailableMakes());
+
+  // Computed tooltip texts
+  tooltipFilters = computed(() => this.getTooltip('filters'));
+  tooltipAddCar = computed(() => this.getTooltip('addCar'));
+  tooltipLimitInfo = computed(() => this.getTooltip('limitInfo'));
+
+  // Tooltip translation method
+  getTooltip(key: string): string {
+    const fullKey = `cars.tooltips.${key}`;
+    const translated = this.translationService.instant(fullKey);
+    return translated === fullKey ? '' : translated;
+  }
   
   // Car limit computations
   currentCarCount = computed(() => this.cars().length);

@@ -106,7 +106,7 @@
     },
     "status": {
       "scheduled": "Scheduled",
-      "in_progress": "In Progress", 
+      "in_progress": "In Progress",
       "completed": "Completed",
       "delayed": "Delayed",
       "in_repair": "In Repair",
@@ -114,6 +114,12 @@
       "waiting_parts": "Waiting Parts",
       "diagnosis": "Diagnosis",
       "waiting_approval": "Waiting Approval"
+    },
+    "tooltips": {
+      "quick_actions": "Quickly access common garage management tasks",
+      "metrics": "View real-time garage performance metrics and statistics",
+      "schedule": "Today's appointments and scheduled services",
+      "active_jobs": "Monitor ongoing repair and service jobs"
     }
   },
   "appointments": {
@@ -191,6 +197,11 @@
       "in-progress": "In Progress",
       "completed": "Completed",
       "cancelled": "Cancelled"
+    },
+    "tooltips": {
+      "filters": "Filter appointments by mechanic, status, or search criteria",
+      "view_mode": "Switch between list, calendar, and today views",
+      "add_appointment": "Schedule a new service appointment"
     }
   },
   "cars": {
@@ -265,7 +276,12 @@
     "totalServices": "Total Services",
     "nextDue": "Next Due",
     "schedule": "Schedule",
-    "history": "History"
+    "history": "History",
+    "tooltips": {
+      "filters": "Search and filter vehicles by make, model, or status",
+      "add_car": "Register a new vehicle in the system",
+      "limit_info": "Track your vehicle count against subscription limits"
+    }
   },
   "maintenance": {
     "title": "Maintenance",
@@ -494,7 +510,12 @@
       "days": "days",
       "payment": "Payment Terms"
     },
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "tooltips": {
+      "filters": "Search and filter parts by name, category, or stock status",
+      "add_part": "Add a new part to the inventory",
+      "stock_alert": "View parts with low stock levels that need reordering"
+    }
   },
   "invoicing": {
     "title": "Invoicing",
@@ -725,7 +746,12 @@
     "form": {
       "newCustomer": "New Customer"
     },
-    "loading": "Loading customers..."
+    "loading": "Loading customers...",
+    "tooltips": {
+      "filters": "Search and filter customers by name, phone, or loyalty status",
+      "add_customer": "Add a new customer to the system",
+      "loyalty": "View customer loyalty tiers and service history"
+    }
   },
   "employees": {
     "title": "Employee Management",
@@ -814,7 +840,13 @@
     "skills": "Skills",
     "certifications": "Certifications",
     "workSchedule": "Work Schedule",
-    "noEmployees": "No employees found"
+    "noEmployees": "No employees found",
+    "tooltips": {
+      "filters": "Search and filter employees by name, role, or department",
+      "add_employee": "Add a new employee to the team",
+      "performance": "View employee performance metrics and statistics",
+      "limit_info": "Track active employee count against subscription limits"
+    }
   },
   "reports": {
     "title": "Reports",

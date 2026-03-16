@@ -1,0 +1,25 @@
+flowchart LR
+    START(("Start"))
+    END_SUCCESS(("End"))
+
+    START --> OPEN["Open Appointments Page"]
+    OPEN --> CLICK["Click 'Add Appointment'"]
+    CLICK --> HAS_CAR{"Car Exists?"}
+
+    HAS_CAR -->|"Yes"| SCHEDULE["Schedule Appointment
+    (See Diagram 3)"]
+    HAS_CAR -->|"No"| HAS_CUSTOMER{"Customer Exists?"}
+
+    HAS_CUSTOMER -->|"No"| CREATE_CUST["Create New Customer
+    (See Diagram 1)"]
+    HAS_CUSTOMER -->|"Yes"| CREATE_CAR["Register New Car
+    (See Diagram 2)"]
+
+    CREATE_CUST --> CREATE_CAR
+    CREATE_CAR --> SCHEDULE
+
+    SCHEDULE --> END_SUCCESS
+
+    classDef startEnd fill:#4a90d9,stroke:#2c5f8a,color:#fff,stroke-width:3px
+    classDef decision fill:#7c3aed,stroke:#5b21b6,color:#fff,stroke-width:2px
+    classDef subprocess fill:#1e293b,stroke:#60a5fa,color:#e2e8f0,stroke-width:2px

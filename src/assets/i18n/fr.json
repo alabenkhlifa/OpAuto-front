@@ -114,6 +114,12 @@
       "waiting_parts": "En attente de pièces",
       "diagnosis": "Diagnostic",
       "waiting_approval": "En attente d'approbation"
+    },
+    "tooltips": {
+      "quick_actions": "Accéder rapidement aux tâches courantes de gestion du garage",
+      "metrics": "Afficher les métriques et statistiques de performance en temps réel",
+      "schedule": "Rendez-vous et services programmés d'aujourd'hui",
+      "active_jobs": "Surveiller les travaux de réparation et d'entretien en cours"
     }
   },
   "appointments": {
@@ -191,6 +197,11 @@
       "in-progress": "En cours",
       "completed": "Terminé",
       "cancelled": "Annulé"
+    },
+    "tooltips": {
+      "filters": "Filtrer les rendez-vous par mécanicien, statut ou critères de recherche",
+      "view_mode": "Basculer entre les vues liste, calendrier et aujourd'hui",
+      "add_appointment": "Planifier un nouveau rendez-vous de service"
     }
   },
   "cars": {
@@ -276,7 +287,12 @@
     "phoneNumberRequired": "Numéro de téléphone *",
     "phoneNumberPlaceholder": "Entrez le numéro de téléphone",
     "emailPlaceholder": "Entrez l'adresse e-mail",
-    "addressPlaceholder": "Entrez l'adresse"
+    "addressPlaceholder": "Entrez l'adresse",
+    "tooltips": {
+      "filters": "Rechercher et filtrer les véhicules par marque, modèle ou statut",
+      "add_car": "Enregistrer un nouveau véhicule dans le système",
+      "limit_info": "Suivre le nombre de véhicules par rapport aux limites d'abonnement"
+    }
   },
   "maintenance": {
     "title": "Maintenance",
@@ -505,7 +521,12 @@
       "days": "jours",
       "payment": "Conditions de paiement"
     },
-    "loading": "Chargement..."
+    "loading": "Chargement...",
+    "tooltips": {
+      "filters": "Rechercher et filtrer les pièces par nom, catégorie ou statut de stock",
+      "add_part": "Ajouter une nouvelle pièce à l'inventaire",
+      "stock_alert": "Voir les pièces avec stock faible nécessitant une commande"
+    }
   },
   "invoicing": {
     "title": "Facturation",
@@ -687,7 +708,12 @@
     "form": {
       "newCustomer": "Nouveau client"
     },
-    "loading": "Chargement des clients..."
+    "loading": "Chargement des clients...",
+    "tooltips": {
+      "filters": "Rechercher et filtrer les clients par nom, téléphone ou statut de fidélité",
+      "add_customer": "Ajouter un nouveau client au système",
+      "loyalty": "Voir les niveaux de fidélité et l'historique des services"
+    }
   },
   "employees": {
     "title": "Gestion des Employés",
@@ -776,7 +802,13 @@
     "skills": "Compétences",
     "certifications": "Certifications",
     "workSchedule": "Horaire de travail",
-    "noEmployees": "Aucun employé trouvé"
+    "noEmployees": "Aucun employé trouvé",
+    "tooltips": {
+      "filters": "Rechercher et filtrer les employés par nom, rôle ou département",
+      "add_employee": "Ajouter un nouvel employé à l'équipe",
+      "performance": "Voir les métriques et statistiques de performance des employés",
+      "limit_info": "Suivre le nombre d'employés actifs par rapport aux limites d'abonnement"
+    }
   },
   "reports": {
     "title": "Rapports",
