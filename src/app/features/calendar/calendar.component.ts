@@ -12,7 +12,7 @@ import { AppointmentService } from '../appointments/services/appointment.service
 import { TranslationService } from '../../core/services/translation.service';
 import { SidebarService } from '../../core/services/sidebar.service';
 import { Appointment } from '../../core/models/appointment.model';
-import { Subscription } from 'rxjs';
+import { Subscription, forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-calendar',
@@ -66,7 +66,13 @@ export class CalendarComponent implements OnInit, OnDestroy {
   };
 
   ngOnInit() {
-    this.subscription = this.appointmentService.getAppointments().subscribe(appointments => {
+    // Preload customers, cars, mechanics caches before mapping appointments
+    this.subscription = forkJoin({
+      customers: this.appointmentService.getCustomers(),
+      cars: this.appointmentService.getCars(),
+      mechanics: this.appointmentService.getMechanics(),
+      appointments: this.appointmentService.getAppointments()
+    }).subscribe(({ appointments }) => {
       this.appointments = appointments;
       this.mechanics.set(this.calendarService.getMechanicsFromAppointments(appointments));
       this.loadEvents();

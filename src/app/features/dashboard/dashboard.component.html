@@ -133,15 +133,29 @@
     }
   </div>
 
-  <!-- Charts Row 1: Revenue Trend + Job Type Distribution -->
+  <!-- Charts Row 1: Revenue Trend (wide) -->
   <div class="chart-row">
-    <div class="glass-card chart-card">
+    <div class="glass-card chart-card" style="flex: 2;">
       <h3 class="chart-title">{{ 'dashboard.charts.revenueTrend' | translate }}</h3>
       <div class="chart-container">
         <canvas baseChart
           [data]="revenueChartData"
           [options]="revenueChartOptions"
           type="line">
+        </canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row 2: Mechanic Performance + Job Type Distribution -->
+  <div class="chart-row-equal">
+    <div class="glass-card chart-card">
+      <h3 class="chart-title">{{ 'dashboard.charts.mechanicPerformance' | translate }}</h3>
+      <div class="chart-container">
+        <canvas baseChart
+          [data]="mechanicChartData"
+          [options]="mechanicChartOptions"
+          type="bar">
         </canvas>
       </div>
     </div>
@@ -157,22 +171,9 @@
     </div>
   </div>
 
-  <!-- Charts Row 2: Mechanic Performance + Today's Appointments -->
-  <div class="chart-row-equal">
-    <div class="glass-card chart-card">
-      <h3 class="chart-title">{{ 'dashboard.charts.mechanicPerformance' | translate }}</h3>
-      <div class="chart-container">
-        <canvas baseChart
-          [data]="mechanicChartData"
-          [options]="mechanicChartOptions"
-          type="bar">
-        </canvas>
-      </div>
-    </div>
-
-    <!-- Today's Schedule -->
+  <!-- Today's Schedule (full width row) -->
+  <div class="section-container mb-8">
     <div class="glass-card schedule-card-redesigned">
-      <!-- Header with Icon -->
       <div class="card-header-redesigned">
         <div class="header-left">
           <div class="schedule-icon" [appTooltip]="tooltipSchedule()" tooltipPosition="right">
@@ -192,16 +193,12 @@
         </div>
       </div>
 
-      <!-- Timeline Schedule -->
       <div class="schedule-timeline">
         @for (appointment of todayAppointments; track appointment.id) {
           <div class="timeline-item" [ngClass]="getTimelineItemClass(appointment.status)">
-            <!-- Timeline Dot -->
             <div class="timeline-dot" [ngClass]="getTimelineDotClass(appointment.status)">
               <div class="timeline-dot-inner"></div>
             </div>
-
-            <!-- Timeline Content -->
             <div class="timeline-content">
               <div class="timeline-time">{{ appointment.time }}</div>
               <div class="timeline-main">
