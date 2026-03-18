@@ -23,6 +23,9 @@ export interface GarageModule {
   icon: string;
   isActive: boolean;
   isFree: boolean;
+  willRenew?: boolean;
+  purchasedAt?: string;
+  expiresAt?: string;
 }
 
 export const FREE_MODULES: ModuleId[] = ['dashboard', 'customers', 'cars', 'appointments'];

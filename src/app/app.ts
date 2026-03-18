@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, effect } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { SidebarService } from './core/services/sidebar.service';
 import { TranslationService } from './core/services/translation.service';
@@ -24,12 +24,19 @@ export class App implements OnInit {
   private notificationService = inject(NotificationService);
   private router = inject(Router);
 
+  constructor() {
+    // Once modules are loaded, conditionally load notifications
+    effect(() => {
+      if (this.moduleService.isLoaded() && this.moduleService.hasModuleAccess('notifications')) {
+        this.notificationService.loadNotifications();
+      }
+    });
+  }
+
   ngOnInit(): void {
-    // After auth is confirmed, load active modules and notifications
     this.authService.isAuthenticated$.subscribe(isAuth => {
       if (isAuth) {
         this.moduleService.loadActiveModules();
-        this.notificationService.loadNotifications();
       }
     });
   }

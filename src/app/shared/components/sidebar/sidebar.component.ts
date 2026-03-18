@@ -4,7 +4,8 @@ import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { SidebarService } from '../../../core/services/sidebar.service';
 import { TranslationService } from '../../../core/services/translation.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { SubscriptionService } from '../../../core/services/subscription.service';
+import { ModuleService } from '../../../core/services/module.service';
+import { ModuleId } from '../../../core/models/module.model';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { filter, Subscription } from 'rxjs';
 
@@ -19,7 +20,7 @@ interface NavItem {
   isActive?: boolean;
   isExpanded?: boolean;
   ownerOnly?: boolean;
-  requiresFeature?: string;
+  requiresModule?: ModuleId;
 }
 
 @Component({
@@ -34,15 +35,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
   private sidebarService = inject(SidebarService);
   private translationService = inject(TranslationService);
   private authService = inject(AuthService);
-  private subscriptionService = inject(SubscriptionService);
+  private moduleService = inject(ModuleService);
   private routerSubscription?: Subscription;
-  private featureSubscription = new Subscription();
-  
-  hasInventoryAccess = signal(false);
-  hasAdvancedReports = signal(false);
-  hasMultiUserAccess = signal(false);
-  hasInternalApprovals = signal(false);
-  
+
   isCollapsed = this.sidebarService.isCollapsed;
   isMobileMenuOpen = this.sidebarService.isMobileMenuOpen;
   isHovered = signal(false);
@@ -61,7 +56,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
       label: 'Calendar',
       translationKey: 'navigation.calendar',
       icon: 'calendar-view',
-      route: '/calendar'
+      route: '/calendar',
+      requiresModule: 'calendar'
     },
     {
       id: 'appointments',
@@ -84,6 +80,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       translationKey: 'navigation.maintenance',
       icon: 'wrench',
       isExpanded: false,
+      requiresModule: 'maintenance',
       children: [
         { id: 'maintenance-active', label: 'Active Jobs', translationKey: 'maintenance.activeJobs', icon: 'play', route: '/maintenance/active', badge: 5 },
         { id: 'maintenance-history', label: 'Completed Jobs', translationKey: 'maintenance.completedJobs', icon: 'history', route: '/maintenance/history' },
@@ -97,7 +94,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       icon: 'package',
       route: '/inventory',
       ownerOnly: true,
-      requiresFeature: 'inventory_management'
+      requiresModule: 'inventory'
     },
     {
       id: 'invoices',
@@ -106,6 +103,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       icon: 'receipt',
       isExpanded: false,
       ownerOnly: true,
+      requiresModule: 'invoicing',
       children: [
         { id: 'invoices-list', label: 'All Invoices', translationKey: 'invoicing.navigation.allInvoices', icon: 'list', route: '/invoices' },
         { id: 'invoices-create', label: 'Create Invoice', translationKey: 'invoicing.navigation.createInvoice', icon: 'plus', route: '/invoices/create' },
@@ -126,7 +124,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       icon: 'chart',
       route: '/reports',
       ownerOnly: true,
-      requiresFeature: 'basic_reports'
+      requiresModule: 'reports'
     },
     {
       id: 'approvals',
@@ -136,14 +134,15 @@ export class SidebarComponent implements OnInit, OnDestroy {
       route: '/approvals',
       badge: 3,
       ownerOnly: true,
-      requiresFeature: 'internal_approvals'
+      requiresModule: 'approvals'
     },
     {
       id: 'notifications',
       label: 'Notifications',
       translationKey: 'navigation.notifications',
       icon: 'bell',
-      route: '/notifications'
+      route: '/notifications',
+      requiresModule: 'notifications'
     }
   ];
 
@@ -154,7 +153,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
       translationKey: 'navigation.settings',
       icon: 'settings',
       route: '/settings',
-      ownerOnly: true
+      ownerOnly: true,
+      requiresModule: 'settings'
     },
     {
       id: 'employees',
@@ -163,7 +163,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       icon: 'team',
       route: '/employees',
       ownerOnly: true,
-      requiresFeature: 'multi_user'
+      requiresModule: 'employees'
     },
     {
       id: 'modules',
@@ -184,35 +184,24 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   filteredNavItems = computed(() => {
     const isOwner = this.authService.isOwner();
-    return this.filterItemsByRoleAndFeature(this.navItems, isOwner);
+    return this.filterItemsByRole(this.navItems, isOwner);
   });
 
   filteredSettingsItems = computed(() => {
     const isOwner = this.authService.isOwner();
-    return this.filterItemsByRoleAndFeature(this.settingsItems, isOwner);
+    return this.filterItemsByRole(this.settingsItems, isOwner);
   });
 
-  private filterItemsByRoleAndFeature(items: NavItem[], isOwner: boolean): NavItem[] {
+  private filterItemsByRole(items: NavItem[], isOwner: boolean): NavItem[] {
     return items.filter(item => {
-      if (item.ownerOnly && !isOwner) {
-        return false;
-      }
-      if (item.requiresFeature) {
-        if (item.requiresFeature === 'inventory_management') {
-          return this.hasInventoryAccess();
-        }
-        if (item.requiresFeature === 'multi_user') {
-          return this.hasMultiUserAccess();
-        }
-        if (item.requiresFeature === 'internal_approvals') {
-          return this.hasInternalApprovals();
-        }
-        if (item.requiresFeature === 'advanced_reports' && !this.hasAdvancedReports()) {
-          return false;
-        }
-      }
+      if (item.ownerOnly && !isOwner) return false;
       return true;
     });
+  }
+
+  isModuleLocked(item: NavItem): boolean {
+    if (!item.requiresModule) return false;
+    return !this.moduleService.hasModuleAccess(item.requiresModule);
   }
 
   getTranslatedLabel(translationKey: string, fallback: string): string {
@@ -221,53 +210,18 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.updateActiveStates(this.router.url);
-    
+
     this.routerSubscription = this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event: NavigationEnd) => {
         this.updateActiveStates(event.url);
       });
-    
-    this.loadFeatureAccess();
-    
-    this.featureSubscription.add(
-      this.subscriptionService.currentTier$.subscribe(() => {
-        this.loadFeatureAccess();
-      })
-    );
-  }
-  
-  private loadFeatureAccess(): void {
-    this.featureSubscription.add(
-      this.subscriptionService.isFeatureEnabled('inventory_management').subscribe(enabled => {
-        this.hasInventoryAccess.set(enabled);
-      })
-    );
-    
-    this.featureSubscription.add(
-      this.subscriptionService.isFeatureEnabled('advanced_reports').subscribe(enabled => {
-        this.hasAdvancedReports.set(enabled);
-      })
-    );
-    
-    this.featureSubscription.add(
-      this.subscriptionService.isFeatureEnabled('multi_user').subscribe(enabled => {
-        this.hasMultiUserAccess.set(enabled);
-      })
-    );
-    
-    this.featureSubscription.add(
-      this.subscriptionService.isFeatureEnabled('internal_approvals').subscribe(enabled => {
-        this.hasInternalApprovals.set(enabled);
-      })
-    );
   }
 
   ngOnDestroy() {
     if (this.routerSubscription) {
       this.routerSubscription.unsubscribe();
     }
-    this.featureSubscription.unsubscribe();
   }
 
   toggleSidebar() {
@@ -280,20 +234,29 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   navigateTo(route: string) {
     if (route) {
-      // Update active state
       this.updateActiveStates(route);
       this.router.navigate([route]);
-      // Close mobile menu if open
       this.sidebarService.closeMobileMenu();
     }
   }
 
+  onNavItemClick(item: NavItem, event: Event) {
+    event.stopPropagation();
+    if (this.isModuleLocked(item)) {
+      this.router.navigate(['/modules']);
+      this.sidebarService.closeMobileMenu();
+      return;
+    }
+    if (item.children) {
+      this.toggleSubmenu(item, event);
+    } else {
+      this.navigateTo(item.route!);
+    }
+  }
+
   private updateActiveStates(activeRoute: string) {
-    // Reset all active states (work on original arrays)
     this.resetActiveStates(this.navItems);
     this.resetActiveStates(this.settingsItems);
-    
-    // Set new active state (work on original arrays)
     this.setActiveState(this.navItems, activeRoute);
     this.setActiveState(this.settingsItems, activeRoute);
   }
@@ -312,18 +275,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
       if (item.route === activeRoute) {
         item.isActive = true;
       }
-      
-      // Check children and set parent as active if child is active
+
       if (item.children) {
         this.setActiveState(item.children, activeRoute);
-        
-        // If any child is active, expand the parent and mark it as having an active child
         const hasActiveChild = item.children.some(child => child.isActive);
         if (hasActiveChild) {
           item.isExpanded = true;
         }
-        
-        // For partial matches (like /maintenance/active matching /maintenance parent)
         if (item.route && activeRoute.startsWith(item.route + '/')) {
           item.isExpanded = true;
         }
@@ -343,21 +301,18 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   onMouseEnter() {
-    // Only allow hover on desktop (lg and up)
     if (this.isDesktop()) {
       this.isHovered.set(true);
     }
   }
 
   onMouseLeave() {
-    // Only allow hover on desktop (lg and up)
     if (this.isDesktop()) {
       this.isHovered.set(false);
     }
   }
 
   shouldShowExpanded(): boolean {
-    // On mobile, show expanded content when menu is open
     if (this.isMobile()) {
       return this.isMobileMenuOpen();
     }
@@ -365,7 +320,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   onSidebarClick() {
-    // Only allow click expansion on desktop
     if (this.isDesktop() && this.isCollapsed()) {
       this.toggleSidebar();
     }

@@ -189,6 +189,15 @@
   border: 1px solid rgba(255, 132, 0, 0.3);
 }
 
+.nav-link.locked {
+  opacity: 0.45;
+}
+
+.nav-link.locked:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #94a3b8;
+}
+
 /* Navigation Icons & Labels */
 .nav-icon {
   flex-shrink: 0;

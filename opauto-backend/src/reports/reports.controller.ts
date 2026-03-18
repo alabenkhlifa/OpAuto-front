@@ -6,11 +6,13 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { UserRole } from '@prisma/client';
+import { ModuleAccessGuard, RequireModule } from '../modules/module-access.guard';
 
 @ApiTags('reports')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, ModuleAccessGuard)
 @Roles(UserRole.OWNER)
+@RequireModule('reports')
 @Controller('reports')
 export class ReportsController {
   constructor(private service: ReportsService) {}

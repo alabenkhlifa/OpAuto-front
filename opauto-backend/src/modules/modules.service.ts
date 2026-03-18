@@ -19,6 +19,8 @@ const MODULE_CATALOG = [
   { id: 'notifications', name: 'Notifications', price: 19, description: 'Smart notifications' },
 ];
 
+const FREE_MODULES = ['dashboard', 'customers', 'cars', 'appointments'];
+
 @Injectable()
 export class ModulesService {
   constructor(private prisma: PrismaService) {}
@@ -26,21 +28,32 @@ export class ModulesService {
   getCatalog() { return MODULE_CATALOG; }
 
   async getActiveModules(garageId: string) {
-    return this.prisma.garageModule.findMany({ where: { garageId, isActive: true } });
+    const modules = await this.prisma.garageModule.findMany({
+      where: { garageId },
+    });
+    // Access lasts until expiresAt, even if cancelled (isActive=false means won't renew)
+    const now = new Date();
+    return modules.filter(m => !m.expiresAt || m.expiresAt > now);
   }
 
   async hasAccess(garageId: string, moduleId: string) {
-    const freeModules = ['dashboard', 'customers', 'cars', 'appointments'];
-    if (freeModules.includes(moduleId)) return true;
-    const mod = await this.prisma.garageModule.findUnique({ where: { garageId_moduleId: { garageId, moduleId } } });
-    return mod?.isActive ?? false;
+    if (FREE_MODULES.includes(moduleId)) return true;
+    const mod = await this.prisma.garageModule.findUnique({
+      where: { garageId_moduleId: { garageId, moduleId } },
+    });
+    if (!mod) return false;
+    // isActive=false means cancelled (won't renew), but access stays until expiry
+    if (mod.expiresAt && mod.expiresAt < new Date()) return false;
+    return true;
   }
 
   async purchaseModule(garageId: string, moduleId: string) {
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
     return this.prisma.garageModule.upsert({
       where: { garageId_moduleId: { garageId, moduleId } },
-      update: { isActive: true },
-      create: { garageId, moduleId },
+      update: { isActive: true, purchasedAt: now, expiresAt },
+      create: { garageId, moduleId, purchasedAt: now, expiresAt },
     });
   }
 

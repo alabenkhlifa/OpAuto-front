@@ -3,6 +3,11 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { execSync } from 'child_process';
+import * as path from 'path';
+
+// Use the test database — never touch the dev database
+const TEST_DATABASE_URL = 'postgresql://postgres:postgres@localhost:5432/opauto_test';
 
 describe('OpAuto API (e2e)', () => {
   let app: INestApplication;
@@ -23,6 +28,21 @@ describe('OpAuto API (e2e)', () => {
   let partId: string;
 
   beforeAll(async () => {
+    // Force tests to use the test database
+    process.env.DATABASE_URL = TEST_DATABASE_URL;
+
+    // Create the test database if it doesn't exist and push schema
+    try {
+      execSync(`createdb -h localhost -U postgres opauto_test 2>/dev/null || true`, { env: { ...process.env, PGPASSWORD: 'postgres' } });
+      execSync('npx prisma db push --skip-generate', {
+        cwd: path.resolve(__dirname, '..'),
+        env: { ...process.env, DATABASE_URL: TEST_DATABASE_URL },
+        stdio: 'pipe',
+      });
+    } catch {
+      // db push may warn but still succeed
+    }
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -40,7 +60,7 @@ describe('OpAuto API (e2e)', () => {
 
     prisma = app.get(PrismaService);
 
-    // Clean database before tests
+    // Clean test database before tests
     await prisma.$executeRawUnsafe(`
       DO $$ DECLARE r RECORD;
       BEGIN

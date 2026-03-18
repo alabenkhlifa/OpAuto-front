@@ -2,19 +2,35 @@ import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ModuleId, GarageModule, MODULE_CATALOG, FREE_MODULES } from '../models/module.model';
 
+interface ActiveModuleInfo {
+  id: ModuleId;
+  willRenew: boolean;
+  purchasedAt?: string;
+  expiresAt?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ModuleService {
   private http = inject(HttpClient);
 
+  private activeModuleInfos = signal<ActiveModuleInfo[]>([]);
   private activeModuleIds = signal<ModuleId[]>([]);
   private loaded = false;
+  isLoaded = signal(false);
 
   modules = computed<GarageModule[]>(() => {
     const activeIds = this.activeModuleIds();
-    return MODULE_CATALOG.map(m => ({
-      ...m,
-      isActive: activeIds.includes(m.id),
-    }));
+    const infos = this.activeModuleInfos();
+    return MODULE_CATALOG.map(m => {
+      const info = infos.find(i => i.id === m.id);
+      return {
+        ...m,
+        isActive: activeIds.includes(m.id),
+        willRenew: info?.willRenew ?? m.isFree,
+        purchasedAt: info?.purchasedAt,
+        expiresAt: info?.expiresAt,
+      };
+    });
   });
 
   activeModules = computed(() => this.modules().filter(m => m.isActive));
@@ -24,22 +40,31 @@ export class ModuleService {
     if (this.loaded) return;
     this.http.get<any[]>('/modules').subscribe({
       next: (modules) => {
-        const ids = modules.map((m: any) => m.moduleId || m.id) as ModuleId[];
+        const infos: ActiveModuleInfo[] = modules.map((m: any) => ({
+          id: (m.moduleId || m.id) as ModuleId,
+          willRenew: m.isActive !== false,
+          purchasedAt: m.purchasedAt,
+          expiresAt: m.expiresAt,
+        }));
+        const ids = infos.map(i => i.id);
+        this.activeModuleInfos.set(infos);
         this.activeModuleIds.set([...FREE_MODULES, ...ids]);
         this.loaded = true;
+        this.isLoaded.set(true);
       },
       error: () => {
-        // Fallback: activate all modules for demo
-        this.activeModuleIds.set(MODULE_CATALOG.map(m => m.id));
+        // Fail-closed: only free modules on error
+        this.activeModuleIds.set([...FREE_MODULES]);
+        this.activeModuleInfos.set([]);
         this.loaded = true;
+        this.isLoaded.set(true);
       }
     });
   }
 
   hasModuleAccess(moduleId: ModuleId): boolean {
     if (FREE_MODULES.includes(moduleId)) return true;
-    // If not loaded yet, default to allowing access
-    if (!this.loaded) return true;
+    if (!this.loaded) return false;
     return this.activeModuleIds().includes(moduleId);
   }
 
@@ -47,12 +72,21 @@ export class ModuleService {
     return this.modules();
   }
 
+  getModuleExpiry(moduleId: ModuleId): { purchasedAt?: string; expiresAt?: string } | null {
+    const info = this.activeModuleInfos().find(i => i.id === moduleId);
+    return info ? { purchasedAt: info.purchasedAt, expiresAt: info.expiresAt } : null;
+  }
+
   purchaseModule(moduleId: ModuleId) {
-    this.http.post(`/modules/${moduleId}/purchase`, {}).subscribe({
-      next: () => {
+    return this.http.post<any>(`/modules/${moduleId}/purchase`, {}).subscribe({
+      next: (result) => {
         if (!this.activeModuleIds().includes(moduleId)) {
           this.activeModuleIds.update(ids => [...ids, moduleId]);
         }
+        this.activeModuleInfos.update(infos => {
+          const filtered = infos.filter(i => i.id !== moduleId);
+          return [...filtered, { id: moduleId, willRenew: true, purchasedAt: result.purchasedAt, expiresAt: result.expiresAt }];
+        });
       }
     });
   }
@@ -61,7 +95,9 @@ export class ModuleService {
     if (FREE_MODULES.includes(moduleId)) return;
     this.http.delete(`/modules/${moduleId}`).subscribe({
       next: () => {
-        this.activeModuleIds.update(ids => ids.filter(id => id !== moduleId));
+        // Module is cancelled but access stays until expiresAt — reload from backend
+        this.loaded = false;
+        this.loadActiveModules();
       }
     });
   }

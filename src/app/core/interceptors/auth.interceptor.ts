@@ -19,6 +19,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
+      // Handle 403 module-not-purchased errors — redirect to marketplace
+      if (error.status === 403 && error.error?.moduleId) {
+        router.navigate(['/modules']);
+        return throwError(() => error);
+      }
+
       // Only intercept 401s, and skip auth endpoints to avoid loops
       if (
         error.status !== 401 ||

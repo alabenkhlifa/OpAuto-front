@@ -4,10 +4,12 @@ import { NotificationsService } from './notifications.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { ModuleAccessGuard, RequireModule } from '../modules/module-access.guard';
 
 @ApiTags('notifications')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, ModuleAccessGuard)
+@RequireModule('notifications')
 @Controller('notifications')
 export class NotificationsController {
   constructor(private service: NotificationsService) {}

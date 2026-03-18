@@ -46,3 +46,4 @@ Thumbs.db
 opauto-backend/node_modules/
 opauto-backend/dist/
 opauto-backend/.env
+opauto-backend/.env.test

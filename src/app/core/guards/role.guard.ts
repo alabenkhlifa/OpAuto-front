@@ -1,7 +1,8 @@
 import { inject } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { CanActivateFn } from '@angular/router';
-import { map } from 'rxjs/operators';
+import { map, filter, take } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 import { ModuleService } from '../services/module.service';
 import { ModuleId } from '../models/module.model';
@@ -27,11 +28,17 @@ export const moduleGuard = (moduleId: ModuleId): CanActivateFn => {
     const moduleService = inject(ModuleService);
     const router = inject(Router);
 
-    if (moduleService.hasModuleAccess(moduleId)) {
-      return true;
-    }
-
-    router.navigate(['/modules']);
-    return false;
+    // Wait for modules to finish loading before checking access
+    return toObservable(moduleService.isLoaded).pipe(
+      filter(loaded => loaded),
+      take(1),
+      map(() => {
+        if (moduleService.hasModuleAccess(moduleId)) {
+          return true;
+        }
+        router.navigate(['/modules']);
+        return false;
+      })
+    );
   };
 };

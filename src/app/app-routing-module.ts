@@ -1,19 +1,19 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { authGuard, guestGuard } from './core/guards/auth.guard';
-import { ownerGuard } from './core/guards/role.guard';
+import { ownerGuard, moduleGuard } from './core/guards/role.guard';
 
 const routes: Routes = [
   // Production: redirect to auth, Development: redirect to dashboard
-  { 
-    path: '', 
-    redirectTo: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+  {
+    path: '',
+    redirectTo: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
       ? '/dashboard'  // Development
-      : '/auth',      // Production 
-    pathMatch: 'full' 
+      : '/auth',      // Production
+    pathMatch: 'full'
   },
-  { 
-    path: 'auth', 
+  {
+    path: 'auth',
     loadComponent: () => import('./features/auth/auth.component').then(m => m.AuthComponent),
     canActivate: [guestGuard]
   },
@@ -25,137 +25,137 @@ const routes: Routes = [
   {
     path: 'calendar',
     loadComponent: () => import('./features/calendar/calendar.component').then(m => m.CalendarComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, moduleGuard('calendar')]
   },
   {
-    path: 'appointments', 
+    path: 'appointments',
     loadComponent: () => import('./features/appointments/appointments.component').then(m => m.AppointmentsComponent),
     canActivate: [authGuard]
   },
-  { 
-    path: 'cars', 
+  {
+    path: 'cars',
     loadComponent: () => import('./features/cars/cars.component').then(m => m.CarsComponent),
     canActivate: [authGuard]
   },
-  { 
-    path: 'inventory', 
+  {
+    path: 'inventory',
     loadComponent: () => import('./features/inventory/inventory.component').then(m => m.InventoryComponent),
-    canActivate: [authGuard, ownerGuard]
+    canActivate: [authGuard, ownerGuard, moduleGuard('inventory')]
   },
-  { 
-    path: 'invoices', 
+  {
+    path: 'invoices',
     loadComponent: () => import('./features/invoicing/invoicing.component').then(m => m.InvoicingComponent),
-    canActivate: [authGuard, ownerGuard]
+    canActivate: [authGuard, ownerGuard, moduleGuard('invoicing')]
   },
-  { 
-    path: 'invoices/create', 
+  {
+    path: 'invoices/create',
     loadComponent: () => import('./features/invoicing/components/invoice-form.component').then(m => m.InvoiceFormComponent),
-    canActivate: [authGuard, ownerGuard]
+    canActivate: [authGuard, ownerGuard, moduleGuard('invoicing')]
   },
-  { 
-    path: 'invoices/edit/:id', 
+  {
+    path: 'invoices/edit/:id',
     loadComponent: () => import('./features/invoicing/components/invoice-form.component').then(m => m.InvoiceFormComponent),
-    canActivate: [authGuard, ownerGuard]
+    canActivate: [authGuard, ownerGuard, moduleGuard('invoicing')]
   },
-  { 
-    path: 'invoices/pending', 
+  {
+    path: 'invoices/pending',
     loadComponent: () => import('./features/invoicing/invoicing.component').then(m => m.InvoicingComponent),
-    canActivate: [authGuard, ownerGuard]
+    canActivate: [authGuard, ownerGuard, moduleGuard('invoicing')]
   },
-  { 
-    path: 'invoices/:id', 
+  {
+    path: 'invoices/:id',
     loadComponent: () => import('./features/invoicing/components/invoice-details.component').then(m => m.InvoiceDetailsComponent),
-    canActivate: [authGuard, ownerGuard]
+    canActivate: [authGuard, ownerGuard, moduleGuard('invoicing')]
   },
-  { 
-    path: 'customers', 
+  {
+    path: 'customers',
     loadComponent: () => import('./features/customers/customers.component').then(m => m.CustomersComponent),
     canActivate: [authGuard]
   },
-  { 
-    path: 'customers/:id', 
+  {
+    path: 'customers/:id',
     loadComponent: () => import('./features/customers/components/customer-details.component').then(m => m.CustomerDetailsComponent),
     canActivate: [authGuard]
   },
-  { 
-    path: 'reports', 
+  {
+    path: 'reports',
     loadComponent: () => import('./features/reports/reports.component').then(m => m.ReportsComponent),
-    canActivate: [authGuard, ownerGuard]
+    canActivate: [authGuard, ownerGuard, moduleGuard('reports')]
   },
-  { 
-    path: 'maintenance', 
+  {
+    path: 'maintenance',
     loadComponent: () => import('./features/maintenance/maintenance.component').then(m => m.MaintenanceComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, moduleGuard('maintenance')]
   },
-  { 
-    path: 'maintenance/active', 
+  {
+    path: 'maintenance/active',
     loadComponent: () => import('./features/maintenance/maintenance.component').then(m => m.MaintenanceComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, moduleGuard('maintenance')]
   },
-  { 
-    path: 'maintenance/history', 
+  {
+    path: 'maintenance/history',
     loadComponent: () => import('./features/maintenance/maintenance.component').then(m => m.MaintenanceComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, moduleGuard('maintenance')]
   },
-  { 
-    path: 'maintenance/schedule', 
+  {
+    path: 'maintenance/schedule',
     loadComponent: () => import('./features/maintenance/maintenance.component').then(m => m.MaintenanceComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, moduleGuard('maintenance')]
   },
-  { 
-    path: 'maintenance/new', 
+  {
+    path: 'maintenance/new',
     loadComponent: () => import('./features/maintenance/components/maintenance-form.component').then(m => m.MaintenanceFormComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, moduleGuard('maintenance')]
   },
-  { 
-    path: 'maintenance/edit/:id', 
+  {
+    path: 'maintenance/edit/:id',
     loadComponent: () => import('./features/maintenance/components/maintenance-form.component').then(m => m.MaintenanceFormComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, moduleGuard('maintenance')]
   },
-  { 
-    path: 'maintenance/details/:id', 
+  {
+    path: 'maintenance/details/:id',
     loadComponent: () => import('./features/maintenance/components/maintenance-details.component').then(m => m.MaintenanceDetailsComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, moduleGuard('maintenance')]
   },
-  { 
-    path: 'employees', 
+  {
+    path: 'employees',
     loadComponent: () => import('./features/employees/employees.component').then(m => m.EmployeesComponent),
-    canActivate: [authGuard, ownerGuard]
+    canActivate: [authGuard, ownerGuard, moduleGuard('employees')]
   },
-  { 
-    path: 'employees/new', 
+  {
+    path: 'employees/new',
     loadComponent: () => import('./features/employees/components/employee-form.component').then(m => m.EmployeeFormComponent),
-    canActivate: [authGuard, ownerGuard]
+    canActivate: [authGuard, ownerGuard, moduleGuard('employees')]
   },
-  { 
-    path: 'employees/edit/:id', 
+  {
+    path: 'employees/edit/:id',
     loadComponent: () => import('./features/employees/components/employee-form.component').then(m => m.EmployeeFormComponent),
-    canActivate: [authGuard, ownerGuard]
+    canActivate: [authGuard, ownerGuard, moduleGuard('employees')]
   },
-  { 
-    path: 'employees/details/:id', 
+  {
+    path: 'employees/details/:id',
     loadComponent: () => import('./features/employees/components/employee-details.component').then(m => m.EmployeeDetailsComponent),
-    canActivate: [authGuard, ownerGuard]
+    canActivate: [authGuard, ownerGuard, moduleGuard('employees')]
   },
-  { 
-    path: 'users', 
+  {
+    path: 'users',
     loadComponent: () => import('./features/users/users.component').then(m => m.UsersComponent),
-    canActivate: [authGuard, ownerGuard]
+    canActivate: [authGuard, ownerGuard, moduleGuard('users')]
   },
-  { 
-    path: 'settings', 
+  {
+    path: 'settings',
     loadComponent: () => import('./features/garage-settings/garage-settings.component').then(m => m.GarageSettingsComponent),
-    canActivate: [authGuard, ownerGuard]
+    canActivate: [authGuard, ownerGuard, moduleGuard('settings')]
   },
-  { 
-    path: 'approvals', 
+  {
+    path: 'approvals',
     loadComponent: () => import('./features/approvals/approvals.component').then(m => m.ApprovalsComponent),
-    canActivate: [authGuard, ownerGuard]
+    canActivate: [authGuard, ownerGuard, moduleGuard('approvals')]
   },
   {
     path: 'notifications',
     loadComponent: () => import('./features/notifications/notifications.component').then(m => m.NotificationsComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, moduleGuard('notifications')]
   },
   {
     path: 'modules',
@@ -167,8 +167,8 @@ const routes: Routes = [
     loadComponent: () => import('./features/profile/profile.component').then(m => m.ProfileComponent),
     canActivate: [authGuard]
   },
-  { 
-    path: 'subscription', 
+  {
+    path: 'subscription',
     loadComponent: () => import('./features/subscription/subscription.component').then(m => m.SubscriptionComponent),
     canActivate: [authGuard, ownerGuard]
   },
