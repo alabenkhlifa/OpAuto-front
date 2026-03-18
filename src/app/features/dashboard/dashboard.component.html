@@ -94,7 +94,7 @@
 
   <!-- KPI Cards Row -->
   <div class="kpi-grid">
-    @for (kpi of kpiCards; track kpi.label) {
+    @for (kpi of kpiCards; track kpi.labelKey) {
       <div class="glass-card kpi-card">
         <div class="kpi-icon-wrapper" [ngClass]="'kpi-icon-' + kpi.icon">
           @switch (kpi.icon) {
@@ -122,19 +122,12 @@
         </div>
         <div class="kpi-info">
           <div class="kpi-value">{{ kpi.value }}</div>
-          <div class="kpi-label">{{ kpi.label }}</div>
-          <div class="kpi-trend" [ngClass]="kpi.trendDirection">
-            @if (kpi.trendDirection === 'up') {
-              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M7 14l5-5 5 5z"/>
-              </svg>
-            } @else {
-              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M7 10l5 5 5-5z"/>
-              </svg>
-            }
-            <span>{{ kpi.trend }} {{ kpi.trendLabel }}</span>
-          </div>
+          <div class="kpi-label">{{ kpi.labelKey | translate }}</div>
+          @if (kpi.trend || kpi.trendLabelKey) {
+            <div class="kpi-trend" [ngClass]="kpi.trendDirection">
+              <span>{{ kpi.trend }} {{ kpi.trendLabelKey | translate }}</span>
+            </div>
+          }
         </div>
       </div>
     }
@@ -143,7 +136,7 @@
   <!-- Charts Row 1: Revenue Trend + Job Type Distribution -->
   <div class="chart-row">
     <div class="glass-card chart-card">
-      <h3 class="chart-title">Revenue Trend</h3>
+      <h3 class="chart-title">{{ 'dashboard.charts.revenueTrend' | translate }}</h3>
       <div class="chart-container">
         <canvas baseChart
           [data]="revenueChartData"
@@ -153,7 +146,7 @@
       </div>
     </div>
     <div class="glass-card chart-card">
-      <h3 class="chart-title">Job Type Distribution</h3>
+      <h3 class="chart-title">{{ 'dashboard.charts.jobTypeDistribution' | translate }}</h3>
       <div class="chart-container">
         <canvas baseChart
           [data]="jobTypeChartData"
@@ -167,7 +160,7 @@
   <!-- Charts Row 2: Mechanic Performance + Today's Appointments -->
   <div class="chart-row-equal">
     <div class="glass-card chart-card">
-      <h3 class="chart-title">Mechanic Performance</h3>
+      <h3 class="chart-title">{{ 'dashboard.charts.mechanicPerformance' | translate }}</h3>
       <div class="chart-container">
         <canvas baseChart
           [data]="mechanicChartData"

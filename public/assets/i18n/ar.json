@@ -118,6 +118,23 @@
       "diagnosis": "التشخيص",
       "waiting_approval": "في انتظار الموافقة"
     },
+    "kpi": {
+      "revenue": "الإيرادات",
+      "appointments": "المواعيد",
+      "utilization": "الاستخدام",
+      "activeJobs": "الأعمال النشطة",
+      "today": "اليوم",
+      "baysOccupied": "حجرات مشغولة",
+      "fromLastWeek": "مقارنة بالأسبوع الماضي",
+      "fromYesterday": "مقارنة بالأمس"
+    },
+    "charts": {
+      "revenueTrend": "اتجاه الإيرادات",
+      "jobTypeDistribution": "توزيع أنواع العمل",
+      "mechanicPerformance": "أداء الميكانيكيين",
+      "completed": "مكتمل",
+      "inProgress": "قيد التنفيذ"
+    },
     "tooltips": {
       "quick_actions": "الوصول السريع إلى مهام إدارة الورشة الشائعة",
       "metrics": "عرض مقاييس وإحصائيات الأداء في الوقت الفعلي",

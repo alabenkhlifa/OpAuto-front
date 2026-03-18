@@ -118,6 +118,23 @@
       "diagnosis": "Diagnosis",
       "waiting_approval": "Waiting Approval"
     },
+    "kpi": {
+      "revenue": "Revenue",
+      "appointments": "Appointments",
+      "utilization": "Utilization",
+      "activeJobs": "Active Jobs",
+      "today": "today",
+      "baysOccupied": "bays occupied",
+      "fromLastWeek": "from last week",
+      "fromYesterday": "from yesterday"
+    },
+    "charts": {
+      "revenueTrend": "Revenue Trend",
+      "jobTypeDistribution": "Job Type Distribution",
+      "mechanicPerformance": "Mechanic Performance",
+      "completed": "Completed",
+      "inProgress": "In Progress"
+    },
     "tooltips": {
       "quick_actions": "Quickly access common garage management tasks",
       "metrics": "View real-time garage performance metrics and statistics",

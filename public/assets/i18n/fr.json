@@ -118,6 +118,23 @@
       "diagnosis": "Diagnostic",
       "waiting_approval": "En attente d'approbation"
     },
+    "kpi": {
+      "revenue": "Revenus",
+      "appointments": "Rendez-vous",
+      "utilization": "Utilisation",
+      "activeJobs": "Travaux actifs",
+      "today": "aujourd'hui",
+      "baysOccupied": "baies occupées",
+      "fromLastWeek": "par rapport à la semaine dernière",
+      "fromYesterday": "par rapport à hier"
+    },
+    "charts": {
+      "revenueTrend": "Tendance des revenus",
+      "jobTypeDistribution": "Répartition par type de travail",
+      "mechanicPerformance": "Performance des mécaniciens",
+      "completed": "Terminé",
+      "inProgress": "En cours"
+    },
     "tooltips": {
       "quick_actions": "Accéder rapidement aux tâches courantes de gestion du garage",
       "metrics": "Afficher les métriques et statistiques de performance en temps réel",
