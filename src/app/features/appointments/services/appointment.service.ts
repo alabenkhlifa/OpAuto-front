@@ -176,7 +176,13 @@ export class AppointmentService {
   }
 
   getCustomers(): Observable<Customer[]> {
-    return this.http.get<Customer[]>('/customers').pipe(
+    return this.http.get<any[]>('/customers').pipe(
+      map(customers => customers.map(c => ({
+        id: c.id,
+        name: c.name || `${c.firstName || ''} ${c.lastName || ''}`.trim(),
+        phone: c.phone || '',
+        email: c.email,
+      } as Customer))),
       tap(customers => this.cachedCustomers = customers)
     );
   }
