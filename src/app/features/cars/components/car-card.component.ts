@@ -99,9 +99,9 @@ import { CarWithHistory } from '../services/car.service';
   styles: [`
     /* Car Card - Permanent Dark Glassmorphism Design to match appointments */
     .car-card {
-      background: rgba(17, 24, 39, 0.95);
+      background: rgba(11, 8, 41, 0.95);
       backdrop-filter: blur(10px);
-      border: 1px solid rgba(75, 85, 99, 0.6);
+      border: 1px solid rgba(42, 37, 102, 0.6);
       border-radius: 20px;
       padding: 1.5rem;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
@@ -111,9 +111,9 @@ import { CarWithHistory } from '../services/car.service';
     }
 
     .car-card:hover {
-      background: rgba(31, 41, 55, 0.98);
+      background: rgba(18, 15, 61, 0.98);
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
-      border-color: rgba(59, 130, 246, 0.7);
+      border-color: rgba(255, 132, 0, 0.7);
       transform: translateY(-2px);
     }
 
@@ -128,12 +128,12 @@ import { CarWithHistory } from '../services/car.service';
       flex-shrink: 0;
       width: 3rem;
       height: 3rem;
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(29, 78, 216, 0.1));
+      background: linear-gradient(135deg, rgba(255, 132, 0, 0.15), rgba(204, 106, 0, 0.1));
       border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 1px solid rgba(59, 130, 246, 0.2);
+      border: 1px solid rgba(255, 132, 0, 0.2);
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
       overflow: hidden;
@@ -158,19 +158,19 @@ import { CarWithHistory } from '../services/car.service';
     .car-image svg {
       width: 1.5rem;
       height: 1.5rem;
-      color: #3b82f6;
+      color: #FF8400;
       transition: all 0.3s ease;
       z-index: 1;
     }
 
     .car-card:hover .car-image {
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(29, 78, 216, 0.15));
-      border-color: rgba(59, 130, 246, 0.4);
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+      background: linear-gradient(135deg, rgba(255, 132, 0, 0.25), rgba(204, 106, 0, 0.15));
+      border-color: rgba(255, 132, 0, 0.4);
+      box-shadow: 0 4px 12px rgba(255, 132, 0, 0.2);
     }
 
     .car-card:hover .car-image svg {
-      color: #60a5fa;
+      color: #FF8400;
       transform: scale(1.1);
     }
 
@@ -246,7 +246,7 @@ import { CarWithHistory } from '../services/car.service';
     }
 
     .license-plate {
-      background: linear-gradient(135deg, #1f2937, #374151);
+      background: linear-gradient(135deg, #120F3D, #1C1852);
       color: white;
       padding: 0.75rem;
       border-radius: 8px;
@@ -256,7 +256,7 @@ import { CarWithHistory } from '../services/car.service';
       font-weight: bold;
       letter-spacing: 2px;
       margin-bottom: 1rem;
-      border: 2px solid #4b5563;
+      border: 2px solid #2A2566;
     }
 
     .customer-section {
@@ -316,7 +316,7 @@ import { CarWithHistory } from '../services/car.service';
 
     /* Focus management for accessibility */
     .action-btn:focus {
-      outline: 2px solid #3b82f6;
+      outline: 2px solid #FF8400;
       outline-offset: 2px;
     }
 
@@ -371,14 +371,14 @@ import { CarWithHistory } from '../services/car.service';
 
     /* History button - orange to match appointment edit button */
     .action-btn.secondary {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      border-color: #f59e0b;
+      background: linear-gradient(135deg, #7B8CC4, #6778B0);
+      border-color: #7B8CC4;
       color: white;
       box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
     }
 
     .action-btn.secondary:hover {
-      background: linear-gradient(135deg, #d97706, #b45309);
+      background: linear-gradient(135deg, #6778B0, #b45309);
       box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
       transform: translateY(-1px);
     }

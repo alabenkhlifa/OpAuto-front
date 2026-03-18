@@ -9,32 +9,39 @@ export default {
       colors: {
         // OpAuto Professional Color Palette
         primary: {
-          50: '#eff6ff',   // Very light blue
-          100: '#dbeafe',  // Light blue
-          200: '#bfdbfe',  // Soft blue
-          300: '#93c5fd',  // Medium light blue
-          400: '#60a5fa',  // Medium blue
-          500: '#2563eb',  // Main primary blue
-          600: '#1d4ed8',  // Darker blue
-          700: '#1e40af',  // Deep blue
-          800: '#1e3a8a',  // Very deep blue
-          900: '#1a365d',  // Darkest blue
-          950: '#0f172a',  // Almost black blue
+          50: '#FFF5EB',   // Very light orange
+          100: '#FFE4C4',  // Light orange
+          200: '#FFCA8A',  // Soft orange
+          300: '#FFa033',  // Medium light orange
+          400: '#FF8400',  // Main primary orange
+          500: '#E67700',  // Darker orange
+          600: '#CC6A00',  // Deep orange
+          700: '#B35C00',  // Very deep orange
+          800: '#994F00',  // Darkest orange
+          900: '#804200',  // Almost black orange
+          950: '#663500',  // Deepest orange
         },
         secondary: {
-          50: '#fffbeb',   // Very light amber
-          100: '#fef3c7',  // Light amber
-          200: '#fde68a',  // Soft amber
-          300: '#fcd34d',  // Medium light amber
-          400: '#fbbf24',  // Medium amber
-          500: '#f59e0b',  // Main secondary amber
-          600: '#d97706',  // Darker amber
-          700: '#b45309',  // Deep amber
-          800: '#92400e',  // Very deep amber
-          900: '#78350f',  // Darkest amber
-          950: '#451a03',  // Almost black amber
+          50: '#F0F3FB',   // Very light vista bleu
+          100: '#DCE3F4',  // Light vista bleu
+          200: '#C4CFEC',  // Soft vista bleu
+          300: '#A3B4E6',  // Medium light vista bleu
+          400: '#8FA0D8',  // Main secondary vista bleu
+          500: '#7B8CC4',  // Darker vista bleu
+          600: '#6778B0',  // Deep vista bleu
+          700: '#53649C',  // Very deep vista bleu
+          800: '#3F5088',  // Darkest vista bleu
+          900: '#2B3C74',  // Almost black vista bleu
+          950: '#172860',  // Deepest vista bleu
         },
-        // Enhanced grays for better contrast
+        accent: {
+          50: '#FEFAF5',   // Very light amande
+          100: '#FDF0E0',  // Light amande
+          200: '#F9DFC6',  // Main amande
+          300: '#F5CFA8',  // Darker amande
+          400: '#F1BF8A',  // Deep amande
+        },
+        // Enhanced grays for Bleu Oxford palette
         gray: {
           50: '#f8fafc',
           100: '#f1f5f9',
@@ -42,11 +49,11 @@ export default {
           300: '#cbd5e1',
           400: '#94a3b8',
           500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#0f172a',
-          950: '#020617',
+          600: '#2A2566',
+          700: '#1C1852',
+          800: '#120F3D',
+          900: '#0B0829',
+          950: '#060518',
         },
         // Status colors that work well in both modes
         success: {

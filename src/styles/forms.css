@@ -16,7 +16,7 @@
   padding: 0.5rem 0.75rem;
   border: 1px solid #4b5563;
   border-radius: 0.375rem;
-  background-color: #1f2937;
+  background-color: #120F3D;
   color: #f9fafb;
   font-size: 0.875rem;
   transition: all 0.2s ease;
@@ -24,8 +24,8 @@
 
 .form-input:focus, .form-textarea:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #FF8400;
+  box-shadow: 0 0 0 3px rgba(255, 132, 0, 0.1);
 }
 
 /* Enhanced Dropdown/Select Styling - Glassmorphism */
@@ -34,7 +34,7 @@
   width: 100%;
   padding: 0.75rem;
   backdrop-filter: blur(10px);
-  background: rgba(31, 41, 55, 0.7);
+  background: rgba(18, 15, 61, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   font-size: 0.875rem;
@@ -53,9 +53,9 @@
 
 .form-select:focus, .dropdown-select:focus, .filter-select:focus, select[class*="select"]:focus {
   outline: none;
-  background: rgba(31, 41, 55, 0.9);
-  border-color: rgba(59, 130, 246, 0.5);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  background: rgba(18, 15, 61, 0.9);
+  border-color: rgba(255, 132, 0, 0.5);
+  box-shadow: 0 0 0 3px rgba(255, 132, 0, 0.1);
   /* Maintain custom dropdown arrow on focus */
   background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
@@ -64,36 +64,36 @@
 }
 
 .form-select option, .dropdown-select option, .filter-select option, select[class*="select"] option {
-  background: #374151;
+  background: #1C1852;
   color: white;
 }
 
 .form-input:disabled, .form-select:disabled, .form-textarea:disabled, .dropdown-select:disabled, .filter-select:disabled, select[class*="select"]:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  background-color: #111827;
+  background-color: #0B0829;
 }
 
 /* Form Checkboxes */
 .form-checkbox {
   width: 1rem;
   height: 1rem;
-  color: #2563eb;
+  color: #E67700;
   border-radius: 0.25rem;
   border: 1px solid #4b5563;
-  background-color: #1f2937;
+  background-color: #120F3D;
   transition: all 0.2s ease;
 }
 
 .form-checkbox:checked {
-  background-color: #2563eb;
-  border-color: #2563eb;
+  background-color: #E67700;
+  border-color: #E67700;
 }
 
 .form-checkbox:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #FF8400;
+  box-shadow: 0 0 0 3px rgba(255, 132, 0, 0.1);
 }
 
 /* Error States */

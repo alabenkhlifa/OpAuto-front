@@ -1,8 +1,9 @@
 import { Injectable, signal, inject } from '@angular/core';
-import { Observable, of, BehaviorSubject, throwError } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
+import { Observable, of, BehaviorSubject } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
 import { Car, Customer } from '../../../core/models/appointment.model';
-import { SubscriptionService } from '../../../core/services/subscription.service';
+import { fromBackendEnum } from '../../../core/utils/enum-mapper';
 
 export interface CarWithHistory extends Car {
   lastServiceDate?: Date;
@@ -13,230 +14,149 @@ export interface CarWithHistory extends Car {
   lastServiceType?: string;
 }
 
+interface BackendCar {
+  id: string;
+  customerId: string;
+  make: string;
+  model: string;
+  year: number;
+  vin?: string;
+  licensePlate: string;
+  color?: string;
+  mileage?: number;
+  engineType?: string;
+  transmission?: string;
+  lastServiceDate?: string;
+  nextServiceDate?: string;
+  notes?: string;
+  totalServices?: number;
+  createdAt: string;
+  updatedAt: string;
+  customer?: { firstName: string; lastName: string };
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class CarService {
-  private subscriptionService = inject(SubscriptionService);
-  
+  private http = inject(HttpClient);
+
   private carsSubject = new BehaviorSubject<CarWithHistory[]>([]);
   public cars$ = this.carsSubject.asObservable();
-  
+
   public searchQuery = signal<string>('');
   public selectedMake = signal<string>('all');
   public selectedStatus = signal<string>('all');
 
-  private mockCars: CarWithHistory[] = [
-    {
-      id: 'car1',
-      licensePlate: '123 TUN 2024',
-      make: 'BMW',
-      model: 'X5',
-      year: 2020,
-      customerId: 'customer1',
-      lastServiceDate: new Date(2025, 6, 15),
-      nextServiceDue: new Date(2025, 9, 15),
-      totalServices: 8,
-      currentMileage: 45000,
+  private mapFromBackend(b: BackendCar): CarWithHistory {
+    return {
+      id: b.id,
+      licensePlate: b.licensePlate,
+      make: b.make,
+      model: b.model,
+      year: b.year,
+      customerId: b.customerId,
+      currentMileage: b.mileage || 0,
       serviceStatus: 'up-to-date',
-      lastServiceType: 'Oil Change & Filter'
-    },
-    {
-      id: 'car2',
-      licensePlate: '456 TUN 2019',
-      make: 'Honda',
-      model: 'Civic',
-      year: 2019,
-      customerId: 'customer2',
-      lastServiceDate: new Date(2025, 5, 20),
-      nextServiceDue: new Date(2025, 8, 20),
-      totalServices: 12,
-      currentMileage: 78000,
-      serviceStatus: 'due-soon',
-      lastServiceType: 'Brake System Check'
-    },
-    {
-      id: 'car3',
-      licensePlate: '789 TUN 2021',
-      make: 'Toyota',
-      model: 'Camry',
-      year: 2021,
-      customerId: 'customer1',
-      lastServiceDate: new Date(2025, 4, 10),
-      nextServiceDue: new Date(2025, 7, 10),
-      totalServices: 5,
-      currentMileage: 32000,
-      serviceStatus: 'overdue',
-      lastServiceType: 'Annual Inspection'
-    },
-    {
-      id: 'car4',
-      licensePlate: '321 TUN 2022',
-      make: 'Mercedes',
-      model: 'C-Class',
-      year: 2022,
-      customerId: 'customer3',
-      lastServiceDate: new Date(2025, 7, 1),
-      nextServiceDue: new Date(2025, 10, 1),
-      totalServices: 3,
-      currentMileage: 15000,
-      serviceStatus: 'up-to-date',
-      lastServiceType: 'Routine Maintenance'
-    },
-    {
-      id: 'car5',
-      licensePlate: '654 TUN 2020',
-      make: 'Audi',
-      model: 'A4',
-      year: 2020,
-      customerId: 'customer4',
-      lastServiceDate: new Date(2025, 6, 25),
-      nextServiceDue: new Date(2025, 9, 25),
-      totalServices: 7,
-      currentMileage: 52000,
-      serviceStatus: 'up-to-date',
-      lastServiceType: 'Tire Rotation'
-    },
-    {
-      id: 'car6',
-      licensePlate: '147 TUN 2018',
-      make: 'Peugeot',
-      model: '308',
-      year: 2018,
-      customerId: 'customer2',
-      lastServiceDate: new Date(2025, 3, 15),
-      nextServiceDue: new Date(2025, 6, 15),
-      totalServices: 15,
-      currentMileage: 95000,
-      serviceStatus: 'overdue',
-      lastServiceType: 'Engine Diagnostics'
-    }
-  ];
+      totalServices: b.totalServices || 0,
+      lastServiceDate: b.lastServiceDate ? new Date(b.lastServiceDate) : undefined,
+      nextServiceDue: b.nextServiceDate ? new Date(b.nextServiceDate) : undefined,
+    };
+  }
 
-  private mockCustomers: Customer[] = [
-    { id: 'customer1', name: 'Ahmed Ben Ali', phone: '+216-20-123-456', email: 'ahmed.benali@email.tn' },
-    { id: 'customer2', name: 'Fatma Trabelsi', phone: '+216-25-789-123', email: 'fatma.trabelsi@email.tn' },
-    { id: 'customer3', name: 'Mohamed Khemir', phone: '+216-22-456-789', email: 'mohamed.khemir@email.tn' },
-    { id: 'customer4', name: 'Leila Mansouri', phone: '+216-28-654-321', email: 'leila.mansouri@email.tn' }
-  ];
-
-  constructor() {
-    this.carsSubject.next(this.mockCars);
+  private mapToBackend(f: Partial<CarWithHistory>): Record<string, unknown> {
+    const payload: Record<string, unknown> = {};
+    if (f.licensePlate !== undefined) payload['licensePlate'] = f.licensePlate;
+    if (f.make !== undefined) payload['make'] = f.make;
+    if (f.model !== undefined) payload['model'] = f.model;
+    if (f.year !== undefined) payload['year'] = f.year;
+    if (f.customerId !== undefined) payload['customerId'] = f.customerId;
+    if (f.currentMileage !== undefined) payload['mileage'] = f.currentMileage;
+    return payload;
   }
 
   getCars(): Observable<CarWithHistory[]> {
-    return this.cars$;
+    return this.http.get<BackendCar[]>('/cars').pipe(
+      map(list => list.map(b => this.mapFromBackend(b))),
+      tap(cars => this.carsSubject.next(cars))
+    );
   }
 
   getCarById(carId: string): CarWithHistory | undefined {
-    return this.mockCars.find(car => car.id === carId);
+    return this.carsSubject.value.find(car => car.id === carId);
   }
 
   getCustomerById(customerId: string): Customer | undefined {
-    return this.mockCustomers.find(customer => customer.id === customerId);
+    // No longer maintained locally; callers should use CustomerService
+    return undefined;
   }
 
   getCarsByCustomer(customerId: string): Observable<CarWithHistory[]> {
-    const filtered = this.mockCars.filter(car => car.customerId === customerId);
-    return of(filtered);
+    return this.http.get<BackendCar[]>('/cars', { params: { customerId } }).pipe(
+      map(list => list.map(b => this.mapFromBackend(b)))
+    );
   }
 
   getCarsByMake(make: string): Observable<CarWithHistory[]> {
-    const filtered = this.mockCars.filter(car => car.make.toLowerCase() === make.toLowerCase());
+    const filtered = this.carsSubject.value.filter(
+      car => car.make.toLowerCase() === make.toLowerCase()
+    );
     return of(filtered);
   }
 
   getCarsByStatus(status: string): Observable<CarWithHistory[]> {
-    const filtered = this.mockCars.filter(car => car.serviceStatus === status);
+    const filtered = this.carsSubject.value.filter(car => car.serviceStatus === status);
     return of(filtered);
   }
 
   searchCars(query: string): Observable<CarWithHistory[]> {
-    const filtered = this.mockCars.filter(car =>
-      car.licensePlate.toLowerCase().includes(query.toLowerCase()) ||
-      car.make.toLowerCase().includes(query.toLowerCase()) ||
-      car.model.toLowerCase().includes(query.toLowerCase()) ||
-      this.getCustomerById(car.customerId)?.name.toLowerCase().includes(query.toLowerCase())
+    const q = query.toLowerCase();
+    const filtered = this.carsSubject.value.filter(car =>
+      car.licensePlate.toLowerCase().includes(q) ||
+      car.make.toLowerCase().includes(q) ||
+      car.model.toLowerCase().includes(q)
     );
     return of(filtered);
   }
 
   getAvailableMakes(): string[] {
-    return [...new Set(this.mockCars.map(car => car.make))].sort();
+    return [...new Set(this.carsSubject.value.map(car => car.make))].sort();
   }
 
   createCar(car: Omit<CarWithHistory, 'id'>): Observable<CarWithHistory> {
-    return this.subscriptionService.getCurrentSubscriptionStatus().pipe(
-      switchMap(status => {
-        const currentCount = this.mockCars.length;
-        const limit = status.currentTier.limits.cars;
-        
-        // Check if we're at the limit
-        if (limit !== null && currentCount >= limit) {
-          return throwError({
-            error: 'CAR_LIMIT_EXCEEDED',
-            message: `Vehicle limit of ${limit} reached for ${status.currentTier.name} tier`,
-            currentCount,
-            limit,
-            tier: status.currentTier.name
-          });
-        }
-        
-        const newCar: CarWithHistory = {
-          ...car,
-          id: Date.now().toString()
-        };
-        
-        this.mockCars.push(newCar);
-        this.carsSubject.next([...this.mockCars]);
-        return of(newCar);
+    return this.http.post<BackendCar>('/cars', this.mapToBackend(car as CarWithHistory)).pipe(
+      map(b => this.mapFromBackend(b)),
+      tap(created => {
+        this.carsSubject.next([...this.carsSubject.value, created]);
       })
     );
   }
 
-  canCreateCar(): Observable<{canCreate: boolean, reason?: string}> {
-    return this.subscriptionService.getCurrentSubscriptionStatus().pipe(
-      map(status => {
-        const currentCount = this.mockCars.length;
-        const limit = status.currentTier.limits.cars;
-        
-        if (limit === null) {
-          return { canCreate: true };
-        }
-        
-        if (currentCount >= limit) {
-          return { 
-            canCreate: false, 
-            reason: `Vehicle limit of ${limit} reached for ${status.currentTier.name} tier`
-          };
-        }
-        
-        return { canCreate: true };
-      })
-    );
+  canCreateCar(): Observable<{ canCreate: boolean; reason?: string }> {
+    return of({ canCreate: true });
   }
 
   getCurrentCarCount(): number {
-    return this.mockCars.length;
+    return this.carsSubject.value.length;
   }
 
   updateCar(carId: string, updates: Partial<CarWithHistory>): Observable<CarWithHistory> {
-    const index = this.mockCars.findIndex(car => car.id === carId);
-    if (index !== -1) {
-      this.mockCars[index] = { ...this.mockCars[index], ...updates };
-      this.carsSubject.next([...this.mockCars]);
-      return of(this.mockCars[index]);
-    }
-    throw new Error('Car not found');
+    return this.http.put<BackendCar>(`/cars/${carId}`, this.mapToBackend(updates)).pipe(
+      map(b => this.mapFromBackend(b)),
+      tap(updated => {
+        const cars = this.carsSubject.value.map(c => (c.id === carId ? updated : c));
+        this.carsSubject.next(cars);
+      })
+    );
   }
 
   deleteCar(carId: string): Observable<boolean> {
-    const index = this.mockCars.findIndex(car => car.id === carId);
-    if (index !== -1) {
-      this.mockCars.splice(index, 1);
-      this.carsSubject.next([...this.mockCars]);
-      return of(true);
-    }
-    return of(false);
+    return this.http.delete<void>(`/cars/${carId}`).pipe(
+      map(() => {
+        const cars = this.carsSubject.value.filter(c => c.id !== carId);
+        this.carsSubject.next(cars);
+        return true;
+      })
+    );
   }
 }

@@ -9,6 +9,12 @@
 - Use ONLY global classes from `/src/styles/`
 - NO custom CSS, NO conditional `dark:` classes
 
+**Color Palette**:
+- **Orange** (primary/accent): `#FF8400`
+- **Vista Bleu** (secondary): `#8FA0D8`
+- **Amande** (light/background): `#F9DFC6`
+- **Bleu Oxford** (dark/background): `#0B0829`
+
 **Quick Reference**:
 - Cards: `glass-card` ONLY
 - Buttons: `btn-primary|secondary|tertiary|danger|success`
@@ -27,8 +33,10 @@ When making UI changes:
 - Update to "Done" only after user confirmation
 - Include acceptance criteria in issue creation
 
-### 4. Playwright Usage Rule
-- Only use Playwright when user adds "use PL"
+### 4. Browser Testing Rule
+- Prefer **Chrome DevTools MCP** (`chrome-devtools`) for browser testing, screenshots, DOM inspection, network analysis, and performance profiling
+- Use Chrome DevTools MCP when verifying UI changes, debugging runtime issues, or taking screenshots
+- Fall back to Playwright only when Chrome DevTools MCP is unavailable
 - Focus on code changes and compilation feedback
 - NEVER navigate to auth pages automatically
 
@@ -187,7 +195,7 @@ npm run start:dev | npm run build | npm run test | npm run test:e2e
 ```
 
 ### Docs
-`TECHNICAL.md` · `UI-SYSTEM.md` · `FEATURES.md` · `WORKFLOWS.md` · `DESIGN_SYSTEM_CHECKLIST.md` · `MVP_PLAN.md`
+`TECHNICAL.md` · `UI-SYSTEM.md` · `FEATURES.md` · `WORKFLOWS.md` · `DESIGN_SYSTEM_CHECKLIST.md` · `MVP_PLAN.md` · `MVP_PROGRESS.md`
 
 ## ⚡ Development Reminders
 
@@ -203,6 +211,7 @@ npm run start:dev | npm run build | npm run test | npm run test:e2e
 2. **Never modify tests**: Don't change tests after implementation to make them pass
 3. **Commit workflow**: Ask before committing - only commit when user explicitly requests
 4. **File preference**: ALWAYS prefer editing existing files over creating new ones
+5. **Progress tracking**: Update `MVP_PROGRESS.md` as implementation progresses (check off completed items)
 
 ### Token Efficiency (MANDATORY)
 - **NEVER explore/scan the project to understand structure** — the Project Map above is the source of truth

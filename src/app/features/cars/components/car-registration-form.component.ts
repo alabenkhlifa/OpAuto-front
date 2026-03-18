@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CarService, CarWithHistory } from '../services/car.service';
 import { Customer } from '../../../core/models/customer.model';
+import { CustomerService } from '../../../core/services/customer.service';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 import { TranslationService } from '../../../core/services/translation.service';
 import { Subscription } from 'rxjs';
@@ -223,7 +224,7 @@ import { Subscription } from 'rxjs';
     }
 
     .modal-content {
-      background: rgba(17, 24, 39, 0.95);
+      background: rgba(11, 8, 41, 0.95);
       backdrop-filter: blur(20px);
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 24px;
@@ -310,7 +311,7 @@ import { Subscription } from 'rxjs';
       content: '';
       width: 4px;
       height: 1.5rem;
-      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      background: linear-gradient(135deg, #FF8400, #CC6A00);
       border-radius: 2px;
     }
 
@@ -361,9 +362,9 @@ import { Subscription } from 'rxjs';
     .form-select:focus,
     .form-textarea:focus {
       outline: none;
-      border-color: #3b82f6;
+      border-color: #FF8400;
       background: rgba(255, 255, 255, 0.1);
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+      box-shadow: 0 0 0 3px rgba(255, 132, 0, 0.2);
       transform: translateY(-1px);
     }
 
@@ -418,9 +419,9 @@ import { Subscription } from 'rxjs';
     }
 
     .toggle-input:checked + .toggle-label {
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(37, 99, 235, 0.8));
+      background: linear-gradient(135deg, rgba(255, 132, 0, 0.8), rgba(37, 99, 235, 0.8));
       color: #ffffff;
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      box-shadow: 0 4px 12px rgba(255, 132, 0, 0.3);
       backdrop-filter: blur(10px);
     }
 
@@ -531,7 +532,7 @@ import { Subscription } from 'rxjs';
       width: 2rem;
       height: 2rem;
       border: 3px solid rgba(255, 255, 255, 0.2);
-      border-top: 3px solid #3b82f6;
+      border-top: 3px solid #FF8400;
       border-radius: 50%;
       animation: spin 1s linear infinite;
       margin-bottom: 1rem;
@@ -693,15 +694,11 @@ export class CarRegistrationFormComponent implements OnInit, OnDestroy {
   }
 
   private loadCustomers(): void {
-    // TODO: Replace with actual customer service call
-    // For now, using mock customers from car service
-    const mockCustomers: Customer[] = [
-      { id: 'customer1', name: 'Ahmed Ben Ali', phone: '+216-20-123-456', email: 'ahmed.benali@email.tn', registrationDate: new Date(), totalCars: 2, totalAppointments: 5, totalInvoices: 3, totalSpent: 1200, averageSpending: 400, status: 'active', preferredContactMethod: 'phone', loyaltyPoints: 50, createdAt: new Date(), updatedAt: new Date() },
-      { id: 'customer2', name: 'Fatma Trabelsi', phone: '+216-25-789-123', email: 'fatma.trabelsi@email.tn', registrationDate: new Date(), totalCars: 1, totalAppointments: 3, totalInvoices: 2, totalSpent: 800, averageSpending: 400, status: 'active', preferredContactMethod: 'email', loyaltyPoints: 30, createdAt: new Date(), updatedAt: new Date() },
-      { id: 'customer3', name: 'Mohamed Khemir', phone: '+216-22-456-789', email: 'mohamed.khemir@email.tn', registrationDate: new Date(), totalCars: 1, totalAppointments: 2, totalInvoices: 1, totalSpent: 500, averageSpending: 500, status: 'vip', preferredContactMethod: 'phone', loyaltyPoints: 75, createdAt: new Date(), updatedAt: new Date() },
-      { id: 'customer4', name: 'Leila Mansouri', phone: '+216-28-654-321', email: 'leila.mansouri@email.tn', registrationDate: new Date(), totalCars: 3, totalAppointments: 8, totalInvoices: 6, totalSpent: 2100, averageSpending: 350, status: 'vip', preferredContactMethod: 'whatsapp', loyaltyPoints: 120, createdAt: new Date(), updatedAt: new Date() }
-    ];
-    this.customers.set(mockCustomers);
+    const customerService = inject(CustomerService);
+    customerService.getCustomers().subscribe({
+      next: (customers) => this.customers.set(customers),
+      error: () => this.customers.set([])
+    });
   }
 
   onSubmit(): void {

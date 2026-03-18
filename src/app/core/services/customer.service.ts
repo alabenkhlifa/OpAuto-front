@@ -1,10 +1,12 @@
-import { Injectable, signal, computed } from '@angular/core';
-import { Observable, of, BehaviorSubject, map, combineLatest } from 'rxjs';
-import { 
-  Customer, 
-  CustomerStats, 
-  CustomerHistory, 
-  CreateCustomerRequest, 
+import { Injectable, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, BehaviorSubject, of } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
+import {
+  Customer,
+  CustomerStats,
+  CustomerHistory,
+  CreateCustomerRequest,
   UpdateCustomerRequest,
   CustomerSearchFilters,
   CustomerSummary,
@@ -15,204 +17,166 @@ import {
   ContactMethod,
   CustomerSortField
 } from '../models/customer.model';
+import { fromBackendEnum, toBackendEnum } from '../utils/enum-mapper';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CustomerService {
+  private http = inject(HttpClient);
+
   private customersSubject = new BehaviorSubject<Customer[]>([]);
   public customers$ = this.customersSubject.asObservable();
-  
+
   public searchQuery = signal<string>('');
   public selectedStatus = signal<string>('all');
   public selectedCity = signal<string>('all');
 
-  private mockCustomers: Customer[] = [
-    {
-      id: 'customer1',
-      name: 'Ahmed Ben Ali',
-      phone: '+216-20-123-456',
-      email: 'ahmed.benali@email.tn',
-      address: {
-        street: '15 Avenue Bourguiba',
-        city: 'Tunis',
-        postalCode: '1000',
-        country: 'Tunisia'
-      },
-      registrationDate: new Date(2024, 0, 15),
-      lastVisitDate: new Date(2025, 6, 15),
-      totalCars: 2,
-      totalAppointments: 15,
-      totalInvoices: 12,
-      totalSpent: 2850.50,
-      averageSpending: 237.54,
-      status: 'vip',
-      notes: 'Loyal customer since 2024. Prefers morning appointments.',
-      preferredContactMethod: 'phone',
-      loyaltyPoints: 285,
-      referralSource: 'Facebook',
-      createdAt: new Date(2024, 0, 15),
-      updatedAt: new Date(2025, 6, 15)
-    },
-    {
-      id: 'customer2',
-      name: 'Fatma Trabelsi',
-      phone: '+216-25-789-123',
-      email: 'fatma.trabelsi@email.tn',
-      address: {
-        street: '42 Rue de la République',
-        city: 'Sfax',
-        postalCode: '3000',
-        country: 'Tunisia'
-      },
-      registrationDate: new Date(2024, 2, 22),
-      lastVisitDate: new Date(2025, 5, 20),
-      totalCars: 1,
-      totalAppointments: 8,
-      totalInvoices: 7,
-      totalSpent: 1650.75,
-      averageSpending: 235.82,
-      status: 'active',
-      notes: 'Works in healthcare. Flexible with scheduling.',
-      preferredContactMethod: 'email',
-      loyaltyPoints: 165,
-      referralSource: 'Friend referral',
-      createdAt: new Date(2024, 2, 22),
-      updatedAt: new Date(2025, 5, 20)
-    },
-    {
-      id: 'customer3',
-      name: 'Mohamed Khemir',
-      phone: '+216-22-456-789',
-      email: 'mohamed.khemir@email.tn',
-      address: {
-        street: '78 Avenue Habib Bourguiba',
-        city: 'Sousse',
-        postalCode: '4000',
-        country: 'Tunisia'
-      },
-      registrationDate: new Date(2024, 4, 10),
-      lastVisitDate: new Date(2025, 7, 1),
-      totalCars: 1,
-      totalAppointments: 3,
-      totalInvoices: 3,
-      totalSpent: 890.25,
-      averageSpending: 296.75,
-      status: 'active',
-      notes: 'Business owner, prefers luxury car services.',
-      preferredContactMethod: 'whatsapp',
-      loyaltyPoints: 89,
-      referralSource: 'Google Search',
-      createdAt: new Date(2024, 4, 10),
-      updatedAt: new Date(2025, 7, 1)
-    },
-    {
-      id: 'customer4',
-      name: 'Leila Mansouri',
-      phone: '+216-28-654-321',
-      email: 'leila.mansouri@email.tn',
-      address: {
-        street: '23 Rue Ibn Khaldoun',
-        city: 'Tunis',
-        postalCode: '1002',
-        country: 'Tunisia'
-      },
-      registrationDate: new Date(2024, 7, 5),
-      lastVisitDate: new Date(2025, 6, 25),
-      totalCars: 1,
-      totalAppointments: 5,
-      totalInvoices: 5,
-      totalSpent: 1320.00,
-      averageSpending: 264.00,
-      status: 'active',
-      notes: 'Teacher, prefers afternoon appointments after work.',
-      preferredContactMethod: 'phone',
-      loyaltyPoints: 132,
-      referralSource: 'Colleague referral',
-      createdAt: new Date(2024, 7, 5),
-      updatedAt: new Date(2025, 6, 25)
-    },
-    {
-      id: 'customer5',
-      name: 'Youssef Hammami',
-      phone: '+216-29-987-654',
-      email: 'youssef.hammami@email.tn',
-      registrationDate: new Date(2025, 0, 12),
-      totalCars: 1,
-      totalAppointments: 1,
-      totalInvoices: 1,
-      totalSpent: 125.50,
-      averageSpending: 125.50,
-      status: 'active',
-      notes: 'New customer, first service completed.',
-      preferredContactMethod: 'sms',
-      loyaltyPoints: 13,
-      referralSource: 'Walk-in',
-      createdAt: new Date(2025, 0, 12),
-      updatedAt: new Date(2025, 0, 12)
-    },
-    {
-      id: 'customer6',
-      name: 'Samira Bouzid',
-      phone: '+216-24-321-987',
-      registrationDate: new Date(2023, 11, 8),
-      lastVisitDate: new Date(2024, 8, 15),
-      totalCars: 2,
-      totalAppointments: 25,
-      totalInvoices: 20,
-      totalSpent: 4250.80,
-      averageSpending: 212.54,
-      status: 'inactive',
-      notes: 'Former regular customer. Has not visited in 6+ months.',
-      preferredContactMethod: 'phone',
-      loyaltyPoints: 425,
-      referralSource: 'Family referral',
-      createdAt: new Date(2023, 11, 8),
-      updatedAt: new Date(2024, 8, 15)
-    }
-  ];
+  // ---------------------------------------------------------------------------
+  // Backend mapping
+  // ---------------------------------------------------------------------------
 
-  constructor() {
-    this.customersSubject.next(this.mockCustomers);
+  private mapFromBackend(b: any): Customer {
+    const name = ((b.firstName || '') + ' ' + (b.lastName || '')).trim() || b.name || '';
+    const cars: any[] = b.cars || [];
+    const countData = b._count || {};
+
+    return {
+      id: b.id,
+      name,
+      phone: b.phone || '',
+      email: b.email || undefined,
+      address: b.address ? { street: b.address, city: '', postalCode: '', country: '' } : undefined,
+      registrationDate: new Date(b.createdAt),
+      lastVisitDate: b.updatedAt ? new Date(b.updatedAt) : undefined,
+      totalCars: cars.length || 0,
+      totalAppointments: countData.appointments ?? b.visitCount ?? 0,
+      totalInvoices: countData.invoices ?? 0,
+      totalSpent: b.totalSpent ?? 0,
+      averageSpending: b.totalSpent && (countData.invoices || b.visitCount)
+        ? b.totalSpent / (countData.invoices || b.visitCount || 1)
+        : 0,
+      status: fromBackendEnum(b.status) as CustomerStatus,
+      notes: b.notes || undefined,
+      preferredContactMethod: (b.preferredContactMethod as ContactMethod) || 'phone',
+      loyaltyPoints: b.loyaltyPoints ?? 0,
+      referralSource: b.referralSource || undefined,
+      createdAt: new Date(b.createdAt),
+      updatedAt: new Date(b.updatedAt)
+    };
   }
 
+  private mapToBackend(f: CreateCustomerRequest | UpdateCustomerRequest): any {
+    const payload: any = {};
+
+    if ('name' in f && f.name != null) {
+      const parts = f.name.trim().split(/\s+/);
+      payload.firstName = parts[0] || '';
+      payload.lastName = parts.slice(1).join(' ') || '';
+    }
+
+    if ('phone' in f && f.phone != null) payload.phone = f.phone;
+    if ('email' in f && f.email != null) payload.email = f.email;
+    if ('notes' in f && f.notes != null) payload.notes = f.notes;
+    if ('address' in f && f.address != null) {
+      // Backend stores address as a single string
+      payload.address = [f.address.street, f.address.city, f.address.postalCode, f.address.country]
+        .filter(Boolean)
+        .join(', ');
+    }
+    if ('status' in f && f.status != null) payload.status = toBackendEnum(f.status);
+
+    return payload;
+  }
+
+  // ---------------------------------------------------------------------------
+  // CRUD
+  // ---------------------------------------------------------------------------
+
   getCustomers(): Observable<Customer[]> {
-    return this.customers$;
+    return this.http.get<any[]>('/customers').pipe(
+      map(items => items.map(item => this.mapFromBackend(item))),
+      tap(customers => this.customersSubject.next(customers))
+    );
   }
 
   getCustomerById(customerId: string): Observable<Customer | undefined> {
-    return of(this.mockCustomers.find(customer => customer.id === customerId));
+    return this.http.get<any>(`/customers/${customerId}`).pipe(
+      map(b => this.mapFromBackend(b))
+    );
   }
 
+  createCustomer(customerData: CreateCustomerRequest): Observable<Customer> {
+    const body = this.mapToBackend(customerData);
+    return this.http.post<any>('/customers', body).pipe(
+      map(b => this.mapFromBackend(b)),
+      tap(customer => {
+        const current = this.customersSubject.value;
+        this.customersSubject.next([customer, ...current]);
+      })
+    );
+  }
+
+  updateCustomer(customerId: string, updates: UpdateCustomerRequest): Observable<Customer> {
+    const body = this.mapToBackend(updates);
+    return this.http.put<any>(`/customers/${customerId}`, body).pipe(
+      map(b => this.mapFromBackend(b)),
+      tap(updated => {
+        const current = this.customersSubject.value;
+        const index = current.findIndex(c => c.id === customerId);
+        if (index !== -1) {
+          current[index] = updated;
+          this.customersSubject.next([...current]);
+        }
+      })
+    );
+  }
+
+  deleteCustomer(customerId: string): Observable<boolean> {
+    return this.http.delete<void>(`/customers/${customerId}`).pipe(
+      map(() => {
+        const current = this.customersSubject.value;
+        this.customersSubject.next(current.filter(c => c.id !== customerId));
+        return true;
+      })
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Computed / local queries (operate on cached data)
+  // ---------------------------------------------------------------------------
+
   getCustomerStats(): Observable<CustomerStats> {
-    const totalCustomers = this.mockCustomers.length;
-    const activeCustomers = this.mockCustomers.filter(c => c.status === 'active').length;
-    const vipCustomers = this.mockCustomers.filter(c => c.status === 'vip').length;
-    
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
-    const newCustomersThisMonth = this.mockCustomers.filter(c => 
-      c.registrationDate.getMonth() === currentMonth && 
+    const customers = this.customersSubject.value;
+    const totalCustomers = customers.length;
+    const activeCustomers = customers.filter(c => c.status === 'active').length;
+    const vipCustomers = customers.filter(c => c.status === 'vip').length;
+
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    const newCustomersThisMonth = customers.filter(c =>
+      c.registrationDate.getMonth() === currentMonth &&
       c.registrationDate.getFullYear() === currentYear
     ).length;
 
-    const totalSpent = this.mockCustomers.reduce((sum, c) => sum + c.totalSpent, 0);
-    const averageCustomerValue = totalSpent / totalCustomers;
+    const totalSpent = customers.reduce((sum, c) => sum + c.totalSpent, 0);
+    const averageCustomerValue = totalCustomers ? totalSpent / totalCustomers : 0;
 
-    const topCustomers = [...this.mockCustomers]
+    const topCustomers = [...customers]
       .sort((a, b) => b.totalSpent - a.totalSpent)
       .slice(0, 5)
       .map(c => this.mapToCustomerSummary(c));
 
     const customersByStatus: Record<CustomerStatus, number> = {
-      active: this.mockCustomers.filter(c => c.status === 'active').length,
-      inactive: this.mockCustomers.filter(c => c.status === 'inactive').length,
-      vip: this.mockCustomers.filter(c => c.status === 'vip').length,
-      blocked: this.mockCustomers.filter(c => c.status === 'blocked').length
+      active: customers.filter(c => c.status === 'active').length,
+      inactive: customers.filter(c => c.status === 'inactive').length,
+      vip: customers.filter(c => c.status === 'vip').length,
+      blocked: customers.filter(c => c.status === 'blocked').length
     };
 
-    const recentCustomers = [...this.mockCustomers]
-      .sort((a, b) => new Date(b.registrationDate).getTime() - new Date(a.registrationDate).getTime())
+    const recentCustomers = [...customers]
+      .sort((a, b) => b.registrationDate.getTime() - a.registrationDate.getTime())
       .slice(0, 5)
       .map(c => this.mapToCustomerSummary(c));
 
@@ -229,7 +193,7 @@ export class CustomerService {
   }
 
   searchCustomers(filters: CustomerSearchFilters): Observable<Customer[]> {
-    let filtered = [...this.mockCustomers];
+    let filtered = [...this.customersSubject.value];
 
     if (filters.query) {
       const query = filters.query.toLowerCase();
@@ -250,13 +214,13 @@ export class CustomerService {
     }
 
     if (filters.registrationDateFrom) {
-      filtered = filtered.filter(customer => 
+      filtered = filtered.filter(customer =>
         customer.registrationDate >= filters.registrationDateFrom!
       );
     }
 
     if (filters.registrationDateTo) {
-      filtered = filtered.filter(customer => 
+      filtered = filtered.filter(customer =>
         customer.registrationDate <= filters.registrationDateTo!
       );
     }
@@ -270,7 +234,7 @@ export class CustomerService {
     }
 
     if (filters.hasEmail !== undefined) {
-      filtered = filtered.filter(customer => 
+      filtered = filtered.filter(customer =>
         filters.hasEmail ? !!customer.email : !customer.email
       );
     }
@@ -315,129 +279,49 @@ export class CustomerService {
   }
 
   getCustomerHistory(customerId: string): Observable<CustomerHistory> {
-    const mockAppointments: CustomerAppointmentHistory[] = [
-      {
-        id: 'app1',
-        date: new Date(2025, 6, 15),
-        serviceName: 'Oil Change & Filter',
-        carMake: 'BMW',
-        carModel: 'X5',
-        licensePlate: '123 TUN 2024',
-        status: 'completed',
-        totalCost: 85.50
-      },
-      {
-        id: 'app2',
-        date: new Date(2025, 5, 20),
-        serviceName: 'Brake System Check',
-        carMake: 'Toyota',
-        carModel: 'Camry',
-        licensePlate: '789 TUN 2021',
-        status: 'completed',
-        totalCost: 245.75
-      }
-    ];
+    return this.http.get<any>(`/customers/${customerId}`).pipe(
+      map(b => {
+        const appointments: CustomerAppointmentHistory[] = (b.appointments || []).map((a: any) => ({
+          id: a.id,
+          date: new Date(a.startTime || a.date),
+          serviceName: a.serviceName || a.title || '',
+          carMake: a.car?.make || '',
+          carModel: a.car?.model || '',
+          licensePlate: a.car?.licensePlate || '',
+          status: fromBackendEnum(a.status),
+          totalCost: a.totalCost ?? a.price ?? 0
+        }));
 
-    const mockInvoices: CustomerInvoiceHistory[] = [
-      {
-        id: 'inv1',
-        invoiceNumber: 'INV-2025-001',
-        date: new Date(2025, 6, 15),
-        amount: 85.50,
-        status: 'paid',
-        serviceName: 'Oil Change & Filter',
-        dueDate: new Date(2025, 6, 29)
-      },
-      {
-        id: 'inv2',
-        invoiceNumber: 'INV-2025-002',
-        date: new Date(2025, 5, 20),
-        amount: 245.75,
-        status: 'paid',
-        serviceName: 'Brake System Check',
-        dueDate: new Date(2025, 6, 4)
-      }
-    ];
+        const invoices: CustomerInvoiceHistory[] = (b.invoices || []).map((inv: any) => ({
+          id: inv.id,
+          invoiceNumber: inv.invoiceNumber || inv.number || '',
+          date: new Date(inv.createdAt || inv.date),
+          amount: inv.totalAmount ?? inv.amount ?? 0,
+          status: fromBackendEnum(inv.status),
+          serviceName: inv.serviceName || '',
+          dueDate: new Date(inv.dueDate || inv.createdAt)
+        }));
 
-    const mockCars: CustomerCarHistory[] = [
-      {
-        id: 'car1',
-        licensePlate: '123 TUN 2024',
-        make: 'BMW',
-        model: 'X5',
-        year: 2020,
-        registrationDate: new Date(2024, 0, 15),
-        lastServiceDate: new Date(2025, 6, 15),
-        totalServices: 8,
-        totalSpent: 1425.50
-      },
-      {
-        id: 'car3',
-        licensePlate: '789 TUN 2021',
-        make: 'Toyota',
-        model: 'Camry',
-        year: 2021,
-        registrationDate: new Date(2024, 8, 10),
-        lastServiceDate: new Date(2025, 4, 10),
-        totalServices: 5,
-        totalSpent: 1425.00
-      }
-    ];
+        const cars: CustomerCarHistory[] = (b.cars || []).map((car: any) => ({
+          id: car.id,
+          licensePlate: car.licensePlate || '',
+          make: car.make || '',
+          model: car.model || '',
+          year: car.year || 0,
+          registrationDate: new Date(car.createdAt),
+          lastServiceDate: car.updatedAt ? new Date(car.updatedAt) : undefined,
+          totalServices: 0,
+          totalSpent: 0
+        }));
 
-    return of({
-      appointments: mockAppointments,
-      invoices: mockInvoices,
-      cars: mockCars
-    });
-  }
-
-  createCustomer(customerData: CreateCustomerRequest): Observable<Customer> {
-    const newCustomer: Customer = {
-      id: Date.now().toString(),
-      ...customerData,
-      registrationDate: new Date(),
-      totalCars: 0,
-      totalAppointments: 0,
-      totalInvoices: 0,
-      totalSpent: 0,
-      averageSpending: 0,
-      status: 'active',
-      loyaltyPoints: 0,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-
-    this.mockCustomers.push(newCustomer);
-    this.customersSubject.next([...this.mockCustomers]);
-    return of(newCustomer);
-  }
-
-  updateCustomer(customerId: string, updates: UpdateCustomerRequest): Observable<Customer> {
-    const index = this.mockCustomers.findIndex(customer => customer.id === customerId);
-    if (index !== -1) {
-      this.mockCustomers[index] = {
-        ...this.mockCustomers[index],
-        ...updates,
-        updatedAt: new Date()
-      };
-      this.customersSubject.next([...this.mockCustomers]);
-      return of(this.mockCustomers[index]);
-    }
-    throw new Error('Customer not found');
-  }
-
-  deleteCustomer(customerId: string): Observable<boolean> {
-    const index = this.mockCustomers.findIndex(customer => customer.id === customerId);
-    if (index !== -1) {
-      this.mockCustomers.splice(index, 1);
-      this.customersSubject.next([...this.mockCustomers]);
-      return of(true);
-    }
-    return of(false);
+        return { appointments, invoices, cars };
+      })
+    );
   }
 
   getAvailableCities(): Observable<string[]> {
-    const cities = [...new Set(this.mockCustomers
+    const customers = this.customersSubject.value;
+    const cities = [...new Set(customers
       .map(customer => customer.address?.city)
       .filter((city): city is string => !!city)
     )].sort();
@@ -445,12 +329,12 @@ export class CustomerService {
   }
 
   getCustomersByStatus(status: CustomerStatus): Observable<Customer[]> {
-    const filtered = this.mockCustomers.filter(customer => customer.status === status);
+    const filtered = this.customersSubject.value.filter(customer => customer.status === status);
     return of(filtered);
   }
 
   getTopCustomers(limit: number = 5): Observable<CustomerSummary[]> {
-    const topCustomers = [...this.mockCustomers]
+    const topCustomers = [...this.customersSubject.value]
       .sort((a, b) => b.totalSpent - a.totalSpent)
       .slice(0, limit)
       .map(c => this.mapToCustomerSummary(c));
@@ -458,8 +342,8 @@ export class CustomerService {
   }
 
   getRecentCustomers(limit: number = 5): Observable<CustomerSummary[]> {
-    const recentCustomers = [...this.mockCustomers]
-      .sort((a, b) => new Date(b.registrationDate).getTime() - new Date(a.registrationDate).getTime())
+    const recentCustomers = [...this.customersSubject.value]
+      .sort((a, b) => b.registrationDate.getTime() - a.registrationDate.getTime())
       .slice(0, limit)
       .map(c => this.mapToCustomerSummary(c));
     return of(recentCustomers);
@@ -470,7 +354,7 @@ export class CustomerService {
   }
 
   addLoyaltyPoints(customerId: string, points: number): Observable<Customer> {
-    const customer = this.mockCustomers.find(c => c.id === customerId);
+    const customer = this.customersSubject.value.find(c => c.id === customerId);
     if (customer) {
       const newPoints = customer.loyaltyPoints + points;
       return this.updateCustomer(customerId, { loyaltyPoints: newPoints });
@@ -479,7 +363,7 @@ export class CustomerService {
   }
 
   getCustomerMetrics(customerId: string): Observable<any> {
-    const customer = this.mockCustomers.find(c => c.id === customerId);
+    const customer = this.customersSubject.value.find(c => c.id === customerId);
     if (!customer) {
       throw new Error('Customer not found');
     }
@@ -500,6 +384,10 @@ export class CustomerService {
       nextTierProgress: this.getNextTierProgress(customer.loyaltyPoints)
     });
   }
+
+  // ---------------------------------------------------------------------------
+  // Private helpers
+  // ---------------------------------------------------------------------------
 
   private mapToCustomerSummary(customer: Customer): CustomerSummary {
     return {

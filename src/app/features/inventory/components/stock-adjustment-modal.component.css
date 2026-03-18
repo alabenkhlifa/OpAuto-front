@@ -26,25 +26,25 @@
 
 .form-input:focus {
   background: rgba(255, 255, 255, 0.9);
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #FF8400;
+  box-shadow: 0 0 0 3px rgba(255, 132, 0, 0.1);
 }
 
 .dark .form-input:focus {
   background: rgba(55, 65, 81, 0.9);
-  border-color: #60a5fa;
-  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+  border-color: #FF8400;
+  box-shadow: 0 0 0 3px rgba(255, 132, 0, 0.1);
 }
 
 /* Preview section styling */
 .preview-section {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 197, 253, 0.05));
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: linear-gradient(135deg, rgba(255, 132, 0, 0.1), rgba(255, 160, 51, 0.05));
+  border: 1px solid rgba(255, 132, 0, 0.2);
 }
 
 .dark .preview-section {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(147, 197, 253, 0.1));
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  background: linear-gradient(135deg, rgba(255, 132, 0, 0.2), rgba(255, 160, 51, 0.1));
+  border: 1px solid rgba(255, 132, 0, 0.3);
 }
 
 /* Stock status indicators */
@@ -70,14 +70,14 @@
 
 /* Button styling */
 .btn-adjust {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-  box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.3);
+  background: linear-gradient(135deg, #FF8400, #CC6A00);
+  box-shadow: 0 4px 14px 0 rgba(255, 132, 0, 0.3);
   transition: all 0.2s ease;
 }
 
 .btn-adjust:hover:not(:disabled) {
-  background: linear-gradient(135deg, #1d4ed8, #1e40af);
-  box-shadow: 0 6px 20px 0 rgba(59, 130, 246, 0.4);
+  background: linear-gradient(135deg, #CC6A00, #B35C00);
+  box-shadow: 0 6px 20px 0 rgba(255, 132, 0, 0.4);
   transform: translateY(-1px);
 }
 
@@ -123,7 +123,7 @@
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid #FF8400;
   outline-offset: 2px;
 }
 

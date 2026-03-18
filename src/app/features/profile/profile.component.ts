@@ -460,9 +460,9 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
   styles: [`
     /* Component uses global glass-card, form, and button classes */
     .glass-card {
-      background: rgba(17, 24, 39, 0.95);
+      background: rgba(11, 8, 41, 0.95);
       backdrop-filter: blur(10px);
-      border: 1px solid rgba(75, 85, 99, 0.6);
+      border: 1px solid rgba(42, 37, 102, 0.6);
       border-radius: 20px;
       padding: 1.5rem;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
@@ -470,30 +470,30 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
     }
 
     .glass-card:hover {
-      background: rgba(31, 41, 55, 0.98);
+      background: rgba(18, 15, 61, 0.98);
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
-      border-color: rgba(59, 130, 246, 0.7);
+      border-color: rgba(255, 132, 0, 0.7);
       transform: translateY(-2px);
     }
 
     .nav-button-active {
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(29, 78, 216, 0.8));
-      border-color: rgba(59, 130, 246, 0.6);
+      background: linear-gradient(135deg, rgba(255, 132, 0, 0.8), rgba(204, 106, 0, 0.8));
+      border-color: rgba(255, 132, 0, 0.6);
       color: white;
-      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+      box-shadow: 0 4px 15px rgba(255, 132, 0, 0.3);
     }
 
     .nav-button-inactive {
-      background-color: rgba(31, 41, 55, 0.6);
-      border-color: rgba(75, 85, 99, 0.4);
+      background-color: rgba(18, 15, 61, 0.6);
+      border-color: rgba(42, 37, 102, 0.4);
       color: #9ca3af;
     }
 
     .nav-button-inactive:hover {
-      background-color: rgba(31, 41, 55, 0.8);
-      border-color: rgba(59, 130, 246, 0.4);
+      background-color: rgba(18, 15, 61, 0.8);
+      border-color: rgba(255, 132, 0, 0.4);
       color: #ffffff;
-      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+      box-shadow: 0 2px 8px rgba(255, 132, 0, 0.2);
     }
 
     .toggle-button {

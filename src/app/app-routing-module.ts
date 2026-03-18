@@ -17,12 +17,17 @@ const routes: Routes = [
     loadComponent: () => import('./features/auth/auth.component').then(m => m.AuthComponent),
     canActivate: [guestGuard]
   },
-  { 
-    path: 'dashboard', 
+  {
+    path: 'dashboard',
     loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),
     canActivate: [authGuard]
   },
-  { 
+  {
+    path: 'calendar',
+    loadComponent: () => import('./features/calendar/calendar.component').then(m => m.CalendarComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'appointments', 
     loadComponent: () => import('./features/appointments/appointments.component').then(m => m.AppointmentsComponent),
     canActivate: [authGuard]
@@ -147,8 +152,18 @@ const routes: Routes = [
     loadComponent: () => import('./features/approvals/approvals.component').then(m => m.ApprovalsComponent),
     canActivate: [authGuard, ownerGuard]
   },
-  { 
-    path: 'profile', 
+  {
+    path: 'notifications',
+    loadComponent: () => import('./features/notifications/notifications.component').then(m => m.NotificationsComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'modules',
+    loadComponent: () => import('./features/subscription/subscription.component').then(m => m.SubscriptionComponent),
+    canActivate: [authGuard, ownerGuard]
+  },
+  {
+    path: 'profile',
     loadComponent: () => import('./features/profile/profile.component').then(m => m.ProfileComponent),
     canActivate: [authGuard]
   },

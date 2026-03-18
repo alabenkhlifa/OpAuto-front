@@ -371,8 +371,8 @@ export interface PhotoUploadEvent {
 
     .form-select,
     .form-input {
-      background: rgba(31, 41, 55, 0.8);
-      border: 1px solid rgba(75, 85, 99, 0.5);
+      background: rgba(18, 15, 61, 0.8);
+      border: 1px solid rgba(42, 37, 102, 0.5);
       border-radius: 0.5rem;
       color: #ffffff;
       padding: 0.75rem 1rem;
@@ -383,22 +383,22 @@ export interface PhotoUploadEvent {
     .form-select:focus,
     .form-input:focus {
       outline: none;
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      border-color: #FF8400;
+      box-shadow: 0 0 0 3px rgba(255, 132, 0, 0.1);
     }
 
     .form-select option {
-      background: #1f2937;
+      background: #120F3D;
       color: #ffffff;
     }
 
     /* Upload Zone */
     .upload-zone {
-      border: 2px dashed rgba(75, 85, 99, 0.5);
+      border: 2px dashed rgba(42, 37, 102, 0.5);
       border-radius: 1rem;
       padding: 3rem 2rem;
       text-align: center;
-      background: rgba(17, 24, 39, 0.3);
+      background: rgba(11, 8, 41, 0.3);
       transition: all 0.3s ease;
       cursor: pointer;
       position: relative;
@@ -410,8 +410,8 @@ export interface PhotoUploadEvent {
 
     .upload-zone:hover,
     .upload-zone:focus {
-      border-color: #3b82f6;
-      background: rgba(17, 24, 39, 0.5);
+      border-color: #FF8400;
+      background: rgba(11, 8, 41, 0.5);
     }
 
     .upload-zone.drag-active {
@@ -571,8 +571,8 @@ export interface PhotoUploadEvent {
     .placeholder-image {
       width: 80px;
       height: 60px;
-      background: rgba(31, 41, 55, 0.8);
-      border: 1px solid rgba(75, 85, 99, 0.5);
+      background: rgba(18, 15, 61, 0.8);
+      border: 1px solid rgba(42, 37, 102, 0.5);
       border-radius: 0.5rem;
       display: flex;
       align-items: center;
@@ -584,8 +584,8 @@ export interface PhotoUploadEvent {
       position: absolute;
       top: -4px;
       right: -4px;
-      background: rgba(17, 24, 39, 0.9);
-      border: 1px solid rgba(75, 85, 99, 0.5);
+      background: rgba(11, 8, 41, 0.9);
+      border: 1px solid rgba(42, 37, 102, 0.5);
       border-radius: 50%;
       width: 20px;
       height: 20px;
@@ -611,9 +611,9 @@ export interface PhotoUploadEvent {
     }
 
     .tier-professional {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
+      background: linear-gradient(135deg, #7B8CC4, #6778B0);
       color: #ffffff;
-      border: 1px solid #f59e0b;
+      border: 1px solid #7B8CC4;
     }
 
     /* Responsive Design */
@@ -765,7 +765,7 @@ export interface PhotoUploadEvent {
     .upload-zone:focus-visible,
     .form-select:focus-visible,
     .form-input:focus-visible {
-      outline: 2px solid #3b82f6;
+      outline: 2px solid #FF8400;
       outline-offset: 2px;
     }
   `]

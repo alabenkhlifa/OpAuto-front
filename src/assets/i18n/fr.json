@@ -46,6 +46,9 @@
     "reports": "Rapports",
     "employees": "Employés",
     "profile": "Profil",
+    "calendar": "Calendrier",
+    "notifications": "Notifications",
+    "modules": "Modules",
     "subscription": "Abonnement",
     "logout": "Déconnexion",
     "opAuto": "OpAuto",
@@ -1337,6 +1340,9 @@
       "emailLabel": "Adresse email",
       "emailPlaceholder": "Entrez votre email",
       "emailRequired": "Une adresse email valide est requise",
+      "emailOrUsernameLabel": "Email / Nom d'utilisateur",
+      "emailOrUsernamePlaceholder": "Entrez votre email ou nom d'utilisateur",
+      "emailOrUsernameRequired": "L'email ou le nom d'utilisateur est requis",
       "passwordLabel": "Mot de passe",
       "passwordPlaceholder": "Entrez votre mot de passe",
       "passwordRequired": "Le mot de passe est requis",
@@ -2076,5 +2082,52 @@
         "description": "Téléchargez des photos des réparations et des problèmes. La documentation visuelle aide à communiquer avec les clients."
       }
     }
+  },
+  "calendar": {
+    "title": "Calendrier",
+    "month": "Mois",
+    "week": "Semaine",
+    "day": "Jour",
+    "today": "Aujourd'hui",
+    "allMechanics": "Tous les mécaniciens",
+    "noEvents": "Aucun événement",
+    "dragToReschedule": "Glisser pour replanifier",
+    "clickToView": "Cliquer pour voir les détails"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Tout marquer comme lu",
+    "viewAll": "Voir toutes les notifications",
+    "noNotifications": "Aucune notification",
+    "allCaughtUp": "Vous êtes à jour !",
+    "unreadOnly": "Non lues uniquement",
+    "types": {
+      "appointment": "Rendez-vous",
+      "maintenance": "Maintenance",
+      "approval": "Approbations",
+      "invoice": "Factures",
+      "stock": "Stock",
+      "system": "Système"
+    }
+  },
+  "modules": {
+    "title": "Marketplace de Modules",
+    "subtitle": "Personnalisez votre garage avec les modules dont vous avez besoin",
+    "free": "Gratuit",
+    "perMonth": "/mois",
+    "active": "Actif",
+    "activate": "Activer",
+    "deactivate": "Désactiver",
+    "freeModules": "Modules Gratuits",
+    "paidModules": "Modules Payants",
+    "allModulesActive": "Tous les modules actifs pour la démo"
+  },
+  "ai": {
+    "title": "Assistant IA",
+    "diagnose": "Diagnostic IA",
+    "estimate": "Estimation IA",
+    "suggest": "Suggestion IA",
+    "generateInsights": "Générer des insights",
+    "mockMode": "Fonctionnement en mode démo"
   }
 }

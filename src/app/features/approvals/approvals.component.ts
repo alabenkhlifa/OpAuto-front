@@ -383,7 +383,7 @@ import { ApprovalModalComponent } from './components/approval-modal.component';
       display: block;
       width: 100%;
       padding: 0.5rem 0.75rem;
-      background: rgba(17, 24, 39, 0.4);
+      background: rgba(11, 8, 41, 0.4);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
       border: 1px solid rgba(255, 255, 255, 0.2);
@@ -394,9 +394,9 @@ import { ApprovalModalComponent } from './components/approval-modal.component';
     
     .form-input:focus, .form-select:focus {
       outline: none;
-      background: rgba(17, 24, 39, 0.6);
-      border-color: rgba(96, 165, 250, 0.5);
-      box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+      background: rgba(11, 8, 41, 0.6);
+      border-color: rgba(255, 132, 0, 0.5);
+      box-shadow: 0 0 0 3px rgba(255, 132, 0, 0.1);
     }
     
     .form-input::placeholder {

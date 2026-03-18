@@ -366,8 +366,8 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
     }
 
     .category-filter {
-      background: rgba(31, 41, 55, 0.8);
-      border: 1px solid rgba(75, 85, 99, 0.5);
+      background: rgba(18, 15, 61, 0.8);
+      border: 1px solid rgba(42, 37, 102, 0.5);
       border-radius: 0.5rem;
       color: #ffffff;
       padding: 0.5rem 0.75rem;
@@ -377,11 +377,11 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
 
     .category-filter:focus {
       outline: none;
-      border-color: #3b82f6;
+      border-color: #FF8400;
     }
 
     .category-filter option {
-      background: #1f2937;
+      background: #120F3D;
       color: #ffffff;
     }
 
@@ -393,8 +393,8 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
     }
 
     .photo-item {
-      background: rgba(17, 24, 39, 0.95);
-      border: 1px solid rgba(75, 85, 99, 0.6);
+      background: rgba(11, 8, 41, 0.95);
+      border: 1px solid rgba(42, 37, 102, 0.6);
       border-radius: 1rem;
       overflow: hidden;
       transition: all 0.3s ease;
@@ -403,7 +403,7 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
     .photo-item:hover {
       transform: translateY(-2px);
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
-      border-color: rgba(59, 130, 246, 0.7);
+      border-color: rgba(255, 132, 0, 0.7);
     }
 
     /* Photo Container */
@@ -426,7 +426,7 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
     }
 
     .photo-image:focus {
-      outline: 2px solid #3b82f6;
+      outline: 2px solid #FF8400;
       outline-offset: 2px;
     }
 
@@ -448,7 +448,7 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
     }
 
     .category-badge[data-category="before"] {
-      background: rgba(59, 130, 246, 0.9);
+      background: rgba(255, 132, 0, 0.9);
     }
 
     .category-badge[data-category="during"] {
@@ -540,8 +540,8 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
     }
 
     .action-btn {
-      background: rgba(75, 85, 99, 0.3);
-      border: 1px solid rgba(75, 85, 99, 0.5);
+      background: rgba(42, 37, 102, 0.3);
+      border: 1px solid rgba(42, 37, 102, 0.5);
       border-radius: 0.5rem;
       color: #d1d5db;
       padding: 0.5rem;
@@ -553,26 +553,26 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
     }
 
     .action-btn:hover {
-      background: rgba(75, 85, 99, 0.5);
+      background: rgba(42, 37, 102, 0.5);
       color: #ffffff;
       transform: translateY(-1px);
     }
 
     .action-btn:focus {
-      outline: 2px solid #3b82f6;
+      outline: 2px solid #FF8400;
       outline-offset: 2px;
     }
 
     .view-btn:hover {
-      background: rgba(59, 130, 246, 0.2);
-      border-color: #3b82f6;
-      color: #60a5fa;
+      background: rgba(255, 132, 0, 0.2);
+      border-color: #FF8400;
+      color: #FF8400;
     }
 
     .edit-btn:hover {
       background: rgba(245, 158, 11, 0.2);
-      border-color: #f59e0b;
-      color: #fbbf24;
+      border-color: #7B8CC4;
+      color: #8FA0D8;
     }
 
     .delete-btn:hover {
@@ -619,9 +619,9 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
     }
 
     .photo-modal {
-      background: rgba(17, 24, 39, 0.95);
+      background: rgba(11, 8, 41, 0.95);
       backdrop-filter: blur(20px);
-      border: 1px solid rgba(75, 85, 99, 0.6);
+      border: 1px solid rgba(42, 37, 102, 0.6);
       border-radius: 1rem;
       max-width: 90vw;
       max-height: 90vh;
@@ -635,7 +635,7 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
       justify-content: space-between;
       align-items: center;
       padding: 1rem 1.5rem;
-      border-bottom: 1px solid rgba(75, 85, 99, 0.3);
+      border-bottom: 1px solid rgba(42, 37, 102, 0.3);
     }
 
     .close-btn {
@@ -650,7 +650,7 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
 
     .close-btn:hover {
       color: #ffffff;
-      background: rgba(75, 85, 99, 0.3);
+      background: rgba(42, 37, 102, 0.3);
     }
 
     .modal-body {
@@ -669,8 +669,8 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
 
     .photo-details-panel {
       padding: 1.5rem;
-      background: rgba(31, 41, 55, 0.8);
-      border-top: 1px solid rgba(75, 85, 99, 0.3);
+      background: rgba(18, 15, 61, 0.8);
+      border-top: 1px solid rgba(42, 37, 102, 0.3);
     }
 
     .detail-row {
@@ -679,7 +679,7 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
       align-items: flex-start;
       gap: 1rem;
       padding: 0.5rem 0;
-      border-bottom: 1px solid rgba(75, 85, 99, 0.2);
+      border-bottom: 1px solid rgba(42, 37, 102, 0.2);
     }
 
     .detail-row:last-child {
@@ -865,7 +865,7 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
     .action-btn:focus-visible,
     .close-btn:focus-visible,
     .category-filter:focus-visible {
-      outline: 2px solid #3b82f6;
+      outline: 2px solid #FF8400;
       outline-offset: 2px;
     }
   `]

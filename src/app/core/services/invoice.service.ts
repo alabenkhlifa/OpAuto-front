@@ -1,11 +1,13 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable, of, BehaviorSubject } from 'rxjs';
-import { 
-  Invoice, 
-  InvoiceWithDetails, 
-  InvoiceLineItem, 
-  Payment, 
-  InvoiceStats, 
+import { map, tap } from 'rxjs/operators';
+import {
+  Invoice,
+  InvoiceWithDetails,
+  InvoiceLineItem,
+  Payment,
+  InvoiceStats,
   InvoiceSettings,
   InvoiceStatus,
   PaymentMethod,
@@ -17,11 +19,14 @@ import {
   InvoiceSearchCriteria
 } from '../models/invoice.model';
 import { Appointment } from '../models/appointment.model';
+import { fromBackendEnum, toBackendEnum } from '../utils/enum-mapper';
 
 @Injectable({
   providedIn: 'root'
 })
 export class InvoiceService {
+  private http = inject(HttpClient);
+
   private invoicesSubject = new BehaviorSubject<InvoiceWithDetails[]>([]);
   public invoices$ = this.invoicesSubject.asObservable();
 
@@ -37,6 +42,7 @@ export class InvoiceService {
   public selectedPaymentMethod = signal<string>('all');
   public dateRange = signal<{ from?: Date; to?: Date }>({});
 
+  // Hardcoded defaults (no backend endpoint for these)
   private invoiceSettings: InvoiceSettings = {
     garageInfo: {
       name: 'OpAuto Garage',
@@ -75,7 +81,7 @@ export class InvoiceService {
     }
   };
 
-  private mockServiceRates: ServiceRate[] = [
+  private defaultServiceRates: ServiceRate[] = [
     {
       id: 'service1',
       serviceCode: 'OIL_CHANGE',
@@ -122,377 +128,222 @@ export class InvoiceService {
     }
   ];
 
-  private mockInvoices: InvoiceWithDetails[] = [
-    {
-      id: 'inv1',
-      invoiceNumber: 'INV-2025-1001',
-      customerId: 'customer1',
-      carId: 'car1',
-      appointmentId: '1',
-      issueDate: new Date(2025, 7, 25),
-      dueDate: new Date(2025, 8, 24),
-      status: 'paid',
-      paymentMethod: 'cash',
-      paymentDate: new Date(2025, 7, 26),
-      currency: 'TND',
-      subtotal: 450.00,
-      taxRate: 19,
-      taxAmount: 85.50,
-      discountPercentage: 0,
-      discountAmount: 0,
-      totalAmount: 535.50,
-      paidAmount: 535.50,
-      remainingAmount: 0,
-      lineItems: [
-        {
-          id: 'line1',
-          type: 'service',
-          description: 'Oil Change & Filter Replacement',
-          quantity: 1,
-          unit: 'service',
-          unitPrice: 120.00,
-          totalPrice: 120.00,
-          serviceCode: 'OIL_CHANGE',
-          mechanicId: 'mechanic1',
-          laborHours: 1.5,
-          taxable: true
-        },
-        {
-          id: 'line2',
-          type: 'part',
-          description: 'Engine Oil 5W-30 (5L)',
-          quantity: 2,
-          unit: 'bottle',
-          unitPrice: 45.50,
-          totalPrice: 91.00,
-          partId: 'part1',
-          taxable: true
-        },
-        {
-          id: 'line3',
-          type: 'labor',
-          description: 'Mechanic Labor (1.5 hours)',
-          quantity: 1.5,
-          unit: 'hour',
-          unitPrice: 80.00,
-          totalPrice: 120.00,
-          mechanicId: 'mechanic1',
-          laborHours: 1.5,
-          taxable: true
-        },
-        {
-          id: 'line4',
-          type: 'part',
-          description: 'Oil Filter',
-          quantity: 1,
-          unit: 'piece',
-          unitPrice: 25.00,
-          totalPrice: 25.00,
-          partId: 'part6',
-          taxable: true
-        },
-        {
-          id: 'line5',
-          type: 'misc',
-          description: 'Environmental Disposal Fee',
-          quantity: 1,
-          unit: 'service',
-          unitPrice: 15.00,
-          totalPrice: 15.00,
-          taxable: true
-        }
-      ],
-      notes: 'Customer requested synthetic oil. Next service due in 6 months.',
-      paymentTerms: 'Payment due within 30 days',
-      createdBy: 'admin1',
-      createdAt: new Date(2025, 7, 25),
-      updatedAt: new Date(2025, 7, 26),
-      customerName: 'Ahmed Ben Ali',
-      customerPhone: '+216-20-123-456',
-      customerEmail: 'ahmed.benali@email.tn',
-      carMake: 'BMW',
-      carModel: 'X5',
-      carYear: 2020,
-      licensePlate: '123 TUN 2024',
-      serviceName: 'Oil Change & Filter Replacement',
-      mechanicName: 'Karim Mechanic',
-      paymentHistory: []
-    },
-    {
-      id: 'inv2',
-      invoiceNumber: 'INV-2025-1002',
-      customerId: 'customer2',
-      carId: 'car2',
-      appointmentId: '2',
-      issueDate: new Date(2025, 7, 28),
-      dueDate: new Date(2025, 8, 27),
-      status: 'sent',
-      currency: 'TND',
-      subtotal: 720.00,
-      taxRate: 19,
-      taxAmount: 136.80,
-      discountPercentage: 5,
-      discountAmount: 36.00,
-      totalAmount: 820.80,
-      paidAmount: 0,
-      remainingAmount: 820.80,
-      lineItems: [
-        {
-          id: 'line6',
-          type: 'service',
-          description: 'Front Brake Pads Replacement',
-          quantity: 1,
-          unit: 'service',
-          unitPrice: 350.00,
-          totalPrice: 350.00,
-          serviceCode: 'BRAKE_SERVICE',
-          mechanicId: 'mechanic2',
-          laborHours: 3.0,
-          taxable: true
-        },
-        {
-          id: 'line7',
-          type: 'part',
-          description: 'Brake Pads Front Set - Bosch',
-          quantity: 1,
-          unit: 'set',
-          unitPrice: 180.00,
-          totalPrice: 180.00,
-          partId: 'part2',
-          taxable: true
-        },
-        {
-          id: 'line8',
-          type: 'labor',
-          description: 'Mechanic Labor (3 hours)',
-          quantity: 3,
-          unit: 'hour',
-          unitPrice: 80.00,
-          totalPrice: 240.00,
-          mechanicId: 'mechanic2',
-          laborHours: 3.0,
-          taxable: true
-        }
-      ],
-      notes: 'Customer complained about brake noise. Brake pads were worn out.',
-      paymentTerms: 'Payment due within 30 days',
-      createdBy: 'admin1',
-      createdAt: new Date(2025, 7, 28),
-      updatedAt: new Date(2025, 7, 28),
-      customerName: 'Fatma Trabelsi',
-      customerPhone: '+216-25-789-123',
-      customerEmail: 'fatma.trabelsi@email.tn',
-      carMake: 'Honda',
-      carModel: 'Civic',
-      carYear: 2019,
-      licensePlate: '456 TUN 2019',
-      serviceName: 'Front Brake Pads Replacement',
-      mechanicName: 'Ahmed Mechanic',
-      paymentHistory: []
-    },
-    {
-      id: 'inv3',
-      invoiceNumber: 'INV-2025-1003',
-      customerId: 'customer3',
-      carId: 'car4',
-      issueDate: new Date(2025, 7, 20),
-      dueDate: new Date(2025, 8, 19),
-      status: 'overdue',
-      currency: 'TND',
-      subtotal: 280.00,
-      taxRate: 19,
-      taxAmount: 53.20,
-      discountPercentage: 0,
-      discountAmount: 0,
-      totalAmount: 333.20,
-      paidAmount: 200.00,
-      remainingAmount: 133.20,
-      lineItems: [
-        {
-          id: 'line9',
-          type: 'service',
-          description: 'Routine Maintenance Check',
-          quantity: 1,
-          unit: 'service',
-          unitPrice: 150.00,
-          totalPrice: 150.00,
-          serviceCode: 'ROUTINE_CHECK',
-          mechanicId: 'mechanic1',
-          laborHours: 2.0,
-          taxable: true
-        },
-        {
-          id: 'line10',
-          type: 'labor',
-          description: 'Mechanic Labor (2 hours)',
-          quantity: 2,
-          unit: 'hour',
-          unitPrice: 80.00,
-          totalPrice: 160.00,
-          mechanicId: 'mechanic1',
-          laborHours: 2.0,
-          taxable: true
-        }
-      ],
-      notes: 'Customer made partial payment. Follow up required.',
-      paymentTerms: 'Payment due within 30 days',
-      createdBy: 'admin1',
-      createdAt: new Date(2025, 7, 20),
-      updatedAt: new Date(2025, 7, 25),
-      customerName: 'Mohamed Khemir',
-      customerPhone: '+216-22-456-789',
-      customerEmail: 'mohamed.khemir@email.tn',
-      carMake: 'Mercedes',
-      carModel: 'C-Class',
-      carYear: 2022,
-      licensePlate: '321 TUN 2022',
-      serviceName: 'Routine Maintenance Check',
-      mechanicName: 'Karim Mechanic',
-      paymentHistory: [
-        {
-          id: 'pay1',
-          invoiceId: 'inv3',
-          amount: 200.00,
-          method: 'cash',
-          paymentDate: new Date(2025, 7, 22),
-          notes: 'Partial payment',
-          processedBy: 'admin1',
-          createdAt: new Date(2025, 7, 22)
-        }
-      ]
-    }
-  ];
+  // --- Backend mapping helpers ---
 
-  private mockPayments: Payment[] = [
-    {
-      id: 'pay1',
-      invoiceId: 'inv3',
-      amount: 200.00,
-      method: 'cash',
-      paymentDate: new Date(2025, 7, 22),
-      notes: 'Partial payment',
-      processedBy: 'admin1',
-      createdAt: new Date(2025, 7, 22)
-    }
-  ];
+  private mapFromBackend(b: any): InvoiceWithDetails {
+    const payments: Payment[] = (b.payments || []).map((p: any) => ({
+      id: p.id,
+      invoiceId: p.invoiceId || b.id,
+      amount: p.amount,
+      method: fromBackendEnum(p.method) as PaymentMethod,
+      paymentDate: new Date(p.paymentDate || p.createdAt),
+      reference: p.reference,
+      notes: p.notes,
+      processedBy: p.processedBy || '',
+      createdAt: new Date(p.createdAt)
+    }));
 
-  constructor() {
-    this.invoicesSubject.next(this.mockInvoices);
-    this.paymentsSubject.next(this.mockPayments);
-    this.serviceRatesSubject.next(this.mockServiceRates);
+    const paidAmount = payments.reduce((sum, p) => sum + p.amount, 0);
+    const totalAmount = b.total || b.totalAmount || 0;
+    const taxAmount = b.tax || b.taxAmount || 0;
+    const discountAmount = b.discount || b.discountAmount || 0;
+    const subtotal = b.subtotal || (totalAmount - taxAmount + discountAmount);
+
+    return {
+      id: b.id,
+      invoiceNumber: b.invoiceNumber || '',
+      customerId: b.customerId,
+      carId: b.carId,
+      appointmentId: b.appointmentId,
+      issueDate: new Date(b.createdAt || b.issueDate),
+      dueDate: new Date(b.dueDate || b.createdAt),
+      status: fromBackendEnum(b.status) as InvoiceStatus,
+      paymentMethod: b.paymentMethod ? fromBackendEnum(b.paymentMethod) as PaymentMethod : undefined,
+      paymentDate: b.paymentDate ? new Date(b.paymentDate) : undefined,
+      currency: b.currency || 'TND',
+      subtotal,
+      taxRate: b.taxRate ?? this.invoiceSettings.taxSettings.defaultTaxRate,
+      taxAmount,
+      discountPercentage: b.discountPercentage || 0,
+      discountAmount,
+      totalAmount,
+      paidAmount,
+      remainingAmount: totalAmount - paidAmount,
+      lineItems: (b.lineItems || []).map((li: any) => ({
+        id: li.id,
+        type: (li.type || 'misc') as LineItemType,
+        description: li.description || '',
+        quantity: li.quantity || 1,
+        unit: li.unit || 'service',
+        unitPrice: li.unitPrice || 0,
+        totalPrice: li.totalPrice || (li.quantity * li.unitPrice) || 0,
+        partId: li.partId,
+        serviceCode: li.serviceCode,
+        mechanicId: li.mechanicId,
+        laborHours: li.laborHours,
+        discountPercentage: li.discountPercentage,
+        taxable: li.taxable ?? true
+      })),
+      notes: b.notes,
+      paymentTerms: b.paymentTerms || this.invoiceSettings.paymentTerms.defaultTerms,
+      createdBy: b.createdBy || '',
+      createdAt: new Date(b.createdAt),
+      updatedAt: new Date(b.updatedAt || b.createdAt),
+      // Relations
+      customerName: b.customer ? `${b.customer.firstName || ''} ${b.customer.lastName || b.customer.name || ''}`.trim() : '',
+      customerPhone: b.customer?.phone || '',
+      customerEmail: b.customer?.email,
+      carMake: b.car?.make || '',
+      carModel: b.car?.model || '',
+      carYear: b.car?.year || 0,
+      licensePlate: b.car?.licensePlate || '',
+      serviceName: b.serviceName,
+      mechanicName: b.mechanicName,
+      paymentHistory: payments
+    };
   }
 
-  // Invoice CRUD operations
+  private mapToBackend(f: Partial<CreateInvoiceRequest | UpdateInvoiceRequest>): any {
+    const payload: any = {};
+
+    if (f.customerId !== undefined) payload.customerId = f.customerId;
+    if (f.carId !== undefined) payload.carId = f.carId;
+    if ((f as any).appointmentId !== undefined) payload.appointmentId = (f as any).appointmentId;
+    if (f.status !== undefined) payload.status = toBackendEnum(f.status);
+    if (f.lineItems !== undefined) {
+      payload.lineItems = f.lineItems.map(li => ({
+        type: li.type,
+        description: li.description,
+        quantity: li.quantity,
+        unit: li.unit,
+        unitPrice: li.unitPrice,
+        totalPrice: li.totalPrice,
+        partId: li.partId,
+        serviceCode: li.serviceCode,
+        mechanicId: li.mechanicId,
+        laborHours: li.laborHours,
+        discountPercentage: li.discountPercentage,
+        taxable: li.taxable
+      }));
+    }
+    if (f.notes !== undefined) payload.notes = f.notes;
+    if (f.discountPercentage !== undefined) payload.discountPercentage = f.discountPercentage;
+    if (f.taxRate !== undefined) payload.taxRate = f.taxRate;
+    if (f.dueDate !== undefined) payload.dueDate = f.dueDate instanceof Date ? f.dueDate.toISOString() : f.dueDate;
+    if (f.issueDate !== undefined) payload.issueDate = f.issueDate instanceof Date ? f.issueDate.toISOString() : f.issueDate;
+    if (f.currency !== undefined) payload.currency = f.currency;
+    if (f.paymentTerms !== undefined) payload.paymentTerms = f.paymentTerms;
+    if (f.paymentMethod !== undefined) payload.paymentMethod = toBackendEnum(f.paymentMethod);
+
+    return payload;
+  }
+
+  // --- Invoice CRUD operations ---
+
   getInvoices(): Observable<InvoiceWithDetails[]> {
-    return this.invoices$;
+    return this.http.get<any[]>('/invoices').pipe(
+      map(items => items.map(b => this.mapFromBackend(b))),
+      tap(invoices => this.invoicesSubject.next(invoices))
+    );
   }
 
   getInvoiceById(invoiceId: string): InvoiceWithDetails | undefined {
-    return this.mockInvoices.find(invoice => invoice.id === invoiceId);
+    return this.invoicesSubject.value.find(invoice => invoice.id === invoiceId);
   }
 
   createInvoice(invoiceData: CreateInvoiceRequest): Observable<InvoiceWithDetails> {
-    const calculation = this.calculateInvoiceTotals(invoiceData.lineItems, invoiceData.discountPercentage || 0);
-    
-    const newInvoice: InvoiceWithDetails = {
-      ...invoiceData,
-      id: Date.now().toString(),
-      invoiceNumber: this.generateInvoiceNumber(),
-      subtotal: calculation.subtotal,
-      taxAmount: calculation.taxAmount,
-      discountAmount: calculation.discountAmount,
-      totalAmount: calculation.totalAmount,
-      remainingAmount: calculation.totalAmount,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      // These will be populated from related services
-      customerName: '',
-      customerPhone: '',
-      carMake: '',
-      carModel: '',
-      carYear: 0,
-      licensePlate: '',
-      paymentHistory: []
-    };
-
-    // Populate customer and car details
-    this.populateInvoiceDetails(newInvoice);
-
-    this.mockInvoices.push(newInvoice);
-    this.invoicesSubject.next([...this.mockInvoices]);
-    return of(newInvoice);
+    const body = this.mapToBackend(invoiceData);
+    return this.http.post<any>('/invoices', body).pipe(
+      map(b => this.mapFromBackend(b)),
+      tap(created => {
+        const current = this.invoicesSubject.value;
+        this.invoicesSubject.next([...current, created]);
+      })
+    );
   }
 
   updateInvoice(invoiceId: string, updates: UpdateInvoiceRequest): Observable<InvoiceWithDetails> {
-    const index = this.mockInvoices.findIndex(inv => inv.id === invoiceId);
-    if (index !== -1) {
-      const currentInvoice = this.mockInvoices[index];
-      
-      // Recalculate totals if line items changed
-      let calculation = {
-        subtotal: currentInvoice.subtotal,
-        taxAmount: currentInvoice.taxAmount,
-        discountAmount: currentInvoice.discountAmount,
-        totalAmount: currentInvoice.totalAmount
-      };
-
-      if (updates.lineItems || updates.discountPercentage !== undefined) {
-        calculation = this.calculateInvoiceTotals(
-          updates.lineItems || currentInvoice.lineItems,
-          updates.discountPercentage ?? currentInvoice.discountPercentage
-        );
-      }
-
-      const updatedInvoice = {
-        ...currentInvoice,
-        ...updates,
-        ...calculation,
-        remainingAmount: calculation.totalAmount - (updates.paidAmount ?? currentInvoice.paidAmount),
-        updatedAt: new Date()
-      };
-
-      this.mockInvoices[index] = updatedInvoice;
-      this.invoicesSubject.next([...this.mockInvoices]);
-      return of(updatedInvoice);
-    }
-    throw new Error('Invoice not found');
+    const body = this.mapToBackend(updates);
+    return this.http.put<any>(`/invoices/${invoiceId}`, body).pipe(
+      map(b => this.mapFromBackend(b)),
+      tap(updated => {
+        const current = this.invoicesSubject.value;
+        const index = current.findIndex(inv => inv.id === invoiceId);
+        if (index !== -1) {
+          current[index] = updated;
+          this.invoicesSubject.next([...current]);
+        }
+      })
+    );
   }
 
   deleteInvoice(invoiceId: string): Observable<boolean> {
-    const index = this.mockInvoices.findIndex(inv => inv.id === invoiceId);
-    if (index !== -1) {
-      this.mockInvoices.splice(index, 1);
-      this.invoicesSubject.next([...this.mockInvoices]);
-      return of(true);
-    }
-    return of(false);
+    return this.http.delete<void>(`/invoices/${invoiceId}`).pipe(
+      map(() => {
+        const current = this.invoicesSubject.value;
+        const index = current.findIndex(inv => inv.id === invoiceId);
+        if (index !== -1) {
+          current.splice(index, 1);
+          this.invoicesSubject.next([...current]);
+        }
+        return true;
+      })
+    );
   }
 
-  // Payment operations
+  // --- Payment operations ---
+
   addPayment(payment: Omit<Payment, 'id' | 'createdAt'>): Observable<Payment> {
-    const newPayment: Payment = {
-      ...payment,
-      id: Date.now().toString(),
-      createdAt: new Date()
+    const body = {
+      amount: payment.amount,
+      method: toBackendEnum(payment.method),
+      paymentDate: payment.paymentDate instanceof Date ? payment.paymentDate.toISOString() : payment.paymentDate,
+      reference: payment.reference,
+      notes: payment.notes,
+      processedBy: payment.processedBy
     };
+    return this.http.post<any>(`/invoices/${payment.invoiceId}/payments`, body).pipe(
+      map(b => ({
+        id: b.id,
+        invoiceId: b.invoiceId || payment.invoiceId,
+        amount: b.amount,
+        method: fromBackendEnum(b.method) as PaymentMethod,
+        paymentDate: new Date(b.paymentDate || b.createdAt),
+        reference: b.reference,
+        notes: b.notes,
+        processedBy: b.processedBy || '',
+        createdAt: new Date(b.createdAt)
+      })),
+      tap(newPayment => {
+        const currentPayments = this.paymentsSubject.value;
+        this.paymentsSubject.next([...currentPayments, newPayment]);
 
-    this.mockPayments.push(newPayment);
-    this.paymentsSubject.next([...this.mockPayments]);
-
-    // Update invoice paid amount and status
-    this.updateInvoicePaymentStatus(payment.invoiceId, payment.amount);
-
-    return of(newPayment);
+        // Refresh the invoice to get updated totals from backend
+        this.refreshInvoice(payment.invoiceId);
+      })
+    );
   }
 
   getPaymentsByInvoice(invoiceId: string): Observable<Payment[]> {
-    const payments = this.mockPayments.filter(p => p.invoiceId === invoiceId);
-    return of(payments.sort((a, b) => b.paymentDate.getTime() - a.paymentDate.getTime()));
+    return this.http.get<any[]>(`/invoices/${invoiceId}/payments`).pipe(
+      map(items => items.map(p => ({
+        id: p.id,
+        invoiceId: p.invoiceId || invoiceId,
+        amount: p.amount,
+        method: fromBackendEnum(p.method) as PaymentMethod,
+        paymentDate: new Date(p.paymentDate || p.createdAt),
+        reference: p.reference,
+        notes: p.notes,
+        processedBy: p.processedBy || '',
+        createdAt: new Date(p.createdAt)
+      })).sort((a, b) => b.paymentDate.getTime() - a.paymentDate.getTime()))
+    );
   }
 
-  // Generate invoice from appointment
+  // --- Generate invoice from appointment ---
+
   createInvoiceFromAppointment(appointment: Appointment, partsUsed: any[] = []): Observable<InvoiceWithDetails> {
-    const serviceRate = this.mockServiceRates.find(rate => 
+    const serviceRate = this.defaultServiceRates.find(rate =>
       rate.serviceCode === appointment.serviceType.toUpperCase().replace('-', '_')
     );
 
@@ -564,7 +415,8 @@ export class InvoiceService {
     return this.createInvoice(invoiceData);
   }
 
-  // Calculations
+  // --- Calculations (pure functions) ---
+
   calculateInvoiceTotals(lineItems: InvoiceLineItem[], discountPercentage: number = 0): InvoiceCalculation {
     const subtotal = lineItems.reduce((sum, item) => sum + item.totalPrice, 0);
     const discountAmount = (subtotal * discountPercentage) / 100;
@@ -586,9 +438,10 @@ export class InvoiceService {
     return subtotal - discount;
   }
 
-  // Search and filtering
+  // --- Search and filtering (computed from local cache) ---
+
   searchInvoices(criteria: InvoiceSearchCriteria): Observable<InvoiceWithDetails[]> {
-    let filtered = [...this.mockInvoices];
+    let filtered = [...this.invoicesSubject.value];
 
     if (criteria.query) {
       const query = criteria.query.toLowerCase();
@@ -631,29 +484,31 @@ export class InvoiceService {
     return of(filtered.sort((a, b) => b.issueDate.getTime() - a.issueDate.getTime()));
   }
 
-  // Statistics
+  // --- Statistics (computed from local cache) ---
+
   getInvoiceStats(): Observable<InvoiceStats> {
-    const totalInvoices = this.mockInvoices.length;
-    const totalRevenue = this.mockInvoices.reduce((sum, inv) => sum + inv.totalAmount, 0);
-    const paidInvoices = this.mockInvoices.filter(inv => inv.status === 'paid').length;
-    const pendingInvoices = this.mockInvoices.filter(inv => ['sent', 'viewed'].includes(inv.status)).length;
-    const overdueInvoices = this.mockInvoices.filter(inv => inv.status === 'overdue').length;
+    const invoices = this.invoicesSubject.value;
+    const totalInvoices = invoices.length;
+    const totalRevenue = invoices.reduce((sum, inv) => sum + inv.totalAmount, 0);
+    const paidInvoices = invoices.filter(inv => inv.status === 'paid').length;
+    const pendingInvoices = invoices.filter(inv => ['sent', 'viewed'].includes(inv.status)).length;
+    const overdueInvoices = invoices.filter(inv => inv.status === 'overdue').length;
     const averageInvoiceAmount = totalInvoices > 0 ? totalRevenue / totalInvoices : 0;
 
     // Calculate monthly and yearly revenue
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
-    
-    const monthlyRevenue = this.mockInvoices
+
+    const monthlyRevenue = invoices
       .filter(inv => inv.issueDate.getMonth() === currentMonth && inv.issueDate.getFullYear() === currentYear)
       .reduce((sum, inv) => sum + inv.paidAmount, 0);
 
-    const yearlyRevenue = this.mockInvoices
+    const yearlyRevenue = invoices
       .filter(inv => inv.issueDate.getFullYear() === currentYear)
       .reduce((sum, inv) => sum + inv.paidAmount, 0);
 
     // Payment method statistics
-    const paymentMethodCounts = this.mockInvoices.reduce((counts, inv) => {
+    const paymentMethodCounts = invoices.reduce((counts, inv) => {
       if (inv.paymentMethod) {
         counts[inv.paymentMethod] = (counts[inv.paymentMethod] || 0) + 1;
       }
@@ -663,10 +518,10 @@ export class InvoiceService {
     const paymentMethodStats = Object.entries(paymentMethodCounts).map(([method, count]) => ({
       method: method as PaymentMethod,
       count,
-      totalAmount: this.mockInvoices
+      totalAmount: invoices
         .filter(inv => inv.paymentMethod === method)
         .reduce((sum, inv) => sum + inv.paidAmount, 0),
-      percentage: (count / totalInvoices) * 100
+      percentage: totalInvoices > 0 ? (count / totalInvoices) * 100 : 0
     }));
 
     const stats: InvoiceStats = {
@@ -679,7 +534,7 @@ export class InvoiceService {
       monthlyRevenue,
       yearlyRevenue,
       topCustomers: [], // TODO: Calculate from data
-      recentInvoices: [...this.mockInvoices]
+      recentInvoices: [...invoices]
         .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
         .slice(0, 10),
       paymentMethodStats
@@ -688,16 +543,19 @@ export class InvoiceService {
     return of(stats);
   }
 
-  // Service rates
+  // --- Service rates (hardcoded defaults, no backend endpoint) ---
+
   getServiceRates(): Observable<ServiceRate[]> {
+    this.serviceRatesSubject.next(this.defaultServiceRates);
     return this.serviceRates$;
   }
 
   getServiceRateByCode(serviceCode: string): ServiceRate | undefined {
-    return this.mockServiceRates.find(rate => rate.serviceCode === serviceCode);
+    return this.defaultServiceRates.find(rate => rate.serviceCode === serviceCode);
   }
 
-  // Settings
+  // --- Settings (hardcoded defaults) ---
+
   getInvoiceSettings(): Observable<InvoiceSettings> {
     return of(this.invoiceSettings);
   }
@@ -707,7 +565,8 @@ export class InvoiceService {
     return of(this.invoiceSettings);
   }
 
-  // Utility methods
+  // --- Utility methods (pure functions) ---
+
   getStatusColor(status: InvoiceStatus): string {
     const colors = {
       'draft': 'text-gray-600',
@@ -751,67 +610,18 @@ export class InvoiceService {
     }).format(date);
   }
 
-  // Private helper methods
-  private generateInvoiceNumber(): string {
-    const settings = this.invoiceSettings.invoiceNumbering;
-    const year = new Date().getFullYear();
-    const number = settings.currentNumber.toString().padStart(settings.digitCount, '0');
-    
-    // Increment counter
-    settings.currentNumber++;
-    
-    return `${settings.prefix}-${year}-${number}`;
-  }
+  // --- Private helpers ---
 
-  private updateInvoicePaymentStatus(invoiceId: string, paymentAmount: number): void {
-    const invoice = this.getInvoiceById(invoiceId);
-    if (invoice) {
-      const newPaidAmount = invoice.paidAmount + paymentAmount;
-      const remainingAmount = invoice.totalAmount - newPaidAmount;
-      
-      let newStatus: InvoiceStatus = 'paid';
-      if (remainingAmount > 0) {
-        newStatus = 'partially-paid';
+  private refreshInvoice(invoiceId: string): void {
+    this.http.get<any>(`/invoices/${invoiceId}`).pipe(
+      map(b => this.mapFromBackend(b))
+    ).subscribe(updated => {
+      const current = this.invoicesSubject.value;
+      const index = current.findIndex(inv => inv.id === invoiceId);
+      if (index !== -1) {
+        current[index] = updated;
+        this.invoicesSubject.next([...current]);
       }
-      
-      this.updateInvoice(invoiceId, {
-        paidAmount: newPaidAmount,
-        remainingAmount,
-        status: newStatus,
-        paymentDate: remainingAmount === 0 ? new Date() : undefined
-      });
-    }
-  }
-
-  private populateInvoiceDetails(invoice: InvoiceWithDetails): void {
-    // This would typically fetch from other services
-    // For now, using mock data from existing services
-    const customers = [
-      { id: 'customer1', name: 'Ahmed Ben Ali', phone: '+216-20-123-456', email: 'ahmed.benali@email.tn' },
-      { id: 'customer2', name: 'Fatma Trabelsi', phone: '+216-25-789-123', email: 'fatma.trabelsi@email.tn' },
-      { id: 'customer3', name: 'Mohamed Khemir', phone: '+216-22-456-789', email: 'mohamed.khemir@email.tn' }
-    ];
-
-    const cars = [
-      { id: 'car1', licensePlate: '123 TUN 2024', make: 'BMW', model: 'X5', year: 2020 },
-      { id: 'car2', licensePlate: '456 TUN 2019', make: 'Honda', model: 'Civic', year: 2019 },
-      { id: 'car4', licensePlate: '321 TUN 2022', make: 'Mercedes', model: 'C-Class', year: 2022 }
-    ];
-
-    const customer = customers.find(c => c.id === invoice.customerId);
-    const car = cars.find(c => c.id === invoice.carId);
-
-    if (customer) {
-      invoice.customerName = customer.name;
-      invoice.customerPhone = customer.phone;
-      invoice.customerEmail = customer.email;
-    }
-
-    if (car) {
-      invoice.carMake = car.make;
-      invoice.carModel = car.model;
-      invoice.carYear = car.year;
-      invoice.licensePlate = car.licensePlate;
-    }
+    });
   }
 }

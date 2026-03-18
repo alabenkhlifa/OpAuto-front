@@ -1,0 +1,493 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Enums ──────────────────────────────────────────────
+
+enum UserRole {
+  OWNER
+  STAFF
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum CustomerStatus {
+  ACTIVE
+  INACTIVE
+  VIP
+  BLOCKED
+}
+
+enum EmployeeRole {
+  MECHANIC
+  ELECTRICIAN
+  BODYWORK_SPECIALIST
+  TIRE_SPECIALIST
+  MANAGER
+  RECEPTIONIST
+  APPRENTICE
+}
+
+enum EmployeeDepartment {
+  MECHANICAL
+  BODYWORK
+  ELECTRICAL
+  TIRE_ALIGNMENT
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  ON_LEAVE
+  INACTIVE
+}
+
+enum MaintenanceStatus {
+  PENDING
+  DIAGNOSED
+  WAITING_APPROVAL
+  WAITING_PARTS
+  IN_PROGRESS
+  QUALITY_CHECK
+  COMPLETED
+  CANCELLED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ApprovalType {
+  MAINTENANCE
+  INVOICE
+  PURCHASE_ORDER
+  DISCOUNT
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  PARTIALLY_PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  BANK_TRANSFER
+  CHECK
+  MOBILE_PAYMENT
+}
+
+enum NotificationType {
+  APPOINTMENT_REMINDER
+  APPOINTMENT_CREATED
+  APPOINTMENT_UPDATED
+  MAINTENANCE_STATUS
+  APPROVAL_REQUEST
+  APPROVAL_RESPONSE
+  INVOICE_CREATED
+  INVOICE_OVERDUE
+  LOW_STOCK
+  EMPLOYEE_SCHEDULE
+  SYSTEM
+}
+
+// ── Models ──────────────────────────────────────────────
+
+model Garage {
+  id               String   @id @default(uuid())
+  name             String
+  address          String?
+  phone            String?
+  email            String?
+  logo             String?
+  specializations  String[] // MECHANICAL, BODYWORK, ELECTRICAL, TIRE_ALIGNMENT
+  businessHours    Json?    // { mon: { open: "08:00", close: "18:00" }, ... }
+  currency         String   @default("TND")
+  taxRate          Float    @default(19.0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  users            User[]
+  customers        Customer[]
+  cars             Car[]
+  appointments     Appointment[]
+  employees        Employee[]
+  maintenanceJobs  MaintenanceJob[]
+  invoices         Invoice[]
+  parts            Part[]
+  suppliers        Supplier[]
+  approvals        Approval[]
+  notifications    Notification[]
+  garageModules    GarageModule[]
+
+  @@map("garages")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  garageId     String
+  email        String?  @unique
+  username     String?  @unique
+  password     String
+  firstName    String
+  lastName     String
+  role         UserRole @default(STAFF)
+  avatar       String?
+  phone        String?
+  isActive     Boolean  @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  garage       Garage   @relation(fields: [garageId], references: [id], onDelete: Cascade)
+
+  @@map("users")
+}
+
+model Customer {
+  id           String         @id @default(uuid())
+  garageId     String
+  firstName    String
+  lastName     String
+  email        String?
+  phone        String
+  address      String?
+  status       CustomerStatus @default(ACTIVE)
+  loyaltyTier  String?        // bronze, silver, gold, platinum
+  totalSpent   Float          @default(0)
+  visitCount   Int            @default(0)
+  notes        String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  garage       Garage         @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  cars         Car[]
+  appointments Appointment[]
+  invoices     Invoice[]
+
+  @@map("customers")
+}
+
+model Car {
+  id              String   @id @default(uuid())
+  garageId        String
+  customerId      String
+  make            String
+  model           String
+  year            Int
+  vin             String?
+  licensePlate    String
+  color           String?
+  mileage         Int?
+  engineType      String?  // petrol, diesel, electric, hybrid
+  transmission    String?  // manual, automatic
+  lastServiceDate DateTime?
+  nextServiceDate DateTime?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  garage          Garage   @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  appointments    Appointment[]
+  maintenanceJobs MaintenanceJob[]
+
+  @@map("cars")
+}
+
+model Appointment {
+  id          String            @id @default(uuid())
+  garageId    String
+  customerId  String
+  carId       String
+  employeeId  String?
+  title       String
+  description String?
+  status      AppointmentStatus @default(SCHEDULED)
+  startTime   DateTime
+  endTime     DateTime
+  type        String?           // oil-change, brake-service, inspection, etc.
+  priority    String?           // low, medium, high, urgent
+  notes       String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  garage      Garage            @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  customer    Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  car         Car               @relation(fields: [carId], references: [id], onDelete: Cascade)
+  employee    Employee?         @relation(fields: [employeeId], references: [id])
+
+  @@map("appointments")
+}
+
+model Employee {
+  id           String             @id @default(uuid())
+  garageId     String
+  userId       String?
+  firstName    String
+  lastName     String
+  email        String?
+  phone        String?
+  role         EmployeeRole       @default(MECHANIC)
+  department   EmployeeDepartment @default(MECHANICAL)
+  status       EmployeeStatus     @default(ACTIVE)
+  hireDate     DateTime
+  hourlyRate   Float?
+  schedule     Json?              // Weekly schedule
+  skills       String[]
+  avatar       String?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  garage       Garage             @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+  maintenanceJobs MaintenanceJob[]
+
+  @@map("employees")
+}
+
+model MaintenanceJob {
+  id           String            @id @default(uuid())
+  garageId     String
+  carId        String
+  employeeId   String?
+  title        String
+  description  String?
+  status       MaintenanceStatus @default(PENDING)
+  priority     String?           // low, medium, high, urgent
+  estimatedHours Float?
+  actualHours  Float?
+  estimatedCost Float?
+  actualCost   Float?
+  startDate    DateTime?
+  completionDate DateTime?
+  notes        String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  garage       Garage            @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  car          Car               @relation(fields: [carId], references: [id], onDelete: Cascade)
+  employee     Employee?         @relation(fields: [employeeId], references: [id])
+  tasks        MaintenanceTask[]
+  photos       MaintenancePhoto[]
+  approvals    MaintenanceApproval[]
+
+  @@map("maintenance_jobs")
+}
+
+model MaintenanceTask {
+  id               String   @id @default(uuid())
+  maintenanceJobId String
+  title            String
+  description      String?
+  isCompleted      Boolean  @default(false)
+  estimatedMinutes Int?
+  actualMinutes    Int?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  maintenanceJob   MaintenanceJob @relation(fields: [maintenanceJobId], references: [id], onDelete: Cascade)
+
+  @@map("maintenance_tasks")
+}
+
+model MaintenancePhoto {
+  id               String   @id @default(uuid())
+  maintenanceJobId String
+  url              String
+  caption          String?
+  type             String?  // before, during, after
+  createdAt        DateTime @default(now())
+
+  maintenanceJob   MaintenanceJob @relation(fields: [maintenanceJobId], references: [id], onDelete: Cascade)
+
+  @@map("maintenance_photos")
+}
+
+model MaintenanceApproval {
+  id               String         @id @default(uuid())
+  maintenanceJobId String
+  status           ApprovalStatus @default(PENDING)
+  requestedAmount  Float?
+  description      String?
+  respondedAt      DateTime?
+  responseNote     String?
+  createdAt        DateTime       @default(now())
+
+  maintenanceJob   MaintenanceJob @relation(fields: [maintenanceJobId], references: [id], onDelete: Cascade)
+
+  @@map("maintenance_approvals")
+}
+
+model Invoice {
+  id           String        @id @default(uuid())
+  garageId     String
+  customerId   String
+  invoiceNumber String       @unique
+  status       InvoiceStatus @default(DRAFT)
+  subtotal     Float         @default(0)
+  taxAmount    Float         @default(0)
+  discount     Float         @default(0)
+  total        Float         @default(0)
+  dueDate      DateTime?
+  paidAt       DateTime?
+  notes        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  garage       Garage        @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  customer     Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  lineItems    InvoiceLineItem[]
+  payments     Payment[]
+
+  @@map("invoices")
+}
+
+model InvoiceLineItem {
+  id          String  @id @default(uuid())
+  invoiceId   String
+  description String
+  quantity    Float   @default(1)
+  unitPrice   Float
+  total       Float
+  type        String? // labor, part, service
+
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("invoice_line_items")
+}
+
+model Payment {
+  id        String        @id @default(uuid())
+  invoiceId String
+  amount    Float
+  method    PaymentMethod @default(CASH)
+  reference String?
+  paidAt    DateTime      @default(now())
+
+  invoice   Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+model Part {
+  id              String   @id @default(uuid())
+  garageId        String
+  supplierId      String?
+  name            String
+  partNumber      String?
+  category        String?
+  description     String?
+  quantity        Int      @default(0)
+  minQuantity     Int      @default(5)
+  unitPrice       Float    @default(0)
+  costPrice       Float    @default(0)
+  location        String?  // shelf/bin location
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  garage          Garage   @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  supplier        Supplier? @relation(fields: [supplierId], references: [id])
+  stockMovements  StockMovement[]
+
+  @@map("parts")
+}
+
+model Supplier {
+  id        String   @id @default(uuid())
+  garageId  String
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  garage    Garage   @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  parts     Part[]
+
+  @@map("suppliers")
+}
+
+model StockMovement {
+  id        String   @id @default(uuid())
+  partId    String
+  type      String   // in, out, adjustment
+  quantity  Int
+  reason    String?
+  reference String?
+  createdAt DateTime @default(now())
+
+  part      Part     @relation(fields: [partId], references: [id], onDelete: Cascade)
+
+  @@map("stock_movements")
+}
+
+model Approval {
+  id          String         @id @default(uuid())
+  garageId    String
+  type        ApprovalType
+  status      ApprovalStatus @default(PENDING)
+  title       String
+  description String?
+  amount      Float?
+  requestedBy String
+  respondedBy String?
+  respondedAt DateTime?
+  responseNote String?
+  metadata    Json?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  garage      Garage         @relation(fields: [garageId], references: [id], onDelete: Cascade)
+
+  @@map("approvals")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  garageId  String
+  userId    String?
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  metadata  Json?
+  createdAt DateTime         @default(now())
+
+  garage    Garage           @relation(fields: [garageId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model GarageModule {
+  id          String   @id @default(uuid())
+  garageId    String
+  moduleId    String   // calendar, maintenance, invoicing, etc.
+  isActive    Boolean  @default(true)
+  purchasedAt DateTime @default(now())
+  expiresAt   DateTime?
+
+  garage      Garage   @relation(fields: [garageId], references: [id], onDelete: Cascade)
+
+  @@unique([garageId, moduleId])
+  @@map("garage_modules")
+}

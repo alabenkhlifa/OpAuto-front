@@ -1,274 +1,203 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, of, throwError } from 'rxjs';
-import { map, delay, switchMap } from 'rxjs/operators';
-import { 
-  User, 
-  UserRole, 
-  UserStatus, 
-  UserInvitation, 
-  UserStats, 
+import { map, tap, switchMap } from 'rxjs/operators';
+import {
+  User,
+  UserRole,
+  UserStatus,
+  UserInvitation,
+  UserStats,
   UserFilters,
   InviteUserRequest,
   UserLimits
 } from '../models/user.model';
-import { SubscriptionService } from './subscription.service';
-import { SubscriptionTierId } from '../models/subscription.model';
+import { fromBackendEnum, toBackendEnum } from '../utils/enum-mapper';
 
 @Injectable({
   providedIn: 'root'
 })
 export class UserService {
-  private mockUsers: User[] = [
-    {
-      id: 'user-001',
-      email: 'ala@opauto.tn',
-      firstName: 'Ala',
-      lastName: 'Ben Khlifa',
-      fullName: 'Ala Ben Khlifa',
-      role: 'owner',
-      status: 'active',
-      joinedAt: new Date('2023-01-01'),
-      lastActiveAt: new Date(),
-      permissions: {
-        canManageUsers: true,
-        canManageSettings: true,
-        canViewReports: true,
-        canManageInventory: true,
-        canManageAppointments: true,
-        canManageInvoices: true,
-        canManageMaintenance: true
-      }
-    },
-    {
-      id: 'user-002',
-      email: 'sarah@opauto.tn',
-      firstName: 'Sarah',
-      lastName: 'Manager',
-      fullName: 'Sarah Manager',
-      role: 'admin',
-      status: 'active',
-      joinedAt: new Date('2023-02-15'),
-      lastActiveAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-      invitedBy: 'user-001',
-      permissions: {
-        canManageUsers: true,
-        canManageSettings: false,
-        canViewReports: true,
-        canManageInventory: true,
-        canManageAppointments: true,
-        canManageInvoices: true,
-        canManageMaintenance: true
-      }
-    }
-  ];
+  private http = inject(HttpClient);
 
-  private mockInvitations: UserInvitation[] = [
-    {
-      id: 'inv-001',
-      email: 'new.user@example.com',
-      role: 'mechanic',
-      invitedBy: 'user-001',
-      invitedAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
-      expiresAt: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000), // 6 days from now
-      status: 'pending',
-      token: 'mock-invitation-token'
-    }
-  ];
-
-  private usersSubject = new BehaviorSubject<User[]>(this.mockUsers);
-  private invitationsSubject = new BehaviorSubject<UserInvitation[]>(this.mockInvitations);
+  private usersSubject = new BehaviorSubject<User[]>([]);
+  private invitationsSubject = new BehaviorSubject<UserInvitation[]>([]);
 
   public users$ = this.usersSubject.asObservable();
   public invitations$ = this.invitationsSubject.asObservable();
 
-  constructor(private subscriptionService: SubscriptionService) {}
-
   getUsers(filters?: UserFilters): Observable<User[]> {
-    return this.users$.pipe(
-      map((users: User[]) => this.applyFilters(users, filters)),
-      delay(200)
+    return this.http.get<any[]>('/users').pipe(
+      map(users => users.map(u => this.mapFromBackend(u))),
+      tap(users => this.usersSubject.next(users)),
+      map(users => this.applyFilters(users, filters))
     );
   }
 
   getUserById(id: string): Observable<User | null> {
-    return this.users$.pipe(
-      map((users: User[]) => users.find((user: User) => user.id === id) || null),
-      delay(100)
+    return this.http.get<any>(`/users/${id}`).pipe(
+      map(u => u ? this.mapFromBackend(u) : null)
     );
   }
 
   getCurrentUser(): Observable<User | null> {
-    // In real app, this would get current authenticated user
-    return this.getUserById('user-001');
+    return this.http.get<any>('/auth/profile').pipe(
+      map(u => u ? this.mapFromBackend(u) : null)
+    );
   }
 
   getUserStats(): Observable<UserStats> {
-    return this.users$.pipe(
-      switchMap(users => 
-        this.subscriptionService.getCurrentSubscriptionStatus().pipe(
-          map(subscriptionStatus => {
-            const stats: UserStats = {
-              totalUsers: users.length,
-              activeUsers: users.filter(u => u.status === 'active').length,
-              pendingUsers: this.mockInvitations.filter(inv => inv.status === 'pending').length,
-              roleDistribution: {
-                owner: users.filter(u => u.role === 'owner').length,
-                admin: users.filter(u => u.role === 'admin').length,
-                mechanic: users.filter(u => u.role === 'mechanic').length,
-                viewer: users.filter(u => u.role === 'viewer').length
-              },
-              recentJoins: users
-                .filter(u => u.joinedAt > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000))
-                .sort((a, b) => b.joinedAt.getTime() - a.joinedAt.getTime())
-                .slice(0, 5),
-              tierInfo: {
-                current: subscriptionStatus.currentTier,
-                limits: this.calculateUserLimits(users.length, subscriptionStatus.currentTier)
-              }
-            };
-            return stats;
-          })
-        )
-      ),
-      delay(150)
-    );
+    const users = this.usersSubject.value;
+    const stats: UserStats = {
+      totalUsers: users.length,
+      activeUsers: users.filter(u => u.status === 'active').length,
+      pendingUsers: 0,
+      roleDistribution: {
+        owner: users.filter(u => u.role === 'owner').length,
+        admin: users.filter(u => u.role === 'admin').length,
+        mechanic: users.filter(u => u.role === 'mechanic').length,
+        viewer: users.filter(u => u.role === 'viewer').length
+      },
+      recentJoins: users
+        .filter(u => u.joinedAt > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000))
+        .sort((a, b) => b.joinedAt.getTime() - a.joinedAt.getTime())
+        .slice(0, 5),
+      tierInfo: {
+        current: { id: 'professional' as const, name: 'Professional', price: 0, currency: 'TND', features: [], limits: { users: null, cars: null, serviceBays: null } },
+        limits: { current: users.length, limit: null, canAddUser: true }
+      }
+    };
+    return of(stats);
   }
 
   getUserLimits(): Observable<UserLimits> {
-    return this.users$.pipe(
-      switchMap(users =>
-        this.subscriptionService.getCurrentSubscriptionStatus().pipe(
-          map(subscriptionStatus => this.calculateUserLimits(users.length, subscriptionStatus.currentTier))
-        )
-      )
-    );
+    return of({
+      current: this.usersSubject.value.length,
+      limit: null,
+      canAddUser: true
+    });
   }
 
   inviteUser(request: InviteUserRequest): Observable<UserInvitation> {
-    return this.getUserLimits().pipe(
-      switchMap(limits => {
-        if (!limits.canAddUser) {
-          return throwError(() => new Error('User limit reached for current tier'));
-        }
-
-        const newInvitation: UserInvitation = {
-          id: `inv-${Date.now()}`,
+    return this.http.post<any>('/users', {
+      email: request.email,
+      role: toBackendEnum(request.role),
+      firstName: request.email.split('@')[0],
+      lastName: ''
+    }).pipe(
+      map(u => {
+        const invitation: UserInvitation = {
+          id: u.id || `inv-${Date.now()}`,
           email: request.email,
           role: request.role,
-          invitedBy: 'user-001', // Current user ID
+          invitedBy: 'current-user',
           invitedAt: new Date(),
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
           status: 'pending',
-          token: `mock-token-${Date.now()}`
+          token: ''
         };
-
-        const currentInvitations = this.invitationsSubject.value;
-        this.invitationsSubject.next([...currentInvitations, newInvitation]);
-
-        return of(newInvitation).pipe(delay(300));
+        const current = this.invitationsSubject.value;
+        this.invitationsSubject.next([...current, invitation]);
+        return invitation;
       })
     );
   }
 
   resendInvitation(invitationId: string): Observable<UserInvitation> {
-    const currentInvitations = this.invitationsSubject.value;
-    const invitationIndex = currentInvitations.findIndex(inv => inv.id === invitationId);
-    
-    if (invitationIndex === -1) {
-      return throwError(() => new Error('Invitation not found'));
-    }
+    const current = this.invitationsSubject.value;
+    const index = current.findIndex(inv => inv.id === invitationId);
+    if (index === -1) return throwError(() => new Error('Invitation not found'));
 
-    const updatedInvitation = {
-      ...currentInvitations[invitationIndex],
+    const updated = {
+      ...current[index],
       invitedAt: new Date(),
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       status: 'pending' as const
     };
-
-    const updatedInvitations = [...currentInvitations];
-    updatedInvitations[invitationIndex] = updatedInvitation;
-    this.invitationsSubject.next(updatedInvitations);
-
-    return of(updatedInvitation).pipe(delay(200));
+    const updatedList = [...current];
+    updatedList[index] = updated;
+    this.invitationsSubject.next(updatedList);
+    return of(updated);
   }
 
   cancelInvitation(invitationId: string): Observable<boolean> {
-    const currentInvitations = this.invitationsSubject.value;
-    const invitationIndex = currentInvitations.findIndex(inv => inv.id === invitationId);
-    
-    if (invitationIndex === -1) {
-      return throwError(() => new Error('Invitation not found'));
-    }
+    const current = this.invitationsSubject.value;
+    const index = current.findIndex(inv => inv.id === invitationId);
+    if (index === -1) return throwError(() => new Error('Invitation not found'));
 
-    const updatedInvitation = {
-      ...currentInvitations[invitationIndex],
-      status: 'cancelled' as const
-    };
-
-    const updatedInvitations = [...currentInvitations];
-    updatedInvitations[invitationIndex] = updatedInvitation;
-    this.invitationsSubject.next(updatedInvitations);
-
-    return of(true).pipe(delay(200));
+    const updated = { ...current[index], status: 'cancelled' as const };
+    const updatedList = [...current];
+    updatedList[index] = updated;
+    this.invitationsSubject.next(updatedList);
+    return of(true);
   }
 
   updateUserRole(userId: string, newRole: UserRole): Observable<User> {
-    const currentUsers = this.usersSubject.value;
-    const userIndex = currentUsers.findIndex(user => user.id === userId);
-    
-    if (userIndex === -1) {
-      return throwError(() => new Error('User not found'));
-    }
-
-    const updatedUser = {
-      ...currentUsers[userIndex],
-      role: newRole,
-      permissions: this.getPermissionsForRole(newRole)
-    };
-
-    const updatedUsers = [...currentUsers];
-    updatedUsers[userIndex] = updatedUser;
-    this.usersSubject.next(updatedUsers);
-
-    return of(updatedUser).pipe(delay(300));
+    return this.http.put<any>(`/users/${userId}`, { role: toBackendEnum(newRole) }).pipe(
+      map(u => this.mapFromBackend(u)),
+      tap(updated => {
+        const current = this.usersSubject.value;
+        const index = current.findIndex(u => u.id === userId);
+        if (index !== -1) {
+          const updatedList = [...current];
+          updatedList[index] = updated;
+          this.usersSubject.next(updatedList);
+        }
+      })
+    );
   }
 
   updateUserStatus(userId: string, newStatus: UserStatus): Observable<User> {
-    const currentUsers = this.usersSubject.value;
-    const userIndex = currentUsers.findIndex(user => user.id === userId);
-    
-    if (userIndex === -1) {
-      return throwError(() => new Error('User not found'));
-    }
-
-    const updatedUser = {
-      ...currentUsers[userIndex],
-      status: newStatus
-    };
-
-    const updatedUsers = [...currentUsers];
-    updatedUsers[userIndex] = updatedUser;
-    this.usersSubject.next(updatedUsers);
-
-    return of(updatedUser).pipe(delay(300));
+    return this.http.put<any>(`/users/${userId}`, { isActive: newStatus === 'active' }).pipe(
+      map(u => this.mapFromBackend(u)),
+      tap(updated => {
+        const current = this.usersSubject.value;
+        const index = current.findIndex(u => u.id === userId);
+        if (index !== -1) {
+          const updatedList = [...current];
+          updatedList[index] = updated;
+          this.usersSubject.next(updatedList);
+        }
+      })
+    );
   }
 
   removeUser(userId: string): Observable<boolean> {
-    const currentUsers = this.usersSubject.value;
-    const user = currentUsers.find(u => u.id === userId);
-    
-    if (!user) {
-      return throwError(() => new Error('User not found'));
-    }
+    const user = this.usersSubject.value.find(u => u.id === userId);
+    if (!user) return throwError(() => new Error('User not found'));
+    if (user.role === 'owner') return throwError(() => new Error('Cannot remove owner'));
 
-    if (user.role === 'owner') {
-      return throwError(() => new Error('Cannot remove owner'));
-    }
+    return this.http.delete<void>(`/users/${userId}`).pipe(
+      map(() => {
+        const filtered = this.usersSubject.value.filter(u => u.id !== userId);
+        this.usersSubject.next(filtered);
+        return true;
+      })
+    );
+  }
 
-    const filteredUsers = currentUsers.filter(u => u.id !== userId);
-    this.usersSubject.next(filteredUsers);
-    
-    return of(true).pipe(delay(200));
+  private mapFromBackend(b: any): User {
+    return {
+      id: b.id,
+      email: b.email || '',
+      firstName: b.firstName || '',
+      lastName: b.lastName || '',
+      fullName: b.firstName && b.lastName ? `${b.firstName} ${b.lastName}` : (b.name || b.email || ''),
+      role: this.mapRole(b.role),
+      status: b.isActive === false ? 'inactive' : 'active',
+      joinedAt: new Date(b.createdAt || b.joinedAt),
+      lastActiveAt: b.lastActiveAt ? new Date(b.lastActiveAt) : new Date(),
+      invitedBy: b.invitedBy,
+      permissions: this.getPermissionsForRole(this.mapRole(b.role))
+    };
+  }
+
+  private mapRole(backendRole: string): UserRole {
+    const role = (backendRole || '').toUpperCase();
+    if (role === 'OWNER') return 'owner';
+    if (role === 'ADMIN' || role === 'MANAGER') return 'admin';
+    if (role === 'MECHANIC' || role === 'STAFF') return 'mechanic';
+    return 'viewer';
   }
 
   private applyFilters(users: User[], filters?: UserFilters): User[] {
@@ -277,110 +206,27 @@ export class UserService {
     return users.filter(user => {
       if (filters.searchTerm) {
         const searchTerm = filters.searchTerm.toLowerCase();
-        const searchableText = [
-          user.fullName,
-          user.email,
-          user.role
-        ].join(' ').toLowerCase();
-        
+        const searchableText = [user.fullName, user.email, user.role].join(' ').toLowerCase();
         if (!searchableText.includes(searchTerm)) return false;
       }
-
-      if (filters.role && filters.role.length > 0 && !filters.role.includes(user.role)) {
-        return false;
-      }
-
-      if (filters.status && filters.status.length > 0 && !filters.status.includes(user.status)) {
-        return false;
-      }
-
-      if (filters.joinedAfter && user.joinedAt < filters.joinedAfter) {
-        return false;
-      }
-
-      if (filters.joinedBefore && user.joinedAt > filters.joinedBefore) {
-        return false;
-      }
-
+      if (filters.role && filters.role.length > 0 && !filters.role.includes(user.role)) return false;
+      if (filters.status && filters.status.length > 0 && !filters.status.includes(user.status)) return false;
+      if (filters.joinedAfter && user.joinedAt < filters.joinedAfter) return false;
+      if (filters.joinedBefore && user.joinedAt > filters.joinedBefore) return false;
       return true;
     });
-  }
-
-  private calculateUserLimits(currentCount: number, tier: any): UserLimits {
-    const limit = tier.limits.users;
-    const canAddUser = limit === null || currentCount < limit;
-    
-    let nextTier;
-    if (tier.id === 'solo') {
-      nextTier = { 
-        id: 'starter' as const,
-        name: 'Starter', 
-        price: 2000,
-        currency: 'TND',
-        limits: { users: 3, cars: 200, serviceBays: 2 },
-        features: []
-      };
-    } else if (tier.id === 'starter') {
-      nextTier = { 
-        id: 'professional' as const,
-        name: 'Professional',
-        price: 6000,
-        currency: 'TND', 
-        limits: { users: null, cars: null, serviceBays: null },
-        features: []
-      };
-    }
-
-    return {
-      current: currentCount,
-      limit,
-      canAddUser,
-      nextTier
-    };
   }
 
   private getPermissionsForRole(role: UserRole) {
     switch (role) {
       case 'owner':
-        return {
-          canManageUsers: true,
-          canManageSettings: true,
-          canViewReports: true,
-          canManageInventory: true,
-          canManageAppointments: true,
-          canManageInvoices: true,
-          canManageMaintenance: true
-        };
+        return { canManageUsers: true, canManageSettings: true, canViewReports: true, canManageInventory: true, canManageAppointments: true, canManageInvoices: true, canManageMaintenance: true };
       case 'admin':
-        return {
-          canManageUsers: true,
-          canManageSettings: false,
-          canViewReports: true,
-          canManageInventory: true,
-          canManageAppointments: true,
-          canManageInvoices: true,
-          canManageMaintenance: true
-        };
+        return { canManageUsers: true, canManageSettings: false, canViewReports: true, canManageInventory: true, canManageAppointments: true, canManageInvoices: true, canManageMaintenance: true };
       case 'mechanic':
-        return {
-          canManageUsers: false,
-          canManageSettings: false,
-          canViewReports: false,
-          canManageInventory: true,
-          canManageAppointments: true,
-          canManageInvoices: false,
-          canManageMaintenance: true
-        };
+        return { canManageUsers: false, canManageSettings: false, canViewReports: false, canManageInventory: true, canManageAppointments: true, canManageInvoices: false, canManageMaintenance: true };
       case 'viewer':
-        return {
-          canManageUsers: false,
-          canManageSettings: false,
-          canViewReports: true,
-          canManageInventory: false,
-          canManageAppointments: false,
-          canManageInvoices: false,
-          canManageMaintenance: false
-        };
+        return { canManageUsers: false, canManageSettings: false, canViewReports: true, canManageInventory: false, canManageAppointments: false, canManageInvoices: false, canManageMaintenance: false };
     }
   }
 }

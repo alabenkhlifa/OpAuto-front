@@ -297,9 +297,9 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
   styles: [`
     /* Dark glassmorphism card styling */
     .glass-card {
-      background: rgba(17, 24, 39, 0.95);
+      background: rgba(11, 8, 41, 0.95);
       backdrop-filter: blur(10px);
-      border: 1px solid rgba(75, 85, 99, 0.6);
+      border: 1px solid rgba(42, 37, 102, 0.6);
       border-radius: 20px;
       padding: 1.5rem;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
@@ -308,9 +308,9 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
     }
 
     .glass-card:hover {
-      background: rgba(31, 41, 55, 0.98);
+      background: rgba(18, 15, 61, 0.98);
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
-      border-color: rgba(59, 130, 246, 0.7);
+      border-color: rgba(255, 132, 0, 0.7);
       transform: translateY(-2px);
     }
 
@@ -346,8 +346,8 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
     }
     
     .btn-secondary {
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(29, 78, 216, 0.8));
-      border: 1px solid rgba(59, 130, 246, 0.6);
+      background: linear-gradient(135deg, rgba(255, 132, 0, 0.8), rgba(204, 106, 0, 0.8));
+      border: 1px solid rgba(255, 132, 0, 0.6);
       color: white;
       padding: 0.75rem 1rem;
       border-radius: 12px;
@@ -360,12 +360,12 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
       justify-content: center;
       gap: 0.5rem;
       cursor: pointer;
-      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+      box-shadow: 0 4px 15px rgba(255, 132, 0, 0.3);
     }
 
     .btn-secondary:hover {
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(29, 78, 216, 0.9));
-      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+      background: linear-gradient(135deg, rgba(255, 132, 0, 0.9), rgba(204, 106, 0, 0.9));
+      box-shadow: 0 6px 20px rgba(255, 132, 0, 0.4);
       transform: translateY(-1px);
     }
     

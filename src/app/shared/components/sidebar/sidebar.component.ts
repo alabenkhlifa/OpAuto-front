@@ -57,6 +57,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
       isActive: true
     },
     {
+      id: 'calendar',
+      label: 'Calendar',
+      translationKey: 'navigation.calendar',
+      icon: 'calendar-view',
+      route: '/calendar'
+    },
+    {
       id: 'appointments',
       label: 'Appointments',
       translationKey: 'navigation.appointments',
@@ -130,6 +137,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
       badge: 3,
       ownerOnly: true,
       requiresFeature: 'internal_approvals'
+    },
+    {
+      id: 'notifications',
+      label: 'Notifications',
+      translationKey: 'navigation.notifications',
+      icon: 'bell',
+      route: '/notifications'
     }
   ];
 
@@ -152,11 +166,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
       requiresFeature: 'multi_user'
     },
     {
-      id: 'subscription',
-      label: 'Subscription',
-      translationKey: 'navigation.subscription',
-      icon: 'credit-card',
-      route: '/subscription',
+      id: 'modules',
+      label: 'Modules',
+      translationKey: 'navigation.modules',
+      icon: 'grid',
+      route: '/modules',
       ownerOnly: true
     },
     {

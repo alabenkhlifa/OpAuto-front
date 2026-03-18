@@ -1,14 +1,14 @@
-import { Component, Input, Output, EventEmitter, computed, signal, OnInit, OnDestroy, ElementRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, computed, OnInit, OnDestroy, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Observable } from 'rxjs';
-import { SubscriptionService } from '../../../core/services/subscription.service';
-import { SubscriptionTierId } from '../../../core/models/subscription.model';
+import { Router } from '@angular/router';
+import { ModuleService } from '../../../core/services/module.service';
+import { ModuleId, MODULE_CATALOG } from '../../../core/models/module.model';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { AccessibilityService } from '../../services/accessibility.service';
 
 export interface FeatureLockConfig {
   feature: string;
-  requiredTier?: SubscriptionTierId;
+  moduleId?: ModuleId;
   title?: string;
   description?: string;
   showUpgradeButton?: boolean;
@@ -22,41 +22,41 @@ export interface FeatureLockConfig {
   template: `
     <div class="feature-container" [class.feature-locked]="isLocked()">
       <ng-content></ng-content>
-      
+
       @if (isLocked() && shouldShowOverlay()) {
-        <div class="feature-lock-overlay" 
-             role="dialog" 
+        <div class="feature-lock-overlay"
+             role="dialog"
              aria-modal="true"
              [attr.aria-label]="getLockAriaLabel()"
              tabindex="0">
-          
+
           <div class="lock-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M6 10V8C6 5.79086 7.79086 4 10 4H14C16.2091 4 18 5.79086 18 8V10M6 10H18M6 10C4.89543 10 4 10.8954 4 12V18C4 19.1046 4.89543 20 6 20H18C19.1046 20 20 19.1046 20 18V12C20 10.8954 19.1046 10 18 10" 
-                    stroke="currentColor" 
-                    stroke-width="2" 
-                    stroke-linecap="round" 
+              <path d="M6 10V8C6 5.79086 7.79086 4 10 4H14C16.2091 4 18 5.79086 18 8V10M6 10H18M6 10C4.89543 10 4 10.8954 4 12V18C4 19.1046 4.89543 20 6 20H18C19.1046 20 20 19.1046 20 18V12C20 10.8954 19.1046 10 18 10"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
                     stroke-linejoin="round"/>
             </svg>
           </div>
-          
+
           <div class="lock-text">
             {{ getLockMessage() | translate }}
           </div>
-          
+
           @if (config.showUpgradeButton !== false) {
-            <button 
+            <button
               class="upgrade-cta"
               (click)="onUpgradeClick()"
               [attr.aria-label]="getUpgradeAriaLabel()"
               type="button">
-              {{ 'tiers.upgrade' | translate }}
+              {{ 'modules.browse' | translate }}
             </button>
           }
-          
-          @if (config.showUpgradeButton !== false && getRequiredTierName()) {
-            <div class="tier-info">
-              {{ 'tiers.availableIn' | translate: { tier: getRequiredTierName() } }}
+
+          @if (config.showUpgradeButton !== false && getRequiredModuleName()) {
+            <div class="module-info">
+              {{ 'modules.requiredModule' | translate: { module: getRequiredModuleName() } }}
             </div>
           }
         </div>
@@ -67,8 +67,8 @@ export interface FeatureLockConfig {
     .feature-container {
       position: relative;
     }
-    
-    .tier-info {
+
+    .module-info {
       font-size: 0.75rem;
       color: #9ca3af;
       margin-top: 0.25rem;
@@ -79,32 +79,30 @@ export interface FeatureLockConfig {
 export class FeatureLockComponent implements OnInit, OnDestroy {
   @Input() config: FeatureLockConfig = { feature: '', showUpgradeButton: true };
   @Input() feature: string = '';
-  @Input() requiredTier?: SubscriptionTierId;
+  @Input() moduleId?: ModuleId;
   @Input() title?: string;
   @Input() description?: string;
   @Input() showUpgradeButton: boolean = true;
   @Input() customMessage?: string;
   @Input() showOverlayInput: boolean = true;
-  
-  @Output() upgradeClicked = new EventEmitter<{ feature: string; requiredTier?: SubscriptionTierId }>();
 
-  // Computed signals for reactive state
+  @Output() upgradeClicked = new EventEmitter<{ feature: string; moduleId?: ModuleId }>();
+
+  // Computed signal for reactive state using ModuleService
   isLocked = computed(() => {
-    const featureKey = this.getFeatureKey();
-    if (!featureKey) return false;
-    
-    // For demo purposes, we'll use a simple check
-    // In real implementation, this would be connected to the subscription service
-    return !this.subscriptionService.isFeatureEnabled(featureKey);
+    const resolvedModuleId = this.getModuleId();
+    if (!resolvedModuleId) return false;
+
+    return !this.moduleService.hasModuleAccess(resolvedModuleId);
   });
 
-  private loadingSignal = signal(false);
   private escapeKeyHandler?: () => void;
-  
+
   constructor(
-    private subscriptionService: SubscriptionService,
+    private moduleService: ModuleService,
     private accessibilityService: AccessibilityService,
-    private elementRef: ElementRef<HTMLElement>
+    private elementRef: ElementRef<HTMLElement>,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -119,8 +117,8 @@ export class FeatureLockComponent implements OnInit, OnDestroy {
     // Announce feature lock status to screen readers when component initializes
     if (this.isLocked()) {
       const featureName = this.config?.title || this.title || this.getFeatureKey();
-      const requiredTier = this.getRequiredTierName();
-      this.accessibilityService.announceFeatureLock(featureName, requiredTier);
+      const moduleName = this.getRequiredModuleName();
+      this.accessibilityService.announceFeatureLock(featureName, moduleName);
     }
   }
 
@@ -134,6 +132,10 @@ export class FeatureLockComponent implements OnInit, OnDestroy {
     return this.config?.feature || this.feature || '';
   }
 
+  private getModuleId(): ModuleId | null {
+    return this.config?.moduleId || this.moduleId || null;
+  }
+
   shouldShowOverlay(): boolean {
     return this.showOverlayInput;
   }
@@ -141,65 +143,66 @@ export class FeatureLockComponent implements OnInit, OnDestroy {
   getLockMessage(): string {
     if (this.config?.customMessage) return this.config.customMessage;
     if (this.customMessage) return this.customMessage;
-    
-    const requiredTier = this.getRequiredTierName();
-    if (requiredTier) {
-      return 'tiers.featureLockedWithTier';
+
+    const moduleName = this.getRequiredModuleName();
+    if (moduleName) {
+      return 'modules.featureLockedWithModule';
     }
-    
-    return 'tiers.featureLocked';
+
+    return 'modules.featureLocked';
   }
 
   getLockAriaLabel(): string {
     const featureName = this.config?.title || this.title || this.getFeatureKey();
-    return `Feature ${featureName} is locked. Upgrade required.`;
+    return `Feature ${featureName} is locked. Module purchase required.`;
   }
 
   getUpgradeAriaLabel(): string {
-    const requiredTier = this.getRequiredTierName();
-    return requiredTier 
-      ? `Upgrade to ${requiredTier} to unlock this feature`
-      : 'Upgrade your plan to unlock this feature';
+    const moduleName = this.getRequiredModuleName();
+    return moduleName
+      ? `Purchase ${moduleName} module to unlock this feature`
+      : 'Browse modules to unlock this feature';
   }
 
-  getRequiredTierName(): string | null {
-    const tier = this.config?.requiredTier || this.requiredTier;
-    if (tier) return tier;
-    
-    const featureKey = this.getFeatureKey();
-    if (!featureKey) return null;
-    
-    return this.subscriptionService.getUpgradeTierForFeature(featureKey);
+  getRequiredModuleName(): string | null {
+    const resolvedModuleId = this.getModuleId();
+    if (!resolvedModuleId) return null;
+
+    const module = MODULE_CATALOG.find(m => m.id === resolvedModuleId);
+    return module?.name || null;
   }
 
   onUpgradeClick(): void {
     const featureKey = this.getFeatureKey();
-    const requiredTier = this.getRequiredTierName() as SubscriptionTierId;
-    
-    // Announce the upgrade action to screen readers
-    const tierName = requiredTier || 'a higher tier';
-    this.accessibilityService.announce(`Opening upgrade dialog for ${tierName}`, 'polite');
-    
+    const resolvedModuleId = this.getModuleId();
+
+    // Announce the action to screen readers
+    const moduleName = this.getRequiredModuleName() || 'a module';
+    this.accessibilityService.announce(`Opening modules page to purchase ${moduleName}`, 'polite');
+
     this.upgradeClicked.emit({
       feature: featureKey,
-      requiredTier
+      moduleId: resolvedModuleId || undefined
     });
+
+    // Navigate to modules page
+    this.router.navigate(['/modules']);
   }
 
-  // Method to check feature access (for programmatic use)
-  hasFeatureAccess(): Observable<boolean> {
-    const featureKey = this.getFeatureKey();
-    if (!featureKey) return new Observable(observer => observer.next(true));
-    
-    return this.subscriptionService.hasFeature(featureKey);
+  // Method to check module access (for programmatic use)
+  hasFeatureAccess(): boolean {
+    const resolvedModuleId = this.getModuleId();
+    if (!resolvedModuleId) return true;
+
+    return this.moduleService.hasModuleAccess(resolvedModuleId);
   }
 
-  // Method to get upgrade tier info (for programmatic use)
-  getUpgradeTierInfo(): { tier: SubscriptionTierId | null; name: string | null } {
-    const tier = this.getRequiredTierName() as SubscriptionTierId;
+  // Method to get module info (for programmatic use)
+  getModuleInfo(): { moduleId: ModuleId | null; name: string | null } {
+    const resolvedModuleId = this.getModuleId();
     return {
-      tier,
-      name: tier
+      moduleId: resolvedModuleId,
+      name: this.getRequiredModuleName()
     };
   }
 }

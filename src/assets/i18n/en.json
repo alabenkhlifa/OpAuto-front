@@ -45,6 +45,9 @@
     "customers": "Customers",
     "reports": "Reports",
     "employees": "Employees",
+    "calendar": "Calendar",
+    "notifications": "Notifications",
+    "modules": "Modules",
     "subscription": "Subscription",
     "profile": "Profile",
     "logout": "Logout",
@@ -2038,5 +2041,52 @@
         "description": "Upload photos of repairs and issues. Visual documentation helps communicate with customers."
       }
     }
+  },
+  "calendar": {
+    "title": "Calendar",
+    "month": "Month",
+    "week": "Week",
+    "day": "Day",
+    "today": "Today",
+    "allMechanics": "All Mechanics",
+    "noEvents": "No events",
+    "dragToReschedule": "Drag to reschedule",
+    "clickToView": "Click to view details"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark All Read",
+    "viewAll": "View All Notifications",
+    "noNotifications": "No notifications",
+    "allCaughtUp": "You're all caught up!",
+    "unreadOnly": "Unread Only",
+    "types": {
+      "appointment": "Appointments",
+      "maintenance": "Maintenance",
+      "approval": "Approvals",
+      "invoice": "Invoices",
+      "stock": "Stock",
+      "system": "System"
+    }
+  },
+  "modules": {
+    "title": "Module Marketplace",
+    "subtitle": "Customize your garage with the modules you need",
+    "free": "Free",
+    "perMonth": "/month",
+    "active": "Active",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "freeModules": "Free Modules",
+    "paidModules": "Paid Modules",
+    "allModulesActive": "All modules active for demo"
+  },
+  "ai": {
+    "title": "AI Assistant",
+    "diagnose": "AI Diagnose",
+    "estimate": "AI Estimate",
+    "suggest": "AI Suggest",
+    "generateInsights": "Generate Insights",
+    "mockMode": "Running in demo mode"
   }
 }

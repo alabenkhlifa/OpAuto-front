@@ -6,8 +6,8 @@
 /* Primary Action Button - Car Management "Register Car" Standard */
 .btn-primary {
   backdrop-filter: blur(20px);
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(29, 78, 216, 0.8));
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  background: linear-gradient(135deg, rgba(255, 132, 0, 0.8), rgba(204, 106, 0, 0.8));
+  border: 1px solid rgba(255, 132, 0, 0.3);
   border-radius: 12px;
   color: white !important;
   padding: 0.75rem 1rem;
@@ -22,9 +22,9 @@
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(29, 78, 216, 0.9));
+  background: linear-gradient(135deg, rgba(255, 132, 0, 0.9), rgba(204, 106, 0, 0.9));
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(255, 132, 0, 0.3);
 }
 
 /* Secondary Action Button (e.g., Clear, Cancel, Reset) */
@@ -37,26 +37,26 @@
   font-size: 0.875rem;
   font-weight: 500;
   color: #ffffff !important;
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(255, 132, 0, 0.1);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  border: 1px solid rgba(255, 132, 0, 0.3);
   border-radius: 12px;
   transition: all 0.2s ease;
   cursor: pointer;
 }
 
 .btn-secondary:hover {
-  background: rgba(59, 130, 246, 0.2);
-  border-color: rgba(59, 130, 246, 0.4);
+  background: rgba(255, 132, 0, 0.2);
+  border-color: rgba(255, 132, 0, 0.4);
   color: #ffffff !important;
   transform: translateY(-1px);
 }
 
 /* Tertiary/Neutral Button (e.g., Edit, View, Adjust) */
 .btn-tertiary {
-  background: rgba(31, 41, 55, 0.6) !important;
+  background: rgba(18, 15, 61, 0.6) !important;
   backdrop-filter: blur(10px) !important;
-  border: 1px solid rgba(75, 85, 99, 0.4) !important;
+  border: 1px solid rgba(42, 37, 102, 0.4) !important;
   color: #d1d5db !important;
   transition: all 0.2s ease !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
@@ -72,8 +72,8 @@
 }
 
 .btn-tertiary:hover {
-  background: rgba(31, 41, 55, 0.8) !important;
-  border-color: rgba(75, 85, 99, 0.6) !important;
+  background: rgba(18, 15, 61, 0.8) !important;
+  border-color: rgba(42, 37, 102, 0.6) !important;
   color: #ffffff !important;
   transform: translateY(-1px) !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
@@ -88,7 +88,7 @@
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
   color: #d1d5db;
-  background: rgba(31, 41, 55, 0.6);
+  background: rgba(18, 15, 61, 0.6);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
@@ -98,21 +98,21 @@
 }
 
 .btn-filter-toggle:hover {
-  background: rgba(31, 41, 55, 0.8);
+  background: rgba(18, 15, 61, 0.8);
 }
 
 /* Active state for filter toggle - shows when filters are visible */
 .btn-filter-toggle.active {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(29, 78, 216, 0.8)) !important;
-  border-color: rgba(59, 130, 246, 0.5) !important;
+  background: linear-gradient(135deg, rgba(255, 132, 0, 0.8), rgba(204, 106, 0, 0.8)) !important;
+  border-color: rgba(255, 132, 0, 0.5) !important;
   color: white !important;
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 15px rgba(255, 132, 0, 0.3);
 }
 
 .btn-filter-toggle.active:hover {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(29, 78, 216, 0.9)) !important;
+  background: linear-gradient(135deg, rgba(255, 132, 0, 0.9), rgba(204, 106, 0, 0.9)) !important;
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 6px 20px rgba(255, 132, 0, 0.4);
 }
 
 /* Filter Chip Buttons (for quick filters) */
@@ -121,32 +121,32 @@
   font-size: 0.875rem;
   font-weight: 500;
   color: #d1d5db;
-  background: rgba(31, 41, 55, 0.6);
+  background: rgba(18, 15, 61, 0.6);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(75, 85, 99, 0.4);
+  border: 1px solid rgba(42, 37, 102, 0.4);
   border-radius: 12px;
   transition: all 0.2s ease;
   cursor: pointer;
 }
 
 .btn-filter-chip:hover {
-  background: rgba(31, 41, 55, 0.8);
-  border-color: rgba(75, 85, 99, 0.6);
+  background: rgba(18, 15, 61, 0.8);
+  border-color: rgba(42, 37, 102, 0.6);
   color: #ffffff;
   transform: translateY(-1px);
 }
 
 .btn-filter-chip.active {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(29, 78, 216, 0.8));
-  border-color: rgba(59, 130, 246, 0.6);
+  background: linear-gradient(135deg, rgba(255, 132, 0, 0.8), rgba(204, 106, 0, 0.8));
+  border-color: rgba(255, 132, 0, 0.6);
   color: #ffffff !important;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(255, 132, 0, 0.3);
 }
 
 .btn-filter-chip.active:hover {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(29, 78, 216, 0.9));
+  background: linear-gradient(135deg, rgba(255, 132, 0, 0.9), rgba(204, 106, 0, 0.9));
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 6px 16px rgba(255, 132, 0, 0.4);
 }
 
 /* Danger/Delete Button */
@@ -306,6 +306,6 @@
 .btn-warning:focus-visible,
 .btn-filter-toggle:focus-visible,
 .btn-filter-chip:focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid #FF8400;
   outline-offset: 2px;
 }

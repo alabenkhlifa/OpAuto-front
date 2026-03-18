@@ -21,7 +21,7 @@
 
 /* Glass Control Styling */
 .glass-control {
-  background: rgba(17, 24, 39, 0.4);
+  background: rgba(11, 8, 41, 0.4);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);

@@ -7,9 +7,9 @@
 
 /* Glass card styling to match appointments */
 .glass-card {
-  background: rgba(17, 24, 39, 0.95);
+  background: rgba(11, 8, 41, 0.95);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(75, 85, 99, 0.6);
+  border: 1px solid rgba(42, 37, 102, 0.6);
   border-radius: 20px;
   padding: 1.5rem;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
@@ -18,9 +18,9 @@
 }
 
 .glass-card:hover {
-  background: rgba(31, 41, 55, 0.98);
+  background: rgba(18, 15, 61, 0.98);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
-  border-color: rgba(59, 130, 246, 0.7);
+  border-color: rgba(255, 132, 0, 0.7);
   transform: translateY(-2px);
 }
 
@@ -41,7 +41,7 @@
   min-width: 200px;
   padding: 0.75rem 1rem 0.75rem 2.5rem;
   backdrop-filter: blur(10px);
-  background: rgba(31, 41, 55, 0.7);
+  background: rgba(18, 15, 61, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   font-size: 0.875rem;
@@ -58,9 +58,9 @@
 
 .search-input:focus {
   outline: none;
-  background: rgba(31, 41, 55, 0.9);
-  border-color: rgba(59, 130, 246, 0.5);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  background: rgba(18, 15, 61, 0.9);
+  border-color: rgba(255, 132, 0, 0.5);
+  box-shadow: 0 0 0 3px rgba(255, 132, 0, 0.1);
 }
 
 .search-input::placeholder {
@@ -70,8 +70,8 @@
 /* Add button styling to match appointments */
 .add-btn, .mobile-fab {
   backdrop-filter: blur(20px);
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(29, 78, 216, 0.8));
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  background: linear-gradient(135deg, rgba(255, 132, 0, 0.8), rgba(204, 106, 0, 0.8));
+  border: 1px solid rgba(255, 132, 0, 0.3);
   border-radius: 12px;
   color: white;
   padding: 0.75rem 1rem;
@@ -83,7 +83,7 @@
 }
 
 .add-btn:hover, .mobile-fab:hover {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(29, 78, 216, 0.9));
+  background: linear-gradient(135deg, rgba(255, 132, 0, 0.9), rgba(204, 106, 0, 0.9));
   transform: translateY(-1px);
 }
 
@@ -110,26 +110,26 @@
 }
 
 .stats-nav [role="button"]:hover {
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(255, 132, 0, 0.1);
   transform: translateY(-1px);
 }
 
 .stats-nav [role="button"]:focus {
-  background: rgba(59, 130, 246, 0.15);
-  outline: 2px solid #3b82f6;
+  background: rgba(255, 132, 0, 0.15);
+  outline: 2px solid #FF8400;
   outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 4px rgba(255, 132, 0, 0.1);
 }
 
 .stats-nav [role="button"]:focus-visible {
-  background: rgba(59, 130, 246, 0.15);
-  outline: 2px solid #3b82f6;
+  background: rgba(255, 132, 0, 0.15);
+  outline: 2px solid #FF8400;
   outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 4px rgba(255, 132, 0, 0.1);
 }
 
 .stats-nav [role="button"]:active {
-  background: rgba(59, 130, 246, 0.2);
+  background: rgba(255, 132, 0, 0.2);
   transform: translateY(0);
 }
 
@@ -141,7 +141,7 @@
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
   color: #d1d5db;
-  background: rgba(31, 41, 55, 0.6);
+  background: rgba(18, 15, 61, 0.6);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
@@ -150,26 +150,26 @@
 }
 
 .filter-toggle:hover {
-  background: rgba(31, 41, 55, 0.8);
+  background: rgba(18, 15, 61, 0.8);
 }
 
 .filter-toggle.active {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(29, 78, 216, 0.8)) !important;
-  border-color: rgba(59, 130, 246, 0.5) !important;
+  background: linear-gradient(135deg, rgba(255, 132, 0, 0.8), rgba(204, 106, 0, 0.8)) !important;
+  border-color: rgba(255, 132, 0, 0.5) !important;
   color: white !important;
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 15px rgba(255, 132, 0, 0.3);
 }
 
 .filter-toggle.active:hover {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(29, 78, 216, 0.9)) !important;
+  background: linear-gradient(135deg, rgba(255, 132, 0, 0.9), rgba(204, 106, 0, 0.9)) !important;
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 6px 20px rgba(255, 132, 0, 0.4);
 }
 
 .filters-panel {
-  background: rgba(17, 24, 39, 0.9);
+  background: rgba(11, 8, 41, 0.9);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(75, 85, 99, 0.4);
+  border: 1px solid rgba(42, 37, 102, 0.4);
   border-radius: 20px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -187,7 +187,7 @@
 }
 
 .filters-panel.open:hover {
-  background: rgba(31, 41, 55, 0.95);
+  background: rgba(18, 15, 61, 0.95);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
 }
 
@@ -195,7 +195,7 @@
   width: 100%;
   padding: 0.75rem;
   backdrop-filter: blur(10px);
-  background: rgba(31, 41, 55, 0.7);
+  background: rgba(18, 15, 61, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   font-size: 0.875rem;
@@ -214,8 +214,8 @@
 
 .filter-select:focus {
   outline: none;
-  background: rgba(31, 41, 55, 0.9);
-  border-color: rgba(59, 130, 246, 0.5);
+  background: rgba(18, 15, 61, 0.9);
+  border-color: rgba(255, 132, 0, 0.5);
   /* Maintain custom dropdown arrow on focus */
   background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
@@ -224,7 +224,7 @@
 }
 
 .filter-select option {
-  background: #374151;
+  background: #1C1852;
   color: white;
 }
 
@@ -250,7 +250,7 @@
 
 /* Status Legend Styling */
 .status-legend {
-  background: rgba(17, 24, 39, 0.6) !important;
+  background: rgba(11, 8, 41, 0.6) !important;
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
@@ -261,7 +261,7 @@
 }
 
 .status-legend:hover {
-  background: rgba(31, 41, 55, 0.7) !important;
+  background: rgba(18, 15, 61, 0.7) !important;
   transform: translateY(-1px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
 }
@@ -280,7 +280,7 @@
   content: '';
   width: 4px;
   height: 1rem;
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  background: linear-gradient(135deg, #FF8400, #CC6A00);
   border-radius: 2px;
 }
 
@@ -314,8 +314,8 @@
 .loading-spinner {
   width: 2rem;
   height: 2rem;
-  border: 3px solid rgba(59, 130, 246, 0.3);
-  border-top: 3px solid #3b82f6;
+  border: 3px solid rgba(255, 132, 0, 0.3);
+  border-top: 3px solid #FF8400;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -392,27 +392,27 @@
 }
 
 .car-grid-item:focus {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid #FF8400;
   outline-offset: 2px;
 }
 
 .car-grid-item:focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid #FF8400;
   outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 4px rgba(255, 132, 0, 0.1);
 }
 
 /* Desktop Filters Panel */
 .desktop-filters-panel {
-  background: rgba(17, 24, 39, 0.95) !important;
+  background: rgba(11, 8, 41, 0.95) !important;
   backdrop-filter: blur(15px);
-  border: 1px solid rgba(75, 85, 99, 0.6);
+  border: 1px solid rgba(42, 37, 102, 0.6);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .desktop-filters-panel:hover {
-  background: rgba(31, 41, 55, 0.98) !important;
+  background: rgba(18, 15, 61, 0.98) !important;
   transform: translateY(-1px);
   box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
 }
@@ -422,7 +422,7 @@
   padding: 0.5rem 0.75rem;
   padding-right: 2rem;
   backdrop-filter: blur(10px);
-  background: rgba(31, 41, 55, 0.8);
+  background: rgba(18, 15, 61, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   font-size: 0.875rem;
@@ -439,9 +439,9 @@
 
 .filter-select-desktop:focus {
   outline: none;
-  background: rgba(31, 41, 55, 0.95);
-  border-color: rgba(59, 130, 246, 0.5);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+  background: rgba(18, 15, 61, 0.95);
+  border-color: rgba(255, 132, 0, 0.5);
+  box-shadow: 0 0 0 2px rgba(255, 132, 0, 0.1);
   background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
   background-position: right 0.5rem center;
@@ -449,7 +449,7 @@
 }
 
 .filter-select-desktop option {
-  background: #374151;
+  background: #1C1852;
   color: white;
   padding: 0.5rem;
 }

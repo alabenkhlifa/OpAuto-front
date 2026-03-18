@@ -45,6 +45,9 @@
     "customers": "Customers",
     "reports": "Reports",
     "employees": "Employees",
+    "calendar": "Calendar",
+    "notifications": "Notifications",
+    "modules": "Modules",
     "subscription": "Subscription",
     "profile": "Profile",
     "logout": "Logout",
@@ -106,7 +109,7 @@
     },
     "status": {
       "scheduled": "Scheduled",
-      "in_progress": "In Progress", 
+      "in_progress": "In Progress",
       "completed": "Completed",
       "delayed": "Delayed",
       "in_repair": "In Repair",
@@ -114,6 +117,12 @@
       "waiting_parts": "Waiting Parts",
       "diagnosis": "Diagnosis",
       "waiting_approval": "Waiting Approval"
+    },
+    "tooltips": {
+      "quick_actions": "Quickly access common garage management tasks",
+      "metrics": "View real-time garage performance metrics and statistics",
+      "schedule": "Today's appointments and scheduled services",
+      "active_jobs": "Monitor ongoing repair and service jobs"
     }
   },
   "appointments": {
@@ -191,6 +200,11 @@
       "in-progress": "In Progress",
       "completed": "Completed",
       "cancelled": "Cancelled"
+    },
+    "tooltips": {
+      "filters": "Filter appointments by mechanic, status, or search criteria",
+      "view_mode": "Switch between list, calendar, and today views",
+      "add_appointment": "Schedule a new service appointment"
     }
   },
   "cars": {
@@ -265,7 +279,12 @@
     "totalServices": "Total Services",
     "nextDue": "Next Due",
     "schedule": "Schedule",
-    "history": "History"
+    "history": "History",
+    "tooltips": {
+      "filters": "Search and filter vehicles by make, model, or status",
+      "add_car": "Register a new vehicle in the system",
+      "limit_info": "Track your vehicle count against subscription limits"
+    }
   },
   "maintenance": {
     "title": "Maintenance",
@@ -494,7 +513,12 @@
       "days": "days",
       "payment": "Payment Terms"
     },
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "tooltips": {
+      "filters": "Search and filter parts by name, category, or stock status",
+      "add_part": "Add a new part to the inventory",
+      "stock_alert": "View parts with low stock levels that need reordering"
+    }
   },
   "invoicing": {
     "title": "Invoicing",
@@ -725,7 +749,12 @@
     "form": {
       "newCustomer": "New Customer"
     },
-    "loading": "Loading customers..."
+    "loading": "Loading customers...",
+    "tooltips": {
+      "filters": "Search and filter customers by name, phone, or loyalty status",
+      "add_customer": "Add a new customer to the system",
+      "loyalty": "View customer loyalty tiers and service history"
+    }
   },
   "employees": {
     "title": "Employee Management",
@@ -814,7 +843,13 @@
     "skills": "Skills",
     "certifications": "Certifications",
     "workSchedule": "Work Schedule",
-    "noEmployees": "No employees found"
+    "noEmployees": "No employees found",
+    "tooltips": {
+      "filters": "Search and filter employees by name, role, or department",
+      "add_employee": "Add a new employee to the team",
+      "performance": "View employee performance metrics and statistics",
+      "limit_info": "Track active employee count against subscription limits"
+    }
   },
   "reports": {
     "title": "Reports",
@@ -2006,5 +2041,52 @@
         "description": "Upload photos of repairs and issues. Visual documentation helps communicate with customers."
       }
     }
+  },
+  "calendar": {
+    "title": "Calendar",
+    "month": "Month",
+    "week": "Week",
+    "day": "Day",
+    "today": "Today",
+    "allMechanics": "All Mechanics",
+    "noEvents": "No events",
+    "dragToReschedule": "Drag to reschedule",
+    "clickToView": "Click to view details"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark All Read",
+    "viewAll": "View All Notifications",
+    "noNotifications": "No notifications",
+    "allCaughtUp": "You're all caught up!",
+    "unreadOnly": "Unread Only",
+    "types": {
+      "appointment": "Appointments",
+      "maintenance": "Maintenance",
+      "approval": "Approvals",
+      "invoice": "Invoices",
+      "stock": "Stock",
+      "system": "System"
+    }
+  },
+  "modules": {
+    "title": "Module Marketplace",
+    "subtitle": "Customize your garage with the modules you need",
+    "free": "Free",
+    "perMonth": "/month",
+    "active": "Active",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "freeModules": "Free Modules",
+    "paidModules": "Paid Modules",
+    "allModulesActive": "All modules active for demo"
+  },
+  "ai": {
+    "title": "AI Assistant",
+    "diagnose": "AI Diagnose",
+    "estimate": "AI Estimate",
+    "suggest": "AI Suggest",
+    "generateInsights": "Generate Insights",
+    "mockMode": "Running in demo mode"
   }
 }

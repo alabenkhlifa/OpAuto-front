@@ -3,12 +3,13 @@ import { Router, RouterOutlet } from '@angular/router';
 import { SidebarService } from './core/services/sidebar.service';
 import { TranslationService } from './core/services/translation.service';
 import { SidebarComponent } from './shared/components/sidebar/sidebar.component';
+import { NotificationBellComponent } from './shared/components/notification-bell/notification-bell.component';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.html',
   standalone: true,
-  imports: [RouterOutlet, SidebarComponent],
+  imports: [RouterOutlet, SidebarComponent, NotificationBellComponent],
   styleUrl: './app.css'
 })
 export class App {

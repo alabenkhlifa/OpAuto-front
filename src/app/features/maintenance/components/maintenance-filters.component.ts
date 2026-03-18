@@ -132,9 +132,9 @@ import { inject } from '@angular/core';
   styles: [`
     /* Dark glassmorphism card styling */
     .glass-card {
-      background: rgba(17, 24, 39, 0.95);
+      background: rgba(11, 8, 41, 0.95);
       backdrop-filter: blur(10px);
-      border: 1px solid rgba(75, 85, 99, 0.6);
+      border: 1px solid rgba(42, 37, 102, 0.6);
       border-radius: 20px;
       padding: 1.5rem;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
@@ -143,9 +143,9 @@ import { inject } from '@angular/core';
     }
 
     .glass-card:hover {
-      background: rgba(31, 41, 55, 0.98);
+      background: rgba(18, 15, 61, 0.98);
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
-      border-color: rgba(59, 130, 246, 0.7);
+      border-color: rgba(255, 132, 0, 0.7);
       transform: translateY(-2px);
     }
 

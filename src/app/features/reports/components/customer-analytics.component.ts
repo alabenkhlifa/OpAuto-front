@@ -125,7 +125,7 @@ export class CustomerAnalyticsComponent implements OnInit {
             label: 'New Customers',
             data: [8, 12, 15, 10, 18, 14, 22, 16],
             borderColor: 'rgb(59, 130, 246)',
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            backgroundColor: 'rgba(255, 132, 0, 0.1)',
             tension: 0.3,
             fill: true
           },
@@ -164,7 +164,7 @@ export class CustomerAnalyticsComponent implements OnInit {
           data: [15, 60, 20, 5],
           backgroundColor: [
             '#8B5CF6',
-            '#3B82F6',
+            '#FF8400',
             '#10B981',
             '#6B7280'
           ],
@@ -193,9 +193,9 @@ export class CustomerAnalyticsComponent implements OnInit {
           data: [45, 52, 48, 58, 62, 35],
           backgroundColor: [
             '#EF4444',
-            '#F59E0B',
+            '#7B8CC4',
             '#10B981',
-            '#3B82F6',
+            '#FF8400',
             '#8B5CF6',
             '#6B7280'
           ],

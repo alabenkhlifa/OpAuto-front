@@ -198,7 +198,7 @@ export interface UpgradePromptConfig {
       justify-content: space-between;
       align-items: center;
       padding: 1.5rem;
-      border-bottom: 1px solid rgba(75, 85, 99, 0.3);
+      border-bottom: 1px solid rgba(42, 37, 102, 0.3);
     }
 
     .modal-title {
@@ -220,7 +220,7 @@ export interface UpgradePromptConfig {
 
     .close-button:hover {
       color: #ffffff;
-      background: rgba(75, 85, 99, 0.3);
+      background: rgba(42, 37, 102, 0.3);
     }
 
     .close-button svg {
@@ -258,9 +258,9 @@ export interface UpgradePromptConfig {
     }
 
     .tier-card {
-      background: rgba(31, 41, 55, 0.8);
+      background: rgba(18, 15, 61, 0.8);
       backdrop-filter: blur(10px);
-      border: 1px solid rgba(75, 85, 99, 0.4);
+      border: 1px solid rgba(42, 37, 102, 0.4);
       border-radius: 16px;
       padding: 1.5rem;
       position: relative;
@@ -328,7 +328,7 @@ export interface UpgradePromptConfig {
       align-items: center;
       gap: 0.75rem;
       padding: 0.5rem 0;
-      border-bottom: 1px solid rgba(75, 85, 99, 0.2);
+      border-bottom: 1px solid rgba(42, 37, 102, 0.2);
     }
 
     .feature-item:last-child {
@@ -370,7 +370,7 @@ export interface UpgradePromptConfig {
     .single-tier-upgrade {
       text-align: center;
       padding: 2rem;
-      background: rgba(31, 41, 55, 0.6);
+      background: rgba(18, 15, 61, 0.6);
       border-radius: 12px;
       margin-bottom: 2rem;
     }
@@ -378,7 +378,7 @@ export interface UpgradePromptConfig {
     .tier-highlight .tier-name {
       font-size: 1.5rem;
       font-weight: 700;
-      color: #f59e0b;
+      color: #7B8CC4;
       margin-bottom: 1rem;
     }
 
@@ -397,7 +397,7 @@ export interface UpgradePromptConfig {
 
     .modal-footer {
       padding: 1.5rem;
-      border-top: 1px solid rgba(75, 85, 99, 0.3);
+      border-top: 1px solid rgba(42, 37, 102, 0.3);
       display: flex;
       justify-content: flex-end;
       gap: 1rem;

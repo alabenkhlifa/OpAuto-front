@@ -30,8 +30,8 @@
   pointer-events: none;
   background: transparent;
   box-shadow:
-    0 0 0 3px rgba(59, 130, 246, 0.9),
-    0 0 0 6px rgba(59, 130, 246, 0.5),
+    0 0 0 3px rgba(255, 132, 0, 0.9),
+    0 0 0 6px rgba(255, 132, 0, 0.5),
     0 0 0 9999px rgba(0, 0, 0, 0.75);
   border-radius: 12px;
   transition: all 0.3s ease-out;
@@ -76,7 +76,7 @@
 
 .tour-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+  background: linear-gradient(90deg, #FF8400 0%, #8b5cf6 100%);
   transition: width 0.3s ease;
   border-radius: 2px;
 }
@@ -153,12 +153,12 @@
 }
 
 .tour-btn-primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #FF8400 0%, #8b5cf6 100%);
   color: #fff;
 }
 
 .tour-btn-primary:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, #E67700 0%, #7c3aed 100%);
 }
 
 .tour-btn-secondary {
@@ -187,9 +187,9 @@
 :global(.tour-highlight) {
   position: relative;
   z-index: 10000;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.6),
-              0 0 0 12px rgba(59, 130, 246, 0.3),
-              0 0 40px rgba(59, 130, 246, 0.4) !important;
+  box-shadow: 0 0 0 4px rgba(255, 132, 0, 0.6),
+              0 0 0 12px rgba(255, 132, 0, 0.3),
+              0 0 40px rgba(255, 132, 0, 0.4) !important;
   border-radius: 8px;
   animation: pulse 2s infinite;
   background: transparent !important;
@@ -218,26 +218,26 @@
 
 @keyframes pulse {
   0%, 100% {
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.6),
-                0 0 0 12px rgba(59, 130, 246, 0.3),
-                0 0 40px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 0 0 4px rgba(255, 132, 0, 0.6),
+                0 0 0 12px rgba(255, 132, 0, 0.3),
+                0 0 40px rgba(255, 132, 0, 0.4);
   }
   50% {
-    box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.7),
-                0 0 0 16px rgba(59, 130, 246, 0.2),
-                0 0 50px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 0 0 6px rgba(255, 132, 0, 0.7),
+                0 0 0 16px rgba(255, 132, 0, 0.2),
+                0 0 50px rgba(255, 132, 0, 0.3);
   }
 }
 
 @keyframes spotlightPulse {
   0%, 100% {
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.9),
-                0 0 0 6px rgba(59, 130, 246, 0.5),
+    box-shadow: 0 0 0 3px rgba(255, 132, 0, 0.9),
+                0 0 0 6px rgba(255, 132, 0, 0.5),
                 0 0 0 9999px rgba(0, 0, 0, 0.75);
   }
   50% {
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 1),
-                0 0 0 8px rgba(59, 130, 246, 0.6),
+    box-shadow: 0 0 0 4px rgba(255, 132, 0, 1),
+                0 0 0 8px rgba(255, 132, 0, 0.6),
                 0 0 0 9999px rgba(0, 0, 0, 0.75);
   }
 }

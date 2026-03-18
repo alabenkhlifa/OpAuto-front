@@ -333,9 +333,9 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
 
     /* Glass Card - matching other screens */
     .glass-card {
-      background: rgba(17, 24, 39, 0.95);
+      background: rgba(11, 8, 41, 0.95);
       backdrop-filter: blur(10px);
-      border: 1px solid rgba(75, 85, 99, 0.6);
+      border: 1px solid rgba(42, 37, 102, 0.6);
       border-radius: 20px;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -343,7 +343,7 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
 
     .glass-card:hover {
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
-      border-color: rgba(59, 130, 246, 0.7);
+      border-color: rgba(255, 132, 0, 0.7);
     }
     
     /* Form Labels - Dark Theme */
@@ -360,9 +360,9 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
       display: block;
       width: 100%;
       padding: 0.75rem 1rem;
-      border: 1px solid rgba(75, 85, 99, 0.6);
+      border: 1px solid rgba(42, 37, 102, 0.6);
       border-radius: 12px;
-      background: rgba(31, 41, 55, 0.6);
+      background: rgba(18, 15, 61, 0.6);
       backdrop-filter: blur(10px);
       color: #f9fafb;
       font-size: 0.875rem;
@@ -371,9 +371,9 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
     
     .form-input:focus, .form-select:focus, .form-textarea:focus {
       outline: none;
-      border-color: #3b82f6;
-      background: rgba(31, 41, 55, 0.8);
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+      border-color: #FF8400;
+      background: rgba(18, 15, 61, 0.8);
+      box-shadow: 0 0 0 3px rgba(255, 132, 0, 0.2);
     }
 
     /* Select dropdown styling */
@@ -390,21 +390,21 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
     .form-checkbox {
       width: 1.25rem;
       height: 1.25rem;
-      background: rgba(31, 41, 55, 0.6);
-      border: 1px solid rgba(75, 85, 99, 0.6);
+      background: rgba(18, 15, 61, 0.6);
+      border: 1px solid rgba(42, 37, 102, 0.6);
       border-radius: 0.375rem;
       cursor: pointer;
       transition: all 0.2s ease;
     }
 
     .form-checkbox:checked {
-      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-      border-color: #3b82f6;
+      background: linear-gradient(135deg, #FF8400, #CC6A00);
+      border-color: #FF8400;
     }
 
     .form-checkbox:focus {
       outline: none;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+      box-shadow: 0 0 0 3px rgba(255, 132, 0, 0.2);
     }
     
     /* Button Styles - Using global button system */
@@ -417,16 +417,16 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
       font-size: 0.875rem;
       font-weight: 600;
       transition: all 0.2s ease;
-      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      background: linear-gradient(135deg, #FF8400, #E67700);
       color: white;
-      border: 1px solid rgba(59, 130, 246, 0.3);
-      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+      border: 1px solid rgba(255, 132, 0, 0.3);
+      box-shadow: 0 4px 15px rgba(255, 132, 0, 0.3);
     }
     
     .btn-primary:hover:not(:disabled) {
-      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      background: linear-gradient(135deg, #E67700, #CC6A00);
       transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+      box-shadow: 0 6px 20px rgba(255, 132, 0, 0.4);
     }
     
     .btn-primary:disabled {
@@ -443,9 +443,9 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
       font-size: 0.875rem;
       font-weight: 500;
       transition: all 0.2s ease;
-      background: rgba(31, 41, 55, 0.6);
+      background: rgba(18, 15, 61, 0.6);
       color: #d1d5db;
-      border: 1px solid rgba(75, 85, 99, 0.6);
+      border: 1px solid rgba(42, 37, 102, 0.6);
       backdrop-filter: blur(10px);
     }
     

@@ -6,6 +6,13 @@
   
   <!-- Main Content Area -->
   <main class="main-content" [class.no-sidebar]="isAuthRoute()">
+    <!-- Top Bar with Notification Bell -->
+    @if (!isAuthRoute()) {
+      <div class="top-bar">
+        <div class="top-bar-spacer"></div>
+        <app-notification-bell></app-notification-bell>
+      </div>
+    }
     <!-- Page Content -->
     <router-outlet />
   </main>

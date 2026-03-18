@@ -11,27 +11,30 @@
 
 /* OpAuto Theme Variables - Dark Mode Only */
 :root {
-  /* Dark Theme Colors - Permanent */
-  --color-bg-primary: #0f172a;
-  --color-bg-secondary: #1e293b;
-  --color-bg-tertiary: #334155;
+  /* Dark Theme Colors - Bleu Oxford Palette */
+  --color-bg-primary: #0B0829;
+  --color-bg-secondary: #120F3D;
+  --color-bg-tertiary: #1C1852;
   --color-text-primary: #f8fafc;
   --color-text-secondary: #cbd5e1;
   --color-text-tertiary: #94a3b8;
-  --color-border: #334155;
-  --color-border-light: #475569;
-  
-  /* Primary Blue Colors */
-  --color-primary: #60a5fa;
-  --color-primary-hover: #3b82f6;
-  --color-primary-light: #1e3a8a;
-  --color-primary-dark: #93c5fd;
-  
-  /* Secondary Amber Colors */
-  --color-secondary: #fbbf24;
-  --color-secondary-hover: #f59e0b;
-  --color-secondary-light: #92400e;
-  --color-secondary-dark: #fcd34d;
+  --color-border: #1C1852;
+  --color-border-light: #2A2566;
+
+  /* Primary Orange Colors */
+  --color-primary: #FF8400;
+  --color-primary-hover: #E67700;
+  --color-primary-light: #CC6A00;
+  --color-primary-dark: #FFa033;
+
+  /* Secondary Vista Bleu Colors */
+  --color-secondary: #8FA0D8;
+  --color-secondary-hover: #7B8CC4;
+  --color-secondary-light: #6778B0;
+  --color-secondary-dark: #A3B4E6;
+
+  /* Accent Light - Amande */
+  --color-accent-light: #F9DFC6;
   
   /* Status Colors */
   --color-success: #4ade80;
@@ -61,7 +64,7 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   /* Always dark mode */
-  background-color: #0f172a;
+  background-color: #0B0829;
 }
 
 body {
@@ -128,7 +131,7 @@ input, textarea, select {
 input:focus, textarea:focus, select:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+  box-shadow: 0 0 0 3px rgba(255, 132, 0, 0.1);
 }
 
 /* Utility Classes */
@@ -141,7 +144,7 @@ input:focus, textarea:focus, select:focus {
 
 /* Dark Mode Glassmorphism Effects - Permanent */
 .glass {
-  background: rgba(17, 24, 39, 0.4);
+  background: rgba(11, 8, 41, 0.4);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -150,7 +153,7 @@ input:focus, textarea:focus, select:focus {
 }
 
 .glass-light {
-  background: rgba(17, 24, 39, 0.3);
+  background: rgba(11, 8, 41, 0.3);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -159,7 +162,7 @@ input:focus, textarea:focus, select:focus {
 }
 
 .glass-dark {
-  background: rgba(17, 24, 39, 0.6);
+  background: rgba(11, 8, 41, 0.6);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.15);
@@ -169,7 +172,7 @@ input:focus, textarea:focus, select:focus {
 
 /* Glass Navigation */
 .glass-nav {
-  background: rgba(17, 24, 39, 0.8);
+  background: rgba(11, 8, 41, 0.8);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -177,7 +180,7 @@ input:focus, textarea:focus, select:focus {
 
 /* Glass Card */
 .glass-card {
-  background: rgba(17, 24, 39, 0.4);
+  background: rgba(11, 8, 41, 0.4);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -190,25 +193,25 @@ input:focus, textarea:focus, select:focus {
 
 /* Glass Button */
 .glass-button {
-  background: rgba(96, 165, 250, 0.2);
+  background: rgba(255, 132, 0, 0.2);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(96, 165, 250, 0.3);
+  border: 1px solid rgba(255, 132, 0, 0.3);
   border-radius: 12px;
   color: var(--color-primary);
   transition: all 0.3s ease;
 }
 
 .glass-button:hover {
-  background: rgba(96, 165, 250, 0.3);
-  border-color: rgba(96, 165, 250, 0.5);
+  background: rgba(255, 132, 0, 0.3);
+  border-color: rgba(255, 132, 0, 0.5);
   transform: translateY(-1px);
-  box-shadow: 0 10px 25px 0 rgba(96, 165, 250, 0.2);
+  box-shadow: 0 10px 25px 0 rgba(255, 132, 0, 0.2);
 }
 
 /* Glass Modal */
 .glass-modal {
-  background: rgba(17, 24, 39, 0.95);
+  background: rgba(11, 8, 41, 0.95);
   backdrop-filter: blur(40px) saturate(200%);
   -webkit-backdrop-filter: blur(40px) saturate(200%);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -220,7 +223,7 @@ input:focus, textarea:focus, select:focus {
 
 /* Glass Input */
 .glass-input {
-  background: rgba(17, 24, 39, 0.4);
+  background: rgba(11, 8, 41, 0.4);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -229,14 +232,14 @@ input:focus, textarea:focus, select:focus {
 }
 
 .glass-input:focus {
-  background: rgba(17, 24, 39, 0.6);
-  border-color: rgba(96, 165, 250, 0.5);
-  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+  background: rgba(11, 8, 41, 0.6);
+  border-color: rgba(255, 132, 0, 0.5);
+  box-shadow: 0 0 0 3px rgba(255, 132, 0, 0.1);
 }
 
 /* Glass Sidebar */
 .glass-sidebar {
-  background: rgba(17, 24, 39, 0.8);
+  background: rgba(11, 8, 41, 0.8);
   backdrop-filter: blur(30px) saturate(200%);
   -webkit-backdrop-filter: blur(30px) saturate(200%);
   border-right: 1px solid rgba(255, 255, 255, 0.1);
@@ -261,7 +264,7 @@ svg {
 /* Enhanced glass effects for better Apple-style appearance */
 @supports (backdrop-filter: blur(20px)) {
   .glass, .glass-card, .glass-nav, .glass-modal {
-    background-color: rgba(17, 24, 39, 0.3);
+    background-color: rgba(11, 8, 41, 0.3);
   }
 }
 
@@ -277,7 +280,7 @@ svg {
   pointer-events: none;
 
   /* Glassmorphism styling */
-  background: rgba(17, 24, 39, 0.95);
+  background: rgba(11, 8, 41, 0.95);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.15);
@@ -311,28 +314,28 @@ svg {
   bottom: -8px;
   left: 50%;
   transform: translateX(-50%);
-  border-top-color: rgba(17, 24, 39, 0.95);
+  border-top-color: rgba(11, 8, 41, 0.95);
 }
 
 .tooltip-container.tooltip-bottom::before {
   top: -8px;
   left: 50%;
   transform: translateX(-50%);
-  border-bottom-color: rgba(17, 24, 39, 0.95);
+  border-bottom-color: rgba(11, 8, 41, 0.95);
 }
 
 .tooltip-container.tooltip-left::before {
   right: -8px;
   top: 50%;
   transform: translateY(-50%);
-  border-left-color: rgba(17, 24, 39, 0.95);
+  border-left-color: rgba(11, 8, 41, 0.95);
 }
 
 .tooltip-container.tooltip-right::before {
   left: -8px;
   top: 50%;
   transform: translateY(-50%);
-  border-right-color: rgba(17, 24, 39, 0.95);
+  border-right-color: rgba(11, 8, 41, 0.95);
 }
 
 /* Tooltip max width for longer text */

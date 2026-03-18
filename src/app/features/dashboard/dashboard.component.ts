@@ -2,6 +2,9 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { HttpClientModule } from '@angular/common/http';
+import { BaseChartDirective } from 'ng2-charts';
+import { Chart, ChartConfiguration, registerables } from 'chart.js';
+
 import { LanguageToggleComponent } from '../../shared/components/language-toggle/language-toggle.component';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { TranslationService } from '../../core/services/translation.service';
@@ -9,6 +12,8 @@ import { AuthService } from '../../core/services/auth.service';
 import { OnboardingService } from '../../core/services/onboarding.service';
 import { OnboardingTourComponent } from '../../shared/components/onboarding-tour/onboarding-tour.component';
 import { TooltipDirective } from '../../shared/directives/tooltip.directive';
+
+Chart.register(...registerables);
 
 interface GarageMetrics {
   totalCarsToday: number;
@@ -49,7 +54,7 @@ interface ActiveJob {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, HttpClientModule, LanguageToggleComponent, TranslatePipe, OnboardingTourComponent, TooltipDirective],
+  imports: [CommonModule, HttpClientModule, BaseChartDirective, LanguageToggleComponent, TranslatePipe, OnboardingTourComponent, TooltipDirective],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
@@ -191,6 +196,78 @@ export class DashboardComponent implements OnInit {
       status: 'waiting_parts'
     }
   ];
+
+  // KPI Cards Data
+  kpiCards = [
+    { label: 'Revenue', value: '2,450 TND', trend: '+12%', trendDirection: 'up' as const, trendLabel: 'from last week', icon: 'revenue' },
+    { label: 'Appointments', value: '7 today', trend: '+3', trendDirection: 'up' as const, trendLabel: 'from last week', icon: 'appointments' },
+    { label: 'Utilization', value: '75%', trend: '6/8 bays', trendDirection: 'up' as const, trendLabel: 'occupied', icon: 'utilization' },
+    { label: 'Active Jobs', value: '3', trend: '-1', trendDirection: 'down' as const, trendLabel: 'from yesterday', icon: 'jobs' },
+  ];
+
+  // Revenue Line Chart
+  revenueChartData: ChartConfiguration<'line'>['data'] = {
+    labels: ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'],
+    datasets: [{
+      data: [18500, 22300, 19800, 24500, 21000, 26800],
+      label: 'Revenue (TND)',
+      fill: true,
+      tension: 0.4,
+      borderColor: '#FF8400',
+      backgroundColor: 'rgba(255, 132, 0, 0.1)',
+      pointBackgroundColor: '#FF8400',
+      pointBorderColor: '#FF8400',
+      pointHoverBackgroundColor: '#fff',
+      pointHoverBorderColor: '#FF8400',
+    }]
+  };
+
+  revenueChartOptions: ChartConfiguration<'line'>['options'] = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+      y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', callback: (v) => v + ' TND' } }
+    },
+    plugins: { legend: { display: false } }
+  };
+
+  // Job Type Doughnut Chart
+  jobTypeChartData: ChartConfiguration<'doughnut'>['data'] = {
+    labels: ['Oil Change', 'Brake Service', 'Engine', 'Tires', 'Electrical', 'Body Work'],
+    datasets: [{
+      data: [30, 20, 15, 15, 12, 8],
+      backgroundColor: ['#FF8400', '#8FA0D8', '#F9DFC6', '#22c55e', '#a855f7', '#06b6d4'],
+      borderColor: '#0B0829',
+      borderWidth: 2,
+    }]
+  };
+
+  jobTypeChartOptions: ChartConfiguration<'doughnut'>['options'] = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { position: 'right', labels: { color: '#94a3b8', padding: 12, font: { size: 12 } } } },
+    cutout: '65%',
+  };
+
+  // Mechanic Performance Bar Chart
+  mechanicChartData: ChartConfiguration<'bar'>['data'] = {
+    labels: ['Mohamed', 'Khalil', 'Youssef', 'Hichem', 'Ali'],
+    datasets: [
+      { data: [12, 10, 8, 9, 6], label: 'Completed', backgroundColor: '#FF8400', borderRadius: 6 },
+      { data: [3, 2, 4, 1, 3], label: 'In Progress', backgroundColor: '#8FA0D8', borderRadius: 6 },
+    ]
+  };
+
+  mechanicChartOptions: ChartConfiguration<'bar'>['options'] = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: { grid: { display: false }, ticks: { color: '#94a3b8' }, stacked: true },
+      y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' }, stacked: true }
+    },
+    plugins: { legend: { labels: { color: '#94a3b8' } } }
+  };
 
   constructor() {
   }

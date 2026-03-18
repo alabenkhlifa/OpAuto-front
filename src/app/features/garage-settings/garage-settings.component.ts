@@ -215,8 +215,8 @@ import { IntegrationSettingsComponent } from './components/integration-settings.
     .loading-spinner {
       width: 2rem;
       height: 2rem;
-      border: 3px solid rgba(59, 130, 246, 0.3);
-      border-top: 3px solid #3b82f6;
+      border: 3px solid rgba(255, 132, 0, 0.3);
+      border-top: 3px solid #FF8400;
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }

@@ -255,7 +255,7 @@ import { TooltipDirective } from '../../../shared/directives/tooltip.directive';
     }
 
     .loading-bar {
-      background: rgba(75, 85, 99, 0.6);
+      background: rgba(42, 37, 102, 0.6);
       border-radius: 0.5rem;
       margin-bottom: 1rem;
       animation: pulse 1.5s ease-in-out infinite;
@@ -280,7 +280,7 @@ import { TooltipDirective } from '../../../shared/directives/tooltip.directive';
 
     .glass-card {
       backdrop-filter: blur(20px);
-      background: rgba(31, 41, 55, 0.6);
+      background: rgba(18, 15, 61, 0.6);
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 16px;
       padding: 1.5rem;
@@ -308,7 +308,7 @@ import { TooltipDirective } from '../../../shared/directives/tooltip.directive';
     }
 
     .tier-badge.solo {
-      background: rgba(59, 130, 246, 0.8);
+      background: rgba(255, 132, 0, 0.8);
       color: white;
     }
 
@@ -366,7 +366,7 @@ import { TooltipDirective } from '../../../shared/directives/tooltip.directive';
     }
 
     .usage-item {
-      background: rgba(31, 41, 55, 0.4);
+      background: rgba(18, 15, 61, 0.4);
       padding: 1rem;
       border-radius: 12px;
     }
@@ -390,7 +390,7 @@ import { TooltipDirective } from '../../../shared/directives/tooltip.directive';
 
     .progress-bar {
       width: 100%;
-      background: rgba(75, 85, 99, 1);
+      background: rgba(42, 37, 102, 1);
       border-radius: 9999px;
       height: 0.5rem;
       overflow: hidden;
@@ -456,11 +456,11 @@ import { TooltipDirective } from '../../../shared/directives/tooltip.directive';
     }
 
     .feature-item.enabled {
-      background: rgba(31, 41, 55, 0.5);
+      background: rgba(18, 15, 61, 0.5);
     }
 
     .feature-item.disabled {
-      background: rgba(17, 24, 39, 0.3);
+      background: rgba(11, 8, 41, 0.3);
     }
 
     .feature-icon {
@@ -509,7 +509,7 @@ import { TooltipDirective } from '../../../shared/directives/tooltip.directive';
     }
 
     .tier-card {
-      background: rgba(31, 41, 55, 0.6);
+      background: rgba(18, 15, 61, 0.6);
       backdrop-filter: blur(20px);
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 16px;
@@ -518,8 +518,8 @@ import { TooltipDirective } from '../../../shared/directives/tooltip.directive';
     }
 
     .tier-card.current {
-      border-color: rgba(59, 130, 246, 0.5);
-      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+      border-color: rgba(255, 132, 0, 0.5);
+      box-shadow: 0 0 0 2px rgba(255, 132, 0, 0.5);
     }
 
     .tier-card.recommended {
@@ -610,7 +610,7 @@ import { TooltipDirective } from '../../../shared/directives/tooltip.directive';
     }
 
     .current-plan-indicator {
-      background: rgba(59, 130, 246, 0.8);
+      background: rgba(255, 132, 0, 0.8);
       color: white;
       padding: 0.75rem 1rem;
       border-radius: 12px;

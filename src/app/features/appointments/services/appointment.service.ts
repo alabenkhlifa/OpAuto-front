@@ -1,242 +1,152 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable, of, BehaviorSubject } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
 import { Appointment, AppointmentSlot, Car, Customer, Mechanic, GarageCapacity } from '../../../core/models/appointment.model';
+import { fromBackendEnum, toBackendEnum } from '../../../core/utils/enum-mapper';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AppointmentService {
+  private http = inject(HttpClient);
+
   private appointmentsSubject = new BehaviorSubject<Appointment[]>([]);
   public appointments$ = this.appointmentsSubject.asObservable();
-  
+
   public selectedDate = signal<Date>(new Date());
   public viewMode = signal<'day' | 'week' | 'month'>('day');
 
-  // Mock data for development - Dynamic dates based on today
-  private mockAppointments: Appointment[] = this.generateMockAppointments();
+  // Cached data from backend for sync lookups
+  private cachedCars: Car[] = [];
+  private cachedCustomers: Customer[] = [];
+  private cachedMechanics: Mechanic[] = [];
 
-  private mockCars: Car[] = [
-    { id: 'car1', licensePlate: '123 TUN 2024', make: 'BMW', model: 'X5', year: 2020, customerId: 'customer1' },
-    { id: 'car2', licensePlate: '456 TUN 2019', make: 'Honda', model: 'Civic', year: 2019, customerId: 'customer2' },
-    { id: 'car3', licensePlate: '789 TUN 2021', make: 'Toyota', model: 'Camry', year: 2021, customerId: 'customer1' },
-    { id: 'car4', licensePlate: '321 TUN 2022', make: 'Mercedes', model: 'C-Class', year: 2022, customerId: 'customer3' },
-    { id: 'car5', licensePlate: '654 TUN 2020', make: 'Audi', model: 'A4', year: 2020, customerId: 'customer4' }
-  ];
+  // --- Backend mapping helpers ---
 
-  private mockCustomers: Customer[] = [
-    { id: 'customer1', name: 'Ahmed Ben Ali', phone: '+216-20-123-456', email: 'ahmed.benali@email.tn' },
-    { id: 'customer2', name: 'Fatma Trabelsi', phone: '+216-25-789-123', email: 'fatma.trabelsi@email.tn' },
-    { id: 'customer3', name: 'Mohamed Khemir', phone: '+216-22-456-789', email: 'mohamed.khemir@email.tn' },
-    { id: 'customer4', name: 'Leila Mansouri', phone: '+216-28-654-321', email: 'leila.mansouri@email.tn' }
-  ];
+  private mapFromBackend(b: any): Appointment {
+    const scheduledDate = new Date(b.startTime || b.scheduledDate);
+    const estimatedDuration = b.estimatedDuration ||
+      this.calculateFromTimes(b.startTime, b.endTime);
 
-  private mockMechanics: Mechanic[] = [
-    { id: 'mechanic1', name: 'Karim Mechanic', specialties: ['oil-change', 'inspection', 'engine'], isAvailable: true, currentWorkload: 2 },
-    { id: 'mechanic2', name: 'Slim Technician', specialties: ['brake-repair', 'transmission', 'electrical'], isAvailable: true, currentWorkload: 1 },
-    { id: 'mechanic3', name: 'Hedi Expert', specialties: ['bodywork', 'painting', 'tires'], isAvailable: false, currentWorkload: 3 }
-  ];
+    return {
+      id: b.id,
+      carId: b.carId,
+      customerId: b.customerId,
+      mechanicId: b.employeeId || b.mechanicId,
+      serviceName: b.title || b.serviceName,
+      serviceType: b.type || b.serviceType,
+      scheduledDate,
+      estimatedDuration,
+      status: fromBackendEnum(b.status) as Appointment['status'],
+      notes: b.notes,
+      priority: b.priority || 'medium',
+      createdAt: new Date(b.createdAt),
+      updatedAt: new Date(b.updatedAt),
+    };
+  }
 
-  private generateMockAppointments(): Appointment[] {
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+  private mapToBackend(f: Partial<Appointment>): any {
+    const payload: any = {};
 
-    return [
-      {
-        id: '1',
-        carId: 'car1',
-        customerId: 'customer1', 
-        mechanicId: 'mechanic1',
-        serviceType: 'oil-change',
-        serviceName: 'Oil Change & Filter Replacement',
-        scheduledDate: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 8, 30),
-        estimatedDuration: 90,
-        status: 'completed',
-        notes: 'Regular maintenance - customer requested synthetic oil',
-        priority: 'medium',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: '2', 
-        carId: 'car2',
-        customerId: 'customer2',
-        mechanicId: 'mechanic2',
-        serviceType: 'brake-repair',
-        serviceName: 'Front Brake Pads Replacement',
-        scheduledDate: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 14, 0),
-        estimatedDuration: 120,
-        status: 'completed',
-        notes: 'Customer reported squeaking noise',
-        priority: 'high',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: '3',
-        carId: 'car3', 
-        customerId: 'customer1',
-        mechanicId: 'mechanic1',
-        serviceType: 'inspection',
-        serviceName: 'Annual Technical Inspection',
-        scheduledDate: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 30),
-        estimatedDuration: 60,
-        status: 'scheduled',
-        priority: 'low',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: '4',
-        carId: 'car4',
-        customerId: 'customer3',
-        mechanicId: 'mechanic2',
-        serviceType: 'engine',
-        serviceName: 'Engine Diagnostic & Tune-up',
-        scheduledDate: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 11, 0),
-        estimatedDuration: 180,
-        status: 'in-progress',
-        notes: 'Check engine light is on',
-        priority: 'high',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: '5',
-        carId: 'car5',
-        customerId: 'customer4',
-        mechanicId: 'mechanic1',
-        serviceType: 'tires',
-        serviceName: 'Tire Rotation & Balancing',
-        scheduledDate: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 16, 30),
-        estimatedDuration: 45,
-        status: 'scheduled',
-        priority: 'low',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: '6',
-        carId: 'car2',
-        customerId: 'customer2',
-        mechanicId: 'mechanic2',
-        serviceType: 'transmission',
-        serviceName: 'Transmission Fluid Change',
-        scheduledDate: new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 8, 0),
-        estimatedDuration: 60,
-        status: 'scheduled',
-        notes: 'Scheduled maintenance',
-        priority: 'medium',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: '7',
-        carId: 'car1',
-        customerId: 'customer1',
-        mechanicId: 'mechanic1',
-        serviceType: 'electrical',
-        serviceName: 'Battery & Alternator Check',
-        scheduledDate: new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 10, 30),
-        estimatedDuration: 90,
-        status: 'scheduled',
-        notes: 'Customer reports starting issues',
-        priority: 'high',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: '8',
-        carId: 'car3',
-        customerId: 'customer1',
-        mechanicId: 'mechanic3',
-        serviceType: 'bodywork',
-        serviceName: 'Minor Dent Repair',
-        scheduledDate: new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 14, 0),
-        estimatedDuration: 120,
-        status: 'scheduled',
-        priority: 'low',
-        createdAt: new Date(),
-        updatedAt: new Date()
+    if (f.serviceName !== undefined) payload.title = f.serviceName;
+    if (f.serviceType !== undefined) payload.type = f.serviceType;
+    if (f.scheduledDate !== undefined) {
+      const start = f.scheduledDate instanceof Date ? f.scheduledDate : new Date(f.scheduledDate);
+      payload.startTime = start.toISOString();
+      if (f.estimatedDuration !== undefined) {
+        payload.endTime = new Date(start.getTime() + f.estimatedDuration * 60000).toISOString();
       }
-    ];
+    }
+    if (f.estimatedDuration !== undefined) payload.estimatedDuration = f.estimatedDuration;
+    if (f.mechanicId !== undefined) payload.employeeId = f.mechanicId;
+    if (f.carId !== undefined) payload.carId = f.carId;
+    if (f.customerId !== undefined) payload.customerId = f.customerId;
+    if (f.status !== undefined) payload.status = toBackendEnum(f.status);
+    if (f.priority !== undefined) payload.priority = f.priority;
+    if (f.notes !== undefined) payload.notes = f.notes;
+
+    return payload;
   }
 
-  constructor() {
-    this.appointmentsSubject.next(this.mockAppointments);
+  private calculateFromTimes(startTime: string | undefined, endTime: string | undefined): number {
+    if (!startTime || !endTime) return 60; // default 60 min
+    const diffMs = new Date(endTime).getTime() - new Date(startTime).getTime();
+    return Math.round(diffMs / 60000);
   }
 
-  // Appointment CRUD operations
+  // --- Appointment CRUD operations ---
+
   getAppointments(): Observable<Appointment[]> {
-    return this.appointments$;
+    return this.http.get<any[]>('/appointments').pipe(
+      map(items => items.map(b => this.mapFromBackend(b))),
+      tap(appointments => this.appointmentsSubject.next(appointments))
+    );
   }
 
   getAppointmentsByDate(date: Date): Observable<Appointment[]> {
-    const dayStart = new Date(date);
-    dayStart.setHours(0, 0, 0, 0);
-    const dayEnd = new Date(date);
-    dayEnd.setHours(23, 59, 59, 999);
-
-    const filtered = this.mockAppointments.filter(apt => 
-      apt.scheduledDate >= dayStart && apt.scheduledDate <= dayEnd
+    const dateStr = date.toISOString().split('T')[0];
+    return this.http.get<any[]>('/appointments', { params: { date: dateStr } }).pipe(
+      map(items => items.map(b => this.mapFromBackend(b)))
     );
-    return of(filtered);
   }
 
   createAppointment(appointment: Omit<Appointment, 'id' | 'createdAt' | 'updatedAt'>): Observable<Appointment> {
-    const newAppointment: Appointment = {
-      ...appointment,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    
-    this.mockAppointments.push(newAppointment);
-    this.appointmentsSubject.next([...this.mockAppointments]);
-    return of(newAppointment);
+    const body = this.mapToBackend(appointment as Partial<Appointment>);
+    return this.http.post<any>('/appointments', body).pipe(
+      map(b => this.mapFromBackend(b)),
+      tap(created => {
+        const current = this.appointmentsSubject.value;
+        this.appointmentsSubject.next([...current, created]);
+      })
+    );
   }
 
   updateAppointment(id: string, updates: Partial<Appointment>): Observable<Appointment> {
-    const index = this.mockAppointments.findIndex(apt => apt.id === id);
-    if (index !== -1) {
-      this.mockAppointments[index] = {
-        ...this.mockAppointments[index],
-        ...updates,
-        updatedAt: new Date()
-      };
-      this.appointmentsSubject.next([...this.mockAppointments]);
-      return of(this.mockAppointments[index]);
-    }
-    throw new Error('Appointment not found');
+    const body = this.mapToBackend(updates);
+    return this.http.put<any>(`/appointments/${id}`, body).pipe(
+      map(b => this.mapFromBackend(b)),
+      tap(updated => {
+        const current = this.appointmentsSubject.value;
+        const index = current.findIndex(apt => apt.id === id);
+        if (index !== -1) {
+          current[index] = updated;
+          this.appointmentsSubject.next([...current]);
+        }
+      })
+    );
   }
 
   deleteAppointment(id: string): Observable<boolean> {
-    const index = this.mockAppointments.findIndex(apt => apt.id === id);
-    if (index !== -1) {
-      this.mockAppointments.splice(index, 1);
-      this.appointmentsSubject.next([...this.mockAppointments]);
-      return of(true);
-    }
-    return of(false);
+    return this.http.delete<void>(`/appointments/${id}`).pipe(
+      map(() => {
+        const current = this.appointmentsSubject.value;
+        const index = current.findIndex(apt => apt.id === id);
+        if (index !== -1) {
+          current.splice(index, 1);
+          this.appointmentsSubject.next([...current]);
+        }
+        return true;
+      })
+    );
   }
 
-  // Slot management
+  // --- Slot management ---
+
   getAvailableSlots(date: Date, duration: number): Observable<AppointmentSlot[]> {
     const slots: AppointmentSlot[] = [];
     const dayStart = new Date(date);
     dayStart.setHours(8, 0, 0, 0); // 8 AM start
-    
+
     for (let hour = 8; hour < 18; hour++) {
       for (let minute = 0; minute < 60; minute += 30) {
         const slotStart = new Date(dayStart);
         slotStart.setHours(hour, minute, 0, 0);
         const slotEnd = new Date(slotStart);
         slotEnd.setMinutes(slotStart.getMinutes() + duration);
-        
+
         const isAvailable = !this.isSlotConflict(slotStart, slotEnd);
-        
+
         slots.push({
           startTime: slotStart,
           endTime: slotEnd,
@@ -244,48 +154,54 @@ export class AppointmentService {
         });
       }
     }
-    
+
     return of(slots);
   }
 
   private isSlotConflict(startTime: Date, endTime: Date): boolean {
-    return this.mockAppointments.some(apt => {
+    return this.appointmentsSubject.value.some(apt => {
       const aptStart = apt.scheduledDate;
       const aptEnd = new Date(aptStart.getTime() + apt.estimatedDuration * 60000);
-      
+
       return (startTime < aptEnd && endTime > aptStart);
     });
   }
 
-  // Helper data getters
+  // --- Helper data getters (wired to backend) ---
+
   getCars(): Observable<Car[]> {
-    return of(this.mockCars);
+    return this.http.get<Car[]>('/cars').pipe(
+      tap(cars => this.cachedCars = cars)
+    );
   }
 
   getCustomers(): Observable<Customer[]> {
-    return of(this.mockCustomers);
+    return this.http.get<Customer[]>('/customers').pipe(
+      tap(customers => this.cachedCustomers = customers)
+    );
   }
 
   getMechanics(): Observable<Mechanic[]> {
-    return of(this.mockMechanics);
+    return this.http.get<any[]>('/employees').pipe(
+      map(employees => employees.map(e => ({
+        id: e.id,
+        name: e.name || `${e.firstName || ''} ${e.lastName || ''}`.trim(),
+        specialties: e.specialties || e.skills || [],
+        isAvailable: e.isAvailable ?? true,
+        currentWorkload: e.currentWorkload ?? 0,
+      } as Mechanic))),
+      tap(mechanics => this.cachedMechanics = mechanics)
+    );
   }
 
   getGarageCapacity(): Observable<GarageCapacity> {
-    return of({
-      totalLifts: 5,
-      availableLifts: 3,
-      totalMechanics: 2,
-      availableMechanics: 2,
-      workingHours: {
-        start: '08:00',
-        end: '18:00'
-      }
-    });
+    return this.http.get<GarageCapacity>('/garage-settings/capacity');
   }
 
-  // Search and filter
+  // --- Search and filter (using cached subject) ---
+
   searchAppointments(query: string): Observable<Appointment[]> {
-    const filtered = this.mockAppointments.filter(apt => 
+    const filtered = this.appointmentsSubject.value.filter(apt =>
       apt.serviceName.toLowerCase().includes(query.toLowerCase()) ||
       apt.notes?.toLowerCase().includes(query.toLowerCase())
     );
@@ -293,26 +209,27 @@ export class AppointmentService {
   }
 
   getAppointmentsByMechanic(mechanicId: string): Observable<Appointment[]> {
-    const filtered = this.mockAppointments.filter(apt => apt.mechanicId === mechanicId);
+    const filtered = this.appointmentsSubject.value.filter(apt => apt.mechanicId === mechanicId);
     return of(filtered);
   }
 
   getAppointmentsByStatus(status: string): Observable<Appointment[]> {
-    const filtered = this.mockAppointments.filter(apt => apt.status === status);
+    const filtered = this.appointmentsSubject.value.filter(apt => apt.status === status);
     return of(filtered);
   }
 
-  // Helper methods to get related data
+  // --- Sync helper methods (use cached data) ---
+
   getCarById(carId: string): Car | undefined {
-    return this.mockCars.find(car => car.id === carId);
+    return this.cachedCars.find(car => car.id === carId);
   }
 
   getCustomerById(customerId: string): Customer | undefined {
-    return this.mockCustomers.find(customer => customer.id === customerId);
+    return this.cachedCustomers.find(customer => customer.id === customerId);
   }
 
   getMechanicById(mechanicId: string): Mechanic | undefined {
-    return this.mockMechanics.find(mechanic => mechanic.id === mechanicId);
+    return this.cachedMechanics.find(mechanic => mechanic.id === mechanicId);
   }
 
   getCustomerByCar(carId: string): Customer | undefined {
@@ -320,9 +237,10 @@ export class AppointmentService {
     return car ? this.getCustomerById(car.customerId) : undefined;
   }
 
-  // Enhanced appointment data with related info
+  // --- Enhanced appointment data with related info ---
+
   getAppointmentWithDetails(appointmentId: string): Observable<any> {
-    const appointment = this.mockAppointments.find(apt => apt.id === appointmentId);
+    const appointment = this.appointmentsSubject.value.find(apt => apt.id === appointmentId);
     if (!appointment) {
       throw new Error('Appointment not found');
     }

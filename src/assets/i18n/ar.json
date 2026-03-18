@@ -45,6 +45,9 @@
     "customers": "العملاء",
     "reports": "التقارير",
     "employees": "الموظفين",
+    "calendar": "التقويم",
+    "notifications": "الإشعارات",
+    "modules": "الوحدات",
     "subscription": "الاشتراك",
     "profile": "الملف الشخصي",
     "logout": "تسجيل خروج",
@@ -2114,5 +2117,52 @@
         "description": "قم بتحميل صور الإصلاحات والمشاكل. يساعد التوثيق البصري في التواصل مع العملاء."
       }
     }
+  },
+  "calendar": {
+    "title": "التقويم",
+    "month": "شهر",
+    "week": "أسبوع",
+    "day": "يوم",
+    "today": "اليوم",
+    "allMechanics": "جميع الميكانيكيين",
+    "noEvents": "لا توجد أحداث",
+    "dragToReschedule": "اسحب لإعادة الجدولة",
+    "clickToView": "انقر لعرض التفاصيل"
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "markAllRead": "تعليم الكل كمقروء",
+    "viewAll": "عرض جميع الإشعارات",
+    "noNotifications": "لا توجد إشعارات",
+    "allCaughtUp": "أنت على اطلاع بكل شيء!",
+    "unreadOnly": "غير المقروءة فقط",
+    "types": {
+      "appointment": "المواعيد",
+      "maintenance": "الصيانة",
+      "approval": "الموافقات",
+      "invoice": "الفواتير",
+      "stock": "المخزون",
+      "system": "النظام"
+    }
+  },
+  "modules": {
+    "title": "سوق الوحدات",
+    "subtitle": "خصص ورشتك بالوحدات التي تحتاجها",
+    "free": "مجاني",
+    "perMonth": "/شهر",
+    "active": "نشط",
+    "activate": "تفعيل",
+    "deactivate": "إلغاء التفعيل",
+    "freeModules": "وحدات مجانية",
+    "paidModules": "وحدات مدفوعة",
+    "allModulesActive": "جميع الوحدات نشطة للعرض التجريبي"
+  },
+  "ai": {
+    "title": "مساعد الذكاء الاصطناعي",
+    "diagnose": "تشخيص ذكي",
+    "estimate": "تقدير ذكي",
+    "suggest": "اقتراح ذكي",
+    "generateInsights": "إنشاء رؤى",
+    "mockMode": "يعمل في وضع العرض التجريبي"
   }
 }

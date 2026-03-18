@@ -150,9 +150,9 @@ export class FinancialReportsComponent implements OnInit {
           data: [45, 30, 20, 5],
           backgroundColor: [
             '#10B981',
-            '#3B82F6', 
+            '#FF8400', 
             '#8B5CF6',
-            '#F59E0B'
+            '#7B8CC4'
           ],
           borderWidth: 2,
           borderColor: '#ffffff'
@@ -187,7 +187,7 @@ export class FinancialReportsComponent implements OnInit {
             label: 'Net Profit',
             data: [2800, 3600, 3200, 3900],
             borderColor: 'rgb(59, 130, 246)',
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            backgroundColor: 'rgba(255, 132, 0, 0.1)',
             tension: 0.3,
             fill: true
           }

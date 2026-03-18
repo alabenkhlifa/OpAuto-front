@@ -426,9 +426,9 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
   styles: [`
     /* Dark glassmorphism card styling */
     .glass-card {
-      background: rgba(17, 24, 39, 0.95);
+      background: rgba(11, 8, 41, 0.95);
       backdrop-filter: blur(10px);
-      border: 1px solid rgba(75, 85, 99, 0.6);
+      border: 1px solid rgba(42, 37, 102, 0.6);
       border-radius: 20px;
       padding: 1.5rem;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
@@ -437,16 +437,16 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
     }
 
     .glass-card:hover {
-      background: rgba(31, 41, 55, 0.98);
+      background: rgba(18, 15, 61, 0.98);
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
-      border-color: rgba(59, 130, 246, 0.7);
+      border-color: rgba(255, 132, 0, 0.7);
       transform: translateY(-2px);
     }
 
     /* Button styling to match other screens */
     .btn-primary {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      border: 1px solid #f59e0b;
+      background: linear-gradient(135deg, #7B8CC4, #6778B0);
+      border: 1px solid #7B8CC4;
       color: white !important;
       padding: 0.75rem 1rem;
       border-radius: 12px;
@@ -463,14 +463,14 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
     }
 
     .btn-primary:hover {
-      background: linear-gradient(135deg, #d97706, #b45309);
+      background: linear-gradient(135deg, #6778B0, #b45309);
       box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
       transform: translateY(-1px);
     }
     
     .btn-secondary {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      border: 1px solid #f59e0b;
+      background: linear-gradient(135deg, #7B8CC4, #6778B0);
+      border: 1px solid #7B8CC4;
       color: white !important;
       padding: 0.75rem 1rem;
       border-radius: 12px;
@@ -487,7 +487,7 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
     }
 
     .btn-secondary:hover {
-      background: linear-gradient(135deg, #d97706, #b45309);
+      background: linear-gradient(135deg, #6778B0, #b45309);
       box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
       transform: translateY(-1px);
     }
@@ -541,10 +541,10 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
     }
 
     .status-badge-in-progress {
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(29, 78, 216, 0.9)) !important;
+      background: linear-gradient(135deg, rgba(255, 132, 0, 0.9), rgba(204, 106, 0, 0.9)) !important;
       color: #ffffff !important;
-      border: 1px solid rgba(59, 130, 246, 0.6);
-      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+      border: 1px solid rgba(255, 132, 0, 0.6);
+      box-shadow: 0 4px 15px rgba(255, 132, 0, 0.3);
     }
 
     .status-badge-completed {
@@ -562,10 +562,10 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
     }
 
     .priority-badge-low {
-      background: linear-gradient(135deg, rgba(75, 85, 99, 0.9), rgba(55, 65, 81, 0.9)) !important;
+      background: linear-gradient(135deg, rgba(42, 37, 102, 0.9), rgba(55, 65, 81, 0.9)) !important;
       color: #ffffff !important;
-      border: 1px solid rgba(75, 85, 99, 0.6);
-      box-shadow: 0 4px 15px rgba(75, 85, 99, 0.3);
+      border: 1px solid rgba(42, 37, 102, 0.6);
+      box-shadow: 0 4px 15px rgba(42, 37, 102, 0.3);
     }
 
     .priority-badge-medium {

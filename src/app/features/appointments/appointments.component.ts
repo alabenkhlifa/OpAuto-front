@@ -323,8 +323,8 @@ export class AppointmentsComponent implements AfterViewInit {
 
   getStatusColor(status: AppointmentStatus): string {
     const colors = {
-      'scheduled': '#3b82f6', // blue
-      'in-progress': '#f59e0b', // amber  
+      'scheduled': '#FF8400', // blue
+      'in-progress': '#7B8CC4', // amber  
       'completed': '#10b981', // green
       'cancelled': '#ef4444' // red
     };
@@ -334,7 +334,7 @@ export class AppointmentsComponent implements AfterViewInit {
   getPriorityColor(priority: string): string {
     const colors = {
       'low': '#6b7280',    // gray
-      'medium': '#f59e0b', // amber
+      'medium': '#7B8CC4', // amber
       'high': '#ef4444'    // red
     };
     return colors[priority as keyof typeof colors] || colors.low;

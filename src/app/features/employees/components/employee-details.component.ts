@@ -331,12 +331,12 @@ import { Employee, EmployeePerformanceMetrics } from '../../../core/models/emplo
       font-weight: 500;
       border-radius: 0.375rem;
       color: white;
-      background-color: #2563eb;
+      background-color: #E67700;
       gap: 0.5rem;
     }
     
     .btn-primary:hover {
-      background-color: #1d4ed8;
+      background-color: #CC6A00;
     }
   `]
 })

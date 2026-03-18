@@ -13,7 +13,7 @@ import { LanguageToggleComponent } from '../../shared/components/language-toggle
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, TranslatePipe, LanguageToggleComponent],
   template: `
-    <div class="min-h-screen flex items-center justify-center p-4" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);">
+    <div class="min-h-screen flex items-center justify-center p-4" style="background: linear-gradient(135deg, #0B0829 0%, #120F3D 50%, #1C1852 100%);">
       
       <!-- Background Pattern -->
       <div class="absolute inset-0 overflow-hidden pointer-events-none">
@@ -281,9 +281,9 @@ import { LanguageToggleComponent } from '../../shared/components/language-toggle
   styles: [`
     /* Glass Card Effect */
     .glass-card {
-      background: rgba(17, 24, 39, 0.95);
+      background: rgba(11, 8, 41, 0.95);
       backdrop-filter: blur(20px);
-      border: 1px solid rgba(75, 85, 99, 0.6);
+      border: 1px solid rgba(42, 37, 102, 0.6);
       border-radius: 20px;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -302,9 +302,9 @@ import { LanguageToggleComponent } from '../../shared/components/language-toggle
       display: block;
       width: 100%;
       padding: 0.875rem 1rem;
-      border: 1px solid rgba(75, 85, 99, 0.4);
+      border: 1px solid rgba(42, 37, 102, 0.4);
       border-radius: 12px;
-      background: rgba(31, 41, 55, 0.6);
+      background: rgba(18, 15, 61, 0.6);
       backdrop-filter: blur(10px);
       color: #ffffff;
       font-size: 0.875rem;
@@ -313,9 +313,9 @@ import { LanguageToggleComponent } from '../../shared/components/language-toggle
     
     .form-input:focus {
       outline: none;
-      border-color: rgba(59, 130, 246, 0.6);
-      background: rgba(31, 41, 55, 0.8);
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      border-color: rgba(255, 132, 0, 0.6);
+      background: rgba(18, 15, 61, 0.8);
+      box-shadow: 0 0 0 3px rgba(255, 132, 0, 0.1);
     }
     
     .form-input::placeholder {

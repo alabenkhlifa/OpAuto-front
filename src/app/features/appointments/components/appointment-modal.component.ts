@@ -188,7 +188,7 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
     }
 
     .modal-content {
-      background: rgba(17, 24, 39, 0.95);
+      background: rgba(11, 8, 41, 0.95);
       backdrop-filter: blur(20px);
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 24px;
@@ -275,7 +275,7 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
       content: '';
       width: 4px;
       height: 1.5rem;
-      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      background: linear-gradient(135deg, #FF8400, #CC6A00);
       border-radius: 2px;
     }
 
@@ -350,9 +350,9 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
     .form-select:focus,
     .form-textarea:focus {
       outline: none;
-      border-color: #3b82f6;
+      border-color: #FF8400;
       background: rgba(255, 255, 255, 0.1);
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+      box-shadow: 0 0 0 3px rgba(255, 132, 0, 0.2);
       transform: translateY(-1px);
     }
 
@@ -395,10 +395,10 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
     }
 
     .quick-add-btn:hover {
-      border-color: #3b82f6;
+      border-color: #FF8400;
       border-style: solid;
-      color: #3b82f6;
-      background: rgba(59, 130, 246, 0.1);
+      color: #FF8400;
+      background: rgba(255, 132, 0, 0.1);
       transform: scale(1.05);
     }
 

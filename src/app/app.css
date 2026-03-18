@@ -31,13 +31,32 @@
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.5rem;
-  background: rgba(17, 24, 39, 0.8);
+  background: rgba(11, 8, 41, 0.8);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   position: sticky;
   top: 0;
   z-index: 10;
+}
+
+/* Top Bar with Notification Bell */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0.75rem 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(11, 8, 41, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.top-bar-spacer {
+  flex: 1;
 }
 
 /* Page Content */

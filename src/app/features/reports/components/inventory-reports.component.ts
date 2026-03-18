@@ -177,7 +177,7 @@ export class InventoryReportsComponent implements OnInit {
           {
             label: 'Current Stock',
             data: [12, 8, 15, 20, 25, 6],
-            backgroundColor: 'rgba(59, 130, 246, 0.8)',
+            backgroundColor: 'rgba(255, 132, 0, 0.8)',
             borderColor: 'rgb(59, 130, 246)',
             borderWidth: 1
           },
@@ -215,9 +215,9 @@ export class InventoryReportsComponent implements OnInit {
           data: [25, 20, 15, 18, 12, 10],
           backgroundColor: [
             '#EF4444',
-            '#F59E0B',
+            '#7B8CC4',
             '#10B981',
-            '#3B82F6',
+            '#FF8400',
             '#8B5CF6',
             '#6B7280'
           ],
@@ -246,9 +246,9 @@ export class InventoryReportsComponent implements OnInit {
           data: [8.5, 6.2, 12.1, 9.8, 4.3, 7.6],
           backgroundColor: [
             '#10B981',
-            '#3B82F6',
+            '#FF8400',
             '#8B5CF6',
-            '#F59E0B',
+            '#7B8CC4',
             '#EF4444',
             '#6B7280'
           ],

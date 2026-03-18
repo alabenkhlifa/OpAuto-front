@@ -1,23 +1,28 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable, of, BehaviorSubject } from 'rxjs';
-import { 
-  Part, 
-  PartWithStock, 
-  Supplier, 
-  StockMovement, 
-  PartOrder, 
-  InventoryAlert, 
+import { map, tap } from 'rxjs/operators';
+import {
+  Part,
+  PartWithStock,
+  Supplier,
+  StockMovement,
+  PartOrder,
+  InventoryAlert,
   InventoryStats,
   PartCategory,
   StockStatus,
   StockMovementType,
   OrderStatus
 } from '../models/part.model';
+import { fromBackendEnum } from '../utils/enum-mapper';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PartService {
+  private http = inject(HttpClient);
+
   private partsSubject = new BehaviorSubject<PartWithStock[]>([]);
   public parts$ = this.partsSubject.asObservable();
 
@@ -39,347 +44,175 @@ export class PartService {
   public selectedSupplier = signal<string>('all');
   public selectedStockStatus = signal<string>('all');
 
-  private mockSuppliers: Supplier[] = [
-    {
-      id: 'supplier1',
-      name: 'Auto Parts Tunisia',
-      contactPerson: 'Karim Bouaziz',
-      phone: '+216-70-123-456',
-      email: 'contact@autoparts.tn',
-      address: 'Avenue Habib Bourguiba, Tunis',
-      paymentTerms: '30 days',
-      deliveryTime: 3,
-      isActive: true,
-      createdAt: new Date(2024, 0, 15)
-    },
-    {
-      id: 'supplier2',
-      name: 'European Auto Supply',
-      contactPerson: 'Marc Dubois',
-      phone: '+216-71-654-321',
-      email: 'info@euroautosupply.tn',
-      address: 'Zone Industrielle, Sfax',
-      paymentTerms: '15 days',
-      deliveryTime: 5,
-      isActive: true,
-      createdAt: new Date(2024, 1, 20)
-    },
-    {
-      id: 'supplier3',
-      name: 'Maghreb Motors Parts',
-      contactPerson: 'Amina Khelifi',
-      phone: '+216-72-987-654',
-      email: 'sales@maghrebmotors.tn',
-      address: 'Route de Sousse, Monastir',
-      paymentTerms: '45 days',
-      deliveryTime: 2,
-      isActive: true,
-      createdAt: new Date(2024, 2, 10)
-    }
-  ];
+  // --- Backend mapping ---
 
-  private mockParts: PartWithStock[] = [
-    {
-      id: 'part1',
-      name: 'Engine Oil 5W-30',
-      partNumber: 'EO-5W30-5L',
-      description: 'Synthetic engine oil for modern engines',
-      category: 'fluids',
-      supplierId: 'supplier1',
-      brand: 'Total',
-      price: 45.50,
+  private mapFromBackend(b: any): PartWithStock {
+    const quantity = b.quantity ?? 0;
+    const minQuantity = b.minQuantity ?? 0;
+    return {
+      id: b.id,
+      name: b.name ?? '',
+      partNumber: b.partNumber ?? '',
+      description: b.description ?? '',
+      category: fromBackendEnum(b.category) as PartCategory,
+      supplierId: b.supplierId ?? '',
+      brand: '',
+      price: b.unitPrice ?? 0,
       currency: 'TND',
-      stockLevel: 12,
-      minStockLevel: 5,
-      maxStockLevel: 50,
-      unit: 'bottle',
-      location: 'Shelf A-1',
-      isActive: true,
-      createdAt: new Date(2024, 0, 15),
-      updatedAt: new Date(2025, 7, 20),
-      stockStatus: 'in-stock',
-      totalUsageThisMonth: 8,
-      averageMonthlyUsage: 10,
-      daysUntilReorder: 15
-    },
-    {
-      id: 'part2',
-      name: 'Brake Pads Front Set',
-      partNumber: 'BP-FRONT-BMW-X5',
-      description: 'Front brake pads for BMW X5 series',
-      category: 'brakes',
-      supplierId: 'supplier2',
-      brand: 'Bosch',
-      price: 180.00,
-      currency: 'TND',
-      stockLevel: 2,
-      minStockLevel: 4,
-      maxStockLevel: 20,
-      unit: 'set',
-      location: 'Shelf B-3',
-      isActive: true,
-      createdAt: new Date(2024, 1, 10),
-      updatedAt: new Date(2025, 7, 18),
-      stockStatus: 'low-stock',
-      totalUsageThisMonth: 3,
-      averageMonthlyUsage: 4,
-      daysUntilReorder: 7
-    },
-    {
-      id: 'part3',
-      name: 'Air Filter',
-      partNumber: 'AF-UNIVERSAL-001',
-      description: 'Universal air filter for most car models',
-      category: 'filters',
-      supplierId: 'supplier1',
-      brand: 'Mann',
-      price: 25.90,
-      currency: 'TND',
-      stockLevel: 0,
-      minStockLevel: 8,
-      maxStockLevel: 40,
+      stockLevel: quantity,
+      minStockLevel: minQuantity,
+      maxStockLevel: minQuantity * 3,
       unit: 'piece',
-      location: 'Shelf A-5',
+      location: '',
       isActive: true,
-      createdAt: new Date(2024, 1, 5),
-      updatedAt: new Date(2025, 7, 25),
-      stockStatus: 'out-of-stock',
-      totalUsageThisMonth: 6,
-      averageMonthlyUsage: 8,
-      daysUntilReorder: 0
-    },
-    {
-      id: 'part4',
-      name: 'Spark Plugs Set',
-      partNumber: 'SP-4CYL-NGK',
-      description: 'NGK spark plugs for 4-cylinder engines',
-      category: 'engine',
-      supplierId: 'supplier3',
-      brand: 'NGK',
-      price: 65.00,
-      currency: 'TND',
-      stockLevel: 8,
-      minStockLevel: 6,
-      maxStockLevel: 30,
-      unit: 'set',
-      location: 'Shelf C-2',
-      isActive: true,
-      createdAt: new Date(2024, 2, 1),
-      updatedAt: new Date(2025, 7, 22),
-      stockStatus: 'in-stock',
-      totalUsageThisMonth: 2,
-      averageMonthlyUsage: 3,
-      daysUntilReorder: 20
-    },
-    {
-      id: 'part5',
-      name: 'Tire 205/55R16',
-      partNumber: 'TR-205-55-16-MX',
-      description: 'Michelin tire 205/55R16 for sedans',
-      category: 'tires',
-      supplierId: 'supplier2',
-      brand: 'Michelin',
-      price: 320.00,
-      currency: 'TND',
-      stockLevel: 16,
-      minStockLevel: 8,
-      maxStockLevel: 40,
-      unit: 'piece',
-      location: 'Tire Rack 1',
-      isActive: true,
-      createdAt: new Date(2024, 2, 15),
-      updatedAt: new Date(2025, 7, 19),
-      stockStatus: 'in-stock',
-      totalUsageThisMonth: 4,
-      averageMonthlyUsage: 6,
-      daysUntilReorder: 25
-    }
-  ];
-
-  private mockStockMovements: StockMovement[] = [
-    {
-      id: 'movement1',
-      partId: 'part1',
-      type: 'out',
-      quantity: 2,
-      reason: 'Used in service job #SJ001',
-      reference: 'SJ001',
-      performedBy: 'mechanic1',
-      createdAt: new Date(2025, 7, 25),
-      notes: 'Oil change for BMW X5'
-    },
-    {
-      id: 'movement2',
-      partId: 'part2',
-      type: 'out',
-      quantity: 1,
-      reason: 'Used in service job #SJ002',
-      reference: 'SJ002',
-      performedBy: 'mechanic2',
-      createdAt: new Date(2025, 7, 24),
-      notes: 'Brake pad replacement'
-    },
-    {
-      id: 'movement3',
-      partId: 'part3',
-      type: 'in',
-      quantity: 10,
-      reason: 'Stock replenishment',
-      reference: 'PO001',
-      performedBy: 'admin1',
-      createdAt: new Date(2025, 7, 20),
-      notes: 'Restocked air filters'
-    }
-  ];
-
-  private mockAlerts: InventoryAlert[] = [
-    {
-      id: 'alert1',
-      partId: 'part3',
-      type: 'out-of-stock',
-      message: 'Air Filter is out of stock',
-      severity: 'critical',
-      isRead: false,
-      createdAt: new Date(2025, 7, 25)
-    },
-    {
-      id: 'alert2',
-      partId: 'part2',
-      type: 'low-stock',
-      message: 'Brake Pads Front Set stock is low (2 remaining)',
-      severity: 'warning',
-      isRead: false,
-      createdAt: new Date(2025, 7, 24)
-    }
-  ];
-
-  constructor() {
-    this.partsSubject.next(this.mockParts);
-    this.suppliersSubject.next(this.mockSuppliers);
-    this.stockMovementsSubject.next(this.mockStockMovements);
-    this.alertsSubject.next(this.mockAlerts);
+      createdAt: b.createdAt ? new Date(b.createdAt) : new Date(),
+      updatedAt: b.updatedAt ? new Date(b.updatedAt) : new Date(),
+      stockStatus: this.calculateStockStatus(quantity, minQuantity),
+      totalUsageThisMonth: 0,
+      averageMonthlyUsage: 0,
+      daysUntilReorder: 999
+    };
   }
 
-  // Parts CRUD operations
+  private mapToBackend(f: Partial<Part>): any {
+    return {
+      name: f.name,
+      partNumber: f.partNumber,
+      description: f.description,
+      category: f.category,
+      quantity: f.stockLevel,
+      minQuantity: f.minStockLevel,
+      unitPrice: f.price,
+      supplierId: f.supplierId
+    };
+  }
+
+  // --- Parts CRUD operations ---
+
   getParts(): Observable<PartWithStock[]> {
-    return this.parts$;
+    return this.http.get<any[]>('/inventory').pipe(
+      map(items => items.map(b => this.mapFromBackend(b))),
+      tap(parts => this.partsSubject.next(parts))
+    );
   }
 
   getPartById(partId: string): PartWithStock | undefined {
-    return this.mockParts.find(part => part.id === partId);
+    return this.partsSubject.value.find(part => part.id === partId);
   }
 
   createPart(part: Omit<Part, 'id' | 'createdAt' | 'updatedAt'>): Observable<PartWithStock> {
-    const newPart: PartWithStock = {
-      ...part,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      stockStatus: this.calculateStockStatus(part.stockLevel, part.minStockLevel),
-      totalUsageThisMonth: 0,
-      averageMonthlyUsage: 0,
-      daysUntilReorder: this.calculateDaysUntilReorder(part.stockLevel, 0)
-    };
-
-    this.mockParts.push(newPart);
-    this.partsSubject.next([...this.mockParts]);
-    return of(newPart);
+    return this.http.post<any>('/inventory', this.mapToBackend(part)).pipe(
+      map(b => this.mapFromBackend(b)),
+      tap(newPart => {
+        const current = this.partsSubject.value;
+        this.partsSubject.next([...current, newPart]);
+      })
+    );
   }
 
   updatePart(partId: string, updates: Partial<Part>): Observable<PartWithStock> {
-    const index = this.mockParts.findIndex(part => part.id === partId);
-    if (index !== -1) {
-      const updatedPart = {
-        ...this.mockParts[index],
-        ...updates,
-        updatedAt: new Date(),
-        stockStatus: this.calculateStockStatus(
-          updates.stockLevel ?? this.mockParts[index].stockLevel,
-          updates.minStockLevel ?? this.mockParts[index].minStockLevel
-        )
-      };
-      this.mockParts[index] = updatedPart;
-      this.partsSubject.next([...this.mockParts]);
-      return of(updatedPart);
-    }
-    throw new Error('Part not found');
+    return this.http.put<any>(`/inventory/${partId}`, this.mapToBackend(updates)).pipe(
+      map(b => this.mapFromBackend(b)),
+      tap(updated => {
+        const current = this.partsSubject.value;
+        const index = current.findIndex(p => p.id === partId);
+        if (index !== -1) {
+          const updatedList = [...current];
+          updatedList[index] = updated;
+          this.partsSubject.next(updatedList);
+        }
+      })
+    );
   }
 
   deletePart(partId: string): Observable<boolean> {
-    const index = this.mockParts.findIndex(part => part.id === partId);
-    if (index !== -1) {
-      this.mockParts.splice(index, 1);
-      this.partsSubject.next([...this.mockParts]);
-      return of(true);
-    }
-    return of(false);
+    return this.http.delete<void>(`/inventory/${partId}`).pipe(
+      map(() => {
+        const current = this.partsSubject.value;
+        this.partsSubject.next(current.filter(p => p.id !== partId));
+        return true;
+      })
+    );
   }
 
-  // Stock management
+  // --- Stock management ---
+
   adjustStock(partId: string, quantity: number, reason: string, performedBy: string): Observable<StockMovement> {
     const part = this.getPartById(partId);
     if (!part) {
       throw new Error('Part not found');
     }
 
-    const movement: StockMovement = {
-      id: Date.now().toString(),
-      partId,
-      type: quantity > 0 ? 'in' : 'out',
-      quantity: Math.abs(quantity),
-      reason,
-      performedBy,
-      createdAt: new Date()
-    };
-
-    // Update part stock level
     const newStockLevel = part.stockLevel + quantity;
-    this.updatePart(partId, { stockLevel: newStockLevel });
+    return this.http.put<any>(`/inventory/${partId}`, { quantity: newStockLevel }).pipe(
+      map(b => {
+        const mapped = this.mapFromBackend(b);
+        const current = this.partsSubject.value;
+        const index = current.findIndex(p => p.id === partId);
+        if (index !== -1) {
+          const updatedList = [...current];
+          updatedList[index] = mapped;
+          this.partsSubject.next(updatedList);
+        }
 
-    // Add stock movement
-    this.mockStockMovements.push(movement);
-    this.stockMovementsSubject.next([...this.mockStockMovements]);
-
-    // Check for alerts
-    this.checkAndCreateAlerts(partId, newStockLevel);
-
-    return of(movement);
+        const movement: StockMovement = {
+          id: Date.now().toString(),
+          partId,
+          type: quantity > 0 ? 'in' : 'out',
+          quantity: Math.abs(quantity),
+          reason,
+          performedBy,
+          createdAt: new Date()
+        };
+        const movements = this.stockMovementsSubject.value;
+        this.stockMovementsSubject.next([movement, ...movements]);
+        this.checkAndCreateAlerts(partId, newStockLevel);
+        return movement;
+      })
+    );
   }
 
   getStockMovements(partId?: string): Observable<StockMovement[]> {
-    const movements = partId 
-      ? this.mockStockMovements.filter(m => m.partId === partId)
-      : this.mockStockMovements;
-    return of(movements.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
+    return this.http.get<StockMovement[]>('/inventory/movements').pipe(
+      tap(movements => this.stockMovementsSubject.next(movements)),
+      map(movements => {
+        const filtered = partId ? movements.filter(m => m.partId === partId) : movements;
+        return filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      })
+    );
   }
 
-  // Suppliers
+  // --- Suppliers ---
+
   getSuppliers(): Observable<Supplier[]> {
-    return this.suppliers$;
+    return this.http.get<Supplier[]>('/inventory/suppliers').pipe(
+      tap(suppliers => this.suppliersSubject.next(suppliers))
+    );
   }
 
   getSupplierById(supplierId: string): Supplier | undefined {
-    return this.mockSuppliers.find(supplier => supplier.id === supplierId);
+    return this.suppliersSubject.value.find(supplier => supplier.id === supplierId);
   }
 
-  // Filtering and search
+  // --- Filtering and search ---
+
   getPartsByCategory(category: PartCategory): Observable<PartWithStock[]> {
-    const filtered = this.mockParts.filter(part => part.category === category);
+    const filtered = this.partsSubject.value.filter(part => part.category === category);
     return of(filtered);
   }
 
   getPartsBySupplier(supplierId: string): Observable<PartWithStock[]> {
-    const filtered = this.mockParts.filter(part => part.supplierId === supplierId);
+    const filtered = this.partsSubject.value.filter(part => part.supplierId === supplierId);
     return of(filtered);
   }
 
   getPartsByStockStatus(status: StockStatus): Observable<PartWithStock[]> {
-    const filtered = this.mockParts.filter(part => part.stockStatus === status);
+    const filtered = this.partsSubject.value.filter(part => part.stockStatus === status);
     return of(filtered);
   }
 
   searchParts(query: string): Observable<PartWithStock[]> {
-    const filtered = this.mockParts.filter(part =>
+    const filtered = this.partsSubject.value.filter(part =>
       part.name.toLowerCase().includes(query.toLowerCase()) ||
       part.partNumber.toLowerCase().includes(query.toLowerCase()) ||
       part.brand.toLowerCase().includes(query.toLowerCase()) ||
@@ -388,39 +221,45 @@ export class PartService {
     return of(filtered);
   }
 
-  // Alerts
+  // --- Alerts ---
+
   getAlerts(): Observable<InventoryAlert[]> {
     return this.alerts$;
   }
 
   markAlertAsRead(alertId: string): Observable<boolean> {
-    const index = this.mockAlerts.findIndex(alert => alert.id === alertId);
+    const alerts = this.alertsSubject.value;
+    const index = alerts.findIndex(alert => alert.id === alertId);
     if (index !== -1) {
-      this.mockAlerts[index].isRead = true;
-      this.alertsSubject.next([...this.mockAlerts]);
+      alerts[index] = { ...alerts[index], isRead: true };
+      this.alertsSubject.next([...alerts]);
       return of(true);
     }
     return of(false);
   }
 
-  // Statistics
+  // --- Statistics ---
+
   getInventoryStats(): Observable<InventoryStats> {
-    const totalParts = this.mockParts.length;
-    const totalValue = this.mockParts.reduce((sum, part) => sum + (part.price * part.stockLevel), 0);
-    const lowStockCount = this.mockParts.filter(part => part.stockStatus === 'low-stock').length;
-    const outOfStockCount = this.mockParts.filter(part => part.stockStatus === 'out-of-stock').length;
-    
-    const categoryCounts = this.mockParts.reduce((counts, part) => {
+    const parts = this.partsSubject.value;
+    const movements = this.stockMovementsSubject.value;
+
+    const totalParts = parts.length;
+    const totalValue = parts.reduce((sum, part) => sum + (part.price * part.stockLevel), 0);
+    const lowStockCount = parts.filter(part => part.stockStatus === 'low-stock').length;
+    const outOfStockCount = parts.filter(part => part.stockStatus === 'out-of-stock').length;
+
+    const categoryCounts = parts.reduce((counts, part) => {
       counts[part.category] = (counts[part.category] || 0) + 1;
       return counts;
     }, {} as Record<PartCategory, number>);
 
-    const topUsedParts = [...this.mockParts]
+    const topUsedParts = [...parts]
       .sort((a, b) => b.totalUsageThisMonth - a.totalUsageThisMonth)
       .slice(0, 5);
 
-    const recentMovements = [...this.mockStockMovements]
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    const recentMovements = [...movements]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 10);
 
     const stats: InventoryStats = {
@@ -428,7 +267,7 @@ export class PartService {
       totalValue,
       lowStockCount,
       outOfStockCount,
-      pendingOrdersCount: 0, // TODO: implement orders
+      pendingOrdersCount: 0,
       categoryCounts,
       topUsedParts,
       recentMovements
@@ -437,7 +276,8 @@ export class PartService {
     return of(stats);
   }
 
-  // Utility methods
+  // --- Utility methods ---
+
   getAvailableCategories(): PartCategory[] {
     return ['engine', 'transmission', 'brakes', 'suspension', 'electrical', 'filters', 'fluids', 'tires', 'body', 'accessories', 'consumables'];
   }
@@ -495,11 +335,11 @@ export class PartService {
     if (!part) return;
 
     // Remove existing alerts for this part
-    this.mockAlerts = this.mockAlerts.filter(alert => alert.partId !== partId);
+    let alerts = this.alertsSubject.value.filter(alert => alert.partId !== partId);
 
     // Create new alert if needed
     if (newStockLevel === 0) {
-      this.mockAlerts.push({
+      alerts.push({
         id: Date.now().toString(),
         partId,
         type: 'out-of-stock',
@@ -509,7 +349,7 @@ export class PartService {
         createdAt: new Date()
       });
     } else if (newStockLevel <= part.minStockLevel) {
-      this.mockAlerts.push({
+      alerts.push({
         id: Date.now().toString(),
         partId,
         type: 'low-stock',
@@ -520,6 +360,6 @@ export class PartService {
       });
     }
 
-    this.alertsSubject.next([...this.mockAlerts]);
+    this.alertsSubject.next([...alerts]);
   }
 }
