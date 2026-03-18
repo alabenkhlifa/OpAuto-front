@@ -2068,7 +2068,15 @@
     "allMechanics": "All Mechanics",
     "noEvents": "No events",
     "dragToReschedule": "Drag to reschedule",
-    "clickToView": "Click to view details"
+    "clickToView": "Click to view details",
+    "detail": {
+      "customer": "Customer",
+      "vehicle": "Vehicle",
+      "mechanic": "Mechanic",
+      "status": "Status",
+      "time": "Time"
+    },
+    "mechanics": "Mechanics"
   },
   "notifications": {
     "title": "Notifications",

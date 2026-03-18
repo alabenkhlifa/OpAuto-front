@@ -10,6 +10,7 @@ import listPlugin from '@fullcalendar/list';
 import { CalendarService, CalendarEvent } from './services/calendar.service';
 import { AppointmentService } from '../appointments/services/appointment.service';
 import { TranslationService } from '../../core/services/translation.service';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { SidebarService } from '../../core/services/sidebar.service';
 import { Appointment } from '../../core/models/appointment.model';
 import { Subscription, forkJoin } from 'rxjs';
@@ -17,7 +18,7 @@ import { Subscription, forkJoin } from 'rxjs';
 @Component({
   selector: 'app-calendar',
   standalone: true,
-  imports: [CommonModule, FormsModule, FullCalendarModule],
+  imports: [CommonModule, FormsModule, FullCalendarModule, TranslatePipe],
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.css',
 })

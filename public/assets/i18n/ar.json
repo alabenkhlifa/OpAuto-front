@@ -2144,7 +2144,15 @@
     "allMechanics": "جميع الميكانيكيين",
     "noEvents": "لا توجد أحداث",
     "dragToReschedule": "اسحب لإعادة الجدولة",
-    "clickToView": "انقر لعرض التفاصيل"
+    "clickToView": "انقر لعرض التفاصيل",
+    "detail": {
+      "customer": "العميل",
+      "vehicle": "المركبة",
+      "mechanic": "الميكانيكي",
+      "status": "الحالة",
+      "time": "الوقت"
+    },
+    "mechanics": "الميكانيكيون"
   },
   "notifications": {
     "title": "الإشعارات",

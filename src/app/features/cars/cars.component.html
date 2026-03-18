@@ -8,62 +8,10 @@
         <h1 id="page-title" class="text-3xl font-bold text-white mb-1">{{ 'cars.vehicleDatabase' | translate }}</h1>
         <p class="text-gray-300" aria-describedby="page-title">{{ 'cars.subtitle' | translate }}</p>
 
-        <!-- Car Count and Tier Info with Progress Bar -->
-        <div class="mt-3 space-y-3">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <span class="text-sm text-white">{{ 'cars.vehicles' | translate }}:</span>
-              <span class="count-badge text-sm font-semibold px-2 py-1 rounded-full bg-gray-100"
-                    [class.text-amber-600]="isNearLimit() && !isAtCarLimit()"
-                    [class.text-red-600]="isAtCarLimit()"
-                    [class.text-gray-700]="!isNearLimit() && !isAtCarLimit()"
-                    [class.text-amber-400]="isNearLimit() && !isAtCarLimit()"
-                    [class.text-red-400]="isAtCarLimit()"
-                    [class.text-gray-300]="!isNearLimit() && !isAtCarLimit()"
-                    [appTooltip]="tooltipLimitInfo()"
-                    tooltipPosition="right"
-                    [attr.aria-label]="'Current vehicle count: ' + carLimitDisplay()">
-                {{ carLimitDisplay() }}
-              </span>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="text-sm text-white">{{ 'tiers.plan' | translate }}</span>
-              <span [ngClass]="getTierBadgeClass()" 
-                    [attr.aria-label]="'Current subscription tier: ' + currentTier()">
-                {{ currentTier() }}
-              </span>
-            </div>
-          </div>
-
-          <!-- Progress Bar -->
-          @if (carLimit()) {
-            <div class="w-full">
-              <div class="flex items-center justify-between text-xs text-white mb-1">
-                <span>{{ 'cars.vehicleUsage' | translate }}</span>
-                <span>{{ getUsagePercentage() }}%</span>
-              </div>
-              <div class="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
-                <div class="progress-bar h-full rounded-full transition-all duration-300 ease-out"
-                     [style.width.%]="getUsagePercentage()"
-                     [class.bg-green-500]="!isNearLimit()"
-                     [class.bg-amber-500]="isNearLimit() && !isAtCarLimit()"
-                     [class.bg-red-500]="isAtCarLimit()"
-                     [attr.aria-label]="'Vehicle usage: ' + getUsagePercentage() + ' percent'"
-                     role="progressbar"
-                     [attr.aria-valuenow]="currentCarCount()"
-                     [attr.aria-valuemin]="0"
-                     [attr.aria-valuemax]="carLimit()">
-                </div>
-              </div>
-            </div>
-          } @else {
-            <div class="text-xs text-gray-400 flex items-center gap-1">
-              <svg class="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-              </svg>
-              {{ 'cars.unlimitedVehicles' | translate }}
-            </div>
-          }
+        <!-- Vehicle Count -->
+        <div class="mt-3 flex items-center gap-2">
+          <span class="text-sm text-gray-300">{{ 'cars.vehicles' | translate }}:</span>
+          <span class="text-sm font-semibold text-white">{{ currentCarCount() }}</span>
         </div>
       </div>
 
@@ -88,14 +36,10 @@
 
         <!-- Add Car Button -->
         <button class="btn-primary"
-                [disabled]="isAtCarLimit()"
-                [class.opacity-50]="isAtCarLimit()"
-                [class.cursor-not-allowed]="isAtCarLimit()"
                 (click)="openRegistrationForm()"
                 [appTooltip]="tooltipAddCar()"
                 tooltipPosition="left"
-                [attr.aria-label]="isAtCarLimit() ? 'Cannot add vehicle - limit of ' + carLimit() + ' reached' : 'Add new vehicle to database'"
-                [attr.aria-describedby]="isAtCarLimit() ? 'limit-reached-notice' : null"
+                aria-label="Add new vehicle to database"
                 type="button">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -105,53 +49,6 @@
       </div>
     </div>
   </header>
-
-  <!-- Limit Warning (90% capacity) -->
-  <div *ngIf="isNearLimit() && !isAtCarLimit()"
-       id="limit-warning-notice"
-       class="limit-warning glass-card bg-amber-900/20 border-l-4 border-amber-500"
-       role="alert"
-       aria-live="polite">
-    <div class="flex items-center gap-3 p-4">
-      <svg class="w-6 h-6 text-amber-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
-      </svg>
-      <div class="flex-1">
-        <p class="text-amber-200 font-medium">{{ 'cars.approachingLimit' | translate: {remaining: remainingCars()} }}</p>
-        <p class="text-amber-300 text-sm mt-1">{{ 'cars.approachingLimitDescription' | translate }}</p>
-      </div>
-      <button class="btn-secondary btn-sm"
-              (click)="onUpgradeRequested()"
-              [attr.aria-label]="'Consider upgrading your plan to add more vehicles'"
-              type="button">
-        {{ 'tiers.considerUpgrade' | translate }}
-      </button>
-    </div>
-  </div>
-
-  <!-- Limit Reached State -->
-  <div *ngIf="isAtCarLimit()"
-       id="limit-reached-notice"
-       class="limit-reached-notice glass-card bg-red-900/20 border-l-4 border-red-500"
-       role="alert"
-       aria-live="assertive"
-       aria-atomic="true">
-    <div class="flex items-center gap-3 p-4">
-      <svg class="w-6 h-6 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z" />
-      </svg>
-      <div class="flex-1">
-        <h4 class="text-red-200 font-semibold">{{ 'cars.limitReached' | translate }}</h4>
-        <p class="text-red-300 text-sm mt-1">{{ 'cars.limitReachedDescription' | translate: {limit: carLimit(), tier: currentTier()} }}</p>
-      </div>
-      <button class="btn-primary"
-              (click)="onUpgradeRequested()"
-              [attr.aria-label]="'Upgrade your plan to add more vehicles'"
-              type="button">
-        {{ 'tiers.upgradeNow' | translate }}
-      </button>
-    </div>
-  </div>
 
   <!-- Stats Overview -->
   <section class="glass-card stats-nav" aria-labelledby="stats-heading">

@@ -54,23 +54,23 @@
       </div>
       <div class="panel-body">
         <div class="detail-row">
-          <span class="detail-label">Customer</span>
+          <span class="detail-label">{{ 'calendar.detail.customer' | translate }}</span>
           <span class="detail-value">{{ selectedEvent().customerName }}</span>
         </div>
         <div class="detail-row">
-          <span class="detail-label">Vehicle</span>
+          <span class="detail-label">{{ 'calendar.detail.vehicle' | translate }}</span>
           <span class="detail-value">{{ selectedEvent().carInfo }}</span>
         </div>
         <div class="detail-row">
-          <span class="detail-label">Mechanic</span>
+          <span class="detail-label">{{ 'calendar.detail.mechanic' | translate }}</span>
           <span class="detail-value">{{ selectedEvent().mechanicName }}</span>
         </div>
         <div class="detail-row">
-          <span class="detail-label">Status</span>
-          <span class="badge badge-{{ selectedEvent().status?.toLowerCase() }}">{{ selectedEvent().status }}</span>
+          <span class="detail-label">{{ 'calendar.detail.status' | translate }}</span>
+          <span class="badge badge-{{ selectedEvent().status?.toLowerCase() }}">{{ 'dashboard.status.' + selectedEvent().status?.toLowerCase()?.replace('-', '_') | translate }}</span>
         </div>
         <div class="detail-row">
-          <span class="detail-label">Time</span>
+          <span class="detail-label">{{ 'calendar.detail.time' | translate }}</span>
           <span class="detail-value">{{ selectedEvent().start | date:'short' }} - {{ selectedEvent().end | date:'shortTime' }}</span>
         </div>
       </div>
@@ -80,7 +80,7 @@
   <!-- Mechanic Legend -->
   @if (mechanics().length > 0) {
     <div class="mechanic-legend glass-card">
-      <span class="legend-title">Mechanics:</span>
+      <span class="legend-title">{{ 'calendar.mechanics' | translate }}:</span>
       @for (mech of mechanics(); track mech.id) {
         <span class="legend-item">
           <span class="legend-dot" [style.background-color]="mech.color"></span>

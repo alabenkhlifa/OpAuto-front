@@ -2109,7 +2109,15 @@
     "allMechanics": "Tous les mécaniciens",
     "noEvents": "Aucun événement",
     "dragToReschedule": "Glisser pour replanifier",
-    "clickToView": "Cliquer pour voir les détails"
+    "clickToView": "Cliquer pour voir les détails",
+    "detail": {
+      "customer": "Client",
+      "vehicle": "Véhicule",
+      "mechanic": "Mécanicien",
+      "status": "Statut",
+      "time": "Heure"
+    },
+    "mechanics": "Mécaniciens"
   },
   "notifications": {
     "title": "Notifications",
