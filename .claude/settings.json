@@ -1,0 +1,24 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "file=$(echo \"$TOOL_INPUT\" | grep -o '\"file_path\":\"[^\"]*\"' | head -1 | cut -d'\"' -f4); if [ -z \"$file\" ]; then exit 0; fi; if echo \"$file\" | grep -qE '/i18n/.*\\.json$'; then python3 -c \"import json,sys; json.load(open(sys.argv[1])); print('JSON valid: ' + sys.argv[1].split(chr(47))[-1])\" \"$file\" 2>&1 || echo 'INVALID JSON in '$file; fi"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cmd=$(echo \"$TOOL_INPUT\" | grep -o '\"command\":\"[^\"]*\"' | head -1 | cut -d'\"' -f4); if echo \"$cmd\" | grep -qE 'prisma migrate|prisma db push'; then echo 'Reminder: run npm run prisma:generate after schema changes'; fi"
+          }
+        ]
+      }
+    ]
+  }
+}
