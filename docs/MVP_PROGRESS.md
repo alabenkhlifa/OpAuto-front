@@ -74,6 +74,15 @@
 - [ ] Predictive Maintenance — AI section on car detail view, backend endpoint, service timeline
 - [ ] Customer Churn Prediction — identify at-risk customers, backend endpoint, UI display
 
+## Infrastructure Fixes (Session 2026-03-28)
+- [x] Tailwind v4 source scanning — utility classes (w-6, h-6) now generated correctly
+- [x] Mobile hamburger menu visibility — z-index fix + orange accent
+- [x] Translation file deduplication — removed stale public/assets/i18n/ copies
+- [x] Groq AI provider — real AI (Llama 3.3 70B) with graceful fallback
+- [x] Gemini provider — integrated with graceful 429 handling
+- [x] i18n for AI responses — AI reasons match display language (en/fr/ar)
+- [x] 68 new tests (31 AiService + 37 appointment modal)
+
 ## Verification
 - [x] Frontend builds: `ng build` passes with no errors
 - [x] Backend typechecks: `tsc --noEmit` passes
