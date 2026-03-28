@@ -13,6 +13,7 @@ export class AiService {
   private readonly logger = new Logger(AiService.name);
   private anthropicKey: string | undefined;
   private openaiKey: string | undefined;
+  private geminiKey: string | undefined;
 
   constructor(
     private configService: ConfigService,
@@ -20,6 +21,7 @@ export class AiService {
   ) {
     this.anthropicKey = this.configService.get<string>('ANTHROPIC_API_KEY');
     this.openaiKey = this.configService.get<string>('OPENAI_API_KEY');
+    this.geminiKey = this.configService.get<string>('GEMINI_API_KEY');
   }
 
   async chat(dto: AiChatDto): Promise<{ message: string; provider: string }> {
@@ -28,6 +30,9 @@ export class AiService {
     }
     if (this.openaiKey) {
       return this.chatWithOpenAI(dto);
+    }
+    if (this.geminiKey) {
+      return this.chatWithGemini(dto);
     }
     return this.mockChat(dto);
   }
@@ -301,7 +306,7 @@ export class AiService {
     const rankedCandidates = [...diverseCandidates, ...remainingCandidates];
 
     // 2f — AI ranking (if API key available), else heuristic
-    if (this.anthropicKey || this.openaiKey) {
+    if (this.anthropicKey || this.openaiKey || this.geminiKey) {
       try {
         const top6 = rankedCandidates.slice(0, 6);
         const prompt = `You are a scheduling optimizer for an automotive garage. Pick the TOP 3 slots from the candidates below and explain why each is optimal.
@@ -390,12 +395,19 @@ Respond ONLY with a JSON array, no other text:
       });
 
       const data = await response.json();
+
+      if (!response.ok) {
+        const errorMsg = data.error?.message || `HTTP ${response.status}`;
+        this.logger.warn(`Claude API returned ${response.status}: ${errorMsg}`);
+        return this.mockChat(dto);
+      }
+
       return {
         message: data.content?.[0]?.text || 'No response from AI',
         provider: 'claude',
       };
     } catch (error) {
-      this.logger.error('Claude API error:', error);
+      this.logger.warn('Claude API unreachable:', error);
       return this.mockChat(dto);
     }
   }
@@ -428,13 +440,66 @@ Respond ONLY with a JSON array, no other text:
       );
 
       const data = await response.json();
+
+      if (!response.ok) {
+        const errorMsg = data.error?.message || `HTTP ${response.status}`;
+        this.logger.warn(`OpenAI API returned ${response.status}: ${errorMsg}`);
+        return this.mockChat(dto);
+      }
+
       return {
         message:
           data.choices?.[0]?.message?.content || 'No response from AI',
         provider: 'openai',
       };
     } catch (error) {
-      this.logger.error('OpenAI API error:', error);
+      this.logger.warn('OpenAI API unreachable:', error);
+      return this.mockChat(dto);
+    }
+  }
+
+  private async chatWithGemini(
+    dto: AiChatDto,
+  ): Promise<{ message: string; provider: string }> {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${this.geminiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            systemInstruction: {
+              parts: [
+                {
+                  text: 'You are an AI assistant for OpAuto, a garage management ERP. Help with automotive diagnostics, scheduling, and business insights.',
+                },
+              ],
+            },
+            contents: dto.messages.map((m) => ({
+              role: m.role === 'user' ? 'user' : 'model',
+              parts: [{ text: m.content }],
+            })),
+            generationConfig: {
+              maxOutputTokens: 1024,
+            },
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const errorMsg = data.error?.message || `HTTP ${response.status}`;
+        this.logger.warn(`Gemini API returned ${response.status}: ${errorMsg}`);
+        return this.mockChat(dto);
+      }
+
+      const text =
+        data.candidates?.[0]?.content?.parts?.[0]?.text ||
+        'No response from AI';
+      return { message: text, provider: 'gemini' };
+    } catch (error) {
+      this.logger.warn('Gemini API unreachable:', error);
       return this.mockChat(dto);
     }
   }
