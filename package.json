@@ -68,8 +68,10 @@
   },
   "lint-staged": {
     "src/**/*.ts": [
-      "npx tsc --noEmit"
+      "ng lint --files"
     ],
-    "src/**/*.html": []
+    "src/**/*.html": [
+      "ng lint --files"
+    ]
   }
 }
