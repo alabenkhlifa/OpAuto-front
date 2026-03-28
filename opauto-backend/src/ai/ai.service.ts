@@ -108,18 +108,31 @@ export class AiService {
     provider: string;
   }> {
     // 2a — Query employees with matching skills
-    // Normalize: appointment types use hyphens (oil-change), skills use underscores (oil_change)
-    const normalizedType = dto.appointmentType.replace(/-/g, '_');
+    // Map appointment types to the skills employees actually have in the DB
+    const skillMap: Record<string, string[]> = {
+      'oil-change': ['oil_change', 'engine_repair'],
+      'brake-repair': ['brakes', 'suspension', 'brake_repair'],
+      'inspection': ['diagnostics', 'engine_repair', 'ecu_diagnostics'],
+      'transmission': ['engine_repair', 'diagnostics'],
+      'engine': ['engine_repair', 'diagnostics', 'ecu_diagnostics'],
+      'tires': ['tire_change', 'balancing', 'alignment'],
+    };
+
+    const relevantSkills = skillMap[dto.appointmentType] || [
+      dto.appointmentType,
+      dto.appointmentType.replace(/-/g, '_'),
+    ];
+
+    // Find employees who have ANY of the relevant skills
     let employees = await this.prisma.employee.findMany({
-      where: { garageId, status: 'ACTIVE', skills: { has: normalizedType } },
+      where: {
+        garageId,
+        status: 'ACTIVE',
+        skills: { hasSome: relevantSkills },
+      },
     });
-    // Also try the original form in case skills use hyphens
-    if (employees.length === 0) {
-      employees = await this.prisma.employee.findMany({
-        where: { garageId, status: 'ACTIVE', skills: { has: dto.appointmentType } },
-      });
-    }
-    // Fallback to all active employees (any role that can do hands-on work)
+
+    // Fallback to all active technicians if no skill match
     if (employees.length === 0) {
       employees = await this.prisma.employee.findMany({
         where: {
@@ -130,6 +143,13 @@ export class AiService {
       });
     }
     if (employees.length === 0) return { suggestedSlots: [], provider: 'none' };
+
+    // Track which employees matched by skill vs fallback
+    const skilledEmployeeIds = new Set(
+      employees
+        .filter((e) => e.skills?.some((s) => relevantSkills.includes(s)))
+        .map((e) => e.id),
+    );
 
     // 2b — Compute search window
     const now = new Date();
@@ -269,8 +289,11 @@ export class AiService {
         remainingCandidates.push(c);
       }
     }
-    // Sort diverse candidates by workload ascending
+    // Sort diverse candidates: skilled first, then by workload ascending
     diverseCandidates.sort((a, b) => {
+      const aSkilled = skilledEmployeeIds.has(a.mechanicId) ? 0 : 1;
+      const bSkilled = skilledEmployeeIds.has(b.mechanicId) ? 0 : 1;
+      if (aSkilled !== bSkilled) return aSkilled - bSkilled;
       const wA = workloadMap.get(a.mechanicId) || 0;
       const wB = workloadMap.get(b.mechanicId) || 0;
       return wA - wB;
@@ -329,7 +352,7 @@ Respond ONLY with a JSON array, no other text:
     const scores = [0.95, 0.75, 0.55];
     const top3 = rankedCandidates.slice(0, 3).map((c, i) => {
       const emp = employees.find((e) => e.id === c.mechanicId);
-      const hasSkill = emp?.skills?.includes(normalizedType) || emp?.skills?.includes(dto.appointmentType);
+      const hasSkill = skilledEmployeeIds.has(c.mechanicId);
       const workload = workloadMap.get(c.mechanicId) || 0;
       const reason = hasSkill
         ? `Specialty match: ${dto.appointmentType} (${workload} appointments this week)`
