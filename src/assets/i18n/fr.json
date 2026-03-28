@@ -222,6 +222,16 @@
       "filters": "Filtrer les rendez-vous par mécanicien, statut ou critères de recherche",
       "view_mode": "Basculer entre les vues liste, calendrier et aujourd'hui",
       "add_appointment": "Planifier un nouveau rendez-vous de service"
+    },
+    "aiSuggest": {
+      "button": "Suggestion IA",
+      "loading": "Recherche des créneaux...",
+      "cardTitle": "Créneau suggéré",
+      "mechanic": "Mécanicien",
+      "reason": "Pourquoi",
+      "errorUnavailable": "Suggestions IA indisponibles",
+      "errorGeneric": "Impossible de charger les suggestions",
+      "noSlots": "Aucun créneau disponible"
     }
   },
   "cars": {

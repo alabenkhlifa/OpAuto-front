@@ -222,6 +222,16 @@
       "filters": "Filter appointments by mechanic, status, or search criteria",
       "view_mode": "Switch between list, calendar, and today views",
       "add_appointment": "Schedule a new service appointment"
+    },
+    "aiSuggest": {
+      "button": "AI Suggest",
+      "loading": "Finding best slots...",
+      "cardTitle": "Suggested Slot",
+      "mechanic": "Mechanic",
+      "reason": "Why",
+      "errorUnavailable": "AI suggestions unavailable",
+      "errorGeneric": "Could not load suggestions",
+      "noSlots": "No available slots found"
     }
   },
   "cars": {
