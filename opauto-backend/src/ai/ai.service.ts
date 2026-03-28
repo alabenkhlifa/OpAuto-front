@@ -14,6 +14,7 @@ export class AiService {
   private anthropicKey: string | undefined;
   private openaiKey: string | undefined;
   private geminiKey: string | undefined;
+  private groqKey: string | undefined;
 
   constructor(
     private configService: ConfigService,
@@ -22,6 +23,7 @@ export class AiService {
     this.anthropicKey = this.configService.get<string>('ANTHROPIC_API_KEY');
     this.openaiKey = this.configService.get<string>('OPENAI_API_KEY');
     this.geminiKey = this.configService.get<string>('GEMINI_API_KEY');
+    this.groqKey = this.configService.get<string>('GROQ_API_KEY');
   }
 
   async chat(dto: AiChatDto): Promise<{ message: string; provider: string }> {
@@ -33,6 +35,9 @@ export class AiService {
     }
     if (this.geminiKey) {
       return this.chatWithGemini(dto);
+    }
+    if (this.groqKey) {
+      return this.chatWithGroq(dto);
     }
     return this.mockChat(dto);
   }
@@ -306,7 +311,7 @@ export class AiService {
     const rankedCandidates = [...diverseCandidates, ...remainingCandidates];
 
     // 2f — AI ranking (if API key available), else heuristic
-    if (this.anthropicKey || this.openaiKey || this.geminiKey) {
+    if (this.anthropicKey || this.openaiKey || this.geminiKey || this.groqKey) {
       try {
         const top6 = rankedCandidates.slice(0, 6);
         const prompt = `You are a scheduling optimizer for an automotive garage. Pick the TOP 3 slots from the candidates below and explain why each is optimal.
@@ -500,6 +505,52 @@ Respond ONLY with a JSON array, no other text:
       return { message: text, provider: 'gemini' };
     } catch (error) {
       this.logger.warn('Gemini API unreachable:', error);
+      return this.mockChat(dto);
+    }
+  }
+
+  private async chatWithGroq(
+    dto: AiChatDto,
+  ): Promise<{ message: string; provider: string }> {
+    try {
+      const response = await fetch(
+        'https://api.groq.com/openai/v1/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${this.groqKey}`,
+          },
+          body: JSON.stringify({
+            model: 'llama-3.3-70b-versatile',
+            messages: [
+              {
+                role: 'system',
+                content:
+                  'You are an AI assistant for OpAuto, a garage management ERP. Help with automotive diagnostics, scheduling, and business insights.',
+              },
+              ...dto.messages,
+            ],
+            max_tokens: 1024,
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const errorMsg = data.error?.message || `HTTP ${response.status}`;
+        this.logger.warn(`Groq API returned ${response.status}: ${errorMsg}`);
+        return this.mockChat(dto);
+      }
+
+      return {
+        message:
+          data.choices?.[0]?.message?.content || 'No response from AI',
+        provider: 'groq',
+      };
+    } catch (error) {
+      this.logger.warn('Groq API unreachable:', error);
       return this.mockChat(dto);
     }
   }
