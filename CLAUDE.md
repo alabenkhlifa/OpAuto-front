@@ -77,8 +77,8 @@ Use `AskUserQuestion` — never assume direction.
 
 ## Task Routing
 When the user asks to do something, pick the right command:
-- **Bug / broken / not working / wrong** → run `/fix {description}`
-- **New feature / add / implement / build** → run `/impl {description}`
+- **Bug / broken / not working / wrong** → run `/fix {description}` → then run test-writer + e2e test
+- **New feature / add / implement / build** → run `/impl {description}` → then run test-writer + e2e test
 - **Verify / test UI** → run `/e2e {description}`
 - **Translation / i18n / add key / sync languages** → run `/translate {description}`
 - **Finished / ship it** → run `/done`
