@@ -19,6 +19,7 @@ New feature development. All MVP batches complete (see `docs/MVP_PROGRESS.md`).
 - Never navigate to auth pages automatically
 - Write tests BEFORE sensitive functions; never modify tests to make code pass
 - **Every feature/fix must include unit + integration tests** before being marked complete — launch test-writer agent after implementation, never skip
+- **E2E: use `take_snapshot` (not screenshot) as primary tool** — read the FULL snapshot text after every action, check for unexpected elements/errors. Only screenshot for visual layout checks
 - Ask before committing — only commit when explicitly requested
 - Prefer editing existing files over creating new ones
 - Linear: "In Progress" when starting, "Done" only after user confirmation
