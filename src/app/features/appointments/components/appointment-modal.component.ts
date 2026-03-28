@@ -844,6 +844,7 @@ export class AppointmentModalComponent {
       mechanicId: slot.mechanicId,
     });
     this.suggestions.set([]);
+    this.suggestionsRequested.set(false);
   }
 
   // Method to set appointment for editing
