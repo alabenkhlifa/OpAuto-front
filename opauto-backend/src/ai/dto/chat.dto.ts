@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsArray } from 'class-validator';
+import { IsString, IsOptional, IsArray, IsNumber } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class ChatMessageDto {
@@ -29,4 +29,14 @@ export class AiEstimateDto {
   @ApiProperty({ required: false }) @IsString() @IsOptional() carMake?: string;
   @ApiProperty({ required: false }) @IsString() @IsOptional() carModel?: string;
   @ApiProperty({ required: false }) @IsString() @IsOptional() description?: string;
+}
+
+export class AiSuggestScheduleDto {
+  @ApiProperty() @IsString() appointmentType: string;
+
+  @ApiProperty() @IsNumber() estimatedDuration: number;
+
+  @ApiProperty({ required: false }) @IsString() @IsOptional() preferredDate?: string;
+
+  @ApiProperty({ required: false }) @IsString() @IsOptional() mechanicId?: string;
 }
