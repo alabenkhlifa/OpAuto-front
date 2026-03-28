@@ -7,13 +7,13 @@ import { Appointment, Car, Customer, Mechanic } from '../../../core/models/appoi
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 import { AiService } from '../../../core/services/ai.service';
 import { AiScheduleSuggestion } from '../../../core/models/ai.model';
-import { DatePipe } from '@angular/common';
+
 import { LanguageService } from '../../../core/services/language.service';
 
 @Component({
   selector: 'app-appointment-modal',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, DatePipe],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   template: `
     <!-- Modal Overlay -->
     <div class="modal-overlay" (click)="closeModal()">
@@ -97,21 +97,9 @@ import { LanguageService } from '../../../core/services/language.service';
                 <label class="form-label">{{ 'appointments.time' | translate }}</label>
                 <select class="form-select" formControlName="scheduledTime">
                   <option value="">{{ 'appointments.selectTime' | translate }}</option>
-                  <option value="08:00">8:00 AM</option>
-                  <option value="08:30">8:30 AM</option>
-                  <option value="09:00">9:00 AM</option>
-                  <option value="09:30">9:30 AM</option>
-                  <option value="10:00">10:00 AM</option>
-                  <option value="10:30">10:30 AM</option>
-                  <option value="11:00">11:00 AM</option>
-                  <option value="11:30">11:30 AM</option>
-                  <option value="14:00">2:00 PM</option>
-                  <option value="14:30">2:30 PM</option>
-                  <option value="15:00">3:00 PM</option>
-                  <option value="15:30">3:30 PM</option>
-                  <option value="16:00">4:00 PM</option>
-                  <option value="16:30">4:30 PM</option>
-                  <option value="17:00">5:00 PM</option>
+                  @for (slot of timeSlots; track slot) {
+                    <option [value]="slot">{{ slot }}</option>
+                  }
                 </select>
               </div>
             </div>
@@ -167,10 +155,10 @@ import { LanguageService } from '../../../core/services/language.service';
                   @for (slot of suggestions(); track slot.start) {
                     <button type="button" class="suggestion-card" (click)="applySuggestion(slot)">
                       <div class="suggestion-header">
-                        <span class="suggestion-date">{{ slot.start | date:'EEE, MMM d' }}</span>
+                        <span class="suggestion-date">{{ formatDate(slot.start) }}</span>
                         <span class="suggestion-score" [style.opacity]="slot.score">●</span>
                       </div>
-                      <span class="suggestion-time">{{ slot.start | date:'h:mm a' }} – {{ slot.end | date:'h:mm a' }}</span>
+                      <span class="suggestion-time">{{ formatTime(slot.start) }} – {{ formatTime(slot.end) }}</span>
                       <span class="suggestion-mechanic">{{ slot.mechanicName }}</span>
                       <span class="suggestion-reason">{{ slot.reason }}</span>
                     </button>
@@ -728,6 +716,13 @@ export class AppointmentModalComponent {
   mechanics = signal<Mechanic[]>([]);
   currentAppointmentId = signal<string | null>(null);
 
+  // Time slots in 24h format (locale-neutral)
+  timeSlots = [
+    '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
+    '11:00', '11:30', '14:00', '14:30', '15:00', '15:30',
+    '16:00', '16:30', '17:00',
+  ];
+
   // Form
   appointmentForm: FormGroup = this.fb.group({
     carId: ['', Validators.required],
@@ -848,6 +843,18 @@ export class AppointmentModalComponent {
     });
     this.suggestions.set([]);
     this.suggestionsRequested.set(false);
+  }
+
+  formatDate(iso: string): string {
+    const langToLocale: Record<string, string> = { en: 'en-US', fr: 'fr-FR', ar: 'ar-TN' };
+    const locale = langToLocale[this.languageService.getCurrentLanguage()] || 'en-US';
+    return new Intl.DateTimeFormat(locale, { weekday: 'short', month: 'short', day: 'numeric' }).format(new Date(iso));
+  }
+
+  formatTime(iso: string): string {
+    const langToLocale: Record<string, string> = { en: 'en-US', fr: 'fr-FR', ar: 'ar-TN' };
+    const locale = langToLocale[this.languageService.getCurrentLanguage()] || 'en-US';
+    return new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
   }
 
   // Method to set appointment for editing

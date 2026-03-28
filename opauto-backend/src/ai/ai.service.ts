@@ -330,10 +330,9 @@ ${top6.map((c, i) => {
 
 Consider: (1) Mechanic specialty match, (2) Workload balance, (3) Time convenience (morning preferred).
 
-IMPORTANT: Write the "reason" field in ${responseLang}.
-
-Respond ONLY with a JSON array, no other text:
-[{"index": 0, "score": 0.95, "reason": "Best match because..."}, ...]`;
+Respond ONLY with a JSON array, no other text.
+CRITICAL: The "reason" field MUST be written ENTIRELY in ${responseLang}. Do NOT mix languages. Do NOT use words from any other language.
+[{"index": 0, "score": 0.95, "reason": "reason in ${responseLang} only"}, ...]`;
 
         const aiResponse = await this.chat({
           messages: [{ role: 'user', content: prompt }],
