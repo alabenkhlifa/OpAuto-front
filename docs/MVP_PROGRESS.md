@@ -69,7 +69,7 @@
 
 ## Batch 8: AI Features (MVP)
 - [x] AI provider abstraction (frontend `core/services/ai.service.ts` — backend-delegating service with 7 methods)
-- [ ] Smart Scheduling — "AI Suggest" on appointment form, backend endpoint, top 3 slots
+- [x] Smart Scheduling — "AI Suggest" on appointment form, backend endpoint, top 3 slots
 - [ ] Analytics Narrator — "Generate Insights" on dashboard, backend endpoint, NL bullet points
 - [ ] Predictive Maintenance — AI section on car detail view, backend endpoint, service timeline
 - [ ] Customer Churn Prediction — identify at-risk customers, backend endpoint, UI display
