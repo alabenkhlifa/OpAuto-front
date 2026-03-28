@@ -35,7 +35,8 @@
               },
               {
                 "glob": "**/*",
-                "input": "src/assets"
+                "input": "src/assets",
+                "output": "assets"
               },
               {
                 "glob": "404.html",
@@ -117,7 +118,8 @@
               },
               {
                 "glob": "**/*",
-                "input": "src/assets"
+                "input": "src/assets",
+                "output": "assets"
               }
             ],
             "styles": [
