@@ -18,6 +18,7 @@ New feature development. All MVP batches complete (see `docs/MVP_PROGRESS.md`).
 - Prefer **Chrome DevTools MCP** for browser testing; fall back to Playwright if unavailable
 - Never navigate to auth pages automatically
 - Write tests BEFORE sensitive functions; never modify tests to make code pass
+- **Every feature/fix must include unit + integration tests** before being marked complete — launch test-writer agent after implementation, never skip
 - Ask before committing — only commit when explicitly requested
 - Prefer editing existing files over creating new ones
 - Linear: "In Progress" when starting, "Done" only after user confirmation
@@ -85,7 +86,7 @@ Do NOT ask the user which command to use. Decide based on the request.
 ## Response Style
 - English only, concise — no fluff, no trailing summaries
 - Lead with action or answer, not reasoning
-- Questions to the user must be **numbered choice lists**, never open-ended
+- Questions to the user must use the **AskUserQuestion tool** with clickable options — never list choices as plain text
 
 ## Reference Docs (`docs/`)
 | Doc | Read when... |
