@@ -5,11 +5,14 @@ import { Router } from '@angular/router';
 import { AppointmentService } from '../services/appointment.service';
 import { Appointment, Car, Customer, Mechanic } from '../../../core/models/appointment.model';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
+import { AiService } from '../../../core/services/ai.service';
+import { AiScheduleSuggestion } from '../../../core/models/ai.model';
+import { DatePipe } from '@angular/common';
 
 @Component({
   selector: 'app-appointment-modal',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, DatePipe],
   template: `
     <!-- Modal Overlay -->
     <div class="modal-overlay" (click)="closeModal()">
@@ -130,6 +133,53 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
                   <option value="high">{{ 'appointments.high' | translate }}</option>
                 </select>
               </div>
+            </div>
+
+            <!-- AI Suggest -->
+            <div class="ai-suggest-section">
+              <button type="button" class="ai-suggest-btn"
+                      [disabled]="!appointmentForm.get('serviceType')?.value || !appointmentForm.get('estimatedDuration')?.value || aiService.loading()"
+                      (click)="requestAiSuggestions()">
+                @if (aiService.loading()) {
+                  <div class="ai-spinner"></div>
+                  {{ 'appointments.aiSuggest.loading' | translate }}
+                } @else {
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                  </svg>
+                  {{ 'appointments.aiSuggest.button' | translate }}
+                }
+              </button>
+
+              @if (aiService.error(); as error) {
+                <p class="ai-error">
+                  @if (error.code === 'PROVIDER_UNAVAILABLE') {
+                    {{ 'appointments.aiSuggest.errorUnavailable' | translate }}
+                  } @else {
+                    {{ 'appointments.aiSuggest.errorGeneric' | translate }}
+                  }
+                </p>
+              }
+
+              @if (suggestions().length > 0) {
+                <div class="ai-suggestions">
+                  @for (slot of suggestions(); track slot.start) {
+                    <button type="button" class="suggestion-card" (click)="applySuggestion(slot)">
+                      <div class="suggestion-header">
+                        <span class="suggestion-date">{{ slot.start | date:'EEE, MMM d' }}</span>
+                        <span class="suggestion-score" [style.opacity]="slot.score">●</span>
+                      </div>
+                      <span class="suggestion-time">{{ slot.start | date:'h:mm a' }} – {{ slot.end | date:'h:mm a' }}</span>
+                      <span class="suggestion-mechanic">{{ slot.mechanicName }}</span>
+                      <span class="suggestion-reason">{{ slot.reason }}</span>
+                    </button>
+                  }
+                </div>
+              }
+
+              @if (suggestions().length === 0 && !aiService.loading() && !aiService.error() && suggestionsRequested()) {
+                <p class="ai-no-slots">{{ 'appointments.aiSuggest.noSlots' | translate }}</p>
+              }
             </div>
           </div>
 
@@ -533,12 +583,136 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
     .form-input[type="date"]::-moz-calendar-picker-indicator {
       display: none;
     }
+
+    .ai-suggest-section {
+      margin-top: 1rem;
+    }
+
+    .ai-suggest-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.25rem;
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2));
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: 12px;
+      color: #c4b5fd;
+      font-weight: 500;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 100%;
+      justify-content: center;
+    }
+
+    .ai-suggest-btn:hover:not(:disabled) {
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.3));
+      border-color: rgba(139, 92, 246, 0.5);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(139, 92, 246, 0.2);
+    }
+
+    .ai-suggest-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .ai-spinner {
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid rgba(196, 181, 253, 0.3);
+      border-top: 2px solid #c4b5fd;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    .ai-error {
+      margin-top: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      border-radius: 8px;
+      color: #fca5a5;
+      font-size: 0.8rem;
+    }
+
+    .ai-no-slots {
+      margin-top: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      color: #9ca3af;
+      font-size: 0.8rem;
+      text-align: center;
+    }
+
+    .ai-suggestions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .suggestion-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      padding: 0.75rem 1rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      text-align: left;
+      color: #ffffff;
+    }
+
+    .suggestion-card:hover {
+      background: rgba(139, 92, 246, 0.1);
+      border-color: rgba(139, 92, 246, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .suggestion-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .suggestion-date {
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+
+    .suggestion-score {
+      color: #8b5cf6;
+      font-size: 1.25rem;
+    }
+
+    .suggestion-time {
+      color: #d1d5db;
+      font-size: 0.8rem;
+    }
+
+    .suggestion-mechanic {
+      color: #c4b5fd;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .suggestion-reason {
+      color: #9ca3af;
+      font-size: 0.75rem;
+      font-style: italic;
+    }
   `]
 })
 export class AppointmentModalComponent {
   private fb = inject(FormBuilder);
   private appointmentService = inject(AppointmentService);
   private router = inject(Router);
+  aiService = inject(AiService);
+  suggestions = signal<AiScheduleSuggestion[]>([]);
+  suggestionsRequested = signal(false);
 
   // Outputs
   closed = output<void>();
@@ -632,8 +806,44 @@ export class AppointmentModalComponent {
   closeModal(): void {
     this.editMode.set(false);
     this.currentAppointmentId.set(null);
+    this.suggestionsRequested.set(false);
+    this.suggestions.set([]);
     this.appointmentForm.reset();
     this.closed.emit();
+  }
+
+  requestAiSuggestions(): void {
+    const form = this.appointmentForm.value;
+    this.suggestions.set([]);
+    this.suggestionsRequested.set(true);
+    this.aiService.suggestSchedule({
+      appointmentType: form.serviceType,
+      estimatedDuration: form.estimatedDuration,
+      preferredDate: form.scheduledDate || undefined,
+      mechanicId: form.mechanicId || undefined,
+    }).subscribe({
+      next: (response) => {
+        this.suggestions.set(response.suggestedSlots);
+      },
+      error: () => {
+        // Error is captured in aiService.error signal
+      }
+    });
+  }
+
+  applySuggestion(slot: AiScheduleSuggestion): void {
+    const startDate = new Date(slot.start);
+    const dateStr = startDate.toISOString().split('T')[0];
+    const hours = startDate.getHours().toString().padStart(2, '0');
+    const minutes = startDate.getMinutes().toString().padStart(2, '0');
+    const timeStr = `${hours}:${minutes}`;
+
+    this.appointmentForm.patchValue({
+      scheduledDate: dateStr,
+      scheduledTime: timeStr,
+      mechanicId: slot.mechanicId,
+    });
+    this.suggestions.set([]);
   }
 
   // Method to set appointment for editing
