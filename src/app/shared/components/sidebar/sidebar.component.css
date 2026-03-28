@@ -259,19 +259,19 @@
   position: fixed;
   top: 1rem;
   left: 1rem;
-  z-index: 40;
+  z-index: 51;
   width: 3rem;
   height: 3rem;
   border-radius: 12px;
-  background: rgba(15, 23, 42, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  background: rgba(11, 8, 41, 0.9);
+  border: 1px solid rgba(255, 132, 0, 0.5);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 132, 0, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  color: #ffffff;
+  color: #FF8400;
 }
 
 .mobile-menu-btn:hover {
