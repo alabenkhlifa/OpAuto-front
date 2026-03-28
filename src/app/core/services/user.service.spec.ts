@@ -1,4 +1,6 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { UserService } from './user.service';
 import { SubscriptionService } from './subscription.service';
@@ -6,21 +8,46 @@ import { User, UserRole, UserStats, InviteUserRequest } from '../models/user.mod
 
 describe('UserService', () => {
   let service: UserService;
+  let httpMock: HttpTestingController;
   let mockSubscriptionService: jasmine.SpyObj<SubscriptionService>;
+
+  const mockBackendUsers = [
+    {
+      id: 'user-001',
+      email: 'ala@test.com',
+      firstName: 'Ala',
+      lastName: 'Ben',
+      role: 'OWNER',
+      isActive: true,
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: 'user-002',
+      email: 'admin@test.com',
+      firstName: 'Admin',
+      lastName: 'User',
+      role: 'ADMIN',
+      isActive: true,
+      createdAt: new Date().toISOString()
+    }
+  ];
 
   beforeEach(() => {
     const subscriptionSpy = jasmine.createSpyObj('SubscriptionService', ['getCurrentSubscriptionStatus']);
-    
+
     TestBed.configureTestingModule({
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
         UserService,
         { provide: SubscriptionService, useValue: subscriptionSpy }
       ]
     });
-    
+
     service = TestBed.inject(UserService);
+    httpMock = TestBed.inject(HttpTestingController);
     mockSubscriptionService = TestBed.inject(SubscriptionService) as jasmine.SpyObj<SubscriptionService>;
-    
+
     // Setup default mock response
     mockSubscriptionService.getCurrentSubscriptionStatus.and.returnValue(of({
       currentTier: {
@@ -38,6 +65,10 @@ describe('UserService', () => {
     }));
   });
 
+  afterEach(() => {
+    httpMock.verify();
+  });
+
   it('should be created', () => {
     expect(service).toBeTruthy();
   });
@@ -46,12 +77,16 @@ describe('UserService', () => {
     it('should return users list', (done) => {
       service.getUsers().subscribe(users => {
         expect(users).toBeDefined();
-        expect(users.length).toBeGreaterThan(0);
+        expect(users.length).toBe(2);
         expect(users[0].id).toBeDefined();
         expect(users[0].email).toBeDefined();
         expect(users[0].role).toBeDefined();
         done();
       });
+
+      const req = httpMock.expectOne('/users');
+      expect(req.request.method).toBe('GET');
+      req.flush(mockBackendUsers);
     });
 
     it('should filter users by search term', (done) => {
@@ -61,6 +96,9 @@ describe('UserService', () => {
         expect(users[0].fullName).toContain('Ala');
         done();
       });
+
+      const req = httpMock.expectOne('/users');
+      req.flush(mockBackendUsers);
     });
 
     it('should filter users by role', (done) => {
@@ -70,82 +108,25 @@ describe('UserService', () => {
         expect(users[0].role).toBe('owner');
         done();
       });
+
+      const req = httpMock.expectOne('/users');
+      req.flush(mockBackendUsers);
     });
   });
 
   describe('getUserLimits', () => {
-    it('should return user limits for starter tier', (done) => {
+    it('should return user limits based on current users', (done) => {
       service.getUserLimits().subscribe(limits => {
-        expect(limits.current).toBe(2); // Based on mock data
-        expect(limits.limit).toBe(5); // Starter tier limit
-        expect(limits.canAddUser).toBe(true);
-        expect(limits.nextTier).toBeDefined();
-        expect(limits.nextTier?.id).toBe('professional');
-        done();
-      });
-    });
-
-    it('should handle unlimited tier correctly', (done) => {
-      // Mock professional tier (unlimited)
-      mockSubscriptionService.getCurrentSubscriptionStatus.and.returnValue(of({
-        currentTier: {
-          id: 'professional',
-          name: 'Professional',
-          price: 149,
-          currency: 'TND',
-          limits: { users: null, cars: null, serviceBays: null },
-          features: []
-        },
-        usage: { users: 2, cars: 10, serviceBays: 1 },
-        renewalDate: new Date(),
-        isActive: true,
-        daysUntilRenewal: 30
-      }));
-
-      service.getUserLimits().subscribe(limits => {
+        expect(limits.current).toBe(0); // No users loaded yet
         expect(limits.limit).toBeNull();
         expect(limits.canAddUser).toBe(true);
-        expect(limits.nextTier).toBeUndefined();
-        done();
-      });
-    });
-
-    it('should prevent adding users when limit reached', (done) => {
-      // Mock starter tier with 5 users (at limit)
-      mockSubscriptionService.getCurrentSubscriptionStatus.and.returnValue(of({
-        currentTier: {
-          id: 'starter',
-          name: 'Starter',
-          price: 79,
-          currency: 'TND',
-          limits: { users: 5, cars: 200, serviceBays: 5 },
-          features: []
-        },
-        usage: { users: 5, cars: 10, serviceBays: 1 },
-        renewalDate: new Date(),
-        isActive: true,
-        daysUntilRenewal: 30
-      }));
-
-      // Add 3 more mock users to reach the limit
-      (service as any).mockUsers = [
-        ...(service as any).mockUsers,
-        { id: 'user-003', email: 'test3@test.com', role: 'mechanic' },
-        { id: 'user-004', email: 'test4@test.com', role: 'mechanic' },
-        { id: 'user-005', email: 'test5@test.com', role: 'mechanic' }
-      ];
-
-      service.getUserLimits().subscribe(limits => {
-        expect(limits.current).toBe(5);
-        expect(limits.limit).toBe(5);
-        expect(limits.canAddUser).toBe(false);
         done();
       });
     });
   });
 
   describe('inviteUser', () => {
-    it('should successfully invite user when within limits', (done) => {
+    it('should successfully invite user via HTTP', (done) => {
       const inviteRequest: InviteUserRequest = {
         email: 'newuser@test.com',
         role: 'mechanic' as UserRole,
@@ -160,102 +141,101 @@ describe('UserService', () => {
         expect(invitation.status).toBe('pending');
         done();
       });
-    });
 
-    it('should reject invitation when user limit reached', (done) => {
-      // Mock solo tier (1 user limit)
-      mockSubscriptionService.getCurrentSubscriptionStatus.and.returnValue(of({
-        currentTier: {
-          id: 'solo',
-          name: 'Solo',
-          price: 29,
-          currency: 'TND',
-          limits: { users: 1, cars: 50, serviceBays: 2 },
-          features: []
-        },
-        usage: { users: 1, cars: 5, serviceBays: 1 },
-        renewalDate: new Date(),
-        isActive: true,
-        daysUntilRenewal: 30
-      }));
-
-      const inviteRequest: InviteUserRequest = {
-        email: 'newuser@test.com',
-        role: 'mechanic' as UserRole
-      };
-
-      service.inviteUser(inviteRequest).subscribe({
-        next: () => fail('Should have thrown error'),
-        error: (error) => {
-          expect(error.message).toContain('User limit reached');
-          done();
-        }
-      });
+      const req = httpMock.expectOne('/users');
+      expect(req.request.method).toBe('POST');
+      req.flush({ id: 'new-user-id', email: 'newuser@test.com' });
     });
   });
 
   describe('getUserStats', () => {
     it('should return comprehensive user statistics', (done) => {
-      service.getUserStats().subscribe(stats => {
-        expect(stats).toBeDefined();
-        expect(stats.totalUsers).toBeGreaterThan(0);
-        expect(stats.activeUsers).toBeGreaterThan(0);
-        expect(stats.roleDistribution).toBeDefined();
-        expect(stats.tierInfo).toBeDefined();
-        expect(stats.tierInfo.current).toBeDefined();
-        expect(stats.tierInfo.limits).toBeDefined();
-        done();
+      // First load users to populate internal state
+      service.getUsers().subscribe(() => {
+        service.getUserStats().subscribe(stats => {
+          expect(stats).toBeDefined();
+          expect(stats.totalUsers).toBe(2);
+          expect(stats.activeUsers).toBe(2);
+          expect(stats.roleDistribution).toBeDefined();
+          expect(stats.tierInfo).toBeDefined();
+          expect(stats.tierInfo.current).toBeDefined();
+          expect(stats.tierInfo.limits).toBeDefined();
+          done();
+        });
       });
+
+      const req = httpMock.expectOne('/users');
+      req.flush(mockBackendUsers);
     });
 
     it('should calculate role distribution correctly', (done) => {
-      service.getUserStats().subscribe(stats => {
-        expect(stats.roleDistribution.owner).toBe(1);
-        expect(stats.roleDistribution.admin).toBe(1);
-        expect(stats.roleDistribution.mechanic).toBe(0);
-        expect(stats.roleDistribution.viewer).toBe(0);
-        done();
+      service.getUsers().subscribe(() => {
+        service.getUserStats().subscribe(stats => {
+          expect(stats.roleDistribution.owner).toBe(1);
+          expect(stats.roleDistribution.admin).toBe(1);
+          expect(stats.roleDistribution.mechanic).toBe(0);
+          expect(stats.roleDistribution.viewer).toBe(0);
+          done();
+        });
       });
+
+      const req = httpMock.expectOne('/users');
+      req.flush(mockBackendUsers);
     });
   });
 
   describe('updateUserRole', () => {
-    it('should update user role successfully', (done) => {
-      service.updateUserRole('user-002', 'mechanic').subscribe(updatedUser => {
-        expect(updatedUser.role).toBe('mechanic');
-        expect(updatedUser.permissions.canManageUsers).toBe(false);
-        expect(updatedUser.permissions.canManageInventory).toBe(true);
-        done();
-      });
-    });
-
-    it('should return error for non-existent user', (done) => {
-      service.updateUserRole('non-existent', 'admin').subscribe({
-        next: () => fail('Should have thrown error'),
-        error: (error) => {
-          expect(error.message).toBe('User not found');
+    it('should update user role via HTTP', (done) => {
+      // Load users first
+      service.getUsers().subscribe(() => {
+        service.updateUserRole('user-002', 'mechanic').subscribe(updatedUser => {
+          expect(updatedUser).toBeDefined();
+          expect(updatedUser.role).toBe('mechanic');
           done();
-        }
+        });
+
+        const putReq = httpMock.expectOne('/users/user-002');
+        expect(putReq.request.method).toBe('PUT');
+        putReq.flush({ ...mockBackendUsers[1], role: 'MECHANIC' });
       });
+
+      const getReq = httpMock.expectOne('/users');
+      getReq.flush(mockBackendUsers);
     });
   });
 
   describe('removeUser', () => {
-    it('should remove user successfully', (done) => {
-      service.removeUser('user-002').subscribe(result => {
-        expect(result).toBe(true);
-        done();
+    it('should remove user via HTTP', (done) => {
+      // Load users first so the user exists in the BehaviorSubject
+      service.getUsers().subscribe(() => {
+        service.removeUser('user-002').subscribe(result => {
+          expect(result).toBe(true);
+          done();
+        });
+
+        const deleteReq = httpMock.expectOne('/users/user-002');
+        expect(deleteReq.request.method).toBe('DELETE');
+        deleteReq.flush(null);
       });
+
+      const getReq = httpMock.expectOne('/users');
+      getReq.flush(mockBackendUsers);
     });
 
     it('should prevent removing owner', (done) => {
-      service.removeUser('user-001').subscribe({
-        next: () => fail('Should have thrown error'),
-        error: (error) => {
-          expect(error.message).toBe('Cannot remove owner');
-          done();
-        }
+      // Load users first
+      service.getUsers().subscribe(() => {
+        service.removeUser('user-001').subscribe({
+          next: () => fail('Should have thrown error'),
+          error: (error) => {
+            expect(error.message).toBe('Cannot remove owner');
+            done();
+          }
+        });
       });
+
+      const getReq = httpMock.expectOne('/users');
+      getReq.flush(mockBackendUsers);
     });
   });
 

@@ -1,12 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, BehaviorSubject } from 'rxjs';
 import { UpgradePromptComponent } from './upgrade-prompt.component';
 import { SubscriptionService } from '../../../core/services/subscription.service';
 import { TranslatePipe } from '../../pipes/translate.pipe';
-import { 
-  TierComparison, 
-  SubscriptionTier, 
-  SubscriptionTierId 
+import { TranslationService } from '../../../core/services/translation.service';
+import { AccessibilityService } from '../../services/accessibility.service';
+import {
+  TierComparison,
+  SubscriptionTier,
+  SubscriptionTierId
 } from '../../../core/models/subscription.model';
 import { By } from '@angular/platform-browser';
 
@@ -64,12 +66,25 @@ describe('UpgradePromptComponent', () => {
     const subscriptionServiceSpy = jasmine.createSpyObj('SubscriptionService', [
       'getTierComparison'
     ]);
+    subscriptionServiceSpy.getTierComparison.and.returnValue(of(mockTierComparison));
+
+    const translationServiceSpy = jasmine.createSpyObj('TranslationService', ['instant'], {
+      translations$: new BehaviorSubject({})
+    });
+    translationServiceSpy.instant.and.callFake((key: string) => key);
+
+    const accessibilityServiceSpy = jasmine.createSpyObj('AccessibilityService', [
+      'announce', 'announceFeatureLock', 'handleEscapeKey', 'createFocusTrap', 'setFocus'
+    ]);
+    accessibilityServiceSpy.handleEscapeKey.and.returnValue(() => {});
+    accessibilityServiceSpy.createFocusTrap.and.returnValue(() => {});
 
     await TestBed.configureTestingModule({
       imports: [UpgradePromptComponent],
       providers: [
         { provide: SubscriptionService, useValue: subscriptionServiceSpy },
-        { provide: TranslatePipe, useValue: { transform: (key: string, params?: any) => params ? `${key}:${JSON.stringify(params)}` : key } }
+        { provide: TranslationService, useValue: translationServiceSpy },
+        { provide: AccessibilityService, useValue: accessibilityServiceSpy }
       ]
     }).compileComponents();
 
@@ -277,10 +292,10 @@ describe('UpgradePromptComponent', () => {
 
     it('should emit close event when cancel button is clicked', () => {
       spyOn(component.close, 'emit');
-      
+
       fixture.detectChanges();
-      
-      const cancelButton = fixture.debugElement.query(By.css('.btn-secondary'));
+
+      const cancelButton = fixture.debugElement.query(By.css('.modal-footer .btn-secondary'));
       cancelButton.triggerEventHandler('click', null);
 
       expect(component.close.emit).toHaveBeenCalled();

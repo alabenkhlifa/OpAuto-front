@@ -1,9 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, throwError, BehaviorSubject } from 'rxjs';
 import { UsersComponent } from './users.component';
 import { UserService } from '../../core/services/user.service';
 import { SubscriptionService } from '../../core/services/subscription.service';
+import { TranslationService } from '../../core/services/translation.service';
 import { User, UserStats, UserLimits } from '../../core/models/user.model';
 
 describe('UsersComponent', () => {
@@ -127,12 +128,18 @@ describe('UsersComponent', () => {
     
     const routerSpy = jasmine.createSpyObj('Router', ['navigate']);
 
+    const translationServiceSpy = jasmine.createSpyObj('TranslationService', ['instant'], {
+      translations$: new BehaviorSubject({})
+    });
+    translationServiceSpy.instant.and.callFake((key: string) => key);
+
     await TestBed.configureTestingModule({
       imports: [UsersComponent],
       providers: [
         { provide: UserService, useValue: userSpy },
         { provide: SubscriptionService, useValue: subscriptionSpy },
-        { provide: Router, useValue: routerSpy }
+        { provide: Router, useValue: routerSpy },
+        { provide: TranslationService, useValue: translationServiceSpy }
       ]
     }).compileComponents();
 

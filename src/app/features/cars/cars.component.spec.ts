@@ -1,9 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { of } from 'rxjs';
+import { of, BehaviorSubject } from 'rxjs';
 import { CarsComponent } from './cars.component';
 import { CarService, CarWithHistory } from './services/car.service';
 import { SubscriptionService } from '../../core/services/subscription.service';
+import { LanguageService } from '../../core/services/language.service';
+import { TranslationService } from '../../core/services/translation.service';
+import { AccessibilityService } from '../../shared/services/accessibility.service';
 import { SubscriptionStatus, SubscriptionTier } from '../../core/models/subscription.model';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 
@@ -101,13 +104,35 @@ describe('CarsComponent', () => {
     ]);
     const routerSpy = jasmine.createSpyObj('Router', ['navigate']);
 
+    const languageSpy = jasmine.createSpyObj('LanguageService', [
+      'getCurrentLanguage',
+      'isRTL'
+    ], {
+      currentLanguage$: new BehaviorSubject('en')
+    });
+    languageSpy.getCurrentLanguage.and.returnValue('en');
+    languageSpy.isRTL.and.returnValue(false);
+
+    const translationServiceSpy = jasmine.createSpyObj('TranslationService', ['instant'], {
+      translations$: new BehaviorSubject({})
+    });
+    translationServiceSpy.instant.and.callFake((key: string) => key);
+
+    const accessibilityServiceSpy = jasmine.createSpyObj('AccessibilityService', [
+      'announce', 'announceFeatureLock', 'handleEscapeKey', 'createFocusTrap', 'setFocus'
+    ]);
+    accessibilityServiceSpy.handleEscapeKey.and.returnValue(() => {});
+    accessibilityServiceSpy.createFocusTrap.and.returnValue(() => {});
+
     await TestBed.configureTestingModule({
       imports: [CarsComponent],
       providers: [
         { provide: CarService, useValue: carServiceSpy },
         { provide: SubscriptionService, useValue: subscriptionServiceSpy },
         { provide: Router, useValue: routerSpy },
-        TranslatePipe
+        { provide: LanguageService, useValue: languageSpy },
+        { provide: TranslationService, useValue: translationServiceSpy },
+        { provide: AccessibilityService, useValue: accessibilityServiceSpy }
       ]
     }).compileComponents();
 
@@ -304,9 +329,12 @@ describe('CarsComponent', () => {
   describe('statusCounts', () => {
     it('should calculate status counts correctly', () => {
       mockCarService.getCars.and.returnValue(of(mockCars));
+      mockSubscriptionService.getCurrentSubscriptionStatus.and.returnValue(
+        of(createMockSubscriptionStatus(mockSoloTier, 2))
+      );
 
       component.ngOnInit();
-      
+
       const counts = component.statusCounts();
       expect(counts.total).toBe(2);
       expect(counts.upToDate).toBe(1);

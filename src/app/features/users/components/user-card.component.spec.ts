@@ -1,5 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { BehaviorSubject } from 'rxjs';
 import { UserCardComponent } from './user-card.component';
+import { TranslationService } from '../../../core/services/translation.service';
 import { User } from '../../../core/models/user.model';
 
 describe('UserCardComponent', () => {
@@ -43,8 +45,16 @@ describe('UserCardComponent', () => {
   };
 
   beforeEach(async () => {
+    const translationServiceSpy = jasmine.createSpyObj('TranslationService', ['instant'], {
+      translations$: new BehaviorSubject({})
+    });
+    translationServiceSpy.instant.and.callFake((key: string) => key);
+
     await TestBed.configureTestingModule({
-      imports: [UserCardComponent]
+      imports: [UserCardComponent],
+      providers: [
+        { provide: TranslationService, useValue: translationServiceSpy }
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(UserCardComponent);

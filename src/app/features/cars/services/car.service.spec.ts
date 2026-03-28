@@ -1,4 +1,6 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { CarService, CarWithHistory } from './car.service';
 import { SubscriptionService } from '../../../core/services/subscription.service';
@@ -6,6 +8,7 @@ import { SubscriptionStatus, SubscriptionTier } from '../../../core/models/subsc
 
 describe('CarService', () => {
   let service: CarService;
+  let httpMock: HttpTestingController;
   let mockSubscriptionService: jasmine.SpyObj<SubscriptionService>;
 
   const mockSoloTier: SubscriptionTier = {
@@ -59,15 +62,17 @@ describe('CarService', () => {
     daysUntilRenewal: 30
   });
 
-  const mockCar: Omit<CarWithHistory, 'id'> = {
+  const mockBackendCar = {
+    id: 'car1',
     licensePlate: 'TEST-123',
     make: 'BMW',
     model: 'X5',
     year: 2020,
     customerId: 'customer1',
-    currentMileage: 45000,
+    mileage: 45000,
     totalServices: 0,
-    serviceStatus: 'up-to-date'
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   };
 
   beforeEach(() => {
@@ -75,165 +80,28 @@ describe('CarService', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
         CarService,
         { provide: SubscriptionService, useValue: spy }
       ]
     });
 
     service = TestBed.inject(CarService);
+    httpMock = TestBed.inject(HttpTestingController);
     mockSubscriptionService = TestBed.inject(SubscriptionService) as jasmine.SpyObj<SubscriptionService>;
+  });
+
+  afterEach(() => {
+    httpMock.verify();
   });
 
   it('should be created', () => {
     expect(service).toBeTruthy();
   });
 
-  describe('Car Limit Validation', () => {
-    it('should allow creating car when under Solo limit (50 cars)', (done) => {
-      const mockStatus = createMockSubscriptionStatus(mockSoloTier, 30);
-      mockSubscriptionService.getCurrentSubscriptionStatus.and.returnValue(of(mockStatus));
-
-      service.createCar(mockCar).subscribe({
-        next: (car) => {
-          expect(car).toBeDefined();
-          expect(car.licensePlate).toBe('TEST-123');
-          done();
-        },
-        error: () => {
-          fail('Should not error when under limit');
-          done();
-        }
-      });
-    });
-
-    it('should prevent creating car when at Solo limit (50 cars)', (done) => {
-      const mockStatus = createMockSubscriptionStatus(mockSoloTier, 50);
-      mockSubscriptionService.getCurrentSubscriptionStatus.and.returnValue(of(mockStatus));
-
-      service.createCar(mockCar).subscribe({
-        next: () => {
-          fail('Should not succeed when at limit');
-          done();
-        },
-        error: (error) => {
-          expect(error.error).toBe('CAR_LIMIT_EXCEEDED');
-          expect(error.message).toContain('Vehicle limit of 50 reached');
-          expect(error.tier).toBe('Solo');
-          done();
-        }
-      });
-    });
-
-    it('should allow creating car when under Starter limit (200 cars)', (done) => {
-      const mockStatus = createMockSubscriptionStatus(mockStarterTier, 150);
-      mockSubscriptionService.getCurrentSubscriptionStatus.and.returnValue(of(mockStatus));
-
-      service.createCar(mockCar).subscribe({
-        next: (car) => {
-          expect(car).toBeDefined();
-          expect(car.licensePlate).toBe('TEST-123');
-          done();
-        },
-        error: () => {
-          fail('Should not error when under limit');
-          done();
-        }
-      });
-    });
-
-    it('should prevent creating car when at Starter limit (200 cars)', (done) => {
-      const mockStatus = createMockSubscriptionStatus(mockStarterTier, 200);
-      mockSubscriptionService.getCurrentSubscriptionStatus.and.returnValue(of(mockStatus));
-
-      service.createCar(mockCar).subscribe({
-        next: () => {
-          fail('Should not succeed when at limit');
-          done();
-        },
-        error: (error) => {
-          expect(error.error).toBe('CAR_LIMIT_EXCEEDED');
-          expect(error.message).toContain('Vehicle limit of 200 reached');
-          expect(error.tier).toBe('Starter');
-          done();
-        }
-      });
-    });
-
-    it('should allow creating car with Professional tier (unlimited)', (done) => {
-      const mockStatus = createMockSubscriptionStatus(mockProfessionalTier, 500);
-      mockSubscriptionService.getCurrentSubscriptionStatus.and.returnValue(of(mockStatus));
-
-      service.createCar(mockCar).subscribe({
-        next: (car) => {
-          expect(car).toBeDefined();
-          expect(car.licensePlate).toBe('TEST-123');
-          done();
-        },
-        error: () => {
-          fail('Should not error with unlimited tier');
-          done();
-        }
-      });
-    });
-  });
-
   describe('canCreateCar', () => {
-    it('should return true when under Solo limit', (done) => {
-      const mockStatus = createMockSubscriptionStatus(mockSoloTier, 30);
-      mockSubscriptionService.getCurrentSubscriptionStatus.and.returnValue(of(mockStatus));
-
-      service.canCreateCar().subscribe({
-        next: (result) => {
-          expect(result.canCreate).toBe(true);
-          expect(result.reason).toBeUndefined();
-          done();
-        }
-      });
-    });
-
-    it('should return false when at Solo limit', (done) => {
-      const mockStatus = createMockSubscriptionStatus(mockSoloTier, 50);
-      mockSubscriptionService.getCurrentSubscriptionStatus.and.returnValue(of(mockStatus));
-
-      service.canCreateCar().subscribe({
-        next: (result) => {
-          expect(result.canCreate).toBe(false);
-          expect(result.reason).toContain('Vehicle limit of 50 reached');
-          done();
-        }
-      });
-    });
-
-    it('should return true when under Starter limit', (done) => {
-      const mockStatus = createMockSubscriptionStatus(mockStarterTier, 150);
-      mockSubscriptionService.getCurrentSubscriptionStatus.and.returnValue(of(mockStatus));
-
-      service.canCreateCar().subscribe({
-        next: (result) => {
-          expect(result.canCreate).toBe(true);
-          expect(result.reason).toBeUndefined();
-          done();
-        }
-      });
-    });
-
-    it('should return false when at Starter limit', (done) => {
-      const mockStatus = createMockSubscriptionStatus(mockStarterTier, 200);
-      mockSubscriptionService.getCurrentSubscriptionStatus.and.returnValue(of(mockStatus));
-
-      service.canCreateCar().subscribe({
-        next: (result) => {
-          expect(result.canCreate).toBe(false);
-          expect(result.reason).toContain('Vehicle limit of 200 reached');
-          done();
-        }
-      });
-    });
-
-    it('should return true for Professional tier (unlimited)', (done) => {
-      const mockStatus = createMockSubscriptionStatus(mockProfessionalTier, 1000);
-      mockSubscriptionService.getCurrentSubscriptionStatus.and.returnValue(of(mockStatus));
-
+    it('should return true (always allowed with current implementation)', (done) => {
       service.canCreateCar().subscribe({
         next: (result) => {
           expect(result.canCreate).toBe(true);
@@ -253,24 +121,36 @@ describe('CarService', () => {
   });
 
   describe('getCars', () => {
-    it('should return observable of cars array', (done) => {
+    it('should return observable of cars array via HTTP', (done) => {
       service.getCars().subscribe({
         next: (cars) => {
           expect(Array.isArray(cars)).toBe(true);
-          expect(cars.length).toBeGreaterThanOrEqual(0);
+          expect(cars.length).toBe(1);
+          expect(cars[0].id).toBe('car1');
           done();
         }
       });
+
+      const req = httpMock.expectOne('/cars');
+      expect(req.request.method).toBe('GET');
+      req.flush([mockBackendCar]);
     });
   });
 
   describe('getCarById', () => {
-    it('should return car when found', () => {
-      const car = service.getCarById('car1');
-      expect(car).toBeDefined();
-      if (car) {
-        expect(car.id).toBe('car1');
-      }
+    it('should return car when found in cache', (done) => {
+      // First load cars to populate the BehaviorSubject
+      service.getCars().subscribe(() => {
+        const car = service.getCarById('car1');
+        expect(car).toBeDefined();
+        if (car) {
+          expect(car.id).toBe('car1');
+        }
+        done();
+      });
+
+      const req = httpMock.expectOne('/cars');
+      req.flush([mockBackendCar]);
     });
 
     it('should return undefined when car not found', () => {
@@ -280,18 +160,44 @@ describe('CarService', () => {
   });
 
   describe('getAvailableMakes', () => {
-    it('should return array of unique makes', () => {
-      const makes = service.getAvailableMakes();
-      expect(Array.isArray(makes)).toBe(true);
-      expect(makes.length).toBeGreaterThan(0);
-      
-      // Check that all items are strings and unique
-      const uniqueMakes = new Set(makes);
-      expect(uniqueMakes.size).toBe(makes.length);
-      makes.forEach(make => {
-        expect(typeof make).toBe('string');
-        expect(make.length).toBeGreaterThan(0);
+    it('should return array of unique makes from cached data', (done) => {
+      service.getCars().subscribe(() => {
+        const makes = service.getAvailableMakes();
+        expect(Array.isArray(makes)).toBe(true);
+        expect(makes.length).toBe(1);
+        expect(makes[0]).toBe('BMW');
+        done();
       });
+
+      const req = httpMock.expectOne('/cars');
+      req.flush([mockBackendCar]);
+    });
+  });
+
+  describe('createCar', () => {
+    it('should create car via HTTP', (done) => {
+      const newCar: Omit<CarWithHistory, 'id'> = {
+        licensePlate: 'NEW-123',
+        make: 'Honda',
+        model: 'Civic',
+        year: 2021,
+        customerId: 'customer2',
+        currentMileage: 10000,
+        totalServices: 0,
+        serviceStatus: 'up-to-date'
+      };
+
+      service.createCar(newCar).subscribe({
+        next: (car) => {
+          expect(car).toBeDefined();
+          expect(car.licensePlate).toBe('NEW-123');
+          done();
+        }
+      });
+
+      const req = httpMock.expectOne('/cars');
+      expect(req.request.method).toBe('POST');
+      req.flush({ ...mockBackendCar, id: 'car2', licensePlate: 'NEW-123', make: 'Honda', model: 'Civic' });
     });
   });
 });

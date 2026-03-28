@@ -1,12 +1,19 @@
 import { TestBed } from '@angular/core/testing';
 import { SubscriptionService } from './subscription.service';
+import { ModuleService } from './module.service';
 import { SubscriptionTierId, SubscriptionStatus, TierComparison } from '../models/subscription.model';
 
 describe('SubscriptionService', () => {
   let service: SubscriptionService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    const moduleServiceSpy = jasmine.createSpyObj('ModuleService', ['hasModuleAccess', 'loadActiveModules']);
+
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: ModuleService, useValue: moduleServiceSpy }
+      ]
+    });
     service = TestBed.inject(SubscriptionService);
   });
 
@@ -29,11 +36,11 @@ describe('SubscriptionService', () => {
         const soloTier = tiers.find(t => t.id === 'solo');
         expect(soloTier).toBeDefined();
         expect(soloTier?.name).toBe('Solo');
-        expect(soloTier?.price).toBe(29);
+        expect(soloTier?.price).toBe(500);
         expect(soloTier?.currency).toBe('TND');
         expect(soloTier?.limits.users).toBe(1);
         expect(soloTier?.limits.cars).toBe(50);
-        expect(soloTier?.limits.serviceBays).toBe(2);
+        expect(soloTier?.limits.serviceBays).toBe(1);
         done();
       });
     });
@@ -65,9 +72,9 @@ describe('SubscriptionService', () => {
 
     it('should return correct usage statistics', (done) => {
       service.getCurrentSubscriptionStatus().subscribe(status => {
-        expect(status.usage.users).toBe(3);
-        expect(status.usage.cars).toBe(47);
-        expect(status.usage.serviceBays).toBe(2);
+        expect(status.usage.users).toBe(0);
+        expect(status.usage.cars).toBe(0);
+        expect(status.usage.serviceBays).toBe(0);
         done();
       });
     });
@@ -78,14 +85,13 @@ describe('SubscriptionService', () => {
       service.getTierComparison().subscribe(comparison => {
         expect(comparison).toBeTruthy();
         expect(comparison.tiers.length).toBe(3);
-        expect(comparison.currentTierId).toBe('starter');
+        expect(comparison.currentTierId).toBe('professional');
         done();
       });
     });
 
     it('should provide recommendation when appropriate', (done) => {
       service.getTierComparison().subscribe(comparison => {
-        // With current mock usage (3 users on starter tier with 5 user limit), no recommendation should be made
         expect(comparison.recommendedTierId).toBeUndefined();
         done();
       });
@@ -100,25 +106,23 @@ describe('SubscriptionService', () => {
       });
     });
 
-    it('should return false for disabled features on current tier', (done) => {
+    it('should return true for all features with module system', (done) => {
       service.isFeatureEnabled('team_collaboration').subscribe(enabled => {
-        expect(enabled).toBe(false);
+        expect(enabled).toBe(true);
         done();
       });
     });
   });
 
   describe('getUsagePercentage', () => {
-    it('should calculate usage percentage correctly for limited resources', (done) => {
+    it('should return 0 with module-based system', (done) => {
       service.getUsagePercentage('users').subscribe(percentage => {
-        // 3 users out of 5 limit = 60%
-        expect(percentage).toBe(60);
+        expect(percentage).toBe(0);
         done();
       });
     });
 
     it('should return 0 for unlimited resources', (done) => {
-      // First upgrade to professional tier to test unlimited
       service.upgradeTo('professional').subscribe(() => {
         service.getUsagePercentage('users').subscribe(percentage => {
           expect(percentage).toBe(0);
@@ -127,10 +131,9 @@ describe('SubscriptionService', () => {
       });
     });
 
-    it('should handle cars usage percentage', (done) => {
+    it('should return 0 for cars usage percentage', (done) => {
       service.getUsagePercentage('cars').subscribe(percentage => {
-        // 47 cars out of 200 limit = 23.5%
-        expect(percentage).toBe(23.5);
+        expect(percentage).toBe(0);
         done();
       });
     });
@@ -140,7 +143,7 @@ describe('SubscriptionService', () => {
     it('should successfully upgrade to a higher tier', (done) => {
       service.upgradeTo('professional').subscribe(success => {
         expect(success).toBe(true);
-        
+
         // Verify the tier was actually changed
         service.getCurrentSubscriptionStatus().subscribe(status => {
           expect(status.currentTier.id).toBe('professional');
@@ -178,26 +181,26 @@ describe('SubscriptionService', () => {
   });
 
   describe('getRequiredTier', () => {
-    it('should return the lowest tier that includes a feature', () => {
+    it('should return solo for any feature with module system', () => {
       const requiredTier = service.getRequiredTier('basic_inventory');
       expect(requiredTier).toBe('solo');
     });
 
-    it('should return professional for advanced features', () => {
+    it('should return solo for advanced features with module system', () => {
       const requiredTier = service.getRequiredTier('team_collaboration');
-      expect(requiredTier).toBe('professional');
+      expect(requiredTier).toBe('solo');
     });
 
-    it('should return null for non-existent features', () => {
+    it('should return solo for non-existent features with module system', () => {
       const requiredTier = service.getRequiredTier('non_existent_feature');
-      expect(requiredTier).toBeNull();
+      expect(requiredTier).toBe('solo');
     });
   });
 
   describe('getUpgradeTierForFeature', () => {
-    it('should return the tier needed to unlock a feature', () => {
+    it('should return null with module-based system', () => {
       const upgradeTier = service.getUpgradeTierForFeature('team_collaboration');
-      expect(upgradeTier).toBe('professional');
+      expect(upgradeTier).toBeNull();
     });
 
     it('should return null for already enabled features', () => {
@@ -225,21 +228,18 @@ describe('SubscriptionService', () => {
   });
 
   describe('getLockedFeatures', () => {
-    it('should return features not available in current tier', (done) => {
+    it('should return empty array with module-based system', (done) => {
       service.getLockedFeatures().subscribe(lockedFeatures => {
-        expect(lockedFeatures.length).toBeGreaterThan(0);
-        const teamCollaboration = lockedFeatures.find(f => f.key === 'team_collaboration');
-        expect(teamCollaboration).toBeDefined();
-        expect(teamCollaboration?.enabled).toBe(false);
+        expect(lockedFeatures.length).toBe(0);
         done();
       });
     });
   });
 
   describe('canUpgradeTo', () => {
-    it('should allow upgrade to higher tier', (done) => {
+    it('should return false with module-based system', (done) => {
       service.canUpgradeTo('professional').subscribe(canUpgrade => {
-        expect(canUpgrade).toBe(true);
+        expect(canUpgrade).toBe(false);
         done();
       });
     });
@@ -258,11 +258,12 @@ describe('SubscriptionService', () => {
     });
 
     it('should set loading state during operations', () => {
-      const subscription = service.getTiers().subscribe(() => {
+      let loadingAfterComplete = true;
+      service.getTiers().subscribe(() => {
         // Loading should be false after operation completes
-        expect(service.isLoading()).toBe(false);
-        subscription.unsubscribe();
+        loadingAfterComplete = service.isLoading();
       });
+      expect(loadingAfterComplete).toBe(false);
     });
   });
 

@@ -1,7 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { BehaviorSubject } from 'rxjs';
 import { Router } from '@angular/router';
 import { FeatureLockComponent } from './feature-lock.component';
 import { ModuleService } from '../../../core/services/module.service';
+import { TranslationService } from '../../../core/services/translation.service';
+import { AccessibilityService } from '../../services/accessibility.service';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { By } from '@angular/platform-browser';
 
@@ -18,12 +21,24 @@ describe('FeatureLockComponent', () => {
 
     const routerSpy = jasmine.createSpyObj('Router', ['navigate']);
 
+    const translationServiceSpy = jasmine.createSpyObj('TranslationService', ['instant'], {
+      translations$: new BehaviorSubject({})
+    });
+    translationServiceSpy.instant.and.callFake((key: string) => key);
+
+    const accessibilityServiceSpy = jasmine.createSpyObj('AccessibilityService', [
+      'announce', 'announceFeatureLock', 'handleEscapeKey', 'createFocusTrap', 'setFocus'
+    ]);
+    accessibilityServiceSpy.handleEscapeKey.and.returnValue(() => {});
+    accessibilityServiceSpy.createFocusTrap.and.returnValue(() => {});
+
     await TestBed.configureTestingModule({
       imports: [FeatureLockComponent],
       providers: [
         { provide: ModuleService, useValue: moduleServiceSpy },
         { provide: Router, useValue: routerSpy },
-        { provide: TranslatePipe, useValue: { transform: (key: string) => key } }
+        { provide: TranslationService, useValue: translationServiceSpy },
+        { provide: AccessibilityService, useValue: accessibilityServiceSpy }
       ]
     }).compileComponents();
 

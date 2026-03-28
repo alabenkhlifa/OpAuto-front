@@ -1,17 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CommonModule } from '@angular/common';
-import { signal } from '@angular/core';
-import { of, throwError } from 'rxjs';
+import { signal, WritableSignal } from '@angular/core';
+import { of, throwError, BehaviorSubject } from 'rxjs';
 
 import { SubscriptionDisplayComponent } from './subscription-display.component';
 import { SubscriptionService } from '../../../core/services/subscription.service';
 import { LanguageService } from '../../../core/services/language.service';
+import { TranslationService } from '../../../core/services/translation.service';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
-import { 
-  SubscriptionStatus, 
-  SubscriptionTier, 
-  TierComparison, 
-  FeatureConfig 
+import {
+  SubscriptionStatus,
+  SubscriptionTier,
+  TierComparison,
+  FeatureConfig
 } from '../../../core/models/subscription.model';
 
 describe('SubscriptionDisplayComponent', () => {
@@ -19,6 +20,7 @@ describe('SubscriptionDisplayComponent', () => {
   let fixture: ComponentFixture<SubscriptionDisplayComponent>;
   let mockSubscriptionService: jasmine.SpyObj<SubscriptionService>;
   let mockLanguageService: jasmine.SpyObj<LanguageService>;
+  let isLoadingSignal: WritableSignal<boolean>;
 
   const mockTier: SubscriptionTier = {
     id: 'starter',
@@ -52,25 +54,41 @@ describe('SubscriptionDisplayComponent', () => {
     const subscriptionSpy = jasmine.createSpyObj('SubscriptionService', [
       'getCurrentSubscriptionStatus',
       'getTierComparison',
-      'upgradeTo'
+      'upgradeTo',
+      'canChangeTo',
+      'canDowngradeTo'
     ], {
-      isLoading: signal(false)
+      isLoading: (isLoadingSignal = signal(false))
     });
 
     const languageSpy = jasmine.createSpyObj('LanguageService', [
       'getCurrentLanguage',
       'isRTL'
-    ]);
+    ], {
+      currentLanguage$: new BehaviorSubject('en')
+    });
+
+    const translationServiceSpy = jasmine.createSpyObj('TranslationService', ['instant'], {
+      translations$: new BehaviorSubject({})
+    });
+    translationServiceSpy.instant.and.callFake((key: string) => key);
+
+    // Pre-configure subscription spy defaults before component creation
+    subscriptionSpy.getCurrentSubscriptionStatus.and.returnValue(of(mockStatus));
+    subscriptionSpy.getTierComparison.and.returnValue(of(mockComparison));
+    subscriptionSpy.upgradeTo.and.returnValue(of(true));
+    languageSpy.getCurrentLanguage.and.returnValue('en');
+    languageSpy.isRTL.and.returnValue(false);
 
     await TestBed.configureTestingModule({
       imports: [
         CommonModule,
-        SubscriptionDisplayComponent,
-        TranslatePipe
+        SubscriptionDisplayComponent
       ],
       providers: [
         { provide: SubscriptionService, useValue: subscriptionSpy },
-        { provide: LanguageService, useValue: languageSpy }
+        { provide: LanguageService, useValue: languageSpy },
+        { provide: TranslationService, useValue: translationServiceSpy }
       ]
     }).compileComponents();
 
@@ -78,13 +96,6 @@ describe('SubscriptionDisplayComponent', () => {
     component = fixture.componentInstance;
     mockSubscriptionService = TestBed.inject(SubscriptionService) as jasmine.SpyObj<SubscriptionService>;
     mockLanguageService = TestBed.inject(LanguageService) as jasmine.SpyObj<LanguageService>;
-
-    // Setup default mock returns
-    mockSubscriptionService.getCurrentSubscriptionStatus.and.returnValue(of(mockStatus));
-    mockSubscriptionService.getTierComparison.and.returnValue(of(mockComparison));
-    mockSubscriptionService.upgradeTo.and.returnValue(of(true));
-    mockLanguageService.getCurrentLanguage.and.returnValue('en');
-    mockLanguageService.isRTL.and.returnValue(false);
   });
 
   it('should create', () => {
@@ -101,11 +112,15 @@ describe('SubscriptionDisplayComponent', () => {
   });
 
   it('should display loading state', () => {
-    (mockSubscriptionService as any).isLoading = jasmine.createSpy().and.returnValue(signal(true));
+    // Update the shared writable signal to true
+    isLoadingSignal.set(true);
     fixture.detectChanges();
-    
+
     const loadingElement = fixture.debugElement.nativeElement.querySelector('.loading-container');
     expect(loadingElement).toBeTruthy();
+
+    // Reset for other tests
+    isLoadingSignal.set(false);
   });
 
   it('should format currency correctly', () => {
@@ -214,17 +229,23 @@ describe('SubscriptionDisplayComponent', () => {
 
   it('should handle upgrade successfully', () => {
     spyOn(component, 'loadSubscriptionData' as any);
-    
-    component.upgradeTo('professional');
-    
+
+    // upgradeTo uses takeUntilDestroyed, which requires injection context
+    TestBed.runInInjectionContext(() => {
+      component.upgradeTo('professional');
+    });
+
     expect(mockSubscriptionService.upgradeTo).toHaveBeenCalledWith('professional');
   });
 
   it('should reload data after successful upgrade', () => {
     const loadDataSpy = spyOn<any>(component, 'loadSubscriptionData');
-    
-    component.upgradeTo('professional');
-    
+
+    // upgradeTo uses takeUntilDestroyed, which requires injection context
+    TestBed.runInInjectionContext(() => {
+      component.upgradeTo('professional');
+    });
+
     // Since the observable returns true, loadSubscriptionData should be called
     expect(loadDataSpy).toHaveBeenCalled();
   });
