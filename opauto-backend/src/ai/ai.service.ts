@@ -1,6 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AiChatDto, AiDiagnoseDto, AiEstimateDto } from './dto/chat.dto';
+import {
+  AiChatDto,
+  AiDiagnoseDto,
+  AiEstimateDto,
+  AiSuggestScheduleDto,
+} from './dto/chat.dto';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AiService {
@@ -8,7 +14,10 @@ export class AiService {
   private anthropicKey: string | undefined;
   private openaiKey: string | undefined;
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private prisma: PrismaService,
+  ) {
     this.anthropicKey = this.configService.get<string>('ANTHROPIC_API_KEY');
     this.openaiKey = this.configService.get<string>('OPENAI_API_KEY');
   }
@@ -80,6 +89,182 @@ export class AiService {
         `Parts: estimated`,
         `Service: ${dto.serviceType}`,
       ],
+      provider: 'mock',
+    };
+  }
+
+  async suggestSchedule(
+    garageId: string,
+    dto: AiSuggestScheduleDto,
+  ): Promise<{
+    suggestedSlots: Array<{
+      start: string;
+      end: string;
+      mechanicId: string;
+      mechanicName: string;
+      score: number;
+      reason: string;
+    }>;
+    provider: string;
+  }> {
+    // 2a — Query employees with matching skills
+    let employees = await this.prisma.employee.findMany({
+      where: { garageId, status: 'ACTIVE', skills: { has: dto.appointmentType } },
+    });
+    if (employees.length === 0) {
+      employees = await this.prisma.employee.findMany({
+        where: { garageId, status: 'ACTIVE', role: 'MECHANIC' },
+      });
+    }
+    if (employees.length === 0) return { suggestedSlots: [], provider: 'none' };
+
+    // 2b — Compute search window
+    const now = new Date();
+    let windowStart: Date;
+    let windowEnd: Date;
+    if (dto.preferredDate) {
+      const preferred = new Date(dto.preferredDate);
+      windowStart = new Date(preferred);
+      windowStart.setDate(windowStart.getDate() - 3);
+      windowEnd = new Date(preferred);
+      windowEnd.setDate(windowEnd.getDate() + 3);
+    } else {
+      windowStart = new Date(now);
+      windowEnd = new Date(now);
+      windowEnd.setDate(windowEnd.getDate() + 7);
+    }
+    if (windowStart < now) windowStart = now;
+
+    // 2c — Query existing non-cancelled appointments in window
+    const existingAppointments = await this.prisma.appointment.findMany({
+      where: {
+        garageId,
+        status: { notIn: ['CANCELLED', 'NO_SHOW'] },
+        startTime: { gte: windowStart, lte: windowEnd },
+      },
+      select: { employeeId: true, startTime: true, endTime: true },
+    });
+
+    // 2d — Compute free slots per employee
+    const candidates: Array<{
+      start: string;
+      end: string;
+      mechanicId: string;
+      mechanicName: string;
+    }> = [];
+    const durationMs = dto.estimatedDuration * 60 * 1000;
+
+    const dayCount = Math.ceil(
+      (windowEnd.getTime() - windowStart.getTime()) / (1000 * 60 * 60 * 24),
+    );
+
+    for (let d = 0; d < dayCount && candidates.length < 20; d++) {
+      const dayDate = new Date(windowStart);
+      dayDate.setDate(dayDate.getDate() + d);
+      const dayStart = new Date(dayDate);
+      dayStart.setHours(8, 0, 0, 0);
+      const dayEnd = new Date(dayDate);
+      dayEnd.setHours(18, 0, 0, 0);
+
+      // Skip if day is already past
+      if (dayEnd <= now) continue;
+
+      const effectiveDayStart = dayStart < now ? now : dayStart;
+
+      for (const emp of employees) {
+        if (candidates.length >= 20) break;
+
+        // Get this employee's appointments for this day, sorted
+        const empAppts = existingAppointments
+          .filter((a) => {
+            const aStart = new Date(a.startTime);
+            return (
+              a.employeeId === emp.id &&
+              aStart >= dayStart &&
+              aStart < dayEnd
+            );
+          })
+          .sort(
+            (a, b) =>
+              new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+          );
+
+        // Build free windows
+        const freeWindows: Array<{ from: Date; to: Date }> = [];
+        let cursor = effectiveDayStart;
+        for (const appt of empAppts) {
+          const aStart = new Date(appt.startTime);
+          const aEnd = new Date(appt.endTime);
+          if (aStart > cursor) {
+            freeWindows.push({ from: new Date(cursor), to: new Date(aStart) });
+          }
+          if (aEnd > cursor) cursor = aEnd;
+        }
+        if (cursor < dayEnd) {
+          freeWindows.push({ from: new Date(cursor), to: new Date(dayEnd) });
+        }
+
+        // Extract candidate slots from free windows
+        for (const w of freeWindows) {
+          if (candidates.length >= 20) break;
+
+          // Snap start to next 30-minute boundary
+          let slotStart = new Date(w.from);
+          const mins = slotStart.getMinutes();
+          if (mins % 30 !== 0) {
+            slotStart.setMinutes(Math.ceil(mins / 30) * 30, 0, 0);
+          } else {
+            slotStart.setSeconds(0, 0);
+          }
+
+          while (
+            slotStart.getTime() + durationMs <= w.to.getTime() &&
+            candidates.length < 20
+          ) {
+            const slotEnd = new Date(slotStart.getTime() + durationMs);
+            candidates.push({
+              start: slotStart.toISOString(),
+              end: slotEnd.toISOString(),
+              mechanicId: emp.id,
+              mechanicName: `${emp.firstName} ${emp.lastName}`,
+            });
+            // Move to next 30-minute boundary
+            slotStart = new Date(slotStart.getTime() + 30 * 60 * 1000);
+          }
+        }
+      }
+    }
+
+    if (candidates.length === 0) return { suggestedSlots: [], provider: 'mock' };
+
+    // 2e — Rank with heuristic
+    const workloadMap = new Map<string, number>();
+    for (const appt of existingAppointments) {
+      const count = workloadMap.get(appt.employeeId) || 0;
+      workloadMap.set(appt.employeeId, count + 1);
+    }
+
+    candidates.sort((a, b) => {
+      const wA = workloadMap.get(a.mechanicId) || 0;
+      const wB = workloadMap.get(b.mechanicId) || 0;
+      if (wA !== wB) return wA - wB;
+      return new Date(a.start).getTime() - new Date(b.start).getTime();
+    });
+
+    const scores = [0.95, 0.75, 0.55];
+    const top3 = candidates.slice(0, 3).map((c, i) => {
+      const emp = employees.find((e) => e.id === c.mechanicId);
+      const hasSkill = emp?.skills?.includes(dto.appointmentType);
+      const workload = workloadMap.get(c.mechanicId) || 0;
+      const reason = hasSkill
+        ? `Specialty match: ${dto.appointmentType} (${workload} appointments this week)`
+        : `Available slot with balanced workload (${workload} appointments this week)`;
+      return { ...c, score: scores[i], reason };
+    });
+
+    // 2f — Return
+    return {
+      suggestedSlots: top3,
       provider: 'mock',
     };
   }

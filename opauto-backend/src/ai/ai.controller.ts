@@ -1,8 +1,14 @@
 import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AiService } from './ai.service';
-import { AiChatDto, AiDiagnoseDto, AiEstimateDto } from './dto/chat.dto';
+import {
+  AiChatDto,
+  AiDiagnoseDto,
+  AiEstimateDto,
+  AiSuggestScheduleDto,
+} from './dto/chat.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 @ApiTags('ai')
 @ApiBearerAuth()
@@ -24,5 +30,13 @@ export class AiController {
   @Post('estimate')
   estimate(@Body() dto: AiEstimateDto) {
     return this.aiService.estimate(dto);
+  }
+
+  @Post('suggest-schedule')
+  suggestSchedule(
+    @CurrentUser('garageId') garageId: string,
+    @Body() dto: AiSuggestScheduleDto,
+  ) {
+    return this.aiService.suggestSchedule(garageId, dto);
   }
 }
