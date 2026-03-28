@@ -1,4 +1,4 @@
-# OpAuto — Claude Instructions
+# Smart Garage (OpAuto) — Claude Instructions
 
 Mini-ERP for multi-specialty garages. Angular 15+ frontend + NestJS backend. Dark glassmorphism theme, i18n (en/fr/ar+RTL).
 
@@ -6,12 +6,12 @@ Mini-ERP for multi-specialty garages. Angular 15+ frontend + NestJS backend. Dar
 New feature development. All MVP batches complete (see `docs/MVP_PROGRESS.md`).
 
 ## Environment
-| Component | URL |
-|-----------|-----|
-| Frontend | `http://localhost:4200` |
-| Backend API | `http://localhost:3000/api` |
-| Swagger Docs | `http://localhost:3000/api/docs` |
-| Database | `postgresql://postgres:postgres@localhost:5432/opauto` |
+| Component | Local | Production |
+|-----------|-------|------------|
+| Frontend | `http://localhost:4200` | Vercel |
+| Backend API | `http://localhost:3000/api` | Render |
+| Swagger Docs | `http://localhost:3000/api/docs` | — |
+| Database | `postgresql://postgres:postgres@localhost:5432/opauto` | Supabase |
 
 ## Rules
 - Read `docs/UI-SYSTEM.md` before ANY UI changes — use only global CSS classes from `/src/styles/`
@@ -21,11 +21,12 @@ New feature development. All MVP batches complete (see `docs/MVP_PROGRESS.md`).
 - Ask before committing — only commit when explicitly requested
 - Prefer editing existing files over creating new ones
 - Linear: "In Progress" when starting, "Done" only after user confirmation
-- Update `docs/MVP_PROGRESS.md` as implementation progresses
+- **Always** update `docs/MVP_PROGRESS.md` — check off items when done, add new items when starting new work. This is the single source of truth for what's built vs not.
 
 ## Git Workflow
 - Work on `main` only — no feature branches
 - Commit format: `type: description` (feat, fix, chore, docs, test, ui)
+- Pre-commit hook (husky): lint-staged + backend typecheck + i18n JSON validation
 
 ## Commands
 ```bash
@@ -57,7 +58,7 @@ npx prisma db push         # Push schema changes without migration (dev only)
 - Go directly to files with Glob/Grep — no broad exploration agents
 - Read only what you need — don't read whole files for one method
 - Translations → `assets/i18n/en.json` directly
-- Pass specific file paths to sub-agents from `docs/ARCHITECTURE.md`
+- Sub-agents: follow `.claude/agents.md` — always pass specific file paths, never let them re-discover
 
 ## Common Pitfalls
 - **Cache sync**: AppointmentService caches (customers, cars, mechanics) must be loaded via `forkJoin` before sync lookups — or you get "Unknown Customer"
@@ -72,9 +73,19 @@ Sections: Architecture → Code Quality → Tests → Performance.
 For each issue: file/line refs, 2-3 options (incl. "do nothing"), opinionated recommendation.
 Use `AskUserQuestion` — never assume direction.
 
+## Task Routing
+When the user asks to do something, pick the right command:
+- **Bug / broken / not working / wrong** → run `/fix {description}`
+- **New feature / add / implement / build** → run `/impl {description}`
+- **Verify / test UI** → run `/e2e {description}`
+- **Translation / i18n / add key / sync languages** → run `/translate {description}`
+- **Finished / ship it** → run `/done`
+Do NOT ask the user which command to use. Decide based on the request.
+
 ## Response Style
 - English only, concise — no fluff, no trailing summaries
 - Lead with action or answer, not reasoning
+- Questions to the user must be **numbered choice lists**, never open-ended
 
 ## Reference Docs (`docs/`)
 | Doc | Read when... |

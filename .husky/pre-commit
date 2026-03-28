@@ -1,0 +1,26 @@
+#!/bin/sh
+
+# Lint staged frontend files
+npx lint-staged
+
+# Typecheck backend if backend files are staged
+if git diff --cached --name-only | grep -qE '^opauto-backend/src/'; then
+  echo "Backend files staged — running typecheck..."
+  cd opauto-backend && npx tsc --noEmit 2>&1 | tail -10
+  if [ $? -ne 0 ]; then
+    echo "Backend typecheck failed. Fix errors before committing."
+    exit 1
+  fi
+  cd ..
+fi
+
+# Validate translation JSON files if staged
+for file in src/assets/i18n/en.json src/assets/i18n/fr.json src/assets/i18n/ar.json; do
+  if git diff --cached --name-only | grep -q "$file"; then
+    python3 -c "import json; json.load(open('$file'))" 2>&1
+    if [ $? -ne 0 ]; then
+      echo "Invalid JSON in $file. Fix before committing."
+      exit 1
+    fi
+  fi
+done

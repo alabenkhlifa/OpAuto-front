@@ -1,5 +1,16 @@
 {
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cmd=$(echo \"$TOOL_INPUT\" | grep -o '\"command\":\"[^\"]*\"' | head -1 | cut -d'\"' -f4); if echo \"$cmd\" | grep -qE '^git commit'; then staged=$(git diff --cached --name-only 2>/dev/null); has_src=$(echo \"$staged\" | grep -E '^(src/|opauto-backend/src/)' | head -1); has_progress=$(echo \"$staged\" | grep 'MVP_PROGRESS.md'); if [ -n \"$has_src\" ] && [ -z \"$has_progress\" ]; then echo 'BLOCKER: Source files staged but docs/MVP_PROGRESS.md not updated. Update progress before committing.' >&2; exit 2; fi; fi"
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
@@ -16,6 +27,16 @@
           {
             "type": "command",
             "command": "cmd=$(echo \"$TOOL_INPUT\" | grep -o '\"command\":\"[^\"]*\"' | head -1 | cut -d'\"' -f4); if echo \"$cmd\" | grep -qE 'prisma migrate|prisma db push'; then echo 'Reminder: run npm run prisma:generate after schema changes'; fi"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "changed=$(git diff --name-only 2>/dev/null); has_src=$(echo \"$changed\" | grep -E '^(src/|opauto-backend/src/)' | head -1); has_progress=$(echo \"$changed\" | grep 'MVP_PROGRESS.md'); if [ -n \"$has_src\" ] && [ -z \"$has_progress\" ]; then echo 'ACTION REQUIRED: Source files were modified but docs/MVP_PROGRESS.md was not updated. Update progress tracking now.'; exit 2; fi"
           }
         ]
       }

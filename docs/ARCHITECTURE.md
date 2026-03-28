@@ -1,10 +1,17 @@
-# OpAuto — Architecture & Project Map
+# Smart Garage — Architecture & Project Map
 
 DO NOT re-scan the project — use this index.
 
 ## Overview
 Angular 15+ frontend + NestJS backend mini-ERP for garages.
 Dark glassmorphism theme, i18n (en/fr/ar+RTL), mobile-first (375px).
+
+## Deployment
+| Layer | Service | URL |
+|-------|---------|-----|
+| Frontend | Vercel | — |
+| Backend | Render | — |
+| Database | Supabase (hosted PostgreSQL) | — |
 
 ## Frontend
 ```

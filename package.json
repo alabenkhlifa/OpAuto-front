@@ -20,7 +20,8 @@
     "test:translation-reliable": "npx playwright test tests/translation/reliable-*.spec.ts --reporter=html",
     "test:translation-reliable-auth": "npx playwright test tests/translation/reliable-auth.spec.ts",
     "test:translation-reliable-dashboard": "npx playwright test tests/translation/reliable-dashboard.spec.ts",
-    "test:translation-reliable-cars": "npx playwright test tests/translation/reliable-cars.spec.ts"
+    "test:translation-reliable-cars": "npx playwright test tests/translation/reliable-cars.spec.ts",
+    "prepare": "husky"
   },
   "private": true,
   "dependencies": {
@@ -53,14 +54,24 @@
     "@types/jasmine": "~5.1.0",
     "@types/node": "^18.0.0",
     "angular-cli-ghpages": "^2.0.3",
+    "husky": "^9.1.7",
     "jasmine-core": "~5.7.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
+    "lint-staged": "^16.4.0",
     "playwright": "^1.55.0",
     "tsx": "^4.7.0",
     "typescript": "~5.8.2"
+  },
+  "lint-staged": {
+    "src/**/*.ts": [
+      "ng lint --files"
+    ],
+    "src/**/*.html": [
+      "ng lint --files"
+    ]
   }
 }

@@ -67,6 +67,13 @@
 - [x] Sidebar + route finalization (34 routes, all with proper guards)
 - [x] Sidebar icons for grid (modules) and bell (notifications)
 
+## Batch 8: AI Features (MVP)
+- [ ] AI provider abstraction (frontend `core/services/ai/` — interface, Claude, OpenAI, mock)
+- [ ] Smart Scheduling — "AI Suggest" on appointment form, backend endpoint, top 3 slots
+- [ ] Analytics Narrator — "Generate Insights" on dashboard, backend endpoint, NL bullet points
+- [ ] Predictive Maintenance — AI section on car detail view, backend endpoint, service timeline
+- [ ] Customer Churn Prediction — identify at-risk customers, backend endpoint, UI display
+
 ## Verification
 - [x] Frontend builds: `ng build` passes with no errors
 - [x] Backend typechecks: `tsc --noEmit` passes

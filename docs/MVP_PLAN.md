@@ -1,9 +1,23 @@
-# OpAuto — MVP Plan
+# Smart Garage — MVP Plan
 
 ## Product Vision
-OpAuto is a mini-ERP for **all garage types** — not just mechanics. Academic project, ~2 month timeline.
-**Goal**: Presentable academic demo + usable product for real garages.
+Smart Garage (OpAuto) is a mini-ERP for **all garage types** — not just mechanics. Academic project, 6-month timeline across 5 phases.
+**Goal**: Fully functional ERP platform + academic demo, usable for real garages in Tunisia.
 **Hero feature**: Calendar view for the presentation demo.
+
+### Development Phases
+1. Planning & requirements
+2. Design (mockup, glassmorphism design system, DB schema)
+3. Core development (free tier → paid modules, incremental)
+4. AI integration (predictive maintenance, smart scheduling, narrator, churn prediction)
+5. Testing & refinement
+
+### Deployment
+| Layer | Service |
+|-------|---------|
+| Frontend | Vercel |
+| Backend | Render |
+| Database | Supabase (hosted PostgreSQL) |
 
 ### Supported Specializations
 Garages select multiple specializations → UI adapts job types and terminology:
@@ -63,24 +77,35 @@ Garages select multiple specializations → UI adapts job types and terminology:
 - **Charts** (ng2-charts): revenue trend (line), job distribution (doughnut), mechanic performance (bar)
 - Dark theme chart styling with neon accents
 
-### AI Features
+### AI Features (Core Differentiator)
 Provider-agnostic abstraction (`core/services/ai/`): Claude + OpenAI + mock fallback.
 API calls routed through NestJS backend proxy (keys server-side).
-- **Smart Scheduling**: "AI Suggest" button on appointment form → top 3 time slots
-- **Analytics Narrator**: "Generate Insights" on dashboard → natural language bullet points
-- **Predictive Maintenance**: AI predictions on car detail view → upcoming service timeline
+- **Smart Scheduling**: "AI Suggest" button on appointment form → balance mechanic workload + bay availability → top 3 time slots
+- **Analytics Narrator**: "Generate Insights" on dashboard → natural language summary bullet points
+- **Predictive Maintenance**: AI predictions on car detail view → estimate upcoming services from mileage + history
+- **Customer Churn Prediction**: Identify at-risk customers from visit frequency and engagement patterns
 
 ---
 
-## What's NOT in MVP
-| Feature | Reason |
-|---------|--------|
-| VIN Auto-Decode | Lower priority |
-| Real SMS/Email/WhatsApp | Requires Twilio, costs |
-| AI Chatbot / RAG / Damage Assessment | High effort, lower demo impact |
-| Real payment processing | Post-MVP |
-| Mobile native app | Web responsive only |
-| Premium FullCalendar plugins | Licensing cost |
+## Roadmap (Post-MVP)
+
+### Short-term
+| Feature | Complexity |
+|---------|-----------|
+| AI Diagnostic Chatbot (symptom-based LLM diagnosis) | High |
+| Intelligent Invoice Generation (AI-suggested line items) | Medium |
+| Work Order Copilot (AI suggestions for maintenance jobs) | Medium |
+| VIN Auto-Decoding (automatic vehicle ID from VIN) | Low |
+| WhatsApp & SMS Notifications (real delivery via WhatsApp Business API) | Medium |
+
+### Long-term
+| Feature | Complexity |
+|---------|-----------|
+| RAG Knowledge Base (NL search over repair manuals/OEM docs) | High |
+| Image-Based Damage Assessment (computer vision) | High |
+| Demand Forecasting (parts demand from appointments/seasonal trends) | High |
+| Customer Portal (self-service for history and appointments) | Medium |
+| Mobile Native App | High |
 
 ---
 
@@ -97,7 +122,7 @@ Phase 1 (Modules) ──┬── Phase 2 (Calendar)
 2. **Calendar View** — FullCalendar integration, dark theme, appointment modal wiring
 3. **Notifications + Dashboard** — bell component, notifications page, KPI cards, charts
 4. **Backend + Integration** — NestJS scaffold, all CRUD endpoints, JWT auth, migrate frontend to HttpClient
-5. **AI Features** — provider abstraction, smart scheduling, analytics narrator, predictive maintenance
+5. **AI Features** — provider abstraction, smart scheduling, analytics narrator, predictive maintenance, churn prediction
 
 ---
 
