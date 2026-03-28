@@ -9,6 +9,7 @@ import { AppointmentModalComponent } from './appointment-modal.component';
 import { AppointmentService } from '../services/appointment.service';
 import { AiService } from '../../../core/services/ai.service';
 import { TranslationService } from '../../../core/services/translation.service';
+import { LanguageService } from '../../../core/services/language.service';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 import { AiScheduleSuggestion, AiScheduleResponse, AiError } from '../../../core/models/ai.model';
 
@@ -21,6 +22,7 @@ describe('AppointmentModalComponent — AI Suggest', () => {
   };
   let mockAppointmentService: jasmine.SpyObj<AppointmentService>;
   let mockRouter: jasmine.SpyObj<Router>;
+  let mockLanguageService: jasmine.SpyObj<LanguageService>;
 
   const mockSuggestions: AiScheduleSuggestion[] = [
     {
@@ -65,6 +67,9 @@ describe('AppointmentModalComponent — AI Suggest', () => {
 
     const routerSpy = jasmine.createSpyObj('Router', ['navigate']);
 
+    const languageSpy = jasmine.createSpyObj('LanguageService', ['getCurrentLanguage']);
+    languageSpy.getCurrentLanguage.and.returnValue('en');
+
     const translationSpy = jasmine.createSpyObj('TranslationService', ['instant'], {
       translations$: of({}),
     });
@@ -82,6 +87,7 @@ describe('AppointmentModalComponent — AI Suggest', () => {
         { provide: AiService, useValue: aiSpy },
         { provide: AppointmentService, useValue: appointmentSpy },
         { provide: Router, useValue: routerSpy },
+        { provide: LanguageService, useValue: languageSpy },
         { provide: TranslationService, useValue: translationSpy },
       ],
     }).compileComponents();
@@ -91,6 +97,7 @@ describe('AppointmentModalComponent — AI Suggest', () => {
     mockAiService = TestBed.inject(AiService) as any;
     mockAppointmentService = TestBed.inject(AppointmentService) as jasmine.SpyObj<AppointmentService>;
     mockRouter = TestBed.inject(Router) as jasmine.SpyObj<Router>;
+    mockLanguageService = TestBed.inject(LanguageService) as jasmine.SpyObj<LanguageService>;
   });
 
   // ---------------------------------------------------------------
@@ -133,6 +140,7 @@ describe('AppointmentModalComponent — AI Suggest', () => {
         estimatedDuration: 60,
         preferredDate: '2026-04-01',
         mechanicId: 'mech-1',
+        language: 'en',
       });
     });
 
@@ -417,6 +425,133 @@ describe('AppointmentModalComponent — AI Suggest', () => {
 
       expect(component.suggestions()).toEqual([]);
       expect(component.suggestionsRequested()).toBe(true);
+    });
+  });
+
+  // ---------------------------------------------------------------
+  // 8. i18n: timeSlots, formatDate, formatTime
+  // ---------------------------------------------------------------
+  describe('timeSlots', () => {
+    it('should have exactly 15 entries', () => {
+      expect(component.timeSlots.length).toBe(15);
+    });
+
+    it('should contain only HH:mm 24-hour formatted strings', () => {
+      const hhmmPattern = /^\d{2}:\d{2}$/;
+      for (const slot of component.timeSlots) {
+        expect(slot).toMatch(hhmmPattern);
+        // Verify hours are valid (00-23) and minutes are valid (00-59)
+        const [h, m] = slot.split(':').map(Number);
+        expect(h).toBeGreaterThanOrEqual(0);
+        expect(h).toBeLessThanOrEqual(23);
+        expect(m).toBeGreaterThanOrEqual(0);
+        expect(m).toBeLessThanOrEqual(59);
+      }
+    });
+
+    it('should start at 08:00 and end at 17:00', () => {
+      expect(component.timeSlots[0]).toBe('08:00');
+      expect(component.timeSlots[component.timeSlots.length - 1]).toBe('17:00');
+    });
+  });
+
+  describe('formatDate', () => {
+    const testIso = '2026-04-01T09:00:00.000Z';
+
+    it('should return English formatted date when language is en', () => {
+      mockLanguageService.getCurrentLanguage.and.returnValue('en');
+      const result = component.formatDate(testIso);
+      // Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+      // produces something like "Wed, Apr 1"
+      expect(result).toContain('Apr');
+      expect(result).toContain('1');
+    });
+
+    it('should return French formatted date when language is fr', () => {
+      mockLanguageService.getCurrentLanguage.and.returnValue('fr');
+      const result = component.formatDate(testIso);
+      // Intl.DateTimeFormat('fr-FR', ...) produces something like "mer. 1 avr."
+      expect(result.toLowerCase()).toContain('avr');
+    });
+
+    it('should return Arabic formatted date when language is ar', () => {
+      mockLanguageService.getCurrentLanguage.and.returnValue('ar');
+      const result = component.formatDate(testIso);
+      // Should return a non-empty string with Arabic locale formatting
+      expect(result.length).toBeGreaterThan(0);
+    });
+
+    it('should fall back to en-US for unknown language', () => {
+      mockLanguageService.getCurrentLanguage.and.returnValue('xx' as any);
+      const result = component.formatDate(testIso);
+      // Falls back to en-US since 'xx' is not in the map
+      expect(result).toContain('Apr');
+    });
+  });
+
+  describe('formatTime', () => {
+    const testIso = '2026-04-01T14:30:00.000Z';
+
+    it('should return formatted time when language is en', () => {
+      mockLanguageService.getCurrentLanguage.and.returnValue('en');
+      const result = component.formatTime(testIso);
+      // Intl.DateTimeFormat('en-US', { hour: '2-digit', minute: '2-digit' })
+      // The output depends on timezone, but it should contain a colon and digits
+      expect(result).toMatch(/\d{1,2}:\d{2}/);
+    });
+
+    it('should return formatted time when language is fr', () => {
+      mockLanguageService.getCurrentLanguage.and.returnValue('fr');
+      const result = component.formatTime(testIso);
+      // French time format uses h or : separator, should contain digits
+      expect(result).toMatch(/\d{1,2}[h:]\d{2}/);
+    });
+
+    it('should return formatted time when language is ar', () => {
+      mockLanguageService.getCurrentLanguage.and.returnValue('ar');
+      const result = component.formatTime(testIso);
+      // Should return a non-empty string
+      expect(result.length).toBeGreaterThan(0);
+    });
+
+    it('should use the current language from LanguageService', () => {
+      mockLanguageService.getCurrentLanguage.and.returnValue('fr');
+      component.formatTime(testIso);
+      expect(mockLanguageService.getCurrentLanguage).toHaveBeenCalled();
+    });
+  });
+
+  // ---------------------------------------------------------------
+  // 9. requestAiSuggestions sends language parameter
+  // ---------------------------------------------------------------
+  describe('requestAiSuggestions — language param', () => {
+    beforeEach(() => {
+      component.appointmentForm.patchValue({
+        serviceType: 'oil-change',
+        estimatedDuration: 60,
+        scheduledDate: '2026-04-01',
+        mechanicId: '',
+      });
+    });
+
+    it('should pass current language to suggestSchedule', () => {
+      mockLanguageService.getCurrentLanguage.and.returnValue('fr');
+      mockAiService.suggestSchedule.and.returnValue(of(mockScheduleResponse));
+
+      component.requestAiSuggestions();
+
+      const callArgs = mockAiService.suggestSchedule.calls.mostRecent().args[0];
+      expect(callArgs.language).toBe('fr');
+    });
+
+    it('should pass ar language when Arabic is selected', () => {
+      mockLanguageService.getCurrentLanguage.and.returnValue('ar');
+      mockAiService.suggestSchedule.and.returnValue(of(mockScheduleResponse));
+
+      component.requestAiSuggestions();
+
+      const callArgs = mockAiService.suggestSchedule.calls.mostRecent().args[0];
+      expect(callArgs.language).toBe('ar');
     });
   });
 });
