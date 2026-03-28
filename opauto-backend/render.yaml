@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: opauto-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        value: <SUPABASE_CONNECTION_STRING>
+      - key: JWT_SECRET
+        value: <GENERATE_A_RANDOM_SECRET>
+      - key: JWT_EXPIRATION
+        value: 1h
+      - key: CORS_ORIGIN
+        value: <YOUR_VERCEL_URL>
+      - key: PORT
+        value: 3000
+      - key: GROQ_API_KEY
+        value: <YOUR_GROQ_API_KEY>
