@@ -39,4 +39,6 @@ export class AiSuggestScheduleDto {
   @ApiProperty({ required: false }) @IsString() @IsOptional() preferredDate?: string;
 
   @ApiProperty({ required: false }) @IsString() @IsOptional() mechanicId?: string;
+
+  @ApiProperty({ required: false }) @IsString() @IsOptional() language?: string;
 }

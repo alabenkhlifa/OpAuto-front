@@ -64,6 +64,7 @@ export interface AiScheduleRequest {
   preferredDate?: string;
   mechanicId?: string;
   estimatedDuration: number;
+  language?: string;
 }
 
 export interface AiScheduleResponse {

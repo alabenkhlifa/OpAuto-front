@@ -314,6 +314,9 @@ export class AiService {
     if (this.anthropicKey || this.openaiKey || this.geminiKey || this.groqKey) {
       try {
         const top6 = rankedCandidates.slice(0, 6);
+        const langMap: Record<string, string> = { en: 'English', fr: 'French', ar: 'Arabic' };
+        const responseLang = langMap[dto.language || 'en'] || 'English';
+
         const prompt = `You are a scheduling optimizer for an automotive garage. Pick the TOP 3 slots from the candidates below and explain why each is optimal.
 
 Service requested: ${dto.appointmentType} (${dto.estimatedDuration} min)
@@ -326,6 +329,8 @@ ${top6.map((c, i) => {
 }).join('\n')}
 
 Consider: (1) Mechanic specialty match, (2) Workload balance, (3) Time convenience (morning preferred).
+
+IMPORTANT: Write the "reason" field in ${responseLang}.
 
 Respond ONLY with a JSON array, no other text:
 [{"index": 0, "score": 0.95, "reason": "Best match because..."}, ...]`;
@@ -364,9 +369,21 @@ Respond ONLY with a JSON array, no other text:
       const emp = employees.find((e) => e.id === c.mechanicId);
       const hasSkill = skilledEmployeeIds.has(c.mechanicId);
       const workload = workloadMap.get(c.mechanicId) || 0;
-      const reason = hasSkill
-        ? `Specialty match: ${dto.appointmentType} (${workload} appointments this week)`
-        : `Available slot with balanced workload (${workload} appointments this week)`;
+      const lang = dto.language || 'en';
+      let reason: string;
+      if (lang === 'fr') {
+        reason = hasSkill
+          ? `Spécialité : ${dto.appointmentType} (${workload} rendez-vous cette semaine)`
+          : `Créneau disponible avec charge équilibrée (${workload} rendez-vous cette semaine)`;
+      } else if (lang === 'ar') {
+        reason = hasSkill
+          ? `تخصص: ${dto.appointmentType} (${workload} مواعيد هذا الأسبوع)`
+          : `موعد متاح مع توزيع متوازن (${workload} مواعيد هذا الأسبوع)`;
+      } else {
+        reason = hasSkill
+          ? `Specialty match: ${dto.appointmentType} (${workload} appointments this week)`
+          : `Available slot with balanced workload (${workload} appointments this week)`;
+      }
       return { ...c, score: scores[i], reason };
     });
 

@@ -8,6 +8,7 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 import { AiService } from '../../../core/services/ai.service';
 import { AiScheduleSuggestion } from '../../../core/models/ai.model';
 import { DatePipe } from '@angular/common';
+import { LanguageService } from '../../../core/services/language.service';
 
 @Component({
   selector: 'app-appointment-modal',
@@ -711,6 +712,7 @@ export class AppointmentModalComponent {
   private appointmentService = inject(AppointmentService);
   private router = inject(Router);
   aiService = inject(AiService);
+  private languageService = inject(LanguageService);
   suggestions = signal<AiScheduleSuggestion[]>([]);
   suggestionsRequested = signal(false);
 
@@ -821,6 +823,7 @@ export class AppointmentModalComponent {
       estimatedDuration: form.estimatedDuration,
       preferredDate: form.scheduledDate || undefined,
       mechanicId: form.mechanicId || undefined,
+      language: this.languageService.getCurrentLanguage(),
     }).subscribe({
       next: (response) => {
         this.suggestions.set(response.suggestedSlots);
