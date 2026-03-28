@@ -108,12 +108,25 @@ export class AiService {
     provider: string;
   }> {
     // 2a — Query employees with matching skills
+    // Normalize: appointment types use hyphens (oil-change), skills use underscores (oil_change)
+    const normalizedType = dto.appointmentType.replace(/-/g, '_');
     let employees = await this.prisma.employee.findMany({
-      where: { garageId, status: 'ACTIVE', skills: { has: dto.appointmentType } },
+      where: { garageId, status: 'ACTIVE', skills: { has: normalizedType } },
     });
+    // Also try the original form in case skills use hyphens
     if (employees.length === 0) {
       employees = await this.prisma.employee.findMany({
-        where: { garageId, status: 'ACTIVE', role: 'MECHANIC' },
+        where: { garageId, status: 'ACTIVE', skills: { has: dto.appointmentType } },
+      });
+    }
+    // Fallback to all active employees (any role that can do hands-on work)
+    if (employees.length === 0) {
+      employees = await this.prisma.employee.findMany({
+        where: {
+          garageId,
+          status: 'ACTIVE',
+          role: { in: ['MECHANIC', 'ELECTRICIAN', 'BODYWORK_SPECIALIST', 'TIRE_SPECIALIST'] },
+        },
       });
     }
     if (employees.length === 0) return { suggestedSlots: [], provider: 'none' };
@@ -237,24 +250,86 @@ export class AiService {
 
     if (candidates.length === 0) return { suggestedSlots: [], provider: 'mock' };
 
-    // 2e — Rank with heuristic
+    // 2e — Build workload map
     const workloadMap = new Map<string, number>();
     for (const appt of existingAppointments) {
       const count = workloadMap.get(appt.employeeId) || 0;
       workloadMap.set(appt.employeeId, count + 1);
     }
 
-    candidates.sort((a, b) => {
+    // Deduplicate: pick the best (earliest) slot per mechanic first, then allow repeats
+    const seenMechanics = new Set<string>();
+    const diverseCandidates: typeof candidates = [];
+    const remainingCandidates: typeof candidates = [];
+    for (const c of candidates) {
+      if (!seenMechanics.has(c.mechanicId)) {
+        seenMechanics.add(c.mechanicId);
+        diverseCandidates.push(c);
+      } else {
+        remainingCandidates.push(c);
+      }
+    }
+    // Sort diverse candidates by workload ascending
+    diverseCandidates.sort((a, b) => {
       const wA = workloadMap.get(a.mechanicId) || 0;
       const wB = workloadMap.get(b.mechanicId) || 0;
-      if (wA !== wB) return wA - wB;
-      return new Date(a.start).getTime() - new Date(b.start).getTime();
+      return wA - wB;
     });
+    const rankedCandidates = [...diverseCandidates, ...remainingCandidates];
 
+    // 2f — AI ranking (if API key available), else heuristic
+    if (this.anthropicKey || this.openaiKey) {
+      try {
+        const top6 = rankedCandidates.slice(0, 6);
+        const prompt = `You are a scheduling optimizer for an automotive garage. Pick the TOP 3 slots from the candidates below and explain why each is optimal.
+
+Service requested: ${dto.appointmentType} (${dto.estimatedDuration} min)
+
+Candidates:
+${top6.map((c, i) => {
+  const emp = employees.find((e) => e.id === c.mechanicId);
+  const workload = workloadMap.get(c.mechanicId) || 0;
+  return `${i}: ${c.mechanicName} | ${c.start} - ${c.end} | Skills: ${emp?.skills?.join(', ') || 'general'} | Workload: ${workload} appointments this week`;
+}).join('\n')}
+
+Consider: (1) Mechanic specialty match, (2) Workload balance, (3) Time convenience (morning preferred).
+
+Respond ONLY with a JSON array, no other text:
+[{"index": 0, "score": 0.95, "reason": "Best match because..."}, ...]`;
+
+        const aiResponse = await this.chat({
+          messages: [{ role: 'user', content: prompt }],
+          context: 'scheduling',
+        });
+
+        // Parse AI response
+        const jsonMatch = aiResponse.message.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          const picks = JSON.parse(jsonMatch[0]) as Array<{
+            index: number;
+            score: number;
+            reason: string;
+          }>;
+          const top3 = picks.slice(0, 3).map((pick) => ({
+            ...top6[pick.index],
+            score: pick.score,
+            reason: pick.reason,
+          }));
+          return {
+            suggestedSlots: top3,
+            provider: aiResponse.provider,
+          };
+        }
+      } catch (error) {
+        this.logger.warn('AI ranking failed, falling back to heuristic', error);
+      }
+    }
+
+    // Heuristic fallback
     const scores = [0.95, 0.75, 0.55];
-    const top3 = candidates.slice(0, 3).map((c, i) => {
+    const top3 = rankedCandidates.slice(0, 3).map((c, i) => {
       const emp = employees.find((e) => e.id === c.mechanicId);
-      const hasSkill = emp?.skills?.includes(dto.appointmentType);
+      const hasSkill = emp?.skills?.includes(normalizedType) || emp?.skills?.includes(dto.appointmentType);
       const workload = workloadMap.get(c.mechanicId) || 0;
       const reason = hasSkill
         ? `Specialty match: ${dto.appointmentType} (${workload} appointments this week)`
@@ -262,7 +337,6 @@ export class AiService {
       return { ...c, score: scores[i], reason };
     });
 
-    // 2f — Return
     return {
       suggestedSlots: top3,
       provider: 'mock',
