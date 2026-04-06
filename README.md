@@ -181,10 +181,11 @@ OpAuto offers three subscription tiers to match your garage's needs:
 - **[Chart.js](https://www.chartjs.org/)** - Interactive data visualizations
 
 ### Backend Technologies
-- **[Spring Boot](https://spring.io/projects/spring-boot)** - Java/Kotlin backend framework
+- **[NestJS](https://nestjs.com/)** - Progressive Node.js framework
+- **[Prisma](https://www.prisma.io/)** - Next-generation ORM
 - **[PostgreSQL](https://www.postgresql.org/)** - Robust relational database
 - **[JWT Authentication](https://jwt.io/)** - Secure token-based authentication
-- **[Docker](https://www.docker.com/)** - Containerization and deployment
+- **[Swagger/OpenAPI](https://swagger.io/)** - API documentation
 
 ### Development Tools
 - **[Angular CLI](https://cli.angular.io/)** - Development and build tooling
@@ -201,85 +202,96 @@ OpAuto offers three subscription tiers to match your garage's needs:
 
 ---
 
-## 🚀 Installation
+## 🚀 Installation & Running
 
 ### Prerequisites
 - **Node.js** (v18 or higher)
-- **npm** (v9 or higher) or **yarn**
-- **Angular CLI** (v15 or higher)
-- **Java 21 LTS** (for backend)
-- **Docker & Docker Compose** (for containerized setup)
+- **npm** (v9 or higher)
+- **PostgreSQL** (v14 or higher)
 
-### Quick Start (Frontend Only)
+### 1. Database Setup
+
+**Option A — Docker (recommended):**
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-username/OpAuto-front.git
-cd OpAuto-front
+docker-compose up -d
+```
+
+This starts a PostgreSQL 16 container on port `5432` with database `opauto` ready to go.
+
+**Option B — Local PostgreSQL:**
+
+```bash
+createdb opauto
+```
+
+Default connection string: `postgresql://postgres:postgres@localhost:5432/opauto`
+
+### 2. Backend Setup (NestJS + Prisma)
+
+```bash
+cd opauto-backend
 
 # Install dependencies
 npm install
 
-# Start development server
-npm start
+# Generate Prisma client
+npm run prisma:generate
 
-# Open your browser
-open http://localhost:4200
+# Run database migrations
+npm run prisma:migrate
+
+# (Optional) Seed the database with sample data
+npx prisma db seed
+
+# Start the backend in dev mode
+npm run start:dev
 ```
 
-### Full Stack Setup
+The API will be available at `http://localhost:3000/api` with Swagger docs at `http://localhost:3000/api/docs`.
+
+### 3. Frontend Setup (Angular)
 
 ```bash
-# Clone the main repository
-git clone https://github.com/alabenkhlifa/opauto.git
-cd opauto
-
-# Start with Docker Compose
-docker-compose up -d
-
-# Or setup manually:
-
-# Backend setup
-cd backend
-./gradlew bootRun
-
-# Frontend setup (in new terminal)
-cd frontend
+# From the project root
 npm install
+
+# Start development server
 npm start
 ```
+
+The app will be available at `http://localhost:4200`.
 
 ### Development Commands
 
+**Frontend** (from project root):
+
 ```bash
-# Development server with hot reload
-npm start
-
-# Build for production
-npm run build
-
-# Run unit tests
-npm test
-
-# Run e2e tests
-npm run e2e
-
-# Lint and format code
-npm run lint
-npm run format
-
-# Build and serve production build
-npm run build:prod
-npm run serve:prod
+npm start           # Dev server with hot reload (http://localhost:4200)
+npm run build        # Build for development
+npm run build:prod   # Build for production
+npm run test         # Run unit tests
+npm run lint         # Lint the codebase
 ```
 
-### Production Build
+**Backend** (from `opauto-backend/`):
 
 ```bash
-# Build optimized production bundle
-npm run build:prod
+npm run start:dev    # Dev server with watch mode (http://localhost:3000)
+npm run build        # Build for production
+npm run test         # Run unit tests
+npm run test:e2e     # Run end-to-end tests
+npm run lint         # Lint and fix
+```
 
-# The build artifacts will be stored in the `dist/` directory
+**Prisma** (from `opauto-backend/`):
+
+```bash
+npm run prisma:generate   # Generate Prisma client after schema changes
+npm run prisma:migrate    # Create & apply migrations
+npm run prisma:studio     # Open Prisma Studio GUI (http://localhost:5555)
+npx prisma db seed        # Seed database with sample data
+npx prisma migrate reset  # Drop DB, re-run all migrations, re-seed
 ```
 
 ---
