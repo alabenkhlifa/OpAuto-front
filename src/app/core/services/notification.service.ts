@@ -1,7 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { AppNotification, NotificationType } from '../models/notification.model';
-import { fromBackendEnum } from '../utils/enum-mapper';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
@@ -82,7 +81,7 @@ export class NotificationService {
   private mapFromBackend(b: any): AppNotification {
     return {
       id: b.id,
-      type: (fromBackendEnum(b.type) || 'system') as NotificationType,
+      type: (b.type?.toLowerCase() || 'system') as NotificationType,
       title: b.title || '',
       message: b.message || b.body || '',
       isRead: b.isRead ?? b.read ?? false,
