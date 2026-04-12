@@ -22,10 +22,10 @@ Single source of truth for the current bug batch. Add new bugs to **§ Backlog**
 ### P1 — Missing Key Actions (fix second)
 | ID | Area | Category | Status |
 |----|------|----------|--------|
-| BUG-014 | Calendar missing "Add Appointment" button | Appointments | 🔴 |
-| BUG-016 | Appointment sidebar missing Edit + Cancel | Appointments | 🔴 |
-| BUG-013 | Sidebar badge counts are static | Navigation | 🔴 |
-| BUG-012 | Invoice print broken + needs PDF download | Invoicing | 🔴 |
+| BUG-014 | Calendar missing "Add Appointment" button | Appointments | 🟢 |
+| BUG-016 | Appointment sidebar missing Edit + Cancel | Appointments | 🟢 |
+| BUG-013 | Sidebar badge counts are static | Navigation | 🟢 |
+| BUG-012 | Invoice print broken + needs PDF download | Invoicing | 🟢 |
 
 ### P2 — Polish / i18n / UX (fix third)
 | ID | Area | Category | Status |
