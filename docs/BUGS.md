@@ -30,13 +30,13 @@ Single source of truth for the current bug batch. Add new bugs to **§ Backlog**
 ### P2 — Polish / i18n / UX (fix third)
 | ID | Area | Category | Status |
 |----|------|----------|--------|
-| BUG-001 | Tour modal overflow | Onboarding | 🔴 |
-| BUG-002 | Notification panel opacity | Notifications | 🔴 |
-| BUG-003 | Notification counter reset on bell click | Notifications | 🔴 |
-| BUG-004 | Customers list styling diverges | Customers | 🔴 |
+| BUG-001 | Tour modal overflow | Onboarding | 🟢 |
+| BUG-002 | Notification panel opacity | Notifications | 🟢 |
+| BUG-003 | Notification counter reset on bell click | Notifications | 🟢 |
+| BUG-004 | Customers list styling diverges | Customers | 🟢 |
 | BUG-006 | Missing `customers.*` i18n keys | i18n | 🟢 |
 | BUG-015 | Appointment sidebar untranslated status | i18n | 🟢 |
-| BUG-017 | Stock "Add Part" modal untranslated | i18n | 🔴 |
+| BUG-017 | Stock "Add Part" modal untranslated | i18n | 🟢 |
 
 ### P3 — Large Redesign (fix last)
 | ID | Area | Category | Status |
