@@ -97,24 +97,14 @@ import { CarWithHistory } from '../services/car.service';
     </div>
   `,
   styles: [`
-    /* Car Card - Permanent Dark Glassmorphism Design to match appointments */
     .car-card {
-      background: rgba(11, 8, 41, 0.95);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(42, 37, 102, 0.6);
-      border-radius: 20px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
       padding: 1.5rem;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
       cursor: pointer;
       margin-bottom: 1rem;
-    }
-
-    .car-card:hover {
-      background: rgba(18, 15, 61, 0.98);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
-      border-color: rgba(255, 132, 0, 0.7);
-      transform: translateY(-2px);
     }
 
     .car-header {
@@ -182,7 +172,7 @@ import { CarWithHistory } from '../services/car.service';
     .car-title {
       font-size: 1.125rem;
       font-weight: 600;
-      color: #ffffff;
+      color: #111827;
       margin: 0;
       line-height: 1.2;
     }
@@ -205,7 +195,6 @@ import { CarWithHistory } from '../services/car.service';
       align-items: center;
       gap: 0.375rem;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      backdrop-filter: blur(10px);
       position: relative;
       overflow: hidden;
     }
@@ -246,8 +235,8 @@ import { CarWithHistory } from '../services/car.service';
     }
 
     .license-plate {
-      background: linear-gradient(135deg, #120F3D, #1C1852);
-      color: white;
+      background: #f1f5f9;
+      color: #111827;
       padding: 0.75rem;
       border-radius: 8px;
       text-align: center;
@@ -256,17 +245,17 @@ import { CarWithHistory } from '../services/car.service';
       font-weight: bold;
       letter-spacing: 2px;
       margin-bottom: 1rem;
-      border: 2px solid #2A2566;
+      border: 1px solid #e2e8f0;
     }
 
     .customer-section {
       margin-bottom: 1rem;
       padding-bottom: 1rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      border-bottom: 1px solid #e2e8f0;
     }
-    
+
     .customer-section span {
-      color: #ffffff;
+      color: #374151;
     }
 
     .service-stats {
@@ -282,12 +271,12 @@ import { CarWithHistory } from '../services/car.service';
     }
 
     .stat-label {
-      color: #9ca3af;
+      color: #6b7280;
     }
 
     .stat-value {
       font-weight: 600;
-      color: #ffffff;
+      color: #111827;
     }
 
     .card-actions {
@@ -308,7 +297,6 @@ import { CarWithHistory } from '../services/car.service';
       font-weight: 600;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       border: 1px solid;
-      backdrop-filter: blur(20px);
       cursor: pointer;
       position: relative;
       outline: none;
@@ -355,32 +343,16 @@ import { CarWithHistory } from '../services/car.service';
       }
     }
 
-    /* Schedule button - green to match appointment complete button */
     .action-btn.primary {
-      background: linear-gradient(135deg, #059669, #047857);
-      border-color: #059669;
-      color: white;
-      box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+      color: #16a34a;
     }
 
-    .action-btn.primary:hover {
-      background: linear-gradient(135deg, #047857, #065f46);
-      box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
-      transform: translateY(-1px);
-    }
-
-    /* History button - orange to match appointment edit button */
     .action-btn.secondary {
-      background: linear-gradient(135deg, #7B8CC4, #6778B0);
-      border-color: #7B8CC4;
-      color: white;
-      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
-    }
-
-    .action-btn.secondary:hover {
-      background: linear-gradient(135deg, #6778B0, #b45309);
-      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
-      transform: translateY(-1px);
+      background: #eff6ff;
+      border-color: #bfdbfe;
+      color: #2563eb;
     }
 
     /* Responsive Scaling */

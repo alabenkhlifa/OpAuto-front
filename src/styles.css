@@ -9,6 +9,7 @@
 
 /* Light theme overrides for Tailwind dark-mode utility classes used in templates */
 .text-white { color: var(--color-text-primary) !important; }
+.btn-primary, .btn-danger, .btn-success, .btn-warning, .btn-clear-filters { color: #ffffff !important; }
 .text-gray-300 { color: var(--color-text-secondary) !important; }
 .text-gray-400 { color: var(--color-text-tertiary) !important; }
 .text-gray-500 { color: #9ca3af !important; }
