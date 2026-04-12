@@ -130,32 +130,18 @@
   cursor: pointer;
 }
 
-/* Complete button - green to match nav-button-add */
+/* Complete button */
 .appointment-card button:first-child {
-  background: linear-gradient(135deg, #059669, #047857) !important;
-  border-color: #059669 !important;
-  color: white !important;
-  box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+  background: #f0fdf4 !important;
+  border: 1px solid #bbf7d0 !important;
+  color: #16a34a !important;
 }
 
-.appointment-card button:first-child:hover {
-  background: linear-gradient(135deg, #047857, #065f46) !important;
-  box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
-  transform: translateY(-1px);
-}
-
-/* Edit button - orange/amber */
+/* Edit button */
 .appointment-card button:last-child {
-  background: linear-gradient(135deg, #7B8CC4, #6778B0) !important;
-  border-color: #7B8CC4 !important;
-  color: white !important;
-  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
-}
-
-.appointment-card button:last-child:hover {
-  background: linear-gradient(135deg, #6778B0, #b45309) !important;
-  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
-  transform: translateY(-1px);
+  background: #eff6ff !important;
+  border: 1px solid #bfdbfe !important;
+  color: #2563eb !important;
 }
 
 .filter-chip {
