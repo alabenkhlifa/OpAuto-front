@@ -1,4 +1,4 @@
-import { Component, inject, signal, HostListener } from '@angular/core';
+import { Component, inject, signal, HostListener, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -20,7 +20,7 @@ import { NotificationService } from '../../../core/services/notification.service
       </button>
 
       @if (isOpen()) {
-        <div class="notification-dropdown glass-card">
+        <div class="notification-dropdown glass-modal">
           <div class="dropdown-header">
             <h3>Notifications</h3>
             @if (notificationService.unreadCount() > 0) {
@@ -255,9 +255,10 @@ import { NotificationService } from '../../../core/services/notification.service
     }
   `],
 })
-export class NotificationBellComponent {
+export class NotificationBellComponent implements OnDestroy {
   notificationService = inject(NotificationService);
   private router = inject(Router);
+  private markReadTimer: ReturnType<typeof setTimeout> | null = null;
 
   isOpen = signal(false);
 
@@ -265,13 +266,39 @@ export class NotificationBellComponent {
   onDocumentClick(event: Event) {
     const target = event.target as HTMLElement;
     if (!target.closest('.notification-bell-wrapper')) {
-      this.isOpen.set(false);
+      this.closeDropdown();
     }
+  }
+
+  ngOnDestroy() {
+    this.clearMarkReadTimer();
   }
 
   toggleDropdown(event: Event) {
     event.stopPropagation();
+    const wasOpen = this.isOpen();
     this.isOpen.update(v => !v);
+
+    if (!wasOpen && this.notificationService.unreadCount() > 0) {
+      this.markReadTimer = setTimeout(() => {
+        this.notificationService.markAllAsRead();
+        this.markReadTimer = null;
+      }, 1000);
+    } else if (wasOpen) {
+      this.clearMarkReadTimer();
+    }
+  }
+
+  private closeDropdown() {
+    this.isOpen.set(false);
+    this.clearMarkReadTimer();
+  }
+
+  private clearMarkReadTimer() {
+    if (this.markReadTimer) {
+      clearTimeout(this.markReadTimer);
+      this.markReadTimer = null;
+    }
   }
 
   onNotificationClick(id: string) {
@@ -283,7 +310,7 @@ export class NotificationBellComponent {
   }
 
   viewAll() {
-    this.isOpen.set(false);
+    this.closeDropdown();
     this.router.navigate(['/notifications']);
   }
 

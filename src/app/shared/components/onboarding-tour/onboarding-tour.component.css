@@ -49,6 +49,10 @@
   animation: slideIn 0.3s ease-out;
   min-width: 320px;
   max-width: 480px;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   z-index: 10001;
   position: fixed;
   pointer-events: auto;
@@ -84,6 +88,9 @@
 /* Content */
 .tour-content {
   color: #fff;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 /* Step Counter */
@@ -116,6 +123,8 @@
   justify-content: space-between;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .tour-actions.rtl {

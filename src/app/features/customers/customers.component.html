@@ -7,6 +7,7 @@
         <p class="text-gray-300 mt-1">{{ 'customers.subtitle' | translate }}</p>
       </div>
       
+      <div class="flex items-center gap-3">
       <!-- View Toggle -->
       <div class="flex items-center gap-2">
         <button (click)="onViewChange('dashboard')"
@@ -39,6 +40,11 @@
             <span class="text-sm">{{ 'customers.navigation.analytics' | translate }}</span>
           </button>
         }
+      </div>
+
+      <button (click)="onAddCustomer()" class="btn-primary">
+        + {{ 'customers.addCustomer' | translate }}
+      </button>
       </div>
     </div>
   </header>
@@ -241,7 +247,7 @@
             {{ 'customers.actions.clear' | translate }}
           </button>
           <button (click)="onAddCustomer()"
-                  class="btn-primary flex-1">
+                  class="btn-primary">
             {{ 'customers.actions.addCustomer' | translate }}
           </button>
         </div>
