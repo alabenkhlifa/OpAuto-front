@@ -469,13 +469,6 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .glass-card:hover {
-      background: rgba(18, 15, 61, 0.98);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
-      border-color: rgba(255, 132, 0, 0.7);
-      transform: translateY(-2px);
-    }
-
     .nav-button-active {
       background: linear-gradient(135deg, rgba(255, 132, 0, 0.8), rgba(204, 106, 0, 0.8));
       border-color: rgba(255, 132, 0, 0.6);

@@ -341,11 +341,6 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .glass-card:hover {
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
-      border-color: rgba(255, 132, 0, 0.7);
-    }
-    
     /* Form Labels - Dark Theme */
     .form-label {
       display: block;

@@ -142,13 +142,6 @@ import { inject } from '@angular/core';
       margin-bottom: 1rem;
     }
 
-    .glass-card:hover {
-      background: rgba(18, 15, 61, 0.98);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
-      border-color: rgba(255, 132, 0, 0.7);
-      transform: translateY(-2px);
-    }
-
     /* Fix text colors for permanent dark theme */
     .glass-card h3,
     .glass-card .text-gray-900 {

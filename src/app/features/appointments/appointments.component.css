@@ -43,13 +43,6 @@
   margin-bottom: 1rem;
 }
 
-.glass-card:hover {
-  background: #f8fafc;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border-color: rgba(255, 132, 0, 0.7);
-  transform: translateY(-2px);
-}
-
 .add-btn, .mobile-fab {
   background: linear-gradient(135deg, rgba(255, 132, 0, 0.8), rgba(204, 106, 0, 0.8));
   border: 1px solid rgba(255, 132, 0, 0.3);

@@ -16,13 +16,6 @@
   margin-bottom: 1rem;
 }
 
-.glass-card:hover {
-  background: #f8fafc;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border-color: rgba(255, 132, 0, 0.7);
-  transform: translateY(-2px);
-}
-
 /* Form section styling */
 .form-section {
   background: #ffffff;
