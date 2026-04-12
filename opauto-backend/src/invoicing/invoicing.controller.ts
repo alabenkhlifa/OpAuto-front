@@ -22,4 +22,5 @@ export class InvoicingController {
   @Post() @RequireModule('invoicing') create(@CurrentUser('garageId') gid: string, @Body() dto: CreateInvoiceDto) { return this.service.create(gid, dto); }
   @Put(':id') @RequireModule('invoicing') update(@Param('id') id: string, @CurrentUser('garageId') gid: string, @Body() dto: UpdateInvoiceDto) { return this.service.update(id, gid, dto); }
   @Delete(':id') @RequireModule('invoicing') remove(@Param('id') id: string, @CurrentUser('garageId') gid: string) { return this.service.remove(id, gid); }
+  @Post(':id/payments') @RequireModule('invoicing') addPayment(@Param('id') id: string, @CurrentUser('garageId') gid: string, @Body() dto: any) { return this.service.addPayment(id, gid, dto); }
 }

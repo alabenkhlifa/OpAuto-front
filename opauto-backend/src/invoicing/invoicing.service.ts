@@ -60,4 +60,24 @@ export class InvoicingService {
     await this.findOne(id, garageId);
     return this.prisma.invoice.delete({ where: { id } });
   }
+
+  async addPayment(invoiceId: string, garageId: string, dto: { amount: number; method?: string; paymentDate?: string; reference?: string; notes?: string; processedBy?: string }) {
+    const invoice = await this.findOne(invoiceId, garageId);
+    const payment = await this.prisma.payment.create({
+      data: {
+        invoiceId,
+        amount: dto.amount,
+        method: (dto.method as any) || 'CASH',
+        reference: dto.reference,
+        paidAt: dto.paymentDate ? new Date(dto.paymentDate) : new Date(),
+      },
+    });
+
+    const payments = await this.prisma.payment.findMany({ where: { invoiceId } });
+    const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
+    const newStatus = totalPaid >= invoice.total ? 'PAID' : 'PARTIALLY_PAID';
+    await this.prisma.invoice.update({ where: { id: invoiceId }, data: { status: newStatus } });
+
+    return payment;
+  }
 }
