@@ -85,12 +85,11 @@ export class CustomerDetailsComponent implements OnInit {
   }
 
   onDelete() {
-    if (confirm('Are you sure you want to delete this customer? This action cannot be undone.')) {
+    const confirmMsg = this.translationService.instant('customers.actions.confirmDelete');
+    if (confirm(confirmMsg)) {
       this.customerService.deleteCustomer(this.customerId()).subscribe({
-        next: (success) => {
-          if (success) {
-            this.router.navigate(['/customers']);
-          }
+        next: () => {
+          this.router.navigate(['/customers']);
         },
         error: (error) => {
           console.error('Error deleting customer:', error);
