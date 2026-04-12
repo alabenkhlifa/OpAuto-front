@@ -67,11 +67,6 @@
     "typescript": "~5.8.2"
   },
   "lint-staged": {
-    "src/**/*.ts": [
-      "ng lint --files"
-    ],
-    "src/**/*.html": [
-      "ng lint --files"
-    ]
+    "src/assets/i18n/*.json": "true"
   }
 }

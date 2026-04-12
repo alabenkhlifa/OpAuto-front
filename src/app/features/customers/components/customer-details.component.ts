@@ -1,16 +1,15 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CustomerService } from '../../../core/services/customer.service';
 import { TranslationService } from '../../../core/services/translation.service';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
-import { Customer, CustomerHistory, UpdateCustomerRequest, CustomerStatus, ContactMethod } from '../../../core/models/customer.model';
+import { Customer, CustomerHistory, CustomerStatus, ContactMethod } from '../../../core/models/customer.model';
 
 @Component({
   selector: 'app-customer-details',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, ReactiveFormsModule, TranslatePipe],
+  imports: [CommonModule, RouterModule, TranslatePipe],
   templateUrl: './customer-details.component.html',
   styleUrl: './customer-details.component.css'
 })
@@ -19,31 +18,13 @@ export class CustomerDetailsComponent implements OnInit {
   private router = inject(Router);
   private customerService = inject(CustomerService);
   private translationService = inject(TranslationService);
-  private fb = inject(FormBuilder);
 
   customer = signal<Customer | null>(null);
   history = signal<CustomerHistory | null>(null);
   metrics = signal<any>(null);
   isLoading = signal(false);
-  isEditing = signal(false);
-  
-  editForm: FormGroup;
   customerId = signal<string>('');
-
-  constructor() {
-    this.editForm = this.fb.group({
-      name: ['', [Validators.required, Validators.minLength(2)]],
-      phone: ['', [Validators.required, Validators.pattern(/^\+216-[0-9]{2}-[0-9]{3}-[0-9]{3}$/)]],
-      email: ['', [Validators.email]],
-      street: [''],
-      city: [''],
-      postalCode: [''],
-      country: ['Tunisia'],
-      status: ['active', Validators.required],
-      preferredContactMethod: ['phone', Validators.required],
-      notes: ['']
-    });
-  }
+  activeTab = signal<'cars' | 'appointments' | 'invoices'>('cars');
 
   ngOnInit() {
     this.route.params.subscribe(params => {
@@ -63,7 +44,6 @@ export class CustomerDetailsComponent implements OnInit {
       next: (customer) => {
         if (customer) {
           this.customer.set(customer);
-          this.populateForm(customer);
         }
         this.isLoading.set(false);
       },
@@ -96,65 +76,12 @@ export class CustomerDetailsComponent implements OnInit {
     });
   }
 
-  private populateForm(customer: Customer) {
-    this.editForm.patchValue({
-      name: customer.name,
-      phone: customer.phone,
-      email: customer.email || '',
-      street: customer.address?.street || '',
-      city: customer.address?.city || '',
-      postalCode: customer.address?.postalCode || '',
-      country: customer.address?.country || 'Tunisia',
-      status: customer.status,
-      preferredContactMethod: customer.preferredContactMethod,
-      notes: customer.notes || ''
-    });
-  }
-
   onBack() {
     this.router.navigate(['/customers']);
   }
 
   onEdit() {
-    this.isEditing.set(true);
-  }
-
-  onCancelEdit() {
-    this.isEditing.set(false);
-    const customer = this.customer();
-    if (customer) {
-      this.populateForm(customer);
-    }
-  }
-
-  onSave() {
-    if (this.editForm.valid) {
-      const formValue = this.editForm.value;
-      const updateData: UpdateCustomerRequest = {
-        name: formValue.name,
-        phone: formValue.phone,
-        email: formValue.email || undefined,
-        address: formValue.street || formValue.city ? {
-          street: formValue.street,
-          city: formValue.city,
-          postalCode: formValue.postalCode,
-          country: formValue.country
-        } : undefined,
-        status: formValue.status,
-        preferredContactMethod: formValue.preferredContactMethod,
-        notes: formValue.notes || undefined
-      };
-
-      this.customerService.updateCustomer(this.customerId(), updateData).subscribe({
-        next: (updatedCustomer) => {
-          this.customer.set(updatedCustomer);
-          this.isEditing.set(false);
-        },
-        error: (error) => {
-          console.error('Error updating customer:', error);
-        }
-      });
-    }
+    this.router.navigate(['/customers', this.customerId(), 'edit']);
   }
 
   onDelete() {

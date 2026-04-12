@@ -1,0 +1,146 @@
+<div class="min-h-screen p-4 lg:p-6" style="background: var(--color-bg-primary)">
+  <div class="max-w-4xl mx-auto">
+
+    <!-- Header -->
+    <div class="mb-6">
+      <div class="flex items-center space-x-2 mb-2">
+        <button class="p-2 text-gray-400 hover:text-white transition-colors"
+                (click)="goBack()">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+        </button>
+        <h1 class="text-2xl lg:text-3xl font-bold text-white">
+          {{ (isEditMode ? 'customers.editCustomer' : 'customers.form.newCustomer') | translate }}
+        </h1>
+      </div>
+      <p class="text-sm text-gray-300 ml-9">
+        {{ (isEditMode ? 'customers.form.editSubtitle' : 'customers.form.createSubtitle') | translate }}
+      </p>
+    </div>
+
+    <!-- Form -->
+    <div class="glass-card">
+      <form [formGroup]="customerForm" (ngSubmit)="onSubmit()">
+
+        <!-- Personal Information -->
+        <div class="p-6 border-b border-gray-700/50">
+          <h2 class="text-lg font-semibold text-white mb-4">{{ 'customers.customerInformation' | translate }}</h2>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'customers.fullName' | translate }} *</label>
+              <input type="text" formControlName="name"
+                     [placeholder]="'customers.form.fullNamePlaceholder' | translate"
+                     class="form-input"
+                     [class.border-red-500]="isFieldInvalid('name')">
+              @if (isFieldInvalid('name')) {
+                <p class="mt-1 text-sm text-red-400">{{ 'customers.form.errors.nameRequired' | translate }}</p>
+              }
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'customers.phoneNumber' | translate }} *</label>
+              <input type="tel" formControlName="phone"
+                     [placeholder]="'customers.form.phonePlaceholder' | translate"
+                     class="form-input"
+                     [class.border-red-500]="isFieldInvalid('phone')">
+              @if (isFieldInvalid('phone')) {
+                <p class="mt-1 text-sm text-red-400">{{ 'customers.form.errors.phoneRequired' | translate }}</p>
+              }
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'customers.email' | translate }}</label>
+              <input type="email" formControlName="email"
+                     [placeholder]="'customers.form.emailPlaceholder' | translate"
+                     class="form-input"
+                     [class.border-red-500]="isFieldInvalid('email')">
+              @if (isFieldInvalid('email')) {
+                <p class="mt-1 text-sm text-red-400">{{ 'customers.form.errors.emailInvalid' | translate }}</p>
+              }
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'customers.preferredContact' | translate }} *</label>
+              <select formControlName="preferredContactMethod" class="form-select">
+                @for (method of contactMethodOptions; track method.value) {
+                  <option [value]="method.value">{{ method.labelKey | translate }}</option>
+                }
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Address -->
+        <div class="p-6 border-b border-gray-700/50">
+          <h2 class="text-lg font-semibold text-white mb-4">{{ 'customers.addressInformation' | translate }}</h2>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="md:col-span-2">
+              <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'customers.streetAddress' | translate }}</label>
+              <input type="text" formControlName="street"
+                     [placeholder]="'customers.streetPlaceholder' | translate"
+                     class="form-input">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'customers.city' | translate }}</label>
+              <input type="text" formControlName="city"
+                     [placeholder]="'customers.cityPlaceholder' | translate"
+                     class="form-input">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'customers.postalCode' | translate }}</label>
+              <input type="text" formControlName="postalCode"
+                     [placeholder]="'customers.postalCodePlaceholder' | translate"
+                     class="form-input">
+            </div>
+          </div>
+        </div>
+
+        <!-- Status & Notes -->
+        <div class="p-6">
+          <h2 class="text-lg font-semibold text-white mb-4">{{ 'customers.form.additionalInfo' | translate }}</h2>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div *ngIf="isEditMode">
+              <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'customers.form.status' | translate }} *</label>
+              <select formControlName="status" class="form-select">
+                @for (opt of statusOptions; track opt.value) {
+                  <option [value]="opt.value">{{ opt.labelKey | translate }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'customers.additionalNotes' | translate }}</label>
+            <textarea formControlName="notes" rows="3"
+                      [placeholder]="'customers.notesPlaceholder' | translate"
+                      class="form-input resize-none"></textarea>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="px-6 py-4 bg-gray-900/30 backdrop-blur-sm rounded-b-xl flex justify-end space-x-3">
+          <button type="button" class="btn-secondary" (click)="goBack()">
+            {{ 'common.cancel' | translate }}
+          </button>
+          <button type="submit" class="btn-primary"
+                  [disabled]="customerForm.invalid || isSubmitting()">
+            @if (isSubmitting()) {
+              <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              {{ (isEditMode ? 'customers.form.updating' : 'customers.form.creating') | translate }}
+            } @else {
+              {{ (isEditMode ? 'customers.form.updateCustomer' : 'customers.form.createCustomer') | translate }}
+            }
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>

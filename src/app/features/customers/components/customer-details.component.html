@@ -28,21 +28,10 @@
       
       <!-- Actions -->
       <div class="flex gap-2">
-        <button *ngIf="!isEditing()" (click)="onEdit()"
-                class="btn-tertiary">
+        <button (click)="onEdit()" class="btn-tertiary">
           {{ 'customers.edit' | translate }}
         </button>
-        <button *ngIf="isEditing()" (click)="onSave()"
-                [disabled]="!editForm.valid"
-                class="btn-primary">
-          {{ 'customers.save' | translate }}
-        </button>
-        <button *ngIf="isEditing()" (click)="onCancelEdit()"
-                class="btn-secondary">
-          {{ 'common.cancel' | translate }}
-        </button>
-        <button *ngIf="!isEditing()" (click)="onDelete()"
-                class="btn-danger">
+        <button (click)="onDelete()" class="btn-danger">
           {{ 'customers.delete' | translate }}
         </button>
       </div>
@@ -59,7 +48,7 @@
       <div class="lg:col-span-2 glass-card">
         <h2 class="text-lg font-semibold text-white mb-4">{{ 'customers.customerInformation' | translate }}</h2>
         
-        <div *ngIf="!isEditing()" class="space-y-4">
+        <div class="space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-300 mb-1">{{ 'customers.fullName' | translate }}</label>
@@ -81,7 +70,7 @@
               </div>
             </div>
           </div>
-          
+
           <div *ngIf="customer()?.address">
             <label class="block text-sm font-medium text-gray-300 mb-1">{{ 'customers.address' | translate }}</label>
             <p class="text-white">
@@ -96,94 +85,6 @@
             <p class="text-white">{{ customer()?.notes }}</p>
           </div>
         </div>
-
-        <!-- Edit Form -->
-        <form *ngIf="isEditing()" [formGroup]="editForm" class="space-y-4">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'customers.fullName' | translate }} *</label>
-              <input type="text" formControlName="name"
-                     placeholder="{{ 'customers.form.fullNamePlaceholder' | translate }}"
-                     class="form-input">
-              <div *ngIf="editForm.get('name')?.errors && editForm.get('name')?.touched" class="mt-1">
-                <p class="text-sm text-red-400">{{ 'customers.form.errors.nameRequired' | translate }}</p>
-              </div>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'customers.phoneNumber' | translate }} *</label>
-              <input type="tel" formControlName="phone"
-                     placeholder="{{ 'customers.form.phonePlaceholder' | translate }}"
-                     class="form-input">
-              <div *ngIf="editForm.get('phone')?.errors && editForm.get('phone')?.touched" class="mt-1">
-                <p class="text-sm text-red-400">{{ 'customers.form.errors.phoneRequired' | translate }}</p>
-              </div>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'customers.email' | translate }}</label>
-              <input type="email" formControlName="email"
-                     placeholder="{{ 'customers.form.emailPlaceholder' | translate }}"
-                     class="form-input">
-              <div *ngIf="editForm.get('email')?.errors && editForm.get('email')?.touched" class="mt-1">
-                <p class="text-sm text-red-400">{{ 'customers.form.errors.emailInvalid' | translate }}</p>
-              </div>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'customers.preferredContact' | translate }} *</label>
-              <select formControlName="preferredContactMethod"
-                      class="form-select">
-                <option value="phone">{{ getContactMethodLabel('phone') }}</option>
-                <option value="email">{{ getContactMethodLabel('email') }}</option>
-                <option value="sms">{{ getContactMethodLabel('sms') }}</option>
-                <option value="whatsapp">{{ getContactMethodLabel('whatsapp') }}</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Address -->
-          <div class="space-y-4 border-t border-gray-600 pt-4">
-            <h3 class="text-md font-medium text-white">{{ 'customers.addressInformation' | translate }}</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'customers.streetAddress' | translate }}</label>
-                <input type="text" formControlName="street"
-                       placeholder="{{ 'customers.streetPlaceholder' | translate }}"
-                       class="form-input">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'customers.city' | translate }}</label>
-                <input type="text" formControlName="city"
-                       placeholder="{{ 'customers.cityPlaceholder' | translate }}"
-                       class="form-input">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'customers.postalCode' | translate }}</label>
-                <input type="text" formControlName="postalCode"
-                       placeholder="{{ 'customers.postalCodePlaceholder' | translate }}"
-                       class="form-input">
-              </div>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-600 pt-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'customers.form.status' | translate }} *</label>
-              <select formControlName="status"
-                      class="form-select">
-                <option value="active">{{ getStatusLabel('active') }}</option>
-                <option value="vip">{{ getStatusLabel('vip') }}</option>
-                <option value="inactive">{{ getStatusLabel('inactive') }}</option>
-                <option value="blocked">{{ getStatusLabel('blocked') }}</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="border-t border-gray-600 pt-4">
-            <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'customers.additionalNotes' | translate }}</label>
-            <textarea formControlName="notes" rows="3"
-                      placeholder="{{ 'customers.notesPlaceholder' | translate }}"
-                      class="form-input resize-none"></textarea>
-          </div>
-        </form>
       </div>
 
       <!-- Customer Metrics -->
@@ -246,23 +147,38 @@
     <div class="glass-card">
       <div class="border-b border-gray-600">
         <nav class="flex space-x-8 px-6" aria-label="Tabs">
-          <button class="border-b-2 border-blue-400 py-4 px-1 text-sm font-medium text-blue-400">
+          <button (click)="activeTab.set('cars')"
+                  class="py-4 px-1 text-sm font-medium border-b-2 transition-colors"
+                  [class.border-blue-400]="activeTab() === 'cars'"
+                  [class.text-blue-400]="activeTab() === 'cars'"
+                  [class.border-transparent]="activeTab() !== 'cars'"
+                  [class.text-gray-400]="activeTab() !== 'cars'">
             {{ 'customers.cars' | translate }} ({{ history()?.cars?.length || 0 }})
           </button>
-          <button class="border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-400 hover:text-gray-300 hover:border-gray-500">
+          <button (click)="activeTab.set('appointments')"
+                  class="py-4 px-1 text-sm font-medium border-b-2 transition-colors"
+                  [class.border-blue-400]="activeTab() === 'appointments'"
+                  [class.text-blue-400]="activeTab() === 'appointments'"
+                  [class.border-transparent]="activeTab() !== 'appointments'"
+                  [class.text-gray-400]="activeTab() !== 'appointments'">
             {{ 'appointments.title' | translate }} ({{ history()?.appointments?.length || 0 }})
           </button>
-          <button class="border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-400 hover:text-gray-300 hover:border-gray-500">
+          <button (click)="activeTab.set('invoices')"
+                  class="py-4 px-1 text-sm font-medium border-b-2 transition-colors"
+                  [class.border-blue-400]="activeTab() === 'invoices'"
+                  [class.text-blue-400]="activeTab() === 'invoices'"
+                  [class.border-transparent]="activeTab() !== 'invoices'"
+                  [class.text-gray-400]="activeTab() !== 'invoices'">
             {{ 'invoicing.title' | translate }} ({{ history()?.invoices?.length || 0 }})
           </button>
         </nav>
       </div>
 
       <!-- Cars Tab Content -->
-      <div class="p-6">
+      <div *ngIf="activeTab() === 'cars'" class="p-6">
         <div *ngIf="history()?.cars && history()!.cars.length > 0; else noCars" class="space-y-4">
-          <div *ngFor="let car of history()?.cars" 
-               class="flex items-center justify-between p-4 bg-gray-800/40 rounded-lg hover:bg-gray-700/50 transition-all cursor-pointer border border-gray-600/30"
+          <div *ngFor="let car of history()?.cars"
+               class="flex items-center justify-between p-4 bg-gray-800/40 rounded-lg cursor-pointer border border-gray-600/30"
                (click)="onViewCar(car.id)">
             <div class="flex items-center gap-4">
               <div class="h-12 w-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
@@ -289,6 +205,76 @@
               <span class="text-gray-500 text-2xl">🚗</span>
             </div>
             <p class="text-gray-400">{{ 'customers.noCars' | translate }}</p>
+          </div>
+        </ng-template>
+      </div>
+
+      <!-- Appointments Tab Content -->
+      <div *ngIf="activeTab() === 'appointments'" class="p-6">
+        <div *ngIf="history()?.appointments && history()!.appointments.length > 0; else noAppointments" class="space-y-4">
+          <div *ngFor="let apt of history()?.appointments"
+               class="flex items-center justify-between p-4 bg-gray-800/40 rounded-lg cursor-pointer border border-gray-600/30"
+               (click)="onViewAppointment(apt.id)">
+            <div class="flex items-center gap-4">
+              <div class="h-12 w-12 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center">
+                <span class="text-white text-xl">📅</span>
+              </div>
+              <div>
+                <p class="font-medium text-white">{{ apt.serviceName }}</p>
+                <p class="text-sm text-gray-400">{{ apt.carMake }} {{ apt.carModel }} — {{ apt.licensePlate }}</p>
+                <p class="text-xs text-gray-500">{{ formatDate(apt.date) }}</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <p class="font-semibold text-white">{{ formatCurrency(apt.totalCost) }}</p>
+              <span class="text-xs px-2 py-1 rounded-full"
+                    [ngClass]="getServiceStatusClass(apt.status)">
+                {{ apt.status }}
+              </span>
+            </div>
+          </div>
+        </div>
+        <ng-template #noAppointments>
+          <div class="text-center py-8">
+            <div class="mx-auto h-16 w-16 bg-gray-800/40 rounded-full flex items-center justify-center mb-4">
+              <span class="text-gray-500 text-2xl">📅</span>
+            </div>
+            <p class="text-gray-400">{{ 'customers.noAppointments' | translate }}</p>
+          </div>
+        </ng-template>
+      </div>
+
+      <!-- Invoices Tab Content -->
+      <div *ngIf="activeTab() === 'invoices'" class="p-6">
+        <div *ngIf="history()?.invoices && history()!.invoices.length > 0; else noInvoices" class="space-y-4">
+          <div *ngFor="let inv of history()?.invoices"
+               class="flex items-center justify-between p-4 bg-gray-800/40 rounded-lg cursor-pointer border border-gray-600/30"
+               (click)="onViewInvoice(inv.id)">
+            <div class="flex items-center gap-4">
+              <div class="h-12 w-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <span class="text-white text-xl">🧾</span>
+              </div>
+              <div>
+                <p class="font-medium text-white">{{ inv.invoiceNumber }}</p>
+                <p class="text-sm text-gray-400">{{ inv.serviceName }}</p>
+                <p class="text-xs text-gray-500">{{ formatDate(inv.date) }}</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <p class="font-semibold text-white">{{ formatCurrency(inv.amount) }}</p>
+              <span class="text-xs px-2 py-1 rounded-full"
+                    [ngClass]="getPaymentStatusClass(inv.status)">
+                {{ inv.status }}
+              </span>
+            </div>
+          </div>
+        </div>
+        <ng-template #noInvoices>
+          <div class="text-center py-8">
+            <div class="mx-auto h-16 w-16 bg-gray-800/40 rounded-full flex items-center justify-center mb-4">
+              <span class="text-gray-500 text-2xl">🧾</span>
+            </div>
+            <p class="text-gray-400">{{ 'customers.noInvoices' | translate }}</p>
           </div>
         </ng-template>
       </div>

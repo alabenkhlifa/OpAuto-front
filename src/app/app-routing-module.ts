@@ -73,6 +73,16 @@ const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'customers/new',
+    loadComponent: () => import('./features/customers/components/customer-form.component').then(m => m.CustomerFormComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'customers/:id/edit',
+    loadComponent: () => import('./features/customers/components/customer-form.component').then(m => m.CustomerFormComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'customers/:id',
     loadComponent: () => import('./features/customers/components/customer-details.component').then(m => m.CustomerDetailsComponent),
     canActivate: [authGuard]

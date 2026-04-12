@@ -120,11 +120,11 @@ export class CustomersComponent implements OnInit {
   }
 
   onAddCustomer() {
-    this.router.navigate(['/customers/add']);
+    this.router.navigate(['/customers/new']);
   }
 
   onEditCustomer(customerId: string) {
-    this.router.navigate(['/customers/edit', customerId]);
+    this.router.navigate(['/customers', customerId, 'edit']);
   }
 
   onViewCustomer(customerId: string) {
