@@ -1,25 +1,24 @@
-/* Cars Component - Permanent Dark Glassmorphism to match appointments */
+/* Cars Component - Light Theme */
 
 .cars-container {
   min-height: 100vh;
   background: transparent;
 }
 
-/* Glass card styling to match appointments */
+/* Glass card styling - Light Theme */
 .glass-card {
-  background: rgba(11, 8, 41, 0.95);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(42, 37, 102, 0.6);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 20px;
   padding: 1.5rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   margin-bottom: 1rem;
 }
 
 .glass-card:hover {
-  background: rgba(18, 15, 61, 0.98);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+  background: #f8fafc;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   border-color: rgba(255, 132, 0, 0.7);
   transform: translateY(-2px);
 }
@@ -29,24 +28,23 @@
 }
 
 .cars-header h1 {
-  color: #ffffff;
+  color: #111827;
 }
 
 .cars-header p {
-  color: #d1d5db;
+  color: #374151;
 }
 
 .search-input {
   width: 100%;
   min-width: 200px;
   padding: 0.75rem 1rem 0.75rem 2.5rem;
-  backdrop-filter: blur(10px);
-  background: rgba(18, 15, 61, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
   font-size: 0.875rem;
   transition: all 0.2s ease;
-  color: white;
+  color: #111827;
 }
 
 @media (max-width: 640px) {
@@ -58,7 +56,7 @@
 
 .search-input:focus {
   outline: none;
-  background: rgba(18, 15, 61, 0.9);
+  background: #ffffff;
   border-color: rgba(255, 132, 0, 0.5);
   box-shadow: 0 0 0 3px rgba(255, 132, 0, 0.1);
 }
@@ -67,9 +65,8 @@
   color: #9ca3af;
 }
 
-/* Add button styling to match appointments */
+/* Add button styling */
 .add-btn, .mobile-fab {
-  backdrop-filter: blur(20px);
   background: linear-gradient(135deg, rgba(255, 132, 0, 0.8), rgba(204, 106, 0, 0.8));
   border: 1px solid rgba(255, 132, 0, 0.3);
   border-radius: 12px;
@@ -91,13 +88,13 @@
   /* Uses glass-card styling */
 }
 
-/* Fix only the total cars number to be white, keep colored status numbers */
+/* Fix the total cars number, keep colored status numbers */
 .stats-nav .text-center:first-child .text-2xl {
-  color: #ffffff !important;
+  color: #111827 !important;
 }
 
 .stats-nav .text-xs {
-  color: #d1d5db !important;
+  color: #374151 !important;
 }
 
 /* Clickable Stats Focus States for Accessibility */
@@ -140,17 +137,16 @@
   gap: 0.5rem;
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
-  color: #d1d5db;
-  background: rgba(18, 15, 61, 0.6);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #374151;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
   transition: all 0.2s ease;
   margin-bottom: 0.75rem;
 }
 
 .filter-toggle:hover {
-  background: rgba(18, 15, 61, 0.8);
+  background: #f1f5f9;
 }
 
 .filter-toggle.active {
@@ -167,11 +163,10 @@
 }
 
 .filters-panel {
-  background: rgba(11, 8, 41, 0.9);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(42, 37, 102, 0.4);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   margin-bottom: 1rem;
   max-height: 0 !important;
@@ -187,25 +182,24 @@
 }
 
 .filters-panel.open:hover {
-  background: rgba(18, 15, 61, 0.95);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+  background: #f8fafc;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .filter-select {
   width: 100%;
   padding: 0.75rem;
-  backdrop-filter: blur(10px);
-  background: rgba(18, 15, 61, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
   font-size: 0.875rem;
   transition: all 0.2s ease;
-  color: white;
+  color: #111827;
   /* Force custom styling on mobile */
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23374151' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
   background-position: right 0.75rem center;
   background-size: 1rem;
@@ -214,18 +208,18 @@
 
 .filter-select:focus {
   outline: none;
-  background: rgba(18, 15, 61, 0.9);
+  background: #ffffff;
   border-color: rgba(255, 132, 0, 0.5);
   /* Maintain custom dropdown arrow on focus */
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23374151' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
   background-position: right 0.75rem center;
   background-size: 1rem;
 }
 
 .filter-select option {
-  background: #1C1852;
-  color: white;
+  background: #ffffff;
+  color: #111827;
 }
 
 /* Clear filters button styling moved to global buttons.css as .btn-clear-filters */
@@ -236,40 +230,39 @@
   /* Uses glass-card styles for consistency */
 }
 
-/* Empty state text - permanent dark */
+/* Empty state text */
 .empty-state h3,
 .empty-state .text-gray-900 {
-  color: #ffffff !important;
+  color: #111827 !important;
 }
 
 .empty-state p,
 .empty-state .text-gray-600,
 .empty-state .text-gray-400 {
-  color: #d1d5db !important;
+  color: #374151 !important;
 }
 
 /* Status Legend Styling */
 .status-legend {
-  background: rgba(11, 8, 41, 0.6) !important;
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0;
   border-radius: 16px;
   padding: 1rem;
   margin-bottom: 1rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .status-legend:hover {
-  background: rgba(18, 15, 61, 0.7) !important;
+  background: #f8fafc !important;
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .legend-title {
   font-size: 1rem;
   font-weight: 600;
-  color: #ffffff;
+  color: #111827;
   margin: 0 0 0.75rem 0;
   display: flex;
   align-items: center;
@@ -307,7 +300,7 @@
 
 .legend-text {
   font-size: 0.875rem;
-  color: #d1d5db;
+  color: #374151;
   flex: 1;
 }
 
@@ -404,34 +397,32 @@
 
 /* Desktop Filters Panel */
 .desktop-filters-panel {
-  background: rgba(11, 8, 41, 0.95) !important;
-  backdrop-filter: blur(15px);
-  border: 1px solid rgba(42, 37, 102, 0.6);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .desktop-filters-panel:hover {
-  background: rgba(18, 15, 61, 0.98) !important;
+  background: #f8fafc !important;
   transform: translateY(-1px);
-  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .filter-select-desktop {
   min-width: 140px;
   padding: 0.5rem 0.75rem;
   padding-right: 2rem;
-  backdrop-filter: blur(10px);
-  background: rgba(18, 15, 61, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
   font-size: 0.875rem;
   transition: all 0.2s ease;
-  color: white;
+  color: #111827;
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23374151' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
   background-position: right 0.5rem center;
   background-size: 0.875rem;
@@ -439,18 +430,18 @@
 
 .filter-select-desktop:focus {
   outline: none;
-  background: rgba(18, 15, 61, 0.95);
+  background: #ffffff;
   border-color: rgba(255, 132, 0, 0.5);
   box-shadow: 0 0 0 2px rgba(255, 132, 0, 0.1);
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23374151' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
   background-position: right 0.5rem center;
   background-size: 0.875rem;
 }
 
 .filter-select-desktop option {
-  background: #1C1852;
-  color: white;
+  background: #ffffff;
+  color: #111827;
   padding: 0.5rem;
 }
 
@@ -482,7 +473,7 @@
   background-position: left 0.75rem center;
   padding-left: 2.5rem;
   padding-right: 0.75rem;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='18,9 12,15 6,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23374151' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='18,9 12,15 6,9'%3e%3c/polyline%3e%3c/svg%3e");
 }
 
 :host-context([dir="rtl"]) .desktop-filters-panel .flex {

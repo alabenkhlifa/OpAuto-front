@@ -1,4 +1,4 @@
-/* OpAuto Dashboard - Permanent Dark Mode */
+/* OpAuto Dashboard - Light Theme */
 
 /* Navigation button styles */
 .nav-button-active {
@@ -94,21 +94,20 @@
   }
 }
 
-/* Glass Card Base - Permanent Dark Mode */
+/* Glass Card Base - Light Theme */
 .glass-card {
-  background: rgba(11, 8, 41, 0.6);
-  backdrop-filter: blur(20px);
+  background: #ffffff;
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid #e2e8f0;
   padding: 2rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .glass-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
-  background: rgba(18, 15, 61, 0.7);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: #f8fafc;
 }
 
 .card-header {
@@ -147,14 +146,14 @@
   grid-template-columns: 80px 1fr;
   gap: 1rem;
   padding: 1rem;
-  background: rgba(18, 15, 61, 0.6);
+  background: #f8fafc;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid #e2e8f0;
   transition: all 0.2s ease;
 }
 
 .appointment-item:hover {
-  background: rgba(18, 15, 61, 0.8);
+  background: #f1f5f9;
   transform: translateX(4px);
 }
 
@@ -315,7 +314,7 @@
 .progress-bar {
   width: 100%;
   height: 8px;
-  background: rgba(42, 37, 102, 0.4);
+  background: #e2e8f0;
   border-radius: 4px;
   overflow: hidden;
 }
@@ -352,11 +351,10 @@
   color: var(--color-text-primary);
 }
 
-/* Urgent Actions - Fixed Dark Mode */
+/* Urgent Actions - Light Theme */
 .urgent-card {
   border: 2px solid rgba(248, 113, 113, 0.4);
-  background: rgba(11, 8, 41, 0.8) !important;
-  backdrop-filter: blur(20px);
+  background: #ffffff !important;
 }
 
 .urgent-content {
@@ -450,7 +448,7 @@
   margin: 0;
 }
 
-/* Action Icon Colors - Dark Mode */
+/* Action Icon Colors */
 .action-icon-primary {
   background: rgba(255, 132, 0, 0.2);
   color: #FF8400;
@@ -479,13 +477,13 @@
 
 /* Language Toggle Enhanced Visibility */
 ::ng-deep app-language-toggle button {
-  border: 2px solid rgba(156, 163, 175, 0.8) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  border: 2px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
 }
 
 ::ng-deep app-language-toggle button:hover {
-  border-color: rgba(209, 213, 219, 0.9) !important;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
   transform: translateY(-1px);
 }
 
@@ -563,13 +561,13 @@
 .kpi-value {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #fff;
+  color: #111827;
   line-height: 1.2;
 }
 
 .kpi-label {
   font-size: 0.85rem;
-  color: #94a3b8;
+  color: #6b7280;
   margin-top: 0.25rem;
 }
 
@@ -618,7 +616,7 @@
 .chart-title {
   font-size: 1rem;
   font-weight: 600;
-  color: #fff;
+  color: #111827;
   margin-bottom: 1rem;
 }
 
@@ -636,7 +634,7 @@
   align-items: center;
   margin-bottom: 2rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .header-left {
@@ -716,11 +714,11 @@
   top: 3.5rem;
   bottom: -1rem;
   width: 2px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent);
+  background: linear-gradient(180deg, #e2e8f0, transparent);
 }
 
 .timeline-item:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: #f8fafc;
   border-radius: 12px;
   padding-left: 0.5rem;
   padding-right: 0.5rem;
@@ -834,10 +832,10 @@
 }
 
 .stat-card {
-  background: rgba(18, 15, 61, 0.6);
+  background: #f8fafc;
   border-radius: 16px;
   padding: 1.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid #e2e8f0;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
@@ -845,9 +843,9 @@
 }
 
 .stat-card:hover {
-  background: rgba(18, 15, 61, 0.8);
+  background: #f1f5f9;
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .stat-icon-wrapper {

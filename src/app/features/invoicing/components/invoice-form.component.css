@@ -1,78 +1,73 @@
-/* Invoice Form Component - Permanent Dark Glassmorphism */
+/* Invoice Form Component - Light Theme */
 
 .invoice-form-container {
   min-height: 100vh;
   background: transparent;
 }
 
-/* Glass card styling to match other screens */
+/* Glass card styling - Light Theme */
 .glass-card {
-  background: rgba(11, 8, 41, 0.95);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(42, 37, 102, 0.6);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 20px;
   padding: 1.5rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   margin-bottom: 1rem;
 }
 
 .glass-card:hover {
-  background: rgba(18, 15, 61, 0.98);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+  background: #f8fafc;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   border-color: rgba(255, 132, 0, 0.7);
   transform: translateY(-2px);
 }
 
 /* Form section styling */
 .form-section {
-  background: rgba(11, 8, 41, 0.95);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(42, 37, 102, 0.6);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 20px;
   padding: 1.5rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   margin-bottom: 1rem;
 }
 
-/* Form inputs - Permanent dark glassmorphism */
+/* Form inputs - Light theme */
 .form-input {
-  background: rgba(55, 65, 81, 0.4) !important;
-  border: 1px solid rgba(42, 37, 102, 0.6) !important;
-  backdrop-filter: blur(8px) !important;
-  color: #ffffff !important;
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #111827 !important;
   transition: all 0.2s ease !important;
 }
 
 .form-input:focus {
-  background: rgba(55, 65, 81, 0.7) !important;
+  background: #ffffff !important;
   border-color: #FF8400 !important;
   box-shadow: 0 0 0 3px rgba(255, 132, 0, 0.2) !important;
 }
 
-/* Line item styling - Permanent dark glassmorphism */
+/* Line item styling - Light theme */
 .line-item {
-  background: rgba(55, 65, 81, 0.3);
-  border: 1px solid rgba(42, 37, 102, 0.6);
-  backdrop-filter: blur(5px);
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   transition: all 0.2s ease;
 }
 
 .line-item:hover {
-  background: rgba(55, 65, 81, 0.5);
-  border-color: rgba(42, 37, 102, 0.8);
+  background: #f1f5f9;
+  border-color: #cbd5e1;
 }
 
 /* Summary sidebar */
 .summary-sidebar {
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
 }
 
 .dark .summary-sidebar {
-  background: rgba(18, 15, 61, 0.9);
-  border: 1px solid rgba(42, 37, 102, 0.4);
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
 }
 
 /* Sticky positioning for summary */
@@ -88,8 +83,8 @@
 }
 
 .dark .customer-info {
-  background: linear-gradient(135deg, rgba(255, 132, 0, 0.2), rgba(255, 160, 51, 0.1));
-  border: 1px solid rgba(255, 132, 0, 0.3);
+  background: linear-gradient(135deg, rgba(255, 132, 0, 0.1), rgba(255, 160, 51, 0.05));
+  border: 1px solid rgba(255, 132, 0, 0.2);
 }
 
 /* Total amount highlighting */
@@ -159,6 +154,7 @@
 
 /* Loading states */
 .loading-overlay {
+  /* keep backdrop-filter for modal overlay */
   backdrop-filter: blur(4px);
 }
 
@@ -169,8 +165,8 @@
 }
 
 .dark .form-input.ng-invalid.ng-touched {
-  border-color: #f87171;
-  background-color: rgba(127, 29, 29, 0.2);
+  border-color: #ef4444;
+  background-color: rgba(254, 242, 242, 0.5);
 }
 
 .form-input.ng-valid.ng-touched {
@@ -178,7 +174,7 @@
 }
 
 .dark .form-input.ng-valid.ng-touched {
-  border-color: #34d399;
+  border-color: #10b981;
 }
 
 /* Error text styling */
@@ -189,7 +185,7 @@
 }
 
 .dark .error-text {
-  color: #fca5a5;
+  color: #ef4444;
 }
 
 /* Enhanced number inputs */

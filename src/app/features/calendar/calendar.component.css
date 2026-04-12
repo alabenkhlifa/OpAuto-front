@@ -20,7 +20,7 @@
   gap: 0.75rem;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #fff;
+  color: #111827;
   margin: 0;
 }
 
@@ -37,7 +37,7 @@
 .current-date {
   font-size: 1.125rem;
   font-weight: 600;
-  color: #fff;
+  color: #111827;
   margin: 0;
   min-width: 200px;
   text-align: center;
@@ -87,40 +87,40 @@
 .mechanic-filter {
   padding: 0.5rem 2rem 0.5rem 0.75rem;
   border-radius: 10px;
-  background: rgba(11, 8, 41, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #fff;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #111827;
   font-size: 0.875rem;
   -webkit-appearance: none;
   appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23374151' stroke-width='2'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
   background-position: right 0.5rem center;
   background-size: 1rem;
 }
 
 .mechanic-filter option {
-  background: #0B0829;
-  color: #fff;
+  background: #ffffff;
+  color: #111827;
 }
 
 .view-switcher {
   display: flex;
   border-radius: 10px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid #e2e8f0;
 }
 
 .view-switcher button {
   padding: 0.5rem 1rem;
-  background: rgba(11, 8, 41, 0.6);
+  background: #ffffff;
   border: none;
-  color: #94a3b8;
+  color: #6b7280;
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  border-right: 1px solid #e2e8f0;
 }
 
 .view-switcher button:last-child {
@@ -128,13 +128,13 @@
 }
 
 .view-switcher button.active {
-  background: rgba(255, 132, 0, 0.3);
+  background: rgba(255, 132, 0, 0.1);
   color: #FF8400;
 }
 
 .view-switcher button:hover:not(.active) {
-  background: rgba(255, 255, 255, 0.05);
-  color: #fff;
+  background: #f1f5f9;
+  color: #111827;
 }
 
 /* Calendar Container */
@@ -142,31 +142,31 @@
   padding: 1rem;
 }
 
-/* FullCalendar Dark Theme Overrides */
+/* FullCalendar Light Theme Overrides */
 :host ::ng-deep .fc {
-  --fc-border-color: rgba(255, 255, 255, 0.08);
+  --fc-border-color: #e2e8f0;
   --fc-page-bg-color: transparent;
-  --fc-neutral-bg-color: rgba(11, 8, 41, 0.3);
-  --fc-today-bg-color: rgba(255, 132, 0, 0.08);
-  --fc-highlight-color: rgba(255, 132, 0, 0.12);
+  --fc-neutral-bg-color: #f8fafc;
+  --fc-today-bg-color: rgba(255, 132, 0, 0.06);
+  --fc-highlight-color: rgba(255, 132, 0, 0.08);
   --fc-event-border-color: transparent;
   --fc-now-indicator-color: #FF8400;
 }
 
 :host ::ng-deep .fc .fc-col-header-cell {
-  background: rgba(11, 8, 41, 0.4);
+  background: #f8fafc;
   padding: 0.75rem 0;
 }
 
 :host ::ng-deep .fc .fc-col-header-cell-cushion {
-  color: #8FA0D8;
+  color: #374151;
   font-weight: 600;
   font-size: 0.875rem;
   text-decoration: none;
 }
 
 :host ::ng-deep .fc .fc-daygrid-day-number {
-  color: #cbd5e1;
+  color: #374151;
   font-size: 0.875rem;
   padding: 0.5rem;
   text-decoration: none;
@@ -190,16 +190,16 @@
 
 :host ::ng-deep .fc .fc-event:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 :host ::ng-deep .fc .fc-timegrid-slot {
   height: 3rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid #f1f5f9;
 }
 
 :host ::ng-deep .fc .fc-timegrid-slot-label-cushion {
-  color: #64748b;
+  color: #6b7280;
   font-size: 0.75rem;
 }
 
@@ -246,7 +246,7 @@
   height: 100vh;
   z-index: 101;
   border-radius: 0;
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
   animation: slideIn 0.3s ease;
@@ -262,14 +262,14 @@
   align-items: center;
   justify-content: space-between;
   padding: 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .panel-header h3 {
   margin: 0;
   font-size: 1.125rem;
   font-weight: 600;
-  color: #fff;
+  color: #111827;
 }
 
 .close-btn {
@@ -279,16 +279,16 @@
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.05);
+  background: #f1f5f9;
   border: none;
-  color: #94a3b8;
+  color: #6b7280;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .close-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  background: #e2e8f0;
+  color: #111827;
 }
 
 .panel-body {
@@ -301,7 +301,7 @@
   display: flex;
   gap: 0.75rem;
   padding: 1.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid #f1f5f9;
 }
 
 .panel-actions .btn-secondary,
@@ -314,20 +314,20 @@
   flex-direction: column;
   gap: 0.25rem;
   padding: 0.75rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .detail-label {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #8FA0D8;
+  color: #6b7280;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .detail-value {
   font-size: 0.95rem;
-  color: #fff;
+  color: #111827;
 }
 
 /* Mechanic Legend */
@@ -343,7 +343,7 @@
 .legend-title {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #8FA0D8;
+  color: #374151;
 }
 
 .legend-item {
@@ -351,7 +351,7 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.875rem;
-  color: #cbd5e1;
+  color: #374151;
 }
 
 .legend-dot {

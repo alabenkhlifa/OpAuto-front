@@ -70,35 +70,35 @@
   .invoice-content { page-break-inside: avoid; }
 }
 
-/* Screen-only glassmorphism effects - always dark mode */
+/* Screen-only card effects - Light theme */
 @media screen {
   .glass-card {
-    background: rgba(18, 15, 61, 0.8) !important;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(42, 37, 102, 0.3) !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   }
 }
 
-/* Invoice header styling - dark mode only */
+/* Invoice header styling - light theme */
 .invoice-header {
-  background: linear-gradient(135deg, #120F3D, #1C1852) !important;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9) !important;
 }
 
-/* Professional table styling - dark mode only */
+/* Professional table styling - light theme */
 .invoice-table {
-  background: rgba(18, 15, 61, 0.95) !important;
+  background: #ffffff !important;
 }
 
 .invoice-table th {
-  background: rgba(30, 41, 59, 0.8) !important;
+  background: #f8fafc !important;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: rgb(156, 163, 175) !important;
+  color: #6b7280 !important;
 }
 
 .invoice-table td {
-  color: rgb(255, 255, 255) !important;
+  color: #111827 !important;
 }
 
 /* Line item type badges */
@@ -131,7 +131,7 @@
 
 .type-misc {
   background: rgba(107, 114, 128, 0.1);
-  color: #1C1852;
+  color: #374151;
   border: 1px solid rgba(107, 114, 128, 0.2);
 }
 
@@ -220,7 +220,7 @@
 }
 
 .payment-history-item:hover {
-  background: rgba(55, 65, 81, 0.8) !important;
+  background: #f1f5f9 !important;
   transform: translateX(4px);
 }
 
@@ -237,7 +237,7 @@
 }
 
 .dark .loading-skeleton {
-  background: linear-gradient(90deg, #1C1852 25%, #2A2566 50%, #1C1852 75%);
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
   background-size: 200% 100%;
 }
 
