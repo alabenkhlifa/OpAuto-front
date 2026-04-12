@@ -216,9 +216,15 @@
     "statusIndicators": "Status Indicators",
     "complete": "Complete",
     "edit": "Edit",
+    "unknownCar": "Unknown Car",
+    "unknownCustomer": "Unknown Customer",
+    "unassigned": "Unassigned",
     "status": {
       "scheduled": "Scheduled",
+      "confirmed": "Confirmed",
+      "pending": "Pending",
       "in-progress": "In Progress",
+      "in_progress": "In Progress",
       "completed": "Completed",
       "cancelled": "Cancelled"
     },

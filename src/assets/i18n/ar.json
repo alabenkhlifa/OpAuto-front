@@ -216,9 +216,15 @@
     "statusIndicators": "مؤشرات الحالة",
     "complete": "إكمال",
     "edit": "تعديل",
+    "unknownCar": "سيارة غير معروفة",
+    "unknownCustomer": "عميل غير معروف",
+    "unassigned": "غير معين",
     "status": {
       "scheduled": "مجدول",
+      "confirmed": "مؤكد",
+      "pending": "قيد الانتظار",
       "in-progress": "قيد التنفيذ",
+      "in_progress": "قيد التنفيذ",
       "completed": "مكتمل",
       "cancelled": "ملغي"
     },

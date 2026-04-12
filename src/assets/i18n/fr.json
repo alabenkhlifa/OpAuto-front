@@ -216,9 +216,15 @@
     "statusIndicators": "Indicateurs de statut",
     "complete": "Terminer",
     "edit": "Modifier",
+    "unknownCar": "Voiture inconnue",
+    "unknownCustomer": "Client inconnu",
+    "unassigned": "Non assigné",
     "status": {
       "scheduled": "Programmé",
+      "confirmed": "Confirmé",
+      "pending": "En attente",
       "in-progress": "En cours",
+      "in_progress": "En cours",
       "completed": "Terminé",
       "cancelled": "Annulé"
     },

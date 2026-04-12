@@ -343,17 +343,17 @@ export class AppointmentsComponent implements AfterViewInit {
   // Helper methods for template
   getCarInfo(carId: string): string {
     const car = this.appointmentService.getCarById(carId);
-    return car ? `${car.make} ${car.model} - ${car.licensePlate}` : 'Unknown Car';
+    return car ? `${car.make} ${car.model} - ${car.licensePlate}` : this.translationService.instant('appointments.unknownCar');
   }
 
   getCustomerName(customerId: string): string {
     const customer = this.appointmentService.getCustomerById(customerId);
-    return customer ? customer.name : 'Unknown Customer';
+    return customer ? customer.name : this.translationService.instant('appointments.unknownCustomer');
   }
 
   getMechanicName(mechanicId: string): string {
     const mechanic = this.appointmentService.getMechanicById(mechanicId);
-    return mechanic ? mechanic.name : 'Unassigned';
+    return mechanic ? mechanic.name : this.translationService.instant('appointments.unassigned');
   }
 
   getServiceName(serviceName: string): string {
