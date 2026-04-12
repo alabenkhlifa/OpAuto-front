@@ -35,7 +35,7 @@ Single source of truth for the current bug batch. Add new bugs to **§ Backlog**
 | BUG-003 | Notification counter reset on bell click | Notifications | 🔴 |
 | BUG-004 | Customers list styling diverges | Customers | 🔴 |
 | BUG-006 | Missing `customers.*` i18n keys | i18n | 🟢 |
-| BUG-015 | Appointment sidebar untranslated status | i18n | 🔴 |
+| BUG-015 | Appointment sidebar untranslated status | i18n | 🟢 |
 | BUG-017 | Stock "Add Part" modal untranslated | i18n | 🔴 |
 
 ### P3 — Large Redesign (fix last)
