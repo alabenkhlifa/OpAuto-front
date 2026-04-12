@@ -8,6 +8,7 @@ import { Appointment, AppointmentStatus } from '../../core/models/appointment.mo
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { LanguageService } from '../../core/services/language.service';
 import { TranslationService } from '../../core/services/translation.service';
+import { forkJoin } from 'rxjs';
 import { TooltipDirective } from '../../shared/directives/tooltip.directive';
 
 @Component({
@@ -100,8 +101,13 @@ export class AppointmentsComponent implements AfterViewInit {
 
   loadAppointments(): void {
     this.isLoading.set(true);
-    this.appointmentService.getAppointments().subscribe({
-      next: (appointments) => {
+    forkJoin({
+      customers: this.appointmentService.getCustomers(),
+      cars: this.appointmentService.getCars(),
+      mechanics: this.appointmentService.getMechanics(),
+      appointments: this.appointmentService.getAppointments()
+    }).subscribe({
+      next: ({ appointments }) => {
         this.appointments.set(appointments);
         this.applyFilters();
         this.isLoading.set(false);
