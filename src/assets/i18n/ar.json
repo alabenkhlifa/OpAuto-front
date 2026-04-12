@@ -1734,7 +1734,36 @@
       "saveAsDraft": "حفظ كمسودة",
       "loadingFormData": "جارِ تحميل بيانات النموذج..."
     },
-    "loading": "جارِ التحميل..."
+    "loading": "جارِ التحميل...",
+    "print": {
+      "invoice": "فاتورة",
+      "issueDate": "تاريخ الإصدار",
+      "dueDate": "تاريخ الاستحقاق",
+      "taxId": "الرقم الضريبي",
+      "billTo": "فاتورة إلى",
+      "vehicle": "المركبة",
+      "licensePlate": "لوحة الترقيم",
+      "service": "الخدمة",
+      "servicesParts": "الخدمات والقطع",
+      "description": "الوصف",
+      "qty": "الكمية",
+      "unit": "الوحدة",
+      "unitPrice": "سعر الوحدة",
+      "total": "المجموع",
+      "subtotal": "المجموع الفرعي",
+      "discount": "الخصم",
+      "paid": "المدفوع",
+      "remaining": "المتبقي",
+      "paymentTerms": "شروط الدفع",
+      "bankDetails": "التفاصيل البنكية",
+      "bank": "البنك",
+      "account": "الحساب",
+      "iban": "IBAN",
+      "notes": "ملاحظات",
+      "edit": "تعديل",
+      "sendInvoice": "إرسال الفاتورة",
+      "recordPayment": "تسجيل دفعة"
+    }
   },
   "photo": {
     "title": "الصور",

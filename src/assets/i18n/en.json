@@ -1735,6 +1735,38 @@
       "bankTransfer": "Bank Transfer",
       "check": "Check",
       "credit": "Credit"
+    },
+    "print": {
+      "invoice": "INVOICE",
+      "issueDate": "Issue Date",
+      "dueDate": "Due Date",
+      "taxId": "Tax ID",
+      "billTo": "Bill To",
+      "vehicle": "Vehicle",
+      "licensePlate": "License Plate",
+      "service": "Service",
+      "servicesParts": "Services & Parts",
+      "description": "Description",
+      "qty": "Qty",
+      "unit": "Unit",
+      "unitPrice": "Unit Price",
+      "total": "Total",
+      "subtotal": "Subtotal",
+      "discount": "Discount",
+      "paid": "Paid",
+      "remaining": "Remaining",
+      "paymentTerms": "Payment Terms",
+      "bankDetails": "Bank Details",
+      "bank": "Bank",
+      "account": "Account",
+      "iban": "IBAN",
+      "notes": "Notes",
+      "edit": "Edit",
+      "sendInvoice": "Send Invoice",
+      "recordPayment": "Record Payment"
+    },
+    "pending": {
+      "recordPayment": "Record Payment"
     }
   },
   "approvals": {

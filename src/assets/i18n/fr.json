@@ -1732,7 +1732,36 @@
       "saveAsDraft": "Enregistrer comme brouillon",
       "loadingFormData": "Chargement des données du formulaire..."
     },
-    "loading": "Chargement..."
+    "loading": "Chargement...",
+    "print": {
+      "invoice": "FACTURE",
+      "issueDate": "Date d'émission",
+      "dueDate": "Date d'échéance",
+      "taxId": "N° fiscal",
+      "billTo": "Facturer à",
+      "vehicle": "Véhicule",
+      "licensePlate": "Plaque d'immatriculation",
+      "service": "Service",
+      "servicesParts": "Services et pièces",
+      "description": "Description",
+      "qty": "Qté",
+      "unit": "Unité",
+      "unitPrice": "Prix unitaire",
+      "total": "Total",
+      "subtotal": "Sous-total",
+      "discount": "Remise",
+      "paid": "Payé",
+      "remaining": "Restant",
+      "paymentTerms": "Conditions de paiement",
+      "bankDetails": "Coordonnées bancaires",
+      "bank": "Banque",
+      "account": "Compte",
+      "iban": "IBAN",
+      "notes": "Notes",
+      "edit": "Modifier",
+      "sendInvoice": "Envoyer la facture",
+      "recordPayment": "Enregistrer un paiement"
+    }
   },
   "approvals": {
     "title": "Approbations",
