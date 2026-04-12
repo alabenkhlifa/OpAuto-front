@@ -60,15 +60,6 @@
   background: linear-gradient(135deg, #7B8CC4, #6778B0);
 }
 
-/* Invoice card hover effects */
-.invoice-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-}
-
-.dark .invoice-card:hover {
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-}
 
 /* Revenue highlight effects */
 .revenue-highlight {
@@ -146,7 +137,7 @@
 }
 
 /* Smooth transitions for all interactive elements */
-button, .invoice-card, .filter-input {
+button, .filter-input {
   transition: all 0.2s ease;
 }
 

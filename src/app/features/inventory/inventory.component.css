@@ -58,17 +58,6 @@
   }
 }
 
-/* Hover effects for interactive elements */
-.part-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-}
-
-@media (prefers-color-scheme: dark) {
-  .part-card:hover {
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  }
-}
 
 /* Alert animations */
 .alert-enter {
@@ -105,15 +94,8 @@
   border-radius: 20px;
   padding: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.inventory-card:hover {
-  background: #f8fafc;
-  border-color: rgba(255, 132, 0, 0.7);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
 
 .inventory-card h3,
 .inventory-card h4,
@@ -199,15 +181,8 @@
 .inventory-list-item {
   background: #f8fafc !important;
   border: 1px solid #e2e8f0 !important;
-  transition: all 0.2s ease !important;
 }
 
-.inventory-list-item:hover {
-  background: #f1f5f9 !important;
-  border-color: #cbd5e1 !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
-}
 
 /* Component uses global badge system from /src/styles/badges.css */
 
@@ -217,12 +192,6 @@
   border: 1px solid #e2e8f0;
 }
 
-.supplier-card:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-}
 
 /* Focus states for accessibility */
 button:focus-visible,

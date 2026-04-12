@@ -174,10 +174,6 @@
   transform: translateY(0) !important;
 }
 
-.filters-panel.open:hover {
-  background: #f8fafc;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
 
 .filter-select {
   width: 100%;
@@ -243,14 +239,8 @@
   padding: 1rem;
   margin-bottom: 1rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.status-legend:hover {
-  background: #f8fafc !important;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
 
 .legend-title {
   font-size: 1rem;
@@ -393,14 +383,8 @@
   background: #ffffff !important;
   border: 1px solid #e2e8f0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.desktop-filters-panel:hover {
-  background: #f8fafc !important;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
 
 .filter-select-desktop {
   min-width: 140px;

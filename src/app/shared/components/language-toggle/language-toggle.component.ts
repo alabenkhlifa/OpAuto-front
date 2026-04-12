@@ -34,11 +34,11 @@ import { TranslationService } from '../../../core/services/translation.service';
 
       <!-- Dropdown Menu - Glassmorphism Style -->
       @if (isDropdownOpen()) {
-        <div class="absolute top-full right-0 mt-2 w-48 backdrop-blur-lg rounded-xl border shadow-lg z-50 bg-slate-900 bg-opacity-95 border-slate-700">
-          
+        <div class="absolute top-full right-0 mt-2 w-48 rounded-xl border shadow-lg z-50 bg-white border-gray-200">
+
           <!-- Dropdown Header -->
-          <div class="px-4 py-3 border-b border-slate-600 border-opacity-60">
-            <p class="text-xs font-medium uppercase tracking-wider text-gray-300">
+          <div class="px-4 py-3 border-b border-gray-200">
+            <p class="text-xs font-medium uppercase tracking-wider text-gray-500">
               {{ getTranslatedText('settings.language', 'Select Language') }}
             </p>
           </div>
@@ -46,33 +46,27 @@ import { TranslationService } from '../../../core/services/translation.service';
           <!-- Language Options -->
           <div class="py-2">
             @for (language of languageOptions; track language.code) {
-              <button 
-                class="w-full flex items-center gap-3 px-4 py-3 text-left transition-all duration-150 hover:bg-blue-600 hover:bg-opacity-30 hover:backdrop-blur-sm"
-                [class.bg-blue-600]="language.code === currentLanguage()"
-                [class.bg-opacity-40]="language.code === currentLanguage()"
-                [class.backdrop-blur-sm]="language.code === currentLanguage()"
+              <button
+                class="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors duration-150 hover:bg-gray-50"
+                [class.bg-orange-50]="language.code === currentLanguage()"
                 (click)="selectLanguage(language.code)">
-                
+
                 <!-- Flag -->
                 <span class="text-xl leading-none">{{ language.flag }}</span>
-                
+
                 <!-- Language Info -->
                 <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium"
-                     [class.text-gray-100]="language.code !== currentLanguage()"
-                     [class.text-white]="language.code === currentLanguage()">
+                  <p class="text-sm font-medium text-gray-900">
                     {{ language.nativeName }}
                   </p>
-                  <p class="text-xs"
-                     [class.text-gray-400]="language.code !== currentLanguage()"
-                     [class.text-gray-200]="language.code === currentLanguage()">
+                  <p class="text-xs text-gray-500">
                     {{ language.name }}
                   </p>
                 </div>
-                
+
                 <!-- Selected Indicator -->
                 @if (language.code === currentLanguage()) {
-                  <svg class="w-4 h-4 text-white" 
+                  <svg class="w-4 h-4 text-orange-500"
                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                   </svg>
@@ -97,31 +91,9 @@ import { TranslationService } from '../../../core/services/translation.service';
     .rotate-180 {
       transform: rotate(180deg);
     }
-    
-    /* Enhanced glassmorphism effects */
-    .backdrop-blur-lg {
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-    }
 
-    .backdrop-blur-sm {
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
-
-    /* Smooth transitions for glassmorphism */
-    * {
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* Enhanced hover effects for glassmorphism */
-    button:hover {
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    }
-
-    /* Dropdown shadow enhancement */
     .shadow-lg {
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
     }
 
     /* RTL Support */
