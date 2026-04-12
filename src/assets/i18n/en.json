@@ -2132,8 +2132,11 @@
       "vehicle": "Vehicle",
       "mechanic": "Mechanic",
       "status": "Status",
-      "time": "Time"
+      "time": "Time",
+      "edit": "Edit",
+      "cancel": "Cancel Appointment"
     },
+    "confirmCancel": "Are you sure you want to cancel this appointment?",
     "mechanics": "Mechanics"
   },
   "notifications": {

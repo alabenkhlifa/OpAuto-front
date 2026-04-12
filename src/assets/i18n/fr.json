@@ -2173,8 +2173,11 @@
       "vehicle": "Véhicule",
       "mechanic": "Mécanicien",
       "status": "Statut",
-      "time": "Heure"
+      "time": "Heure",
+      "edit": "Modifier",
+      "cancel": "Annuler le rendez-vous"
     },
+    "confirmCancel": "Êtes-vous sûr de vouloir annuler ce rendez-vous ?",
     "mechanics": "Mécaniciens"
   },
   "notifications": {

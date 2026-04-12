@@ -34,6 +34,10 @@
         <button [class.active]="currentView() === 'timeGridWeek'" (click)="changeView('timeGridWeek')">Week</button>
         <button [class.active]="currentView() === 'timeGridDay'" (click)="changeView('timeGridDay')">Day</button>
       </div>
+
+      <button class="btn-primary" (click)="onAddAppointment()">
+        + {{ 'appointments.addAppointment' | translate }}
+      </button>
     </div>
   </div>
 
@@ -73,6 +77,16 @@
           <span class="detail-label">{{ 'calendar.detail.time' | translate }}</span>
           <span class="detail-value">{{ selectedEvent().start | date:'short' }} - {{ selectedEvent().end | date:'shortTime' }}</span>
         </div>
+      </div>
+      <div class="panel-actions">
+        <button class="btn-secondary" (click)="onEditAppointment()">
+          {{ 'calendar.detail.edit' | translate }}
+        </button>
+        @if (canCancel()) {
+          <button class="btn-danger" (click)="onCancelAppointment()">
+            {{ 'calendar.detail.cancel' | translate }}
+          </button>
+        }
       </div>
     </div>
   }

@@ -297,6 +297,18 @@
   flex: 1;
 }
 
+.panel-actions {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.panel-actions .btn-secondary,
+.panel-actions .btn-danger {
+  flex: 1;
+}
+
 .detail-row {
   display: flex;
   flex-direction: column;

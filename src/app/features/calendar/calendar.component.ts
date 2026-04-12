@@ -7,6 +7,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
+import { Router } from '@angular/router';
 import { CalendarService, CalendarEvent } from './services/calendar.service';
 import { AppointmentService } from '../appointments/services/appointment.service';
 import { TranslationService } from '../../core/services/translation.service';
@@ -26,6 +27,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
   private calendarService = inject(CalendarService);
   private appointmentService = inject(AppointmentService);
   private translationService = inject(TranslationService);
+  private router = inject(Router);
   public sidebarService = inject(SidebarService);
 
   @ViewChild('calendar') calendarComponent!: FC;
@@ -158,6 +160,40 @@ export class CalendarComponent implements OnInit, OnDestroy {
   closeEventDetail() {
     this.showEventDetail.set(false);
     this.selectedEvent.set(null);
+  }
+
+  onAddAppointment() {
+    this.router.navigate(['/appointments'], { queryParams: { action: 'create' } });
+  }
+
+  onEditAppointment() {
+    const event = this.selectedEvent();
+    if (event?.id) {
+      this.router.navigate(['/appointments'], { queryParams: { edit: event.id } });
+    }
+  }
+
+  onCancelAppointment() {
+    const event = this.selectedEvent();
+    if (!event?.id) return;
+    const confirmMsg = this.t('calendar.confirmCancel') || 'Are you sure you want to cancel this appointment?';
+    if (confirm(confirmMsg)) {
+      this.appointmentService.updateAppointment(event.id, { status: 'cancelled' as any }).subscribe({
+        next: () => {
+          this.closeEventDetail();
+          this.appointmentService.getAppointments().subscribe(appts => {
+            this.appointments = appts;
+            this.loadEvents();
+          });
+        },
+        error: (err) => console.error('Failed to cancel appointment:', err)
+      });
+    }
+  }
+
+  canCancel(): boolean {
+    const status = this.selectedEvent()?.status?.toLowerCase()?.replace('-', '_');
+    return status === 'pending' || status === 'confirmed';
   }
 
   t(key: string): string {
