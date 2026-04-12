@@ -10,7 +10,7 @@
       <!-- Quick Actions -->
       <div class="flex flex-wrap items-center gap-2 justify-start sm:justify-end">
         <button (click)="setView('dashboard')" 
-                class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105"
+                class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors duration-200 font-medium"
                 [class]="currentView() === 'dashboard' ? 'nav-button-active' : 'nav-button-inactive'">
           <!-- Dashboard Icon -->
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -20,7 +20,7 @@
           <span class="text-sm">{{ 'inventory.navigation.dashboard' | translate }}</span>
         </button>
         <button (click)="setView('parts')"
-                class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105"
+                class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors duration-200 font-medium"
                 [class]="currentView() === 'parts' ? 'nav-button-active' : 'nav-button-inactive'">
           <!-- Parts Catalog Icon -->
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -29,7 +29,7 @@
           <span class="text-sm">{{ 'inventory.navigation.partsCatalog' | translate }}</span>
         </button>
         <button (click)="setView('suppliers')"
-                class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105"
+                class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors duration-200 font-medium"
                 [class]="currentView() === 'suppliers' ? 'nav-button-active' : 'nav-button-inactive'">
           <!-- Suppliers Icon -->
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

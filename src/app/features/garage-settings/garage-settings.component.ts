@@ -40,7 +40,7 @@ import { IntegrationSettingsComponent } from './components/integration-settings.
       <div class="glass-card settings-nav">
         <nav class="flex flex-wrap gap-2 overflow-x-auto">
           <button
-            class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105 whitespace-nowrap"
+            class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors duration-200 font-medium whitespace-nowrap"
             [class]="activeTab() === 'garage-info' ? 'nav-button-active' : 'nav-button-inactive'"
             (click)="setActiveTab('garage-info')">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -50,7 +50,7 @@ import { IntegrationSettingsComponent } from './components/integration-settings.
           </button>
           
           <button
-            class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105 whitespace-nowrap"
+            class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors duration-200 font-medium whitespace-nowrap"
             [class]="activeTab() === 'operational' ? 'nav-button-active' : 'nav-button-inactive'"
             (click)="setActiveTab('operational')">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -61,7 +61,7 @@ import { IntegrationSettingsComponent } from './components/integration-settings.
           </button>
           
           <button
-            class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105 whitespace-nowrap"
+            class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors duration-200 font-medium whitespace-nowrap"
             [class]="activeTab() === 'business' ? 'nav-button-active' : 'nav-button-inactive'"
             (click)="setActiveTab('business')">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -71,7 +71,7 @@ import { IntegrationSettingsComponent } from './components/integration-settings.
           </button>
           
           <button
-            class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105 whitespace-nowrap"
+            class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors duration-200 font-medium whitespace-nowrap"
             [class]="activeTab() === 'system' ? 'nav-button-active' : 'nav-button-inactive'"
             (click)="setActiveTab('system')">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -81,7 +81,7 @@ import { IntegrationSettingsComponent } from './components/integration-settings.
           </button>
           
           <button
-            class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-sm border-2 transition-all duration-300 font-medium hover:scale-105 whitespace-nowrap"
+            class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors duration-200 font-medium whitespace-nowrap"
             [class]="activeTab() === 'integrations' ? 'nav-button-active' : 'nav-button-inactive'"
             (click)="setActiveTab('integrations')">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -192,23 +192,20 @@ import { IntegrationSettingsComponent } from './components/integration-settings.
 
     /* Navigation button styles */
     .nav-button-active {
-      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover)) !important;
-      border-color: var(--color-primary) !important;
-      color: white !important;
-      box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+      background: rgba(255, 132, 0, 0.1) !important;
+      border-color: rgba(255, 132, 0, 0.3) !important;
+      color: #FF8400 !important;
     }
 
     .nav-button-inactive {
-      background-color: var(--color-bg-primary) !important;
+      background-color: #ffffff !important;
       border-color: var(--color-border) !important;
       color: var(--color-text-secondary) !important;
     }
 
     .nav-button-inactive:hover {
       background-color: var(--color-bg-tertiary) !important;
-      border-color: var(--color-primary) !important;
       color: var(--color-text-primary) !important;
-      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
     }
 
     /* Loading spinner */

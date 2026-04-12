@@ -1,22 +1,19 @@
 /* Navigation button styles */
 .nav-button-active {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover)) !important;
-  border-color: var(--color-primary) !important;
-  color: white !important;
-  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+  background: rgba(255, 132, 0, 0.1) !important;
+  border-color: rgba(255, 132, 0, 0.3) !important;
+  color: #FF8400 !important;
 }
 
 .nav-button-inactive {
-  background-color: var(--color-bg-primary) !important;
+  background-color: #ffffff !important;
   border-color: var(--color-border) !important;
   color: var(--color-text-secondary) !important;
 }
 
 .nav-button-inactive:hover {
   background-color: var(--color-bg-tertiary) !important;
-  border-color: var(--color-primary) !important;
   color: var(--color-text-primary) !important;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
 }
 
 /* Glass Control Styling */

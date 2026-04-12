@@ -470,23 +470,20 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
     }
 
     .nav-button-active {
-      background: linear-gradient(135deg, rgba(255, 132, 0, 0.8), rgba(204, 106, 0, 0.8));
-      border-color: rgba(255, 132, 0, 0.6);
-      color: white;
-      box-shadow: 0 4px 15px rgba(255, 132, 0, 0.3);
+      background: rgba(255, 132, 0, 0.1) !important;
+      border-color: rgba(255, 132, 0, 0.3) !important;
+      color: #FF8400 !important;
     }
 
     .nav-button-inactive {
-      background-color: rgba(18, 15, 61, 0.6);
-      border-color: rgba(42, 37, 102, 0.4);
-      color: #9ca3af;
+      background-color: #ffffff !important;
+      border-color: var(--color-border) !important;
+      color: var(--color-text-secondary) !important;
     }
 
     .nav-button-inactive:hover {
-      background-color: rgba(18, 15, 61, 0.8);
-      border-color: rgba(255, 132, 0, 0.4);
-      color: #ffffff;
-      box-shadow: 0 2px 8px rgba(255, 132, 0, 0.2);
+      background-color: var(--color-bg-tertiary) !important;
+      color: var(--color-text-primary) !important;
     }
 
     .toggle-button {
