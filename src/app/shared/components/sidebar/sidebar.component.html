@@ -145,8 +145,8 @@
               }
 
               <!-- Badge -->
-              @if (item.badge && !isModuleLocked(item) && shouldShowExpanded()) {
-                <span class="nav-badge">{{ item.badge }}</span>
+              @if (getBadge(item.id) && !isModuleLocked(item) && shouldShowExpanded()) {
+                <span class="nav-badge">{{ getBadge(item.id) }}</span>
               }
 
               <!-- Chevron for submenus -->
@@ -170,8 +170,8 @@
                       (click)="navigateTo(child.route!)">
                       <span class="submenu-icon">•</span>
                       <span class="submenu-label">{{ child.translationKey | translate }}</span>
-                      @if (child.badge) {
-                        <span class="nav-badge">{{ child.badge }}</span>
+                      @if (getBadge(child.id)) {
+                        <span class="nav-badge">{{ getBadge(child.id) }}</span>
                       }
                     </button>
                   </li>

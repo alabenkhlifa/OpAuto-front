@@ -1,10 +1,12 @@
-import { Component, inject, signal, OnInit, OnDestroy, computed } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { SidebarService } from '../../../core/services/sidebar.service';
 import { TranslationService } from '../../../core/services/translation.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ModuleService } from '../../../core/services/module.service';
+import { NotificationService } from '../../../core/services/notification.service';
 import { ModuleId } from '../../../core/models/module.model';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { filter, Subscription } from 'rxjs';
@@ -32,11 +34,14 @@ interface NavItem {
 })
 export class SidebarComponent implements OnInit, OnDestroy {
   private router = inject(Router);
+  private http = inject(HttpClient);
   private sidebarService = inject(SidebarService);
   private translationService = inject(TranslationService);
   private authService = inject(AuthService);
   private moduleService = inject(ModuleService);
+  private notificationService = inject(NotificationService);
   private routerSubscription?: Subscription;
+  private badgeCounts = signal<Record<string, number>>({});
 
   isCollapsed = this.sidebarService.isCollapsed;
   isMobileMenuOpen = this.sidebarService.isMobileMenuOpen;
@@ -64,8 +69,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       label: 'Appointments',
       translationKey: 'navigation.appointments',
       icon: 'calendar',
-      route: '/appointments',
-      badge: 3
+      route: '/appointments'
     },
     {
       id: 'cars',
@@ -82,7 +86,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       isExpanded: false,
       requiresModule: 'maintenance',
       children: [
-        { id: 'maintenance-active', label: 'Active Jobs', translationKey: 'maintenance.activeJobs', icon: 'play', route: '/maintenance/active', badge: 5 },
+        { id: 'maintenance-active', label: 'Active Jobs', translationKey: 'maintenance.activeJobs', icon: 'play', route: '/maintenance/active' },
         { id: 'maintenance-history', label: 'Completed Jobs', translationKey: 'maintenance.completedJobs', icon: 'history', route: '/maintenance/history' },
         { id: 'maintenance-schedule', label: 'Schedule', translationKey: 'maintenance.schedule', icon: 'calendar', route: '/maintenance/schedule' }
       ]
@@ -107,7 +111,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       children: [
         { id: 'invoices-list', label: 'All Invoices', translationKey: 'invoicing.navigation.allInvoices', icon: 'list', route: '/invoices' },
         { id: 'invoices-create', label: 'Create Invoice', translationKey: 'invoicing.navigation.createInvoice', icon: 'plus', route: '/invoices/create' },
-        { id: 'invoices-pending', label: 'Pending Payment', translationKey: 'invoicing.navigation.pendingPayment', icon: 'clock', route: '/invoices/pending', badge: 2 }
+        { id: 'invoices-pending', label: 'Pending Payment', translationKey: 'invoicing.navigation.pendingPayment', icon: 'clock', route: '/invoices/pending' }
       ]
     },
     {
@@ -132,7 +136,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
       translationKey: 'maintenance.pendingApproval',
       icon: 'check-circle',
       route: '/approvals',
-      badge: 3,
       ownerOnly: true,
       requiresModule: 'approvals'
     },
@@ -210,12 +213,58 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.updateActiveStates(this.router.url);
+    this.loadBadgeCounts();
 
     this.routerSubscription = this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event: NavigationEnd) => {
         this.updateActiveStates(event.url);
+        this.loadBadgeCounts();
       });
+  }
+
+  private loadBadgeCounts() {
+    this.http.get<any>('/appointments').subscribe({
+      next: (appts) => {
+        const today = new Date().toDateString();
+        const todayCount = Array.isArray(appts) ? appts.filter((a: any) => {
+          const d = new Date(a.startTime || a.date);
+          return d.toDateString() === today;
+        }).length : 0;
+        this.badgeCounts.update(c => ({ ...c, appointments: todayCount }));
+      },
+      error: () => {}
+    });
+    this.http.get<any[]>('/maintenance').subscribe({
+      next: (jobs) => {
+        const active = Array.isArray(jobs) ? jobs.filter((j: any) => j.status === 'IN_PROGRESS').length : 0;
+        this.badgeCounts.update(c => ({ ...c, 'maintenance-active': active }));
+      },
+      error: () => {}
+    });
+    this.http.get<any[]>('/invoices').subscribe({
+      next: (invs) => {
+        const pending = Array.isArray(invs) ? invs.filter((i: any) => i.status === 'PENDING' || i.status === 'OVERDUE').length : 0;
+        this.badgeCounts.update(c => ({ ...c, 'invoices-pending': pending }));
+      },
+      error: () => {}
+    });
+    this.http.get<any[]>('/approvals').subscribe({
+      next: (aprs) => {
+        const pending = Array.isArray(aprs) ? aprs.filter((a: any) => a.status === 'PENDING').length : 0;
+        this.badgeCounts.update(c => ({ ...c, approvals: pending }));
+      },
+      error: () => {}
+    });
+  }
+
+  getBadge(itemId: string): number | null {
+    if (itemId === 'notifications') {
+      const count = this.notificationService.unreadCount();
+      return count > 0 ? count : null;
+    }
+    const count = this.badgeCounts()[itemId];
+    return count && count > 0 ? count : null;
   }
 
   ngOnDestroy() {
