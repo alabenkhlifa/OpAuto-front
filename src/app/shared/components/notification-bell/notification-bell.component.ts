@@ -69,9 +69,9 @@ import { NotificationService } from '../../../core/services/notification.service
       width: 40px;
       height: 40px;
       border-radius: 12px;
-      background: rgba(11, 8, 41, 0.4);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: #94a3b8;
+      background: transparent;
+      border: 1px solid var(--color-border);
+      color: #6b7280;
       cursor: pointer;
       transition: all 0.2s;
     }
@@ -79,6 +79,7 @@ import { NotificationService } from '../../../core/services/notification.service
     .bell-btn:hover, .bell-btn.has-unread {
       color: #FF8400;
       border-color: rgba(255, 132, 0, 0.3);
+      background: rgba(255, 132, 0, 0.05);
     }
 
     .unread-badge {
@@ -96,7 +97,7 @@ import { NotificationService } from '../../../core/services/notification.service
       align-items: center;
       justify-content: center;
       padding: 0 4px;
-      border: 2px solid #0B0829;
+      border: 2px solid #ffffff;
     }
 
     .notification-dropdown {
@@ -123,14 +124,14 @@ import { NotificationService } from '../../../core/services/notification.service
       align-items: center;
       justify-content: space-between;
       padding: 1rem 1.25rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      border-bottom: 1px solid var(--color-border);
     }
 
     .dropdown-header h3 {
       margin: 0;
       font-size: 1rem;
       font-weight: 600;
-      color: #fff;
+      color: #111827;
     }
 
     .mark-all-btn {
@@ -158,11 +159,11 @@ import { NotificationService } from '../../../core/services/notification.service
       padding: 0.875rem 1.25rem;
       cursor: pointer;
       transition: background 0.15s;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      border-bottom: 1px solid var(--color-border-light);
     }
 
     .notification-item:hover {
-      background: rgba(255, 255, 255, 0.03);
+      background: #f8fafc;
     }
 
     .notification-item.unread {
@@ -192,12 +193,12 @@ import { NotificationService } from '../../../core/services/notification.service
     .notif-title {
       font-size: 0.85rem;
       font-weight: 600;
-      color: #fff;
+      color: #111827;
     }
 
     .notif-message {
       font-size: 0.8rem;
-      color: #94a3b8;
+      color: #6b7280;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -226,7 +227,7 @@ import { NotificationService } from '../../../core/services/notification.service
 
     .dropdown-footer {
       padding: 0.75rem;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      border-top: 1px solid var(--color-border);
       text-align: center;
     }
 

@@ -88,7 +88,7 @@ import { SidebarService } from '../../core/services/sidebar.service';
     .notifications-page { padding: 1.5rem; max-width: 900px; margin: 0 auto; }
     .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
     .header-left { display: flex; align-items: center; gap: 1rem; }
-    .page-title { display: flex; align-items: center; gap: 0.75rem; font-size: 1.5rem; font-weight: 700; color: #fff; margin: 0; }
+    .page-title { display: flex; align-items: center; gap: 0.75rem; font-size: 1.5rem; font-weight: 700; color: #111827; margin: 0; }
     .page-title svg { color: #FF8400; }
     .unread-count { padding: 0.25rem 0.75rem; border-radius: 12px; background: rgba(255, 132, 0, 0.15); color: #FF8400; font-size: 0.85rem; font-weight: 600; }
     .filters { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 1rem; margin-bottom: 1.5rem; align-items: center; }
@@ -100,17 +100,17 @@ import { SidebarService } from '../../core/services/sidebar.service';
     .notif-icon-lg { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; background: rgba(255, 132, 0, 0.1); flex-shrink: 0; }
     .notif-body { flex: 1; min-width: 0; }
     .notif-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.25rem; }
-    .notif-title { font-size: 0.95rem; font-weight: 600; color: #fff; }
-    .notif-time { font-size: 0.75rem; color: #64748b; white-space: nowrap; }
-    .notif-message { font-size: 0.875rem; color: #94a3b8; margin: 0 0 0.5rem; line-height: 1.5; }
+    .notif-title { font-size: 0.95rem; font-weight: 600; color: #111827; }
+    .notif-time { font-size: 0.75rem; color: #9ca3af; white-space: nowrap; }
+    .notif-message { font-size: 0.875rem; color: #374151; margin: 0 0 0.5rem; line-height: 1.5; }
     .type-label { font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 6px; background: rgba(143, 160, 216, 0.1); color: #8FA0D8; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
     .notif-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
-    .action-btn { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.05); border: none; color: #94a3b8; cursor: pointer; transition: all 0.2s; }
+    .action-btn { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: #f8fafc; border: 1px solid #e2e8f0; color: #6b7280; cursor: pointer; transition: all 0.2s; }
     .action-btn:hover { background: rgba(255, 132, 0, 0.1); color: #FF8400; }
     .action-btn.delete:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
     .empty-state { display: flex; flex-direction: column; align-items: center; padding: 3rem; color: #64748b; text-align: center; }
     .empty-state svg { color: #2A2566; margin-bottom: 1rem; }
-    .empty-state h3 { color: #fff; margin: 0 0 0.5rem; }
+    .empty-state h3 { color: #111827; margin: 0 0 0.5rem; }
     .empty-state p { margin: 0; }
     @media (max-width: 640px) {
       .notifications-page { padding: 1rem; }

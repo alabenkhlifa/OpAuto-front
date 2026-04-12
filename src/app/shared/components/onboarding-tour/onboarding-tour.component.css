@@ -87,7 +87,7 @@
 
 /* Content */
 .tour-content {
-  color: #fff;
+  color: #374151;
   overflow-y: auto;
   flex: 1;
   min-height: 0;
@@ -105,7 +105,7 @@
   font-size: 20px;
   font-weight: 700;
   margin-bottom: 12px;
-  color: #fff;
+  color: #111827;
   line-height: 1.4;
 }
 
@@ -113,7 +113,7 @@
 .tour-description {
   font-size: 15px;
   line-height: 1.6;
-  color: #cbd5e1;
+  color: #6b7280;
   margin-bottom: 24px;
 }
 
@@ -171,25 +171,25 @@
 }
 
 .tour-btn-secondary {
-  background: rgba(100, 116, 139, 0.2);
-  color: #cbd5e1;
-  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: #f1f5f9;
+  color: #374151;
+  border: 1px solid #e2e8f0;
 }
 
 .tour-btn-secondary:hover {
-  background: rgba(100, 116, 139, 0.3);
-  border-color: rgba(148, 163, 184, 0.5);
+  background: #e2e8f0;
+  border-color: #cbd5e1;
 }
 
 .tour-btn-skip {
   background: transparent;
-  color: #94a3b8;
+  color: #6b7280;
   padding: 10px 16px;
 }
 
 .tour-btn-skip:hover {
-  color: #cbd5e1;
-  background: rgba(148, 163, 184, 0.1);
+  color: #374151;
+  background: #f1f5f9;
 }
 
 /* Highlight Target Element */

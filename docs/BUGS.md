@@ -41,7 +41,7 @@ Single source of truth for the current bug batch. Add new bugs to **§ Backlog**
 ### P3 — Large Redesign (fix last)
 | ID | Area | Category | Status |
 |----|------|----------|--------|
-| BUG-009 | Switch dashboard to white theme | Theme | 🔴 |
+| BUG-009 | Switch dashboard to white theme | Theme | 🟢 |
 | BUG-010 | Reduce excessive hover effects | Theme | 🔴 |
 
 ---
