@@ -109,6 +109,9 @@
     },
     "status": {
       "scheduled": "مجدول",
+      "confirmed": "مؤكد",
+      "pending": "قيد الانتظار",
+      "cancelled": "ملغى",
       "in_progress": "قيد التنفيذ",
       "completed": "مكتمل",
       "delayed": "متأخر",

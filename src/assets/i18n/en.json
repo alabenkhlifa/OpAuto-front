@@ -109,6 +109,9 @@
     },
     "status": {
       "scheduled": "Scheduled",
+      "confirmed": "Confirmed",
+      "pending": "Pending",
+      "cancelled": "Cancelled",
       "in_progress": "In Progress",
       "completed": "Completed",
       "delayed": "Delayed",

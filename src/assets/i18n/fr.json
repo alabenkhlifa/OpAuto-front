@@ -109,6 +109,9 @@
     },
     "status": {
       "scheduled": "Programmé",
+      "confirmed": "Confirmé",
+      "pending": "En attente",
+      "cancelled": "Annulé",
       "in_progress": "En cours",
       "completed": "Terminé",
       "delayed": "Retardé",
