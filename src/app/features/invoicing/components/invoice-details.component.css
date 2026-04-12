@@ -1,42 +1,73 @@
 /* Print-specific styles */
 @media print {
-  .print\:bg-white {
-    background-color: white !important;
-    color: black !important;
-  }
-  
-  .print\:shadow-none {
-    box-shadow: none !important;
-  }
-  
-  .print\:p-0 {
-    padding: 0 !important;
-  }
-  
-  /* Hide non-essential elements when printing */
-  .no-print {
-    display: none !important;
-  }
-  
-  /* Ensure proper page breaks */
-  .invoice-content {
-    page-break-inside: avoid;
-  }
-  
-  /* Optimize typography for print */
-  body {
+  * {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
-  
-  /* Table styling for print */
-  table {
-    border-collapse: collapse;
+
+  html, body {
+    background: white !important;
+    color: #111 !important;
+    font-size: 12pt;
   }
-  
-  th, td {
-    border-bottom: 1px solid #e5e7eb;
+
+  /* Hide app chrome */
+  app-sidebar, app-topbar, .notification-bell,
+  [class*="sidebar"], nav, header,
+  .no-print {
+    display: none !important;
   }
+
+  /* Reset the page container */
+  .min-h-screen {
+    background: white !important;
+    padding: 0 !important;
+    min-height: auto !important;
+  }
+
+  /* Reset glass-card to white */
+  .glass-card {
+    background: white !important;
+    backdrop-filter: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  /* Text overrides */
+  .text-white, .text-gray-300, .text-gray-400, .text-blue-400 {
+    color: #111 !important;
+  }
+
+  .text-gray-300, .text-gray-400 {
+    color: #555 !important;
+  }
+
+  /* Borders */
+  .border-gray-500, .border-gray-600 {
+    border-color: #ddd !important;
+  }
+
+  /* Invoice title */
+  h3.text-blue-400 {
+    color: #1a56db !important;
+  }
+
+  /* Table */
+  table { border-collapse: collapse; width: 100%; }
+  th { background: #f3f4f6 !important; color: #333 !important; }
+  th, td { border-bottom: 1px solid #e5e7eb; padding: 8px; }
+
+  /* Badges */
+  .badge { border: 1px solid #999; color: #333 !important; background: #f0f0f0 !important; }
+
+  /* Green/red amounts */
+  .text-green-400 { color: #059669 !important; }
+  .text-red-400 { color: #dc2626 !important; }
+
+  /* Page setup */
+  @page { margin: 1.5cm; size: A4; }
+  .invoice-content { page-break-inside: avoid; }
 }
 
 /* Screen-only glassmorphism effects - always dark mode */

@@ -73,7 +73,15 @@ export class InvoiceDetailsComponent implements OnInit {
   }
 
   onPrint(): void {
-    window.print();
+    this.isPrintMode.set(true);
+    setTimeout(() => {
+      window.print();
+      this.isPrintMode.set(false);
+    }, 100);
+  }
+
+  onDownloadPDF(): void {
+    this.onPrint();
   }
 
   onSendInvoice(): void {

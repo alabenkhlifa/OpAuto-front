@@ -350,3 +350,13 @@ svg {
     max-width: 300px;
   }
 }
+
+@media print {
+  app-sidebar, .sidebar, .notification-bell-container {
+    display: none !important;
+  }
+  .main-content {
+    margin-left: 0 !important;
+    padding: 0 !important;
+  }
+}
