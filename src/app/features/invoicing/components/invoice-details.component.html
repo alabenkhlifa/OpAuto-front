@@ -8,7 +8,7 @@
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
           </svg>
-          <span>Back</span>
+          <span>{{ 'common.back' | translate }}</span>
         </button>
         <div>
           <h1 class="text-xl lg:text-2xl font-bold text-white">
@@ -30,17 +30,17 @@
       <div class="flex gap-2">
         <button (click)="onEdit()"
                 class="btn-primary">
-          Edit
+          {{ 'invoicing.print.edit' | translate }}
         </button>
-        <button *ngIf="invoice()?.status === 'draft'" 
+        <button *ngIf="invoice()?.status === 'draft'"
                 (click)="onSendInvoice()"
                 class="btn-success">
-          Send Invoice
+          {{ 'invoicing.print.sendInvoice' | translate }}
         </button>
-        <button *ngIf="invoice() && invoice()!.remainingAmount > 0" 
+        <button *ngIf="invoice() && invoice()!.remainingAmount > 0"
                 (click)="onMarkAsPaid()"
                 class="btn-success">
-          Record Payment
+          {{ 'invoicing.print.recordPayment' | translate }}
         </button>
         <button (click)="onPrint()"
                 class="btn-secondary">
@@ -71,17 +71,17 @@
                 <p>{{ settings()?.garageInfo?.country }}</p>
                 <p>📞 {{ settings()?.garageInfo?.phone }}</p>
                 <p>✉️ {{ settings()?.garageInfo?.email }}</p>
-                <p *ngIf="settings()?.garageInfo?.taxId">Tax ID: {{ settings()?.garageInfo?.taxId }}</p>
+                <p *ngIf="settings()?.garageInfo?.taxId">{{ 'invoicing.print.taxId' | translate }}: {{ settings()?.garageInfo?.taxId }}</p>
               </div>
             </div>
             
             <!-- Invoice Info -->
             <div class="text-right">
-              <h3 class="text-3xl font-bold text-blue-400">INVOICE</h3>
+              <h3 class="text-3xl font-bold text-blue-400">{{ 'invoicing.print.invoice' | translate }}</h3>
               <div class="mt-2 text-sm space-y-1">
                 <p class="font-medium text-white">{{ invoice()?.invoiceNumber }}</p>
-                <p class="text-gray-300">Issue Date: {{ formatDate(invoice()?.issueDate!) }}</p>
-                <p class="text-gray-300">Due Date: {{ formatDate(invoice()?.dueDate!) }}</p>
+                <p class="text-gray-300">{{ 'invoicing.print.issueDate' | translate }}: {{ formatDate(invoice()?.issueDate!) }}</p>
+                <p class="text-gray-300">{{ 'invoicing.print.dueDate' | translate }}: {{ formatDate(invoice()?.dueDate!) }}</p>
               </div>
             </div>
           </div>
@@ -92,7 +92,7 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
             <!-- Bill To -->
             <div>
-              <h4 class="text-lg font-semibold text-white mb-3">Bill To:</h4>
+              <h4 class="text-lg font-semibold text-white mb-3">{{ 'invoicing.print.billTo' | translate }}:</h4>
               <div class="text-sm text-gray-300 space-y-1">
                 <p class="font-medium text-white">{{ invoice()?.customerName }}</p>
                 <p>📞 {{ invoice()?.customerPhone }}</p>
@@ -102,13 +102,13 @@
             
             <!-- Vehicle Info -->
             <div>
-              <h4 class="text-lg font-semibold text-white mb-3">Vehicle:</h4>
+              <h4 class="text-lg font-semibold text-white mb-3">{{ 'invoicing.print.vehicle' | translate }}:</h4>
               <div class="text-sm text-gray-300 space-y-1">
                 <p class="font-medium text-white">
                   {{ invoice()?.carMake }} {{ invoice()?.carModel }} ({{ invoice()?.carYear }})
                 </p>
-                <p>License Plate: {{ invoice()?.licensePlate }}</p>
-                <p *ngIf="invoice()?.serviceName">Service: {{ invoice()?.serviceName }}</p>
+                <p>{{ 'invoicing.print.licensePlate' | translate }}: {{ invoice()?.licensePlate }}</p>
+                <p *ngIf="invoice()?.serviceName">{{ 'invoicing.print.service' | translate }}: {{ invoice()?.serviceName }}</p>
               </div>
             </div>
           </div>
@@ -116,17 +116,17 @@
 
         <!-- Line Items -->
         <div class="p-8">
-          <h4 class="text-lg font-semibold text-white mb-4">Services & Parts</h4>
-          
+          <h4 class="text-lg font-semibold text-white mb-4">{{ 'invoicing.print.servicesParts' | translate }}</h4>
+
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
               <thead>
                 <tr class="border-b border-gray-500">
-                  <th class="text-left py-3 text-gray-300 font-medium">Description</th>
-                  <th class="text-center py-3 text-gray-300 font-medium">Qty</th>
-                  <th class="text-center py-3 text-gray-300 font-medium">Unit</th>
-                  <th class="text-right py-3 text-gray-300 font-medium">Unit Price</th>
-                  <th class="text-right py-3 text-gray-300 font-medium">Total</th>
+                  <th class="text-left py-3 text-gray-300 font-medium">{{ 'invoicing.print.description' | translate }}</th>
+                  <th class="text-center py-3 text-gray-300 font-medium">{{ 'invoicing.print.qty' | translate }}</th>
+                  <th class="text-center py-3 text-gray-300 font-medium">{{ 'invoicing.print.unit' | translate }}</th>
+                  <th class="text-right py-3 text-gray-300 font-medium">{{ 'invoicing.print.unitPrice' | translate }}</th>
+                  <th class="text-right py-3 text-gray-300 font-medium">{{ 'invoicing.print.total' | translate }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -155,14 +155,14 @@
           <div class="flex justify-end">
             <div class="w-full max-w-sm space-y-2">
               <div class="flex justify-between text-sm">
-                <span class="text-gray-300">Subtotal:</span>
+                <span class="text-gray-300">{{ 'invoicing.print.subtotal' | translate }}:</span>
                 <span class="font-medium text-white">{{ formatCurrency(invoice()?.subtotal || 0) }}</span>
               </div>
               
               <div *ngIf="invoice() && invoice()!.discountAmount > 0" 
                    class="flex justify-between text-sm">
                 <span class="text-gray-300">
-                  Discount ({{ invoice()?.discountPercentage }}%):
+                  {{ 'invoicing.print.discount' | translate }} ({{ invoice()?.discountPercentage }}%):
                 </span>
                 <span class="font-medium text-green-400">
                   -{{ formatCurrency(invoice()?.discountAmount || 0) }}
@@ -179,18 +179,18 @@
               <hr class="border-gray-500">
               
               <div class="flex justify-between pt-2">
-                <span class="text-lg font-semibold text-white">Total:</span>
+                <span class="text-lg font-semibold text-white">{{ 'invoicing.print.total' | translate }}:</span>
                 <span class="text-xl font-bold text-white">{{ formatCurrency(invoice()?.totalAmount || 0) }}</span>
               </div>
 
               <!-- Payment Progress -->
               <div *ngIf="invoice() && invoice()!.paidAmount > 0" class="pt-2">
                 <div class="flex justify-between text-sm">
-                  <span class="text-gray-300">Paid:</span>
+                  <span class="text-gray-300">{{ 'invoicing.print.paid' | translate }}:</span>
                   <span class="font-medium text-green-400">{{ formatCurrency(invoice()?.paidAmount || 0) }}</span>
                 </div>
                 <div *ngIf="invoice() && invoice()!.remainingAmount > 0" class="flex justify-between text-sm">
-                  <span class="text-gray-300">Remaining:</span>
+                  <span class="text-gray-300">{{ 'invoicing.print.remaining' | translate }}:</span>
                   <span class="font-medium text-red-400">{{ formatCurrency(invoice()?.remainingAmount || 0) }}</span>
                 </div>
               </div>
@@ -202,23 +202,23 @@
         <div class="px-8 pb-8 border-t border-gray-500 pt-6">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
-              <h4 class="font-semibold text-white mb-2">Payment Terms</h4>
+              <h4 class="font-semibold text-white mb-2">{{ 'invoicing.print.paymentTerms' | translate }}</h4>
               <p class="text-sm text-gray-300">{{ invoice()?.paymentTerms }}</p>
               
               <div *ngIf="settings()?.garageInfo?.bankDetails" class="mt-4">
-                <h5 class="font-medium text-white mb-2">Bank Details</h5>
+                <h5 class="font-medium text-white mb-2">{{ 'invoicing.print.bankDetails' | translate }}</h5>
                 <div class="text-xs text-gray-300 space-y-1">
-                  <p><strong>Bank:</strong> {{ settings()?.garageInfo?.bankDetails?.bankName }}</p>
-                  <p><strong>Account:</strong> {{ settings()?.garageInfo?.bankDetails?.accountNumber }}</p>
+                  <p><strong>{{ 'invoicing.print.bank' | translate }}:</strong> {{ settings()?.garageInfo?.bankDetails?.bankName }}</p>
+                  <p><strong>{{ 'invoicing.print.account' | translate }}:</strong> {{ settings()?.garageInfo?.bankDetails?.accountNumber }}</p>
                   <p *ngIf="settings()?.garageInfo?.bankDetails?.iban">
-                    <strong>IBAN:</strong> {{ settings()?.garageInfo?.bankDetails?.iban }}
+                    <strong>{{ 'invoicing.print.iban' | translate }}:</strong> {{ settings()?.garageInfo?.bankDetails?.iban }}
                   </p>
                 </div>
               </div>
             </div>
             
             <div *ngIf="invoice()?.notes">
-              <h4 class="font-semibold text-white mb-2">Notes</h4>
+              <h4 class="font-semibold text-white mb-2">{{ 'invoicing.print.notes' | translate }}</h4>
               <p class="text-sm text-gray-300">{{ invoice()?.notes }}</p>
             </div>
           </div>

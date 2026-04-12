@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { InvoiceService } from '../../../core/services/invoice.service';
 import { InvoiceWithDetails, Payment, InvoiceSettings } from '../../../core/models/invoice.model';
+import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 
 @Component({
   selector: 'app-invoice-details',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
   templateUrl: './invoice-details.component.html',
   styleUrl: './invoice-details.component.css'
 })
