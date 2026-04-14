@@ -177,6 +177,8 @@
     "appointmentTime": "Heure du rendez-vous",
     "estimatedDuration": "Durée estimée",
     "schedule": "Programmer",
+    "update": "Mettre à jour",
+    "saving": "Enregistrement...",
     "date": "Date",
     "time": "Heure",
     "selectTime": "Sélectionner l'heure",
@@ -242,6 +244,12 @@
       "errorUnavailable": "Suggestions IA indisponibles",
       "errorGeneric": "Impossible de charger les suggestions",
       "noSlots": "Aucun créneau disponible"
+    },
+    "toast": {
+      "created": "Rendez-vous créé avec succès",
+      "createFailed": "Échec de la création du rendez-vous",
+      "updated": "Rendez-vous mis à jour avec succès",
+      "updateFailed": "Échec de la mise à jour du rendez-vous"
     }
   },
   "cars": {
@@ -2282,7 +2290,21 @@
       "cancel": "Annuler le rendez-vous"
     },
     "confirmCancel": "Êtes-vous sûr de vouloir annuler ce rendez-vous ?",
-    "mechanics": "Mécaniciens"
+    "mechanics": "Mécaniciens",
+    "toast": {
+      "rescheduled": "Rendez-vous reprogrammé avec succès",
+      "rescheduleFailed": "Échec de la reprogrammation du rendez-vous",
+      "cancelled": "Rendez-vous annulé",
+      "cancelFailed": "Échec de l'annulation du rendez-vous",
+      "cannotMoveCompleted": "Impossible de déplacer un rendez-vous terminé",
+      "cannotMoveCancelled": "Impossible de déplacer un rendez-vous annulé",
+      "cannotMovePast": "Impossible de déplacer un rendez-vous passé",
+      "closedDayConfirm": "Le garage est fermé le {{day}}. Êtes-vous sûr de vouloir programmer ce rendez-vous ?",
+      "closedDayTitle": "Garage fermé",
+      "closedDayProceed": "Programmer quand même",
+      "duringLunchBreak": "Pendant la pause déjeuner",
+      "lunchBreakConfirm": "{{name}} est en pause déjeuner pendant ce créneau. Assigner quand même ?"
+    }
   },
   "notifications": {
     "title": "Notifications",

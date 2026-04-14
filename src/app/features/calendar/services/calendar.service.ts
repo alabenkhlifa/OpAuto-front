@@ -53,7 +53,7 @@ export class CalendarService {
     return appointments.map(apt => {
       const color = apt.mechanicId
         ? this.getMechanicColor(apt.mechanicId)
-        : { bg: '#FF8400', border: '#E67700', text: '#fff' };
+        : { bg: '#ef4444', border: '#dc2626', text: '#fff' };
 
       const customer = this.appointmentService.getCustomerById(apt.customerId);
       const car = this.appointmentService.getCarById(apt.carId);

@@ -15,10 +15,10 @@ import { AuthService } from '../../../core/services/auth.service';
       <!-- Header -->
       <div class="flex items-start justify-between mb-4">
         <div class="flex-1 min-w-0">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white truncate">
+          <h3 class="text-lg font-semibold text-gray-900 truncate">
             {{ getServiceName(job.jobTitle) }}
           </h3>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <p class="text-sm text-gray-500 mt-1">
             {{ job.carDetails }} • {{ job.licensePlate }}
           </p>
         </div>
@@ -48,12 +48,12 @@ import { AuthService } from '../../../core/services/auth.service';
       <!-- Customer & Mechanic -->
       <div class="grid grid-cols-2 gap-4 mb-4">
         <div>
-          <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">{{ 'maintenance.customer' | translate }}</p>
-          <p class="text-sm font-medium text-gray-900 dark:text-white">{{ job.customerName }}</p>
+          <p class="text-xs text-gray-500 uppercase tracking-wide">{{ 'maintenance.customer' | translate }}</p>
+          <p class="text-sm font-medium text-gray-900">{{ job.customerName }}</p>
         </div>
         <div>
-          <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">{{ 'maintenance.mechanic' | translate }}</p>
-          <p class="text-sm font-medium text-gray-900 dark:text-white">{{ job.mechanicName }}</p>
+          <p class="text-xs text-gray-500 uppercase tracking-wide">{{ 'maintenance.mechanic' | translate }}</p>
+          <p class="text-sm font-medium text-gray-900">{{ job.mechanicName }}</p>
         </div>
       </div>
 
@@ -61,10 +61,10 @@ import { AuthService } from '../../../core/services/auth.service';
       @if (job.tasks.length > 0) {
         <div class="mb-4">
           <div class="flex justify-between text-sm mb-1">
-            <span class="text-gray-600 dark:text-gray-400">{{ 'maintenance.progress' | translate }}</span>
-            <span class="text-gray-900 dark:text-white">{{ getTaskProgress(job) }}%</span>
+            <span class="text-gray-600">{{ 'maintenance.progress' | translate }}</span>
+            <span class="text-gray-900">{{ getTaskProgress(job) }}%</span>
           </div>
-          <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+          <div class="w-full bg-gray-200 rounded-full h-2">
             <div class="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all" 
                  [style.width.%]="getTaskProgress(job)"></div>
           </div>
@@ -75,30 +75,30 @@ import { AuthService } from '../../../core/services/auth.service';
       @if (authService.isOwner()) {
         <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
           <div>
-            <p class="text-gray-500 dark:text-gray-400">{{ 'maintenance.mileage' | translate }}</p>
-            <p class="font-medium text-gray-900 dark:text-white">{{ job.currentMileage | number }} km</p>
+            <p class="text-gray-500">{{ 'maintenance.mileage' | translate }}</p>
+            <p class="font-medium text-gray-900">{{ job.currentMileage | number }} km</p>
           </div>
           <div>
-            <p class="text-gray-500 dark:text-gray-400">{{ 'maintenance.estimatedCost' | translate }}</p>
-            <p class="font-medium text-gray-900 dark:text-white">{{ formatCurrency(job.estimatedCost) }}</p>
+            <p class="text-gray-500">{{ 'maintenance.estimatedCost' | translate }}</p>
+            <p class="font-medium text-gray-900">{{ formatCurrency(job.estimatedCost) }}</p>
           </div>
         </div>
       } @else {
         <div class="mb-4 text-sm">
           <div>
-            <p class="text-gray-500 dark:text-gray-400">{{ 'maintenance.mileage' | translate }}</p>
-            <p class="font-medium text-gray-900 dark:text-white">{{ job.currentMileage | number }} km</p>
+            <p class="text-gray-500">{{ 'maintenance.mileage' | translate }}</p>
+            <p class="font-medium text-gray-900">{{ job.currentMileage | number }} km</p>
           </div>
         </div>
       }
 
       <!-- Description -->
       @if (view === 'list' || job.description.length < 100) {
-        <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">{{ job.description }}</p>
+        <p class="text-sm text-gray-600 mb-4">{{ job.description }}</p>
       }
 
       <!-- Timestamps -->
-      <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-4">
+      <div class="flex justify-between text-xs text-gray-500 mb-4">
         <span>{{ 'maintenance.created' | translate }}: {{ job.createdAt | date:'short' }}</span>
         @if (job.completionDate) {
           <span>{{ 'maintenance.completed' | translate }}: {{ job.completionDate | date:'short' }}</span>
@@ -156,27 +156,6 @@ import { AuthService } from '../../../core/services/auth.service';
       cursor: pointer;
     }
 
-    /* Override text colors for dark theme readability */
-    .glass-card h3 {
-      color: #ffffff !important;
-    }
-
-    .glass-card p {
-      color: #d1d5db !important;
-    }
-
-    .glass-card .text-gray-500,
-    .glass-card .text-gray-400 {
-      color: #9ca3af !important;
-    }
-
-    .glass-card .text-gray-900 {
-      color: #ffffff !important;
-    }
-
-    .glass-card .text-gray-600 {
-      color: #d1d5db !important;
-    }
 
     /* Component uses global button classes from /src/styles/buttons.css */
     /* Component uses global badge classes from /src/styles/badges.css */
@@ -241,14 +220,14 @@ export class MaintenanceJobCardComponent {
 
   getStatusTextColor(status: MaintenanceStatus): string {
     const colors = {
-      'waiting': 'text-yellow-700 dark:text-yellow-300',
-      'in-progress': 'text-blue-700 dark:text-blue-300',
-      'waiting-approval': 'text-orange-700 dark:text-orange-300',
-      'waiting-parts': 'text-purple-700 dark:text-purple-300',
-      'completed': 'text-green-700 dark:text-green-300',
-      'cancelled': 'text-gray-700 dark:text-gray-300'
+      'waiting': 'text-yellow-700',
+      'in-progress': 'text-blue-700',
+      'waiting-approval': 'text-orange-700',
+      'waiting-parts': 'text-purple-700',
+      'completed': 'text-green-700',
+      'cancelled': 'text-gray-700'
     };
-    return colors[status] || 'text-gray-700 dark:text-gray-300';
+    return colors[status] || 'text-gray-700';
   }
 
   getPriorityBadgeClass(priority: string): string {

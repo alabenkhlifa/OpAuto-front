@@ -14,7 +14,7 @@ import { inject } from '@angular/core';
   template: `
     <div class="glass-card">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-medium text-white">{{ 'maintenance.filters.title' | translate }}</h3>
+        <h3 class="text-lg font-medium text-gray-900">{{ 'maintenance.filters.title' | translate }}</h3>
         <button 
           class="btn-clear-filters"
           (click)="clearFilters()">
@@ -29,7 +29,7 @@ import { inject } from '@angular/core';
         
         <!-- Search -->
         <div>
-          <label class="block text-sm font-medium text-gray-300 mb-1">
+          <label class="block text-sm font-medium text-gray-600 mb-1">
             {{ 'maintenance.filters.search' | translate }}
           </label>
           <input
@@ -42,7 +42,7 @@ import { inject } from '@angular/core';
 
         <!-- Status Filter -->
         <div>
-          <label class="block text-sm font-medium text-gray-300 mb-1">
+          <label class="block text-sm font-medium text-gray-600 mb-1">
             {{ 'maintenance.filters.status' | translate }}
           </label>
           <select
@@ -58,7 +58,7 @@ import { inject } from '@angular/core';
 
         <!-- Priority Filter -->
         <div>
-          <label class="block text-sm font-medium text-gray-300 mb-1">
+          <label class="block text-sm font-medium text-gray-600 mb-1">
             {{ 'maintenance.filters.priority' | translate }}
           </label>
           <select
@@ -75,7 +75,7 @@ import { inject } from '@angular/core';
         <!-- Mechanic Filter - Hidden for Solo tier -->
         @if (subscriptionService.currentTier() !== 'solo') {
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1">
+            <label class="block text-sm font-medium text-gray-600 mb-1">
               {{ 'maintenance.filters.mechanic' | translate }}
             </label>
             <select
@@ -95,24 +95,24 @@ import { inject } from '@angular/core';
       <!-- Date Range Filter -->
       <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label class="block text-sm font-medium text-gray-700 mb-1">
             {{ 'maintenance.filters.fromDate' | translate }}
           </label>
           <input
             type="date"
             [(ngModel)]="startDate"
             (ngModelChange)="onDateRangeChange()"
-            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm">
+            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm">
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label class="block text-sm font-medium text-gray-700 mb-1">
             {{ 'maintenance.filters.toDate' | translate }}
           </label>
           <input
             type="date"
             [(ngModel)]="endDate"
             (ngModelChange)="onDateRangeChange()"
-            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm">
+            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm">
         </div>
       </div>
 
@@ -129,36 +129,7 @@ import { inject } from '@angular/core';
 
     </div>
   `,
-  styles: [`
-    /* Dark glassmorphism card styling */
-    .glass-card {
-      background: rgba(11, 8, 41, 0.95);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(42, 37, 102, 0.6);
-      border-radius: 20px;
-      padding: 1.5rem;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      margin-bottom: 1rem;
-    }
-
-    /* Fix text colors for permanent dark theme */
-    .glass-card h3,
-    .glass-card .text-gray-900 {
-      color: #ffffff !important;
-    }
-
-    .glass-card .text-gray-700,
-    .glass-card .text-gray-600 {
-      color: #d1d5db !important;
-    }
-
-    .glass-card .text-gray-300 {
-      color: #9ca3af !important;
-    }
-
-    /* Component uses global button system from /src/styles/buttons.css */
-  `]
+  styles: [``]
 })
 export class MaintenanceFiltersComponent {
   private translationService = inject(TranslationService);

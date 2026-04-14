@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } fr
 import { Router, ActivatedRoute } from '@angular/router';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractType, ExperienceLevel } from '../../../core/models/employee.model';
+import { ToastService } from '../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-employee-form',
@@ -17,17 +18,17 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
         <div class="mb-6">
           <div class="flex items-center space-x-2 mb-2">
             <button 
-              class="p-2 text-gray-400 hover:text-white transition-colors"
+              class="p-2 text-gray-500 hover:text-gray-900 transition-colors"
               (click)="goBack()">
               <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
             </button>
-            <h1 class="text-2xl lg:text-3xl font-bold text-white">
+            <h1 class="text-2xl lg:text-3xl font-bold text-gray-900">
               {{ isEditMode ? 'Edit Employee' : 'Add New Employee' }}
             </h1>
           </div>
-          <p class="text-sm text-gray-300 ml-9">
+          <p class="text-sm text-gray-600 ml-9">
             {{ isEditMode ? 'Update employee information and settings' : 'Enter employee details and work configuration' }}
           </p>
         </div>
@@ -37,8 +38,8 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
           <form [formGroup]="employeeForm" (ngSubmit)="onSubmit()">
           
             <!-- Personal Information -->
-            <div class="p-6 border-b border-gray-700/50">
-              <h2 class="text-lg font-semibold text-white mb-4">Personal Information</h2>
+            <div class="p-6 border-b border-gray-200">
+              <h2 class="text-lg font-semibold text-gray-900 mb-4">Personal Information</h2>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -49,7 +50,7 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
                   formControlName="firstName"
                   [class.border-red-500]="isFieldInvalid('firstName')">
                 @if (isFieldInvalid('firstName')) {
-                  <p class="mt-1 text-sm text-red-600 dark:text-red-400">First name is required</p>
+                  <p class="mt-1 text-sm text-red-600">First name is required</p>
                 }
               </div>
               
@@ -61,7 +62,7 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
                   formControlName="lastName"
                   [class.border-red-500]="isFieldInvalid('lastName')">
                 @if (isFieldInvalid('lastName')) {
-                  <p class="mt-1 text-sm text-red-600 dark:text-red-400">Last name is required</p>
+                  <p class="mt-1 text-sm text-red-600">Last name is required</p>
                 }
               </div>
               
@@ -74,7 +75,7 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
                   placeholder="+216 20 123 456"
                   [class.border-red-500]="isFieldInvalid('phone')">
                 @if (isFieldInvalid('phone')) {
-                  <p class="mt-1 text-sm text-red-600 dark:text-red-400">Phone number is required</p>
+                  <p class="mt-1 text-sm text-red-600">Phone number is required</p>
                 }
               </div>
               
@@ -87,7 +88,7 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
                   placeholder="employee@opauto.tn"
                   [class.border-red-500]="isFieldInvalid('email')">
                 @if (isFieldInvalid('email')) {
-                  <p class="mt-1 text-sm text-red-600 dark:text-red-400">Valid email is required</p>
+                  <p class="mt-1 text-sm text-red-600">Valid email is required</p>
                 }
               </div>
               
@@ -111,8 +112,8 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
           </div>
 
             <!-- Employment Information -->
-            <div class="p-6 border-b border-gray-700/50">
-              <h2 class="text-lg font-semibold text-white mb-4">Employment Details</h2>
+            <div class="p-6 border-b border-gray-200">
+              <h2 class="text-lg font-semibold text-gray-900 mb-4">Employment Details</h2>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -127,7 +128,7 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
                   }
                 </select>
                 @if (isFieldInvalid('role')) {
-                  <p class="mt-1 text-sm text-red-600 dark:text-red-400">Role is required</p>
+                  <p class="mt-1 text-sm text-red-600">Role is required</p>
                 }
               </div>
               
@@ -143,7 +144,7 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
                   }
                 </select>
                 @if (isFieldInvalid('department')) {
-                  <p class="mt-1 text-sm text-red-600 dark:text-red-400">Department is required</p>
+                  <p class="mt-1 text-sm text-red-600">Department is required</p>
                 }
               </div>
               
@@ -159,7 +160,7 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
                   }
                 </select>
                 @if (isFieldInvalid('contractType')) {
-                  <p class="mt-1 text-sm text-red-600 dark:text-red-400">Contract type is required</p>
+                  <p class="mt-1 text-sm text-red-600">Contract type is required</p>
                 }
               </div>
               
@@ -173,7 +174,7 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
                   step="50"
                   [class.border-red-500]="isFieldInvalid('salary')">
                 @if (isFieldInvalid('salary')) {
-                  <p class="mt-1 text-sm text-red-600 dark:text-red-400">Salary is required</p>
+                  <p class="mt-1 text-sm text-red-600">Salary is required</p>
                 }
               </div>
               
@@ -185,7 +186,7 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
                   formControlName="hireDate"
                   [class.border-red-500]="isFieldInvalid('hireDate')">
                 @if (isFieldInvalid('hireDate')) {
-                  <p class="mt-1 text-sm text-red-600 dark:text-red-400">Hire date is required</p>
+                  <p class="mt-1 text-sm text-red-600">Hire date is required</p>
                 }
               </div>
               
@@ -201,15 +202,15 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
                   }
                 </select>
                 @if (isFieldInvalid('status')) {
-                  <p class="mt-1 text-sm text-red-600 dark:text-red-400">Status is required</p>
+                  <p class="mt-1 text-sm text-red-600">Status is required</p>
                 }
               </div>
             </div>
           </div>
 
             <!-- Skills & Experience -->
-            <div class="p-6 border-b border-gray-700/50">
-              <h2 class="text-lg font-semibold text-white mb-4">Skills & Experience</h2>
+            <div class="p-6 border-b border-gray-200">
+              <h2 class="text-lg font-semibold text-gray-900 mb-4">Skills & Experience</h2>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -224,7 +225,7 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
                   }
                 </select>
                 @if (isFieldInvalid('experienceLevel')) {
-                  <p class="mt-1 text-sm text-red-600 dark:text-red-400">Experience level is required</p>
+                  <p class="mt-1 text-sm text-red-600">Experience level is required</p>
                 }
               </div>
               
@@ -249,7 +250,7 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
                         class="form-checkbox"
                         [value]="specialty.value"
                         (change)="onSpecialtyChange(specialty.value, $event)">
-                      <span class="ml-2 text-sm text-gray-300">{{ specialty.label }}</span>
+                      <span class="ml-2 text-sm text-gray-600">{{ specialty.label }}</span>
                     </label>
                   }
                 </div>
@@ -269,7 +270,7 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
 
             <!-- Availability -->
             <div class="p-6">
-              <h2 class="text-lg font-semibold text-white mb-4">Availability Settings</h2>
+              <h2 class="text-lg font-semibold text-gray-900 mb-4">Availability Settings</h2>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -295,7 +296,7 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
           </div>
 
             <!-- Form Actions -->
-            <div class="px-6 py-4 bg-gray-900/30 backdrop-blur-sm rounded-b-xl flex justify-end space-x-3">
+            <div class="px-6 py-4 bg-gray-50 rounded-b-xl flex justify-end space-x-3 border-t border-gray-200">
             <button 
               type="button"
               class="btn-secondary"
@@ -325,68 +326,55 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
     </div>
   `,
   styles: [`
-    /* Container Styling */
     .employee-form-container {
       background: transparent;
       min-height: 100vh;
     }
 
-    /* Glass Card - matching other screens */
-    .glass-card {
-      background: rgba(11, 8, 41, 0.95);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(42, 37, 102, 0.6);
-      border-radius: 20px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* Form Labels - Dark Theme */
     .form-label {
       display: block;
       font-size: 0.875rem;
       font-weight: 500;
-      color: #d1d5db;
+      color: #374151;
       margin-bottom: 0.25rem;
     }
-    
-    /* Form Inputs - Glassmorphism Dark Theme */
+
     .form-input, .form-select, .form-textarea {
       display: block;
       width: 100%;
       padding: 0.75rem 1rem;
-      border: 1px solid rgba(42, 37, 102, 0.6);
+      border: 1px solid #d1d5db;
       border-radius: 12px;
-      background: rgba(18, 15, 61, 0.6);
-      backdrop-filter: blur(10px);
-      color: #f9fafb;
+      background: #ffffff;
+      color: #111827;
       font-size: 0.875rem;
       transition: all 0.2s ease;
     }
-    
+
     .form-input:focus, .form-select:focus, .form-textarea:focus {
       outline: none;
       border-color: #FF8400;
-      background: rgba(18, 15, 61, 0.8);
-      box-shadow: 0 0 0 3px rgba(255, 132, 0, 0.2);
+      box-shadow: 0 0 0 3px rgba(255, 132, 0, 0.15);
     }
 
-    /* Select dropdown styling */
+    .form-input:hover:not(:focus), .form-select:hover:not(:focus), .form-textarea:hover:not(:focus) {
+      border-color: #9ca3af;
+    }
+
     .form-select {
       appearance: none;
-      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
       background-repeat: no-repeat;
       background-position: right 1rem center;
       background-size: 1em;
       padding-right: 2.5rem;
     }
-    
-    /* Checkbox styling */
+
     .form-checkbox {
       width: 1.25rem;
       height: 1.25rem;
-      background: rgba(18, 15, 61, 0.6);
-      border: 1px solid rgba(42, 37, 102, 0.6);
+      background: #ffffff;
+      border: 1px solid #d1d5db;
       border-radius: 0.375rem;
       cursor: pointer;
       transition: all 0.2s ease;
@@ -399,62 +387,13 @@ import { Employee, EmployeeRole, EmployeeDepartment, EmployeeStatus, ContractTyp
 
     .form-checkbox:focus {
       outline: none;
-      box-shadow: 0 0 0 3px rgba(255, 132, 0, 0.2);
-    }
-    
-    /* Button Styles - Using global button system */
-    .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.625rem 1.25rem;
-      border-radius: 12px;
-      font-size: 0.875rem;
-      font-weight: 600;
-      transition: all 0.2s ease;
-      background: linear-gradient(135deg, #FF8400, #E67700);
-      color: white;
-      border: 1px solid rgba(255, 132, 0, 0.3);
-      box-shadow: 0 4px 15px rgba(255, 132, 0, 0.3);
-    }
-    
-    .btn-primary:hover:not(:disabled) {
-      background: linear-gradient(135deg, #E67700, #CC6A00);
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(255, 132, 0, 0.4);
-    }
-    
-    .btn-primary:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-    }
-    
-    .btn-secondary {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.625rem 1.25rem;
-      border-radius: 12px;
-      font-size: 0.875rem;
-      font-weight: 500;
-      transition: all 0.2s ease;
-      background: rgba(18, 15, 61, 0.6);
-      color: #d1d5db;
-      border: 1px solid rgba(42, 37, 102, 0.6);
-      backdrop-filter: blur(10px);
-    }
-    
-    .btn-secondary:hover {
-      background: rgba(55, 65, 81, 0.8);
-      border-color: rgba(107, 114, 128, 0.8);
-      transform: translateY(-1px);
+      box-shadow: 0 0 0 3px rgba(255, 132, 0, 0.15);
     }
 
-    /* Error state styling */
-    .form-input.border-red-500, 
+    .form-input.border-red-500,
     .form-select.border-red-500 {
       border-color: #ef4444 !important;
-      background: rgba(239, 68, 68, 0.1);
+      background: rgba(254, 242, 242, 0.5);
     }
   `]
 })
@@ -463,6 +402,7 @@ export class EmployeeFormComponent implements OnInit {
   private employeeService = inject(EmployeeService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private toast = inject(ToastService);
 
   employeeForm!: FormGroup;
   isSubmitting = signal(false);
@@ -482,6 +422,7 @@ export class EmployeeFormComponent implements OnInit {
     { value: 'mechanical', label: 'Mechanical' },
     { value: 'bodywork', label: 'Bodywork' },
     { value: 'electrical', label: 'Electrical' },
+    { value: 'tire-alignment', label: 'Tire & Alignment' },
     { value: 'service', label: 'Service' }
   ];
 
@@ -543,7 +484,7 @@ export class EmployeeFormComponent implements OnInit {
       hireDate: ['', Validators.required],
       status: ['active', Validators.required],
       experienceLevel: ['junior', Validators.required],
-      skillRating: [3.0, [Validators.min(1), Validators.max(5)]],
+      skillRating: [3.0, [Validators.min(0), Validators.max(5)]],
       certifications: [''],
       maxWorkload: [3, [Validators.min(1), Validators.max(10)]],
       isAvailable: [true]
@@ -663,11 +604,13 @@ export class EmployeeFormComponent implements OnInit {
 
       operation.subscribe({
         next: () => {
+          this.toast.success(this.isEditMode ? 'Employee updated successfully' : 'Employee created successfully');
           this.isSubmitting.set(false);
           this.router.navigate(['/employees']);
         },
         error: (error) => {
           console.error('Error saving employee:', error);
+          this.toast.error(this.isEditMode ? 'Failed to update employee' : 'Failed to create employee');
           this.isSubmitting.set(false);
         }
       });

@@ -15,8 +15,8 @@ import { AuthService } from '../../../core/services/auth.service';
       <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-300">{{ 'maintenance.totalJobs' | translate }}</p>
-            <p class="text-2xl font-bold text-white">{{ stats?.totalJobs || 0 }}</p>
+            <p class="text-sm font-medium text-gray-600">{{ 'maintenance.totalJobs' | translate }}</p>
+            <p class="text-2xl font-bold text-gray-900">{{ stats?.totalJobs || 0 }}</p>
           </div>
           <div class="text-2xl">📋</div>
         </div>
@@ -26,8 +26,8 @@ import { AuthService } from '../../../core/services/auth.service';
       <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-300">{{ 'maintenance.activeJobs' | translate }}</p>
-            <p class="text-2xl font-bold text-white">{{ stats?.activeJobs || 0 }}</p>
+            <p class="text-sm font-medium text-gray-600">{{ 'maintenance.activeJobs' | translate }}</p>
+            <p class="text-2xl font-bold text-gray-900">{{ stats?.activeJobs || 0 }}</p>
           </div>
           <div class="text-2xl">⏱️</div>
         </div>
@@ -37,8 +37,8 @@ import { AuthService } from '../../../core/services/auth.service';
       <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-300">{{ 'maintenance.completedToday' | translate }}</p>
-            <p class="text-2xl font-bold text-white">{{ stats?.completedToday || 0 }}</p>
+            <p class="text-sm font-medium text-gray-600">{{ 'maintenance.completedToday' | translate }}</p>
+            <p class="text-2xl font-bold text-gray-900">{{ stats?.completedToday || 0 }}</p>
           </div>
           <div class="text-2xl">✅</div>
         </div>
@@ -48,8 +48,8 @@ import { AuthService } from '../../../core/services/auth.service';
       <div class="glass-card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-300">{{ 'maintenance.pendingApprovals' | translate }}</p>
-            <p class="text-2xl font-bold text-white">{{ stats?.pendingApprovals || 0 }}</p>
+            <p class="text-sm font-medium text-gray-600">{{ 'maintenance.pendingApprovals' | translate }}</p>
+            <p class="text-2xl font-bold text-gray-900">{{ stats?.pendingApprovals || 0 }}</p>
           </div>
           <div class="text-2xl">⚠️</div>
         </div>
@@ -64,8 +64,8 @@ import { AuthService } from '../../../core/services/auth.service';
         <!-- Average Completion Time -->
         <div class="glass-card">
           <div class="text-center">
-            <p class="text-sm font-medium text-gray-300">{{ 'maintenance.avgCompletionTime' | translate }}</p>
-            <p class="text-xl font-bold text-white">{{ (stats?.averageCompletionTime || 0).toFixed(1) }}h</p>
+            <p class="text-sm font-medium text-gray-600">{{ 'maintenance.avgCompletionTime' | translate }}</p>
+            <p class="text-xl font-bold text-gray-900">{{ (stats?.averageCompletionTime || 0).toFixed(1) }}h</p>
           </div>
         </div>
 
@@ -73,8 +73,8 @@ import { AuthService } from '../../../core/services/auth.service';
         @if (authService.isOwner()) {
           <div class="glass-card">
             <div class="text-center">
-              <p class="text-sm font-medium text-gray-300">{{ 'maintenance.revenueToday' | translate }}</p>
-              <p class="text-xl font-bold text-white">{{ formatCurrency(stats?.revenueToday || 0) }}</p>
+              <p class="text-sm font-medium text-gray-600">{{ 'maintenance.revenueToday' | translate }}</p>
+              <p class="text-xl font-bold text-gray-900">{{ formatCurrency(stats?.revenueToday || 0) }}</p>
             </div>
           </div>
         }
@@ -82,8 +82,8 @@ import { AuthService } from '../../../core/services/auth.service';
         <!-- Efficiency -->
         <div class="glass-card">
           <div class="text-center">
-            <p class="text-sm font-medium text-gray-300">{{ 'maintenance.weeklyEfficiency' | translate }}</p>
-            <p class="text-xl font-bold text-white">{{ (stats?.efficiency || 0).toFixed(1) }}%</p>
+            <p class="text-sm font-medium text-gray-600">{{ 'maintenance.weeklyEfficiency' | translate }}</p>
+            <p class="text-xl font-bold text-gray-900">{{ (stats?.efficiency || 0).toFixed(1) }}%</p>
           </div>
         </div>
 

@@ -121,22 +121,106 @@ async function main() {
     prisma.car.create({ data: { garageId: garage.id, customerId: customers[13].id, make: 'Renault', model: 'Megane', year: 2019, licensePlate: '222TUN888', color: 'Gray', mileage: 58000, engineType: 'diesel', transmission: 'manual' } }),
   ]);
 
-  // Create Appointments (mix of past and upcoming)
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  // Create Appointments (April – July 2026)
+  const d = (month: number, day: number, hour: number, min = 0) =>
+    new Date(2026, month - 1, day, hour, min);
+
+  const apt = (cust: number, car: number, emp: number | null, title: string, start: Date, end: Date, status: AppointmentStatus, type: string, priority = 'medium') =>
+    prisma.appointment.create({ data: { garageId: garage.id, customerId: customers[cust].id, carId: cars[car].id, ...(emp !== null ? { employeeId: employees[emp].id } : {}), title, startTime: start, endTime: end, status, type, priority } });
 
   const appointments = await Promise.all([
-    prisma.appointment.create({ data: { garageId: garage.id, customerId: customers[0].id, carId: cars[0].id, employeeId: employees[0].id, title: 'Oil Change + Inspection', startTime: new Date(today.getTime() + 9 * 3600000), endTime: new Date(today.getTime() + 10 * 3600000), status: AppointmentStatus.COMPLETED, type: 'oil-change', priority: 'medium' } }),
-    prisma.appointment.create({ data: { garageId: garage.id, customerId: customers[1].id, carId: cars[2].id, employeeId: employees[1].id, title: 'Brake System Repair', startTime: new Date(today.getTime() + 10.5 * 3600000), endTime: new Date(today.getTime() + 13.5 * 3600000), status: AppointmentStatus.IN_PROGRESS, type: 'brake-service', priority: 'high' } }),
-    prisma.appointment.create({ data: { garageId: garage.id, customerId: customers[2].id, carId: cars[3].id, employeeId: employees[2].id, title: 'Engine Diagnostics', startTime: new Date(today.getTime() + 14 * 3600000), endTime: new Date(today.getTime() + 16 * 3600000), status: AppointmentStatus.SCHEDULED, type: 'engine-diagnostics', priority: 'medium' } }),
-    prisma.appointment.create({ data: { garageId: garage.id, customerId: customers[3].id, carId: cars[4].id, title: 'Transmission Service', startTime: new Date(today.getTime() + 16 * 3600000), endTime: new Date(today.getTime() + 20 * 3600000), status: AppointmentStatus.SCHEDULED, type: 'transmission', priority: 'high' } }),
-    prisma.appointment.create({ data: { garageId: garage.id, customerId: customers[4].id, carId: cars[5].id, employeeId: employees[4].id, title: 'Tire Replacement', startTime: new Date(today.getTime() + 17.5 * 3600000), endTime: new Date(today.getTime() + 18.5 * 3600000), status: AppointmentStatus.SCHEDULED, type: 'tire-replacement', priority: 'low' } }),
-    // Tomorrow
-    prisma.appointment.create({ data: { garageId: garage.id, customerId: customers[5].id, carId: cars[6].id, employeeId: employees[2].id, title: 'AC Service', startTime: new Date(today.getTime() + 33 * 3600000), endTime: new Date(today.getTime() + 35 * 3600000), status: AppointmentStatus.CONFIRMED, type: 'electrical', priority: 'medium' } }),
-    prisma.appointment.create({ data: { garageId: garage.id, customerId: customers[8].id, carId: cars[9].id, employeeId: employees[0].id, title: 'Battery Replacement', startTime: new Date(today.getTime() + 34 * 3600000), endTime: new Date(today.getTime() + 35 * 3600000), status: AppointmentStatus.CONFIRMED, type: 'electrical', priority: 'low' } }),
-    // Past (yesterday)
-    prisma.appointment.create({ data: { garageId: garage.id, customerId: customers[6].id, carId: cars[7].id, employeeId: employees[0].id, title: 'Oil Change', startTime: new Date(today.getTime() - 15 * 3600000), endTime: new Date(today.getTime() - 14 * 3600000), status: AppointmentStatus.COMPLETED, type: 'oil-change', priority: 'low' } }),
-    prisma.appointment.create({ data: { garageId: garage.id, customerId: customers[7].id, carId: cars[8].id, employeeId: employees[3].id, title: 'Dent Repair', startTime: new Date(today.getTime() - 14 * 3600000), endTime: new Date(today.getTime() - 8 * 3600000), status: AppointmentStatus.COMPLETED, type: 'bodywork', priority: 'medium' } }),
+    // ── April 2026 ──
+    // Past (completed)
+    apt(0, 0, 0, 'Oil Change + Inspection', d(4,10,9), d(4,10,10), AppointmentStatus.COMPLETED, 'oil-change'),
+    apt(1, 2, 1, 'Brake System Repair', d(4,10,10,30), d(4,10,13,30), AppointmentStatus.COMPLETED, 'brake-service', 'high'),
+    apt(6, 7, 0, 'Oil Change', d(4,11,9), d(4,11,10), AppointmentStatus.COMPLETED, 'oil-change', 'low'),
+    apt(7, 8, 3, 'Dent Repair', d(4,11,10), d(4,11,16), AppointmentStatus.COMPLETED, 'bodywork'),
+    // Today / upcoming this week
+    apt(2, 3, 2, 'Engine Diagnostics', d(4,14,9), d(4,14,11), AppointmentStatus.SCHEDULED, 'engine-diagnostics'),
+    apt(3, 4, null, 'Transmission Service', d(4,14,14), d(4,14,18), AppointmentStatus.SCHEDULED, 'transmission', 'high'),
+    apt(4, 5, 4, 'Tire Replacement', d(4,14,15), d(4,14,16), AppointmentStatus.SCHEDULED, 'tire-replacement', 'low'),
+    apt(5, 6, 2, 'AC Service', d(4,15,9), d(4,15,11), AppointmentStatus.CONFIRMED, 'electrical'),
+    apt(8, 9, 0, 'Battery Replacement', d(4,15,10), d(4,15,11), AppointmentStatus.CONFIRMED, 'electrical', 'low'),
+    apt(9, 10, 1, 'Suspension Check', d(4,16,8), d(4,16,10), AppointmentStatus.SCHEDULED, 'inspection'),
+    apt(10, 11, 4, 'Tire Balancing', d(4,16,10), d(4,16,11), AppointmentStatus.SCHEDULED, 'tire-replacement', 'low'),
+    apt(11, 12, 3, 'Paint Touch-up', d(4,17,9), d(4,17,12), AppointmentStatus.SCHEDULED, 'bodywork'),
+    apt(12, 13, 0, 'Full Service', d(4,17,14), d(4,17,17), AppointmentStatus.SCHEDULED, 'oil-change', 'high'),
+    // Rest of April
+    apt(0, 1, 2, 'ECU Diagnostics', d(4,21,9), d(4,21,11), AppointmentStatus.SCHEDULED, 'engine-diagnostics'),
+    apt(13, 14, 1, 'Brake Pad Replacement', d(4,21,14), d(4,21,16), AppointmentStatus.SCHEDULED, 'brake-service'),
+    apt(14, 14, 4, 'Wheel Alignment', d(4,22,8), d(4,22,9,30), AppointmentStatus.SCHEDULED, 'tire-replacement', 'low'),
+    apt(1, 2, 0, 'Oil Change', d(4,23,9), d(4,23,10), AppointmentStatus.SCHEDULED, 'oil-change', 'low'),
+    apt(5, 6, 2, 'Alternator Repair', d(4,24,10), d(4,24,13), AppointmentStatus.SCHEDULED, 'electrical', 'high'),
+    apt(3, 4, 3, 'Body Panel Repair', d(4,25,9), d(4,25,14), AppointmentStatus.SCHEDULED, 'bodywork', 'high'),
+    apt(8, 9, 0, 'Timing Belt Replacement', d(4,28,8), d(4,28,12), AppointmentStatus.SCHEDULED, 'engine-diagnostics', 'high'),
+    apt(9, 10, 1, 'Brake Fluid Flush', d(4,28,14), d(4,28,15,30), AppointmentStatus.SCHEDULED, 'brake-service'),
+    apt(6, 7, 4, 'Tire Rotation', d(4,29,9), d(4,29,10), AppointmentStatus.SCHEDULED, 'tire-replacement', 'low'),
+    apt(2, 3, 2, 'Check Engine Light', d(4,30,10), d(4,30,12), AppointmentStatus.SCHEDULED, 'engine-diagnostics'),
+
+    // ── May 2026 ──
+    apt(0, 0, 0, 'Oil Change', d(5,4,9), d(5,4,10), AppointmentStatus.SCHEDULED, 'oil-change', 'low'),
+    apt(12, 13, 1, 'Brake Inspection', d(5,4,10), d(5,4,11,30), AppointmentStatus.SCHEDULED, 'brake-service'),
+    apt(4, 5, 2, 'Battery Test', d(5,5,9), d(5,5,10), AppointmentStatus.SCHEDULED, 'electrical', 'low'),
+    apt(7, 8, 3, 'Bumper Repair', d(5,5,10), d(5,5,14), AppointmentStatus.SCHEDULED, 'bodywork', 'high'),
+    apt(10, 11, 4, 'New Tires', d(5,6,8), d(5,6,10), AppointmentStatus.SCHEDULED, 'tire-replacement'),
+    apt(1, 2, 0, 'Clutch Adjustment', d(5,7,9), d(5,7,11), AppointmentStatus.SCHEDULED, 'transmission'),
+    apt(3, 4, 2, 'Wiring Repair', d(5,8,14), d(5,8,17), AppointmentStatus.SCHEDULED, 'electrical', 'high'),
+    apt(5, 6, 1, 'Front Brake Replacement', d(5,11,9), d(5,11,12), AppointmentStatus.SCHEDULED, 'brake-service', 'high'),
+    apt(6, 7, 0, 'Oil & Filter Change', d(5,12,9), d(5,12,10), AppointmentStatus.SCHEDULED, 'oil-change', 'low'),
+    apt(14, 14, 3, 'Scratch Repair', d(5,12,14), d(5,12,16), AppointmentStatus.SCHEDULED, 'bodywork'),
+    apt(8, 9, 4, 'Tire Pressure Sensors', d(5,13,10), d(5,13,11,30), AppointmentStatus.SCHEDULED, 'tire-replacement'),
+    apt(2, 3, 2, 'Engine Mount Replacement', d(5,14,8), d(5,14,12), AppointmentStatus.SCHEDULED, 'engine-diagnostics', 'high'),
+    apt(9, 10, 0, 'Coolant Flush', d(5,18,9), d(5,18,10,30), AppointmentStatus.SCHEDULED, 'oil-change'),
+    apt(11, 12, 1, 'ABS Sensor Check', d(5,19,14), d(5,19,16), AppointmentStatus.SCHEDULED, 'brake-service'),
+    apt(0, 1, 4, 'Wheel Balancing', d(5,20,8), d(5,20,9), AppointmentStatus.SCHEDULED, 'tire-replacement', 'low'),
+    apt(13, 14, 3, 'Door Dent Repair', d(5,21,10), d(5,21,13), AppointmentStatus.SCHEDULED, 'bodywork'),
+    apt(4, 5, 2, 'Headlight Wiring', d(5,22,9), d(5,22,11), AppointmentStatus.SCHEDULED, 'electrical'),
+    apt(7, 8, 0, 'Full Service 60k', d(5,25,8), d(5,25,12), AppointmentStatus.SCHEDULED, 'oil-change', 'high'),
+    apt(1, 2, 1, 'Rear Brake Pads', d(5,26,14), d(5,26,16), AppointmentStatus.SCHEDULED, 'brake-service'),
+    apt(3, 4, 2, 'Starter Motor', d(5,27,9), d(5,27,12), AppointmentStatus.SCHEDULED, 'electrical', 'high'),
+
+    // ── June 2026 ──
+    apt(0, 0, 0, 'Oil Change', d(6,1,9), d(6,1,10), AppointmentStatus.SCHEDULED, 'oil-change', 'low'),
+    apt(5, 6, 1, 'Brake Disc Replacement', d(6,1,10), d(6,1,13), AppointmentStatus.SCHEDULED, 'brake-service', 'high'),
+    apt(10, 11, 4, 'Summer Tires', d(6,2,8), d(6,2,10), AppointmentStatus.SCHEDULED, 'tire-replacement'),
+    apt(2, 3, 2, 'AC Recharge', d(6,3,9), d(6,3,10,30), AppointmentStatus.SCHEDULED, 'electrical'),
+    apt(12, 13, 3, 'Full Respray', d(6,4,8), d(6,4,17), AppointmentStatus.SCHEDULED, 'bodywork', 'high'),
+    apt(8, 9, 0, 'Transmission Fluid', d(6,8,9), d(6,8,10,30), AppointmentStatus.SCHEDULED, 'transmission'),
+    apt(6, 7, 1, 'Handbrake Cable', d(6,9,14), d(6,9,16), AppointmentStatus.SCHEDULED, 'brake-service'),
+    apt(14, 14, 2, 'Alternator Belt', d(6,10,9), d(6,10,10,30), AppointmentStatus.SCHEDULED, 'electrical'),
+    apt(9, 10, 4, 'Tire Replacement', d(6,11,8), d(6,11,9,30), AppointmentStatus.SCHEDULED, 'tire-replacement', 'low'),
+    apt(4, 5, 0, 'Full Service', d(6,15,8), d(6,15,12), AppointmentStatus.SCHEDULED, 'oil-change'),
+    apt(1, 2, 3, 'Windshield Chip Repair', d(6,16,10), d(6,16,11), AppointmentStatus.SCHEDULED, 'bodywork', 'low'),
+    apt(11, 12, 1, 'Brake Fluid Change', d(6,17,9), d(6,17,10), AppointmentStatus.SCHEDULED, 'brake-service'),
+    apt(3, 4, 2, 'AC Compressor', d(6,18,9), d(6,18,13), AppointmentStatus.SCHEDULED, 'electrical', 'high'),
+    apt(7, 8, 0, 'Oil Change', d(6,22,9), d(6,22,10), AppointmentStatus.SCHEDULED, 'oil-change', 'low'),
+    apt(0, 1, 4, 'Alignment Check', d(6,23,14), d(6,23,15,30), AppointmentStatus.SCHEDULED, 'tire-replacement'),
+    apt(13, 14, 1, 'Brake Caliper Rebuild', d(6,24,8), d(6,24,12), AppointmentStatus.SCHEDULED, 'brake-service', 'high'),
+    apt(5, 6, 3, 'Side Mirror Replacement', d(6,25,10), d(6,25,11,30), AppointmentStatus.SCHEDULED, 'bodywork'),
+    apt(2, 3, 0, 'Spark Plug Replacement', d(6,29,9), d(6,29,10,30), AppointmentStatus.SCHEDULED, 'engine-diagnostics'),
+    apt(8, 9, 2, 'Power Window Fix', d(6,30,14), d(6,30,16), AppointmentStatus.SCHEDULED, 'electrical'),
+
+    // ── July 2026 ──
+    apt(6, 7, 0, 'Oil Change', d(7,1,9), d(7,1,10), AppointmentStatus.SCHEDULED, 'oil-change', 'low'),
+    apt(9, 10, 1, 'Front Brakes', d(7,1,10), d(7,1,12), AppointmentStatus.SCHEDULED, 'brake-service'),
+    apt(4, 5, 4, 'Tire Rotation', d(7,2,8), d(7,2,9), AppointmentStatus.SCHEDULED, 'tire-replacement', 'low'),
+    apt(12, 13, 2, 'Battery Replacement', d(7,2,9), d(7,2,10), AppointmentStatus.SCHEDULED, 'electrical'),
+    apt(1, 2, 3, 'Fender Repair', d(7,6,9), d(7,6,14), AppointmentStatus.SCHEDULED, 'bodywork', 'high'),
+    apt(0, 0, 0, 'Full Service 80k', d(7,7,8), d(7,7,12), AppointmentStatus.SCHEDULED, 'oil-change', 'high'),
+    apt(3, 4, 1, 'Brake Inspection', d(7,8,9), d(7,8,10,30), AppointmentStatus.SCHEDULED, 'brake-service'),
+    apt(14, 14, 2, 'Headlight Adjustment', d(7,9,14), d(7,9,15), AppointmentStatus.SCHEDULED, 'electrical', 'low'),
+    apt(10, 11, 4, 'New Summer Tires', d(7,13,8), d(7,13,10), AppointmentStatus.SCHEDULED, 'tire-replacement'),
+    apt(7, 8, 0, 'Engine Tune-up', d(7,14,9), d(7,14,12), AppointmentStatus.SCHEDULED, 'engine-diagnostics'),
+    apt(5, 6, 3, 'Hood Repaint', d(7,15,8), d(7,15,15), AppointmentStatus.SCHEDULED, 'bodywork', 'high'),
+    apt(11, 12, 1, 'Emergency Brake Fix', d(7,16,14), d(7,16,16), AppointmentStatus.SCHEDULED, 'brake-service', 'high'),
+    apt(2, 3, 2, 'Fuel Pump Replacement', d(7,20,9), d(7,20,13), AppointmentStatus.SCHEDULED, 'engine-diagnostics', 'high'),
+    apt(8, 9, 0, 'Oil Change', d(7,21,9), d(7,21,10), AppointmentStatus.SCHEDULED, 'oil-change', 'low'),
+    apt(13, 14, 4, 'Wheel Alignment', d(7,22,8), d(7,22,9,30), AppointmentStatus.SCHEDULED, 'tire-replacement'),
+    apt(0, 1, 1, 'Rear Brakes', d(7,23,14), d(7,23,16,30), AppointmentStatus.SCHEDULED, 'brake-service'),
+    apt(6, 7, 2, 'AC Service', d(7,27,9), d(7,27,11), AppointmentStatus.SCHEDULED, 'electrical'),
+    apt(9, 10, 3, 'Bumper Respray', d(7,28,10), d(7,28,14), AppointmentStatus.SCHEDULED, 'bodywork'),
+    apt(4, 5, 0, 'Transmission Check', d(7,29,9), d(7,29,11), AppointmentStatus.SCHEDULED, 'transmission'),
+    apt(1, 2, 4, 'Tire Inspection', d(7,30,8), d(7,30,9), AppointmentStatus.SCHEDULED, 'tire-replacement', 'low'),
   ]);
 
   // Create Suppliers
@@ -181,15 +265,24 @@ async function main() {
     prisma.maintenanceJob.create({ data: { garageId: garage.id, carId: cars[4].id, title: 'Transmission Fluid Change', description: 'Full transmission fluid flush and filter replacement', status: MaintenanceStatus.WAITING_APPROVAL, priority: 'high', estimatedHours: 3, estimatedCost: 280 } }),
   ]);
 
-  // Create Invoices
+  // Create Invoices (spread across Jan–Apr 2026 for revenue chart)
   const invoiceData = [
-    { customerId: customers[0].id, invoiceNumber: 'INV-202603-0001', status: InvoiceStatus.PAID, subtotal: 180, taxAmount: 34.2, total: 214.2, dueDate: new Date(Date.now() - 7 * 86400000), paidAt: new Date(Date.now() - 5 * 86400000) },
-    { customerId: customers[1].id, invoiceNumber: 'INV-202603-0002', status: InvoiceStatus.SENT, subtotal: 450, taxAmount: 85.5, total: 535.5, dueDate: new Date(Date.now() + 14 * 86400000) },
-    { customerId: customers[3].id, invoiceNumber: 'INV-202603-0003', status: InvoiceStatus.PAID, subtotal: 890, taxAmount: 169.1, total: 1059.1, paidAt: new Date(Date.now() - 3 * 86400000) },
-    { customerId: customers[6].id, invoiceNumber: 'INV-202603-0004', status: InvoiceStatus.DRAFT, subtotal: 120, taxAmount: 22.8, total: 142.8 },
-    { customerId: customers[7].id, invoiceNumber: 'INV-202603-0005', status: InvoiceStatus.PAID, subtotal: 550, taxAmount: 104.5, total: 654.5, paidAt: new Date(Date.now() - 10 * 86400000) },
-    { customerId: customers[9].id, invoiceNumber: 'INV-202603-0006', status: InvoiceStatus.OVERDUE, subtotal: 320, taxAmount: 60.8, total: 380.8, dueDate: new Date(Date.now() - 5 * 86400000) },
-    { customerId: customers[12].id, invoiceNumber: 'INV-202603-0007', status: InvoiceStatus.PAID, subtotal: 1200, taxAmount: 228, total: 1428, paidAt: new Date(Date.now() - 1 * 86400000) },
+    // January 2026
+    { customerId: customers[0].id, invoiceNumber: 'INV-202601-0001', status: InvoiceStatus.PAID, subtotal: 280, taxAmount: 53.2, total: 333.2, createdAt: new Date('2026-01-10'), dueDate: new Date('2026-01-24'), paidAt: new Date('2026-01-15') },
+    { customerId: customers[3].id, invoiceNumber: 'INV-202601-0002', status: InvoiceStatus.PAID, subtotal: 650, taxAmount: 123.5, total: 773.5, createdAt: new Date('2026-01-22'), dueDate: new Date('2026-02-05'), paidAt: new Date('2026-01-28') },
+    // February 2026
+    { customerId: customers[1].id, invoiceNumber: 'INV-202602-0001', status: InvoiceStatus.PAID, subtotal: 420, taxAmount: 79.8, total: 499.8, createdAt: new Date('2026-02-05'), dueDate: new Date('2026-02-19'), paidAt: new Date('2026-02-12') },
+    { customerId: customers[7].id, invoiceNumber: 'INV-202602-0002', status: InvoiceStatus.PAID, subtotal: 890, taxAmount: 169.1, total: 1059.1, createdAt: new Date('2026-02-18'), dueDate: new Date('2026-03-04'), paidAt: new Date('2026-02-25') },
+    { customerId: customers[4].id, invoiceNumber: 'INV-202602-0003', status: InvoiceStatus.PAID, subtotal: 180, taxAmount: 34.2, total: 214.2, createdAt: new Date('2026-02-26'), dueDate: new Date('2026-03-12'), paidAt: new Date('2026-03-02') },
+    // March 2026
+    { customerId: customers[6].id, invoiceNumber: 'INV-202603-0001', status: InvoiceStatus.PAID, subtotal: 550, taxAmount: 104.5, total: 654.5, createdAt: new Date('2026-03-03'), dueDate: new Date('2026-03-17'), paidAt: new Date('2026-03-10') },
+    { customerId: customers[9].id, invoiceNumber: 'INV-202603-0002', status: InvoiceStatus.PAID, subtotal: 1200, taxAmount: 228, total: 1428, createdAt: new Date('2026-03-15'), dueDate: new Date('2026-03-29'), paidAt: new Date('2026-03-22') },
+    { customerId: customers[12].id, invoiceNumber: 'INV-202603-0003', status: InvoiceStatus.PAID, subtotal: 320, taxAmount: 60.8, total: 380.8, createdAt: new Date('2026-03-28'), dueDate: new Date('2026-04-11'), paidAt: new Date('2026-04-02') },
+    // April 2026
+    { customerId: customers[0].id, invoiceNumber: 'INV-202604-0001', status: InvoiceStatus.PAID, subtotal: 750, taxAmount: 142.5, total: 892.5, createdAt: new Date('2026-04-02'), dueDate: new Date('2026-04-16'), paidAt: new Date('2026-04-08') },
+    { customerId: customers[1].id, invoiceNumber: 'INV-202604-0002', status: InvoiceStatus.SENT, subtotal: 450, taxAmount: 85.5, total: 535.5, createdAt: new Date('2026-04-10'), dueDate: new Date('2026-04-24') },
+    { customerId: customers[3].id, invoiceNumber: 'INV-202604-0003', status: InvoiceStatus.DRAFT, subtotal: 380, taxAmount: 72.2, total: 452.2, createdAt: new Date('2026-04-13') },
+    { customerId: customers[14].id, invoiceNumber: 'INV-202604-0004', status: InvoiceStatus.OVERDUE, subtotal: 290, taxAmount: 55.1, total: 345.1, createdAt: new Date('2026-04-01'), dueDate: new Date('2026-04-08') },
   ];
 
   const invoices = await Promise.all(

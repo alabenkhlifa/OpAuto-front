@@ -128,8 +128,8 @@
 }
 
 .view-switcher button.active {
-  background: rgba(255, 132, 0, 0.1);
-  color: #FF8400;
+  background: rgba(255, 132, 0, 0.8);
+  color: #ffffff;
 }
 
 .view-switcher button:hover:not(.active) {
@@ -390,4 +390,128 @@
     min-width: auto;
     font-size: 1rem;
   }
+}
+
+/* Closed day styling */
+::ng-deep .closed-day {
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 5px,
+    rgba(239, 68, 68, 0.04) 5px,
+    rgba(239, 68, 68, 0.04) 10px
+  ) !important;
+  position: relative;
+}
+
+::ng-deep .fc-daygrid-day.closed-day .fc-daygrid-day-number {
+  color: #ef4444;
+  opacity: 0.6;
+}
+
+::ng-deep .fc-timegrid-col.closed-day {
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 5px,
+    rgba(239, 68, 68, 0.04) 5px,
+    rgba(239, 68, 68, 0.04) 10px
+  ) !important;
+}
+
+/* Closed day confirm modal */
+.closed-day-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.closed-day-modal {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.closed-day-modal-header {
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border-bottom: 1px solid #fef2f2;
+  background: #fef2f2;
+}
+
+.closed-day-modal-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 12px;
+  background: #fee2e2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #dc2626;
+}
+
+.closed-day-modal-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.closed-day-modal-body {
+  padding: 1.5rem;
+  color: #6b7280;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.closed-day-modal-footer {
+  padding: 1rem 1.5rem 1.5rem;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.closed-day-modal-footer .btn-cancel {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  transition: all 0.2s;
+}
+
+.closed-day-modal-footer .btn-cancel:hover {
+  background: #e5e7eb;
+}
+
+.closed-day-modal-footer .btn-confirm {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(135deg, #FF8400, #E67700);
+  border: 1px solid #FF8400;
+  color: white;
+  box-shadow: 0 4px 12px rgba(255, 132, 0, 0.3);
+  transition: all 0.2s;
+}
+
+.closed-day-modal-footer .btn-confirm:hover {
+  background: linear-gradient(135deg, #E67700, #CC6A00);
 }

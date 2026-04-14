@@ -13,13 +13,12 @@ import { LanguageToggleComponent } from '../../shared/components/language-toggle
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, TranslatePipe, LanguageToggleComponent],
   template: `
-    <div class="min-h-screen flex items-center justify-center p-4" style="background: linear-gradient(135deg, #0B0829 0%, #120F3D 50%, #1C1852 100%);">
-      
+    <div class="min-h-screen flex items-center justify-center p-4" style="background: linear-gradient(135deg, #f8fafc 0%, #fff7ed 50%, #f1f5f9 100%);">
+
       <!-- Background Pattern -->
       <div class="absolute inset-0 overflow-hidden pointer-events-none">
-        <div class="absolute -top-20 -right-20 w-40 h-40 bg-blue-600 rounded-full opacity-10 blur-2xl"></div>
-        <div class="absolute -bottom-20 -left-20 w-40 h-40 bg-purple-600 rounded-full opacity-10 blur-2xl"></div>
-        <div class="absolute top-20 left-20 w-40 h-40 bg-amber-600 rounded-full opacity-10 blur-2xl"></div>
+        <div class="absolute -top-20 -right-20 w-40 h-40 bg-orange-400 rounded-full opacity-10 blur-2xl"></div>
+        <div class="absolute -bottom-20 -left-20 w-40 h-40 bg-amber-400 rounded-full opacity-10 blur-2xl"></div>
       </div>
 
       <!-- Auth Card -->
@@ -35,21 +34,21 @@ import { LanguageToggleComponent } from '../../shared/components/language-toggle
             
             <!-- Logo and Title - Centered -->
             <div class="flex flex-col items-center">
-              <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4 shadow-lg">
+              <div class="w-16 h-16 bg-gradient-to-br from-orange-400 to-amber-500 rounded-xl flex items-center justify-center mb-4 shadow-lg">
                 <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.22.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
                 </svg>
               </div>
               <div class="text-center">
-                <h1 class="text-2xl font-bold text-white mb-2">{{ 'auth.title' | translate }}</h1>
-                <p class="text-gray-300">{{ 'auth.subtitle' | translate }}</p>
+                <h1 class="text-2xl font-bold text-gray-900 mb-2">{{ 'auth.title' | translate }}</h1>
+                <p class="text-gray-500">{{ 'auth.subtitle' | translate }}</p>
               </div>
             </div>
           </div>
 
           <!-- Sign In Only - Registration Disabled -->
-          <div class="backdrop-blur-sm bg-slate-800 bg-opacity-50 rounded-lg p-1 mb-6 border border-slate-700">
-            <div class="py-3 px-4 text-sm font-semibold text-white text-center">
+          <div class="rounded-lg p-1 mb-6 bg-gray-100 border border-gray-200">
+            <div class="py-3 px-4 text-sm font-semibold text-gray-700 text-center">
               <svg class="w-4 h-4 mr-2 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
               </svg>
@@ -59,12 +58,12 @@ import { LanguageToggleComponent } from '../../shared/components/language-toggle
 
           <!-- Error Message -->
           @if (errorMessage()) {
-            <div class="mb-4 p-3 backdrop-blur-sm bg-red-900 bg-opacity-30 border border-red-500 border-opacity-30 rounded-lg">
+            <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
               <div class="flex items-start">
-                <svg class="w-5 h-5 text-red-400 mt-0.5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="w-5 h-5 text-red-500 mt-0.5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
                 </svg>
-                <p class="text-sm text-red-200">{{ errorMessage() }}</p>
+                <p class="text-sm text-red-700">{{ errorMessage() }}</p>
               </div>
             </div>
           }
@@ -122,12 +121,12 @@ import { LanguageToggleComponent } from '../../shared/components/language-toggle
                     id="rememberMe"
                     class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                     formControlName="rememberMe">
-                  <label for="rememberMe" class="ml-2 text-sm text-gray-300">{{ 'auth.login.rememberMe' | translate }}</label>
+                  <label for="rememberMe" class="ml-2 text-sm text-gray-600">{{ 'auth.login.rememberMe' | translate }}</label>
                 </div>
                 
                 <button 
                   type="button"
-                  class="text-sm text-blue-400 hover:text-blue-300"
+                  class="text-sm text-orange-500 hover:text-orange-600"
                   (click)="showForgotPassword()">
                   {{ 'auth.login.forgotPassword' | translate }}
                 </button>
@@ -154,42 +153,31 @@ import { LanguageToggleComponent } from '../../shared/components/language-toggle
             </form>
 
           <!-- Demo Credentials -->
-          <div class="mt-6 p-4 backdrop-blur-sm bg-blue-900 bg-opacity-20 border border-blue-500 border-opacity-30 rounded-lg">
-            <h3 class="text-sm font-medium text-blue-300 mb-3">{{ 'auth.demo.title' | translate }}</h3>
+          <div class="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <h3 class="text-sm font-medium text-amber-800 mb-3">{{ 'auth.demo.title' | translate }}</h3>
 
-            <!-- Solo Tier -->
             <div class="mb-3">
-              <p class="text-xs font-semibold text-blue-400 mb-1">🔵 Solo (1 user, 50 cars)</p>
-              <div class="text-xs text-blue-200 space-y-0.5 pl-3">
-                <p><strong>Owner:</strong> solo&#64;opauto.tn / solo123</p>
+              <p class="text-xs font-semibold text-amber-700 mb-1">👑 Owner</p>
+              <div class="text-xs text-amber-900 space-y-0.5 pl-3">
+                <p><strong>Email:</strong> owner&#64;autotech.tn / password123</p>
               </div>
             </div>
 
-            <!-- Starter Tier -->
-            <div class="mb-3">
-              <p class="text-xs font-semibold text-blue-400 mb-1">🟢 Starter (3 users, 200 cars)</p>
-              <div class="text-xs text-blue-200 space-y-0.5 pl-3">
-                <p><strong>Owner:</strong> starter&#64;opauto.tn / starter123</p>
-                <p><strong>Staff:</strong> starter_staff1 / staff123</p>
-                <p><strong>Staff:</strong> starter_staff2 / staff123</p>
-              </div>
-            </div>
-
-            <!-- Professional Tier -->
             <div>
-              <p class="text-xs font-semibold text-blue-400 mb-1">🟣 Professional (Unlimited)</p>
-              <div class="text-xs text-blue-200 space-y-0.5 pl-3">
-                <p><strong>Owner:</strong> pro&#64;opauto.tn / pro123</p>
-                <p><strong>Mechanic:</strong> pro_mechanic1 / staff123</p>
-                <p><strong>Receptionist:</strong> pro_receptionist / staff123</p>
-                <p><strong>Inventory:</strong> pro_inventory / staff123</p>
+              <p class="text-xs font-semibold text-amber-700 mb-1">🔧 Staff</p>
+              <div class="text-xs text-amber-900 space-y-0.5 pl-3">
+                <p><strong>Mohamed Trabelsi:</strong> mohamed / staff123</p>
+                <p><strong>Khalil Bouazizi:</strong> khalil / staff123</p>
+                <p><strong>Youssef Gharbi:</strong> youssef / staff123</p>
+                <p><strong>Hichem Sassi:</strong> hichem / staff123</p>
+                <p><strong>Ali Khelifi:</strong> ali / staff123</p>
               </div>
             </div>
           </div>
 
           <!-- Footer -->
           <div class="mt-6 text-center">
-            <p class="text-xs text-gray-400">
+            <p class="text-xs text-gray-500">
               {{ 'auth.footer.systemName' | translate }}
             </p>
           </div>
@@ -210,14 +198,14 @@ import { LanguageToggleComponent } from '../../shared/components/language-toggle
           </div>
 
           <!-- Modal Content -->
-          <div class="relative glass-card backdrop-blur-lg rounded-xl max-w-md w-full">
-            
+          <div class="relative glass-card rounded-xl max-w-md w-full">
+
             <!-- Header -->
-            <div class="p-6 border-b border-slate-700 border-opacity-50">
+            <div class="p-6 border-b border-gray-200">
               <div class="flex items-center justify-between">
-                <h2 class="text-lg font-semibold text-white">{{ 'auth.forgotPassword.title' | translate }}</h2>
-                <button 
-                  class="text-gray-400 hover:text-gray-200"
+                <h2 class="text-lg font-semibold text-gray-900">{{ 'auth.forgotPassword.title' | translate }}</h2>
+                <button
+                  class="text-gray-400 hover:text-gray-600"
                   (click)="closeForgotPassword()">
                   <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -228,7 +216,7 @@ import { LanguageToggleComponent } from '../../shared/components/language-toggle
 
             <!-- Content -->
             <div class="p-6">
-              <p class="text-gray-300 mb-4">
+              <p class="text-gray-600 mb-4">
                 {{ 'auth.forgotPassword.description' | translate }}
               </p>
               
@@ -279,58 +267,41 @@ import { LanguageToggleComponent } from '../../shared/components/language-toggle
     }
   `,
   styles: [`
-    /* Glass Card Effect */
     .glass-card {
-      background: rgba(11, 8, 41, 0.95);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(42, 37, 102, 0.6);
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
       border-radius: 20px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
     }
 
-    /* Form Elements */
     .form-label {
       display: block;
       font-size: 0.875rem;
       font-weight: 500;
-      color: #ffffff;
+      color: #374151;
       margin-bottom: 0.5rem;
     }
-    
+
     .form-input {
       display: block;
       width: 100%;
       padding: 0.875rem 1rem;
-      border: 1px solid rgba(42, 37, 102, 0.4);
+      border: 1px solid #d1d5db;
       border-radius: 12px;
-      background: rgba(18, 15, 61, 0.6);
-      backdrop-filter: blur(10px);
-      color: #ffffff;
+      background: #ffffff;
+      color: #111827;
       font-size: 0.875rem;
       transition: all 0.2s ease;
     }
-    
+
     .form-input:focus {
       outline: none;
-      border-color: rgba(255, 132, 0, 0.6);
-      background: rgba(18, 15, 61, 0.8);
-      box-shadow: 0 0 0 3px rgba(255, 132, 0, 0.1);
+      border-color: #FF8400;
+      box-shadow: 0 0 0 3px rgba(255, 132, 0, 0.15);
     }
-    
+
     .form-input::placeholder {
       color: #9ca3af;
-    }
-
-    /* Enhanced glassmorphism backdrop */
-    .backdrop-blur-lg {
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-    }
-
-    /* Smooth transitions */
-    * {
-      transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
     }
   `]
 })

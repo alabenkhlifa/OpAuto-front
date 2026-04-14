@@ -7,6 +7,7 @@ import { CarService } from '../../cars/services/car.service';
 import { MaintenanceJob, MaintenanceTask, ServiceType } from '../../../core/models/maintenance.model';
 import { Car } from '../../../core/models/appointment.model';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
+import { ToastService } from '../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-maintenance-form',
@@ -19,22 +20,22 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
       <div class="glass-card mb-6">
         <div class="flex items-start space-x-6">
           <button 
-            class="p-3 text-gray-400 hover:text-white transition-colors bg-gray-800/50 rounded-lg hover:bg-gray-700/50"
+            class="p-3 text-gray-500 hover:text-gray-900 transition-colors bg-gray-100 rounded-lg hover:bg-gray-200"
             (click)="goBack()">
             <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
           </button>
           <div class="flex-1">
-            <h1 class="text-3xl lg:text-4xl font-bold text-white mb-2">
+            <h1 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
               {{ isEditMode() ? ('maintenance.new.editTitle' | translate) : ('maintenance.new.title' | translate) }}
             </h1>
-            <div class="bg-gray-800/30 rounded-lg p-4 backdrop-filter backdrop-blur-sm">
+            <div class="bg-gray-100 rounded-lg p-4">
               <div class="flex items-center space-x-3">
-                <svg class="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
-                <p class="text-lg font-medium text-blue-300">
+                <p class="text-lg font-medium text-blue-600">
                   {{ 'maintenance.new.subtitle' | translate }}
                 </p>
               </div>
@@ -48,13 +49,13 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
         
         <!-- Basic Information -->
         <div class="glass-card">
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ 'maintenance.new.basicInfo' | translate }}</h2>
+          <h2 class="text-lg font-semibold text-gray-900 mb-4">{{ 'maintenance.new.basicInfo' | translate }}</h2>
           
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             
             <!-- Car Selection -->
             <div>
-              <label class="block text-sm font-medium text-gray-300 mb-1">
+              <label class="block text-sm font-medium text-gray-600 mb-1">
                 {{ 'maintenance.new.vehicle' | translate }} *
               </label>
               <select 
@@ -73,7 +74,7 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 
             <!-- Mechanic Assignment -->
             <div>
-              <label class="block text-sm font-medium text-gray-300 mb-1">
+              <label class="block text-sm font-medium text-gray-600 mb-1">
                 {{ 'maintenance.new.assignedMechanic' | translate }} *
               </label>
               <select 
@@ -92,7 +93,7 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 
             <!-- Job Title -->
             <div>
-              <label class="block text-sm font-medium text-gray-300 mb-1">
+              <label class="block text-sm font-medium text-gray-600 mb-1">
                 {{ 'maintenance.new.jobTitle' | translate }} *
               </label>
               <input 
@@ -108,7 +109,7 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 
             <!-- Priority -->
             <div>
-              <label class="block text-sm font-medium text-gray-300 mb-1">
+              <label class="block text-sm font-medium text-gray-600 mb-1">
                 {{ 'maintenance.new.priority' | translate }} *
               </label>
               <select 
@@ -124,7 +125,7 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 
             <!-- Current Mileage -->
             <div>
-              <label class="block text-sm font-medium text-gray-300 mb-1">
+              <label class="block text-sm font-medium text-gray-600 mb-1">
                 {{ 'maintenance.new.currentMileage' | translate }} *
               </label>
               <input 
@@ -142,7 +143,7 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 
             <!-- Estimated Cost -->
             <div>
-              <label class="block text-sm font-medium text-gray-300 mb-1">
+              <label class="block text-sm font-medium text-gray-600 mb-1">
                 {{ 'maintenance.new.estimatedCost' | translate }}
               </label>
               <input 
@@ -158,7 +159,7 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 
           <!-- Description -->
           <div class="mt-4">
-            <label class="block text-sm font-medium text-gray-300 mb-1">
+            <label class="block text-sm font-medium text-gray-600 mb-1">
               {{ 'maintenance.new.description' | translate }} *
             </label>
             <textarea 
@@ -175,7 +176,7 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 
           <!-- Notes -->
           <div class="mt-4">
-            <label class="block text-sm font-medium text-gray-300 mb-1">
+            <label class="block text-sm font-medium text-gray-600 mb-1">
               {{ 'maintenance.new.additionalNotes' | translate }}
             </label>
             <textarea 
@@ -191,7 +192,7 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
         <!-- Tasks -->
         <div class="glass-card">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ 'maintenance.new.tasks' | translate }}</h2>
+            <h2 class="text-lg font-semibold text-gray-900">{{ 'maintenance.new.tasks' | translate }}</h2>
             <button 
               type="button"
               class="btn-secondary text-sm"
@@ -205,11 +206,11 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 
           <div formArrayName="tasks" class="space-y-4">
             @for (task of tasks.controls; track $index; let i = $index) {
-              <div [formGroupName]="i" class="p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
+              <div [formGroupName]="i" class="p-4 border border-gray-200 rounded-lg">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                   
                   <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-1">
+                    <label class="block text-sm font-medium text-gray-600 mb-1">
                       Task Name *
                     </label>
                     <input 
@@ -220,7 +221,7 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
                   </div>
 
                   <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-1">
+                    <label class="block text-sm font-medium text-gray-600 mb-1">
                       Estimated Time (min)
                     </label>
                     <input 
@@ -244,7 +245,7 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
                 </div>
 
                 <div class="mt-3">
-                  <label class="block text-sm font-medium text-gray-300 mb-1">
+                  <label class="block text-sm font-medium text-gray-600 mb-1">
                     Task Description
                   </label>
                   <textarea 
@@ -259,7 +260,7 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
           </div>
 
           @if (tasks.length === 0) {
-            <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+            <div class="text-center py-8 text-gray-500">
               <p class="text-sm">{{ 'maintenance.new.noTasks' | translate }}</p>
             </div>
           }
@@ -294,114 +295,7 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 
     </div>
   `,
-  styles: [`
-    /* Dark glassmorphism card styling */
-    .glass-card {
-      background: rgba(11, 8, 41, 0.95);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(42, 37, 102, 0.6);
-      border-radius: 20px;
-      padding: 1.5rem;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      margin-bottom: 1rem;
-    }
-
-    /* Button styling to match other screens */
-    .btn-primary {
-      background: linear-gradient(135deg, #059669, #047857);
-      border: 1px solid #059669;
-      color: white !important;
-      padding: 0.75rem 1rem;
-      border-radius: 12px;
-      font-size: 0.875rem;
-      font-weight: 600;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      backdrop-filter: blur(20px);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      cursor: pointer;
-      box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      background: linear-gradient(135deg, #047857, #065f46);
-      box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
-      transform: translateY(-1px);
-    }
-
-    .btn-primary:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-    }
-    
-    .btn-secondary {
-      background: linear-gradient(135deg, rgba(255, 132, 0, 0.8), rgba(204, 106, 0, 0.8));
-      border: 1px solid rgba(255, 132, 0, 0.6);
-      color: white;
-      padding: 0.75rem 1rem;
-      border-radius: 12px;
-      font-size: 0.875rem;
-      font-weight: 600;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      backdrop-filter: blur(20px);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      cursor: pointer;
-      box-shadow: 0 4px 15px rgba(255, 132, 0, 0.3);
-    }
-
-    .btn-secondary:hover {
-      background: linear-gradient(135deg, rgba(255, 132, 0, 0.9), rgba(204, 106, 0, 0.9));
-      box-shadow: 0 6px 20px rgba(255, 132, 0, 0.4);
-      transform: translateY(-1px);
-    }
-    
-    .btn-danger {
-      background: linear-gradient(135deg, #dc2626, #991b1b);
-      border: 1px solid #dc2626;
-      color: white !important;
-      padding: 0.75rem 1rem;
-      border-radius: 12px;
-      font-size: 0.875rem;
-      font-weight: 600;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      backdrop-filter: blur(20px);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      cursor: pointer;
-      box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
-    }
-
-    .btn-danger:hover {
-      background: linear-gradient(135deg, #991b1b, #7f1d1d);
-      box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
-      transform: translateY(-1px);
-    }
-
-    /* Fix text colors for permanent dark theme */
-    .glass-card h2,
-    .glass-card .text-gray-900 {
-      color: #ffffff !important;
-    }
-
-    .glass-card .text-gray-500,
-    .glass-card .text-gray-400 {
-      color: #9ca3af !important;
-    }
-
-    .glass-card .text-gray-700,
-    .glass-card .text-gray-600 {
-      color: #d1d5db !important;
-    }
-  `]
+  styles: [``]
 })
 export class MaintenanceFormComponent implements OnInit {
   private fb = inject(FormBuilder);
@@ -409,6 +303,7 @@ export class MaintenanceFormComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private maintenanceService = inject(MaintenanceService);
   private carService = inject(CarService);
+  private toast = inject(ToastService);
 
   maintenanceForm!: FormGroup;
   cars = signal<Car[]>([]);
@@ -554,11 +449,13 @@ export class MaintenanceFormComponent implements OnInit {
 
       operation.subscribe({
         next: () => {
+          this.toast.success(this.isEditMode() ? 'Maintenance job updated successfully' : 'Maintenance job created successfully');
           this.isSubmitting.set(false);
           this.goBack();
         },
         error: (error) => {
           console.error('Error saving job:', error);
+          this.toast.error(this.isEditMode() ? 'Failed to update maintenance job' : 'Failed to create maintenance job');
           this.isSubmitting.set(false);
         }
       });

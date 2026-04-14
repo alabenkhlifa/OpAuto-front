@@ -49,6 +49,7 @@ npx prisma db push         # Push schema changes without migration (dev only)
 ```
 
 ## Engineering Preferences
+- **i18n** — ALL user-facing strings MUST use translation keys (`{{ 'key' | translate }}`). Never hardcode English strings in templates, toasts, confirms, or error messages
 - **DRY** — flag repetition aggressively
 - **Testing** — non-negotiable, too many > too few
 - **Right-sized** — not hacky, not over-abstracted

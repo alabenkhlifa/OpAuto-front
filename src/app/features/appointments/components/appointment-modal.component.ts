@@ -7,13 +7,15 @@ import { Appointment, Car, Customer, Mechanic } from '../../../core/models/appoi
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 import { AiService } from '../../../core/services/ai.service';
 import { AiScheduleSuggestion } from '../../../core/models/ai.model';
-
+import { CarRegistrationFormComponent } from '../../cars/components/car-registration-form.component';
 import { LanguageService } from '../../../core/services/language.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { TranslationService } from '../../../core/services/translation.service';
 
 @Component({
   selector: 'app-appointment-modal',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, CarRegistrationFormComponent],
   template: `
     <!-- Modal Overlay -->
     <div class="modal-overlay" (click)="closeModal()">
@@ -153,7 +155,10 @@ import { LanguageService } from '../../../core/services/language.service';
               @if (suggestions().length > 0) {
                 <div class="ai-suggestions">
                   @for (slot of suggestions(); track slot.start) {
-                    <button type="button" class="suggestion-card" (click)="applySuggestion(slot)">
+                    <button type="button" class="suggestion-card" [class.has-warning]="slot.warning" (click)="onSuggestionClick(slot)">
+                      @if (slot.warning) {
+                        <span class="suggestion-warning">⚠ {{ translationService.instant('calendar.toast.duringLunchBreak') }}</span>
+                      }
                       <div class="suggestion-header">
                         <span class="suggestion-date">{{ formatDate(slot.start) }}</span>
                         <span class="suggestion-score" [style.opacity]="slot.score">●</span>
@@ -202,17 +207,20 @@ import { LanguageService } from '../../../core/services/language.service';
 
       </div>
     </div>
+
+    <!-- Car Registration Modal -->
+    <app-car-registration-form
+      *ngIf="showCarModal()"
+      (close)="showCarModal.set(false)"
+      (carRegistered)="onCarRegistered($event)">
+    </app-car-registration-form>
   `,
   styles: [`
-    /* Dark Glassmorphism Modal Styles - Permanent Theme */
     .modal-overlay {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.8);
-      backdrop-filter: blur(8px);
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
       z-index: 50;
       display: flex;
       align-items: center;
@@ -220,34 +228,22 @@ import { LanguageService } from '../../../core/services/language.service';
       padding: 1rem;
       animation: overlayFadeIn 0.2s ease-out;
     }
-
-    @keyframes overlayFadeIn {
-      from { opacity: 0; backdrop-filter: blur(0px); }
-      to { opacity: 1; backdrop-filter: blur(8px); }
-    }
+    @keyframes overlayFadeIn { from { opacity: 0; } to { opacity: 1; } }
 
     .modal-content {
-      background: rgba(11, 8, 41, 0.95);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
       border-radius: 24px;
       width: 100%;
       max-width: 600px;
       max-height: 90vh;
       overflow-y: auto;
-      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.15);
       animation: modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-
     @keyframes modalSlideIn {
-      from { 
-        opacity: 0; 
-        transform: translateY(20px) scale(0.95); 
-      }
-      to { 
-        opacity: 1; 
-        transform: translateY(0) scale(1); 
-      }
+      from { opacity: 0; transform: translateY(20px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
     .modal-header {
@@ -255,444 +251,157 @@ import { LanguageService } from '../../../core/services/language.service';
       justify-content: space-between;
       align-items: flex-start;
       padding: 2rem 2rem 1rem 2rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      border-bottom: 1px solid #e2e8f0;
     }
-
-    .modal-title {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #ffffff;
-      margin: 0 0 0.25rem 0;
-    }
-
-    .modal-subtitle {
-      color: #d1d5db;
-      font-size: 0.875rem;
-      margin: 0;
-    }
+    .modal-title { font-size: 1.5rem; font-weight: 700; color: #111827; margin: 0 0 0.25rem 0; }
+    .modal-subtitle { color: #6b7280; font-size: 0.875rem; margin: 0; }
 
     .modal-close-btn {
-      width: 2.5rem;
-      height: 2.5rem;
-      border: none;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      color: #d1d5db;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 2.5rem; height: 2.5rem; border: none;
+      background: #f3f4f6; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: #6b7280; transition: all 0.2s ease;
     }
+    .modal-close-btn:hover { background: #e5e7eb; color: #111827; }
 
-    .modal-close-btn:hover {
-      background: rgba(255, 255, 255, 0.2);
-      transform: scale(1.05);
-      color: #ffffff;
-    }
-
-    /* Form Styles */
-    .modal-form {
-      padding: 2rem;
-    }
-
-    .form-section {
-      margin-bottom: 2rem;
-    }
+    .modal-form { padding: 2rem; }
+    .form-section { margin-bottom: 2rem; }
 
     .section-title {
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: #ffffff;
-      margin: 0 0 1rem 0;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
+      font-size: 1.125rem; font-weight: 600; color: #111827;
+      margin: 0 0 1rem 0; display: flex; align-items: center; gap: 0.5rem;
     }
-
     .section-title:before {
-      content: '';
-      width: 4px;
-      height: 1.5rem;
-      background: linear-gradient(135deg, #FF8400, #CC6A00);
-      border-radius: 2px;
+      content: ''; width: 4px; height: 1.5rem;
+      background: linear-gradient(135deg, #FF8400, #CC6A00); border-radius: 2px;
     }
 
-    .form-row {
-      display: flex;
-      gap: 1rem;
-      align-items: flex-end;
-    }
-    
-    /* Special alignment for car selection row with quick-add button */
-    .car-selection-row {
-      align-items: flex-end;
-    }
-    
-    .car-selection-row .form-group {
-      margin-bottom: 0;
-    }
-    
-    .car-selection-row .quick-add-btn {
-      width: 3.125rem;
-      height: 3.125rem;
-      margin-bottom: 0;
-      flex-shrink: 0;
-      /* Position the button to align with the bottom of the select input */
-      align-self: flex-end;
-    }
+    .form-row { display: flex; gap: 1rem; align-items: flex-end; }
+    .car-selection-row { align-items: flex-end; }
+    .car-selection-row .form-group { margin-bottom: 0; }
+    .car-selection-row .quick-add-btn { width: 3.125rem; height: 3.125rem; margin-bottom: 0; flex-shrink: 0; align-self: flex-end; }
 
     @media (max-width: 767px) {
-      .form-row {
-        flex-direction: column;
-        align-items: stretch;
-      }
-      
-      /* Keep car selection row horizontal on mobile */
-      .car-selection-row {
-        flex-direction: row !important;
-        align-items: end !important;
-      }
+      .form-row { flex-direction: column; align-items: stretch; }
+      .car-selection-row { flex-direction: row !important; align-items: end !important; }
     }
 
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
+    .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    .form-label { font-size: 0.875rem; font-weight: 500; color: #374151; }
+
+    .form-input, .form-select, .form-textarea {
+      padding: 0.875rem 1rem; border: 1px solid #d1d5db; border-radius: 12px;
+      background: #ffffff; color: #111827; font-size: 0.875rem; transition: all 0.2s ease;
+    }
+    .form-input::placeholder, .form-textarea::placeholder { color: #9ca3af; }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none; border-color: #FF8400; box-shadow: 0 0 0 3px rgba(255, 132, 0, 0.15);
+    }
+    .form-input:hover:not(:focus), .form-select:hover:not(:focus), .form-textarea:hover:not(:focus) {
+      border-color: #9ca3af;
     }
 
-    .form-label {
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: #d1d5db;
+    .form-select {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+      background-position: right 0.75rem center; background-repeat: no-repeat;
+      background-size: 1.5em 1.5em; padding-right: 2.5rem;
+      -webkit-appearance: none; -moz-appearance: none; appearance: none;
     }
 
-    .form-input,
-    .form-select,
-    .form-textarea {
-      padding: 0.875rem 1rem;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(10px);
-      color: #ffffff;
-      font-size: 0.875rem;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    .form-input[type="date"] {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='1.5'%3e%3cpath d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'/%3e%3c/svg%3e");
+      background-position: right 0.75rem center; background-repeat: no-repeat;
+      background-size: 1.25em 1.25em; padding-right: 2.5rem;
     }
-
-    .form-input::placeholder,
-    .form-textarea::placeholder {
-      color: #9ca3af;
-    }
-
-    .form-input:focus,
-    .form-select:focus,
-    .form-textarea:focus {
-      outline: none;
-      border-color: #FF8400;
-      background: rgba(255, 255, 255, 0.1);
-      box-shadow: 0 0 0 3px rgba(255, 132, 0, 0.2);
-      transform: translateY(-1px);
-    }
-
-    .form-input:hover:not(:focus),
-    .form-select:hover:not(:focus),
-    .form-textarea:hover:not(:focus) {
-      border-color: rgba(255, 255, 255, 0.3);
-      background-color: rgba(255, 255, 255, 0.08);
-    }
-
-    /* Ensure select arrows remain visible on hover */
-    .form-select:hover:not(:focus) {
-      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-      background-position: right 0.75rem center;
-      background-repeat: no-repeat;
-      background-size: 1.5em 1.5em;
-    }
-
-    /* Ensure calendar icons remain visible on hover - use exact same icon */
-    .form-input[type="date"]:hover:not(:focus) {
-      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='1.5'%3e%3cpath d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'/%3e%3c/svg%3e");
-      background-position: right 0.75rem center;
-      background-repeat: no-repeat;
-      background-size: 1.25em 1.25em;
+    .form-input[type="date"]::-webkit-calendar-picker-indicator {
+      opacity: 0; position: absolute; left: 0; top: 0; width: 100%; height: 100%; cursor: pointer; margin: 0; padding: 0;
     }
 
     .quick-add-btn {
-      width: 3.125rem; /* Match form input height */
-      height: 3.125rem; /* Match form input height */
-      border: 1px dashed rgba(255, 255, 255, 0.3);
-      background: transparent;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      color: #d1d5db;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      flex-shrink: 0; /* Prevent button from shrinking */
+      width: 3.125rem; height: 3.125rem;
+      border: 1px dashed #d1d5db; background: transparent; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: #6b7280; transition: all 0.2s ease; flex-shrink: 0;
     }
+    .quick-add-btn:hover { border-color: #FF8400; border-style: solid; color: #FF8400; background: rgba(255, 132, 0, 0.08); }
 
-    .quick-add-btn:hover {
-      border-color: #FF8400;
-      border-style: solid;
-      color: #FF8400;
-      background: rgba(255, 132, 0, 0.1);
-      transform: scale(1.05);
-    }
-
-    /* Modal Footer */
     .modal-footer {
-      display: flex;
-      gap: 1rem;
-      padding: 1.5rem 2rem 2rem 2rem;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex; gap: 1rem; padding: 1.5rem 2rem 2rem 2rem; border-top: 1px solid #e2e8f0;
     }
-
-    @media (max-width: 767px) {
-      .modal-footer {
-        flex-direction: column;
-      }
-    }
+    @media (max-width: 767px) { .modal-footer { flex-direction: column; } }
 
     .modal-btn {
-      flex: 1;
-      padding: 1rem 1.5rem;
-      border-radius: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      backdrop-filter: blur(10px);
+      flex: 1; padding: 1rem 1.5rem; border-radius: 12px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s ease;
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
     }
-
-    .modal-btn.secondary {
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: #d1d5db;
-    }
-
-    .modal-btn.secondary:hover {
-      background: rgba(255, 255, 255, 0.15);
-      border-color: rgba(255, 255, 255, 0.3);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    }
-
+    .modal-btn.secondary { background: #f3f4f6; border: 1px solid #d1d5db; color: #374151; }
+    .modal-btn.secondary:hover { background: #e5e7eb; border-color: #9ca3af; }
     .modal-btn.primary {
-      background: linear-gradient(135deg, #059669, #047857);
-      border: 1px solid #059669;
-      color: white;
-      box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+      background: linear-gradient(135deg, #FF8400, #E67700); border: 1px solid #FF8400;
+      color: white; box-shadow: 0 4px 15px rgba(255, 132, 0, 0.3);
     }
-
     .modal-btn.primary:hover:not(:disabled) {
-      background: linear-gradient(135deg, #047857, #065f46);
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
+      background: linear-gradient(135deg, #E67700, #CC6A00); box-shadow: 0 6px 20px rgba(255, 132, 0, 0.4);
     }
-
-    .modal-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none !important;
-    }
+    .modal-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .submit-spinner {
-      width: 1rem;
-      height: 1rem;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-top: 2px solid white;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
+      width: 1rem; height: 1rem;
+      border: 2px solid rgba(255, 255, 255, 0.3); border-top: 2px solid white;
+      border-radius: 50%; animation: spin 1s linear infinite;
     }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
+    .modal-content::-webkit-scrollbar { width: 6px; }
+    .modal-content::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 3px; }
+    .modal-content::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    .modal-content::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-    /* Custom scrollbar for modal */
-    .modal-content::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    .modal-content::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 3px;
-    }
-
-    .modal-content::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 3px;
-    }
-
-    .modal-content::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 255, 255, 0.5);
-    }
-
-    /* Fix select dropdown arrow positioning and calendar icon styling */
-    .form-select {
-      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-      background-position: right 0.75rem center;
-      background-repeat: no-repeat;
-      background-size: 1.5em 1.5em;
-      padding-right: 2.5rem;
-      -webkit-appearance: none;
-      -moz-appearance: none;
-      appearance: none;
-    }
-
-    /* Date input calendar icon styling - hide native and use custom white icon */
-    .form-input[type="date"] {
-      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='1.5'%3e%3cpath d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'/%3e%3c/svg%3e");
-      background-position: right 0.75rem center;
-      background-repeat: no-repeat;
-      background-size: 1.25em 1.25em;
-      padding-right: 2.5rem;
-    }
-
-    /* Make the entire date field clickable by expanding the calendar picker indicator */
-    .form-input[type="date"]::-webkit-calendar-picker-indicator {
-      opacity: 0;
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      cursor: pointer;
-      margin: 0;
-      padding: 0;
-    }
-
-    /* Alternative approach for other browsers */
-    .form-input[type="date"]::-moz-calendar-picker-indicator {
-      display: none;
-    }
-
-    .ai-suggest-section {
-      margin-top: 1rem;
-    }
-
+    .ai-suggest-section { margin-top: 1rem; }
     .ai-suggest-btn {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
+      display: flex; align-items: center; gap: 0.5rem;
       padding: 0.75rem 1.25rem;
-      background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2));
-      border: 1px solid rgba(139, 92, 246, 0.3);
-      border-radius: 12px;
-      color: #c4b5fd;
-      font-weight: 500;
-      font-size: 0.875rem;
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      width: 100%;
-      justify-content: center;
+      background: rgba(139, 92, 246, 0.08); border: 1px solid rgba(139, 92, 246, 0.25);
+      border-radius: 12px; color: #7c3aed; font-weight: 500; font-size: 0.875rem;
+      cursor: pointer; transition: all 0.2s ease; width: 100%; justify-content: center;
     }
-
     .ai-suggest-btn:hover:not(:disabled) {
-      background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.3));
-      border-color: rgba(139, 92, 246, 0.5);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 15px rgba(139, 92, 246, 0.2);
+      background: rgba(139, 92, 246, 0.15); border-color: rgba(139, 92, 246, 0.4);
     }
-
-    .ai-suggest-btn:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-      transform: none;
-    }
+    .ai-suggest-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
     .ai-spinner {
-      width: 1rem;
-      height: 1rem;
-      border: 2px solid rgba(196, 181, 253, 0.3);
-      border-top: 2px solid #c4b5fd;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
+      width: 1rem; height: 1rem;
+      border: 2px solid rgba(124, 58, 237, 0.3); border-top: 2px solid #7c3aed;
+      border-radius: 50%; animation: spin 1s linear infinite;
     }
-
     .ai-error {
-      margin-top: 0.5rem;
-      padding: 0.5rem 0.75rem;
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.2);
-      border-radius: 8px;
-      color: #fca5a5;
-      font-size: 0.8rem;
+      margin-top: 0.5rem; padding: 0.5rem 0.75rem;
+      background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2);
+      border-radius: 8px; color: #dc2626; font-size: 0.8rem;
     }
+    .ai-no-slots { margin-top: 0.5rem; padding: 0.5rem 0.75rem; color: #6b7280; font-size: 0.8rem; text-align: center; }
 
-    .ai-no-slots {
-      margin-top: 0.5rem;
-      padding: 0.5rem 0.75rem;
-      color: #9ca3af;
-      font-size: 0.8rem;
-      text-align: center;
-    }
-
-    .ai-suggestions {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      margin-top: 0.75rem;
-    }
-
+    .ai-suggestions { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.75rem; }
     .suggestion-card {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-      padding: 0.75rem 1rem;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      text-align: left;
-      color: #ffffff;
+      display: flex; flex-direction: column; gap: 0.25rem;
+      padding: 0.75rem 1rem; background: #f8fafc; border: 1px solid #e2e8f0;
+      border-radius: 12px; cursor: pointer; transition: all 0.2s ease; text-align: left; color: #111827;
     }
-
-    .suggestion-card:hover {
-      background: rgba(139, 92, 246, 0.1);
-      border-color: rgba(139, 92, 246, 0.3);
-      transform: translateY(-1px);
+    .suggestion-card:hover { background: rgba(139, 92, 246, 0.06); border-color: rgba(139, 92, 246, 0.3); }
+    .suggestion-card.has-warning { background: #fffbeb; border-color: #fde68a; }
+    .suggestion-card.has-warning:hover { background: #fef3c7; border-color: #fbbf24; }
+    .suggestion-warning {
+      font-size: 0.65rem; font-weight: 600; color: #b45309; background: #fef3c7;
+      padding: 0.1rem 0.4rem; border-radius: 4px; display: inline-block;
     }
-
-    .suggestion-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .suggestion-date {
-      font-weight: 600;
-      font-size: 0.875rem;
-    }
-
-    .suggestion-score {
-      color: #8b5cf6;
-      font-size: 1.25rem;
-    }
-
-    .suggestion-time {
-      color: #d1d5db;
-      font-size: 0.8rem;
-    }
-
-    .suggestion-mechanic {
-      color: #c4b5fd;
-      font-size: 0.8rem;
-      font-weight: 500;
-    }
-
-    .suggestion-reason {
-      color: #9ca3af;
-      font-size: 0.75rem;
-      font-style: italic;
-    }
+    .suggestion-header { display: flex; justify-content: space-between; align-items: center; }
+    .suggestion-date { font-weight: 600; font-size: 0.875rem; }
+    .suggestion-score { color: #8b5cf6; font-size: 1.25rem; }
+    .suggestion-time { color: #6b7280; font-size: 0.8rem; }
+    .suggestion-mechanic { color: #7c3aed; font-size: 0.8rem; font-weight: 500; }
+    .suggestion-reason { color: #6b7280; font-size: 0.75rem; font-style: italic; }
   `]
 })
 export class AppointmentModalComponent {
@@ -701,6 +410,8 @@ export class AppointmentModalComponent {
   private router = inject(Router);
   aiService = inject(AiService);
   private languageService = inject(LanguageService);
+  private toast = inject(ToastService);
+  translationService = inject(TranslationService);
   suggestions = signal<AiScheduleSuggestion[]>([]);
   suggestionsRequested = signal(false);
 
@@ -711,6 +422,7 @@ export class AppointmentModalComponent {
   // Signals
   editMode = signal(false);
   isSubmitting = signal(false);
+  showCarModal = signal(false);
   cars = signal<Car[]>([]);
   customers = signal<Customer[]>([]);
   mechanics = signal<Mechanic[]>([]);
@@ -768,32 +480,45 @@ export class AppointmentModalComponent {
       const [hours, minutes] = formValue.scheduledTime.split(':').map(Number);
       scheduledDateTime.setHours(hours, minutes, 0, 0);
 
-      const appointmentData = {
+      const appointmentData: any = {
         carId: formValue.carId,
-        customerId: 'customer1', // This would be derived from car selection
-        mechanicId: formValue.mechanicId || 'mechanic1', // Auto-assign if not selected
         serviceType: formValue.serviceType,
         serviceName: formValue.serviceName,
         scheduledDate: scheduledDateTime,
         estimatedDuration: formValue.estimatedDuration,
-        status: 'scheduled' as const,
         priority: formValue.priority,
         notes: formValue.notes || undefined
       };
 
+      if (formValue.mechanicId) {
+        appointmentData.mechanicId = formValue.mechanicId;
+      }
+
       // Choose create or update based on edit mode
-      const operation = this.editMode() && this.currentAppointmentId() 
-        ? this.appointmentService.updateAppointment(this.currentAppointmentId()!, appointmentData)
-        : this.appointmentService.createAppointment(appointmentData);
+      let operation;
+      if (this.editMode() && this.currentAppointmentId()) {
+        operation = this.appointmentService.updateAppointment(this.currentAppointmentId()!, appointmentData);
+      } else {
+        appointmentData.status = 'scheduled';
+        // Derive customerId from car selection
+        const car = this.cars().find(c => c.id === formValue.carId);
+        if (car?.customerId) {
+          appointmentData.customerId = car.customerId;
+        }
+        operation = this.appointmentService.createAppointment(appointmentData);
+      }
 
       operation.subscribe({
         next: (appointment) => {
+          const key = this.editMode() ? 'calendar.toast.rescheduled' : 'appointments.toast.created';
+          this.toast.success(this.translationService.instant(key));
           this.saved.emit(appointment);
           this.closeModal();
           this.isSubmitting.set(false);
         },
-        error: (error) => {
-          console.error('Failed to save appointment:', error);
+        error: () => {
+          const key = this.editMode() ? 'calendar.toast.rescheduleFailed' : 'appointments.toast.createFailed';
+          this.toast.error(this.translationService.instant(key));
           this.isSubmitting.set(false);
         }
       });
@@ -827,6 +552,14 @@ export class AppointmentModalComponent {
         // Error is captured in aiService.error signal
       }
     });
+  }
+
+  onSuggestionClick(slot: AiScheduleSuggestion): void {
+    if (slot.warning) {
+      const msg = this.translationService.instant('calendar.toast.lunchBreakConfirm').replace('{{name}}', slot.mechanicName);
+      if (!confirm(msg)) return;
+    }
+    this.applySuggestion(slot);
   }
 
   applySuggestion(slot: AiScheduleSuggestion): void {
@@ -881,8 +614,14 @@ export class AppointmentModalComponent {
   }
 
   openQuickAddCar(): void {
-    // Close the appointment modal and navigate to cars management screen
-    this.closeModal();
-    this.router.navigate(['/cars']);
+    this.showCarModal.set(true);
+  }
+
+  onCarRegistered(car: any): void {
+    this.showCarModal.set(false);
+    this.appointmentService.getCars().subscribe(cars => {
+      this.cars.set(cars);
+      this.appointmentForm.patchValue({ carId: car.id });
+    });
   }
 }

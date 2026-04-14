@@ -88,7 +88,7 @@ const MODULE_EMOJI: Record<string, string> = {
               } @else if (isCancelled(mod)) {
                 <button class="activate-btn renew" (click)="renewModule(mod)">Reactivate</button>
               } @else if (mod.isActive) {
-                <button class="activate-btn active" (click)="toggleModule(mod)">Deactivate</button>
+                <button class="activate-btn deactivate" (click)="toggleModule(mod)">Deactivate</button>
               } @else {
                 <button class="activate-btn inactive" (click)="toggleModule(mod)">Activate</button>
               }
@@ -114,44 +114,44 @@ const MODULE_EMOJI: Record<string, string> = {
   `,
   styles: [`
     .modules-page { padding: 1.5rem; max-width: 1200px; margin: 0 auto; }
-    .page-header { margin-bottom: 2rem; }
-    .page-title { font-size: 1.75rem; font-weight: 700; color: #fff; margin: 0 0 0.5rem; }
-    .page-subtitle { color: #94a3b8; margin: 0 0 1rem; }
+    .page-header { margin-bottom: 2rem; padding: 1.5rem; background: linear-gradient(135deg, #fff7ed, #fef3c7); border-radius: 20px; border: 1px solid #fed7aa; }
+    .page-title { font-size: 1.75rem; font-weight: 700; color: #111827; margin: 0 0 0.5rem; }
+    .page-subtitle { color: #6b7280; margin: 0 0 1rem; }
     .stats-row { display: flex; gap: 1.5rem; }
     .stat { padding: 0.5rem 1rem; border-radius: 10px; background: rgba(255, 132, 0, 0.1); color: #FF8400; font-weight: 600; font-size: 0.875rem; }
-    .section-title { font-size: 1.25rem; font-weight: 600; color: #8FA0D8; margin: 1.5rem 0 1rem; }
+    .section-title { font-size: 1.25rem; font-weight: 600; color: #374151; margin: 1.5rem 0 1rem; }
     .modules-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-    .module-card { padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; transition: all 0.2s; }
-    .module-card:hover { transform: translateY(-2px); }
-    .module-card.active { border-color: rgba(255, 132, 0, 0.3); }
-    .module-card.expired { border-color: rgba(239, 68, 68, 0.3); }
-    .module-card.cancelled { border-color: rgba(251, 191, 36, 0.3); }
-    .cancelled-badge { padding: 0.15rem 0.4rem; border-radius: 6px; background: rgba(251, 191, 36, 0.15); color: #fbbf24; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; }
-    .cancelled-text { color: #fbbf24 !important; }
+    .module-card { padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; transition: all 0.2s; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; }
+    .module-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); }
+    .module-card.active { border-color: rgba(255, 132, 0, 0.3); background: #fffbf5; }
+    .module-card.expired { border-color: rgba(239, 68, 68, 0.3); background: #fef2f2; }
+    .module-card.cancelled { border-color: rgba(251, 191, 36, 0.3); background: #fffbeb; }
+    .cancelled-badge { padding: 0.15rem 0.4rem; border-radius: 6px; background: rgba(251, 191, 36, 0.15); color: #b45309; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; }
+    .cancelled-text { color: #b45309 !important; }
     .module-header { display: flex; align-items: center; gap: 0.75rem; }
     .module-title-row { display: flex; align-items: center; gap: 0.5rem; }
-    .module-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; background: rgba(255, 132, 0, 0.1); }
-    .module-name { font-size: 1rem; font-weight: 600; color: #fff; }
-    .module-desc { font-size: 0.85rem; color: #94a3b8; line-height: 1.5; }
-    .module-footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 0.75rem; border-top: 1px solid rgba(255, 255, 255, 0.05); }
+    .module-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; background: #fff7ed; }
+    .module-name { font-size: 1rem; font-weight: 600; color: #111827; }
+    .module-desc { font-size: 0.85rem; color: #6b7280; line-height: 1.5; }
+    .module-footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 0.75rem; border-top: 1px solid #f1f5f9; }
     .module-price { font-size: 1.125rem; font-weight: 700; color: #FF8400; }
-    .module-price.free { color: #22c55e; }
-    .free-badge { padding: 0.2rem 0.5rem; border-radius: 6px; background: rgba(34, 197, 94, 0.1); color: #22c55e; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
-    .expired-badge { padding: 0.15rem 0.4rem; border-radius: 6px; background: rgba(239, 68, 68, 0.15); color: #ef4444; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; }
-    .expiry-info { padding: 0.35rem 0.6rem; border-radius: 8px; background: rgba(255, 132, 0, 0.08); }
+    .module-price.free { color: #16a34a; }
+    .free-badge { padding: 0.2rem 0.5rem; border-radius: 6px; background: rgba(34, 197, 94, 0.1); color: #16a34a; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
+    .expired-badge { padding: 0.15rem 0.4rem; border-radius: 6px; background: rgba(239, 68, 68, 0.1); color: #dc2626; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; }
+    .expiry-info { padding: 0.35rem 0.6rem; border-radius: 8px; background: rgba(255, 132, 0, 0.06); }
     .expiry-text { font-size: 0.75rem; color: #FF8400; font-weight: 500; }
     .activate-btn { padding: 0.5rem 1rem; border-radius: 10px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; }
-    .activate-btn.active { background: rgba(255, 132, 0, 0.15); color: #FF8400; border: 1px solid rgba(255, 132, 0, 0.3); }
-    .activate-btn.inactive { background: rgba(18, 15, 61, 0.6); color: #94a3b8; border: 1px solid rgba(255, 255, 255, 0.1); }
-    .activate-btn.renew { background: rgba(255, 132, 0, 0.2); color: #FF8400; border: 1px solid rgba(255, 132, 0, 0.4); }
-    .activate-btn.deactivate { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .activate-btn.active { background: rgba(255, 132, 0, 0.1); color: #FF8400; border: 1px solid rgba(255, 132, 0, 0.3); }
+    .activate-btn.inactive { background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; }
+    .activate-btn.renew { background: rgba(255, 132, 0, 0.1); color: #FF8400; border: 1px solid rgba(255, 132, 0, 0.4); }
+    .activate-btn.deactivate { background: rgba(239, 68, 68, 0.08); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.3); }
     .activate-btn:hover { transform: translateY(-1px); }
 
-    .dialog-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 50; }
-    .dialog-box { max-width: 420px; width: 90%; padding: 1.5rem; }
-    .dialog-title { color: #fff; font-size: 1.1rem; font-weight: 600; margin: 0 0 0.75rem; }
-    .dialog-text { color: #94a3b8; font-size: 0.9rem; line-height: 1.5; margin: 0 0 1.25rem; }
-    .dialog-text strong { color: #fff; }
+    .dialog-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 50; }
+    .dialog-box { max-width: 420px; width: 90%; padding: 1.5rem; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; box-shadow: 0 25px 50px rgba(0,0,0,0.15); }
+    .dialog-title { color: #111827; font-size: 1.1rem; font-weight: 600; margin: 0 0 0.75rem; }
+    .dialog-text { color: #6b7280; font-size: 0.9rem; line-height: 1.5; margin: 0 0 1.25rem; }
+    .dialog-text strong { color: #111827; }
     .dialog-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
   `]
 })

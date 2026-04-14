@@ -218,25 +218,19 @@ export class GarageSettingsService {
   private mapToBackend(settings: Partial<GarageSettings>): any {
     const result: any = {};
     if (settings.garageInfo) {
-      result.name = settings.garageInfo.name;
-      result.address = settings.garageInfo.address;
-      result.city = settings.garageInfo.city;
-      result.postalCode = settings.garageInfo.postalCode;
-      result.country = settings.garageInfo.country;
-      result.phone = settings.garageInfo.phone;
-      result.email = settings.garageInfo.email;
-      result.website = settings.garageInfo.website;
-      result.taxId = settings.garageInfo.taxId;
-      result.registrationNumber = settings.garageInfo.registrationNumber;
-      result.description = settings.garageInfo.description;
+      if (settings.garageInfo.name) result.name = settings.garageInfo.name;
+      if (settings.garageInfo.address) result.address = settings.garageInfo.address;
+      if (settings.garageInfo.phone) result.phone = settings.garageInfo.phone;
+      if (settings.garageInfo.email) result.email = settings.garageInfo.email;
     }
-    if (settings.operationalSettings) {
+    if (settings.operationalSettings?.workingHours) {
       result.businessHours = settings.operationalSettings.workingHours;
-      result.capacity = settings.operationalSettings.capacity;
     }
     if (settings.businessSettings) {
-      result.currency = settings.businessSettings.currency;
-      result.taxRate = settings.businessSettings.taxSettings?.defaultTaxRate;
+      if (settings.businessSettings.currency) result.currency = settings.businessSettings.currency;
+      if (settings.businessSettings.taxSettings?.defaultTaxRate !== undefined) {
+        result.taxRate = settings.businessSettings.taxSettings.defaultTaxRate;
+      }
     }
     return result;
   }

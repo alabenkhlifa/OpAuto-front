@@ -10,6 +10,7 @@ import { LanguageService } from '../../core/services/language.service';
 import { TranslationService } from '../../core/services/translation.service';
 import { forkJoin } from 'rxjs';
 import { TooltipDirective } from '../../shared/directives/tooltip.directive';
+import { ToastService } from '../../shared/services/toast.service';
 
 @Component({
   selector: 'app-appointments',
@@ -22,6 +23,7 @@ export class AppointmentsComponent implements AfterViewInit {
   private appointmentService = inject(AppointmentService);
   private languageService = inject(LanguageService);
   public translationService = inject(TranslationService);
+  private toast = inject(ToastService);
   
   @ViewChild(AppointmentModalComponent) appointmentModal!: AppointmentModalComponent;
   
@@ -211,10 +213,12 @@ export class AppointmentsComponent implements AfterViewInit {
   updateAppointmentStatus(appointmentId: string, status: AppointmentStatus): void {
     this.appointmentService.updateAppointment(appointmentId, { status }).subscribe({
       next: () => {
+        this.toast.success(`Appointment marked as ${status}`);
         this.loadAppointments();
       },
       error: (error) => {
         console.error('Failed to update appointment:', error);
+        this.toast.error('Failed to update appointment status');
       }
     });
   }
@@ -223,10 +227,12 @@ export class AppointmentsComponent implements AfterViewInit {
     if (confirm('Are you sure you want to delete this appointment?')) {
       this.appointmentService.deleteAppointment(appointmentId).subscribe({
         next: () => {
+          this.toast.success('Appointment deleted successfully');
           this.loadAppointments();
         },
         error: (error) => {
           console.error('Failed to delete appointment:', error);
+          this.toast.error('Failed to delete appointment');
         }
       });
     }

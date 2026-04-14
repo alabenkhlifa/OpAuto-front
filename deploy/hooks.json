@@ -1,0 +1,31 @@
+[
+  {
+    "id": "deploy",
+    "execute-command": "/opt/opauto/deploy/deploy.sh",
+    "command-working-directory": "/opt/opauto",
+    "trigger-rule": {
+      "and": [
+        {
+          "match": {
+            "type": "payload-hmac-sha256",
+            "secret": "WEBHOOK_SECRET_CHANGE_ME",
+            "parameter": {
+              "source": "header",
+              "name": "X-Hub-Signature-256"
+            }
+          }
+        },
+        {
+          "match": {
+            "type": "value",
+            "value": "refs/heads/main",
+            "parameter": {
+              "source": "payload",
+              "name": "ref"
+            }
+          }
+        }
+      ]
+    }
+  }
+]

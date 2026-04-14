@@ -6,6 +6,7 @@ import { CustomerService } from '../../../core/services/customer.service';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 import { TranslationService } from '../../../core/services/translation.service';
 import { CreateCustomerRequest, UpdateCustomerRequest, CustomerStatus, ContactMethod } from '../../../core/models/customer.model';
+import { ToastService } from '../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-customer-form',
@@ -20,6 +21,7 @@ export class CustomerFormComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private translationService = inject(TranslationService);
+  private toast = inject(ToastService);
 
   customerForm!: FormGroup;
   isSubmitting = signal(false);
@@ -126,11 +128,13 @@ export class CustomerFormComponent implements OnInit {
 
       this.customerService.updateCustomer(this.customerId, updateData).subscribe({
         next: (updated) => {
+          this.toast.success('Customer updated successfully');
           this.isSubmitting.set(false);
           this.router.navigate(['/customers', updated.id]);
         },
         error: (error) => {
           console.error('Error updating customer:', error);
+          this.toast.error('Failed to update customer');
           this.isSubmitting.set(false);
         }
       });
@@ -151,11 +155,13 @@ export class CustomerFormComponent implements OnInit {
 
       this.customerService.createCustomer(createData).subscribe({
         next: (created) => {
+          this.toast.success('Customer created successfully');
           this.isSubmitting.set(false);
           this.router.navigate(['/customers', created.id]);
         },
         error: (error) => {
           console.error('Error creating customer:', error);
+          this.toast.error('Failed to create customer');
           this.isSubmitting.set(false);
         }
       });

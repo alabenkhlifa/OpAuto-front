@@ -114,6 +114,7 @@ export class AiService {
       mechanicName: string;
       score: number;
       reason: string;
+      warning?: string;
     }>;
     provider: string;
   }> {
@@ -161,7 +162,15 @@ export class AiService {
         .map((e) => e.id),
     );
 
-    // 2b — Compute search window
+    // 2b — Load garage working hours
+    const garage = await this.prisma.garage.findUnique({
+      where: { id: garageId },
+      select: { businessHours: true },
+    });
+    const businessHours = (garage?.businessHours as Record<string, any>) || null;
+    const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+
+    // 2c — Compute search window
     const now = new Date();
     let windowStart: Date;
     let windowEnd: Date;
@@ -194,7 +203,9 @@ export class AiService {
       end: string;
       mechanicId: string;
       mechanicName: string;
+      warning?: string;
     }> = [];
+    const breakCandidates: typeof candidates = [];
     const durationMs = dto.estimatedDuration * 60 * 1000;
 
     const dayCount = Math.ceil(
@@ -204,10 +215,36 @@ export class AiService {
     for (let d = 0; d < dayCount && candidates.length < 20; d++) {
       const dayDate = new Date(windowStart);
       dayDate.setDate(dayDate.getDate() + d);
+
+      // Read garage hours for this day of week
+      const dayKey = dayKeys[dayDate.getDay()];
+      const daySchedule = businessHours?.[dayKey] || businessHours?.[dayKey + 'day'];
+      let openHour = 8, openMin = 0, closeHour = 18, closeMin = 0;
+      let breakStartH = -1, breakStartM = 0, breakEndH = -1, breakEndM = 0;
+
+      if (daySchedule) {
+        // Skip closed days
+        if (daySchedule.open === null || daySchedule.close === null) continue;
+        if (daySchedule.isWorkingDay === false) continue;
+        const openParts = (daySchedule.open || daySchedule.openTime || '08:00').split(':');
+        const closeParts = (daySchedule.close || daySchedule.closeTime || '18:00').split(':');
+        openHour = parseInt(openParts[0]); openMin = parseInt(openParts[1] || '0');
+        closeHour = parseInt(closeParts[0]); closeMin = parseInt(closeParts[1] || '0');
+        // Parse break if defined
+        if (daySchedule.lunchBreak) {
+          const bs = (daySchedule.lunchBreak.startTime || '').split(':');
+          const be = (daySchedule.lunchBreak.endTime || '').split(':');
+          if (bs.length === 2 && be.length === 2) {
+            breakStartH = parseInt(bs[0]); breakStartM = parseInt(bs[1]);
+            breakEndH = parseInt(be[0]); breakEndM = parseInt(be[1]);
+          }
+        }
+      }
+
       const dayStart = new Date(dayDate);
-      dayStart.setHours(8, 0, 0, 0);
+      dayStart.setHours(openHour, openMin, 0, 0);
       const dayEnd = new Date(dayDate);
-      dayEnd.setHours(18, 0, 0, 0);
+      dayEnd.setHours(closeHour, closeMin, 0, 0);
 
       // Skip if day is already past
       if (dayEnd <= now) continue;
@@ -232,16 +269,28 @@ export class AiService {
               new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
           );
 
-        // Build free windows
+        // Build blocked intervals: existing appointments + lunch break
+        const blocked: Array<{ start: Date; end: Date }> = empAppts.map(a => ({
+          start: new Date(a.startTime),
+          end: new Date(a.endTime),
+        }));
+        if (breakStartH >= 0) {
+          const breakStart = new Date(dayDate);
+          breakStart.setHours(breakStartH, breakStartM, 0, 0);
+          const breakEnd = new Date(dayDate);
+          breakEnd.setHours(breakEndH, breakEndM, 0, 0);
+          blocked.push({ start: breakStart, end: breakEnd });
+        }
+        blocked.sort((a, b) => a.start.getTime() - b.start.getTime());
+
+        // Build free windows from gaps between blocked intervals
         const freeWindows: Array<{ from: Date; to: Date }> = [];
         let cursor = effectiveDayStart;
-        for (const appt of empAppts) {
-          const aStart = new Date(appt.startTime);
-          const aEnd = new Date(appt.endTime);
-          if (aStart > cursor) {
-            freeWindows.push({ from: new Date(cursor), to: new Date(aStart) });
+        for (const b of blocked) {
+          if (b.start > cursor) {
+            freeWindows.push({ from: new Date(cursor), to: new Date(b.start) });
           }
-          if (aEnd > cursor) cursor = aEnd;
+          if (b.end > cursor) cursor = b.end;
         }
         if (cursor < dayEnd) {
           freeWindows.push({ from: new Date(cursor), to: new Date(dayEnd) });
@@ -275,7 +324,51 @@ export class AiService {
             slotStart = new Date(slotStart.getTime() + 30 * 60 * 1000);
           }
         }
+
+        // Also generate break-overlap slots as fallback (only appointment conflicts blocked, not break)
+        if (breakStartH >= 0) {
+          const apptOnly: Array<{ start: Date; end: Date }> = empAppts.map(a => ({
+            start: new Date(a.startTime), end: new Date(a.endTime),
+          }));
+          apptOnly.sort((a, b) => a.start.getTime() - b.start.getTime());
+          const breakFreeWindows: Array<{ from: Date; to: Date }> = [];
+          let bCursor = effectiveDayStart;
+          for (const b of apptOnly) {
+            if (b.start > bCursor) breakFreeWindows.push({ from: new Date(bCursor), to: new Date(b.start) });
+            if (b.end > bCursor) bCursor = b.end;
+          }
+          if (bCursor < dayEnd) breakFreeWindows.push({ from: new Date(bCursor), to: new Date(dayEnd) });
+
+          const breakStartTime = new Date(dayDate);
+          breakStartTime.setHours(breakStartH, breakStartM, 0, 0);
+          const breakEndTime = new Date(dayDate);
+          breakEndTime.setHours(breakEndH, breakEndM, 0, 0);
+
+          for (const w of breakFreeWindows) {
+            let slotS = new Date(w.from);
+            const m = slotS.getMinutes();
+            if (m % 30 !== 0) slotS.setMinutes(Math.ceil(m / 30) * 30, 0, 0);
+            else slotS.setSeconds(0, 0);
+            while (slotS.getTime() + durationMs <= w.to.getTime() && breakCandidates.length < 10) {
+              const slotE = new Date(slotS.getTime() + durationMs);
+              // Only include if it actually overlaps the break
+              if (slotS < breakEndTime && slotE > breakStartTime) {
+                breakCandidates.push({
+                  start: slotS.toISOString(), end: slotE.toISOString(),
+                  mechanicId: emp.id, mechanicName: `${emp.firstName} ${emp.lastName}`,
+                  warning: 'lunch_break',
+                });
+              }
+              slotS = new Date(slotS.getTime() + 30 * 60 * 1000);
+            }
+          }
+        }
       }
+    }
+
+    // If no normal candidates, use break-overlap candidates as fallback
+    if (candidates.length === 0 && breakCandidates.length > 0) {
+      candidates.push(...breakCandidates);
     }
 
     if (candidates.length === 0) return { suggestedSlots: [], provider: 'mock' };
@@ -299,11 +392,20 @@ export class AiService {
         remainingCandidates.push(c);
       }
     }
-    // Sort diverse candidates: skilled first, then by workload ascending
+    // Build skill rating map
+    const ratingMap = new Map<string, number>();
+    for (const emp of employees) {
+      ratingMap.set(emp.id, (emp as any).skillRating || (emp.hourlyRate ? Math.min(emp.hourlyRate / 10, 5) : 3));
+    }
+
+    // Sort diverse candidates: skilled first, then by rating descending, then workload ascending
     diverseCandidates.sort((a, b) => {
       const aSkilled = skilledEmployeeIds.has(a.mechanicId) ? 0 : 1;
       const bSkilled = skilledEmployeeIds.has(b.mechanicId) ? 0 : 1;
       if (aSkilled !== bSkilled) return aSkilled - bSkilled;
+      const rA = ratingMap.get(a.mechanicId) || 0;
+      const rB = ratingMap.get(b.mechanicId) || 0;
+      if (rA !== rB) return rB - rA; // higher rating first
       const wA = workloadMap.get(a.mechanicId) || 0;
       const wB = workloadMap.get(b.mechanicId) || 0;
       return wA - wB;
@@ -325,10 +427,12 @@ Candidates:
 ${top6.map((c, i) => {
   const emp = employees.find((e) => e.id === c.mechanicId);
   const workload = workloadMap.get(c.mechanicId) || 0;
-  return `${i}: ${c.mechanicName} | ${c.start} - ${c.end} | Skills: ${emp?.skills?.join(', ') || 'general'} | Workload: ${workload} appointments this week`;
+  const rating = ratingMap.get(c.mechanicId) || 0;
+  const warn = c.warning ? ' | ⚠️ DURING LUNCH BREAK' : '';
+  return `${i}: ${c.mechanicName} | ${c.start} - ${c.end} | Skills: ${emp?.skills?.join(', ') || 'general'} | Rating: ${rating}/5 | Workload: ${workload} appointments this week${warn}`;
 }).join('\n')}
 
-Consider: (1) Mechanic specialty match, (2) Workload balance, (3) Time convenience (morning preferred).
+Consider: (1) Mechanic specialty match, (2) Skill rating (higher is better), (3) Workload balance (prefer less busy), (4) Time convenience (morning preferred).
 
 Respond ONLY with a JSON array, no other text.
 CRITICAL: The "reason" field MUST be written ENTIRELY in ${responseLang}. Do NOT mix languages. Do NOT use words from any other language.

@@ -58,8 +58,7 @@ export class AppointmentService {
         payload.endTime = new Date(start.getTime() + f.estimatedDuration * 60000).toISOString();
       }
     }
-    if (f.estimatedDuration !== undefined) payload.estimatedDuration = f.estimatedDuration;
-    if (f.mechanicId !== undefined) payload.employeeId = f.mechanicId;
+    if (f.mechanicId) payload.employeeId = f.mechanicId;
     if (f.carId !== undefined) payload.carId = f.carId;
     if (f.customerId !== undefined) payload.customerId = f.customerId;
     if (f.status !== undefined) payload.status = toBackendEnum(f.status);
@@ -70,9 +69,10 @@ export class AppointmentService {
   }
 
   private calculateFromTimes(startTime: string | undefined, endTime: string | undefined): number {
-    if (!startTime || !endTime) return 60; // default 60 min
+    if (!startTime || !endTime) return 60;
     const diffMs = new Date(endTime).getTime() - new Date(startTime).getTime();
-    return Math.round(diffMs / 60000);
+    const minutes = Math.round(diffMs / 60000);
+    return minutes > 0 ? minutes : 60;
   }
 
   // --- Appointment CRUD operations ---

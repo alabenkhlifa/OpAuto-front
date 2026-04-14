@@ -375,32 +375,43 @@ import { ApprovalModalComponent } from './components/approval-modal.component';
       display: block;
       font-size: 0.875rem;
       font-weight: 500;
-      color: #d1d5db;
+      color: #374151;
       margin-bottom: 0.25rem;
     }
-    
+
     .form-input, .form-select {
       display: block;
       width: 100%;
       padding: 0.5rem 0.75rem;
-      background: rgba(11, 8, 41, 0.4);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: #ffffff;
+      border: 1px solid #d1d5db;
       border-radius: 12px;
-      color: #f8fafc;
+      color: #111827;
       font-size: 0.875rem;
+      transition: all 0.2s ease;
     }
-    
+
     .form-input:focus, .form-select:focus {
       outline: none;
-      background: rgba(11, 8, 41, 0.6);
-      border-color: rgba(255, 132, 0, 0.5);
-      box-shadow: 0 0 0 3px rgba(255, 132, 0, 0.1);
+      border-color: #FF8400;
+      box-shadow: 0 0 0 3px rgba(255, 132, 0, 0.15);
     }
-    
+
+    .form-input:hover:not(:focus), .form-select:hover:not(:focus) {
+      border-color: #9ca3af;
+    }
+
     .form-input::placeholder {
       color: #9ca3af;
+    }
+
+    .form-select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+      background-position: right 0.75rem center;
+      background-repeat: no-repeat;
+      background-size: 1.5em 1.5em;
+      padding-right: 2.5rem;
     }
   `]
 })

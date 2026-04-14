@@ -9,6 +9,7 @@ import { OperationalSettingsComponent } from './components/operational-settings.
 import { BusinessSettingsComponent } from './components/business-settings.component';
 import { SystemSettingsComponent } from './components/system-settings.component';
 import { IntegrationSettingsComponent } from './components/integration-settings.component';
+import { ToastService } from '../../shared/services/toast.service';
 
 @Component({
   selector: 'app-garage-settings',
@@ -412,13 +413,13 @@ export class GarageSettingsComponent implements OnInit {
     }
   }
 
+  private toast = inject(ToastService);
+
   private showSuccessMessage(message: string) {
-    // In a real app, this would use a toast/notification service
-    console.log('Success:', message);
+    this.toast.success(message);
   }
 
   private showErrorMessage(message: string) {
-    // In a real app, this would use a toast/notification service
-    console.error('Error:', message);
+    this.toast.error(message);
   }
 }

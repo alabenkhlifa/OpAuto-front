@@ -17,7 +17,7 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
         <div class="glass-card mb-6">
           <div class="flex items-start space-x-6">
             <button 
-              class="p-3 text-gray-400 hover:text-white transition-colors bg-gray-800/50 rounded-lg hover:bg-gray-700/50"
+              class="p-3 text-gray-500 hover:text-gray-900 transition-colors bg-gray-100 rounded-lg hover:bg-gray-200"
               (click)="goBack()">
               <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -25,7 +25,7 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
             </button>
             <div class="flex-1">
               <div class="mb-3">
-                <h1 class="text-3xl lg:text-4xl font-bold text-white mb-2">{{ job()!.jobTitle }}</h1>
+                <h1 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">{{ job()!.jobTitle }}</h1>
                 <div class="flex items-center space-x-4 mb-3">
                   <span class="inline-flex items-center px-4 py-2 rounded-xl text-base font-semibold backdrop-filter backdrop-blur-sm"
                         [class]="getStatusClasses(job()!.status)">
@@ -37,15 +37,15 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
                   </span>
                 </div>
               </div>
-              <div class="bg-gray-800/30 rounded-lg p-4 backdrop-filter backdrop-blur-sm">
+              <div class="bg-gray-100 rounded-lg p-4">
                 <div class="flex items-center space-x-3">
-                  <svg class="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16H5a2 2 0 01-2-2V6a2 2 0 012-2h1.586a1 1 0 01.707.293L9 7.586A1 1 0 009.586 8H16a2 2 0 012 2v6a2 2 0 01-2 2h-1"/>
                   </svg>
                   <div>
-                    <p class="text-lg font-medium text-white">{{ job()!.carDetails }}</p>
-                    <p class="text-blue-300 font-semibold text-lg">{{ job()!.licensePlate }}</p>
+                    <p class="text-lg font-medium text-gray-900">{{ job()!.carDetails }}</p>
+                    <p class="text-blue-600 font-semibold text-lg">{{ job()!.licensePlate }}</p>
                   </div>
                 </div>
               </div>
@@ -93,38 +93,38 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
             
             <!-- Job Information -->
             <div class="glass-card">
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Job Information</h2>
+              <h2 class="text-lg font-semibold text-gray-900 mb-4">Job Information</h2>
               
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">Customer</p>
-                  <p class="font-medium text-gray-900 dark:text-white">{{ job()!.customerName }}</p>
+                  <p class="text-sm text-gray-500">Customer</p>
+                  <p class="font-medium text-gray-900">{{ job()!.customerName }}</p>
                 </div>
                 <div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">Assigned Mechanic</p>
-                  <p class="font-medium text-gray-900 dark:text-white">{{ job()!.mechanicName }}</p>
+                  <p class="text-sm text-gray-500">Assigned Mechanic</p>
+                  <p class="font-medium text-gray-900">{{ job()!.mechanicName }}</p>
                 </div>
                 <div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">Current Mileage</p>
-                  <p class="font-medium text-gray-900 dark:text-white">{{ job()!.currentMileage | number }} km</p>
+                  <p class="text-sm text-gray-500">Current Mileage</p>
+                  <p class="font-medium text-gray-900">{{ job()!.currentMileage | number }} km</p>
                 </div>
                 <div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">Estimated Cost</p>
-                  <p class="font-medium text-gray-900 dark:text-white">{{ formatCurrency(job()!.estimatedCost) }}</p>
+                  <p class="text-sm text-gray-500">Estimated Cost</p>
+                  <p class="font-medium text-gray-900">{{ formatCurrency(job()!.estimatedCost) }}</p>
                 </div>
               </div>
 
               @if (job()!.description) {
                 <div class="mt-4">
-                  <p class="text-sm text-gray-500 dark:text-gray-400">Description</p>
-                  <p class="text-gray-900 dark:text-white">{{ job()!.description }}</p>
+                  <p class="text-sm text-gray-500">Description</p>
+                  <p class="text-gray-900">{{ job()!.description }}</p>
                 </div>
               }
 
               @if (job()!.notes) {
                 <div class="mt-4">
-                  <p class="text-sm text-gray-500 dark:text-gray-400">Notes</p>
-                  <p class="text-gray-900 dark:text-white">{{ job()!.notes }}</p>
+                  <p class="text-sm text-gray-500">Notes</p>
+                  <p class="text-gray-900">{{ job()!.notes }}</p>
                 </div>
               }
             </div>
@@ -132,18 +132,18 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
             <!-- Tasks -->
             <div class="glass-card">
               <div class="flex items-center justify-between mb-4">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Tasks</h2>
-                <div class="text-sm text-gray-500 dark:text-gray-400">
+                <h2 class="text-lg font-semibold text-gray-900">Tasks</h2>
+                <div class="text-sm text-gray-500">
                   {{ getCompletedTasksCount() }} of {{ job()!.tasks.length }} completed
                 </div>
               </div>
 
               @if (job()!.tasks.length === 0) {
-                <p class="text-gray-500 dark:text-gray-400 text-center py-8">No tasks defined for this job.</p>
+                <p class="text-gray-500 text-center py-8">No tasks defined for this job.</p>
               } @else {
                 <div class="space-y-3">
                   @for (task of job()!.tasks; track task.id) {
-                    <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
+                    <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                       <div class="flex items-center space-x-3 flex-1">
                         <div class="w-6 h-6 rounded-full flex items-center justify-center"
                              [class]="getTaskStatusColor(task.status)">
@@ -157,11 +157,11 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
                         </div>
                         
                         <div class="flex-1">
-                          <h3 class="font-medium text-gray-900 dark:text-white">{{ task.name }}</h3>
+                          <h3 class="font-medium text-gray-900">{{ task.name }}</h3>
                           @if (task.description) {
-                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ task.description }}</p>
+                            <p class="text-sm text-gray-500">{{ task.description }}</p>
                           }
-                          <div class="flex items-center space-x-4 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                          <div class="flex items-center space-x-4 mt-1 text-xs text-gray-500">
                             <span>Est: {{ task.estimatedTime }}min</span>
                             @if (task.actualTime) {
                               <span>Actual: {{ task.actualTime }}min</span>
@@ -199,10 +199,10 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
                 <!-- Progress Bar -->
                 <div class="mt-4">
                   <div class="flex justify-between text-sm mb-2">
-                    <span class="text-gray-600 dark:text-gray-400">Overall Progress</span>
-                    <span class="text-gray-900 dark:text-white">{{ getTaskProgress() }}%</span>
+                    <span class="text-gray-600">Overall Progress</span>
+                    <span class="text-gray-900">{{ getTaskProgress() }}%</span>
                   </div>
-                  <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                  <div class="w-full bg-gray-200 rounded-full h-3">
                     <div class="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full transition-all" 
                          [style.width.%]="getTaskProgress()"></div>
                   </div>
@@ -213,15 +213,15 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
             <!-- Approval Requests -->
             @if (job()!.approvalRequests.length > 0) {
               <div class="glass-card">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Approval Requests</h2>
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Approval Requests</h2>
                 
                 <div class="space-y-4">
                   @for (request of job()!.approvalRequests; track request.id) {
-                    <div class="p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
+                    <div class="p-4 border border-gray-200 rounded-lg">
                       <div class="flex items-start justify-between">
                         <div class="flex-1">
                           <div class="flex items-center space-x-2 mb-2">
-                            <h3 class="font-medium text-gray-900 dark:text-white">{{ getRequestTypeLabel(request.type) }}</h3>
+                            <h3 class="font-medium text-gray-900">{{ getRequestTypeLabel(request.type) }}</h3>
                             <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
                                   [class]="getRequestStatusClasses(request.status)">
                               {{ request.status | titlecase }}
@@ -232,16 +232,16 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
                             </span>
                           </div>
                           
-                          <p class="text-gray-700 dark:text-gray-300 mb-2">{{ request.description }}</p>
+                          <p class="text-gray-700 mb-2">{{ request.description }}</p>
                           
-                          <div class="text-sm text-gray-500 dark:text-gray-400">
+                          <div class="text-sm text-gray-500">
                             <p>Estimated Price: {{ formatCurrency(request.estimatedPrice) }}</p>
                             <p>Requested by: {{ request.requestedBy }} on {{ request.requestedAt | date:'short' }}</p>
                             @if (request.approvedAt) {
                               <p>Approved by: {{ request.approvedBy }} on {{ request.approvedAt | date:'short' }}</p>
                             }
                             @if (request.rejectionReason) {
-                              <p class="text-red-600 dark:text-red-400">Rejected: {{ request.rejectionReason }}</p>
+                              <p class="text-red-600">Rejected: {{ request.rejectionReason }}</p>
                             }
                           </div>
                         </div>
@@ -275,14 +275,14 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
             
             <!-- Timeline -->
             <div class="glass-card">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Timeline</h3>
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">Timeline</h3>
               
               <div class="space-y-4">
                 <div class="flex items-center space-x-3">
                   <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
                   <div>
-                    <p class="text-sm font-medium text-gray-900 dark:text-white">Job Created</p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ job()!.createdAt | date:'short' }}</p>
+                    <p class="text-sm font-medium text-gray-900">Job Created</p>
+                    <p class="text-xs text-gray-500">{{ job()!.createdAt | date:'short' }}</p>
                   </div>
                 </div>
                 
@@ -290,8 +290,8 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
                   <div class="flex items-center space-x-3">
                     <div class="w-3 h-3 bg-orange-500 rounded-full"></div>
                     <div>
-                      <p class="text-sm font-medium text-gray-900 dark:text-white">Work Started</p>
-                      <p class="text-xs text-gray-500 dark:text-gray-400">{{ job()!.startDate | date:'short' }}</p>
+                      <p class="text-sm font-medium text-gray-900">Work Started</p>
+                      <p class="text-xs text-gray-500">{{ job()!.startDate | date:'short' }}</p>
                     </div>
                   </div>
                 }
@@ -300,8 +300,8 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
                   <div class="flex items-center space-x-3">
                     <div class="w-3 h-3 bg-green-500 rounded-full"></div>
                     <div>
-                      <p class="text-sm font-medium text-gray-900 dark:text-white">Job Completed</p>
-                      <p class="text-xs text-gray-500 dark:text-gray-400">{{ job()!.completionDate | date:'short' }}</p>
+                      <p class="text-sm font-medium text-gray-900">Job Completed</p>
+                      <p class="text-xs text-gray-500">{{ job()!.completionDate | date:'short' }}</p>
                     </div>
                   </div>
                 }
@@ -309,8 +309,8 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
                 <div class="flex items-center space-x-3">
                   <div class="w-3 h-3 bg-gray-400 rounded-full"></div>
                   <div>
-                    <p class="text-sm font-medium text-gray-900 dark:text-white">Last Updated</p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ job()!.updatedAt | date:'short' }}</p>
+                    <p class="text-sm font-medium text-gray-900">Last Updated</p>
+                    <p class="text-xs text-gray-500">{{ job()!.updatedAt | date:'short' }}</p>
                   </div>
                 </div>
               </div>
@@ -318,24 +318,24 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
 
             <!-- Cost Information -->
             <div class="glass-card">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Cost Information</h3>
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">Cost Information</h3>
               
               <div class="space-y-3">
                 <div class="flex justify-between">
-                  <span class="text-gray-600 dark:text-gray-400">Estimated Cost:</span>
-                  <span class="font-medium text-gray-900 dark:text-white">{{ formatCurrency(job()!.estimatedCost) }}</span>
+                  <span class="text-gray-600">Estimated Cost:</span>
+                  <span class="font-medium text-gray-900">{{ formatCurrency(job()!.estimatedCost) }}</span>
                 </div>
                 
                 @if (job()!.actualCost) {
                   <div class="flex justify-between">
-                    <span class="text-gray-600 dark:text-gray-400">Actual Cost:</span>
-                    <span class="font-medium text-gray-900 dark:text-white">{{ formatCurrency(job()!.actualCost || 0) }}</span>
+                    <span class="text-gray-600">Actual Cost:</span>
+                    <span class="font-medium text-gray-900">{{ formatCurrency(job()!.actualCost || 0) }}</span>
                   </div>
                   
                   @if (job()!.actualCost !== job()!.estimatedCost) {
                     <div class="flex justify-between text-sm">
-                      <span class="text-gray-500 dark:text-gray-400">Variance:</span>
-                      <span [class]="(job()!.actualCost || 0) > job()!.estimatedCost ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'">
+                      <span class="text-gray-500">Variance:</span>
+                      <span [class]="(job()!.actualCost || 0) > job()!.estimatedCost ? 'text-red-600' : 'text-green-600'">
                         {{ formatCurrency(getAbsoluteValue((job()!.actualCost || 0) - job()!.estimatedCost)) }}
                         {{ (job()!.actualCost || 0) > job()!.estimatedCost ? 'over' : 'under' }}
                       </span>
@@ -347,25 +347,25 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
 
             <!-- Time Information -->
             <div class="glass-card">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Time Tracking</h3>
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">Time Tracking</h3>
               
               <div class="space-y-3">
                 <div class="flex justify-between">
-                  <span class="text-gray-600 dark:text-gray-400">Estimated Duration:</span>
-                  <span class="font-medium text-gray-900 dark:text-white">{{ job()!.estimatedDuration }}min</span>
+                  <span class="text-gray-600">Estimated Duration:</span>
+                  <span class="font-medium text-gray-900">{{ job()!.estimatedDuration }}min</span>
                 </div>
                 
                 @if (job()!.actualDuration) {
                   <div class="flex justify-between">
-                    <span class="text-gray-600 dark:text-gray-400">Actual Duration:</span>
-                    <span class="font-medium text-gray-900 dark:text-white">{{ job()!.actualDuration }}min</span>
+                    <span class="text-gray-600">Actual Duration:</span>
+                    <span class="font-medium text-gray-900">{{ job()!.actualDuration }}min</span>
                   </div>
                 }
                 
                 @if (job()!.startDate && !job()!.completionDate) {
                   <div class="flex justify-between">
-                    <span class="text-gray-600 dark:text-gray-400">Time Elapsed:</span>
-                    <span class="font-medium text-orange-600 dark:text-orange-400">{{ getElapsedTime() }}</span>
+                    <span class="text-gray-600">Time Elapsed:</span>
+                    <span class="font-medium text-orange-600">{{ getElapsedTime() }}</span>
                   </div>
                 }
               </div>
@@ -383,7 +383,7 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <p class="text-gray-500 dark:text-gray-400">Loading job details...</p>
+            <p class="text-gray-500">Loading job details...</p>
           </div>
         </div>
       }
@@ -396,24 +396,24 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
           <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" (click)="hideRejectModal()"></div>
           
-          <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-            <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-              <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Reject Approval Request</h3>
+          <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+              <h3 class="text-lg font-medium text-gray-900 mb-4">Reject Approval Request</h3>
               <textarea
                 [(ngModel)]="rejectionReason"
                 rows="4"
                 placeholder="Please provide a reason for rejection..."
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white">
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
               </textarea>
             </div>
-            <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
               <button 
                 class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
                 (click)="confirmReject()">
                 Reject
               </button>
               <button 
-                class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                 (click)="hideRejectModal()">
                 Cancel
               </button>
@@ -424,108 +424,7 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
     }
   `,
   styles: [`
-    /* Dark glassmorphism card styling */
-    .glass-card {
-      background: rgba(11, 8, 41, 0.95);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(42, 37, 102, 0.6);
-      border-radius: 20px;
-      padding: 1.5rem;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      margin-bottom: 1rem;
-    }
-
-    /* Button styling to match other screens */
-    .btn-primary {
-      background: linear-gradient(135deg, #7B8CC4, #6778B0);
-      border: 1px solid #7B8CC4;
-      color: white !important;
-      padding: 0.75rem 1rem;
-      border-radius: 12px;
-      font-size: 0.875rem;
-      font-weight: 600;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      backdrop-filter: blur(20px);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      cursor: pointer;
-      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
-    }
-
-    .btn-primary:hover {
-      background: linear-gradient(135deg, #6778B0, #b45309);
-      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
-      transform: translateY(-1px);
-    }
-    
-    .btn-secondary {
-      background: linear-gradient(135deg, #7B8CC4, #6778B0);
-      border: 1px solid #7B8CC4;
-      color: white !important;
-      padding: 0.75rem 1rem;
-      border-radius: 12px;
-      font-size: 0.875rem;
-      font-weight: 600;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      backdrop-filter: blur(20px);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      cursor: pointer;
-      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
-    }
-
-    .btn-secondary:hover {
-      background: linear-gradient(135deg, #6778B0, #b45309);
-      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
-      transform: translateY(-1px);
-    }
-    
-    .btn-success {
-      background: linear-gradient(135deg, #059669, #047857);
-      border: 1px solid #059669;
-      color: white;
-      padding: 0.75rem 1rem;
-      border-radius: 12px;
-      font-size: 0.875rem;
-      font-weight: 600;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      backdrop-filter: blur(20px);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      cursor: pointer;
-      box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
-    }
-
-    .btn-success:hover {
-      background: linear-gradient(135deg, #047857, #065f46);
-      box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
-      transform: translateY(-1px);
-    }
-
-    /* Fix text colors for permanent dark theme */
-    .glass-card h2,
-    .glass-card h3,
-    .glass-card .text-gray-900 {
-      color: #ffffff !important;
-    }
-
-    .glass-card .text-gray-500,
-    .glass-card .text-gray-400 {
-      color: #9ca3af !important;
-    }
-
-    .glass-card .text-gray-600 {
-      color: #d1d5db !important;
-    }
-
-    /* Enhanced status and priority badge styling */
+    /* Status and priority badge styling */
     .status-badge-waiting {
       background: linear-gradient(135deg, rgba(245, 158, 11, 0.9), rgba(217, 119, 6, 0.9)) !important;
       color: #ffffff !important;

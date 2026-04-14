@@ -6,6 +6,7 @@ import { TranslationService } from '../../../core/services/translation.service';
 import { PartService } from '../../../core/services/part.service';
 import { Part, PartWithStock, Supplier, PartCategory, PartUnit } from '../../../core/models/part.model';
 import { Subscription } from 'rxjs';
+import { ToastService } from '../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-part-modal',
@@ -161,11 +162,11 @@ import { Subscription } from 'rxjs';
               <div class="form-group">
                 <label class="form-label">{{ statusText() }}</label>
                 <div class="flex items-center gap-3 mt-2">
-                  <input type="checkbox" 
+                  <input type="checkbox"
                          id="isActive"
                          formControlName="isActive"
-                         class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded">
-                  <label for="isActive" class="text-sm font-medium text-white">
+                         class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                  <label for="isActive" class="text-sm font-medium text-gray-900">
                     {{ activePartText() }}
                   </label>
                 </div>
@@ -195,15 +196,14 @@ import { Subscription } from 'rxjs';
     </div>
   `,
   styles: [`
-    /* Dark Glassmorphism Modal Styles - Permanent Theme */
     .modal-overlay {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.8);
-      backdrop-filter: blur(8px);
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
       z-index: 50;
       display: flex;
       align-items: center;
@@ -213,32 +213,25 @@ import { Subscription } from 'rxjs';
     }
 
     @keyframes overlayFadeIn {
-      from { opacity: 0; backdrop-filter: blur(0px); }
-      to { opacity: 1; backdrop-filter: blur(8px); }
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
 
     .modal-content {
-      background: rgba(11, 8, 41, 0.95);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
       border-radius: 24px;
       width: 100%;
       max-width: 600px;
       max-height: 90vh;
       overflow-y: auto;
-      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.15);
       animation: modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     @keyframes modalSlideIn {
-      from { 
-        opacity: 0; 
-        transform: translateY(20px) scale(0.95); 
-      }
-      to { 
-        opacity: 1; 
-        transform: translateY(0) scale(1); 
-      }
+      from { opacity: 0; transform: translateY(20px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
     .modal-header {
@@ -246,18 +239,18 @@ import { Subscription } from 'rxjs';
       justify-content: space-between;
       align-items: flex-start;
       padding: 2rem 2rem 1rem 2rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      border-bottom: 1px solid #e2e8f0;
     }
 
     .modal-title {
       font-size: 1.5rem;
       font-weight: 700;
-      color: #ffffff;
+      color: #111827;
       margin: 0 0 0.25rem 0;
     }
 
     .modal-subtitle {
-      color: #d1d5db;
+      color: #6b7280;
       font-size: 0.875rem;
       margin: 0;
     }
@@ -266,23 +259,21 @@ import { Subscription } from 'rxjs';
       width: 2.5rem;
       height: 2.5rem;
       border: none;
-      background: rgba(255, 255, 255, 0.1);
+      background: #f3f4f6;
       border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      color: #d1d5db;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      color: #6b7280;
+      transition: all 0.2s ease;
     }
 
     .modal-close-btn:hover {
-      background: rgba(255, 255, 255, 0.2);
-      transform: scale(1.05);
-      color: #ffffff;
+      background: #e5e7eb;
+      color: #111827;
     }
 
-    /* Form Styles */
     .modal-form {
       padding: 2rem;
     }
@@ -294,7 +285,7 @@ import { Subscription } from 'rxjs';
     .section-title {
       font-size: 1.125rem;
       font-weight: 600;
-      color: #ffffff;
+      color: #111827;
       margin: 0 0 1rem 0;
       display: flex;
       align-items: center;
@@ -331,20 +322,19 @@ import { Subscription } from 'rxjs';
     .form-label {
       font-size: 0.875rem;
       font-weight: 500;
-      color: #d1d5db;
+      color: #374151;
     }
 
     .form-input,
     .form-select,
     .form-textarea {
       padding: 0.875rem 1rem;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid #d1d5db;
       border-radius: 12px;
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(10px);
-      color: #ffffff;
+      background: #ffffff;
+      color: #111827;
       font-size: 0.875rem;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.2s ease;
     }
 
     .form-input::placeholder,
@@ -357,20 +347,17 @@ import { Subscription } from 'rxjs';
     .form-textarea:focus {
       outline: none;
       border-color: #FF8400;
-      background: rgba(255, 255, 255, 0.1);
-      box-shadow: 0 0 0 3px rgba(255, 132, 0, 0.2);
-      transform: translateY(-1px);
+      box-shadow: 0 0 0 3px rgba(255, 132, 0, 0.15);
     }
 
     .form-input:hover:not(:focus),
     .form-select:hover:not(:focus),
     .form-textarea:hover:not(:focus) {
-      border-color: rgba(255, 255, 255, 0.3);
-      background-color: rgba(255, 255, 255, 0.08);
+      border-color: #9ca3af;
     }
 
     .form-select {
-      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
       background-position: right 0.75rem center;
       background-repeat: no-repeat;
       background-size: 1.5em 1.5em;
@@ -380,12 +367,11 @@ import { Subscription } from 'rxjs';
       appearance: none;
     }
 
-    /* Modal Footer */
     .modal-footer {
       display: flex;
       gap: 1rem;
       padding: 1.5rem 2rem 2rem 2rem;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      border-top: 1px solid #e2e8f0;
     }
 
     @media (max-width: 767px) {
@@ -400,44 +386,39 @@ import { Subscription } from 'rxjs';
       border-radius: 12px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.2s ease;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 0.5rem;
-      backdrop-filter: blur(10px);
     }
 
     .modal-btn.secondary {
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: #d1d5db;
+      background: #f3f4f6;
+      border: 1px solid #d1d5db;
+      color: #374151;
     }
 
     .modal-btn.secondary:hover {
-      background: rgba(255, 255, 255, 0.15);
-      border-color: rgba(255, 255, 255, 0.3);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      background: #e5e7eb;
+      border-color: #9ca3af;
     }
 
     .modal-btn.primary {
-      background: linear-gradient(135deg, #059669, #047857);
-      border: 1px solid #059669;
+      background: linear-gradient(135deg, #FF8400, #E67700);
+      border: 1px solid #FF8400;
       color: white;
-      box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+      box-shadow: 0 4px 15px rgba(255, 132, 0, 0.3);
     }
 
     .modal-btn.primary:hover:not(:disabled) {
-      background: linear-gradient(135deg, #047857, #065f46);
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
+      background: linear-gradient(135deg, #E67700, #CC6A00);
+      box-shadow: 0 6px 20px rgba(255, 132, 0, 0.4);
     }
 
     .modal-btn:disabled {
       opacity: 0.5;
       cursor: not-allowed;
-      transform: none !important;
     }
 
     .submit-spinner {
@@ -454,23 +435,22 @@ import { Subscription } from 'rxjs';
       100% { transform: rotate(360deg); }
     }
 
-    /* Custom scrollbar for modal */
     .modal-content::-webkit-scrollbar {
       width: 6px;
     }
 
     .modal-content::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.1);
+      background: #f1f5f9;
       border-radius: 3px;
     }
 
     .modal-content::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.3);
+      background: #cbd5e1;
       border-radius: 3px;
     }
 
     .modal-content::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 255, 255, 0.5);
+      background: #94a3b8;
     }
   `]
 })
@@ -483,6 +463,7 @@ export class PartModalComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private partService = inject(PartService);
   private translationService = inject(TranslationService);
+  private toast = inject(ToastService);
 
   suppliers = signal<Supplier[]>([]);
   isSubmitting = signal(false);
@@ -751,24 +732,28 @@ export class PartModalComponent implements OnInit, OnDestroy {
       if (this.isEditMode() && this.part) {
         this.partService.updatePart(this.part.id, partData).subscribe({
           next: (updatedPart) => {
+            this.toast.success('Part updated successfully');
             this.save.emit(updatedPart);
             this.isSubmitting.set(false);
             this.onClose();
           },
           error: (error) => {
             console.error('Failed to update part:', error);
+            this.toast.error('Failed to update part');
             this.isSubmitting.set(false);
           }
         });
       } else {
         this.partService.createPart(partData).subscribe({
           next: (newPart) => {
+            this.toast.success('Part created successfully');
             this.save.emit(newPart);
             this.isSubmitting.set(false);
             this.onClose();
           },
           error: (error) => {
             console.error('Failed to create part:', error);
+            this.toast.error('Failed to create part');
             this.isSubmitting.set(false);
           }
         });

@@ -284,9 +284,10 @@ export class DashboardComponent implements OnInit {
   private buildRevenueChart(invoices: any[]): void {
     const monthlyRevenue: Record<string, number> = {};
     invoices.forEach(inv => {
-      const d = new Date(inv.issueDate);
+      const d = new Date(inv.issueDate || inv.createdAt || inv.date);
+      if (isNaN(d.getTime())) return;
       const key = d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
-      monthlyRevenue[key] = (monthlyRevenue[key] || 0) + inv.totalAmount;
+      monthlyRevenue[key] = (monthlyRevenue[key] || 0) + (inv.totalAmount || inv.total || 0);
     });
 
     const labels = Object.keys(monthlyRevenue);
@@ -321,7 +322,7 @@ export class DashboardComponent implements OnInit {
       datasets: [{
         data: data.length ? data : [1],
         backgroundColor: colors.slice(0, Math.max(labels.length, 1)),
-        borderColor: '#0B0829', borderWidth: 2,
+        borderColor: '#ffffff', borderWidth: 2,
       }]
     };
   }

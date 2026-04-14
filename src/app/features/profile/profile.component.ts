@@ -19,8 +19,8 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
       <!-- Header -->
       <div class="glass-card mb-6">
         <div>
-          <h1 class="text-3xl font-bold text-white">{{ 'profile.title' | translate }}</h1>
-          <p class="text-gray-300 mt-1">{{ 'profile.subtitle' | translate }}</p>
+          <h1 class="text-3xl font-bold text-gray-900">{{ 'profile.title' | translate }}</h1>
+          <p class="text-gray-500 mt-1">{{ 'profile.subtitle' | translate }}</p>
         </div>
       </div>
 
@@ -38,23 +38,23 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
                 }
               </div>
 
-              <h2 class="text-xl font-semibold text-white">{{ currentUser()?.name }}</h2>
-              <p class="text-blue-400 font-medium">{{ getRoleLabel() }}</p>
-              <p class="text-gray-300 text-sm mt-1">{{ currentUser()?.garageName }}</p>
+              <h2 class="text-xl font-semibold text-gray-900">{{ currentUser()?.name }}</h2>
+              <p class="text-orange-500 font-medium">{{ getRoleLabel() }}</p>
+              <p class="text-gray-500 text-sm mt-1">{{ currentUser()?.garageName }}</p>
             </div>
 
             <!-- Quick Stats -->
             <div class="space-y-3">
-              <div class="flex justify-between items-center py-2 border-b border-white/10">
-                <span class="text-gray-300 text-sm">{{ 'profile.memberSince' | translate }}</span>
-                <span class="text-white text-sm font-medium">{{ formatDate(currentUser()?.createdAt) }}</span>
+              <div class="flex justify-between items-center py-2 border-b border-gray-200">
+                <span class="text-gray-500 text-sm">{{ 'profile.memberSince' | translate }}</span>
+                <span class="text-gray-900 text-sm font-medium">{{ formatDate(currentUser()?.createdAt) }}</span>
               </div>
-              <div class="flex justify-between items-center py-2 border-b border-white/10">
-                <span class="text-gray-300 text-sm">{{ 'profile.lastLogin' | translate }}</span>
-                <span class="text-white text-sm font-medium">{{ formatDate(currentUser()?.lastLogin) }}</span>
+              <div class="flex justify-between items-center py-2 border-b border-gray-200">
+                <span class="text-gray-500 text-sm">{{ 'profile.lastLogin' | translate }}</span>
+                <span class="text-gray-900 text-sm font-medium">{{ formatDate(currentUser()?.lastLogin) }}</span>
               </div>
               <div class="flex justify-between items-center py-2">
-                <span class="text-gray-300 text-sm">{{ 'profile.accountStatus' | translate }}</span>
+                <span class="text-gray-500 text-sm">{{ 'profile.accountStatus' | translate }}</span>
                 <span [class]="currentUser()?.isActive ? 'badge badge-active' : 'badge badge-inactive'">
                   {{ currentUser()?.isActive ? 'Active' : 'Inactive' }}
                 </span>
@@ -77,7 +77,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
         <div class="lg:col-span-2">
           <div class="glass-card">
             <!-- Tab Navigation -->
-            <div class="flex border-b border-white/10 rounded-t-2xl overflow-hidden mb-6">
+            <div class="flex border-b border-gray-200 rounded-t-2xl overflow-hidden mb-6">
               <button
                 class="nav-button flex-1 py-4 px-6 text-sm font-medium transition-all duration-200"
                 [class]="activeTab() === 'profile' ? 'nav-button-active' : 'nav-button-inactive'"
@@ -175,7 +175,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
                     </div>
 
                     <!-- Profile Actions -->
-                    <div class="flex justify-end space-x-3 pt-4 border-t border-white/10">
+                    <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
                       <button
                         type="button"
                         class="btn-secondary"
@@ -210,53 +210,53 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
                       <div class="space-y-3 mt-2">
                         <div class="flex items-center justify-between">
                           <div>
-                            <p class="text-sm font-medium text-white">{{ 'profile.preferences.emailNotifications' | translate }}</p>
-                            <p class="text-xs text-gray-400">{{ 'profile.preferences.emailNotificationsDescription' | translate }}</p>
+                            <p class="text-sm font-medium text-gray-900">{{ 'profile.preferences.emailNotifications' | translate }}</p>
+                            <p class="text-xs text-gray-500">{{ 'profile.preferences.emailNotificationsDescription' | translate }}</p>
                           </div>
                           <label class="relative inline-flex items-center cursor-pointer">
                             <input
                               type="checkbox"
                               class="sr-only peer"
                               formControlName="emailNotifications">
-                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                           </label>
                         </div>
 
                         <div class="flex items-center justify-between">
                           <div>
-                            <p class="text-sm font-medium text-white">{{ 'profile.preferences.smsNotifications' | translate }}</p>
-                            <p class="text-xs text-gray-400">{{ 'profile.preferences.smsNotificationsDescription' | translate }}</p>
+                            <p class="text-sm font-medium text-gray-900">{{ 'profile.preferences.smsNotifications' | translate }}</p>
+                            <p class="text-xs text-gray-500">{{ 'profile.preferences.smsNotificationsDescription' | translate }}</p>
                           </div>
                           <label class="relative inline-flex items-center cursor-pointer">
                             <input
                               type="checkbox"
                               class="sr-only peer"
                               formControlName="smsNotifications">
-                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                           </label>
                         </div>
 
                         <div class="flex items-center justify-between">
                           <div>
-                            <p class="text-sm font-medium text-white">{{ 'profile.preferences.browserNotifications' | translate }}</p>
-                            <p class="text-xs text-gray-400">{{ 'profile.preferences.browserNotificationsDescription' | translate }}</p>
+                            <p class="text-sm font-medium text-gray-900">{{ 'profile.preferences.browserNotifications' | translate }}</p>
+                            <p class="text-xs text-gray-500">{{ 'profile.preferences.browserNotificationsDescription' | translate }}</p>
                           </div>
                           <label class="relative inline-flex items-center cursor-pointer">
                             <input
                               type="checkbox"
                               class="sr-only peer"
                               formControlName="browserNotifications">
-                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                           </label>
                         </div>
                       </div>
                     </div>
 
                     <!-- Onboarding Tour Section -->
-                    <div class="pt-4 border-t border-white/10">
+                    <div class="pt-4 border-t border-gray-200">
                       <label class="form-label">{{ 'profile.preferences.onboardingTour' | translate }}</label>
                       <div class="space-y-3 mt-2">
-                        <p class="text-sm text-gray-400">{{ 'profile.preferences.onboardingTourDescription' | translate }}</p>
+                        <p class="text-sm text-gray-500">{{ 'profile.preferences.onboardingTourDescription' | translate }}</p>
                         <button
                           type="button"
                           class="btn-secondary flex items-center gap-2"
@@ -270,7 +270,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
                     </div>
 
                     <!-- Preferences Actions -->
-                    <div class="flex justify-end space-x-3 pt-4 border-t border-white/10">
+                    <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
                       <button
                         type="button"
                         class="btn-secondary"
@@ -299,14 +299,14 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
                 @if (activeTab() === 'security') {
                   <form [formGroup]="passwordForm" (ngSubmit)="onChangePassword()" class="space-y-6">
 
-                    <div class="bg-amber-900/30 border border-amber-700 rounded-lg p-4 mb-6">
+                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
                       <div class="flex items-start">
-                        <svg class="w-5 h-5 text-amber-400 mt-0.5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg class="w-5 h-5 text-amber-500 mt-0.5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
                         </svg>
                         <div>
-                          <h3 class="text-sm font-medium text-amber-300">{{ 'profile.security.securityReminderTitle' | translate }}</h3>
-                          <p class="text-sm text-amber-400 mt-1">{{ 'profile.security.securityReminder' | translate }}</p>
+                          <h3 class="text-sm font-medium text-amber-800">{{ 'profile.security.securityReminderTitle' | translate }}</h3>
+                          <p class="text-sm text-amber-700 mt-1">{{ 'profile.security.securityReminder' | translate }}</p>
                         </div>
                       </div>
                     </div>
@@ -398,7 +398,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
                     </div>
 
                     <!-- Security Actions -->
-                    <div class="flex justify-end space-x-3 pt-4 border-t border-white/10">
+                    <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
                       <button
                         type="button"
                         class="btn-secondary"
@@ -431,12 +431,12 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
       <!-- Success Message -->
       @if (successMessage()) {
         <div class="fixed bottom-4 right-4 z-50">
-          <div class="bg-green-900/50 border border-green-700 rounded-lg p-4 shadow-lg backdrop-blur-lg">
+          <div class="bg-green-50 border border-green-200 rounded-lg p-4 shadow-lg">
             <div class="flex items-center">
-              <svg class="w-5 h-5 text-green-600 dark:text-green-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg class="w-5 h-5 text-green-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <p class="text-sm font-medium text-green-300">{{ successMessage() }}</p>
+              <p class="text-sm font-medium text-green-800">{{ successMessage() }}</p>
             </div>
           </div>
         </div>
@@ -445,12 +445,12 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
       <!-- Error Message -->
       @if (errorMessage()) {
         <div class="fixed bottom-4 right-4 z-50">
-          <div class="bg-red-900/50 border border-red-700 rounded-lg p-4 shadow-lg backdrop-blur-lg">
+          <div class="bg-red-50 border border-red-200 rounded-lg p-4 shadow-lg">
             <div class="flex items-center">
-              <svg class="w-5 h-5 text-red-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg class="w-5 h-5 text-red-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
-              <p class="text-sm font-medium text-red-300">{{ errorMessage() }}</p>
+              <p class="text-sm font-medium text-red-800">{{ errorMessage() }}</p>
             </div>
           </div>
         </div>
@@ -458,17 +458,6 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
     </div>
   `,
   styles: [`
-    /* Component uses global glass-card, form, and button classes */
-    .glass-card {
-      background: rgba(11, 8, 41, 0.95);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(42, 37, 102, 0.6);
-      border-radius: 20px;
-      padding: 1.5rem;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
     .nav-button-active {
       background: rgba(255, 132, 0, 0.1) !important;
       border-color: rgba(255, 132, 0, 0.3) !important;

@@ -177,6 +177,8 @@
     "appointmentTime": "Appointment Time",
     "estimatedDuration": "Estimated Duration",
     "schedule": "Schedule",
+    "update": "Update",
+    "saving": "Saving...",
     "date": "Date",
     "time": "Time",
     "selectTime": "Select Time",
@@ -242,6 +244,12 @@
       "errorUnavailable": "AI suggestions unavailable",
       "errorGeneric": "Could not load suggestions",
       "noSlots": "No available slots found"
+    },
+    "toast": {
+      "created": "Appointment created successfully",
+      "createFailed": "Failed to create appointment",
+      "updated": "Appointment updated successfully",
+      "updateFailed": "Failed to update appointment"
     }
   },
   "cars": {
@@ -2244,7 +2252,21 @@
       "cancel": "Cancel Appointment"
     },
     "confirmCancel": "Are you sure you want to cancel this appointment?",
-    "mechanics": "Mechanics"
+    "mechanics": "Mechanics",
+    "toast": {
+      "rescheduled": "Appointment rescheduled successfully",
+      "rescheduleFailed": "Failed to reschedule appointment",
+      "cancelled": "Appointment cancelled",
+      "cancelFailed": "Failed to cancel appointment",
+      "cannotMoveCompleted": "Cannot move a completed appointment",
+      "cannotMoveCancelled": "Cannot move a cancelled appointment",
+      "cannotMovePast": "Cannot move a past appointment",
+      "closedDayConfirm": "The garage is closed on {{day}}. Are you sure you want to schedule this appointment?",
+      "closedDayTitle": "Garage Closed",
+      "closedDayProceed": "Schedule Anyway",
+      "duringLunchBreak": "During lunch break",
+      "lunchBreakConfirm": "{{name}} is on lunch break during this time. Assign anyway?"
+    }
   },
   "notifications": {
     "title": "Notifications",

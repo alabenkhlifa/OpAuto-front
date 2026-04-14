@@ -83,6 +83,27 @@
 - [x] i18n for AI responses — AI reasons match display language (en/fr/ar)
 - [x] 68 new tests (31 AiService + 37 appointment modal)
 
+## UI Polish (Session 2026-04-12)
+- [x] Maintenance page light theme — converted all 5 maintenance components from dark glassmorphism to light theme
+- [x] Calendar view-switcher active text — white text on orange background instead of orange-on-light
+- [x] Sidebar expand button — fixed invisible button (removed conflicting Tailwind classes, bigger hamburger icon, visible styling)
+- [x] Part modal light theme — converted Add/Edit Part modal from dark glassmorphism to light theme
+- [x] Stock adjustment modal light theme — restyled with consistent form inputs, orange primary button, proper spacing
+- [x] Sidebar expand button z-index — raised to z-index 51 so it sits above the top bar
+- [x] Appointment "Add" button white text — removed overly broad `button span` color override in appointments CSS
+- [x] Appointment modal light theme — converted from dark glassmorphism to light theme with AI suggest styling
+- [x] Customers quick actions removed — removed redundant Quick Actions section from customers dashboard
+- [x] Calendar add appointment — opens modal directly instead of navigating to appointments tab
+- [x] Quick add car from appointment modal — opens car registration modal inline instead of navigating to cars page
+- [x] Car registration modal light theme — converted from dark glassmorphism to light theme
+- [x] Customer list items restyled — light borders, dark text, orange/teal avatars, hover states
+- [x] Employee form light theme — converted from dark glassmorphism to white bg, dark text, gray inputs
+- [x] Modules page restyled — warm gradient header, dark text, tinted card states, less monotone white
+- [x] Profile page light theme — dark text, light borders, light toast/warning boxes, removed glass-card override
+- [x] Calendar drag-and-drop rescheduling — AI-validated with conflict modal showing alternatives
+- [x] Login page light theme — white card, warm gradient bg, dark text, amber demo credentials
+- [x] Global toast notification system — success/error/warning/info toasts in top-right corner
+
 ## Verification
 - [x] Frontend builds: `ng build` passes with no errors
 - [x] Backend typechecks: `tsc --noEmit` passes

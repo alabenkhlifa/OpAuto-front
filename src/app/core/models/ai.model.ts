@@ -57,6 +57,7 @@ export interface AiScheduleSuggestion {
   mechanicName: string;
   score: number;
   reason: string;
+  warning?: string;
 }
 
 export interface AiScheduleRequest {

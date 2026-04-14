@@ -1,16 +1,50 @@
 version: '3.8'
 services:
-  postgres:
+  db:
     image: postgres:16-alpine
     container_name: opauto-db
-    ports:
-      - '5432:5432'
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: opauto
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: ${DB_USER:-opauto}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-opauto_secret}
+      POSTGRES_DB: ${DB_NAME:-opauto}
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-opauto}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./opauto-backend
+      dockerfile: Dockerfile
+    container_name: opauto-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-opauto}:${DB_PASSWORD:-opauto_secret}@db:5432/${DB_NAME:-opauto}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      NODE_ENV: production
+      PORT: 3000
+
+  nginx:
+    image: nginx:alpine
+    container_name: opauto-nginx
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./dist/OpAuto-front/browser:/usr/share/nginx/html:ro
 
 volumes:
-  pgdata:
+  pg_data:

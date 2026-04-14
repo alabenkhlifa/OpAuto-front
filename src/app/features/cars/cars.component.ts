@@ -13,6 +13,9 @@ import { SubscriptionTierId, SubscriptionStatus } from '../../core/models/subscr
 import { LanguageService } from '../../core/services/language.service';
 import { TooltipDirective } from '../../shared/directives/tooltip.directive';
 import { TranslationService } from '../../core/services/translation.service';
+import { CustomerService } from '../../core/services/customer.service';
+import { forkJoin } from 'rxjs';
+import { ToastService } from '../../shared/services/toast.service';
 
 @Component({
   selector: 'app-cars',
@@ -26,9 +29,12 @@ export class CarsComponent implements OnInit {
   private subscriptionService = inject(SubscriptionService);
   private languageService = inject(LanguageService);
   private translationService = inject(TranslationService);
+  private customerService = inject(CustomerService);
   private router = inject(Router);
+  private toast = inject(ToastService);
 
   cars = signal<CarWithHistory[]>([]);
+  private customerMap = new Map<string, string>();
   subscriptionStatus = signal<SubscriptionStatus | null>(null);
   isLoading = signal(false);
   showRegistrationForm = signal(false);
@@ -141,8 +147,12 @@ export class CarsComponent implements OnInit {
 
   private loadCars(): void {
     this.isLoading.set(true);
-    this.carService.getCars().subscribe({
-      next: (cars) => {
+    forkJoin({
+      cars: this.carService.getCars(),
+      customers: this.customerService.getCustomers()
+    }).subscribe({
+      next: ({ cars, customers }) => {
+        customers.forEach(c => this.customerMap.set(c.id, c.name));
         this.cars.set(cars);
         this.isLoading.set(false);
       },
@@ -165,8 +175,7 @@ export class CarsComponent implements OnInit {
   }
 
   getCustomerName(customerId: string): string {
-    const customer = this.carService.getCustomerById(customerId);
-    return customer ? customer.name : 'Unknown Customer';
+    return this.customerMap.get(customerId) || 'Unknown Customer';
   }
 
   getStatusColor(status: string): string {
@@ -263,6 +272,7 @@ export class CarsComponent implements OnInit {
   }
 
   onCarRegistered(car: CarWithHistory): void {
+    this.toast.success('Car registered successfully');
     this.loadCars();
     this.showRegistrationForm.set(false);
   }

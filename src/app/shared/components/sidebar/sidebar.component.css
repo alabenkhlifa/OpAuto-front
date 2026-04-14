@@ -287,13 +287,13 @@
   position: fixed;
   top: 1rem;
   left: 1rem;
-  z-index: 40;
-  width: 3rem;
-  height: 3rem;
+  z-index: 51;
+  width: 2.75rem;
+  height: 2.75rem;
   border-radius: 12px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -302,12 +302,9 @@
   color: #374151;
 }
 
-.show-sidebar-btn svg {
-  color: #374151;
-}
-
 .show-sidebar-btn:hover {
-  transform: scale(1.05);
+  background: #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* Submenu Styles */

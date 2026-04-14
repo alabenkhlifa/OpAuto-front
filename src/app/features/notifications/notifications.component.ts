@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NotificationService } from '../../core/services/notification.service';
@@ -119,9 +119,13 @@ import { SidebarService } from '../../core/services/sidebar.service';
     }
   `],
 })
-export class NotificationsComponent {
+export class NotificationsComponent implements OnInit {
   notificationService = inject(NotificationService);
   sidebarService = inject(SidebarService);
+
+  ngOnInit() {
+    setTimeout(() => this.notificationService.markAllAsRead(), 1000);
+  }
 
   filterType = signal<NotificationType | null>(null);
   showUnreadOnly = signal(false);

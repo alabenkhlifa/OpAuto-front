@@ -9,6 +9,8 @@ import { fromBackendEnum, toBackendEnum } from '../utils/enum-mapper';
 const ROLE_FROM_BACKEND: Record<string, EmployeeRole> = {
   'MECHANIC': 'senior-mechanic',
   'ELECTRICIAN': 'senior-mechanic',
+  'BODYWORK_SPECIALIST': 'senior-mechanic',
+  'TIRE_SPECIALIST': 'senior-mechanic',
   'MANAGER': 'admin',
   'APPRENTICE': 'apprentice',
   'RECEPTIONIST': 'service-advisor',

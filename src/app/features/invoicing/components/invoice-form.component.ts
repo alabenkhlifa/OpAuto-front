@@ -15,6 +15,7 @@ import {
 } from '../../../core/models/invoice.model';
 import { PartWithStock, Supplier } from '../../../core/models/part.model';
 import { Car, Customer } from '../../../core/models/appointment.model';
+import { ToastService } from '../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-invoice-form',
@@ -30,6 +31,7 @@ export class InvoiceFormComponent implements OnInit {
   private invoiceService = inject(InvoiceService);
   private partService = inject(PartService);
   private translationService = inject(TranslationService);
+  private toast = inject(ToastService);
 
   invoiceForm: FormGroup;
   isLoading = signal(false);
@@ -323,10 +325,12 @@ export class InvoiceFormComponent implements OnInit {
         if (invoiceId) {
           this.invoiceService.updateInvoice(invoiceId, invoiceData).subscribe({
             next: (updatedInvoice) => {
+              this.toast.success('Invoice updated successfully');
               this.router.navigate(['/invoices', updatedInvoice.id]);
             },
             error: (error) => {
               console.error('Failed to update invoice:', error);
+              this.toast.error('Failed to update invoice');
               this.isSubmitting.set(false);
             }
           });
@@ -335,10 +339,12 @@ export class InvoiceFormComponent implements OnInit {
         // Create new invoice
         this.invoiceService.createInvoice(invoiceData).subscribe({
           next: (newInvoice) => {
+            this.toast.success('Invoice created successfully');
             this.router.navigate(['/invoices', newInvoice.id]);
           },
           error: (error) => {
             console.error('Failed to create invoice:', error);
+            this.toast.error('Failed to create invoice');
             this.isSubmitting.set(false);
           }
         });

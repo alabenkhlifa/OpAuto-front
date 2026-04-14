@@ -177,6 +177,8 @@
     "appointmentTime": "وقت الموعد",
     "estimatedDuration": "المدة المقدرة",
     "schedule": "جدولة",
+    "update": "تحديث",
+    "saving": "جاري الحفظ...",
     "date": "التاريخ",
     "time": "الوقت",
     "selectTime": "اختيار الوقت",
@@ -242,6 +244,12 @@
       "errorUnavailable": "اقتراحات الذكاء الاصطناعي غير متاحة",
       "errorGeneric": "تعذر تحميل الاقتراحات",
       "noSlots": "لم يتم العثور على مواعيد متاحة"
+    },
+    "toast": {
+      "created": "تم إنشاء الموعد بنجاح",
+      "createFailed": "فشل في إنشاء الموعد",
+      "updated": "تم تحديث الموعد بنجاح",
+      "updateFailed": "فشل في تحديث الموعد"
     }
   },
   "cars": {
@@ -2317,7 +2325,21 @@
       "cancel": "إلغاء الموعد"
     },
     "confirmCancel": "هل أنت متأكد أنك تريد إلغاء هذا الموعد؟",
-    "mechanics": "الميكانيكيون"
+    "mechanics": "الميكانيكيون",
+    "toast": {
+      "rescheduled": "تم إعادة جدولة الموعد بنجاح",
+      "rescheduleFailed": "فشل في إعادة جدولة الموعد",
+      "cancelled": "تم إلغاء الموعد",
+      "cancelFailed": "فشل في إلغاء الموعد",
+      "cannotMoveCompleted": "لا يمكن نقل موعد مكتمل",
+      "cannotMoveCancelled": "لا يمكن نقل موعد ملغى",
+      "cannotMovePast": "لا يمكن نقل موعد سابق",
+      "closedDayConfirm": "الورشة مغلقة يوم {{day}}. هل أنت متأكد أنك تريد تحديد هذا الموعد؟",
+      "closedDayTitle": "الورشة مغلقة",
+      "closedDayProceed": "جدولة على أي حال",
+      "duringLunchBreak": "أثناء استراحة الغداء",
+      "lunchBreakConfirm": "{{name}} في استراحة الغداء خلال هذا الوقت. هل تريد التعيين على أي حال؟"
+    }
   },
   "notifications": {
     "title": "الإشعارات",

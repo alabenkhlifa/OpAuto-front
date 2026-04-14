@@ -9,6 +9,7 @@ import { MaintenanceStatsComponent } from './components/maintenance-stats.compon
 import { MaintenanceFiltersComponent } from './components/maintenance-filters.component';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { TranslationService } from '../../core/services/translation.service';
+import { ToastService } from '../../shared/services/toast.service';
 
 @Component({
   selector: 'app-maintenance',
@@ -30,10 +31,10 @@ import { TranslationService } from '../../core/services/translation.service';
       <header class="glass-card maintenance-header">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div class="flex-1">
-            <h1 class="text-2xl lg:text-3xl font-bold text-white mb-1">
+            <h1 class="text-2xl lg:text-3xl font-bold text-primary-themed mb-1">
               {{ getPageTitle() }}
             </h1>
-            <p class="text-gray-300">{{ getPageDescription() }}</p>
+            <p class="text-secondary-themed">{{ getPageDescription() }}</p>
           </div>
 
           <div class="flex items-center gap-3">
@@ -75,7 +76,7 @@ import { TranslationService } from '../../core/services/translation.service';
       <!-- Jobs List -->
       <div class="glass-card">
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-lg font-semibold text-white">
+          <h2 class="text-lg font-semibold text-primary-themed">
             {{ getJobsTitle() }} ({{ filteredJobs().length }})
           </h2>
           
@@ -98,8 +99,8 @@ import { TranslationService } from '../../core/services/translation.service';
             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <h3 class="mt-2 text-sm font-medium text-white">{{ 'maintenance.noJobs' | translate }}</h3>
-            <p class="mt-1 text-sm text-gray-300">{{ 'maintenance.noJobsMessage' | translate }}</p>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">{{ 'maintenance.noJobs' | translate }}</h3>
+            <p class="mt-1 text-sm text-gray-600">{{ 'maintenance.noJobsMessage' | translate }}</p>
           </div>
         } @else {
           <!-- Jobs Grid -->
@@ -120,58 +121,19 @@ import { TranslationService } from '../../core/services/translation.service';
     </div>
   `,
   styles: [`
-    /* Maintenance Component - Permanent Dark Glassmorphism to match other screens */
-    
     .maintenance-container {
       min-height: 100vh;
       background: transparent;
     }
 
-    /* Glass card styling to match other screens */
-    .glass-card {
-      background: rgba(11, 8, 41, 0.95);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(42, 37, 102, 0.6);
-      border-radius: 20px;
-      padding: 1.5rem;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      margin-bottom: 1rem;
-    }
-
-    /* Header styling */
-    .maintenance-header {
-      /* Uses glass-card styles */
-    }
-
-    /* Component uses global button system from /src/styles/buttons.css */
-
-    /* Filters panel styling */
-    .filters-panel {
-      background: rgba(11, 8, 41, 0.9);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(42, 37, 102, 0.4);
-      border-radius: 20px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .filters-panel:hover {
-      transform: translateY(-2px);
-      background: rgba(18, 15, 61, 0.95);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
-    }
-
-    /* View toggle styling */
     .view-toggle {
       display: flex;
-      background: rgba(18, 15, 61, 0.6);
+      background: #f1f5f9;
       border-radius: 12px;
       padding: 0.25rem;
       gap: 0.25rem;
     }
 
-    /* Ensure hidden class works properly */
     .view-toggle.hidden {
       display: none !important;
     }
@@ -182,7 +144,7 @@ import { TranslationService } from '../../core/services/translation.service';
       font-weight: 500;
       border-radius: 8px;
       transition: all 0.2s ease;
-      color: #9ca3af;
+      color: #6b7280;
       cursor: pointer;
     }
 
@@ -193,17 +155,8 @@ import { TranslationService } from '../../core/services/translation.service';
     }
 
     .view-toggle-btn:not(.active):hover {
-      background: rgba(42, 37, 102, 0.4);
-      color: #d1d5db;
-    }
-
-    /* Empty state styling */
-    .empty-state h3 {
-      color: #ffffff !important;
-    }
-
-    .empty-state p {
-      color: #d1d5db !important;
+      background: #e2e8f0;
+      color: #111827;
     }
   `]
 })
@@ -212,6 +165,7 @@ export class MaintenanceComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private translationService = inject(TranslationService);
+  private toast = inject(ToastService);
 
   // Signals
   maintenanceJobs = signal<MaintenanceJob[]>([]);
@@ -401,8 +355,14 @@ export class MaintenanceComponent implements OnInit {
 
   onStatusChange(event: { jobId: string; status: any }) {
     this.maintenanceService.updateJobStatus(event.jobId, event.status).subscribe({
-      next: () => this.loadMaintenanceData(),
-      error: (error) => console.error('Error updating job status:', error)
+      next: () => {
+        this.toast.success(`Job status updated to ${event.status}`);
+        this.loadMaintenanceData();
+      },
+      error: (error) => {
+        console.error('Error updating job status:', error);
+        this.toast.error('Failed to update job status');
+      }
     });
   }
 
