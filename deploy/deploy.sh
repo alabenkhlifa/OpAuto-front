@@ -24,6 +24,6 @@ docker compose up -d 2>&1 | tee -a "$LOG_FILE"
 
 # Run migrations
 echo "Running migrations..." | tee -a "$LOG_FILE"
-docker compose exec -T backend npx prisma migrate deploy 2>&1 | tee -a "$LOG_FILE"
+docker compose exec -T backend npx prisma db push --accept-data-loss 2>&1 | tee -a "$LOG_FILE"
 
 echo "=== Deploy completed at $(date) ===" | tee -a "$LOG_FILE"
