@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, BehaviorSubject } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { map, tap, catchError } from 'rxjs/operators';
 import {
   Invoice,
   InvoiceWithDetails,
@@ -560,10 +560,34 @@ export class InvoiceService {
     return this.defaultServiceRates.find(rate => rate.serviceCode === serviceCode);
   }
 
-  // --- Settings (hardcoded defaults) ---
+  // --- Settings ---
 
   getInvoiceSettings(): Observable<InvoiceSettings> {
-    return of(this.invoiceSettings);
+    return this.http.get<any>('/garage-settings').pipe(
+      map(garage => {
+        const parts = (garage.address || '').split(',').map((s: string) => s.trim()).filter(Boolean);
+        const city = parts.length > 1 ? parts[parts.length - 1].replace(/\s*\d+\s*$/, '').trim() : this.invoiceSettings.garageInfo.city;
+        const postal = (garage.address || '').match(/\b\d{4}\b/)?.[0] || this.invoiceSettings.garageInfo.postalCode;
+        this.invoiceSettings = {
+          ...this.invoiceSettings,
+          garageInfo: {
+            ...this.invoiceSettings.garageInfo,
+            name: garage.name || this.invoiceSettings.garageInfo.name,
+            address: parts[0] || garage.address || this.invoiceSettings.garageInfo.address,
+            city,
+            postalCode: postal,
+            phone: garage.phone || this.invoiceSettings.garageInfo.phone,
+            email: garage.email || this.invoiceSettings.garageInfo.email,
+          },
+          taxSettings: {
+            ...this.invoiceSettings.taxSettings,
+            defaultTaxRate: garage.taxRate ?? this.invoiceSettings.taxSettings.defaultTaxRate,
+          },
+        };
+        return this.invoiceSettings;
+      }),
+      catchError(() => of(this.invoiceSettings))
+    );
   }
 
   updateInvoiceSettings(settings: Partial<InvoiceSettings>): Observable<InvoiceSettings> {

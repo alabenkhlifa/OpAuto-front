@@ -15,7 +15,11 @@ export class InvoicingService {
   async findAll(garageId: string) {
     return this.prisma.invoice.findMany({
       where: { garageId },
-      include: { customer: { select: { firstName: true, lastName: true } }, _count: { select: { lineItems: true, payments: true } } },
+      include: {
+        customer: { select: { firstName: true, lastName: true } },
+        car: { select: { make: true, model: true, year: true, licensePlate: true } },
+        _count: { select: { lineItems: true, payments: true } },
+      },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -23,7 +27,7 @@ export class InvoicingService {
   async findOne(id: string, garageId: string) {
     const invoice = await this.prisma.invoice.findFirst({
       where: { id, garageId },
-      include: { customer: true, lineItems: true, payments: true },
+      include: { customer: true, car: true, lineItems: true, payments: true },
     });
     if (!invoice) throw new NotFoundException('Invoice not found');
     return invoice;
@@ -41,13 +45,14 @@ export class InvoicingService {
     return this.prisma.invoice.create({
       data: {
         garageId, customerId: dto.customerId,
+        carId: dto.carId,
         invoiceNumber: this.generateInvoiceNumber(),
         subtotal, taxAmount, discount, total,
         dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
         notes: dto.notes,
         lineItems: { create: lineItems },
       },
-      include: { lineItems: true, customer: true },
+      include: { lineItems: true, customer: true, car: true },
     });
   }
 

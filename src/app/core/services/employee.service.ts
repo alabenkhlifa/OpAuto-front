@@ -78,7 +78,9 @@ function mapFromBackend(b: any): Employee {
       certifications: [],
     },
     availability: {
-      isAvailable: b.status === 'ACTIVE',
+      isAvailable: b.isAvailable !== undefined ? b.isAvailable : (b.status === 'ACTIVE'),
+      unavailableReason: b.unavailableReason || undefined,
+      unavailableUntil: b.unavailableUntil ? new Date(b.unavailableUntil) : undefined,
       currentWorkload: 0,
       maxWorkload: 4,
     },
@@ -114,6 +116,15 @@ function mapToBackend(f: Partial<Employee>): any {
 
   if (f.skills?.specialties) {
     payload.skills = f.skills.specialties;
+  }
+
+  if (f.availability) {
+    if (f.availability.isAvailable !== undefined) payload.isAvailable = f.availability.isAvailable;
+    if (f.availability.unavailableReason !== undefined) payload.unavailableReason = f.availability.unavailableReason || null;
+    if (f.availability.unavailableUntil !== undefined) {
+      const d = f.availability.unavailableUntil;
+      payload.unavailableUntil = d ? (d instanceof Date ? d.toISOString() : d) : null;
+    }
   }
 
   return payload;
