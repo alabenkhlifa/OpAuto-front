@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { NotificationsService } from './notifications.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
@@ -18,4 +18,5 @@ export class NotificationsController {
   @Post() create(@CurrentUser('garageId') gid: string, @Body() dto: CreateNotificationDto) { return this.service.create(gid, dto); }
   @Put(':id/read') markAsRead(@Param('id') id: string) { return this.service.markAsRead(id); }
   @Put('read-all') markAllAsRead(@CurrentUser('garageId') gid: string, @CurrentUser('id') uid: string) { return this.service.markAllAsRead(gid, uid); }
+  @Delete(':id') remove(@Param('id') id: string) { return this.service.remove(id); }
 }

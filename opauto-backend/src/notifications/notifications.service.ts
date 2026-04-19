@@ -27,4 +27,8 @@ export class NotificationsService {
   async markAllAsRead(garageId: string, userId: string) {
     return this.prisma.notification.updateMany({ where: { garageId, isRead: false, OR: [{ userId }, { userId: null }] }, data: { isRead: true } });
   }
+
+  async remove(id: string) {
+    return this.prisma.notification.delete({ where: { id } });
+  }
 }
