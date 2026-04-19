@@ -93,6 +93,7 @@ export class AppointmentService {
 
   createAppointment(appointment: Omit<Appointment, 'id' | 'createdAt' | 'updatedAt'>): Observable<Appointment> {
     const body = this.mapToBackend(appointment as Partial<Appointment>);
+    delete body.status;
     return this.http.post<any>('/appointments', body).pipe(
       map(b => this.mapFromBackend(b)),
       tap(created => {

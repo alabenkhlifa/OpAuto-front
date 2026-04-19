@@ -7,26 +7,32 @@ import { fromBackendEnum, toBackendEnum } from '../utils/enum-mapper';
 
 // Backend role → frontend role
 const ROLE_FROM_BACKEND: Record<string, EmployeeRole> = {
-  'MECHANIC': 'senior-mechanic',
-  'ELECTRICIAN': 'senior-mechanic',
-  'BODYWORK_SPECIALIST': 'senior-mechanic',
-  'TIRE_SPECIALIST': 'senior-mechanic',
-  'MANAGER': 'admin',
+  'MECHANIC': 'mechanic',
+  'ELECTRICIAN': 'electrician',
+  'BODYWORK_SPECIALIST': 'bodywork-specialist',
+  'TIRE_SPECIALIST': 'tire-specialist',
+  'MANAGER': 'manager',
   'APPRENTICE': 'apprentice',
-  'RECEPTIONIST': 'service-advisor',
+  'RECEPTIONIST': 'receptionist',
 };
 
-// Frontend role → backend role (reverse mapping — pick first match)
+// Frontend role → backend role
 const ROLE_TO_BACKEND: Record<EmployeeRole, string> = {
+  'admin': 'MANAGER',
+  'manager': 'MANAGER',
   'senior-mechanic': 'MECHANIC',
   'junior-mechanic': 'MECHANIC',
-  'admin': 'MANAGER',
+  'mechanic': 'MECHANIC',
+  'electrician': 'ELECTRICIAN',
+  'bodywork-specialist': 'BODYWORK_SPECIALIST',
+  'tire-specialist': 'TIRE_SPECIALIST',
   'apprentice': 'APPRENTICE',
+  'receptionist': 'RECEPTIONIST',
   'service-advisor': 'RECEPTIONIST',
 };
 
 function mapBackendRole(backendRole: string): EmployeeRole {
-  return ROLE_FROM_BACKEND[backendRole] || 'senior-mechanic';
+  return ROLE_FROM_BACKEND[backendRole] || 'mechanic';
 }
 
 function defaultWorkingHours(): WorkingSchedule {
@@ -331,12 +337,13 @@ export class EmployeeService {
   }
 
   private getDepartmentDistribution(employees: Employee[]): { [key in EmployeeDepartment]: number } {
-    const distribution = {
+    const distribution: { [key in EmployeeDepartment]: number } = {
       management: 0,
       mechanical: 0,
       bodywork: 0,
       electrical: 0,
-      service: 0
+      service: 0,
+      'tire-alignment': 0,
     };
 
     employees.forEach(emp => {
@@ -347,12 +354,18 @@ export class EmployeeService {
   }
 
   private getRoleDistribution(employees: Employee[]): { [key in EmployeeRole]: number } {
-    const distribution = {
+    const distribution: { [key in EmployeeRole]: number } = {
       admin: 0,
+      manager: 0,
       'senior-mechanic': 0,
       'junior-mechanic': 0,
+      mechanic: 0,
+      electrician: 0,
+      'bodywork-specialist': 0,
+      'tire-specialist': 0,
       apprentice: 0,
-      'service-advisor': 0
+      receptionist: 0,
+      'service-advisor': 0,
     };
 
     employees.forEach(emp => {

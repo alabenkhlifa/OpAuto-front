@@ -395,25 +395,32 @@ export class EmployeeDetailsComponent implements OnInit {
   }
 
   getRoleLabel(role: string): string {
-    const labels = {
+    const labels: Record<string, string> = {
       'admin': 'Administrator',
+      'manager': 'Manager',
       'senior-mechanic': 'Senior Mechanic',
       'junior-mechanic': 'Junior Mechanic',
+      'mechanic': 'Mechanic',
+      'electrician': 'Electrician',
+      'bodywork-specialist': 'Bodywork Specialist',
+      'tire-specialist': 'Tire Specialist',
       'apprentice': 'Apprentice',
-      'service-advisor': 'Service Advisor'
+      'receptionist': 'Receptionist',
+      'service-advisor': 'Service Advisor',
     };
-    return labels[role as keyof typeof labels] || role;
+    return labels[role] || role;
   }
 
   getDepartmentLabel(department: string): string {
-    const labels = {
+    const labels: Record<string, string> = {
       'management': 'Management',
       'mechanical': 'Mechanical',
       'bodywork': 'Bodywork',
       'electrical': 'Electrical',
-      'service': 'Service'
+      'service': 'Service',
+      'tire-alignment': 'Tire & Alignment',
     };
-    return labels[department as keyof typeof labels] || department;
+    return labels[department] || department;
   }
 
   getStatusLabel(status: string): string {

@@ -43,8 +43,19 @@ export interface Employee {
   updatedAt: Date;
 }
 
-export type EmployeeRole = 'admin' | 'senior-mechanic' | 'junior-mechanic' | 'apprentice' | 'service-advisor';
-export type EmployeeDepartment = 'management' | 'mechanical' | 'bodywork' | 'electrical' | 'service';
+export type EmployeeRole =
+  | 'admin'
+  | 'manager'
+  | 'senior-mechanic'
+  | 'junior-mechanic'
+  | 'mechanic'
+  | 'electrician'
+  | 'bodywork-specialist'
+  | 'tire-specialist'
+  | 'apprentice'
+  | 'receptionist'
+  | 'service-advisor';
+export type EmployeeDepartment = 'management' | 'mechanical' | 'bodywork' | 'electrical' | 'service' | 'tire-alignment';
 export type EmployeeStatus = 'active' | 'inactive' | 'on-leave' | 'terminated';
 export type ContractType = 'full-time' | 'part-time' | 'contract' | 'apprentice';
 export type ExperienceLevel = 'entry' | 'junior' | 'mid' | 'senior' | 'expert';

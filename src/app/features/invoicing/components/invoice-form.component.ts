@@ -2,8 +2,11 @@ import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { InvoiceService } from '../../../core/services/invoice.service';
 import { PartService } from '../../../core/services/part.service';
+import { CustomerService } from '../../../core/services/customer.service';
+import { AppointmentService } from '../../appointments/services/appointment.service';
 import { TranslationService } from '../../../core/services/translation.service';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 import { 
@@ -30,6 +33,8 @@ export class InvoiceFormComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private invoiceService = inject(InvoiceService);
   private partService = inject(PartService);
+  private customerService = inject(CustomerService);
+  private appointmentService = inject(AppointmentService);
   private translationService = inject(TranslationService);
   private toast = inject(ToastService);
 
@@ -107,20 +112,25 @@ export class InvoiceFormComponent implements OnInit {
       error: (error) => console.error('Failed to load service rates:', error)
     });
 
-    // Mock customers and cars (would typically come from respective services)
-    this.customers.set([
-      { id: 'customer1', name: 'Ahmed Ben Ali', phone: '+216-20-123-456', email: 'ahmed.benali@email.tn' },
-      { id: 'customer2', name: 'Fatma Trabelsi', phone: '+216-25-789-123', email: 'fatma.trabelsi@email.tn' },
-      { id: 'customer3', name: 'Mohamed Khemir', phone: '+216-22-456-789', email: 'mohamed.khemir@email.tn' }
-    ]);
-
-    this.cars.set([
-      { id: 'car1', licensePlate: '123 TUN 2024', make: 'BMW', model: 'X5', year: 2020, customerId: 'customer1' },
-      { id: 'car2', licensePlate: '456 TUN 2019', make: 'Honda', model: 'Civic', year: 2019, customerId: 'customer2' },
-      { id: 'car4', licensePlate: '321 TUN 2022', make: 'Mercedes', model: 'C-Class', year: 2022, customerId: 'customer3' }
-    ]);
-
-    this.isLoading.set(false);
+    forkJoin({
+      customers: this.customerService.getCustomers(),
+      cars: this.appointmentService.getCars(),
+    }).subscribe({
+      next: ({ customers, cars }) => {
+        this.customers.set(customers.map(c => ({
+          id: c.id,
+          name: c.name,
+          phone: c.phone,
+          email: c.email,
+        })));
+        this.cars.set(cars);
+        this.isLoading.set(false);
+      },
+      error: (error) => {
+        console.error('Failed to load customers/cars:', error);
+        this.isLoading.set(false);
+      }
+    });
   }
 
   private loadInvoiceForEdit(invoiceId: string): void {

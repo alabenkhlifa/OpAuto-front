@@ -76,7 +76,10 @@ export class InvoicingService {
     const payments = await this.prisma.payment.findMany({ where: { invoiceId } });
     const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
     const newStatus = totalPaid >= invoice.total ? 'PAID' : 'PARTIALLY_PAID';
-    await this.prisma.invoice.update({ where: { id: invoiceId }, data: { status: newStatus } });
+    await this.prisma.invoice.update({
+      where: { id: invoiceId },
+      data: { status: newStatus, paidAt: newStatus === 'PAID' ? payment.paidAt : null },
+    });
 
     return payment;
   }

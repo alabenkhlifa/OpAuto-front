@@ -5,7 +5,9 @@ import { CanActivateFn } from '@angular/router';
 import { map, filter, take } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 import { ModuleService } from '../services/module.service';
+import { TranslationService } from '../services/translation.service';
 import { ModuleId } from '../models/module.model';
+import { ToastService } from '../../shared/services/toast.service';
 
 export const ownerGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
@@ -27,8 +29,9 @@ export const moduleGuard = (moduleId: ModuleId): CanActivateFn => {
   return (route, state) => {
     const moduleService = inject(ModuleService);
     const router = inject(Router);
+    const toast = inject(ToastService);
+    const translate = inject(TranslationService);
 
-    // Wait for modules to finish loading before checking access
     return toObservable(moduleService.isLoaded).pipe(
       filter(loaded => loaded),
       take(1),
@@ -36,6 +39,9 @@ export const moduleGuard = (moduleId: ModuleId): CanActivateFn => {
         if (moduleService.hasModuleAccess(moduleId)) {
           return true;
         }
+        const moduleName = translate.instant(`modules.names.${moduleId}`);
+        const message = translate.instant('modules.activationRequired', { module: moduleName });
+        toast.warning(message && message !== 'modules.activationRequired' ? message : `The ${moduleId} module needs to be activated to access this page.`);
         router.navigate(['/modules']);
         return false;
       })

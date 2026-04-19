@@ -160,23 +160,30 @@ export class EmployeeCardComponent {
   }
 
   getRoleLabel(role: EmployeeRole): string {
-    const labels = {
+    const labels: Record<EmployeeRole, string> = {
       'admin': 'Administrator',
+      'manager': 'Manager',
       'senior-mechanic': 'Senior Mechanic',
       'junior-mechanic': 'Junior Mechanic',
+      'mechanic': 'Mechanic',
+      'electrician': 'Electrician',
+      'bodywork-specialist': 'Bodywork Specialist',
+      'tire-specialist': 'Tire Specialist',
       'apprentice': 'Apprentice',
-      'service-advisor': 'Service Advisor'
+      'receptionist': 'Receptionist',
+      'service-advisor': 'Service Advisor',
     };
     return labels[role] || role;
   }
 
   getDepartmentLabel(department: EmployeeDepartment): string {
-    const labels = {
+    const labels: Record<EmployeeDepartment, string> = {
       'management': 'Management',
       'mechanical': 'Mechanical',
       'bodywork': 'Bodywork',
       'electrical': 'Electrical',
-      'service': 'Service'
+      'service': 'Service',
+      'tire-alignment': 'Tire & Alignment',
     };
     return labels[department] || department;
   }
