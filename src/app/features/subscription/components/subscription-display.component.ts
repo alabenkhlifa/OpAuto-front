@@ -873,11 +873,11 @@ export class SubscriptionDisplayComponent implements OnInit {
   }
 
   formatCurrency(amount: number): string {
-    // Use fr-TN for Tunisian locale with Western numerals regardless of language
     return new Intl.NumberFormat('fr-TN', {
       style: 'currency',
       currency: 'TND',
-      minimumFractionDigits: 0
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(amount);
   }
 

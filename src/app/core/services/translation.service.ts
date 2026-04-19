@@ -123,7 +123,14 @@ export class TranslationService {
       }
     }
 
-    let result = typeof value === 'string' ? value : key;
+    let result: string;
+    if (typeof value === 'string') {
+      result = value;
+    } else if (value && typeof value === 'object' && 'one' in value && 'other' in value && params && typeof params['count'] === 'number') {
+      result = params['count'] === 1 ? (value as any).one : (value as any).other;
+    } else {
+      result = key;
+    }
 
     // Handle parameters
     if (params && typeof result === 'string') {

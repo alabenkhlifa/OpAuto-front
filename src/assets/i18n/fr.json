@@ -91,7 +91,10 @@
     },
     "todaySchedule": {
       "title": "Programme d'aujourd'hui",
-      "appointmentsScheduled": "{{count}} rendez-vous programmés",
+      "appointmentsScheduled": {
+        "one": "{{count}} rendez-vous programmé",
+        "other": "{{count}} rendez-vous programmés"
+      },
       "appointments": "rendez-vous"
     },
     "todayStatus": {
@@ -613,73 +616,6 @@
       "stock_alert": "Voir les pièces avec stock faible nécessitant une commande"
     }
   },
-  "invoicing": {
-    "title": "Facturation",
-    "subtitle": "Générer et gérer les factures",
-    "allInvoices": "Toutes les factures",
-    "createInvoice": "Créer une facture",
-    "pendingPayment": "Paiement en attente",
-    "editInvoice": "Modifier la facture",
-    "deleteInvoice": "Supprimer la facture",
-    "viewInvoice": "Voir la facture",
-    "printInvoice": "Imprimer la facture",
-    "invoiceNumber": "Numéro de facture",
-    "invoiceDate": "Date de facture",
-    "dueDate": "Date d'échéance",
-    "customerInfo": "Informations du client",
-    "billTo": "Facturer à",
-    "items": "Articles",
-    "services": "Services",
-    "addItem": "Ajouter un article",
-    "itemDescription": "Description de l'article",
-    "unitPrice": "Prix unitaire",
-    "quantity": "Quantité",
-    "total": "Total",
-    "subtotal": "Sous-total",
-    "tax": "Taxe",
-    "discount": "Remise",
-    "grandTotal": "Total général",
-    "paid": "Payé",
-    "unpaid": "Non payé",
-    "overdue": "En retard",
-    "paymentStatus": "Statut de paiement",
-    "paymentMethod": "Méthode de paiement",
-    "cash": "Espèces",
-    "card": "Carte",
-    "bankTransfer": "Virement bancaire",
-    "notes": "Notes",
-    "terms": "Termes et conditions",
-    "noInvoices": "Aucune facture trouvée",
-    "print": {
-      "invoice": "FACTURE",
-      "issueDate": "Date d'émission",
-      "dueDate": "Date d'échéance",
-      "taxId": "N° fiscal",
-      "billTo": "Facturer à",
-      "vehicle": "Véhicule",
-      "licensePlate": "Plaque d'immatriculation",
-      "service": "Service",
-      "servicesParts": "Services et pièces",
-      "description": "Description",
-      "qty": "Qté",
-      "unit": "Unité",
-      "unitPrice": "Prix unitaire",
-      "total": "Total",
-      "subtotal": "Sous-total",
-      "discount": "Remise",
-      "paid": "Payé",
-      "remaining": "Restant",
-      "paymentTerms": "Conditions de paiement",
-      "bankDetails": "Coordonnées bancaires",
-      "bank": "Banque",
-      "account": "Compte",
-      "iban": "IBAN",
-      "notes": "Notes",
-      "edit": "Modifier",
-      "sendInvoice": "Envoyer la facture",
-      "recordPayment": "Enregistrer un paiement"
-    }
-  },
   "customers": {
     "title": "Clients",
     "subtitle": "Gérer les informations et l'historique des clients",
@@ -745,6 +681,10 @@
       "phone": "Téléphone",
       "email": "Email",
       "cars": "voitures",
+      "carsCount": {
+        "one": "{{count}} voiture",
+        "other": "{{count}} voitures"
+      },
       "visits": "visites",
       "spent": "dépensé",
       "lastVisit": "Dernière visite",
@@ -1675,7 +1615,10 @@
     },
     "pending": {
       "title": "Paiements en attente",
-      "invoices": "facture(s)",
+      "invoices": {
+        "one": "{{count}} facture",
+        "other": "{{count}} factures"
+      },
       "due": "Échéance",
       "viewDetails": "Voir les détails",
       "recordPayment": "Enregistrer le paiement",

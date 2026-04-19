@@ -131,11 +131,11 @@
             @if (isOwner()) {
               <div class="text-right">
                 <p class="font-semibold text-gray-900">{{ formatCurrency(customer.totalSpent) }}</p>
-                <p class="text-xs text-gray-500">{{ customer.totalCars }} {{ 'customers.labels.cars' | translate }}</p>
+                <p class="text-xs text-gray-500">{{ 'customers.labels.carsCount' | translate:{count: customer.totalCars} }}</p>
               </div>
             } @else {
               <div class="text-right">
-                <p class="text-xs text-gray-500">{{ customer.totalCars }} {{ 'customers.labels.cars' | translate }}</p>
+                <p class="text-xs text-gray-500">{{ 'customers.labels.carsCount' | translate:{count: customer.totalCars} }}</p>
               </div>
             }
           </div>

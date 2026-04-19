@@ -129,7 +129,12 @@ export class DashboardComponent implements OnInit {
   }
 
   formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('fr-TN', { style: 'currency', currency: 'TND' }).format(amount);
+    return new Intl.NumberFormat('fr-TN', {
+      style: 'currency',
+      currency: 'TND',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
   }
 
   getCapacityPercentage(): number {

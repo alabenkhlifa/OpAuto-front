@@ -91,7 +91,10 @@
     },
     "todaySchedule": {
       "title": "جدول اليوم",
-      "appointmentsScheduled": "{{count}} مواعيد مجدولة",
+      "appointmentsScheduled": {
+        "one": "موعد واحد مجدول",
+        "other": "{{count}} مواعيد مجدولة"
+      },
       "appointments": "مواعيد"
     },
     "todayStatus": {
@@ -613,73 +616,6 @@
       "stock_alert": "عرض القطع ذات المخزون المنخفض التي تحتاج إلى إعادة طلب"
     }
   },
-  "invoicing": {
-    "title": "الفوترة",
-    "subtitle": "إنشاء وإدارة الفواتير",
-    "allInvoices": "جميع الفواتير",
-    "createInvoice": "إنشاء فاتورة",
-    "pendingPayment": "دفع معلق",
-    "editInvoice": "تعديل الفاتورة",
-    "deleteInvoice": "حذف الفاتورة",
-    "viewInvoice": "عرض الفاتورة",
-    "printInvoice": "طباعة الفاتورة",
-    "invoiceNumber": "رقم الفاتورة",
-    "invoiceDate": "تاريخ الفاتورة",
-    "dueDate": "تاريخ الاستحقاق",
-    "customerInfo": "معلومات العميل",
-    "billTo": "فاتورة لـ",
-    "items": "البنود",
-    "services": "الخدمات",
-    "addItem": "إضافة بند",
-    "itemDescription": "وصف البند",
-    "unitPrice": "سعر الوحدة",
-    "quantity": "الكمية",
-    "total": "المجموع",
-    "subtotal": "المجموع الفرعي",
-    "tax": "الضريبة",
-    "discount": "الخصم",
-    "grandTotal": "الإجمالي العام",
-    "paid": "مدفوع",
-    "unpaid": "غير مدفوع",
-    "overdue": "متأخر",
-    "paymentStatus": "حالة الدفع",
-    "paymentMethod": "طريقة الدفع",
-    "cash": "نقداً",
-    "card": "بطاقة",
-    "bankTransfer": "حوالة بنكية",
-    "notes": "ملاحظات",
-    "terms": "الشروط والأحكام",
-    "noInvoices": "لا توجد فواتير",
-    "print": {
-      "invoice": "فاتورة",
-      "issueDate": "تاريخ الإصدار",
-      "dueDate": "تاريخ الاستحقاق",
-      "taxId": "الرقم الضريبي",
-      "billTo": "فاتورة إلى",
-      "vehicle": "المركبة",
-      "licensePlate": "لوحة الترقيم",
-      "service": "الخدمة",
-      "servicesParts": "الخدمات والقطع",
-      "description": "الوصف",
-      "qty": "الكمية",
-      "unit": "الوحدة",
-      "unitPrice": "سعر الوحدة",
-      "total": "المجموع",
-      "subtotal": "المجموع الفرعي",
-      "discount": "الخصم",
-      "paid": "المدفوع",
-      "remaining": "المتبقي",
-      "paymentTerms": "شروط الدفع",
-      "bankDetails": "التفاصيل البنكية",
-      "bank": "البنك",
-      "account": "الحساب",
-      "iban": "IBAN",
-      "notes": "ملاحظات",
-      "edit": "تعديل",
-      "sendInvoice": "إرسال الفاتورة",
-      "recordPayment": "تسجيل دفعة"
-    }
-  },
   "customers": {
     "title": "العملاء",
     "subtitle": "إدارة معلومات العملاء وتاريخهم",
@@ -745,6 +681,10 @@
       "phone": "الهاتف",
       "email": "البريد الإلكتروني",
       "cars": "سيارات",
+      "carsCount": {
+        "one": "سيارة واحدة",
+        "other": "{{count}} سيارات"
+      },
       "visits": "زيارات",
       "spent": "أنفق",
       "lastVisit": "آخر زيارة",
@@ -1677,7 +1617,10 @@
     },
     "pending": {
       "title": "المدفوعات المعلقة",
-      "invoices": "فاتورة",
+      "invoices": {
+        "one": "فاتورة واحدة",
+        "other": "{{count}} فواتير"
+      },
       "due": "الاستحقاق",
       "viewDetails": "عرض التفاصيل",
       "recordPayment": "تسجيل الدفع",

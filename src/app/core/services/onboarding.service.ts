@@ -446,7 +446,7 @@ export class OnboardingService {
     const role = user.role;
 
     const tourId = this.getTourIdForUser(tier, role);
-    if (tourId) {
+    if (tourId && this.shouldShowTour(tourId)) {
       this.startTour(tourId);
     }
   }

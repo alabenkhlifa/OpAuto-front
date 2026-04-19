@@ -598,7 +598,9 @@ export class InvoiceService {
   formatCurrency(amount: number, currency: string = 'TND'): string {
     return new Intl.NumberFormat('fr-TN', {
       style: 'currency',
-      currency: currency
+      currency: currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(amount);
   }
 

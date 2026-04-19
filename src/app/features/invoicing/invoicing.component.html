@@ -352,7 +352,7 @@
       <div class="flex items-center justify-between mb-6">
         <h2 class="text-lg font-semibold text-white">{{ 'invoicing.pending.title' | translate }}</h2>
         <span class="badge badge-pending">
-          {{ pendingInvoices().length }} {{ 'invoicing.pending.invoices' | translate }}
+          {{ 'invoicing.pending.invoices' | translate:{count: pendingInvoices().length} }}
         </span>
       </div>
       
