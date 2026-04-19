@@ -66,7 +66,6 @@ export class CustomersComponent implements OnInit {
   ngOnInit() {
     this.isOwner.set(this.authService.isOwner());
     this.loadCustomers();
-    this.loadStats();
     this.loadCities();
     this.loadCustomerLimit();
   }
@@ -88,6 +87,7 @@ export class CustomersComponent implements OnInit {
       next: (customers) => {
         this.customers.set(customers);
         this.isLoading.set(false);
+        this.loadStats();
       },
       error: (error) => {
         console.error('Error loading customers:', error);

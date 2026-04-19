@@ -174,7 +174,7 @@ export class DashboardComponent implements OnInit {
 
   navigateToNewCar(): void { this.router.navigate(['/cars']); }
   navigateToAppointments(): void { this.router.navigate(['/appointments']); }
-  navigateToInvoicing(): void { this.router.navigate(['/invoicing']); }
+  navigateToInvoicing(): void { this.router.navigate(['/invoices/create']); }
   navigateToQualityCheck(): void { this.router.navigate(['/maintenance/active']); }
 
   private loadDashboardData(): void {

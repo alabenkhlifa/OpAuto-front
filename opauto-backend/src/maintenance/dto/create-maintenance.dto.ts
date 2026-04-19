@@ -9,4 +9,5 @@ export class CreateMaintenanceDto {
   @ApiProperty({ required: false }) @IsString() @IsOptional() priority?: string;
   @ApiProperty({ required: false }) @IsNumber() @IsOptional() estimatedHours?: number;
   @ApiProperty({ required: false }) @IsNumber() @IsOptional() estimatedCost?: number;
+  @ApiProperty({ required: false }) @IsString() @IsOptional() notes?: string;
 }
