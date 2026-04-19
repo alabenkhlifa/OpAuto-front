@@ -336,6 +336,31 @@
     }
   },
   "maintenance": {
+    "new": {
+      "title": "New Maintenance Job",
+      "editTitle": "Edit Maintenance Job",
+      "subtitle": "Create a new maintenance job for a vehicle",
+      "basicInfo": "Basic Information",
+      "vehicle": "Vehicle",
+      "selectVehicle": "Select a vehicle",
+      "assignedMechanic": "Assigned Mechanic",
+      "selectMechanic": "Select a mechanic",
+      "jobTitle": "Job Title",
+      "jobTitlePlaceholder": "e.g. Brake pad replacement",
+      "priority": "Priority",
+      "currentMileage": "Current Mileage",
+      "estimatedCost": "Estimated Cost (DT)",
+      "description": "Description",
+      "descriptionPlaceholder": "Describe the work to be done",
+      "additionalNotes": "Additional Notes",
+      "additionalNotesPlaceholder": "Internal notes, warnings, etc.",
+      "tasks": "Tasks",
+      "addTask": "Add Task",
+      "noTasks": "No tasks added yet. Click \"Add Task\" to break the job into steps.",
+      "cancel": "Cancel",
+      "updateJob": "Update Job",
+      "createJob": "Create Job"
+    },
     "title": "Maintenance",
     "subtitle": "Active jobs and maintenance tracking",
     "activeTitle": "Active Jobs",
@@ -1761,9 +1786,6 @@
       "notes": "Notes",
       "edit": "Edit",
       "sendInvoice": "Send Invoice",
-      "recordPayment": "Record Payment"
-    },
-    "pending": {
       "recordPayment": "Record Payment"
     }
   },

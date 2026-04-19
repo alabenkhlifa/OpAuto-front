@@ -347,6 +347,31 @@
     }
   },
   "maintenance": {
+    "new": {
+      "title": "Nouveau travail de maintenance",
+      "editTitle": "Modifier le travail",
+      "subtitle": "Créer un nouveau travail pour un véhicule",
+      "basicInfo": "Informations de base",
+      "vehicle": "Véhicule",
+      "selectVehicle": "Sélectionner un véhicule",
+      "assignedMechanic": "Mécanicien assigné",
+      "selectMechanic": "Sélectionner un mécanicien",
+      "jobTitle": "Titre du travail",
+      "jobTitlePlaceholder": "ex. Remplacement plaquettes de frein",
+      "priority": "Priorité",
+      "currentMileage": "Kilométrage actuel",
+      "estimatedCost": "Coût estimé (DT)",
+      "description": "Description",
+      "descriptionPlaceholder": "Décrivez le travail à effectuer",
+      "additionalNotes": "Notes supplémentaires",
+      "additionalNotesPlaceholder": "Notes internes, avertissements, etc.",
+      "tasks": "Tâches",
+      "addTask": "Ajouter une tâche",
+      "noTasks": "Aucune tâche ajoutée. Cliquez sur \"Ajouter une tâche\" pour découper le travail.",
+      "cancel": "Annuler",
+      "updateJob": "Mettre à jour",
+      "createJob": "Créer le travail"
+    },
     "title": "Maintenance",
     "subtitle": "Travaux actifs et suivi de maintenance",
     "activeTitle": "Travaux Actifs",
@@ -1723,7 +1748,10 @@
     },
     "pending": {
       "title": "Paiements en attente",
-      "invoices": "factures",
+      "invoices": {
+        "one": "{{count}} facture",
+        "other": "{{count}} factures"
+      },
       "due": "Échéance",
       "viewDetails": "Voir détails",
       "recordPayment": "Enregistrer paiement",

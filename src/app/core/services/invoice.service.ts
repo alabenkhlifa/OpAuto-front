@@ -251,6 +251,12 @@ export class InvoiceService {
     return this.invoicesSubject.value.find(invoice => invoice.id === invoiceId);
   }
 
+  fetchInvoiceById(invoiceId: string): Observable<InvoiceWithDetails> {
+    return this.http.get<any>(`/invoices/${invoiceId}`).pipe(
+      map(b => this.mapFromBackend(b))
+    );
+  }
+
   createInvoice(invoiceData: CreateInvoiceRequest): Observable<InvoiceWithDetails> {
     const body = this.mapToBackend(invoiceData);
     return this.http.post<any>('/invoices', body).pipe(

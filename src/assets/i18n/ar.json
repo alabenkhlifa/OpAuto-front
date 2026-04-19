@@ -347,6 +347,31 @@
     }
   },
   "maintenance": {
+    "new": {
+      "title": "عمل صيانة جديد",
+      "editTitle": "تعديل عمل الصيانة",
+      "subtitle": "إنشاء عمل صيانة جديد لمركبة",
+      "basicInfo": "المعلومات الأساسية",
+      "vehicle": "المركبة",
+      "selectVehicle": "اختر مركبة",
+      "assignedMechanic": "الميكانيكي المعيّن",
+      "selectMechanic": "اختر ميكانيكي",
+      "jobTitle": "عنوان العمل",
+      "jobTitlePlaceholder": "مثال: استبدال وسادات الفرامل",
+      "priority": "الأولوية",
+      "currentMileage": "الكيلومترات الحالية",
+      "estimatedCost": "التكلفة المقدرة (د.ت)",
+      "description": "الوصف",
+      "descriptionPlaceholder": "صف العمل المطلوب",
+      "additionalNotes": "ملاحظات إضافية",
+      "additionalNotesPlaceholder": "ملاحظات داخلية، تحذيرات، إلخ.",
+      "tasks": "المهام",
+      "addTask": "إضافة مهمة",
+      "noTasks": "لم تُضف أي مهمة. اضغط \"إضافة مهمة\" لتقسيم العمل.",
+      "cancel": "إلغاء",
+      "updateJob": "تحديث العمل",
+      "createJob": "إنشاء العمل"
+    },
     "title": "الصيانة",
     "subtitle": "الأعمال النشطة وتتبع الصيانة",
     "activeTitle": "الأعمال النشطة",
@@ -1725,7 +1750,10 @@
     },
     "pending": {
       "title": "المدفوعات المعلقة",
-      "invoices": "فواتير",
+      "invoices": {
+        "one": "فاتورة واحدة",
+        "other": "{{count}} فواتير"
+      },
       "due": "الاستحقاق",
       "viewDetails": "عرض التفاصيل",
       "recordPayment": "تسجيل الدفع",

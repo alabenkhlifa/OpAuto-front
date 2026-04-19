@@ -75,36 +75,34 @@ export class InventoryComponent implements OnInit {
 
   private loadData(): void {
     this.isLoading.set(true);
-    
+
     this.partService.getParts().subscribe({
       next: (parts) => {
         this.parts.set(parts);
-      },
-      error: (error) => console.error('Failed to load parts:', error)
-    });
-
-    this.partService.getAlerts().subscribe({
-      next: (alerts) => {
-        this.alerts.set(alerts);
-      },
-      error: (error) => console.error('Failed to load alerts:', error)
-    });
-
-    this.partService.getInventoryStats().subscribe({
-      next: (stats) => {
-        this.stats.set(stats);
-        this.isLoading.set(false);
+        this.partService.getInventoryStats().subscribe({
+          next: (stats) => {
+            this.stats.set(stats);
+            this.isLoading.set(false);
+          },
+          error: (error) => {
+            console.error('Failed to load stats:', error);
+            this.isLoading.set(false);
+          }
+        });
       },
       error: (error) => {
-        console.error('Failed to load stats:', error);
+        console.error('Failed to load parts:', error);
         this.isLoading.set(false);
       }
     });
 
+    this.partService.getAlerts().subscribe({
+      next: (alerts) => this.alerts.set(alerts),
+      error: (error) => console.error('Failed to load alerts:', error)
+    });
+
     this.partService.getSuppliers().subscribe({
-      next: (suppliers) => {
-        this.suppliers.set(suppliers);
-      },
+      next: (suppliers) => this.suppliers.set(suppliers),
       error: (error) => console.error('Failed to load suppliers:', error)
     });
   }

@@ -37,15 +37,22 @@ export class InvoiceDetailsComponent implements OnInit {
 
   private loadInvoice(invoiceId: string): void {
     this.isLoading.set(true);
-    
-    const invoice = this.invoiceService.getInvoiceById(invoiceId);
-    if (invoice) {
+
+    const applyInvoice = (invoice: InvoiceWithDetails) => {
       this.invoice.set(invoice);
-      
-      // Load payments for this invoice
       this.invoiceService.getPaymentsByInvoice(invoiceId).subscribe({
         next: (payments) => this.payments.set(payments),
         error: (error) => console.error('Failed to load payments:', error)
+      });
+    };
+
+    const cached = this.invoiceService.getInvoiceById(invoiceId);
+    if (cached) {
+      applyInvoice(cached);
+    } else {
+      this.invoiceService.fetchInvoiceById(invoiceId).subscribe({
+        next: applyInvoice,
+        error: (error) => console.error('Failed to load invoice:', error)
       });
     }
 
