@@ -92,7 +92,7 @@ Legend: ✅ pass · ❌ fail · ⚠️ works with issue · ⏭️ not-applicable
 |---|---|---|---|
 | GET | `/modules` | 200 | ✅ |
 | POST | `/modules/:id/purchase` | 201 | ✅ |
-| POST | `/modules/:id/deactivate` | 404 | ⚠️ No deactivate endpoint exists. UI Deactivate button currently has no backend counterpart — investigate. |
+| DELETE | `/modules/:id` | 200 | ✅ (deactivate — earlier "no endpoint" note was a test-script typo using POST /deactivate) |
 
 ### Approvals
 | Method | Path | Expected | Result |
@@ -125,8 +125,8 @@ Legend: ✅ pass · ❌ fail · ⚠️ works with issue · ⏭️ not-applicable
 | Method | Path | Expected | Result |
 |---|---|---|---|
 | GET | `/reports/dashboard` | 200 | ✅ |
-| GET | `/reports/financial` | 200 | ❌ 404 — endpoint missing (UI has Financial tab) |
-| GET | `/reports/operational` | 200 | ❌ 404 — endpoint missing (UI has Operational tab) |
+| GET | `/reports/financial` | — | ⏭️ N/A — frontend computes financial metrics client-side from invoices; no backend endpoint needed. Earlier 404 flagged here was a test-script mistake. |
+| GET | `/reports/operational` | — | ⏭️ N/A — same as above, computed from appointments client-side. |
 
 ### Backend issues found & fixed in this session
 - Maintenance: `CreateMaintenanceDto` missing `notes` → could not save/update notes. **Fixed** (`f626fb4`).

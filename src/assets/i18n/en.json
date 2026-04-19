@@ -375,7 +375,7 @@
     "newJob": "New Job",
     "totalJobs": "Total Jobs",
     "completedToday": "Completed Today",
-    "pendingApprovals": "Pending Approvals",
+    "pendingApprovals": "Jobs Needing Approval",
     "allJobs": "All Jobs",
     "viewGrid": "Grid View",
     "viewList": "List View",
@@ -1068,7 +1068,9 @@
       "custom": "Custom"
     },
     "export": {
-      "exporting": "Exporting to {{format}}..."
+      "exporting": "Exporting to {{format}}...",
+      "downloaded": "Report downloaded as CSV.",
+      "tierRequired": "Data export requires a higher subscription tier."
     },
     "kpis": {
       "totalRevenue": "Total Revenue",

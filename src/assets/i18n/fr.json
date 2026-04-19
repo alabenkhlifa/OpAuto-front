@@ -386,7 +386,7 @@
     "newJob": "Nouveau travail",
     "totalJobs": "Total des travaux",
     "completedToday": "Terminés aujourd'hui",
-    "pendingApprovals": "En attente d'approbation",
+    "pendingApprovals": "Travaux à approuver",
     "allJobs": "Tous les travaux",
     "viewGrid": "Grille",
     "viewList": "Liste",
@@ -1030,7 +1030,9 @@
       "custom": "Personnalisé"
     },
     "export": {
-      "exporting": "Export vers {{format}} en cours..."
+      "exporting": "Export vers {{format}} en cours...",
+      "downloaded": "Rapport téléchargé en CSV.",
+      "tierRequired": "L'export nécessite un abonnement supérieur."
     },
     "kpis": {
       "totalRevenue": "Chiffre d'affaires total",

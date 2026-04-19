@@ -8,6 +8,7 @@ import { ReportingService } from '../../core/services/reporting.service';
 import { SubscriptionService } from '../../core/services/subscription.service';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { TranslationService } from '../../core/services/translation.service';
+import { ToastService } from '../../shared/services/toast.service';
 import { 
   ReportFilters, 
   DateRangePreset, 
@@ -32,6 +33,7 @@ export class ReportsComponent implements OnInit {
   private reportingService = inject(ReportingService);
   private translationService = inject(TranslationService);
   private subscriptionService = inject(SubscriptionService);
+  private toast = inject(ToastService);
   
   hasAdvancedReports = signal(false);
   hasDataExport = signal(false);
@@ -310,11 +312,26 @@ export class ReportsComponent implements OnInit {
 
   onExportReport(format: 'pdf' | 'excel' | 'csv') {
     if (!this.hasDataExport()) {
-      console.log('Data export requires Professional tier');
+      this.toast.warning(this.translationService.instant('reports.export.tierRequired'));
       return;
     }
-    const message = this.translationService.instant('reports.export.exporting', { format: format.toUpperCase() });
-    console.log(message);
+    const rows = this.kpis().map(k => ({
+      name: k.label,
+      value: k.value,
+      change: `${k.changeType === 'increase' ? '+' : k.changeType === 'decrease' ? '-' : ''}${Math.abs(k.change ?? 0)}%`,
+    }));
+    const header = 'KPI,Value,Change';
+    const body = rows.map(r => [r.name, r.value, r.change].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const csv = `${header}\n${body}`;
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const stamp = new Date().toISOString().split('T')[0];
+    link.href = url;
+    link.download = `opauto-report-${stamp}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    this.toast.success(this.translationService.instant('reports.export.downloaded'));
   }
 
   onPrintReport() {

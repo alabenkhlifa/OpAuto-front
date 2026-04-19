@@ -386,7 +386,7 @@
     "newJob": "عمل جديد",
     "totalJobs": "إجمالي الأعمال",
     "completedToday": "مكتملة اليوم",
-    "pendingApprovals": "في انتظار الموافقة",
+    "pendingApprovals": "أعمال بانتظار الموافقة",
     "allJobs": "جميع الأعمال",
     "viewGrid": "شبكة",
     "viewList": "قائمة",
@@ -1030,7 +1030,9 @@
       "custom": "مخصص"
     },
     "export": {
-      "exporting": "جارِ التصدير إلى {{format}}..."
+      "exporting": "جارِ التصدير إلى {{format}}...",
+      "downloaded": "تم تنزيل التقرير بصيغة CSV.",
+      "tierRequired": "يتطلب التصدير خطة اشتراك أعلى."
     },
     "kpis": {
       "totalRevenue": "إجمالي الإيرادات",
