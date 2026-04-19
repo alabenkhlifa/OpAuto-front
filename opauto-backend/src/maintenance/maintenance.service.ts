@@ -11,7 +11,16 @@ export class MaintenanceService {
     return this.prisma.maintenanceJob.findMany({
       where: { garageId },
       include: {
-        car: { select: { make: true, model: true, licensePlate: true } },
+        car: {
+          select: {
+            make: true,
+            model: true,
+            year: true,
+            licensePlate: true,
+            mileage: true,
+            customer: { select: { id: true, firstName: true, lastName: true } },
+          },
+        },
         employee: { select: { firstName: true, lastName: true } },
         _count: { select: { tasks: true, photos: true } },
       },

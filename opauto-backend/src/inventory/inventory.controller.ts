@@ -18,6 +18,7 @@ import { ModuleAccessGuard, RequireModule } from '../modules/module-access.guard
 export class InventoryController {
   constructor(private service: InventoryService) {}
   @Get() findAll(@CurrentUser('garageId') gid: string) { return this.service.findAll(gid); }
+  @Get('suppliers') listSuppliers() { return []; }
   @Get(':id') findOne(@Param('id') id: string, @CurrentUser('garageId') gid: string) { return this.service.findOne(id, gid); }
   @Post() @RequireModule('inventory') create(@CurrentUser('garageId') gid: string, @Body() dto: CreatePartDto) { return this.service.create(gid, dto); }
   @Put(':id') @RequireModule('inventory') update(@Param('id') id: string, @CurrentUser('garageId') gid: string, @Body() dto: UpdatePartDto) { return this.service.update(id, gid, dto); }

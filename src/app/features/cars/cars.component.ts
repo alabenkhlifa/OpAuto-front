@@ -45,7 +45,9 @@ export class CarsComponent implements OnInit {
   selectedStatus = signal('all');
   showMobileFilters = signal(false);
 
-  availableMakes = computed(() => this.carService.getAvailableMakes());
+  availableMakes = computed(() =>
+    [...new Set(this.cars().map(c => c.make))].filter(Boolean).sort()
+  );
 
   // Computed tooltip texts
   tooltipFilters = computed(() => this.getTooltip('filters'));

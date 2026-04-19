@@ -8,13 +8,25 @@ export class CarsService {
   constructor(private prisma: PrismaService) {}
 
   async findAll(garageId: string) {
-    return this.prisma.car.findMany({
+    const cars = await this.prisma.car.findMany({
       where: { garageId },
       include: {
         customer: { select: { firstName: true, lastName: true } },
+        appointments: {
+          where: { status: 'COMPLETED' },
+          orderBy: { endTime: 'desc' },
+          take: 1,
+          select: { endTime: true },
+        },
+        _count: { select: { appointments: { where: { status: 'COMPLETED' } } } },
       },
       orderBy: { createdAt: 'desc' },
     });
+    return cars.map(({ appointments, _count, ...car }) => ({
+      ...car,
+      totalServices: _count.appointments,
+      lastServiceDate: appointments[0]?.endTime ?? null,
+    }));
   }
 
   async findOne(id: string, garageId: string) {

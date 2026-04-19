@@ -243,10 +243,14 @@ export class MaintenanceService {
       customerId: b.customerId,
       mechanicId: b.employeeId || b.mechanicId,
       licensePlate: b.car?.licensePlate || b.licensePlate || '',
-      customerName: b.customer ? `${b.customer.firstName || ''} ${b.customer.lastName || ''}`.trim() : (b.customerName || ''),
+      customerName: (() => {
+        const c = b.customer || b.car?.customer;
+        if (c) return `${c.firstName || ''} ${c.lastName || ''}`.trim();
+        return b.customerName || '';
+      })(),
       mechanicName: b.employee ? `${b.employee.firstName || ''} ${b.employee.lastName || ''}`.trim() : (b.mechanicName || ''),
-      carDetails: b.car ? `${b.car.year} ${b.car.make} ${b.car.model}` : (b.carDetails || ''),
-      currentMileage: b.mileage || b.currentMileage || 0,
+      carDetails: b.car ? [b.car.year, b.car.make, b.car.model].filter(Boolean).join(' ') : (b.carDetails || ''),
+      currentMileage: b.car?.mileage || b.mileage || b.currentMileage || 0,
       jobTitle: b.title || b.jobTitle,
       description: b.description || '',
       tasks: (b.tasks || []).map((t: any) => ({

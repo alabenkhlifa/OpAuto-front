@@ -183,9 +183,10 @@ export class DashboardComponent implements OnInit {
       customers: this.customerService.getCustomers(),
       employees: this.employeeService.getEmployees(),
       parts: this.partService.getParts(),
-      invoices: this.invoiceService.getInvoices()
+      invoices: this.invoiceService.getInvoices(),
+      cars: this.appointmentService.getCars()
     }).subscribe({
-      next: ({ appointments, customers, employees, parts, invoices }) => {
+      next: ({ appointments, customers, employees, parts, invoices, cars }) => {
         const today = new Date();
         const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
         const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
@@ -219,12 +220,13 @@ export class DashboardComponent implements OnInit {
           const d = new Date(a.scheduledDate);
           const mechanic = employees.find(e => e.id === a.mechanicId);
           const customer = customers.find(c => c.id === a.customerId);
+          const car = cars.find(c => c.id === a.carId);
           return {
             id: a.id,
             time: d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
             customerName: customer?.name || a.customerId,
-            carModel: a.serviceType || '',
-            licensePlate: '',
+            carModel: car ? `${car.make} ${car.model}` : '',
+            licensePlate: car?.licensePlate || '',
             serviceType: a.serviceName,
             status: a.status.replace(/-/g, '_'),
             estimatedDuration: a.estimatedDuration / 60,
@@ -242,12 +244,13 @@ export class DashboardComponent implements OnInit {
           const progress = Math.min(100, Math.max(0, Math.round((elapsedMs / totalMs) * 100)));
           const mechanic = employees.find(e => e.id === a.mechanicId);
           const customer = customers.find(c => c.id === a.customerId);
+          const car = cars.find(c => c.id === a.carId);
 
           return {
             id: a.id,
             customerName: customer?.name || '',
-            carModel: a.serviceType || '',
-            licensePlate: '',
+            carModel: car ? `${car.make} ${car.model}` : '',
+            licensePlate: car?.licensePlate || '',
             services: [a.serviceName],
             startedAt: start.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
             estimatedCompletion: end.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
