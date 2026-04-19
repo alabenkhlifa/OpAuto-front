@@ -78,7 +78,7 @@ function mapFromBackend(b: any): Employee {
       certifications: [],
     },
     availability: {
-      isAvailable: b.isAvailable !== undefined ? b.isAvailable : (b.status === 'ACTIVE'),
+      isAvailable: b.status === 'ACTIVE' && (b.isAvailable !== undefined ? b.isAvailable : true),
       unavailableReason: b.unavailableReason || undefined,
       unavailableUntil: b.unavailableUntil ? new Date(b.unavailableUntil) : undefined,
       currentWorkload: 0,
