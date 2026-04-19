@@ -1751,6 +1751,15 @@
       "createInvoice": "Create Invoice",
       "saveAsDraft": "Save as Draft"
     },
+    "pending": {
+      "title": "Pending Payments",
+      "invoices": "invoice(s)",
+      "due": "Due",
+      "viewDetails": "View Details",
+      "recordPayment": "Record Payment",
+      "allCaughtUp": "All caught up!",
+      "noPendingPayments": "No invoices are waiting for payment."
+    },
     "allInvoices": "All Invoices",
     "createInvoice": "Create Invoice",
     "pendingPayment": "Pending Payment",

@@ -1671,6 +1671,15 @@
       "createInvoice": "Créer la facture",
       "saveAsDraft": "Enregistrer comme brouillon"
     },
+    "pending": {
+      "title": "Paiements en attente",
+      "invoices": "facture(s)",
+      "due": "Échéance",
+      "viewDetails": "Voir les détails",
+      "recordPayment": "Enregistrer le paiement",
+      "allCaughtUp": "Tout est à jour !",
+      "noPendingPayments": "Aucune facture en attente de paiement."
+    },
     "allInvoices": "Toutes les factures",
     "createInvoice": "Créer une facture",
     "pendingPayment": "Paiement en attente",

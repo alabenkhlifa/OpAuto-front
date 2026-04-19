@@ -69,21 +69,23 @@ export class InvoicingComponent implements OnInit {
 
   private loadData(): void {
     this.isLoading.set(true);
-    
+
     this.invoiceService.getInvoices().subscribe({
       next: (invoices) => {
         this.invoices.set(invoices);
-      },
-      error: (error) => console.error('Failed to load invoices:', error)
-    });
-
-    this.invoiceService.getInvoiceStats().subscribe({
-      next: (stats) => {
-        this.stats.set(stats);
-        this.isLoading.set(false);
+        this.invoiceService.getInvoiceStats().subscribe({
+          next: (stats) => {
+            this.stats.set(stats);
+            this.isLoading.set(false);
+          },
+          error: (error) => {
+            console.error('Failed to load stats:', error);
+            this.isLoading.set(false);
+          }
+        });
       },
       error: (error) => {
-        console.error('Failed to load stats:', error);
+        console.error('Failed to load invoices:', error);
         this.isLoading.set(false);
       }
     });
