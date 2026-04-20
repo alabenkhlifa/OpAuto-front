@@ -452,8 +452,11 @@ export class MaintenanceFormComponent implements OnInit {
         customerId: selectedCar?.customerId || '',
         photos: [],
         approvalRequests: [],
-        status: 'waiting'
       };
+      // Only set default status on create; preserve existing status on edit
+      if (!this.isEditMode()) {
+        jobData.status = 'waiting';
+      }
 
       const operation = this.isEditMode()
         ? this.maintenanceService.updateMaintenanceJob(this.jobId()!, jobData)

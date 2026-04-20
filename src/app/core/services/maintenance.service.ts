@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, BehaviorSubject } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { map, tap, switchMap } from 'rxjs/operators';
 import {
   MaintenanceJob,
   MaintenanceFilters,
@@ -110,23 +110,21 @@ export class MaintenanceService {
   }
 
   updateTaskStatus(jobId: string, taskId: string, status: TaskStatus): Observable<MaintenanceJob> {
-    const job = this.maintenanceJobsSubject.value.find(j => j.id === jobId);
-    if (!job) {
-      throw new Error(`Job with id ${jobId} not found`);
-    }
-
-    const updatedTasks = job.tasks.map(task => {
-      if (task.id === taskId) {
-        const updatedTask = { ...task, status };
-        if (status === 'completed') {
-          updatedTask.completedAt = new Date();
+    return this.updateTask(jobId, taskId, {
+      isCompleted: status === 'completed',
+    }).pipe(
+      switchMap(() => this.http.get<any>(`/maintenance/${jobId}`)),
+      map(j => this.mapFromBackend(j)),
+      tap(updated => {
+        const current = this.maintenanceJobsSubject.value;
+        const index = current.findIndex(j => j.id === jobId);
+        if (index !== -1) {
+          const copy = [...current];
+          copy[index] = updated;
+          this.maintenanceJobsSubject.next(copy);
         }
-        return updatedTask;
-      }
-      return task;
-    });
-
-    return this.updateMaintenanceJob(jobId, { tasks: updatedTasks });
+      })
+    );
   }
 
   addApprovalRequest(jobId: string, request: Omit<ApprovalRequest, 'id' | 'requestedAt' | 'status'>): Observable<MaintenanceJob> {

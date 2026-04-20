@@ -175,22 +175,17 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
 
                       <!-- Task Actions -->
                       @if (job()!.status === 'in-progress' && task.status !== 'completed') {
-                        <div class="flex space-x-2">
-                          @if (task.status === 'pending') {
-                            <button 
-                              class="px-3 py-1 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                              (click)="updateTaskStatus(task.id, 'in-progress')">
-                              Start
-                            </button>
-                          }
-                          @if (task.status === 'in-progress') {
-                            <button 
-                              class="px-3 py-1 text-xs bg-green-600 text-white rounded-md hover:bg-green-700"
-                              (click)="updateTaskStatus(task.id, 'completed')">
-                              Complete
-                            </button>
-                          }
-                        </div>
+                        <button
+                          class="px-3 py-1 text-xs bg-green-600 text-white rounded-md hover:bg-green-700"
+                          (click)="updateTaskStatus(task.id, 'completed')">
+                          Complete
+                        </button>
+                      } @else if (task.status === 'completed' && job()!.status === 'in-progress') {
+                        <button
+                          class="px-3 py-1 text-xs bg-gray-400 text-white rounded-md hover:bg-gray-500"
+                          (click)="updateTaskStatus(task.id, 'pending')">
+                          Reopen
+                        </button>
                       }
                     </div>
                   }
