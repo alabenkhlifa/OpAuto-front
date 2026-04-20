@@ -2,6 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMaintenanceDto } from './dto/create-maintenance.dto';
 import { UpdateMaintenanceDto } from './dto/update-maintenance.dto';
+import { CreateTaskDto } from './dto/create-task.dto';
+import { UpdateTaskDto } from './dto/update-task.dto';
 
 @Injectable()
 export class MaintenanceService {
@@ -66,5 +68,27 @@ export class MaintenanceService {
   async remove(id: string, garageId: string) {
     await this.findOne(id, garageId);
     return this.prisma.maintenanceJob.delete({ where: { id } });
+  }
+
+  // ── Tasks ────────────────────────────────────────────────────────
+  async addTask(jobId: string, garageId: string, dto: CreateTaskDto) {
+    await this.findOne(jobId, garageId);
+    return this.prisma.maintenanceTask.create({
+      data: { maintenanceJobId: jobId, ...dto },
+    });
+  }
+
+  async updateTask(jobId: string, taskId: string, garageId: string, dto: UpdateTaskDto) {
+    await this.findOne(jobId, garageId);
+    const task = await this.prisma.maintenanceTask.findFirst({ where: { id: taskId, maintenanceJobId: jobId } });
+    if (!task) throw new NotFoundException('Task not found');
+    return this.prisma.maintenanceTask.update({ where: { id: taskId }, data: dto });
+  }
+
+  async removeTask(jobId: string, taskId: string, garageId: string) {
+    await this.findOne(jobId, garageId);
+    const task = await this.prisma.maintenanceTask.findFirst({ where: { id: taskId, maintenanceJobId: jobId } });
+    if (!task) throw new NotFoundException('Task not found');
+    return this.prisma.maintenanceTask.delete({ where: { id: taskId } });
   }
 }

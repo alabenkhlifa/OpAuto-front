@@ -314,6 +314,7 @@ export class MaintenanceFormComponent implements OnInit {
   isSubmitting = signal(false);
   jobId = signal<string | null>(null);
   isEditMode = signal(false);
+  private originalTaskIds = new Set<string>();
 
   ngOnInit() {
     this.initializeForm();
@@ -404,8 +405,10 @@ export class MaintenanceFormComponent implements OnInit {
     // Populate tasks
     const tasksArray = this.tasks;
     tasksArray.clear();
+    this.originalTaskIds.clear();
     job.tasks.forEach(task => {
       tasksArray.push(this.createTaskFormGroup(task));
+      this.originalTaskIds.add(task.id);
     });
   }
 
@@ -452,15 +455,17 @@ export class MaintenanceFormComponent implements OnInit {
         status: 'waiting'
       };
 
-      const operation = this.isEditMode() 
+      const operation = this.isEditMode()
         ? this.maintenanceService.updateMaintenanceJob(this.jobId()!, jobData)
         : this.maintenanceService.createMaintenanceJob(jobData);
 
       operation.subscribe({
-        next: () => {
-          this.toast.success(this.isEditMode() ? 'Maintenance job updated successfully' : 'Maintenance job created successfully');
-          this.isSubmitting.set(false);
-          this.goBack();
+        next: (saved) => {
+          this.syncTasks(saved.id, formValue.tasks || []).then(() => {
+            this.toast.success(this.isEditMode() ? 'Maintenance job updated successfully' : 'Maintenance job created successfully');
+            this.isSubmitting.set(false);
+            this.goBack();
+          });
         },
         error: (error) => {
           console.error('Error saving job:', error);
@@ -470,6 +475,31 @@ export class MaintenanceFormComponent implements OnInit {
       });
     } else {
       this.markFormGroupTouched();
+    }
+  }
+
+  private async syncTasks(jobId: string, formTasks: any[]): Promise<void> {
+    const currentIds = new Set<string>();
+    for (const t of formTasks) {
+      const looksLikeServerId = t.id && !String(t.id).startsWith('task-');
+      const payload = {
+        title: t.name,
+        description: t.description || undefined,
+        estimatedMinutes: t.estimatedTime,
+        isCompleted: t.status === 'completed',
+      };
+      if (looksLikeServerId && this.originalTaskIds.has(t.id)) {
+        await this.maintenanceService.updateTask(jobId, t.id, payload).toPromise().catch(() => {});
+        currentIds.add(t.id);
+      } else {
+        const created: any = await this.maintenanceService.addTask(jobId, payload).toPromise().catch(() => null);
+        if (created?.id) currentIds.add(created.id);
+      }
+    }
+    for (const oldId of this.originalTaskIds) {
+      if (!currentIds.has(oldId)) {
+        await this.maintenanceService.deleteTask(jobId, oldId).toPromise().catch(() => {});
+      }
     }
   }
 

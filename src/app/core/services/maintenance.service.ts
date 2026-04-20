@@ -77,6 +77,19 @@ export class MaintenanceService {
     );
   }
 
+  // ── Tasks ────────────────────────────────────────────────────────
+  addTask(jobId: string, task: { title: string; description?: string; estimatedMinutes?: number; isCompleted?: boolean }): Observable<any> {
+    return this.http.post<any>(`/maintenance/${jobId}/tasks`, task);
+  }
+
+  updateTask(jobId: string, taskId: string, updates: { title?: string; description?: string; estimatedMinutes?: number; actualMinutes?: number; isCompleted?: boolean }): Observable<any> {
+    return this.http.put<any>(`/maintenance/${jobId}/tasks/${taskId}`, updates);
+  }
+
+  deleteTask(jobId: string, taskId: string): Observable<any> {
+    return this.http.delete<any>(`/maintenance/${jobId}/tasks/${taskId}`);
+  }
+
   updateJobStatus(id: string, status: MaintenanceStatus): Observable<MaintenanceJob> {
     const updates: any = { status: status === 'waiting' ? 'PENDING' : toBackendEnum(status) };
     if (status === 'completed') {

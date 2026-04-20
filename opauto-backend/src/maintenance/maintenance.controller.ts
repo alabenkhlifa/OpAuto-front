@@ -3,6 +3,8 @@ import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { MaintenanceService } from './maintenance.service';
 import { CreateMaintenanceDto } from './dto/create-maintenance.dto';
 import { UpdateMaintenanceDto } from './dto/update-maintenance.dto';
+import { CreateTaskDto } from './dto/create-task.dto';
+import { UpdateTaskDto } from './dto/update-task.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { ModuleAccessGuard, RequireModule } from '../modules/module-access.guard';
@@ -19,4 +21,17 @@ export class MaintenanceController {
   @Post() @RequireModule('maintenance') create(@CurrentUser('garageId') gid: string, @Body() dto: CreateMaintenanceDto) { return this.service.create(gid, dto); }
   @Put(':id') @RequireModule('maintenance') update(@Param('id') id: string, @CurrentUser('garageId') gid: string, @Body() dto: UpdateMaintenanceDto) { return this.service.update(id, gid, dto); }
   @Delete(':id') @RequireModule('maintenance') remove(@Param('id') id: string, @CurrentUser('garageId') gid: string) { return this.service.remove(id, gid); }
+
+  @Post(':jobId/tasks') @RequireModule('maintenance')
+  addTask(@Param('jobId') jobId: string, @CurrentUser('garageId') gid: string, @Body() dto: CreateTaskDto) {
+    return this.service.addTask(jobId, gid, dto);
+  }
+  @Put(':jobId/tasks/:taskId') @RequireModule('maintenance')
+  updateTask(@Param('jobId') jobId: string, @Param('taskId') taskId: string, @CurrentUser('garageId') gid: string, @Body() dto: UpdateTaskDto) {
+    return this.service.updateTask(jobId, taskId, gid, dto);
+  }
+  @Delete(':jobId/tasks/:taskId') @RequireModule('maintenance')
+  removeTask(@Param('jobId') jobId: string, @Param('taskId') taskId: string, @CurrentUser('garageId') gid: string) {
+    return this.service.removeTask(jobId, taskId, gid);
+  }
 }
