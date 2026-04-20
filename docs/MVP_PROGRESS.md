@@ -1,6 +1,8 @@
 # OpAuto MVP Implementation Progress
 
-> **Session handoff (2026-04-20):** 25 commits landed this session (`67a7aa8` → `b83c9bf`), 41 bugs fixed + 25 gaps tracked as open 🔴 tickets in `docs/BUGS.md`. For the per-screen UI-test matrix and "where to resume" notes, read `TEST_RESULTS.md` first — its top section is a session handoff. For the fix-by-fix log, scroll to **Stability Session 2026-04-20** in this file.
+> **Session handoff (2026-04-21):** 10 commits landed this session (`850ec70` → `8d56b72`) on top of the 2026-04-20 batch. 15 more bugs fixed end-to-end (BUG-063, 068, 069, 073, 074, 086a/b/c, 087d, 088a/b/c, 089, 090, 091) and 14 new tests added (7 unit + 7 integration for invoicing). Remaining 🔴 tickets are all feature gaps (no backend model for photos / user preferences / extended Garage fields / AI UI / calendar drag-drop) — see `docs/BUGS.md`. Scroll to **Stability Session 2026-04-21** below for the fix-by-fix log.
+>
+> **Prior handoff (2026-04-20):** 25 commits landed (`67a7aa8` → `b83c9bf`), 41 bugs fixed + 25 gaps tracked as open 🔴 tickets. See **Stability Session 2026-04-20** lower in this file.
 
 
 ## Batch 0: Foundation & Infrastructure
@@ -180,9 +182,9 @@ Comprehensive end-to-end testing of every screen + backend endpoint. 12 commits 
 - [x] Backend create/update now return relations (car, customer, mechanic)
 - [x] **Tasks persist** — added POST/PUT/DELETE `/maintenance/:jobId/tasks/:taskId?` (commit `648b7b4`). Form's `syncTasks()` runs after job save, diffs original vs current task IDs and fires the right endpoint per task.
 
-## Stability Session 2026-04-21 (resume — 7 tickets verified, 8 bugs fixed)
+## Stability Session 2026-04-21 (resume — 10 tickets verified, 15 bugs fixed, 14 tests added)
 
-BUG-068, 073, 074, 071, 063/064, 065, 066 all exercised end-to-end. See `docs/BUGS.md` for per-ticket detail and new open tickets (BUG-086 … BUG-091).
+BUG-063, 065, 066, 067, 068, 069, 071, 073, 074 exercised end-to-end. BUG-089/090/091 found + fixed along the way. See `docs/BUGS.md` for per-ticket detail.
 
 ### Invoice Draft → Sent → Paid (BUG-068)
 - [x] Verified UI transitions (status + sidebar badge + list card progress) end-to-end
@@ -203,8 +205,15 @@ BUG-068, 073, 074, 071, 063/064, 065, 066 all exercised end-to-end. See `docs/BU
 - [x] Add Part — **`/inventory/suppliers` endpoint was a `[]` stub** → wired to `prisma.supplier.findMany`; also loosened part-modal `s.isActive` filter (schema has no such column)
 - [x] Add Employee — **`CreateEmployeeDto` was rejecting `status` field** sent by frontend → added `EmployeeStatus` field to DTO
 
-### AI page / Profile / Preferences (BUG-071, 063, 064)
-- [ ] Confirmed feature gaps: AI has no frontend route, Profile/Preferences save are `setTimeout` stubs. Logged as 🔴 in BUGS.md; no code change this session.
+### Profile update (BUG-063)
+- [x] Backend: `GET /users/me` + `PUT /users/me` routes (password/role whitelisted out so users can't self-escalate or bypass change-password)
+- [x] Frontend: Profile form was a `setTimeout` fake-success stub → now PUTs firstName/lastName/email/phone; refreshes local currentUser signal so header rerenders
+- [x] Verified: phone edit persists in DB (`+216 98 123 456` → `+216 20 555 777`)
+
+### AI page / Preferences / Photos (BUG-071, 064, 067)
+- [ ] BUG-071: AI module has backend endpoints but no `/ai` frontend route — needs a page component. Feature gap, logged 🔴.
+- [ ] BUG-064: Profile Preferences save is still a `setTimeout` stub — needs a `UserPreference` Prisma model + endpoint. Logged 🔴.
+- [ ] BUG-067: `PhotoUploadComponent` exists in `src/app/shared/` but is never imported; `PhotoService` is `URL.createObjectURL` + signal array (no HTTP). Backend has no `Photo` model. Full feature work. Logged 🔴.
 
 ### Approvals (BUG-065)
 - [x] Approve + Reject buttons verified end-to-end (created approval via API — no UI create button)
@@ -218,3 +227,8 @@ BUG-068, 073, 074, 071, 063/064, 065, 066 all exercised end-to-end. See `docs/BU
 - [x] Frontend `ApprovalType` enum cut from 8 legacy values to the 4 backend actually supports (MAINTENANCE, INVOICE, PURCHASE_ORDER, DISCOUNT)
 - [x] Service `mapType` + model `APPROVAL_TYPE_LABELS` + stats `byType` shape updated
 - [x] i18n keys replaced in en/fr/ar.json. Type dropdown + row badges now render real labels ("Purchase Order", "Discount") instead of "Other"
+
+### Invoice Print (BUG-069)
+- [x] Detail page `onPrint()` calls `window.print()` — verified real native print dialog
+- [x] List-card Print was a no-op (`$event.stopPropagation()` only) → now navigates to `/invoices/:id?autoPrint=1`; detail `ngOnInit` consumes the query param and auto-triggers `window.print()` ~300ms after the invoice renders
+- [x] PDF is served via the browser's "Save as PDF" print destination (onDownloadPDF just calls onPrint) — not a dedicated PDF endpoint but acceptable for MVP

@@ -4,7 +4,9 @@ Single source of truth for the current bug batch. Add new bugs to **§ Backlog**
 
 **Legend:** 🔴 open · 🟡 in progress · 🟢 fixed · ⚪️ deferred
 
-> **Session handoff (2026-04-20):** BUG-019 → BUG-060 fixed this session. **BUG-061 → BUG-085** are open gaps the next session should pick up — see the "Session 2026-04-20 — Known gaps" table further down. For the per-screen UI-test pass/fail matrix and "where to resume" notes, read `TEST_RESULTS.md` top section first.
+> **Session handoff (2026-04-21):** 15 more bugs fixed end-to-end — BUG-063, 068, 069, 073, 074 from the original list, plus new-found BUG-086a/b/c, 087d, 088a/b/c, 089, 090, 091. BUG-064, 067, 070, 071, 087a/b/c still open as genuine feature gaps (no backend model for user preferences / photos / extended Garage fields / AI page / calendar drag-drop) — these need implementation, not debugging. See **Session 2026-04-21** row block further down.
+>
+> **Prior handoff (2026-04-20):** BUG-019 → BUG-060 fixed that session. BUG-061 → BUG-085 were the open gaps it left behind (most now resolved above).
 
 ---
 

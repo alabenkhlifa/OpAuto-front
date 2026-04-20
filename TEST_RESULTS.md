@@ -11,7 +11,9 @@ Legend: ✅ pass · ❌ fail · ⚠️ works with issue · ⏭️ not-yet-tested
 
 ## ⏩ Session handoff — read this first
 
-**Totals**: 25 commits landed (`67a7aa8` → `b83c9bf`) · **41 bugs fixed**, **25 tracked open gaps** in `docs/BUGS.md` (BUG-019 … BUG-085).
+**2026-04-21 session totals**: 10 commits (`850ec70` → `8d56b72`) on top of the 2026-04-20 batch. **15 additional bugs fixed** end-to-end · **14 new tests** (7 unit + 7 integration for invoicing). Running total across both sessions: 35 commits, **56 bugs fixed**, ~15 remaining 🔴 tickets — all genuine feature gaps (no backend model for photos / preferences / extended Garage / AI UI / calendar drag-drop).
+
+**Prior (2026-04-20) totals**: 25 commits (`67a7aa8` → `b83c9bf`) · 41 bugs fixed, 25 open gaps logged.
 
 ### What's verified end-to-end (UI clicks + API roundtrips)
 - **Auth**: login valid/invalid, Sign Out, Register, Refresh, Change Password (backend + UI), Forgot-password modal opens (submit stubbed — BUG-061)
@@ -32,30 +34,34 @@ Legend: ✅ pass · ❌ fail · ⚠️ works with issue · ⏭️ not-yet-tested
 - **Profile**: Sign Out, Change Password
 - **Mobile (375×667)**: sidebar slide-in/out, no horizontal overflow on 6 top pages
 
-### What's NOT verified yet (start here next session)
-See `docs/BUGS.md` entries BUG-061 through BUG-085. Quick high-leverage picks:
-1. **BUG-068** Invoice Draft → Sent → Paid transition via UI (backend works, UI never clicked)
-2. **BUG-073** Settings save after an edit (we clicked all 5 tabs but never saved a change)
-3. **BUG-074** Submit paths on Add Customer / Add Car / Add Part / Add Employee modals
-4. **BUG-071** AI module UI page (`/ai`) — backend verified, page never opened
-5. **BUG-063/064** Profile Update + Preferences save
-6. **BUG-070** Calendar drag-and-drop (still TODO stubs per CLAUDE.md)
-7. **BUG-067** Photo uploads (car / employee / maintenance) — widgets exist
-8. **BUG-065** Approvals create / approve / reject (0 seed data, flow never exercised)
-9. **BUG-066** Stock Adjustment modal
+### What's verified end-to-end this session (2026-04-21)
+- **Invoicing**: Draft → Sent → Paid status flow; list-card Print button (autoPrint via detail page); `/invoices` list now returns `payments[]` so paid/remaining/progress render correctly; seed creates CASH Payment rows for all PAID invoices
+- **Settings**: Garage Info save (name/phone/email/address persist across reload); Working Hours save + correct checkbox hydration after seed shape fix
+- **Add modals**: Add Customer / Car / Part / Employee submit + DB-verified. Inventory `/suppliers` endpoint now returns real data (was `[]` stub). CreateEmployeeDto accepts `status` field (400-ed previously)
+- **Approvals**: Approve + Reject buttons; ApprovalType enum collapsed 8 → 4 (backend reality) so dropdown + row badges show real labels
+- **Inventory**: Stock Adjustment modal writes `stockMovement` audit rows via new `POST /inventory/:id/adjust`
+- **Profile**: Update Profile form wired to new `GET/PUT /users/me`; phone edit persists in DB
+
+### What's NOT fixed yet (remaining 🔴 — all feature gaps, not bugs)
+See `docs/BUGS.md`. Start-here picks for next session:
+1. **BUG-064** Profile Preferences — needs a `UserPreference` Prisma model + endpoint; current save is `setTimeout` stub
+2. **BUG-067** Photo uploads — shared `PhotoUploadComponent` exists but isn't imported anywhere; `PhotoService` is in-memory only; backend has no `Photo` model. Full feature
+3. **BUG-071** AI frontend page — needs an `/ai` route + component; backend endpoints (`/ai/chat`, `/ai/diagnose`, etc.) are live
+4. **BUG-070** Calendar drag-and-drop — `handleDateSelect` + `handleEventDrop` are TODO stubs
+5. **BUG-087a/b/c** Settings schema gaps — Operations capacity/service/appointment + System + Integrations save buttons are no-ops because `Garage` model doesn't store those fields. Needs migration + new columns (or side tables)
+6. **BUG-089/090 follow-up**: approval list "Approved by on" still missing name + date; respondedBy isn't resolved to a user name
 
 ### Environment state after this session
-- `opauto-db` docker container running (`postgres:postgres@localhost:5432/opauto`) with seed data
-- User's `tdx-postgres` container is stopped (stopped by me with user approval to free port 5432) — restart with `docker start tdx-postgres` and `docker stop opauto-db` when switching back
-- Backend + frontend dev servers still running as background bash processes (`b81ouxdwr` + `bz6bmkmmz`) — may need `npm run start:dev` / `ng serve` if session restarts
-- DB was reseeded on 2026-04-20 (`prisma db push --force-reset && prisma db seed`) — clean baseline of 15 customers / 15 cars / 5 employees / 82 appointments / 12 invoices / 5 maintenance / 15 parts
+- `opauto-db` docker container running (`postgres:postgres@localhost:5432/opauto`)
+- DB was reset + reseeded once at the start of 2026-04-21 to pick up the Payment-rows-for-PAID-invoices seed change. Current state is no longer "pristine" — it has test data added via UI: Test Customer 2026-04-21, Tesla Model 3 (TEST001), TEST-PART-001, Probe Reload employee, 2 approvals (1 approved, 1 rejected), stock adjustments on Air Filter. Reseed before next session if a clean baseline matters
+- Backend + frontend dev servers still running as background bash processes — may need `npm run start:dev` / `ng serve` if session restarts
 
 ### How to resume
 1. `cd /Users/alabenkhlifa/IdeaProjects/OpAuto-front`
-2. Check services: `lsof -i :3000 -i :4200` — both must be listening
-3. Login in browser: `owner@autotech.tn / password123`
-4. Pick a 🔴 ticket from `docs/BUGS.md` (BUG-061+)
-5. Keep updating the per-screen table below with ✅/⏭️ as you go
+2. Check services: `lsof -iTCP:3000 -iTCP:4200 -sTCP:LISTEN` — both must be listening; start with `npm run start:dev` (backend) + `ng serve` (frontend) if not
+3. Optional clean slate: `cd opauto-backend && npx prisma db push --force-reset && npx prisma db seed`
+4. Login in browser: `owner@autotech.tn / password123`
+5. Pick a 🔴 ticket from `docs/BUGS.md` — the remaining ones are all feature work (photos, AI UI, calendar drag-drop, user preferences, extended Garage fields). Smallest is BUG-064 (UserPreference model + endpoint + wire)
 
 ---
 
