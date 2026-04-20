@@ -110,3 +110,59 @@
 - [x] Zero old blue colors remaining in src/
 - [x] 16 backend modules in opauto-backend/src/
 - [x] 34 frontend routes
+
+## Stability Session 2026-04-20 (full-suite audit)
+
+Comprehensive end-to-end testing of every screen + backend endpoint. 12 commits landed. Full transcript in `TEST_RESULTS.md`, bug breakdown in `docs/BUGS.md` (BUG-019 … BUG-040).
+
+### P0 — blockers fixed
+- [x] UI create-appointment → 400 (frontend sent `status:SCHEDULED` that DTO rejected)
+- [x] Invoice Create page rendering raw `invoicing.create.*` i18n keys
+- [x] Invoice Create page using 3 hardcoded mock customers instead of real 15
+- [x] Module guard silent redirect → now shows toast "This module needs activation"
+- [x] Dashboard "Generate Invoice" → 404 (`/invoicing` → `/invoices/create`)
+- [x] Customers page showing 0 counts (loadStats race with loadCustomers)
+- [x] Invoicing dashboard KPIs showing 0 (same race pattern)
+- [x] Inventory dashboard showing 0 (same race pattern)
+
+### P1 — data / workflow fixes
+- [x] Invoice `paidAt` stays null after PAID → now set in `addPayment`
+- [x] Employee roles all "Senior Mechanic" → expanded role type (Mechanic / Electrician / Bodywork Specialist / Tire Specialist)
+- [x] `TIRE_ALIGNMENT` department missing translation
+- [x] `common.reset` raw key on Settings
+- [x] Maintenance cards showing "undefined Ford Focus" + empty CUSTOMER/Mileage → backend now includes `car.year`, `car.mileage`, `car.customer`
+- [x] Cars cards always showing "Total Services: 0 / N/A" → backend aggregates from COMPLETED appointments
+- [x] Cars Make filter empty → rebuilds from loaded cars via signal-backed computed
+- [x] GET `/api/inventory/suppliers` 404 → returns `[]`
+- [x] Maintenance "Complete Job" → 400 (`completionDate` not in DTO)
+- [x] Maintenance "New Job" form raw `maintenance.new.*` keys → added en/fr/ar
+- [x] Invoice detail direct-nav showed epoch dates + empty fields → `fetchInvoiceById` HTTP fallback
+- [x] Invoice detail garage footer hardcoded ("OpAuto Garage / contact@opautogatage.tn" typo) → loads from `/garage-settings`
+- [x] Invoice schema now has optional `carId` relation (Car.invoices reverse); detail shows "Volkswagen Golf 8 (2022) / 234TUN567"
+- [x] Employee "Mark Unavailable" silently no-op'd → added `isAvailable`+`unavailableReason`+`unavailableUntil` to schema
+- [x] Inactive employees showed "Available" on their cards → status AND isAvailable
+- [x] Notifications Delete silently no-op'd → added `DELETE /notifications/:id` backend route
+- [x] Login bad creds silent → now shows "Invalid username/email or password"
+- [x] Change Password was a stub → implemented backend `POST /auth/change-password` + wired frontend
+- [x] Reports Export button was `console.log` → generates CSV download with 6 KPIs
+- [x] Staff got 403 on `GET /employees` (blocked appointment mechanic dropdown) → moved `@Roles(OWNER)` to mutations only
+- [x] Staff got 403 on dashboard `GET /invoices` + sidebar `GET /approvals` → gated by `isOwner()` in caller
+- [x] Owner-only route redirect was silent → `ownerGuard` now shows warning toast (en/fr/ar); bootstrap race fixed with `filter(user!==null), take(1)`
+
+### P2 — polish
+- [x] Currency format unified across 9 helpers (all `fr-TN` with `minimumFractionDigits: 2, maximumFractionDigits: 2`) — was mix of 0/2/3 decimals
+- [x] Pluralization: `TranslationService.instant()` now understands `{one, other}` objects
+- [x] Dashboard Today's Schedule: "1 appointment scheduled" / "5 appointments"
+- [x] Customers: "1 car" / "2 cars" (was "1 cars")
+- [x] Invoicing Pending: "1 invoice" / "3 invoices" (was "1 invoice(s)")
+- [x] Dashboard "brake-repair •" raw slug → shows real car make/model
+- [x] Duplicate top-level `invoicing` key in en/fr/ar.json → merged, removed dead block
+- [x] Onboarding tour now honors per-user dismissal (`shouldShowTour()` check added to `startTourForCurrentUser`)
+- [x] Maintenance KPI "Pending Approvals" (confusing with separate `/approvals` page) → renamed "Jobs Needing Approval"
+- [x] Added i18n keys: `common.reset`, `employees.departments.tire-alignment`, `invoicing.create.*`, `invoicing.pending.*`, `maintenance.new.*`, `modules.activationRequired`, `modules.names.*`, `reports.export.{downloaded,tierRequired}`, `auth.ownerOnly`, `customers.labels.carsCount`
+
+### Coverage
+- Backend: 50+ endpoints across auth/customers/cars/employees/appointments/invoices/maintenance/inventory/modules/approvals/notifications/garage-settings/ai/users/reports — all GET/POST/PUT/DELETE verified via curl
+- Frontend: every sidebar page loaded + every top-level button clicked. Staff role audit (`mohamed/staff123`) confirms sidebar filters, owner-only guards work, staff can complete their core flow (appointments + maintenance).
+- Mobile responsive (375×667): sidebar slide-in/out works, no horizontal overflow on Dashboard/Appointments/Cars/Customers/Reports/Modules.
+- Arabic text renders correctly but RTL layout is intentionally disabled (`LanguageService.updateDocumentDirection` hardcodes `dir=ltr`).

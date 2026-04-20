@@ -44,6 +44,44 @@ Single source of truth for the current bug batch. Add new bugs to **§ Backlog**
 | BUG-009 | Switch dashboard to white theme | Theme | 🟢 |
 | BUG-010 | Reduce excessive hover effects | Theme | 🟢 |
 
+### Session 2026-04-20 — Full-suite audit batch
+| ID | Area | Category | Status | Commit |
+|----|------|----------|--------|--------|
+| BUG-019 | Create appointment UI returns 400 | Appointments | 🟢 | `67a7aa8` |
+| BUG-020 | Invoice Create page renders raw i18n keys | i18n | 🟢 | `67a7aa8` |
+| BUG-021 | Invoice Create page has 3 hardcoded mock customers | Invoicing | 🟢 | `67a7aa8` |
+| BUG-022 | Paid-module click silently redirects | Navigation | 🟢 | `67a7aa8` |
+| BUG-023 | All employees display role "Senior Mechanic" | Employees | 🟢 | `67a7aa8` |
+| BUG-024 | Invoice `paidAt` stays null after PAID | Invoicing | 🟢 | `67a7aa8` |
+| BUG-025 | Maintenance cards show "undefined Ford Focus" | Maintenance | 🟢 | `f7d27d1` |
+| BUG-026 | Cars show "Total Services: 0 / N/A" always | Cars | 🟢 | `f7d27d1` |
+| BUG-027 | Cars Make filter dropdown empty | Cars | 🟢 | `f7d27d1` |
+| BUG-028 | `/api/inventory/suppliers` 404 | Inventory | 🟢 | `f7d27d1` |
+| BUG-029 | Dashboard "Generate Invoice" → 404 | Dashboard | 🟢 | `f626fb4` |
+| BUG-030 | Customers page shows 0 counts (race) | Customers | 🟢 | `f626fb4` |
+| BUG-031 | Invoicing dashboard shows 0 KPIs (race) | Invoicing | 🟢 | `0d6d83b` |
+| BUG-032 | Invoicing Pending raw `invoicing.pending.*` keys | i18n | 🟢 | `0d6d83b` |
+| BUG-033 | Inconsistent currency format (0,000 / 2 433,55 / 7 209,000) | UI | 🟢 | `26f4de4` |
+| BUG-034 | Pluralization ("1 appointments", "1 cars", "1 invoice(s)") | i18n | 🟢 | `26f4de4` |
+| BUG-035 | Duplicate top-level `invoicing` key in en/fr/ar.json | i18n | 🟢 | `26f4de4` |
+| BUG-036 | Onboarding tour reopens on every login | Onboarding | 🟢 | `26f4de4` |
+| BUG-037 | Reports Export button was a `console.log` stub | Reports | 🟢 | `ff0f9b9` |
+| BUG-038 | Maintenance "Jobs Needing Approval" confusing label | Maintenance | 🟢 | `ff0f9b9` |
+| BUG-039 | Invoice detail (direct nav) shows epoch dates + empty vehicle | Invoicing | 🟢 | `4780b86` |
+| BUG-040 | Inventory dashboard shows 0 counts (race) | Inventory | 🟢 | `4780b86` |
+| BUG-041 | Maintenance "Complete Job" → 400 (DTO missing `completionDate`) | Maintenance | 🟢 | `4780b86` |
+| BUG-042 | Maintenance new-job form raw `maintenance.new.*` keys | i18n | 🟢 | `4780b86` |
+| BUG-043 | Notifications Delete silently no-op | Notifications | 🟢 | `53f9404` |
+| BUG-044 | Invoice detail footer hardcoded typo `opautogatage.tn` | Invoicing | 🟢 | `a7032df` |
+| BUG-045 | Invoice model missing `carId` relation (Vehicle shows empty) | Invoicing | 🟢 | `a7032df` |
+| BUG-046 | Employee "Mark Unavailable" silently no-op | Employees | 🟢 | `a7032df` |
+| BUG-047 | Inactive employees show "AVAILABILITY: Available" | Employees | 🟢 | `343faf5` |
+| BUG-048 | Login bad credentials show no error | Auth | 🟢 | `8e588f5` |
+| BUG-049 | Change Password was a stub (no backend route) | Auth | 🟢 | `8e588f5` |
+| BUG-050 | Staff `GET /employees` → 403 (blocks appointment modal) | Staff | 🟢 | `0e38c00` |
+| BUG-051 | Staff dashboard + sidebar fire `GET /invoices` + `/approvals` → 403 | Staff | 🟢 | `cf8705f` |
+| BUG-052 | Owner-only URL redirect was silent; guard race on bootstrap | Staff | 🟢 | `cf8705f` |
+
 ---
 
 ## Scoped (investigated, ready to fix)
