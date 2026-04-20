@@ -224,6 +224,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   private loadBadgeCounts() {
+    const isOwner = this.authService.isOwner();
     this.http.get<any>('/appointments').subscribe({
       next: (appts) => {
         const today = new Date().toDateString();
@@ -242,20 +243,22 @@ export class SidebarComponent implements OnInit, OnDestroy {
       },
       error: () => {}
     });
-    this.http.get<any[]>('/invoices').subscribe({
-      next: (invs) => {
-        const pending = Array.isArray(invs) ? invs.filter((i: any) => i.status === 'PENDING' || i.status === 'OVERDUE').length : 0;
-        this.badgeCounts.update(c => ({ ...c, 'invoices-pending': pending }));
-      },
-      error: () => {}
-    });
-    this.http.get<any[]>('/approvals').subscribe({
-      next: (aprs) => {
-        const pending = Array.isArray(aprs) ? aprs.filter((a: any) => a.status === 'PENDING').length : 0;
-        this.badgeCounts.update(c => ({ ...c, approvals: pending }));
-      },
-      error: () => {}
-    });
+    if (isOwner) {
+      this.http.get<any[]>('/invoices').subscribe({
+        next: (invs) => {
+          const pending = Array.isArray(invs) ? invs.filter((i: any) => i.status === 'PENDING' || i.status === 'OVERDUE').length : 0;
+          this.badgeCounts.update(c => ({ ...c, 'invoices-pending': pending }));
+        },
+        error: () => {}
+      });
+      this.http.get<any[]>('/approvals').subscribe({
+        next: (aprs) => {
+          const pending = Array.isArray(aprs) ? aprs.filter((a: any) => a.status === 'PENDING').length : 0;
+          this.badgeCounts.update(c => ({ ...c, approvals: pending }));
+        },
+        error: () => {}
+      });
+    }
   }
 
   getBadge(itemId: string): number | null {

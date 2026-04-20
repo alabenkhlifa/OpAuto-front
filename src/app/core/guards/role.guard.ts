@@ -12,15 +12,20 @@ import { ToastService } from '../../shared/services/toast.service';
 export const ownerGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
+  const toast = inject(ToastService);
+  const translate = inject(TranslationService);
 
   return authService.currentUser$.pipe(
+    filter(user => user !== null),
+    take(1),
     map(user => {
-      if (user && authService.isOwner()) {
+      if (authService.isOwner()) {
         return true;
-      } else {
-        router.navigate(['/dashboard']);
-        return false;
       }
+      const msg = translate.instant('auth.ownerOnly');
+      toast.warning(msg && msg !== 'auth.ownerOnly' ? msg : 'Only the garage owner can access this page.');
+      router.navigate(['/dashboard']);
+      return false;
     })
   );
 };

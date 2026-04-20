@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { BaseChartDirective } from 'ng2-charts';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
 
 import { LanguageToggleComponent } from '../../shared/components/language-toggle/language-toggle.component';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
@@ -183,12 +183,13 @@ export class DashboardComponent implements OnInit {
   navigateToQualityCheck(): void { this.router.navigate(['/maintenance/active']); }
 
   private loadDashboardData(): void {
+    const isOwner = this.authService.isOwner();
     forkJoin({
       appointments: this.appointmentService.getAppointments(),
       customers: this.customerService.getCustomers(),
       employees: this.employeeService.getEmployees(),
-      parts: this.partService.getParts(),
-      invoices: this.invoiceService.getInvoices(),
+      parts: isOwner ? this.partService.getParts() : of([]),
+      invoices: isOwner ? this.invoiceService.getInvoices() : of([]),
       cars: this.appointmentService.getCars()
     }).subscribe({
       next: ({ appointments, customers, employees, parts, invoices, cars }) => {

@@ -1452,6 +1452,7 @@
   "auth": {
     "title": "OpAuto",
     "subtitle": "Garage Management System",
+    "ownerOnly": "Only the garage owner can access this page.",
     "signIn": "Sign In",
     "register": "Register",
     "signInButton": "Sign In",
