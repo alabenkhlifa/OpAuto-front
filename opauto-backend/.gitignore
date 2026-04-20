@@ -1,1 +1,7 @@
 .env.production
+
+# User uploads (served via guarded streaming endpoint; file contents
+# should never be committed — large binaries + per-tenant data)
+uploads/
+uploads-test/
+dist/uploads/

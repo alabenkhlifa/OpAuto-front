@@ -333,7 +333,12 @@ model MaintenancePhoto {
   id               String   @id @default(uuid())
   maintenanceJobId String
   url              String
-  caption          String?
+  filename         String?  // stored filename on disk (UUID + ext)
+  originalName    String?  // user's original filename for download attribution
+  mimeType        String?
+  sizeBytes       Int?
+  uploadedBy      String?
+  caption         String?
   type             String?  // before, during, after
   createdAt        DateTime @default(now())
 
