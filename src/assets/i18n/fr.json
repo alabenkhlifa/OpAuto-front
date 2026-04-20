@@ -1651,6 +1651,31 @@
       "allCaughtUp": "Tout est à jour !",
       "noPendingPayments": "Aucune facture en attente de paiement."
     },
+    "list": {
+      "showFilters": "Afficher les filtres",
+      "hideFilters": "Masquer les filtres",
+      "searchPlaceholder": "Rechercher par N° de facture, client, véhicule...",
+      "allStatus": "Tous les statuts",
+      "allPaymentMethods": "Tous les modes de paiement",
+      "clearFilters": "Effacer les filtres",
+      "customer": "Client",
+      "vehicle": "Véhicule",
+      "license": "Immatriculation",
+      "service": "Service",
+      "multipleServices": "Plusieurs services",
+      "total": "Total",
+      "paid": "Payé",
+      "remaining": "Restant",
+      "paymentProgress": "Progression du paiement",
+      "dueDate": "Échéance",
+      "daysOverdue": "jours de retard",
+      "send": "Envoyer",
+      "markPaid": "Marquer payée",
+      "print": "Imprimer",
+      "noInvoicesFound": "Aucune facture trouvée",
+      "noInvoicesDescription": "Commencez par créer votre première facture.",
+      "createFirstInvoice": "Créer la première facture"
+    },
     "allInvoices": "Toutes les factures",
     "createInvoice": "Créer une facture",
     "pendingPayment": "Paiement en attente",
@@ -1873,14 +1898,10 @@
       "message": "Il n'y a actuellement aucune demande nécessitant une approbation"
     },
     "type": {
-      "part_purchase": "Achat de pièce",
-      "service_approval": "Approbation de service",
-      "customer_credit": "Crédit client",
-      "overtime_request": "Demande d'heures supplémentaires",
-      "expense_claim": "Demande de remboursement",
-      "discount_request": "Demande de remise",
-      "refund_request": "Demande de remboursement",
-      "other": "Autre"
+      "maintenance": "Maintenance",
+      "invoice": "Facture",
+      "purchase-order": "Bon de commande",
+      "discount": "Remise"
     },
     "status": {
       "pending": "En attente",

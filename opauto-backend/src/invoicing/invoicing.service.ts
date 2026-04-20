@@ -18,6 +18,7 @@ export class InvoicingService {
       include: {
         customer: { select: { firstName: true, lastName: true } },
         car: { select: { make: true, model: true, year: true, licensePlate: true } },
+        payments: { select: { id: true, amount: true, method: true, paidAt: true, reference: true } },
         _count: { select: { lineItems: true, payments: true } },
       },
       orderBy: { createdAt: 'desc' },

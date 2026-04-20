@@ -1689,6 +1689,31 @@
       "allCaughtUp": "All caught up!",
       "noPendingPayments": "No invoices are waiting for payment."
     },
+    "list": {
+      "showFilters": "Show Filters",
+      "hideFilters": "Hide Filters",
+      "searchPlaceholder": "Search by invoice #, customer, vehicle...",
+      "allStatus": "All Statuses",
+      "allPaymentMethods": "All Payment Methods",
+      "clearFilters": "Clear Filters",
+      "customer": "Customer",
+      "vehicle": "Vehicle",
+      "license": "License",
+      "service": "Service",
+      "multipleServices": "Multiple services",
+      "total": "Total",
+      "paid": "Paid",
+      "remaining": "Remaining",
+      "paymentProgress": "Payment Progress",
+      "dueDate": "Due Date",
+      "daysOverdue": "days overdue",
+      "send": "Send",
+      "markPaid": "Mark Paid",
+      "print": "Print",
+      "noInvoicesFound": "No invoices found",
+      "noInvoicesDescription": "Get started by creating your first invoice.",
+      "createFirstInvoice": "Create First Invoice"
+    },
     "allInvoices": "All Invoices",
     "createInvoice": "Create Invoice",
     "pendingPayment": "Pending Payment",
@@ -1831,14 +1856,10 @@
       "message": "There are currently no requests that need approval"
     },
     "type": {
-      "part_purchase": "Part Purchase",
-      "service_approval": "Service Approval",
-      "customer_credit": "Customer Credit",
-      "overtime_request": "Overtime Request",
-      "expense_claim": "Expense Claim",
-      "discount_request": "Discount Request",
-      "refund_request": "Refund Request",
-      "other": "Other"
+      "maintenance": "Maintenance",
+      "invoice": "Invoice",
+      "purchase-order": "Purchase Order",
+      "discount": "Discount"
     },
     "status": {
       "pending": "Pending",

@@ -39,13 +39,14 @@ async function main() {
       email: 'contact@autotech.tn',
       specializations: ['MECHANICAL', 'BODYWORK', 'ELECTRICAL', 'TIRE_ALIGNMENT'],
       businessHours: {
-        mon: { open: '08:00', close: '18:00' },
-        tue: { open: '08:00', close: '18:00' },
-        wed: { open: '08:00', close: '18:00' },
-        thu: { open: '08:00', close: '18:00' },
-        fri: { open: '08:00', close: '18:00' },
-        sat: { open: '08:00', close: '13:00' },
-        sun: null,
+        monday:    { isWorkingDay: true,  openTime: '08:00', closeTime: '18:00' },
+        tuesday:   { isWorkingDay: true,  openTime: '08:00', closeTime: '18:00' },
+        wednesday: { isWorkingDay: true,  openTime: '08:00', closeTime: '18:00' },
+        thursday:  { isWorkingDay: true,  openTime: '08:00', closeTime: '18:00' },
+        friday:    { isWorkingDay: true,  openTime: '08:00', closeTime: '18:00' },
+        saturday:  { isWorkingDay: true,  openTime: '08:00', closeTime: '13:00' },
+        sunday:    { isWorkingDay: false, openTime: '',      closeTime: ''      },
+        timezone: 'Africa/Tunis',
       },
       currency: 'TND',
       taxRate: 19,
@@ -287,6 +288,20 @@ async function main() {
 
   const invoices = await Promise.all(
     invoiceData.map(inv => prisma.invoice.create({ data: { garageId: garage.id, ...inv } }))
+  );
+
+  // Create Payment records for PAID invoices so paid/remaining/progress reflect reality
+  await Promise.all(
+    invoices
+      .filter(inv => inv.status === InvoiceStatus.PAID && inv.paidAt)
+      .map(inv => prisma.payment.create({
+        data: {
+          invoiceId: inv.id,
+          amount: inv.total,
+          method: PaymentMethod.CASH,
+          paidAt: inv.paidAt!,
+        },
+      }))
   );
 
   // Create Notifications

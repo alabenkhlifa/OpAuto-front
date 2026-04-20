@@ -1653,6 +1653,31 @@
       "allCaughtUp": "كل شيء محدث!",
       "noPendingPayments": "لا توجد فواتير في انتظار الدفع."
     },
+    "list": {
+      "showFilters": "إظهار الفلاتر",
+      "hideFilters": "إخفاء الفلاتر",
+      "searchPlaceholder": "ابحث برقم الفاتورة أو العميل أو المركبة...",
+      "allStatus": "جميع الحالات",
+      "allPaymentMethods": "جميع طرق الدفع",
+      "clearFilters": "مسح الفلاتر",
+      "customer": "العميل",
+      "vehicle": "المركبة",
+      "license": "رقم التسجيل",
+      "service": "الخدمة",
+      "multipleServices": "خدمات متعددة",
+      "total": "الإجمالي",
+      "paid": "المدفوع",
+      "remaining": "المتبقي",
+      "paymentProgress": "تقدم الدفع",
+      "dueDate": "تاريخ الاستحقاق",
+      "daysOverdue": "أيام تأخير",
+      "send": "إرسال",
+      "markPaid": "تحديد كمدفوعة",
+      "print": "طباعة",
+      "noInvoicesFound": "لا توجد فواتير",
+      "noInvoicesDescription": "ابدأ بإنشاء أول فاتورة لك.",
+      "createFirstInvoice": "إنشاء أول فاتورة"
+    },
     "allInvoices": "جميع الفواتير",
     "createInvoice": "إنشاء فاتورة",
     "pendingPayment": "الدفع المعلق",
@@ -2009,14 +2034,10 @@
       "message": "لا توجد طلبات تحتاج إلى موافقة في الوقت الحالي"
     },
     "type": {
-      "part_purchase": "شراء قطعة غيار",
-      "service_approval": "الموافقة على خدمة",
-      "customer_credit": "رصيد العميل",
-      "overtime_request": "طلب ساعات إضافية",
-      "expense_claim": "مطالبة بالمصروفات",
-      "discount_request": "طلب خصم",
-      "refund_request": "طلب استرداد",
-      "other": "أخرى"
+      "maintenance": "صيانة",
+      "invoice": "فاتورة",
+      "purchase-order": "أمر شراء",
+      "discount": "خصم"
     },
     "status": {
       "pending": "في الانتظار",
