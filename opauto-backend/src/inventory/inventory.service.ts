@@ -11,6 +11,10 @@ export class InventoryService {
     return this.prisma.part.findMany({ where: { garageId }, include: { supplier: { select: { name: true } } }, orderBy: { name: 'asc' } });
   }
 
+  async findSuppliers(garageId: string) {
+    return this.prisma.supplier.findMany({ where: { garageId }, orderBy: { name: 'asc' } });
+  }
+
   async findOne(id: string, garageId: string) {
     const part = await this.prisma.part.findFirst({ where: { id, garageId }, include: { supplier: true, stockMovements: { orderBy: { createdAt: 'desc' }, take: 20 } } });
     if (!part) throw new NotFoundException('Part not found');
@@ -31,9 +35,9 @@ export class InventoryService {
     return this.prisma.part.delete({ where: { id } });
   }
 
-  async adjustStock(partId: string, garageId: string, quantity: number, type: string, reason?: string) {
+  async adjustStock(partId: string, garageId: string, quantity: number, type: string, reason?: string, reference?: string) {
     await this.findOne(partId, garageId);
-    await this.prisma.stockMovement.create({ data: { partId, quantity, type, reason } });
+    await this.prisma.stockMovement.create({ data: { partId, quantity, type, reason, reference } });
     const newQty = type === 'in' ? { increment: quantity } : type === 'out' ? { decrement: quantity } : undefined;
     if (newQty) {
       return this.prisma.part.update({ where: { id: partId }, data: { quantity: newQty } });

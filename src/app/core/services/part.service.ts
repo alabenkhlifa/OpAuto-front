@@ -138,13 +138,9 @@ export class PartService {
   // --- Stock management ---
 
   adjustStock(partId: string, quantity: number, reason: string, performedBy: string): Observable<StockMovement> {
-    const part = this.getPartById(partId);
-    if (!part) {
-      throw new Error('Part not found');
-    }
-
-    const newStockLevel = part.stockLevel + quantity;
-    return this.http.put<any>(`/inventory/${partId}`, { quantity: newStockLevel }).pipe(
+    const type: 'in' | 'out' = quantity >= 0 ? 'in' : 'out';
+    const absQty = Math.abs(quantity);
+    return this.http.post<any>(`/inventory/${partId}/adjust`, { quantity: absQty, type, reason }).pipe(
       map(b => {
         const mapped = this.mapFromBackend(b);
         const current = this.partsSubject.value;
@@ -158,15 +154,15 @@ export class PartService {
         const movement: StockMovement = {
           id: Date.now().toString(),
           partId,
-          type: quantity > 0 ? 'in' : 'out',
-          quantity: Math.abs(quantity),
+          type,
+          quantity: absQty,
           reason,
           performedBy,
           createdAt: new Date()
         };
         const movements = this.stockMovementsSubject.value;
         this.stockMovementsSubject.next([movement, ...movements]);
-        this.checkAndCreateAlerts(partId, newStockLevel);
+        this.checkAndCreateAlerts(partId, mapped.stockLevel ?? 0);
         return movement;
       })
     );

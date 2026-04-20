@@ -18,9 +18,14 @@ import { ModuleAccessGuard, RequireModule } from '../modules/module-access.guard
 export class InventoryController {
   constructor(private service: InventoryService) {}
   @Get() findAll(@CurrentUser('garageId') gid: string) { return this.service.findAll(gid); }
-  @Get('suppliers') listSuppliers() { return []; }
+  @Get('suppliers') listSuppliers(@CurrentUser('garageId') gid: string) { return this.service.findSuppliers(gid); }
   @Get(':id') findOne(@Param('id') id: string, @CurrentUser('garageId') gid: string) { return this.service.findOne(id, gid); }
   @Post() @RequireModule('inventory') create(@CurrentUser('garageId') gid: string, @Body() dto: CreatePartDto) { return this.service.create(gid, dto); }
   @Put(':id') @RequireModule('inventory') update(@Param('id') id: string, @CurrentUser('garageId') gid: string, @Body() dto: UpdatePartDto) { return this.service.update(id, gid, dto); }
+  @Post(':id/adjust') @RequireModule('inventory') adjust(
+    @Param('id') id: string,
+    @CurrentUser('garageId') gid: string,
+    @Body() dto: { quantity: number; type: 'in' | 'out' | 'adjustment'; reason?: string; reference?: string },
+  ) { return this.service.adjustStock(id, gid, dto.quantity, dto.type, dto.reason, dto.reference); }
   @Delete(':id') @RequireModule('inventory') remove(@Param('id') id: string, @CurrentUser('garageId') gid: string) { return this.service.remove(id, gid); }
 }

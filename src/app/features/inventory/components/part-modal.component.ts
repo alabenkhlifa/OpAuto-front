@@ -681,7 +681,7 @@ export class PartModalComponent implements OnInit, OnDestroy {
   private loadSuppliers(): void {
     this.partService.getSuppliers().subscribe({
       next: (suppliers) => {
-        this.suppliers.set(suppliers.filter(s => s.isActive));
+        this.suppliers.set(suppliers.filter(s => s.isActive !== false));
       },
       error: (error) => console.error('Failed to load suppliers:', error)
     });
