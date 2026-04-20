@@ -81,6 +81,12 @@ Single source of truth for the current bug batch. Add new bugs to **§ Backlog**
 | BUG-050 | Staff `GET /employees` → 403 (blocks appointment modal) | Staff | 🟢 | `0e38c00` |
 | BUG-051 | Staff dashboard + sidebar fire `GET /invoices` + `/approvals` → 403 | Staff | 🟢 | `cf8705f` |
 | BUG-052 | Owner-only URL redirect was silent; guard race on bootstrap | Staff | 🟢 | `cf8705f` |
+| BUG-053 | Maintenance New Job form used 3 hardcoded mock mechanics | Maintenance | 🟢 | `406e2ae` |
+| BUG-054 | Maintenance POST → 400 (customerId/status/tasks/approvals/mileage not in DTO) | Maintenance | 🟢 | `406e2ae` |
+| BUG-055 | Maintenance PUT → 400 (same field list) | Maintenance | 🟢 | `406e2ae` |
+| BUG-056 | New jobs invisible — `PENDING` ↔ `waiting` enum mismatch | Maintenance | 🟢 | `406e2ae` |
+| BUG-057 | Maintenance create/update response missing relations (car/customer/mechanic empty after save) | Maintenance | 🟢 | `406e2ae` |
+| BUG-058 | Maintenance tasks don't persist — no `/maintenance/:id/tasks` endpoint | Maintenance | 🔴 | — |
 
 ---
 

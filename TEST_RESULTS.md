@@ -87,11 +87,17 @@ All resources pass CRUD via curl as OWNER:
 | Car year in details | ✅ |
 | View Details → /maintenance/details/:id | ✅ |
 | Edit → /maintenance/edit/:id | ✅ form renders, translations present |
-| Complete Job | ✅ (was 400, fixed in `4780b86`) |
-| New Job form | ✅ translations fixed in `4780b86` |
+| New Job form submit | ✅ (was 400 + mock mechanics, fixed in `406e2ae`) |
+| Mechanic dropdown | ✅ 5 real employees (was 3 hardcoded mock IDs, fixed in `406e2ae`) |
+| Edit job submit | ✅ (was 400, fixed in `406e2ae`) |
+| Start Job transition (waiting → in-progress) | ✅ |
+| Complete Job (in-progress → completed) | ✅ (was 400, fixed in `4780b86`) |
+| New job appears in Active Jobs list | ✅ (was invisible due to PENDING/waiting enum mismatch, fixed in `406e2ae`) |
+| Completed job appears in History tab | ✅ |
+| Create/update response includes relations (car/customer/mechanic) | ✅ (backend include fixed in `406e2ae`) |
 | Completed Jobs tab | ✅ |
 | Schedule tab | ✅ |
-| Add task to job | ⏭️ not tested |
+| Add task to job | ❌ **not persisting** — frontend sends `tasks` array, backend strips it (no `/maintenance/:id/tasks` endpoint exists). Separate feature. |
 
 ### Parts & Inventory (`/inventory`)
 | Element | Result |
@@ -239,7 +245,7 @@ All resources pass CRUD via curl as OWNER:
 
 **Form submissions untested**: Maintenance new-job submit, Add Car / Add Part / Add Customer / Add Employee submits, Settings save after edit, Update Profile submit.
 
-**Flows untested**: adding tasks to a maintenance job + marking complete, approvals create/approve/reject, stock-adjustment modal, photo uploads (car/employee/maintenance), invoice draft→sent transition, invoice print/PDF output verification, calendar drag-and-drop (CLAUDE.md notes these are TODO stubs).
+**Flows untested**: ~~adding tasks to a maintenance job + marking complete~~ (tested 2026-04-20; persists only in-form, backend has no `/maintenance/:id/tasks` endpoint — documented as missing feature), approvals create/approve/reject, stock-adjustment modal, photo uploads (car/employee/maintenance), invoice draft→sent transition, invoice print/PDF output verification, calendar drag-and-drop (CLAUDE.md notes these are TODO stubs).
 
 **Edge cases skipped**: expired-JWT auto-refresh, 403 error surfacing in components, offline handling, concurrent edits.
 

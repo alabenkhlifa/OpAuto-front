@@ -166,3 +166,13 @@ Comprehensive end-to-end testing of every screen + backend endpoint. 12 commits 
 - Frontend: every sidebar page loaded + every top-level button clicked. Staff role audit (`mohamed/staff123`) confirms sidebar filters, owner-only guards work, staff can complete their core flow (appointments + maintenance).
 - Mobile responsive (375×667): sidebar slide-in/out works, no horizontal overflow on Dashboard/Appointments/Cars/Customers/Reports/Modules.
 - Arabic text renders correctly but RTL layout is intentionally disabled (`LanguageService.updateDocumentDirection` hardcodes `dir=ltr`).
+
+### Maintenance UI deep-dive (2026-04-20 later)
+- [x] New Job form submit (was 400: stripped `customerId/status/tasks/approvals/mileage` from payload)
+- [x] Mechanic dropdown populated from real employees (was 3 hardcoded mock IDs)
+- [x] Edit Job submit (same 400 cleanup)
+- [x] Start Job → in-progress transition
+- [x] Complete Job → completed, appears in History tab
+- [x] PENDING ↔ waiting enum mapping in both directions
+- [x] Backend create/update now return relations (car, customer, mechanic)
+- [ ] **Tasks don't persist** — backend has no `/maintenance/:id/tasks` endpoint; frontend sends `tasks` array but it's stripped. Separate feature to implement.
