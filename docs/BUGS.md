@@ -127,7 +127,7 @@ Each is intentionally left open so the team can pick them up. Context + repro st
 | BUG-064 | Profile Preferences tab — save is still a `setTimeout` stub (confirmed). Needs `UserPreference` Prisma model + endpoint | Profile | 🔴 |
 | BUG-065 | Approvals — approve/reject buttons verified end-to-end (see resolved row above) | Approvals | 🟢 |
 | BUG-066 | Stock Adjustment modal — verified + audit trail wired (see resolved row above) | Inventory | 🟢 |
-| BUG-067 | Photo uploads — **feature gap**: `src/app/shared/components/photo-upload/photo-upload.component.ts` exists but is NEVER imported anywhere; `PhotoService` is in-memory only (`URL.createObjectURL` + signal, no HTTP); backend has no `Photo` model or `/photos` endpoints. Full feature build needed. | Uploads | 🔴 |
+| BUG-067 | Photo uploads shipped end-to-end for maintenance. Backend: multer-based `POST /maintenance/:jobId/photos` (10 MB cap, jpeg/png/webp/gif only), GET list, guarded streaming `GET /:jobId/photos/:id/file`, DELETE removes row + disk file. Storage: `uploads/<garageId>/<uuid>.<ext>`. Schema: added `filename`/`originalName`/`mimeType`/`sizeBytes`/`uploadedBy` to MaintenancePhoto. Frontend: `PhotoService` swapped from in-memory mock to HTTP (FormData + batched forkJoin), `PhotoUploadComponent` now imported + mounted in maintenance-details. 6 e2e tests + verified via Chrome DevTools upload round-trip. | Uploads | 🟢 |
 | BUG-068 | Invoice Draft → Sent → Paid transition via UI — only API-tested | Invoicing | 🟢 |
 | BUG-086a | Invoice list card: Paid/Remaining/Progress always 0 (list endpoint omitted `payments[]`) | Invoicing | 🟢 |
 | BUG-086b | `invoicing.list.*` translation namespace missing across en/fr/ar (raw keys rendered) | Invoicing | 🟢 |
