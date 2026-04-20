@@ -277,16 +277,16 @@ export class GarageInfoFormComponent implements OnInit {
   private initializeForm() {
     this.garageForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
-      registrationNumber: ['', Validators.required],
+      registrationNumber: [''],
       description: [''],
       phone: ['', [Validators.required, Validators.pattern(/^\+?[0-9\s-()]+$/)]],
       email: ['', [Validators.required, Validators.email]],
       website: ['', Validators.pattern(/^https?:\/\/.+/)],
-      taxId: ['', Validators.required],
+      taxId: [''],
       address: ['', Validators.required],
-      city: ['', Validators.required],
-      postalCode: ['', Validators.required],
-      country: ['Tunisia', Validators.required],
+      city: [''],
+      postalCode: [''],
+      country: ['Tunisia'],
       bankDetails: this.fb.group({
         bankName: [''],
         accountHolderName: [''],
