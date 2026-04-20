@@ -123,21 +123,21 @@ Each is intentionally left open so the team can pick them up. Context + repro st
 |----|------|----------|--------|
 | BUG-061 | Forgot Password: modal submits to non-existent `/auth/forgot-password` | Auth | 🔴 |
 | BUG-062 | Expired-JWT auto-refresh flow via HTTP interceptor — never exercised | Auth | 🔴 |
-| BUG-063 | Update Profile form submit — never clicked in UI; no test coverage | Profile | 🔴 |
-| BUG-064 | Profile Preferences tab — UI renders but save-persistence untested | Profile | 🔴 |
-| BUG-065 | Approvals — create / approve / reject flow untested (0 seed rows) | Approvals | 🔴 |
-| BUG-066 | Stock Adjustment modal (inventory) — never opened + submitted | Inventory | 🔴 |
-| BUG-067 | Photo uploads — **confirmed feature gap, not a bug**: `src/app/shared/components/photo-upload/photo-upload.component.ts` exists as a shared widget but is NEVER imported by any feature (car / employee / maintenance). `PhotoService` is entirely in-memory (`URL.createObjectURL` + client signal, no HTTP). Backend has no `Photo` model + no `/photos` endpoints. Full implementation needed. | Uploads | 🔴 |
+| BUG-063 | Update Profile form submit — wired to new `/users/me` endpoint (see resolved row above) | Profile | 🟢 |
+| BUG-064 | Profile Preferences tab — save is still a `setTimeout` stub (confirmed). Needs `UserPreference` Prisma model + endpoint | Profile | 🔴 |
+| BUG-065 | Approvals — approve/reject buttons verified end-to-end (see resolved row above) | Approvals | 🟢 |
+| BUG-066 | Stock Adjustment modal — verified + audit trail wired (see resolved row above) | Inventory | 🟢 |
+| BUG-067 | Photo uploads — **feature gap**: `src/app/shared/components/photo-upload/photo-upload.component.ts` exists but is NEVER imported anywhere; `PhotoService` is in-memory only (`URL.createObjectURL` + signal, no HTTP); backend has no `Photo` model or `/photos` endpoints. Full feature build needed. | Uploads | 🔴 |
 | BUG-068 | Invoice Draft → Sent → Paid transition via UI — only API-tested | Invoicing | 🟢 |
 | BUG-086a | Invoice list card: Paid/Remaining/Progress always 0 (list endpoint omitted `payments[]`) | Invoicing | 🟢 |
 | BUG-086b | `invoicing.list.*` translation namespace missing across en/fr/ar (raw keys rendered) | Invoicing | 🟢 |
 | BUG-086c | Seed: PAID invoices had no Payment rows → UI stats/progress wrong after reseed | Seed | 🟢 |
 | BUG-069 | Invoice Print / PDF buttons — render but output never verified | Invoicing | 🟢 |
 | BUG-070 | Calendar drag-and-drop — `handleDateSelect` + `handleEventDrop` are TODO stubs (per CLAUDE.md) | Calendar | 🔴 |
-| BUG-071 | AI module UI page (`/ai`) — backend `/ai/chat` verified, the UI page itself never opened | AI | 🔴 |
+| BUG-071 | AI module UI page (`/ai`) — feature gap: no frontend route/component (see confirmed row above) | AI | 🔴 |
 | BUG-072 | Users page (`/users`) — module active, sidebar has the link, UI never clicked | Users | 🔴 |
-| BUG-073 | Settings save after edit — the 5 tabs render but no form save tested | Settings | 🔴 |
-| BUG-074 | Add Customer / Add Car / Add Part / Add Employee submit — forms open via modal, submit paths untested | CRUD | 🔴 |
+| BUG-073 | Settings save after edit — Garage Info tab verified end-to-end (see resolved row above). Operations/System/Integrations still silent no-ops under BUG-087a/b/c | Settings | 🟢 |
+| BUG-074 | Add Customer / Add Car / Add Part / Add Employee submit — all four verified end-to-end (see resolved row above) | CRUD | 🟢 |
 | BUG-075 | 403 error surfacing in components — staff edge-cases (e.g. POST protected route by accident) not verified | Staff | 🔴 |
 | BUG-076 | Offline / backend-down handling — no check for how the UI degrades | Resilience | 🔴 |
 | BUG-077 | Concurrent edits (two tabs editing same record) — stale-data detection untested | Resilience | 🔴 |
