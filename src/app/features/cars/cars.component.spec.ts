@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { of, BehaviorSubject } from 'rxjs';
 import { CarsComponent } from './cars.component';
 import { CarService, CarWithHistory } from './services/car.service';
+import { CustomerService } from '../../core/services/customer.service';
 import { SubscriptionService } from '../../core/services/subscription.service';
 import { LanguageService } from '../../core/services/language.service';
 import { TranslationService } from '../../core/services/translation.service';
@@ -100,6 +101,11 @@ describe('CarsComponent', () => {
       'getCustomerById',
       'getAvailableMakes'
     ]);
+    // ngOnInit forkJoins CarService.getCars() + CustomerService.getCustomers();
+    // without a stub for the second one the observable never completes and
+    // every count on the component stays at 0.
+    const customerServiceSpy = jasmine.createSpyObj('CustomerService', ['getCustomers']);
+    customerServiceSpy.getCustomers.and.returnValue(of([]));
     const subscriptionServiceSpy = jasmine.createSpyObj('SubscriptionService', [
       'getCurrentSubscriptionStatus'
     ]);
@@ -129,6 +135,7 @@ describe('CarsComponent', () => {
       imports: [CarsComponent, HttpClientTestingModule],
       providers: [
         { provide: CarService, useValue: carServiceSpy },
+        { provide: CustomerService, useValue: customerServiceSpy },
         { provide: SubscriptionService, useValue: subscriptionServiceSpy },
         { provide: Router, useValue: routerSpy },
         { provide: LanguageService, useValue: languageSpy },
