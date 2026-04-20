@@ -82,12 +82,10 @@ export class ApprovalService {
           urgent: approvals.filter(a => a.priority === ApprovalPriority.URGENT).length
         },
         byType: {
-          partPurchase: approvals.filter(a => a.type === ApprovalType.PART_PURCHASE).length,
-          serviceApproval: approvals.filter(a => a.type === ApprovalType.SERVICE_APPROVAL).length,
-          customerCredit: approvals.filter(a => a.type === ApprovalType.CUSTOMER_CREDIT).length,
-          overtime: approvals.filter(a => a.type === ApprovalType.OVERTIME_REQUEST).length,
-          expense: approvals.filter(a => a.type === ApprovalType.EXPENSE_CLAIM).length,
-          other: approvals.filter(a => a.type === ApprovalType.OTHER).length
+          maintenance: approvals.filter(a => a.type === ApprovalType.MAINTENANCE).length,
+          invoice: approvals.filter(a => a.type === ApprovalType.INVOICE).length,
+          purchaseOrder: approvals.filter(a => a.type === ApprovalType.PURCHASE_ORDER).length,
+          discount: approvals.filter(a => a.type === ApprovalType.DISCOUNT).length
         },
         avgResponseTime: 0
       }))
@@ -214,13 +212,10 @@ export class ApprovalService {
 
   private mapType(type: string): ApprovalType {
     const upper = (type || '').toUpperCase();
-    if (upper === 'PART_PURCHASE') return ApprovalType.PART_PURCHASE;
-    if (upper === 'SERVICE_APPROVAL') return ApprovalType.SERVICE_APPROVAL;
-    if (upper === 'CUSTOMER_CREDIT') return ApprovalType.CUSTOMER_CREDIT;
-    if (upper === 'OVERTIME_REQUEST') return ApprovalType.OVERTIME_REQUEST;
-    if (upper === 'EXPENSE_CLAIM') return ApprovalType.EXPENSE_CLAIM;
-    if (upper === 'DISCOUNT_REQUEST') return ApprovalType.DISCOUNT_REQUEST;
-    return ApprovalType.OTHER;
+    if (upper === 'INVOICE') return ApprovalType.INVOICE;
+    if (upper === 'PURCHASE_ORDER') return ApprovalType.PURCHASE_ORDER;
+    if (upper === 'DISCOUNT') return ApprovalType.DISCOUNT;
+    return ApprovalType.MAINTENANCE;
   }
 
   private mapStatus(status: string): ApprovalStatus {

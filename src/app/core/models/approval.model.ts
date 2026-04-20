@@ -102,25 +102,19 @@ export interface ApprovalStats {
     urgent: number;
   };
   byType: {
-    partPurchase: number;
-    serviceApproval: number;
-    customerCredit: number;
-    overtime: number;
-    expense: number;
-    other: number;
+    maintenance: number;
+    invoice: number;
+    purchaseOrder: number;
+    discount: number;
   };
   avgResponseTime: number;
 }
 
 export enum ApprovalType {
-  PART_PURCHASE = 'part_purchase',
-  SERVICE_APPROVAL = 'service_approval',
-  CUSTOMER_CREDIT = 'customer_credit',
-  OVERTIME_REQUEST = 'overtime_request',
-  EXPENSE_CLAIM = 'expense_claim',
-  DISCOUNT_REQUEST = 'discount_request',
-  REFUND_REQUEST = 'refund_request',
-  OTHER = 'other'
+  MAINTENANCE = 'maintenance',
+  INVOICE = 'invoice',
+  PURCHASE_ORDER = 'purchase-order',
+  DISCOUNT = 'discount'
 }
 
 export enum ApprovalStatus {
@@ -139,14 +133,10 @@ export enum ApprovalPriority {
 }
 
 export const APPROVAL_TYPE_LABELS: Record<ApprovalType, string> = {
-  [ApprovalType.PART_PURCHASE]: 'Part Purchase',
-  [ApprovalType.SERVICE_APPROVAL]: 'Service Approval',
-  [ApprovalType.CUSTOMER_CREDIT]: 'Customer Credit',
-  [ApprovalType.OVERTIME_REQUEST]: 'Overtime Request',
-  [ApprovalType.EXPENSE_CLAIM]: 'Expense Claim',
-  [ApprovalType.DISCOUNT_REQUEST]: 'Discount Request',
-  [ApprovalType.REFUND_REQUEST]: 'Refund Request',
-  [ApprovalType.OTHER]: 'Other'
+  [ApprovalType.MAINTENANCE]: 'Maintenance',
+  [ApprovalType.INVOICE]: 'Invoice',
+  [ApprovalType.PURCHASE_ORDER]: 'Purchase Order',
+  [ApprovalType.DISCOUNT]: 'Discount'
 };
 
 export const APPROVAL_STATUS_LABELS: Record<ApprovalStatus, string> = {
