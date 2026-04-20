@@ -42,3 +42,8 @@ export class AiSuggestScheduleDto {
 
   @ApiProperty({ required: false }) @IsString() @IsOptional() language?: string;
 }
+
+export class AiPredictChurnDto {
+  @ApiProperty({ required: false }) @IsString() @IsOptional() customerId?: string;
+  @ApiProperty({ required: false }) @IsString() @IsOptional() language?: string;
+}

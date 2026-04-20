@@ -4,6 +4,7 @@ import {
   AiChatDto,
   AiDiagnoseDto,
   AiEstimateDto,
+  AiPredictChurnDto,
   AiSuggestScheduleDto,
 } from './dto/chat.dto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -494,6 +495,209 @@ CRITICAL: The "reason" field MUST be written ENTIRELY in ${responseLang}. Do NOT
       suggestedSlots: top3,
       provider: 'mock',
     };
+  }
+
+  async predictChurn(
+    garageId: string,
+    dto: AiPredictChurnDto = {},
+  ): Promise<{
+    predictions: Array<{
+      customerId: string;
+      customerName: string;
+      churnRisk: number;
+      riskLevel: 'low' | 'medium' | 'high';
+      factors: string[];
+      suggestedAction: string;
+    }>;
+    provider: string;
+  }> {
+    const where: any = { garageId };
+    if (dto.customerId) where.id = dto.customerId;
+
+    const customers = await this.prisma.customer.findMany({
+      where,
+      include: {
+        appointments: { select: { startTime: true, status: true } },
+        invoices: { select: { createdAt: true, paidAt: true, total: true } },
+      },
+    });
+
+    const now = new Date();
+    const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+    const scored = customers
+      .map((c) => this.scoreCustomerChurn(c, now, MS_PER_DAY, dto.language || 'en'))
+      .filter((p): p is NonNullable<typeof p> => p !== null);
+
+    // Sort by risk desc
+    scored.sort((a, b) => b.churnRisk - a.churnRisk);
+
+    // Get suggestedAction for at-risk (medium+high) ones via LLM if keys available, else templated
+    const atRisk = scored.filter((s) => s.riskLevel !== 'low');
+    let suggestions = new Map<string, string>();
+    let provider = 'template';
+
+    if (atRisk.length > 0 && (this.anthropicKey || this.openaiKey || this.geminiKey || this.groqKey)) {
+      try {
+        const langMap: Record<string, string> = { en: 'English', fr: 'French', ar: 'Arabic' };
+        const responseLang = langMap[dto.language || 'en'] || 'English';
+        const top = atRisk.slice(0, 10);
+        const prompt = `You are assisting a garage owner with customer retention. For each at-risk customer below, suggest ONE short, specific action (one sentence, written in ${responseLang}) the owner can take to re-engage them.
+
+Customers:
+${top.map((c, i) => `${i}: ${c.customerName} | risk=${c.riskLevel} | ${c.factors.join('; ')}`).join('\n')}
+
+Respond ONLY with a JSON array, one object per customer in the same order, no other text.
+CRITICAL: The "action" field MUST be written ENTIRELY in ${responseLang}.
+[{"index": 0, "action": "..."}, ...]`;
+
+        const aiResponse = await this.chat({
+          messages: [{ role: 'user', content: prompt }],
+          context: 'churn_retention',
+        });
+        const jsonMatch = aiResponse.message.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          const picks = JSON.parse(jsonMatch[0]) as Array<{ index: number; action: string }>;
+          for (const p of picks) {
+            if (top[p.index]) suggestions.set(top[p.index].customerId, p.action);
+          }
+          provider = aiResponse.provider;
+        }
+      } catch (error) {
+        this.logger.warn('Churn LLM narrative failed, falling back to template', error);
+      }
+    }
+
+    const predictions = scored.map((s) => ({
+      ...s,
+      suggestedAction:
+        suggestions.get(s.customerId) ||
+        this.templatedChurnAction(s.riskLevel, dto.language || 'en'),
+    }));
+
+    return { predictions, provider };
+  }
+
+  private scoreCustomerChurn(
+    customer: any,
+    now: Date,
+    msPerDay: number,
+    language: string,
+  ): {
+    customerId: string;
+    customerName: string;
+    churnRisk: number;
+    riskLevel: 'low' | 'medium' | 'high';
+    factors: string[];
+  } | null {
+    // Derive last activity: max of completed appointments startTime + paid invoice paidAt
+    const activityDates: number[] = [];
+    for (const appt of customer.appointments || []) {
+      if (appt.status === 'COMPLETED' && appt.startTime) {
+        activityDates.push(new Date(appt.startTime).getTime());
+      }
+    }
+    for (const inv of customer.invoices || []) {
+      if (inv.paidAt) activityDates.push(new Date(inv.paidAt).getTime());
+    }
+
+    // Use the max of stored visitCount and actual completed activities — stored
+    // visitCount is only seeded, never incremented by the app, so it drifts.
+    const derivedVisitCount = activityDates.length;
+    const visitCount = Math.max(customer.visitCount || 0, derivedVisitCount);
+    if (visitCount < 2) return null; // insufficient history
+
+    const lastActivityMs = activityDates.length > 0 ? Math.max(...activityDates) : null;
+    if (lastActivityMs === null) return null; // can't score without any activity
+
+    const daysSince = Math.floor((now.getTime() - lastActivityMs) / msPerDay);
+    const customerAgeDays = Math.max(
+      1,
+      Math.floor((now.getTime() - new Date(customer.createdAt).getTime()) / msPerDay),
+    );
+    const avgInterval = Math.max(30, Math.floor(customerAgeDays / visitCount));
+    const ratio = daysSince / avgInterval;
+
+    let score: number;
+    if (ratio < 1.0) score = 0.0;
+    else if (ratio < 2.0) score = 0.3;
+    else if (ratio < 3.0) score = 0.6;
+    else score = 0.9;
+
+    const factors: string[] = [];
+    factors.push(this.t(language, 'daysSince', { days: daysSince, typical: avgInterval }));
+
+    // Future appointment is a strong anti-churn signal
+    const futureAppts = (customer.appointments || []).filter((a: any) => {
+      const t = a.startTime ? new Date(a.startTime).getTime() : 0;
+      return t > now.getTime() && a.status !== 'CANCELLED' && a.status !== 'NO_SHOW';
+    }).length;
+    if (futureAppts > 0) {
+      score *= 0.3;
+      factors.push(this.t(language, 'futureAppts', { count: futureAppts }));
+    }
+
+    if (customer.status === 'INACTIVE') {
+      score = Math.max(score, 0.7);
+      factors.push(this.t(language, 'markedInactive'));
+    }
+
+    score = Math.min(1, Math.max(0, score));
+    const riskLevel: 'low' | 'medium' | 'high' =
+      score < 0.3 ? 'low' : score < 0.6 ? 'medium' : 'high';
+
+    return {
+      customerId: customer.id,
+      customerName: `${customer.firstName} ${customer.lastName}`.trim(),
+      churnRisk: Math.round(score * 100) / 100,
+      riskLevel,
+      factors,
+    };
+  }
+
+  private t(lang: string, key: string, params: Record<string, any> = {}): string {
+    const dict: Record<string, Record<string, string>> = {
+      en: {
+        daysSince: `${params['days']} days since last visit (typical: ${params['typical']})`,
+        futureAppts: `Has ${params['count']} upcoming appointment(s)`,
+        markedInactive: 'Marked inactive',
+      },
+      fr: {
+        daysSince: `${params['days']} jours depuis la dernière visite (typique: ${params['typical']})`,
+        futureAppts: `A ${params['count']} rendez-vous à venir`,
+        markedInactive: 'Marqué inactif',
+      },
+      ar: {
+        daysSince: `${params['days']} يوم منذ آخر زيارة (المعتاد: ${params['typical']})`,
+        futureAppts: `لديه ${params['count']} موعد قادم`,
+        markedInactive: 'تم تمييزه كغير نشط',
+      },
+    };
+    return dict[lang]?.[key] || dict['en'][key] || key;
+  }
+
+  private templatedChurnAction(
+    level: 'low' | 'medium' | 'high',
+    lang: string,
+  ): string {
+    const dict: Record<string, Record<string, string>> = {
+      en: {
+        low: 'No action needed — customer is on schedule.',
+        medium: 'Send a service reminder (SMS or email).',
+        high: 'Call personally and offer a maintenance incentive.',
+      },
+      fr: {
+        low: 'Aucune action nécessaire — le client est dans les temps.',
+        medium: 'Envoyer un rappel de service (SMS ou e-mail).',
+        high: 'Appeler personnellement et offrir une incitation d\'entretien.',
+      },
+      ar: {
+        low: 'لا إجراء مطلوب — العميل في الموعد.',
+        medium: 'أرسل تذكيرًا بالخدمة (رسالة نصية أو بريد).',
+        high: 'اتصل شخصيًا واعرض حافزًا للصيانة.',
+      },
+    };
+    return dict[lang]?.[level] || dict['en'][level];
   }
 
   private async chatWithClaude(

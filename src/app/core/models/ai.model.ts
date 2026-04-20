@@ -122,6 +122,7 @@ export interface AiChurnPrediction {
 
 export interface AiChurnPredictionRequest {
   customerId?: string;
+  language?: string;
 }
 
 export interface AiChurnPredictionResponse {
