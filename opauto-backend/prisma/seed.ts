@@ -224,6 +224,78 @@ async function main() {
     apt(1, 2, 4, 'Tire Inspection', d(7,30,8), d(7,30,9), AppointmentStatus.SCHEDULED, 'tire-replacement', 'low'),
   ]);
 
+  // ── Churn-risk customers ───────────────────────────────────────────────────
+  // Three customers crafted so the Customers dashboard "At-Risk Customers" card
+  // has something to show on a fresh seed. Dates are relative to now() so they
+  // stay overdue no matter when the seed runs. Each gets one car + one
+  // COMPLETED appointment backdated far enough to trip the churn scorer.
+  //
+  // Scoring reminder (from ai.service.ts):
+  //   avgInterval = max(30, customerAgeDays / visitCount)
+  //   ratio       = daysSinceLastActivity / avgInterval
+  //   <1 → low · <2 → medium (0.3) · <3 → medium-to-high (0.6) · ≥3 → high (0.9)
+  //   status=INACTIVE clamps score ≥ 0.7
+  const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000);
+  const churnCustomers = await Promise.all([
+    // High risk: 150 days since last visit, 30-day typical cadence → ratio 5
+    prisma.customer.create({ data: {
+      garageId: garage.id,
+      firstName: 'Skander', lastName: 'Khaled',
+      email: 'skander.k@email.tn', phone: '+216 26 111 222',
+      address: 'Kairouan',
+      status: CustomerStatus.ACTIVE, loyaltyTier: 'silver',
+      totalSpent: 3400, visitCount: 12,
+      createdAt: daysAgo(400),
+    } }),
+    // High risk (INACTIVE clamp): 100 days since last visit, marked inactive
+    prisma.customer.create({ data: {
+      garageId: garage.id,
+      firstName: 'Dorra', lastName: 'Mansour',
+      email: 'dorra.m@email.tn', phone: '+216 26 333 444',
+      address: 'Mahdia',
+      status: CustomerStatus.INACTIVE,
+      totalSpent: 1600, visitCount: 8,
+      createdAt: daysAgo(300),
+    } }),
+    // Medium risk: 50 days since last visit, 30-day cadence → ratio 1.67
+    prisma.customer.create({ data: {
+      garageId: garage.id,
+      firstName: 'Mehdi', lastName: 'Trabelsi',
+      email: 'mehdi.t@email.tn', phone: '+216 26 555 666',
+      address: 'Gafsa',
+      status: CustomerStatus.ACTIVE,
+      totalSpent: 1150, visitCount: 5,
+      createdAt: daysAgo(200),
+    } }),
+  ]);
+
+  const churnCars = await Promise.all([
+    prisma.car.create({ data: { garageId: garage.id, customerId: churnCustomers[0].id, make: 'Skoda', model: 'Octavia', year: 2017, licensePlate: '112CHR001', color: 'Silver', mileage: 142000, engineType: 'diesel', transmission: 'manual' } }),
+    prisma.car.create({ data: { garageId: garage.id, customerId: churnCustomers[1].id, make: 'Dacia', model: 'Duster',  year: 2018, licensePlate: '112CHR002', color: 'White',  mileage:  98000, engineType: 'diesel', transmission: 'manual' } }),
+    prisma.car.create({ data: { garageId: garage.id, customerId: churnCustomers[2].id, make: 'Seat',  model: 'Ibiza',   year: 2019, licensePlate: '112CHR003', color: 'Red',    mileage:  64000, engineType: 'petrol', transmission: 'manual' } }),
+  ]);
+
+  await Promise.all([
+    prisma.appointment.create({ data: {
+      garageId: garage.id, customerId: churnCustomers[0].id, carId: churnCars[0].id,
+      title: 'Full Service', type: 'oil-change', priority: 'medium',
+      status: AppointmentStatus.COMPLETED,
+      startTime: daysAgo(150), endTime: daysAgo(150),
+    } }),
+    prisma.appointment.create({ data: {
+      garageId: garage.id, customerId: churnCustomers[1].id, carId: churnCars[1].id,
+      title: 'Brake Inspection', type: 'brake-service', priority: 'medium',
+      status: AppointmentStatus.COMPLETED,
+      startTime: daysAgo(100), endTime: daysAgo(100),
+    } }),
+    prisma.appointment.create({ data: {
+      garageId: garage.id, customerId: churnCustomers[2].id, carId: churnCars[2].id,
+      title: 'Oil Change', type: 'oil-change', priority: 'low',
+      status: AppointmentStatus.COMPLETED,
+      startTime: daysAgo(50), endTime: daysAgo(50),
+    } }),
+  ]);
+
   // Create Suppliers
   const suppliers = await Promise.all([
     prisma.supplier.create({ data: { garageId: garage.id, name: 'TunisAuto Parts', email: 'orders@tunisauto.tn', phone: '+216 71 888 999', address: 'Zone Industrielle, Tunis' } }),
