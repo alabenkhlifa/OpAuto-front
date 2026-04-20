@@ -1,6 +1,7 @@
-import { Injectable, signal } from '@angular/core';
-import { Observable, of, throwError } from 'rxjs';
-import { delay, map, switchMap } from 'rxjs/operators';
+import { Injectable, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, of, throwError, forkJoin } from 'rxjs';
+import { catchError, delay, map, switchMap, tap } from 'rxjs/operators';
 import { SubscriptionService } from './subscription.service';
 import { MaintenancePhoto, PhotoCategory } from '../models/maintenance.model';
 
@@ -61,7 +62,25 @@ export class PhotoService {
   private uploadingSignal = signal(false);
   private errorSignal = signal<PhotoUploadError | null>(null);
 
+  private http = inject(HttpClient);
   constructor(private subscriptionService: SubscriptionService) {}
+
+  /**
+   * Map a backend `maintenance_photos` row to the frontend MaintenancePhoto
+   * shape. Backend stores filename/mime/size separately; frontend only needs
+   * url + filename + category + uploadedAt + uploadedBy + description.
+   */
+  private mapFromBackend(b: any): MaintenancePhoto {
+    return {
+      id: b.id,
+      url: b.url,
+      filename: b.originalName || b.filename || 'photo',
+      description: b.caption || '',
+      category: (b.type || 'other') as PhotoCategory,
+      uploadedAt: new Date(b.createdAt),
+      uploadedBy: b.uploadedBy || 'unknown',
+    };
+  }
 
   /**
    * Check if user has photo upload access
@@ -90,9 +109,9 @@ export class PhotoService {
             requiredTier: 'professional'
           } as PhotoUploadError));
         }
-        
-        // Mock filtering by job ID - in real app, this would be a real filter
-        return of(this.mockPhotos()).pipe(delay(300));
+        return this.http.get<any[]>(`/maintenance/${jobId}/photos`).pipe(
+          map(rows => rows.map(r => this.mapFromBackend(r))),
+        );
       })
     );
   }
@@ -138,28 +157,34 @@ export class PhotoService {
           return throwError(() => error);
         }
 
-        // Simulate upload
         this.uploadingSignal.set(true);
         this.errorSignal.set(null);
 
-        const newPhotos: MaintenancePhoto[] = files.map((file, index) => ({
-          id: `photo-${Date.now()}-${index}`,
-          url: URL.createObjectURL(file),
-          filename: file.name,
-          description: descriptions?.[index] || `${category} photo`,
-          category,
-          uploadedAt: new Date(),
-          uploadedBy: 'current-user'
-        }));
+        // Upload each file via multipart POST. ForkJoin waits for all to
+        // settle; if any fails, the whole upload is surfaced as an error
+        // so the UI doesn't show a partial result.
+        const uploads = files.map((file, index) => {
+          const form = new FormData();
+          form.append('file', file);
+          form.append('type', category);
+          const desc = descriptions?.[index];
+          if (desc) form.append('caption', desc);
+          return this.http.post<any>(`/maintenance/${jobId}/photos`, form).pipe(
+            map(row => this.mapFromBackend(row)),
+          );
+        });
 
-        return of(newPhotos).pipe(
-          delay(1500), // Simulate upload time
-          map(photos => {
+        return forkJoin(uploads).pipe(
+          tap(() => this.uploadingSignal.set(false)),
+          catchError(err => {
             this.uploadingSignal.set(false);
-            // Add to mock storage
-            this.mockPhotos.update(existing => [...existing, ...photos]);
-            return photos;
-          })
+            const error: PhotoUploadError = {
+              code: 'UPLOAD_FAILED',
+              message: err?.error?.message || 'Upload failed',
+            };
+            this.errorSignal.set(error);
+            return throwError(() => error);
+          }),
         );
       })
     );
@@ -168,7 +193,7 @@ export class PhotoService {
   /**
    * Delete photo with tier validation
    */
-  deletePhoto(photoId: string): Observable<boolean> {
+  deletePhoto(photoId: string, jobId?: string): Observable<boolean> {
     return this.hasPhotoAccess().pipe(
       switchMap(hasAccess => {
         if (!hasAccess) {
@@ -179,10 +204,15 @@ export class PhotoService {
           };
           return throwError(() => error);
         }
-
-        // Remove from mock storage
-        this.mockPhotos.update(photos => photos.filter(p => p.id !== photoId));
-        return of(true).pipe(delay(300));
+        if (!jobId) {
+          return throwError(() => ({
+            code: 'UPLOAD_FAILED',
+            message: 'Cannot delete photo without jobId',
+          } as PhotoUploadError));
+        }
+        return this.http.delete(`/maintenance/${jobId}/photos/${photoId}`).pipe(
+          map(() => true),
+        );
       })
     );
   }

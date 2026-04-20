@@ -955,7 +955,7 @@ export class PhotoUploadComponent implements OnInit, OnDestroy {
   }
 
   onPhotoDeleted(photoId: string): void {
-    this.photoService.deletePhoto(photoId)
+    this.photoService.deletePhoto(photoId, this.jobId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {

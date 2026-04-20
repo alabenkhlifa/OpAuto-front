@@ -4,11 +4,12 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MaintenanceService } from '../../../core/services/maintenance.service';
 import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/models/maintenance.model';
+import { PhotoUploadComponent } from '../../../shared/components/photo-upload/photo-upload.component';
 
 @Component({
   selector: 'app-maintenance-details',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PhotoUploadComponent],
   template: `
     <div class="p-6 max-w-6xl mx-auto">
       
@@ -198,10 +199,18 @@ import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/model
                     <span class="text-gray-900">{{ getTaskProgress() }}%</span>
                   </div>
                   <div class="w-full bg-gray-200 rounded-full h-3">
-                    <div class="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full transition-all" 
+                    <div class="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full transition-all"
                          [style.width.%]="getTaskProgress()"></div>
                   </div>
                 </div>
+              }
+            </div>
+
+            <!-- Photos -->
+            <div class="glass-card">
+              <h2 class="text-lg font-semibold text-gray-900 mb-4">Photos</h2>
+              @if (job()?.id) {
+                <app-photo-upload [jobId]="job()!.id"></app-photo-upload>
               }
             </div>
 
