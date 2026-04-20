@@ -249,12 +249,23 @@ import { ToastService } from '../../../shared/services/toast.service';
                   <label class="block text-sm font-medium text-gray-600 mb-1">
                     Task Description
                   </label>
-                  <textarea 
+                  <textarea
                     formControlName="description"
                     rows="2"
                     placeholder="Detailed description of what needs to be done..."
                     class="form-textarea text-sm">
                   </textarea>
+                </div>
+
+                <div class="mt-3">
+                  <label class="block text-sm font-medium text-gray-600 mb-1">
+                    {{ 'maintenance.new.taskStatus' | translate }}
+                  </label>
+                  <select formControlName="status" class="form-select text-sm">
+                    <option value="pending">{{ 'maintenance.new.taskStatusPending' | translate }}</option>
+                    <option value="in-progress">{{ 'maintenance.new.taskStatusInProgress' | translate }}</option>
+                    <option value="completed">{{ 'maintenance.new.taskStatusCompleted' | translate }}</option>
+                  </select>
                 </div>
               </div>
             }
