@@ -80,4 +80,33 @@ export class UsersService {
       data: { isActive: false },
     });
   }
+
+  /**
+   * Preferences are 1:1 with user. We upsert on GET so every authenticated
+   * user always has a row — simpler than nullable checks in every caller.
+   */
+  async getPreferences(userId: string) {
+    return this.prisma.userPreference.upsert({
+      where: { userId },
+      update: {},
+      create: { userId },
+    });
+  }
+
+  async updatePreferences(
+    userId: string,
+    dto: Partial<{
+      emailNotifications: boolean;
+      smsNotifications: boolean;
+      browserNotifications: boolean;
+      language: string;
+      theme: string;
+    }>,
+  ) {
+    return this.prisma.userPreference.upsert({
+      where: { userId },
+      update: dto,
+      create: { userId, ...dto },
+    });
+  }
 }

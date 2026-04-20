@@ -3,6 +3,7 @@ import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdatePreferencesDto } from './dto/update-preferences.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -35,6 +36,19 @@ export class UsersController {
   ) {
     const { password, role, ...safe } = dto as any;
     return this.usersService.update(id, garageId, safe);
+  }
+
+  @Get('me/preferences')
+  getMyPreferences(@CurrentUser('id') id: string) {
+    return this.usersService.getPreferences(id);
+  }
+
+  @Put('me/preferences')
+  updateMyPreferences(
+    @CurrentUser('id') id: string,
+    @Body() dto: UpdatePreferencesDto,
+  ) {
+    return this.usersService.updatePreferences(id, dto);
   }
 
   @Get(':id')
