@@ -105,13 +105,14 @@ Single source of truth for the current bug batch. Add new bugs to **§ Backlog**
 | BUG-088b | Part-modal filtered suppliers by `s.isActive` but backend Supplier has no `isActive` column → all filtered out even after endpoint fixed | Inventory | 🟢 | (testing session 2026-04-21) |
 | BUG-088c | CreateEmployeeDto missing `status` field → frontend sent `{status: "ACTIVE"}` and backend rejected as "property status should not exist" → Add Employee impossible via UI | Employees | 🟢 | (testing session 2026-04-21) |
 | BUG-071 | Confirmed: AI module has backend endpoints (`/ai/chat`, `/ai/diagnose`, `/ai/estimate`, `/ai/suggest-schedule`) but no frontend route/page → `/ai` redirects to dashboard. Module is activatable but nothing to activate. **Feature gap, not a bug fix** — needs AI page component built. | AI | 🔴 | (confirmed 2026-04-21) |
-| BUG-063 | Confirmed: Profile → Update Profile is a stub (`setTimeout` + fake success, no API call). Backend PUT `/users/:id` exists but isn't wired. **Feature gap** — needs `me` endpoint + frontend service call. | Profile | 🔴 | (confirmed 2026-04-21) |
+| BUG-063 | Profile → Update Profile wired end-to-end. New backend routes `GET /users/me` + `PUT /users/me` (password/role whitelisted out). Frontend form splits "Full Name" on first space → firstName/lastName, PUTs to backend, shows toast. Verified phone update persists in DB. | Profile | 🟢 | (testing session 2026-04-21) |
 | BUG-064 | Confirmed: Profile → Preferences save is a stub (`setTimeout` + fake success, no API call, no backend schema to persist preferences). **Feature gap** — needs UserPreference model + endpoint. | Profile | 🔴 | (confirmed 2026-04-21) |
 | BUG-065 | Approvals approve/reject buttons verified end-to-end (status + counters update). Creation must go via API — no UI "+ New Approval" button exists. Display shows "Approved by on" (missing name + date — backend has respondedBy/respondedAt but template doesn't render). | Approvals | 🟡 | (testing session 2026-04-21) |
 | BUG-089 | Approval type enum aligned: frontend enum + i18n keys now match backend's 4 values (MAINTENANCE, INVOICE, PURCHASE_ORDER, DISCOUNT) | Approvals | 🟢 | (testing session 2026-04-21) |
 | BUG-090 | Approval list now renders correct type label (Purchase Order, Discount, etc.) for all rows | Approvals | 🟢 | (testing session 2026-04-21) |
 | BUG-066 | Stock Adjustment modal verified end-to-end (stock 8 → 13 via "Add Stock (Incoming)"). Quantity persists. | Inventory | 🟢 | (testing session 2026-04-21) |
 | BUG-091 | Stock Adjustment now wired to `POST /inventory/:id/adjust` — creates `stockMovement` audit rows (type, quantity, reason persisted). Backend + frontend aligned. | Inventory | 🟢 | (testing session 2026-04-21) |
+| BUG-069 | Invoice Print verified: detail page `onPrint()` calls `window.print()`. List card Print button (was a no-op `$event.stopPropagation()`) now navigates to detail with `?autoPrint=1` query param, which triggers print automatically on load. | Invoicing | 🟢 | (testing session 2026-04-21) |
 
 ### Session 2026-04-20 — Known gaps (untested / stubs / missing features)
 Each is intentionally left open so the team can pick them up. Context + repro steps included for each. Date the last session touched each = 2026-04-20.
@@ -124,12 +125,12 @@ Each is intentionally left open so the team can pick them up. Context + repro st
 | BUG-064 | Profile Preferences tab — UI renders but save-persistence untested | Profile | 🔴 |
 | BUG-065 | Approvals — create / approve / reject flow untested (0 seed rows) | Approvals | 🔴 |
 | BUG-066 | Stock Adjustment modal (inventory) — never opened + submitted | Inventory | 🔴 |
-| BUG-067 | Photo uploads — widgets exist for car / employee / maintenance but UI + backend integration untested | Uploads | 🔴 |
+| BUG-067 | Photo uploads — **confirmed feature gap, not a bug**: `src/app/shared/components/photo-upload/photo-upload.component.ts` exists as a shared widget but is NEVER imported by any feature (car / employee / maintenance). `PhotoService` is entirely in-memory (`URL.createObjectURL` + client signal, no HTTP). Backend has no `Photo` model + no `/photos` endpoints. Full implementation needed. | Uploads | 🔴 |
 | BUG-068 | Invoice Draft → Sent → Paid transition via UI — only API-tested | Invoicing | 🟢 |
 | BUG-086a | Invoice list card: Paid/Remaining/Progress always 0 (list endpoint omitted `payments[]`) | Invoicing | 🟢 |
 | BUG-086b | `invoicing.list.*` translation namespace missing across en/fr/ar (raw keys rendered) | Invoicing | 🟢 |
 | BUG-086c | Seed: PAID invoices had no Payment rows → UI stats/progress wrong after reseed | Seed | 🟢 |
-| BUG-069 | Invoice Print / PDF buttons — render but output never verified | Invoicing | 🔴 |
+| BUG-069 | Invoice Print / PDF buttons — render but output never verified | Invoicing | 🟢 |
 | BUG-070 | Calendar drag-and-drop — `handleDateSelect` + `handleEventDrop` are TODO stubs (per CLAUDE.md) | Calendar | 🔴 |
 | BUG-071 | AI module UI page (`/ai`) — backend `/ai/chat` verified, the UI page itself never opened | AI | 🔴 |
 | BUG-072 | Users page (`/users`) — module active, sidebar has the link, UI never clicked | Users | 🔴 |
