@@ -633,6 +633,19 @@
   "customers": {
     "title": "Customers",
     "subtitle": "Manage customer information and history",
+    "atRisk": {
+      "title": "At-Risk Customers",
+      "subtitle": "AI-predicted customers likely to churn",
+      "refresh": "Refresh",
+      "loading": "Scoring…",
+      "hint": "Click Refresh to generate predictions from recent activity.",
+      "noneAtRisk": "No customers at risk right now 🎉",
+      "level": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      }
+    },
     "customerInformation": "Customer Information",
     "notProvided": "Not provided",
     "addCustomer": "Add Customer",

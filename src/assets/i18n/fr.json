@@ -644,6 +644,19 @@
   "customers": {
     "title": "Clients",
     "subtitle": "Gérer les informations et l'historique des clients",
+    "atRisk": {
+      "title": "Clients à risque",
+      "subtitle": "Clients à fort risque de désabonnement (prédit par l'IA)",
+      "refresh": "Actualiser",
+      "loading": "Analyse…",
+      "hint": "Cliquez sur Actualiser pour générer les prédictions.",
+      "noneAtRisk": "Aucun client à risque pour l'instant 🎉",
+      "level": {
+        "low": "Faible",
+        "medium": "Moyen",
+        "high": "Élevé"
+      }
+    },
     "customerInformation": "Informations du client",
     "notProvided": "Non fourni",
     "addCustomer": "Ajouter un client",

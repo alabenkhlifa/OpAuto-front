@@ -4,6 +4,7 @@ import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CustomerService } from '../../core/services/customer.service';
 import { Customer, CustomerStats, CustomerSummary, CustomerStatus } from '../../core/models/customer.model';
+import { AtRiskCustomersCardComponent } from './components/at-risk-customers-card.component';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { TranslationService } from '../../core/services/translation.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -12,7 +13,7 @@ import { SubscriptionService } from '../../core/services/subscription.service';
 @Component({
   selector: 'app-customers',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, RouterModule, FormsModule, TranslatePipe, AtRiskCustomersCardComponent],
   templateUrl: './customers.component.html',
   styleUrl: './customers.component.css'
 })
