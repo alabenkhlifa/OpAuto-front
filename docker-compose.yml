@@ -28,18 +28,35 @@ services:
     environment:
       DATABASE_URL: postgresql://${DB_USER:-opauto}:${DB_PASSWORD:-opauto_secret}@db:5432/${DB_NAME:-opauto}
       JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
-      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      # All supported LLM providers — the first key found is used (see
+      # opauto-backend/src/ai/ai.service.ts). Leave blank to fall back to
+      # the deterministic mock responses.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
       NODE_ENV: production
       PORT: 3000
+    volumes:
+      # Persist user-uploaded photos across container restarts. The backend
+      # writes to /app/uploads (resolved via __dirname + '../../uploads' in
+      # the compiled dist; see maintenance.service.ts:uploadRoot()).
+      - uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3000/api"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   nginx:
     image: nginx:alpine
     container_name: opauto-nginx
     restart: unless-stopped
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     ports:
       - "80:80"
     volumes:
@@ -48,3 +65,4 @@ services:
 
 volumes:
   pg_data:
+  uploads:
