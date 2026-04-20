@@ -175,4 +175,4 @@ Comprehensive end-to-end testing of every screen + backend endpoint. 12 commits 
 - [x] Complete Job → completed, appears in History tab
 - [x] PENDING ↔ waiting enum mapping in both directions
 - [x] Backend create/update now return relations (car, customer, mechanic)
-- [ ] **Tasks don't persist** — backend has no `/maintenance/:id/tasks` endpoint; frontend sends `tasks` array but it's stripped. Separate feature to implement.
+- [x] **Tasks persist** — added POST/PUT/DELETE `/maintenance/:jobId/tasks/:taskId?` (commit `648b7b4`). Form's `syncTasks()` runs after job save, diffs original vs current task IDs and fires the right endpoint per task.

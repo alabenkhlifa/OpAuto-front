@@ -97,7 +97,7 @@ All resources pass CRUD via curl as OWNER:
 | Create/update response includes relations (car/customer/mechanic) | ✅ (backend include fixed in `406e2ae`) |
 | Completed Jobs tab | ✅ |
 | Schedule tab | ✅ |
-| Add task to job | ❌ **not persisting** — frontend sends `tasks` array, backend strips it (no `/maintenance/:id/tasks` endpoint exists). Separate feature. |
+| Add task to job | ✅ (was missing endpoint, implemented in `648b7b4` — POST/PUT/DELETE `/maintenance/:jobId/tasks/:taskId`; form now syncs add/update/delete on save) |
 
 ### Parts & Inventory (`/inventory`)
 | Element | Result |

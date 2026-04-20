@@ -86,7 +86,7 @@ Single source of truth for the current bug batch. Add new bugs to **§ Backlog**
 | BUG-055 | Maintenance PUT → 400 (same field list) | Maintenance | 🟢 | `406e2ae` |
 | BUG-056 | New jobs invisible — `PENDING` ↔ `waiting` enum mismatch | Maintenance | 🟢 | `406e2ae` |
 | BUG-057 | Maintenance create/update response missing relations (car/customer/mechanic empty after save) | Maintenance | 🟢 | `406e2ae` |
-| BUG-058 | Maintenance tasks don't persist — no `/maintenance/:id/tasks` endpoint | Maintenance | 🔴 | — |
+| BUG-058 | Maintenance tasks don't persist — no `/maintenance/:id/tasks` endpoint | Maintenance | 🟢 | `648b7b4` |
 
 ---
 
