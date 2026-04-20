@@ -133,7 +133,7 @@ Each is intentionally left open so the team can pick them up. Context + repro st
 | BUG-086b | `invoicing.list.*` translation namespace missing across en/fr/ar (raw keys rendered) | Invoicing | 🟢 |
 | BUG-086c | Seed: PAID invoices had no Payment rows → UI stats/progress wrong after reseed | Seed | 🟢 |
 | BUG-069 | Invoice Print / PDF buttons — render but output never verified | Invoicing | 🟢 |
-| BUG-070 | Calendar drag-and-drop — `handleDateSelect` + `handleEventDrop` are TODO stubs (per CLAUDE.md) | Calendar | 🔴 |
+| BUG-070 | Calendar drag-and-drop wired end-to-end. `handleEventDrop` already persisted via appointmentService + AI conflict suggestions + closed-day modal (pre-existing); `handleDateSelect` (only TODO stub remaining) now opens the Add Appointment modal pre-filled with the clicked slot via new `AppointmentModalComponent.setInitialDate(date)`. 3 unit tests added. | Calendar | 🟢 |
 | BUG-071 | AI module UI page (`/ai`) — feature gap: no frontend route/component (see confirmed row above) | AI | 🔴 |
 | BUG-072 | Users page (`/users`) verified — loads 6 team members. Added ~50 missing i18n keys (`users.*`, `roles.*`, `status.*`, `permissions.*`, plus 9 new `tiers.*`) across en/fr/ar, page was rendering raw keys. | Users | 🟢 |
 | BUG-073 | Settings save after edit — Garage Info tab verified end-to-end (see resolved row above). Operations/System/Integrations still silent no-ops under BUG-087a/b/c | Settings | 🟢 |

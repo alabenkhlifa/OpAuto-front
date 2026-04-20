@@ -68,7 +68,7 @@ npx prisma db push         # Push schema changes without migration (dev only)
 - **Translation keys**: Arabic (`ar.json`) uses singular keys (`feature`, `photo`, `tier`) while en/fr use plural (`features`, `photos`, `tiers`) — keep in sync when editing
 - **Mock fallbacks**: SubscriptionService returns hardcoded values. ModuleService is the real access gate.
 - **Calendar CSS**: FullCalendar overrides use `::ng-deep` heavily — library updates may break styling
-- **Calendar stubs**: `handleDateSelect` and `handleEventDrop` have TODO stubs — drag-and-drop doesn't persist yet
+- **Calendar drag-drop**: `handleEventDrop` persists via `appointmentService.updateAppointment` with AI-assisted conflict detection + closed-day handling. `handleDateSelect` opens the Add Appointment modal pre-filled with the selected slot via `AppointmentModalComponent.setInitialDate`.
 
 ## Plan Mode Review
 Offer **BIG CHANGE** (interactive, max 4 issues/section) or **SMALL CHANGE** (1 question/section).
