@@ -324,7 +324,7 @@
                   class="btn-success btn-sm flex-1">
             {{ 'invoicing.list.markPaid' | translate }}
           </button>
-          <button (click)="$event.stopPropagation()"
+          <button (click)="onPrintInvoice(invoice); $event.stopPropagation()"
                   class="btn-secondary btn-sm">
             {{ 'invoicing.list.print' | translate }}
           </button>

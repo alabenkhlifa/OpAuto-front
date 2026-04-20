@@ -177,6 +177,10 @@ export class InvoicingComponent implements OnInit {
     });
   }
 
+  onPrintInvoice(invoice: InvoiceWithDetails): void {
+    this.router.navigate(['/invoices', invoice.id], { queryParams: { autoPrint: 1 } });
+  }
+
   getAvailableStatuses(): InvoiceStatus[] {
     return ['draft', 'sent', 'viewed', 'paid', 'partially-paid', 'overdue', 'cancelled', 'refunded'];
   }

@@ -28,12 +28,16 @@ export class InvoiceDetailsComponent implements OnInit {
     if (invoiceId) {
       this.loadInvoice(invoiceId);
     }
-    
-    // Check for print mode in query params
+
     this.route.queryParams.subscribe(params => {
       this.isPrintMode.set(params['print'] === 'true');
+      if (params['autoPrint'] === '1') {
+        this.autoPrintPending = true;
+      }
     });
   }
+
+  private autoPrintPending = false;
 
   private loadInvoice(invoiceId: string): void {
     this.isLoading.set(true);
@@ -44,6 +48,10 @@ export class InvoiceDetailsComponent implements OnInit {
         next: (payments) => this.payments.set(payments),
         error: (error) => console.error('Failed to load payments:', error)
       });
+      if (this.autoPrintPending) {
+        this.autoPrintPending = false;
+        setTimeout(() => this.onPrint(), 300);
+      }
     };
 
     const cached = this.invoiceService.getInvoiceById(invoiceId);
