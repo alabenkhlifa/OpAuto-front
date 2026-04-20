@@ -13,13 +13,12 @@ import { ModuleAccessGuard, RequireModule } from '../modules/module-access.guard
 @ApiTags('employees')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard, ModuleAccessGuard)
-@Roles(UserRole.OWNER)
 @Controller('employees')
 export class EmployeesController {
   constructor(private service: EmployeesService) {}
   @Get() findAll(@CurrentUser('garageId') gid: string) { return this.service.findAll(gid); }
   @Get(':id') findOne(@Param('id') id: string, @CurrentUser('garageId') gid: string) { return this.service.findOne(id, gid); }
-  @Post() @RequireModule('employees') create(@CurrentUser('garageId') gid: string, @Body() dto: CreateEmployeeDto) { return this.service.create(gid, dto); }
-  @Put(':id') @RequireModule('employees') update(@Param('id') id: string, @CurrentUser('garageId') gid: string, @Body() dto: UpdateEmployeeDto) { return this.service.update(id, gid, dto); }
-  @Delete(':id') @RequireModule('employees') remove(@Param('id') id: string, @CurrentUser('garageId') gid: string) { return this.service.remove(id, gid); }
+  @Post() @Roles(UserRole.OWNER) @RequireModule('employees') create(@CurrentUser('garageId') gid: string, @Body() dto: CreateEmployeeDto) { return this.service.create(gid, dto); }
+  @Put(':id') @Roles(UserRole.OWNER) @RequireModule('employees') update(@Param('id') id: string, @CurrentUser('garageId') gid: string, @Body() dto: UpdateEmployeeDto) { return this.service.update(id, gid, dto); }
+  @Delete(':id') @Roles(UserRole.OWNER) @RequireModule('employees') remove(@Param('id') id: string, @CurrentUser('garageId') gid: string) { return this.service.remove(id, gid); }
 }
