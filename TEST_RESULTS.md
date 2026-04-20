@@ -2,12 +2,60 @@
 
 **Date**: 2026-04-19 → 2026-04-20
 **Tester**: Claude (automated via Chrome DevTools MCP + curl)
-**Demo account**: `owner@autotech.tn / password123` and `mohamed / staff123`
+**Demo accounts**: `owner@autotech.tn / password123` (owner) · `mohamed / staff123` (staff)
 **Backend**: http://localhost:3000/api · **Frontend**: http://localhost:4200
 
-Legend: ✅ pass · ❌ fail · ⚠️ works with issue · ⏭️ not-applicable
+Legend: ✅ pass · ❌ fail · ⚠️ works with issue · ⏭️ not-yet-tested · 🔴 open bug
 
-Status: **12 commits landed** (`67a7aa8` → `cf8705f`), **33 bugs found and fixed**. Full log in `docs/BUGS.md` (BUG-019 through BUG-052).
+---
+
+## ⏩ Session handoff — read this first
+
+**Totals**: 25 commits landed (`67a7aa8` → `b83c9bf`) · **41 bugs fixed**, **25 tracked open gaps** in `docs/BUGS.md` (BUG-019 … BUG-085).
+
+### What's verified end-to-end (UI clicks + API roundtrips)
+- **Auth**: login valid/invalid, Sign Out, Register, Refresh, Change Password (backend + UI), Forgot-password modal opens (submit stubbed — BUG-061)
+- **Role gates**: owner + staff login, sidebar filtering, owner-only routes redirect with toast, staff can create appointments
+- **Dashboard**: all 4 Quick Actions, KPIs, Today's Schedule, language toggle (EN/FR/AR)
+- **Calendar**: Month/Week/Day, prev/next, Today, Mechanic filter, + Add Appointment, event click
+- **Appointments**: list, Add, filter tabs All/Scheduled/In Progress/Completed, Edit modal
+- **Cars**: Make filter, Status filter, Schedule service per card → /appointments, View history per card → /maintenance
+- **Maintenance**: full CRUD on jobs (New / Edit / Start / Complete / Reopen), full CRUD on tasks (Add / Remove / Complete / Reopen), Active/History/Schedule tabs
+- **Inventory**: Dashboard KPIs, Parts Catalog, Suppliers tab, Add Part modal opens
+- **Invoicing**: Dashboard KPIs, All Invoices list, Pending Payment tab, Create Invoice form (customer→vehicle dependency), Record Payment, invoice detail page (direct-nav + header from /garage-settings)
+- **Customers**: Dashboard KPIs, List, Analytics tabs, Add Customer modal opens
+- **Reports**: Dashboard / Financial / Operational / Customer / Inventory tabs, Refresh, Export → CSV download
+- **Notifications**: all 7 category tabs, Unread Only, Delete notification
+- **Settings**: all 5 tabs render clean (Garage Info / Operations / Business / System / Integrations)
+- **Employees**: role badges, Add / Edit / Mark Unavailable / Mark Available / Grid-List toggle, Filters
+- **Modules**: Activate / Deactivate, guard toast
+- **Profile**: Sign Out, Change Password
+- **Mobile (375×667)**: sidebar slide-in/out, no horizontal overflow on 6 top pages
+
+### What's NOT verified yet (start here next session)
+See `docs/BUGS.md` entries BUG-061 through BUG-085. Quick high-leverage picks:
+1. **BUG-068** Invoice Draft → Sent → Paid transition via UI (backend works, UI never clicked)
+2. **BUG-073** Settings save after an edit (we clicked all 5 tabs but never saved a change)
+3. **BUG-074** Submit paths on Add Customer / Add Car / Add Part / Add Employee modals
+4. **BUG-071** AI module UI page (`/ai`) — backend verified, page never opened
+5. **BUG-063/064** Profile Update + Preferences save
+6. **BUG-070** Calendar drag-and-drop (still TODO stubs per CLAUDE.md)
+7. **BUG-067** Photo uploads (car / employee / maintenance) — widgets exist
+8. **BUG-065** Approvals create / approve / reject (0 seed data, flow never exercised)
+9. **BUG-066** Stock Adjustment modal
+
+### Environment state after this session
+- `opauto-db` docker container running (`postgres:postgres@localhost:5432/opauto`) with seed data
+- User's `tdx-postgres` container is stopped (stopped by me with user approval to free port 5432) — restart with `docker start tdx-postgres` and `docker stop opauto-db` when switching back
+- Backend + frontend dev servers still running as background bash processes (`b81ouxdwr` + `bz6bmkmmz`) — may need `npm run start:dev` / `ng serve` if session restarts
+- DB was reseeded on 2026-04-20 (`prisma db push --force-reset && prisma db seed`) — clean baseline of 15 customers / 15 cars / 5 employees / 82 appointments / 12 invoices / 5 maintenance / 15 parts
+
+### How to resume
+1. `cd /Users/alabenkhlifa/IdeaProjects/OpAuto-front`
+2. Check services: `lsof -i :3000 -i :4200` — both must be listening
+3. Login in browser: `owner@autotech.tn / password123`
+4. Pick a 🔴 ticket from `docs/BUGS.md` (BUG-061+)
+5. Keep updating the per-screen table below with ✅/⏭️ as you go
 
 ---
 

@@ -1,5 +1,8 @@
 # OpAuto MVP Implementation Progress
 
+> **Session handoff (2026-04-20):** 25 commits landed this session (`67a7aa8` → `b83c9bf`), 41 bugs fixed + 25 gaps tracked as open 🔴 tickets in `docs/BUGS.md`. For the per-screen UI-test matrix and "where to resume" notes, read `TEST_RESULTS.md` first — its top section is a session handoff. For the fix-by-fix log, scroll to **Stability Session 2026-04-20** in this file.
+
+
 ## Batch 0: Foundation & Infrastructure
 - [x] 0A: NestJS Backend Scaffold + Docker
 - [x] 0B: Frontend Environment Config (interceptors, api service)

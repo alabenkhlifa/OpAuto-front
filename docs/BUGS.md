@@ -4,6 +4,8 @@ Single source of truth for the current bug batch. Add new bugs to **§ Backlog**
 
 **Legend:** 🔴 open · 🟡 in progress · 🟢 fixed · ⚪️ deferred
 
+> **Session handoff (2026-04-20):** BUG-019 → BUG-060 fixed this session. **BUG-061 → BUG-085** are open gaps the next session should pick up — see the "Session 2026-04-20 — Known gaps" table further down. For the per-screen UI-test pass/fail matrix and "where to resume" notes, read `TEST_RESULTS.md` top section first.
+
 ---
 
 ## Status Summary
