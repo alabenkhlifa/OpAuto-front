@@ -41,7 +41,14 @@ export class MaintenanceService {
   }
 
   createMaintenanceJob(job: Partial<MaintenanceJob>): Observable<MaintenanceJob> {
-    return this.http.post<any>('/maintenance', this.mapToBackend(job)).pipe(
+    const payload = this.mapToBackend(job);
+    // These are client-side fields — backend rejects them
+    delete payload.customerId;
+    delete payload.status;
+    delete payload.tasks;
+    delete payload.approvals;
+    delete payload.mileage;
+    return this.http.post<any>('/maintenance', payload).pipe(
       map(j => this.mapFromBackend(j)),
       tap(newJob => {
         const current = this.maintenanceJobsSubject.value;
@@ -51,7 +58,12 @@ export class MaintenanceService {
   }
 
   updateMaintenanceJob(id: string, updates: Partial<MaintenanceJob>): Observable<MaintenanceJob> {
-    return this.http.put<any>(`/maintenance/${id}`, this.mapToBackend(updates)).pipe(
+    const payload = this.mapToBackend(updates);
+    delete payload.customerId;
+    delete payload.tasks;
+    delete payload.approvals;
+    delete payload.mileage;
+    return this.http.put<any>(`/maintenance/${id}`, payload).pipe(
       map(j => this.mapFromBackend(j)),
       tap(updated => {
         const current = this.maintenanceJobsSubject.value;
@@ -66,7 +78,7 @@ export class MaintenanceService {
   }
 
   updateJobStatus(id: string, status: MaintenanceStatus): Observable<MaintenanceJob> {
-    const updates: any = { status: toBackendEnum(status) };
+    const updates: any = { status: status === 'waiting' ? 'PENDING' : toBackendEnum(status) };
     if (status === 'completed') {
       updates.completionDate = new Date().toISOString();
     }
@@ -272,7 +284,10 @@ export class MaintenanceService {
         uploadedAt: new Date(p.uploadedAt || p.createdAt),
         uploadedBy: p.uploadedBy
       })),
-      status: (fromBackendEnum(b.status) || 'waiting') as MaintenanceStatus,
+      status: ((): MaintenanceStatus => {
+        const s = fromBackendEnum(b.status) || 'waiting';
+        return (s === 'pending' ? 'waiting' : s) as MaintenanceStatus;
+      })(),
       priority: b.priority || 'medium',
       estimatedCost: b.estimatedCost || 0,
       actualCost: b.actualCost,
@@ -294,7 +309,7 @@ export class MaintenanceService {
     if (f.mechanicId !== undefined) result.employeeId = f.mechanicId;
     if (f.carId !== undefined) result.carId = f.carId;
     if (f.customerId !== undefined) result.customerId = f.customerId;
-    if (f.status !== undefined) result.status = toBackendEnum(f.status);
+    if (f.status !== undefined) result.status = f.status === 'waiting' ? 'PENDING' : toBackendEnum(f.status);
     if (f.priority !== undefined) result.priority = f.priority;
     if (f.estimatedCost !== undefined) result.estimatedCost = f.estimatedCost;
     if (f.actualCost !== undefined) result.actualCost = f.actualCost;

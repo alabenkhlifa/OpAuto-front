@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } fr
 import { Router, ActivatedRoute } from '@angular/router';
 import { MaintenanceService } from '../../../core/services/maintenance.service';
 import { CarService } from '../../cars/services/car.service';
+import { EmployeeService } from '../../../core/services/employee.service';
 import { MaintenanceJob, MaintenanceTask, ServiceType } from '../../../core/models/maintenance.model';
 import { Car } from '../../../core/models/appointment.model';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
@@ -82,7 +83,7 @@ import { ToastService } from '../../../shared/services/toast.service';
                 class="form-select"
                 [class.border-red-500]="isFieldInvalid('mechanicId')">
                 <option value="">{{ 'maintenance.new.selectMechanic' | translate }}</option>
-                @for (mechanic of mechanics; track mechanic.id) {
+                @for (mechanic of mechanics(); track mechanic.id) {
                   <option [value]="mechanic.id">{{ mechanic.name }}</option>
                 }
               </select>
@@ -303,20 +304,16 @@ export class MaintenanceFormComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private maintenanceService = inject(MaintenanceService);
   private carService = inject(CarService);
+  private employeeService = inject(EmployeeService);
   private toast = inject(ToastService);
 
   maintenanceForm!: FormGroup;
   cars = signal<Car[]>([]);
   serviceTypes = signal<ServiceType[]>([]);
+  mechanics = signal<{ id: string; name: string }[]>([]);
   isSubmitting = signal(false);
   jobId = signal<string | null>(null);
   isEditMode = signal(false);
-
-  mechanics = [
-    { id: 'mechanic-001', name: 'Mohamed Trabelsi' },
-    { id: 'mechanic-002', name: 'Ali Sassi' },
-    { id: 'mechanic-003', name: 'Ahmed Bouzid' }
-  ];
 
   ngOnInit() {
     this.initializeForm();
@@ -350,6 +347,18 @@ export class MaintenanceFormComponent implements OnInit {
     this.maintenanceService.getServiceTypes().subscribe({
       next: (serviceTypes) => this.serviceTypes.set(serviceTypes),
       error: (error) => console.error('Error loading service types:', error)
+    });
+
+    // Load real employees for mechanic picker
+    this.employeeService.getEmployees().subscribe({
+      next: (employees) => {
+        this.mechanics.set(
+          employees
+            .filter(e => e.availability.isAvailable)
+            .map(e => ({ id: e.id, name: `${e.personalInfo.firstName} ${e.personalInfo.lastName}`.trim() }))
+        );
+      },
+      error: (error) => console.error('Error loading mechanics:', error)
     });
   }
 
@@ -429,7 +438,7 @@ export class MaintenanceFormComponent implements OnInit {
       
       const formValue = this.maintenanceForm.value;
       const selectedCar = this.cars().find(car => car.id === formValue.carId);
-      const selectedMechanic = this.mechanics.find(m => m.id === formValue.mechanicId);
+      const selectedMechanic = this.mechanics().find(m => m.id === formValue.mechanicId);
 
       const jobData: Partial<MaintenanceJob> = {
         ...formValue,

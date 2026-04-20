@@ -38,12 +38,29 @@ export class MaintenanceService {
   }
 
   async create(garageId: string, dto: CreateMaintenanceDto) {
-    return this.prisma.maintenanceJob.create({ data: { ...dto, garageId } });
+    return this.prisma.maintenanceJob.create({
+      data: { ...dto, garageId },
+      include: {
+        car: {
+          select: { make: true, model: true, year: true, licensePlate: true, mileage: true, customer: { select: { id: true, firstName: true, lastName: true } } },
+        },
+        employee: { select: { firstName: true, lastName: true } },
+      },
+    });
   }
 
   async update(id: string, garageId: string, dto: UpdateMaintenanceDto) {
     await this.findOne(id, garageId);
-    return this.prisma.maintenanceJob.update({ where: { id }, data: dto });
+    return this.prisma.maintenanceJob.update({
+      where: { id },
+      data: dto,
+      include: {
+        car: {
+          select: { make: true, model: true, year: true, licensePlate: true, mileage: true, customer: { select: { id: true, firstName: true, lastName: true } } },
+        },
+        employee: { select: { firstName: true, lastName: true } },
+      },
+    });
   }
 
   async remove(id: string, garageId: string) {
