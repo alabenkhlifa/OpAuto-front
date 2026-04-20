@@ -518,6 +518,22 @@ export class ProfileComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.initializeForms();
     this.loadCurrentUser();
+    this.loadPreferences();
+  }
+
+  private loadPreferences() {
+    this.http.get<any>('/users/me/preferences')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (prefs) => {
+          this.preferencesForm.patchValue({
+            emailNotifications: prefs.emailNotifications,
+            smsNotifications: prefs.smsNotifications,
+            browserNotifications: prefs.browserNotifications,
+          });
+        },
+        error: (err) => console.error('Failed to load preferences:', err),
+      });
   }
 
   ngOnDestroy() {
@@ -620,12 +636,22 @@ export class ProfileComponent implements OnInit, OnDestroy {
       this.isLoading.set(true);
       this.clearMessages();
 
-      // In a real app, this would call an API to save all preferences
-      setTimeout(() => {
-        this.isLoading.set(false);
-        this.successMessage.set('Preferences saved successfully');
-        this.clearSuccessMessage();
-      }, 1000);
+      const value = this.preferencesForm.value;
+      this.http.put('/users/me/preferences', {
+        emailNotifications: value.emailNotifications,
+        smsNotifications: value.smsNotifications,
+        browserNotifications: value.browserNotifications,
+      }).pipe(takeUntil(this.destroy$)).subscribe({
+        next: () => {
+          this.isLoading.set(false);
+          this.successMessage.set('Preferences saved successfully');
+          this.clearSuccessMessage();
+        },
+        error: (err) => {
+          this.isLoading.set(false);
+          this.errorMessage.set(err?.error?.message || 'Failed to save preferences');
+        },
+      });
     }
   }
 
