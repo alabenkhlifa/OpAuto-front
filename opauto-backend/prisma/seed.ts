@@ -393,7 +393,7 @@ async function main() {
   });
 
   console.log('Seed completed successfully!');
-  console.log(`Created: 1 garage, ${1 + staffUsers.length} users, ${employees.length} employees, ${customers.length} customers, ${cars.length} cars`);
+  console.log(`Created: 1 garage, ${1 + staffUsers.length} users, ${employees.length} employees, ${customers.length + churnCustomers.length} customers, ${cars.length + churnCars.length} cars`);
   console.log(`Login credentials: owner@autotech.tn / password123 (owner), mohamed/staff123 (staff)`);
 }
 
