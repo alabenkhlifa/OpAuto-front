@@ -87,6 +87,8 @@ Single source of truth for the current bug batch. Add new bugs to **§ Backlog**
 | BUG-056 | New jobs invisible — `PENDING` ↔ `waiting` enum mismatch | Maintenance | 🟢 | `406e2ae` |
 | BUG-057 | Maintenance create/update response missing relations (car/customer/mechanic empty after save) | Maintenance | 🟢 | `406e2ae` |
 | BUG-058 | Maintenance tasks don't persist — no `/maintenance/:id/tasks` endpoint | Maintenance | 🟢 | `648b7b4` |
+| BUG-059 | Task Complete/Start buttons didn't reach backend (updateTaskStatus went through job-update which strips tasks) | Maintenance | 🟢 | `b09b639` |
+| BUG-060 | Editing any job reset its status to 'waiting' | Maintenance | 🟢 | `b09b639` |
 
 ---
 

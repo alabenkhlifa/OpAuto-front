@@ -97,7 +97,10 @@ All resources pass CRUD via curl as OWNER:
 | Create/update response includes relations (car/customer/mechanic) | ✅ (backend include fixed in `406e2ae`) |
 | Completed Jobs tab | ✅ |
 | Schedule tab | ✅ |
-| Add task to job | ✅ (was missing endpoint, implemented in `648b7b4` — POST/PUT/DELETE `/maintenance/:jobId/tasks/:taskId`; form now syncs add/update/delete on save) |
+| Add task to job | ✅ UI-verified — new task saves and appears on reload (`648b7b4`) |
+| Remove task via edit form | ✅ UI-verified — task deleted from DB after save (`648b7b4`) |
+| Mark task Complete / Reopen on details page | ✅ UI-verified — button flips Complete ↔ Reopen, `isCompleted` roundtrips (`b09b639`) |
+| Editing a completed job preserves status | ✅ (was resetting to 'waiting', fixed in `b09b639`) |
 
 ### Parts & Inventory (`/inventory`)
 | Element | Result |
