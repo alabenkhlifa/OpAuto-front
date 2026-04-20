@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { of, BehaviorSubject } from 'rxjs';
 import { CarsComponent } from './cars.component';
@@ -125,7 +126,7 @@ describe('CarsComponent', () => {
     accessibilityServiceSpy.createFocusTrap.and.returnValue(() => {});
 
     await TestBed.configureTestingModule({
-      imports: [CarsComponent],
+      imports: [CarsComponent, HttpClientTestingModule],
       providers: [
         { provide: CarService, useValue: carServiceSpy },
         { provide: SubscriptionService, useValue: subscriptionServiceSpy },
