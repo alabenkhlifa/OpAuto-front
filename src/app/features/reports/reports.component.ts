@@ -315,14 +315,78 @@ export class ReportsComponent implements OnInit {
       this.toast.warning(this.translationService.instant('reports.export.tierRequired'));
       return;
     }
-    const rows = this.kpis().map(k => ({
-      name: k.label,
-      value: k.value,
-      change: `${k.changeType === 'increase' ? '+' : k.changeType === 'decrease' ? '-' : ''}${Math.abs(k.change ?? 0)}%`,
-    }));
-    const header = 'KPI,Value,Change';
-    const body = rows.map(r => [r.name, r.value, r.change].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
-    const csv = `${header}\n${body}`;
+    // Export every tab's metrics, not just the active one, so the CSV is a
+    // complete snapshot of the business across Dashboard/Financial/Operational/
+    // Customer/Inventory. Each section is its own "Section,Metric,Value" block.
+    const esc = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const rowsOf = (section: string, entries: Array<[string, unknown]>) =>
+      entries.map(([metric, value]) => [section, metric, value].map(esc).join(','));
+
+    const lines: string[] = ['Section,Metric,Value'];
+
+    // Dashboard KPIs
+    for (const k of this.kpis()) {
+      const changePct = `${k.changeType === 'increase' ? '+' : k.changeType === 'decrease' ? '-' : ''}${Math.abs(k.change ?? 0)}%`;
+      lines.push(['Dashboard', k.label, `${k.value} (${changePct})`].map(esc).join(','));
+    }
+
+    const fm = this.financialMetrics();
+    if (fm) {
+      lines.push(...rowsOf('Financial', [
+        ['Total revenue', fm.totalRevenue],
+        ['Paid revenue', fm.paidRevenue],
+        ['Pending revenue', fm.pendingRevenue],
+        ['Overdue revenue', fm.overdueRevenue],
+        ['Average invoice value', fm.averageInvoiceValue],
+        ['Revenue growth %', fm.revenueGrowth],
+        ['Profit margin %', fm.profitMargin],
+        ['Tax collected', fm.taxCollected],
+      ]));
+    }
+
+    const om = this.operationalMetrics();
+    if (om) {
+      lines.push(...rowsOf('Operational', [
+        ['Total appointments', om.totalAppointments],
+        ['Completed appointments', om.completedAppointments],
+        ['Cancelled appointments', om.cancelledAppointments],
+        ['Average service time (min)', om.averageServiceTime],
+        ['Mechanic utilization %', om.mechanicUtilization],
+        ['Garage capacity used %', om.garageCapacityUsed],
+        ['Customer satisfaction', om.customerSatisfactionScore],
+        ['Repeat customer rate %', om.repeatCustomerRate],
+        ['Appointment conversion rate %', om.appointmentConversionRate],
+        ['On-time completion rate %', om.onTimeCompletionRate],
+      ]));
+    }
+
+    const cm = this.customerMetrics();
+    if (cm) {
+      lines.push(...rowsOf('Customer', [
+        ['Total customers', cm.totalCustomers],
+        ['New customers', cm.newCustomers],
+        ['Active customers', cm.activeCustomers],
+        ['Churned customers', cm.churnedCustomers],
+        ['Average customer value', cm.averageCustomerValue],
+        ['Customer lifetime value', cm.customerLifetimeValue],
+        ['Retention rate %', cm.customerRetentionRate],
+      ]));
+    }
+
+    const im = this.inventoryMetrics();
+    if (im) {
+      lines.push(...rowsOf('Inventory', [
+        ['Total parts', im.totalParts],
+        ['Stock value', im.stockValue],
+        ['Low stock items', im.lowStockItems],
+        ['Out of stock items', im.outOfStockItems],
+        ['Fast-moving parts', im.fastMovingParts],
+        ['Slow-moving parts', im.slowMovingParts],
+        ['Inventory turnover', im.inventoryTurnover],
+      ]));
+    }
+
+    const csv = lines.join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
