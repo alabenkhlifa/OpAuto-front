@@ -173,23 +173,37 @@ export class ApprovalService {
   }
 
   private mapFromBackend(b: any): Approval {
+    // Backend stores requestedBy/respondedBy as raw user-id strings and
+    // attaches requesterName/responderName via a batched lookup. We reshape
+    // those into the {id, name, role} objects the UI expects, and route
+    // respondedBy/respondedAt into approvedBy/approvedAt or rejectedBy/
+    // rejectedAt based on status.
+    const status = this.mapStatus(b.status);
+    const requester = typeof b.requestedBy === 'string'
+      ? { id: b.requestedBy, name: b.requesterName || 'Unknown', role: '' }
+      : (b.requestedBy || { id: '', name: 'Unknown', role: '' });
+    const responder = b.respondedBy
+      ? { id: b.respondedBy, name: b.responderName || 'Unknown', role: '' }
+      : undefined;
+    const respondedAt = b.respondedAt ? new Date(b.respondedAt) : undefined;
+
     return {
       id: b.id,
       type: this.mapType(b.type),
       title: b.title || '',
       description: b.description || '',
-      requestedBy: b.requestedBy || { id: b.requestedById || '', name: b.requesterName || 'Unknown', role: '' },
+      requestedBy: requester,
       requestedAt: new Date(b.requestedAt || b.createdAt),
       priority: this.mapPriority(b.priority),
-      status: this.mapStatus(b.status),
-      estimatedCost: b.estimatedCost || 0,
+      status,
+      estimatedCost: b.estimatedCost || b.amount || 0,
       currency: b.currency || 'TND',
       relatedEntity: b.relatedEntity,
       dueDate: b.dueDate ? new Date(b.dueDate) : undefined,
-      approvedBy: b.approvedBy,
-      approvedAt: b.approvedAt ? new Date(b.approvedAt) : undefined,
-      rejectedBy: b.rejectedBy,
-      rejectedAt: b.rejectedAt ? new Date(b.rejectedAt) : undefined,
+      approvedBy: status === 'approved' ? responder : undefined,
+      approvedAt: status === 'approved' ? respondedAt : undefined,
+      rejectedBy: status === 'rejected' ? responder : undefined,
+      rejectedAt: status === 'rejected' ? respondedAt : undefined,
       createdAt: new Date(b.createdAt),
       updatedAt: new Date(b.updatedAt),
       comments: b.comments || []
