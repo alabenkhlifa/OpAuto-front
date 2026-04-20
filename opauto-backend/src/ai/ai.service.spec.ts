@@ -518,3 +518,237 @@ describe('AiService – suggestSchedule', () => {
     expect(result.provider).toBe('none');
   });
 });
+
+// ── predictChurn ─────────────────────────────────────────────────
+//
+// Helpers live here rather than up top because they only serve this block
+// and would clutter the file if reused incidentally by suggestSchedule tests.
+
+function daysAgo(n: number): Date {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d;
+}
+
+function makeCustomer(over: Partial<{
+  id: string;
+  firstName: string;
+  lastName: string;
+  status: 'ACTIVE' | 'INACTIVE';
+  visitCount: number;
+  createdAt: Date;
+  appointments: Array<{ startTime: Date; status: string }>;
+  invoices: Array<{ createdAt?: Date; paidAt?: Date | null; total?: number }>;
+}> = {}) {
+  return {
+    id: over.id ?? 'cust-1',
+    garageId: GARAGE_ID,
+    firstName: over.firstName ?? 'Ali',
+    lastName: over.lastName ?? 'Ben',
+    email: null,
+    phone: '+216 99 000 000',
+    address: null,
+    status: over.status ?? 'ACTIVE',
+    loyaltyTier: null,
+    totalSpent: 0,
+    visitCount: over.visitCount ?? 3,
+    notes: null,
+    createdAt: over.createdAt ?? daysAgo(365),
+    updatedAt: new Date(),
+    appointments: over.appointments ?? [],
+    invoices: over.invoices ?? [],
+  };
+}
+
+describe('AiService – predictChurn', () => {
+  let service: AiService;
+  let prisma: {
+    customer: { findMany: jest.Mock };
+    employee: { findMany: jest.Mock };
+    appointment: { findMany: jest.Mock };
+  };
+  let configService: { get: jest.Mock };
+
+  beforeEach(async () => {
+    prisma = {
+      customer: { findMany: jest.fn().mockResolvedValue([]) },
+      employee: { findMany: jest.fn().mockResolvedValue([]) },
+      appointment: { findMany: jest.fn().mockResolvedValue([]) },
+    };
+    configService = { get: jest.fn().mockReturnValue(undefined) };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        AiService,
+        { provide: PrismaService, useValue: prisma },
+        { provide: ConfigService, useValue: configService },
+      ],
+    }).compile();
+
+    service = module.get<AiService>(AiService);
+  });
+
+  it('returns empty predictions when there are no customers', async () => {
+    prisma.customer.findMany.mockResolvedValue([]);
+    const result = await service.predictChurn(GARAGE_ID, {});
+    expect(result.predictions).toEqual([]);
+    expect(result.provider).toBe('template');
+  });
+
+  it('skips customers with fewer than 2 visits (insufficient history)', async () => {
+    prisma.customer.findMany.mockResolvedValue([
+      makeCustomer({ id: 'c-new', visitCount: 1, appointments: [{ startTime: daysAgo(10), status: 'COMPLETED' }] }),
+    ]);
+    const result = await service.predictChurn(GARAGE_ID, {});
+    expect(result.predictions).toEqual([]);
+  });
+
+  it('skips customers with no completed appointment or paid invoice (no activity to score)', async () => {
+    prisma.customer.findMany.mockResolvedValue([
+      makeCustomer({ id: 'c-noact', visitCount: 5, appointments: [], invoices: [] }),
+    ]);
+    const result = await service.predictChurn(GARAGE_ID, {});
+    expect(result.predictions).toEqual([]);
+  });
+
+  it('scores on-schedule customers as low risk', async () => {
+    // 365-day customer with 10 visits → avgInterval ~= 36. Last visit 20 days ago → ratio < 1.
+    prisma.customer.findMany.mockResolvedValue([
+      makeCustomer({
+        id: 'c-healthy',
+        visitCount: 10,
+        createdAt: daysAgo(365),
+        appointments: [{ startTime: daysAgo(20), status: 'COMPLETED' }],
+      }),
+    ]);
+    const result = await service.predictChurn(GARAGE_ID, {});
+    expect(result.predictions).toHaveLength(1);
+    expect(result.predictions[0].riskLevel).toBe('low');
+    expect(result.predictions[0].churnRisk).toBe(0);
+  });
+
+  it('scores very-overdue customers as high risk', async () => {
+    // 365-day customer with 12 visits → avgInterval floored at 30. Last visit 120 days ago → ratio = 4.
+    prisma.customer.findMany.mockResolvedValue([
+      makeCustomer({
+        id: 'c-churning',
+        visitCount: 12,
+        createdAt: daysAgo(365),
+        appointments: [{ startTime: daysAgo(120), status: 'COMPLETED' }],
+      }),
+    ]);
+    const result = await service.predictChurn(GARAGE_ID, {});
+    expect(result.predictions[0].riskLevel).toBe('high');
+    expect(result.predictions[0].churnRisk).toBeGreaterThanOrEqual(0.6);
+    expect(result.predictions[0].factors.some((f) => f.includes('120'))).toBe(true);
+  });
+
+  it('reduces churn score when customer has a future appointment', async () => {
+    // Same overdue customer as above, but with a future appointment scheduled
+    prisma.customer.findMany.mockResolvedValue([
+      makeCustomer({
+        id: 'c-rebounding',
+        visitCount: 12,
+        createdAt: daysAgo(365),
+        appointments: [
+          { startTime: daysAgo(120), status: 'COMPLETED' },
+          { startTime: daysAgo(-5), status: 'SCHEDULED' }, // 5 days in the future
+        ],
+      }),
+    ]);
+    const result = await service.predictChurn(GARAGE_ID, {});
+    expect(result.predictions[0].churnRisk).toBeLessThan(0.6); // multiplier drops it below "high" threshold
+    expect(result.predictions[0].factors.some((f) => /upcoming|à venir|قادم/.test(f))).toBe(true);
+  });
+
+  it('raises score to at least 0.7 when customer is INACTIVE', async () => {
+    prisma.customer.findMany.mockResolvedValue([
+      makeCustomer({
+        id: 'c-inactive',
+        status: 'INACTIVE',
+        visitCount: 3,
+        createdAt: daysAgo(365),
+        appointments: [{ startTime: daysAgo(20), status: 'COMPLETED' }], // otherwise would be low
+      }),
+    ]);
+    const result = await service.predictChurn(GARAGE_ID, {});
+    expect(result.predictions[0].churnRisk).toBeGreaterThanOrEqual(0.7);
+    expect(result.predictions[0].riskLevel).toBe('high');
+  });
+
+  it('sorts predictions by churnRisk descending', async () => {
+    prisma.customer.findMany.mockResolvedValue([
+      makeCustomer({
+        id: 'c-low',
+        visitCount: 10,
+        createdAt: daysAgo(365),
+        appointments: [{ startTime: daysAgo(20), status: 'COMPLETED' }],
+      }),
+      makeCustomer({
+        id: 'c-high',
+        visitCount: 12,
+        createdAt: daysAgo(365),
+        appointments: [{ startTime: daysAgo(120), status: 'COMPLETED' }],
+      }),
+      makeCustomer({
+        id: 'c-medium',
+        visitCount: 12,
+        createdAt: daysAgo(365),
+        appointments: [{ startTime: daysAgo(60), status: 'COMPLETED' }],
+      }),
+    ]);
+    const result = await service.predictChurn(GARAGE_ID, {});
+    expect(result.predictions.map((p) => p.customerId)).toEqual(['c-high', 'c-medium', 'c-low']);
+  });
+
+  it('returns factors in the requested language (fr)', async () => {
+    prisma.customer.findMany.mockResolvedValue([
+      makeCustomer({
+        id: 'c-fr',
+        visitCount: 5,
+        createdAt: daysAgo(200),
+        appointments: [{ startTime: daysAgo(90), status: 'COMPLETED' }],
+      }),
+    ]);
+    const result = await service.predictChurn(GARAGE_ID, { language: 'fr' });
+    expect(result.predictions[0].factors[0]).toContain('jours');
+    expect(result.predictions[0].suggestedAction).toMatch(/(Aucune|Envoyer|Appeler)/);
+  });
+
+  it('falls back to templated suggestedAction when no LLM keys are configured', async () => {
+    prisma.customer.findMany.mockResolvedValue([
+      makeCustomer({
+        id: 'c-high',
+        visitCount: 12,
+        createdAt: daysAgo(365),
+        appointments: [{ startTime: daysAgo(120), status: 'COMPLETED' }],
+      }),
+    ]);
+    const result = await service.predictChurn(GARAGE_ID, {});
+    expect(result.provider).toBe('template');
+    expect(result.predictions[0].suggestedAction).toContain('Call personally');
+  });
+
+  it('filters by customerId when provided', async () => {
+    prisma.customer.findMany.mockResolvedValue([]);
+    await service.predictChurn(GARAGE_ID, { customerId: 'specific-id' });
+    expect(prisma.customer.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ garageId: GARAGE_ID, id: 'specific-id' }),
+      }),
+    );
+  });
+
+  it('includes appointments and invoices when querying customers', async () => {
+    prisma.customer.findMany.mockResolvedValue([]);
+    await service.predictChurn(GARAGE_ID, {});
+    expect(prisma.customer.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        include: expect.objectContaining({
+          appointments: expect.any(Object),
+          invoices: expect.any(Object),
+        }),
+      }),
+    );
+  });
+});
