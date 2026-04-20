@@ -90,6 +90,44 @@ Single source of truth for the current bug batch. Add new bugs to **§ Backlog**
 | BUG-059 | Task Complete/Start buttons didn't reach backend (updateTaskStatus went through job-update which strips tasks) | Maintenance | 🟢 | `b09b639` |
 | BUG-060 | Editing any job reset its status to 'waiting' | Maintenance | 🟢 | `b09b639` |
 
+### Session 2026-04-20 — Known gaps (untested / stubs / missing features)
+Each is intentionally left open so the team can pick them up. Context + repro steps included for each. Date the last session touched each = 2026-04-20.
+
+| ID | Area | Category | Status |
+|----|------|----------|--------|
+| BUG-061 | Forgot Password: modal submits to non-existent `/auth/forgot-password` | Auth | 🔴 |
+| BUG-062 | Expired-JWT auto-refresh flow via HTTP interceptor — never exercised | Auth | 🔴 |
+| BUG-063 | Update Profile form submit — never clicked in UI; no test coverage | Profile | 🔴 |
+| BUG-064 | Profile Preferences tab — UI renders but save-persistence untested | Profile | 🔴 |
+| BUG-065 | Approvals — create / approve / reject flow untested (0 seed rows) | Approvals | 🔴 |
+| BUG-066 | Stock Adjustment modal (inventory) — never opened + submitted | Inventory | 🔴 |
+| BUG-067 | Photo uploads — widgets exist for car / employee / maintenance but UI + backend integration untested | Uploads | 🔴 |
+| BUG-068 | Invoice Draft → Sent → Paid transition via UI — only API-tested | Invoicing | 🔴 |
+| BUG-069 | Invoice Print / PDF buttons — render but output never verified | Invoicing | 🔴 |
+| BUG-070 | Calendar drag-and-drop — `handleDateSelect` + `handleEventDrop` are TODO stubs (per CLAUDE.md) | Calendar | 🔴 |
+| BUG-071 | AI module UI page (`/ai`) — backend `/ai/chat` verified, the UI page itself never opened | AI | 🔴 |
+| BUG-072 | Users page (`/users`) — module active, sidebar has the link, UI never clicked | Users | 🔴 |
+| BUG-073 | Settings save after edit — the 5 tabs render but no form save tested | Settings | 🔴 |
+| BUG-074 | Add Customer / Add Car / Add Part / Add Employee submit — forms open via modal, submit paths untested | CRUD | 🔴 |
+| BUG-075 | 403 error surfacing in components — staff edge-cases (e.g. POST protected route by accident) not verified | Staff | 🔴 |
+| BUG-076 | Offline / backend-down handling — no check for how the UI degrades | Resilience | 🔴 |
+| BUG-077 | Concurrent edits (two tabs editing same record) — stale-data detection untested | Resilience | 🔴 |
+| BUG-078 | i18n exhaustive sweep — we fixed the keys we hit. Sub-pages we never opened may still render raw `key.name` strings | i18n | 🔴 |
+| BUG-079 | Prisma migrations — entire session used `db push` only. No migration files generated → prod deploy would diverge | DevOps | 🔴 |
+| BUG-080 | Backend + frontend test suites — `npm run test`, `ng test` never executed this session | DevOps | 🔴 |
+| BUG-081 | Arabic RTL layout intentionally disabled (`LanguageService.updateDocumentDirection` hardcodes `dir=ltr`). Many `[dir="rtl"]` CSS selectors are dead code. Team decision to enable at some point | i18n | ⚪️ |
+| BUG-082 | Maintenance form UI has no "complete task" toggle — completion only via /details page | Maintenance | 🔴 |
+| BUG-083 | Backend `MaintenanceTask` model has only `isCompleted` boolean — no intermediate "in-progress" state to let mechanics track tasks they've started but not finished | Maintenance | 🔴 |
+| BUG-084 | Dashboard `Export` only exports the Dashboard tab's KPIs, not the Financial / Operational / Customer / Inventory tab data | Reports | 🔴 |
+| BUG-085 | `opauto-db` docker container still running after the session; user's pre-existing `tdx-postgres` is stopped. Need to restart tdx when user needs that other project's DB | Env | ⚪️ |
+
+### Environment notes
+- Frontend: `http://localhost:4200` (Angular dev server PID in `/private/tmp/.../bz6bmkmmz.output`)
+- Backend: `http://localhost:3000` (Nest dev server PID in `/private/tmp/.../b81ouxdwr.output`)
+- DB: `opauto-db` docker container on `localhost:5432` with `postgres:postgres@opauto`
+- Seed: last run with `npx prisma db seed` on 2026-04-20. Creates `owner@autotech.tn / password123` + 5 staff accounts (`mohamed/khalil/youssef/hichem/ali` all `staff123`)
+- When cleaning up: `docker stop opauto-db` then `docker start tdx-postgres` to restore the other project
+
 ---
 
 ## Scoped (investigated, ready to fix)
