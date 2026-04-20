@@ -32,4 +32,11 @@ export class AuthController {
   refresh(@Body() body: { refresh_token: string }) {
     return this.authService.refreshToken(body.refresh_token);
   }
+
+  @Post('change-password')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  changePassword(@CurrentUser('id') userId: string, @Body() body: { currentPassword: string; newPassword: string }) {
+    return this.authService.changePassword(userId, body.currentPassword, body.newPassword);
+  }
 }

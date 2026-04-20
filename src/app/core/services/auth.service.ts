@@ -64,7 +64,11 @@ export class AuthService {
     }
     return this.http.post<any>('/auth/login', payload).pipe(
       map(response => this.buildAuthResponse(response)),
-      tap(response => this.handleAuthSuccess(response))
+      tap(response => this.handleAuthSuccess(response)),
+      catchError(err => throwError(() => ({
+        code: 'INVALID_CREDENTIALS',
+        message: AUTH_ERRORS['INVALID_CREDENTIALS']
+      } as AuthError)))
     );
   }
 
@@ -124,8 +128,17 @@ export class AuthService {
     return throwError(() => ({ code: 'NOT_IMPLEMENTED', message: 'Password reset is not yet available' } as AuthError));
   }
 
-  changePassword(_request: ChangePasswordRequest): Observable<{ message: string }> {
-    return throwError(() => ({ code: 'NOT_IMPLEMENTED', message: 'Password change is not yet available' } as AuthError));
+  changePassword(request: ChangePasswordRequest): Observable<{ message: string }> {
+    return this.http.post<any>('/auth/change-password', {
+      currentPassword: request.currentPassword,
+      newPassword: request.newPassword,
+    }).pipe(
+      map(() => ({ message: 'Password changed successfully' })),
+      catchError(err => throwError(() => ({
+        code: 'INVALID_CREDENTIALS',
+        message: err?.error?.message || 'Current password is incorrect'
+      } as AuthError)))
+    );
   }
 
   getCurrentUser(): User | null {
