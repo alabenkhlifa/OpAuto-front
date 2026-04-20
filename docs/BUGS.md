@@ -122,6 +122,9 @@ Each is intentionally left open so the team can pick them up. Context + repro st
 | BUG-083 | Backend `MaintenanceTask` model has only `isCompleted` boolean — no intermediate "in-progress" state to let mechanics track tasks they've started but not finished | Maintenance | 🔴 |
 | BUG-084 | Dashboard `Export` only exports the Dashboard tab's KPIs, not the Financial / Operational / Customer / Inventory tab data | Reports | 🔴 |
 | BUG-085 | `opauto-db` docker container still running after the session; user's pre-existing `tdx-postgres` is stopped. Need to restart tdx when user needs that other project's DB | Env | ⚪️ |
+| BUG-086 | Reports Operational + Customer tabs — clicked but contents never verified | Reports | 🔴 |
+| BUG-087 | Reports date-range dropdown — never switched preset to confirm data refetches | Reports | 🔴 |
+| BUG-088 | Reports Refresh button — clicked but never confirmed it fires a data reload | Reports | 🔴 |
 
 ### Environment notes
 - Frontend: `http://localhost:4200` (Angular dev server PID in `/private/tmp/.../bz6bmkmmz.output`)

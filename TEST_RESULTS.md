@@ -186,11 +186,15 @@ All resources pass CRUD via curl as OWNER:
 ### Reports (`/reports`)
 | Element | Result |
 |---|---|
-| Dashboard / Financial / Operational / Customer / Inventory tabs | ✅ all render |
-| Date-range dropdown (14 presets) | ✅ |
-| Refresh | ✅ |
-| Export → CSV download | ✅ (was `console.log` stub, fixed in `ff0f9b9`) |
-| Currency format 2 decimals consistent | ✅ |
+| Dashboard tab (default) | ✅ KPIs render |
+| Financial tab | ⚠️ clicked, saw headings "Revenue Breakdown / Growth Analysis"; did not verify numbers |
+| Operational tab | ⏭️ clicked but content not verified (open BUG-086) |
+| Customer tab | ⏭️ clicked but content not verified (open BUG-086) |
+| Inventory tab | ✅ shows Total Parts 15 / Stock Value 7 209,00 DT |
+| Date-range dropdown (14 presets) | ⏭️ observed options but never switched preset — data re-fetch untested (BUG-087) |
+| Refresh button | ⏭️ clicked but didn't confirm a refresh actually fired (BUG-088) |
+| Export → CSV download | ✅ verified — file written to ~/Downloads with 6 KPIs (fix `ff0f9b9`) |
+| Currency format 2 decimals | ✅ on the KPIs I did view |
 
 ### Pending Approval (`/approvals`)
 | Element | Result |
