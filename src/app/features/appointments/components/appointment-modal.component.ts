@@ -576,6 +576,21 @@ export class AppointmentModalComponent {
     return new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
   }
 
+  /**
+   * Prefill the form with a starting date/time — used when the calendar user
+   * selects a time slot via drag or click. Leaves edit mode off so submit
+   * still creates a new appointment.
+   */
+  setInitialDate(date: Date): void {
+    const dateStr = date.toISOString().split('T')[0];
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    this.appointmentForm.patchValue({
+      scheduledDate: dateStr,
+      scheduledTime: `${hours}:${minutes}`,
+    });
+  }
+
   // Method to set appointment for editing
   setEditAppointment(appointment: Appointment): void {
     this.editMode.set(true);

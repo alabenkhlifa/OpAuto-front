@@ -554,4 +554,35 @@ describe('AppointmentModalComponent — AI Suggest', () => {
       expect(callArgs.language).toBe('ar');
     });
   });
+
+  // ---------------------------------------------------------------
+  // setInitialDate — called by the calendar when user selects a slot
+  // ---------------------------------------------------------------
+  describe('setInitialDate', () => {
+    it('prefills scheduledDate and scheduledTime from the given Date', () => {
+      fixture.detectChanges();
+      const d = new Date(2026, 3, 15, 14, 30); // Apr 15 2026, 14:30 local
+      component.setInitialDate(d);
+
+      expect(component.appointmentForm.get('scheduledDate')?.value).toBe('2026-04-15');
+      expect(component.appointmentForm.get('scheduledTime')?.value).toBe('14:30');
+    });
+
+    it('pads single-digit hours and minutes', () => {
+      fixture.detectChanges();
+      const d = new Date(2026, 0, 5, 9, 5); // Jan 5 2026, 09:05 local
+      component.setInitialDate(d);
+
+      expect(component.appointmentForm.get('scheduledTime')?.value).toBe('09:05');
+    });
+
+    it('does not flip the form into edit mode', () => {
+      fixture.detectChanges();
+      component.setInitialDate(new Date(2026, 3, 15, 10, 0));
+
+      // editMode is a signal on the component; setInitialDate must leave it off
+      // so the submit path still creates rather than updates.
+      expect((component as any).editMode()).toBe(false);
+    });
+  });
 });

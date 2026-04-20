@@ -169,8 +169,11 @@ export class CalendarComponent implements OnInit, OnDestroy {
   }
 
   handleDateSelect(selectInfo: DateSelectArg) {
-    // TODO: Open appointment modal with pre-filled date
-    console.log('Date selected:', selectInfo.startStr);
+    // Clicking/dragging on an empty slot opens the Add Appointment modal
+    // pre-filled with the selected start time. The form still runs the full
+    // validation + conflict flow, so the user can adjust before saving.
+    this.showAddModal.set(true);
+    setTimeout(() => this.appointmentModal?.setInitialDate(selectInfo.start));
   }
 
   handleEventClick(clickInfo: EventClickArg) {
