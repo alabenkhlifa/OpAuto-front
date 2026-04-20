@@ -23,11 +23,20 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
         </div>
         <button
           type="button"
-          class="btn-secondary btn-sm"
+          class="btn-ai"
           [disabled]="loading()"
           (click)="refresh()">
-          <span *ngIf="!loading()">🔮 {{ 'customers.atRisk.refresh' | translate }}</span>
-          <span *ngIf="loading()">⏳ {{ 'customers.atRisk.loading' | translate }}</span>
+          <ng-container *ngIf="loading(); else idleBtn">
+            <span class="btn-ai__spinner"></span>
+            {{ 'customers.atRisk.loading' | translate }}
+          </ng-container>
+          <ng-template #idleBtn>
+            <svg style="width:1rem;height:1rem;flex-shrink:0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+            </svg>
+            {{ 'customers.atRisk.refresh' | translate }}
+          </ng-template>
         </button>
       </div>
 

@@ -32,6 +32,29 @@ Read this BEFORE any UI changes. Use ONLY global classes from `/src/styles/`.
 - Primary pattern: icon + responsive text (`<span class="hidden lg:inline">`)
 - NEVER create custom button classes or inline styles
 
+#### AI buttons — `.btn-ai`
+Every button that triggers an AI call (Refresh predictions, AI Suggest, Generate Insights, Predict Maintenance, …) must use the shared `.btn-ai` class so users recognize AI actions at a glance. Purple palette, sparkle icon, spinner during the call.
+
+```html
+<button type="button" class="btn-ai" [disabled]="loading()" (click)="run()">
+  @if (loading()) {
+    <span class="btn-ai__spinner"></span>
+    {{ 'feature.ai.loading' | translate }}
+  } @else {
+    <svg style="width:1rem;height:1rem;flex-shrink:0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+    </svg>
+    {{ 'feature.ai.run' | translate }}
+  }
+</button>
+```
+
+- Add `btn-ai--block` for a full-width variant (e.g. inside a form card): `<button class="btn-ai btn-ai--block">`
+- Always include the spinner + translated "loading" label on the `loading()` branch; never leave an AI button with no visible pending state
+- Keep the sparkle SVG; it's the shared visual cue for "this runs AI"
+- NEVER style AI buttons with a custom class — if the pattern doesn't fit, extend `.btn-ai` in `buttons.css` instead of branching locally
+
 ### Badges (`/src/styles/badges.css`)
 ```html
 <span class="badge badge-active">Active</span>

@@ -300,3 +300,59 @@
   outline: 2px solid #FF8400;
   outline-offset: 2px;
 }
+
+/* =========================================================================
+   AI buttons — shared style for every AI-triggering action (Refresh
+   predictions, AI Suggest, Generate Insights, etc.). Purple palette so
+   users recognize "this runs AI" at a glance. Use .btn-ai--block to fill
+   the parent's width.
+   ========================================================================= */
+
+.btn-ai {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: rgba(139, 92, 246, 0.08);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  border-radius: 12px;
+  color: #7c3aed;
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  justify-content: center;
+}
+
+.btn-ai--block {
+  width: 100%;
+}
+
+.btn-ai:hover:not(:disabled) {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.4);
+}
+
+.btn-ai:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-ai:focus-visible {
+  outline: 2px solid #7c3aed;
+  outline-offset: 2px;
+}
+
+.btn-ai__spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(124, 58, 237, 0.3);
+  border-top: 2px solid #7c3aed;
+  border-radius: 50%;
+  animation: btn-ai-spin 1s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes btn-ai-spin {
+  to { transform: rotate(360deg); }
+}

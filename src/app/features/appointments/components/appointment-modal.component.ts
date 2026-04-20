@@ -128,11 +128,11 @@ import { TranslationService } from '../../../core/services/translation.service';
 
             <!-- AI Suggest -->
             <div class="ai-suggest-section">
-              <button type="button" class="ai-suggest-btn"
+              <button type="button" class="btn-ai btn-ai--block"
                       [disabled]="!appointmentForm.get('serviceType')?.value || !appointmentForm.get('estimatedDuration')?.value || aiService.loading()"
                       (click)="requestAiSuggestions()">
                 @if (aiService.loading()) {
-                  <div class="ai-spinner"></div>
+                  <span class="btn-ai__spinner"></span>
                   {{ 'appointments.aiSuggest.loading' | translate }}
                 } @else {
                   <svg style="width:1rem;height:1rem;flex-shrink:0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -359,23 +359,9 @@ import { TranslationService } from '../../../core/services/translation.service';
     .modal-content::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
     .ai-suggest-section { margin-top: 1rem; }
-    .ai-suggest-btn {
-      display: flex; align-items: center; gap: 0.5rem;
-      padding: 0.75rem 1.25rem;
-      background: rgba(139, 92, 246, 0.08); border: 1px solid rgba(139, 92, 246, 0.25);
-      border-radius: 12px; color: #7c3aed; font-weight: 500; font-size: 0.875rem;
-      cursor: pointer; transition: all 0.2s ease; width: 100%; justify-content: center;
-    }
-    .ai-suggest-btn:hover:not(:disabled) {
-      background: rgba(139, 92, 246, 0.15); border-color: rgba(139, 92, 246, 0.4);
-    }
-    .ai-suggest-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-    .ai-spinner {
-      width: 1rem; height: 1rem;
-      border: 2px solid rgba(124, 58, 237, 0.3); border-top: 2px solid #7c3aed;
-      border-radius: 50%; animation: spin 1s linear infinite;
-    }
+    /* AI button + spinner styles moved to global /src/styles/buttons.css
+       (.btn-ai / .btn-ai--block / .btn-ai__spinner) for reuse across every
+       AI-triggered button in the app. */
     .ai-error {
       margin-top: 0.5rem; padding: 0.5rem 0.75rem;
       background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2);
