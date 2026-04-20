@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
@@ -493,6 +494,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 })
 export class ProfileComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
+  private http = inject(HttpClient);
   private router = inject(Router);
   private authService = inject(AuthService);
   private subscriptionService = inject(SubscriptionService);
@@ -584,12 +586,32 @@ export class ProfileComponent implements OnInit, OnDestroy {
       this.isLoading.set(true);
       this.clearMessages();
 
-      // In a real app, this would call an API
-      setTimeout(() => {
-        this.isLoading.set(false);
-        this.successMessage.set('Profile updated successfully');
-        this.clearSuccessMessage();
-      }, 1000);
+      const formValue = this.profileForm.value;
+      const fullName: string = (formValue.name || '').trim();
+      const firstSpace = fullName.indexOf(' ');
+      const firstName = firstSpace === -1 ? fullName : fullName.slice(0, firstSpace);
+      const lastName = firstSpace === -1 ? '' : fullName.slice(firstSpace + 1);
+
+      this.http.put('/users/me', {
+        firstName,
+        lastName,
+        email: formValue.email,
+        phone: formValue.phoneNumber || undefined,
+      }).pipe(takeUntil(this.destroy$)).subscribe({
+        next: () => {
+          this.isLoading.set(false);
+          this.successMessage.set('Profile updated successfully');
+          this.clearSuccessMessage();
+          const user = this.currentUser();
+          if (user) {
+            this.currentUser.set({ ...user, name: fullName, email: formValue.email, phoneNumber: formValue.phoneNumber || '' });
+          }
+        },
+        error: (err) => {
+          this.isLoading.set(false);
+          this.errorMessage.set(err?.error?.message || 'Failed to update profile');
+        }
+      });
     }
   }
 

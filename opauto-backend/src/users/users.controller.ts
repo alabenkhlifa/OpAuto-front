@@ -22,6 +22,21 @@ export class UsersController {
     return this.usersService.findAll(garageId);
   }
 
+  @Get('me')
+  findMe(@CurrentUser('id') id: string, @CurrentUser('garageId') garageId: string) {
+    return this.usersService.findOne(id, garageId);
+  }
+
+  @Put('me')
+  updateMe(
+    @CurrentUser('id') id: string,
+    @CurrentUser('garageId') garageId: string,
+    @Body() dto: UpdateUserDto,
+  ) {
+    const { password, role, ...safe } = dto as any;
+    return this.usersService.update(id, garageId, safe);
+  }
+
   @Get(':id')
   @Roles(UserRole.OWNER)
   findOne(@Param('id') id: string, @CurrentUser('garageId') garageId: string) {
