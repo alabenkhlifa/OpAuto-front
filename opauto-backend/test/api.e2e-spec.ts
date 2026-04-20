@@ -106,6 +106,16 @@ describe('OpAuto API (e2e)', () => {
       refreshToken = res.body.refresh_token;
       userId = res.body.user.id;
       garageId = res.body.user.garage.id;
+
+      // /auth/register activates 4 free modules (dashboard, customers, cars,
+      // appointments). The tests below mutate employees, inventory,
+      // maintenance, and invoicing — activate those now so ModuleAccessGuard
+      // doesn't 403. Real users would do this via the Modules marketplace.
+      await prisma.garageModule.createMany({
+        data: ['employees', 'inventory', 'maintenance', 'invoicing', 'reports']
+          .map(moduleId => ({ garageId, moduleId })),
+        skipDuplicates: true,
+      });
     });
 
     it('POST /api/auth/register - should reject duplicate email', async () => {
