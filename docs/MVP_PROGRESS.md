@@ -179,3 +179,42 @@ Comprehensive end-to-end testing of every screen + backend endpoint. 12 commits 
 - [x] PENDING ↔ waiting enum mapping in both directions
 - [x] Backend create/update now return relations (car, customer, mechanic)
 - [x] **Tasks persist** — added POST/PUT/DELETE `/maintenance/:jobId/tasks/:taskId?` (commit `648b7b4`). Form's `syncTasks()` runs after job save, diffs original vs current task IDs and fires the right endpoint per task.
+
+## Stability Session 2026-04-21 (resume — 7 tickets verified, 8 bugs fixed)
+
+BUG-068, 073, 074, 071, 063/064, 065, 066 all exercised end-to-end. See `docs/BUGS.md` for per-ticket detail and new open tickets (BUG-086 … BUG-091).
+
+### Invoice Draft → Sent → Paid (BUG-068)
+- [x] Verified UI transitions (status + sidebar badge + list card progress) end-to-end
+- [x] **`/invoices` list endpoint now includes `payments[]`** (was omitted → cards showed paid=0 / 0% for all PAID invoices)
+- [x] **`invoicing.list.*` i18n namespace added** (en/fr/ar × 24 keys — list card was rendering raw keys)
+- [x] **Seeder creates Payment rows for PAID invoices** (seed data had status=PAID with no Payment rows → UI stats misreported)
+- [x] Tests: 7 unit + 7 integration (invoicing.service.spec, invoicing.e2e-spec, seed-payments.e2e-spec)
+
+### Settings save (BUG-073)
+- [x] Garage Info save verified end-to-end (name, phone, email, address persist across reload)
+- [x] Relaxed over-strict Required validators on `registrationNumber`/`taxId`/`city`/`postalCode`/`country` (backend schema has no columns for these — form was permanently invalid)
+- [x] Working Hours seed shape fixed (`mon/tue/...` → `monday/tuesday/...` with `isWorkingDay/openTime/closeTime`) — checkboxes now populate correctly
+- [ ] Operations capacity/service/appointment, System, Integrations sub-forms still silent no-ops (BUG-087a/b/c — backend `Garage` schema + `mapToBackend` don't cover those fields)
+
+### Add modals (BUG-074)
+- [x] Add Customer submit + persist verified (`/customers/new` full page; creates record + navigates to detail)
+- [x] Add Car (aka Register New Car) — fixed by Add Customer working + existing flow
+- [x] Add Part — **`/inventory/suppliers` endpoint was a `[]` stub** → wired to `prisma.supplier.findMany`; also loosened part-modal `s.isActive` filter (schema has no such column)
+- [x] Add Employee — **`CreateEmployeeDto` was rejecting `status` field** sent by frontend → added `EmployeeStatus` field to DTO
+
+### AI page / Profile / Preferences (BUG-071, 063, 064)
+- [ ] Confirmed feature gaps: AI has no frontend route, Profile/Preferences save are `setTimeout` stubs. Logged as 🔴 in BUGS.md; no code change this session.
+
+### Approvals (BUG-065)
+- [x] Approve + Reject buttons verified end-to-end (created approval via API — no UI create button)
+- [ ] Type enum mismatch (frontend 8 types vs backend 4) + "Approved by on" missing name/date — BUG-089/090, open
+
+### Stock Adjustment modal (BUG-066)
+- [x] Modal opens, adjustment type/reason/qty flow works, stock persists (8 → 13)
+- [x] **Audit trail fixed (BUG-091):** new `POST /inventory/:id/adjust` endpoint writes `stockMovement` rows; frontend `PartService.adjustStock` switched from bare PUT to the new endpoint. Verified 2 audit rows after UI adjustments.
+
+### Approval type alignment (BUG-089/090)
+- [x] Frontend `ApprovalType` enum cut from 8 legacy values to the 4 backend actually supports (MAINTENANCE, INVOICE, PURCHASE_ORDER, DISCOUNT)
+- [x] Service `mapType` + model `APPROVAL_TYPE_LABELS` + stats `byType` shape updated
+- [x] i18n keys replaced in en/fr/ar.json. Type dropdown + row badges now render real labels ("Purchase Order", "Discount") instead of "Other"

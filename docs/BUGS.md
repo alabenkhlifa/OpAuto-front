@@ -91,6 +91,27 @@ Single source of truth for the current bug batch. Add new bugs to **§ Backlog**
 | BUG-058 | Maintenance tasks don't persist — no `/maintenance/:id/tasks` endpoint | Maintenance | 🟢 | `648b7b4` |
 | BUG-059 | Task Complete/Start buttons didn't reach backend (updateTaskStatus went through job-update which strips tasks) | Maintenance | 🟢 | `b09b639` |
 | BUG-060 | Editing any job reset its status to 'waiting' | Maintenance | 🟢 | `b09b639` |
+| BUG-068 | Invoice Draft → Sent → Paid transition via UI verified end-to-end | Invoicing | 🟢 | (testing session 2026-04-21) |
+| BUG-086a | Invoice list `/invoices` omitted `payments[]` → paid/remaining/progress always 0 on cards | Invoicing | 🟢 | (testing session 2026-04-21) |
+| BUG-086b | Added `invoicing.list.*` namespace to en/fr/ar.json (24 keys) | i18n | 🟢 | (testing session 2026-04-21) |
+| BUG-086c | Seeder now creates Payment rows for PAID invoices so UI stats reflect reality | Seed | 🟢 | (testing session 2026-04-21) |
+| BUG-073 | Garage Info Save worked end-to-end after relaxing 4 over-strict validators | Settings | 🟢 | (testing session 2026-04-21) |
+| BUG-087a | Garage Info form collects registrationNumber/description/website/taxId/city/postalCode/country/bankDetails but backend `Garage` schema + `mapToBackend` drop them — silent data loss | Settings | 🔴 | — |
+| BUG-087b | Operations tab: "Save Capacity/Service/Appointment Settings" are silent no-ops (backend + service mapping only support `businessHours`, `currency`, `taxRate`) | Settings | 🔴 | — |
+| BUG-087c | System + Integrations tabs save buttons hit backend but nothing is stored (no columns on `Garage`) | Settings | 🔴 | — |
+| BUG-087d | Seed `businessHours` used abbreviated keys (`mon/tue/...`) while frontend form expects full names (`monday/tuesday/...`) with `isWorkingDay/openTime/closeTime` → Working Hours checkboxes loaded as all-unchecked, silent overwrite on save | Seed | 🟢 | (testing session 2026-04-21) |
+| BUG-074 | Add Customer / Add Car / Add Part / Add Employee submit paths — all four verified end-to-end | Modals | 🟢 | (testing session 2026-04-21) |
+| BUG-088a | `/inventory/suppliers` endpoint returned hardcoded `[]` — Add Part modal had no selectable supplier, making part creation impossible via UI | Inventory | 🟢 | (testing session 2026-04-21) |
+| BUG-088b | Part-modal filtered suppliers by `s.isActive` but backend Supplier has no `isActive` column → all filtered out even after endpoint fixed | Inventory | 🟢 | (testing session 2026-04-21) |
+| BUG-088c | CreateEmployeeDto missing `status` field → frontend sent `{status: "ACTIVE"}` and backend rejected as "property status should not exist" → Add Employee impossible via UI | Employees | 🟢 | (testing session 2026-04-21) |
+| BUG-071 | Confirmed: AI module has backend endpoints (`/ai/chat`, `/ai/diagnose`, `/ai/estimate`, `/ai/suggest-schedule`) but no frontend route/page → `/ai` redirects to dashboard. Module is activatable but nothing to activate. **Feature gap, not a bug fix** — needs AI page component built. | AI | 🔴 | (confirmed 2026-04-21) |
+| BUG-063 | Confirmed: Profile → Update Profile is a stub (`setTimeout` + fake success, no API call). Backend PUT `/users/:id` exists but isn't wired. **Feature gap** — needs `me` endpoint + frontend service call. | Profile | 🔴 | (confirmed 2026-04-21) |
+| BUG-064 | Confirmed: Profile → Preferences save is a stub (`setTimeout` + fake success, no API call, no backend schema to persist preferences). **Feature gap** — needs UserPreference model + endpoint. | Profile | 🔴 | (confirmed 2026-04-21) |
+| BUG-065 | Approvals approve/reject buttons verified end-to-end (status + counters update). Creation must go via API — no UI "+ New Approval" button exists. Display shows "Approved by on" (missing name + date — backend has respondedBy/respondedAt but template doesn't render). | Approvals | 🟡 | (testing session 2026-04-21) |
+| BUG-089 | Approval type enum aligned: frontend enum + i18n keys now match backend's 4 values (MAINTENANCE, INVOICE, PURCHASE_ORDER, DISCOUNT) | Approvals | 🟢 | (testing session 2026-04-21) |
+| BUG-090 | Approval list now renders correct type label (Purchase Order, Discount, etc.) for all rows | Approvals | 🟢 | (testing session 2026-04-21) |
+| BUG-066 | Stock Adjustment modal verified end-to-end (stock 8 → 13 via "Add Stock (Incoming)"). Quantity persists. | Inventory | 🟢 | (testing session 2026-04-21) |
+| BUG-091 | Stock Adjustment now wired to `POST /inventory/:id/adjust` — creates `stockMovement` audit rows (type, quantity, reason persisted). Backend + frontend aligned. | Inventory | 🟢 | (testing session 2026-04-21) |
 
 ### Session 2026-04-20 — Known gaps (untested / stubs / missing features)
 Each is intentionally left open so the team can pick them up. Context + repro steps included for each. Date the last session touched each = 2026-04-20.
@@ -104,7 +125,10 @@ Each is intentionally left open so the team can pick them up. Context + repro st
 | BUG-065 | Approvals — create / approve / reject flow untested (0 seed rows) | Approvals | 🔴 |
 | BUG-066 | Stock Adjustment modal (inventory) — never opened + submitted | Inventory | 🔴 |
 | BUG-067 | Photo uploads — widgets exist for car / employee / maintenance but UI + backend integration untested | Uploads | 🔴 |
-| BUG-068 | Invoice Draft → Sent → Paid transition via UI — only API-tested | Invoicing | 🔴 |
+| BUG-068 | Invoice Draft → Sent → Paid transition via UI — only API-tested | Invoicing | 🟢 |
+| BUG-086a | Invoice list card: Paid/Remaining/Progress always 0 (list endpoint omitted `payments[]`) | Invoicing | 🟢 |
+| BUG-086b | `invoicing.list.*` translation namespace missing across en/fr/ar (raw keys rendered) | Invoicing | 🟢 |
+| BUG-086c | Seed: PAID invoices had no Payment rows → UI stats/progress wrong after reseed | Seed | 🟢 |
 | BUG-069 | Invoice Print / PDF buttons — render but output never verified | Invoicing | 🔴 |
 | BUG-070 | Calendar drag-and-drop — `handleDateSelect` + `handleEventDrop` are TODO stubs (per CLAUDE.md) | Calendar | 🔴 |
 | BUG-071 | AI module UI page (`/ai`) — backend `/ai/chat` verified, the UI page itself never opened | AI | 🔴 |
