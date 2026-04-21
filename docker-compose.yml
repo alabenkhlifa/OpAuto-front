@@ -44,7 +44,11 @@ services:
       # the compiled dist; see maintenance.service.ts:uploadRoot()).
       - uploads:/app/uploads
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:3000/api"]
+      # -f fails on 4xx; NestJS has no handler at /api bare (Nest default 404).
+      # A reachable TCP response is enough to call the process alive. We hit
+      # /api/auth/login with GET → the server replies (Nest auto-404), proving
+      # the app is up; we just don't treat the 404 itself as a failure.
+      test: ["CMD-SHELL", "curl -sS -o /dev/null -m 3 http://localhost:3000/api/auth/login || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5
