@@ -113,6 +113,13 @@
             </div>
           </div>
 
+          <div class="mt-4 flex items-center gap-2">
+            <input type="checkbox" id="smsOptIn" formControlName="smsOptIn" class="h-4 w-4" />
+            <label for="smsOptIn" class="text-sm font-medium text-gray-300">
+              {{ 'customers.form.smsOptIn' | translate }}
+            </label>
+          </div>
+
           <div class="mt-4">
             <label class="block text-sm font-medium text-gray-300 mb-2">{{ 'customers.additionalNotes' | translate }}</label>
             <textarea formControlName="notes" rows="3"

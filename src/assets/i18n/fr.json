@@ -690,10 +690,30 @@
       "loading": "Analyse…",
       "hint": "Cliquez sur Actualiser pour générer les prédictions.",
       "noneAtRisk": "Aucun client à risque pour l'instant 🎉",
+      "viewProfile": "Voir le profil",
       "level": {
         "low": "Faible",
         "medium": "Moyen",
         "high": "Élevé"
+      },
+      "action": {
+        "draft": "Rédiger une action",
+        "drafting": "Rédaction…",
+        "smsBody": "Message SMS (français)",
+        "resetBody": "Régénérer à partir de la remise",
+        "bodyAutoHint": "Le message se synchronise avec les champs de remise. Tapez dans la zone de texte pour personnaliser.",
+        "includeDiscount": "Inclure une remise",
+        "approveSend": "Approuver et envoyer",
+        "sending": "Envoi…",
+        "skip": "Ignorer",
+        "cancel": "Annuler",
+        "close": "Fermer",
+        "sentOk": "SMS envoyé",
+        "redeemHint": "La remise sera proposée automatiquement sur la prochaine facture du client lorsqu'il présentera ce SMS.",
+        "optIn": {
+          "ok": "SMS autorisé",
+          "blocked": "Le client a refusé les SMS"
+        }
       }
     },
     "customerInformation": "Informations du client",
@@ -885,7 +905,8 @@
       "updating": "Mise à jour...",
       "creating": "Création...",
       "updateCustomer": "Mettre à jour le client",
-      "createCustomer": "Créer le client"
+      "createCustomer": "Créer le client",
+      "smsOptIn": "Autoriser les SMS (messages de fidélisation IA)"
     },
     "loading": "Chargement des clients...",
     "tooltips": {
@@ -1845,6 +1866,14 @@
       "customer": "Client",
       "selectCustomer": "Sélectionner un client",
       "customerRequired": "Le client est requis",
+      "aiOffer": {
+        "title": "Offre Churn AI active",
+        "validUntil": "valable jusqu'au",
+        "apply": "Appliquer",
+        "applied": "Appliquée",
+        "remove": "Retirer",
+        "addManually": "Ajoutez ce montant fixe manuellement comme ligne de facture"
+      },
       "vehicle": "Véhicule",
       "selectVehicle": "Sélectionner un véhicule",
       "vehicleRequired": "Le véhicule est requis",

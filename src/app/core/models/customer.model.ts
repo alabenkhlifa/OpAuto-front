@@ -16,6 +16,7 @@ export interface Customer {
   preferredContactMethod: ContactMethod;
   loyaltyPoints: number;
   referralSource?: string;
+  smsOptIn?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -99,6 +100,7 @@ export interface CreateCustomerRequest {
   notes?: string;
   preferredContactMethod: ContactMethod;
   referralSource?: string;
+  smsOptIn?: boolean;
 }
 
 export interface UpdateCustomerRequest {
@@ -110,6 +112,7 @@ export interface UpdateCustomerRequest {
   notes?: string;
   preferredContactMethod?: ContactMethod;
   loyaltyPoints?: number;
+  smsOptIn?: boolean;
 }
 
 export interface CustomerSearchFilters {

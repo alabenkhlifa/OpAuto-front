@@ -1,4 +1,4 @@
-import { IsString, IsEmail, IsOptional, IsEnum } from 'class-validator';
+import { IsString, IsEmail, IsOptional, IsEnum, IsBoolean } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { CustomerStatus } from '@prisma/client';
 
@@ -34,4 +34,9 @@ export class CreateCustomerDto {
   @IsEnum(CustomerStatus)
   @IsOptional()
   status?: CustomerStatus;
+
+  @ApiProperty({ required: false, default: true })
+  @IsBoolean()
+  @IsOptional()
+  smsOptIn?: boolean;
 }

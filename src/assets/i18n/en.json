@@ -679,10 +679,30 @@
       "loading": "Scoring…",
       "hint": "Click Refresh to generate predictions from recent activity.",
       "noneAtRisk": "No customers at risk right now 🎉",
+      "viewProfile": "View profile",
       "level": {
         "low": "Low",
         "medium": "Medium",
         "high": "High"
+      },
+      "action": {
+        "draft": "Draft action",
+        "drafting": "Drafting…",
+        "smsBody": "SMS message (French)",
+        "resetBody": "Regenerate from discount fields",
+        "bodyAutoHint": "Message auto-synced with the discount fields. Type in the textarea to customize.",
+        "includeDiscount": "Include discount",
+        "approveSend": "Approve & send",
+        "sending": "Sending…",
+        "skip": "Skip",
+        "cancel": "Cancel",
+        "close": "Close",
+        "sentOk": "SMS sent",
+        "redeemHint": "The discount will be offered automatically on the customer's next invoice when they show this SMS.",
+        "optIn": {
+          "ok": "SMS enabled",
+          "blocked": "Customer has opted out of SMS"
+        }
       }
     },
     "customerInformation": "Customer Information",
@@ -881,7 +901,8 @@
       "updating": "Updating...",
       "creating": "Creating...",
       "updateCustomer": "Update Customer",
-      "createCustomer": "Create Customer"
+      "createCustomer": "Create Customer",
+      "smsOptIn": "Allow SMS (Churn AI win-back messages)"
     },
     "loading": "Loading customers...",
     "tooltips": {
@@ -1703,6 +1724,14 @@
       "selectCustomer": "Select customer",
       "vehicle": "Vehicle",
       "selectVehicle": "Select vehicle",
+      "aiOffer": {
+        "title": "Active Churn AI offer",
+        "validUntil": "valid until",
+        "apply": "Apply",
+        "applied": "Applied",
+        "remove": "Remove",
+        "addManually": "Apply this fixed amount manually as a line item"
+      },
       "issueDate": "Issue Date",
       "dueDate": "Due Date",
       "paymentTerms": "Payment Terms",

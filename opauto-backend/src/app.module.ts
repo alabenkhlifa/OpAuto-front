@@ -16,6 +16,8 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { ModulesModule } from './modules/modules.module';
 import { GarageSettingsModule } from './garage-settings/garage-settings.module';
 import { AiModule } from './ai/ai.module';
+import { AiActionsModule } from './ai-actions/ai-actions.module';
+import { SmsModule } from './sms/sms.module';
 
 @Module({
   imports: [
@@ -36,6 +38,8 @@ import { AiModule } from './ai/ai.module';
     ModulesModule,
     GarageSettingsModule,
     AiModule,
+    SmsModule,
+    AiActionsModule,
   ],
 })
 export class AppModule {}

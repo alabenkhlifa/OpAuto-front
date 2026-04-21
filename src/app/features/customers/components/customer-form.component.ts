@@ -58,6 +58,7 @@ export class CustomerFormComponent implements OnInit {
       country: ['Tunisia'],
       status: ['active', Validators.required],
       preferredContactMethod: ['phone', Validators.required],
+      smsOptIn: [true],
       notes: ['']
     });
   }
@@ -85,6 +86,7 @@ export class CustomerFormComponent implements OnInit {
             country: customer.address?.country || 'Tunisia',
             status: customer.status,
             preferredContactMethod: customer.preferredContactMethod,
+            smsOptIn: customer.smsOptIn ?? true,
             notes: customer.notes || ''
           });
         }
@@ -123,6 +125,7 @@ export class CustomerFormComponent implements OnInit {
         } : undefined,
         status: formValue.status,
         preferredContactMethod: formValue.preferredContactMethod,
+        smsOptIn: formValue.smsOptIn,
         notes: formValue.notes || undefined
       };
 
@@ -150,6 +153,7 @@ export class CustomerFormComponent implements OnInit {
           country: formValue.country
         } : undefined,
         preferredContactMethod: formValue.preferredContactMethod,
+        smsOptIn: formValue.smsOptIn,
         notes: formValue.notes || undefined
       };
 

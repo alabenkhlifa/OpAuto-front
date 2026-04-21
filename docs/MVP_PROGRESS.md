@@ -78,6 +78,7 @@
 - [ ] Analytics Narrator — "Generate Insights" on dashboard, backend endpoint, NL bullet points
 - [x] Predictive Maintenance — fleet dashboard card + per-car alerts on /cars/:id, `/ai/predict-maintenance` endpoint with Groq-first reason polish, deterministic scorer across 8 service types
 - [x] Customer Churn Prediction — identify at-risk customers, backend endpoint, UI display
+- [x] Executable Churn AI actions (2026-04-21) — AI drafts French SMS + optional %/TND discount; manager one-click approves → Twilio send (mock driver by default, swap via `SMS_PROVIDER=twilio`). New `AiAction` table (DRAFT→APPROVED→SENT/FAILED→REDEEMED/EXPIRED lifecycle), `Customer.smsOptIn` opt-out, inline approval on At-Risk card, `/ai/actions` REST endpoints, 17 new tests.
 
 ## Infrastructure Fixes (Session 2026-03-28)
 - [x] Tailwind v4 source scanning — utility classes (w-6, h-6) now generated correctly

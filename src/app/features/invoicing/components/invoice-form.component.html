@@ -41,10 +41,33 @@
                   {{ customer.name }} - {{ customer.phone }}
                 </option>
               </select>
-              <div *ngIf="invoiceForm.get('customerId')?.errors && invoiceForm.get('customerId')?.touched" 
+              <div *ngIf="invoiceForm.get('customerId')?.errors && invoiceForm.get('customerId')?.touched"
                    class="text-red-500 text-xs mt-1">
                 {{ 'invoicing.create.customerRequired' | translate }}
               </div>
+            </div>
+
+            <div *ngIf="activeAiOffer() as offer" class="md:col-span-2 rounded-lg bg-orange-50 border border-orange-200 p-3 flex flex-wrap items-center gap-3">
+              <div class="flex-1 min-w-[200px] text-sm text-orange-900">
+                <span class="font-semibold">🎯 {{ 'invoicing.create.aiOffer.title' | translate }}</span>
+                <span *ngIf="offer.discountKind === 'PERCENT'"> — {{ offer.discountValue }}%</span>
+                <span *ngIf="offer.discountKind === 'AMOUNT'"> — {{ offer.discountValue }} TND</span>
+                <span *ngIf="offer.expiresAt"> · {{ 'invoicing.create.aiOffer.validUntil' | translate }} {{ formatOfferExpiry(offer.expiresAt) }}</span>
+              </div>
+              <ng-container *ngIf="offer.discountKind === 'PERCENT' && appliedAiActionId() !== offer.id">
+                <button type="button" class="btn-primary btn-sm" (click)="applyAiOffer()">
+                  {{ 'invoicing.create.aiOffer.apply' | translate }}
+                </button>
+              </ng-container>
+              <ng-container *ngIf="appliedAiActionId() === offer.id">
+                <span class="badge badge-success">✓ {{ 'invoicing.create.aiOffer.applied' | translate }}</span>
+                <button type="button" class="btn-tertiary btn-sm" (click)="clearAiOffer()">
+                  {{ 'invoicing.create.aiOffer.remove' | translate }}
+                </button>
+              </ng-container>
+              <span *ngIf="offer.discountKind === 'AMOUNT'" class="text-xs text-orange-800 italic">
+                {{ 'invoicing.create.aiOffer.addManually' | translate }}
+              </span>
             </div>
 
             <div>

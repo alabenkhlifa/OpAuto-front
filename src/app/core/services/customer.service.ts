@@ -61,6 +61,7 @@ export class CustomerService {
       preferredContactMethod: (b.preferredContactMethod as ContactMethod) || 'phone',
       loyaltyPoints: b.loyaltyPoints ?? 0,
       referralSource: b.referralSource || undefined,
+      smsOptIn: b.smsOptIn ?? true,
       createdAt: new Date(b.createdAt),
       updatedAt: new Date(b.updatedAt)
     };
@@ -85,6 +86,7 @@ export class CustomerService {
         .join(', ');
     }
     if ('status' in f && f.status != null) payload.status = toBackendEnum(f.status);
+    if ('smsOptIn' in f && f.smsOptIn != null) payload.smsOptIn = f.smsOptIn;
 
     return payload;
   }

@@ -9,6 +9,8 @@ import { CustomerService } from '../../../core/services/customer.service';
 import { AppointmentService } from '../../appointments/services/appointment.service';
 import { TranslationService } from '../../../core/services/translation.service';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
+import { AiActionsService } from '../../../core/services/ai-actions.service';
+import { AiAction } from '../../../core/models/ai-action.model';
 import { 
   InvoiceWithDetails, 
   InvoiceLineItem, 
@@ -37,6 +39,10 @@ export class InvoiceFormComponent implements OnInit {
   private appointmentService = inject(AppointmentService);
   private translationService = inject(TranslationService);
   private toast = inject(ToastService);
+  private aiActionsService = inject(AiActionsService);
+
+  activeAiOffer = signal<AiAction | null>(null);
+  appliedAiActionId = signal<string | null>(null);
 
   invoiceForm: FormGroup;
   isLoading = signal(false);
@@ -154,6 +160,7 @@ export class InvoiceFormComponent implements OnInit {
       paymentTerms: invoice.paymentTerms,
       notes: invoice.notes
     });
+    if (invoice.customerId) this.loadActiveAiOffer(invoice.customerId);
 
     // Populate line items
     const lineItemsArray = this.lineItems;
@@ -242,14 +249,65 @@ export class InvoiceFormComponent implements OnInit {
 
   onCustomerChange(): void {
     const customerId = this.invoiceForm.get('customerId')?.value;
+    this.appliedAiActionId.set(null);
+    this.activeAiOffer.set(null);
+
     if (customerId) {
-      // Filter cars by customer
       const customerCars = this.cars().filter(car => car.customerId === customerId);
       if (customerCars.length === 1) {
-        // Auto-select if customer has only one car
         this.invoiceForm.patchValue({ carId: customerCars[0].id });
       }
+      this.loadActiveAiOffer(customerId);
     }
+  }
+
+  private loadActiveAiOffer(customerId: string): void {
+    this.aiActionsService.list({ customerId, status: 'SENT' }).subscribe({
+      next: (actions) => {
+        const now = Date.now();
+        const offer = actions
+          .filter(a => a.discountKind && a.discountValue != null)
+          .filter(a => !a.expiresAt || new Date(a.expiresAt).getTime() > now)
+          .sort((a, b) => new Date(b.sentAt ?? b.createdAt).getTime() - new Date(a.sentAt ?? a.createdAt).getTime())[0];
+        this.activeAiOffer.set(offer ?? null);
+      },
+      error: (err) => {
+        console.error('Failed to load AI offers:', err);
+        this.activeAiOffer.set(null);
+      },
+    });
+  }
+
+  applyAiOffer(): void {
+    const offer = this.activeAiOffer();
+    if (!offer || offer.discountKind !== 'PERCENT' || offer.discountValue == null) return;
+    this.invoiceForm.patchValue({ discountPercentage: offer.discountValue });
+    this.appliedAiActionId.set(offer.id);
+    this.toast.success(this.translationService.instant('invoicing.create.aiOffer.applied'));
+  }
+
+  clearAiOffer(): void {
+    this.invoiceForm.patchValue({ discountPercentage: 0 });
+    this.appliedAiActionId.set(null);
+  }
+
+  private redeemAiOfferIfAny(invoiceId: string): void {
+    const actionId = this.appliedAiActionId();
+    if (!actionId) return;
+    this.aiActionsService.redeem(actionId, { invoiceId }).subscribe({
+      next: () => this.appliedAiActionId.set(null),
+      error: (err) => console.error('Failed to mark AI action redeemed:', err),
+    });
+  }
+
+  formatOfferExpiry(iso: string | null | undefined): string {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = String(d.getFullYear());
+    return `${dd}/${mm}/${yyyy}`;
   }
 
   getCustomerCars(): Car[] {
@@ -335,6 +393,7 @@ export class InvoiceFormComponent implements OnInit {
         if (invoiceId) {
           this.invoiceService.updateInvoice(invoiceId, invoiceData).subscribe({
             next: (updatedInvoice) => {
+              this.redeemAiOfferIfAny(updatedInvoice.id);
               this.toast.success('Invoice updated successfully');
               this.router.navigate(['/invoices', updatedInvoice.id]);
             },
@@ -349,6 +408,7 @@ export class InvoiceFormComponent implements OnInit {
         // Create new invoice
         this.invoiceService.createInvoice(invoiceData).subscribe({
           next: (newInvoice) => {
+            this.redeemAiOfferIfAny(newInvoice.id);
             this.toast.success('Invoice created successfully');
             this.router.navigate(['/invoices', newInvoice.id]);
           },

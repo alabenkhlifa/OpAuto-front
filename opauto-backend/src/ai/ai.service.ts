@@ -1,5 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AiActionKind, DiscountKind } from '@prisma/client';
 import {
   AiChatDto,
   AiDiagnoseDto,
@@ -9,6 +10,16 @@ import {
   AiSuggestScheduleDto,
 } from './dto/chat.dto';
 import { PrismaService } from '../prisma/prisma.service';
+
+export interface ChurnActionDraft {
+  kind: AiActionKind;
+  messageBody: string;
+  discountKind?: DiscountKind;
+  discountValue?: number;
+  expiresAtDays?: number;
+  churnRiskSnapshot: number;
+  factorsSnapshot: string[];
+}
 
 @Injectable()
 export class AiService {
@@ -699,6 +710,117 @@ CRITICAL: The "action" field MUST be written ENTIRELY in ${responseLang}.
       },
     };
     return dict[lang]?.[level] || dict['en'][level];
+  }
+
+  // ── Churn Action Drafting (executable recommendations) ─────────
+
+  async proposeAction(garageId: string, customerId: string): Promise<ChurnActionDraft> {
+    const customer = await this.prisma.customer.findFirst({
+      where: { id: customerId, garageId },
+      include: {
+        appointments: { select: { startTime: true, status: true } },
+        invoices: { select: { createdAt: true, paidAt: true, total: true } },
+      },
+    });
+    if (!customer) throw new NotFoundException('Customer not found');
+
+    const now = new Date();
+    const MS_PER_DAY = 24 * 60 * 60 * 1000;
+    const scored = this.scoreCustomerChurn(customer, now, MS_PER_DAY, 'fr');
+    const risk = scored?.churnRisk ?? 0;
+    const factors = scored?.factors ?? [];
+    const level: 'low' | 'medium' | 'high' = scored?.riskLevel ?? 'low';
+
+    const llmDraft = await this.draftWithLlm(customer, level, factors);
+    const draft = llmDraft ?? this.templatedActionDraft(customer, level);
+
+    return {
+      ...draft,
+      churnRiskSnapshot: risk,
+      factorsSnapshot: factors,
+    };
+  }
+
+  private async draftWithLlm(
+    customer: { firstName: string; lastName: string; loyaltyTier: string | null },
+    level: 'low' | 'medium' | 'high',
+    factors: string[],
+  ): Promise<Omit<ChurnActionDraft, 'churnRiskSnapshot' | 'factorsSnapshot'> | null> {
+    if (!this.anthropicKey && !this.openaiKey && !this.geminiKey && !this.groqKey) return null;
+
+    const fullName = `${customer.firstName} ${customer.lastName}`.trim();
+    const prompt = `You draft short win-back SMS copy (IN FRENCH) for a Tunisian car garage.
+Customer: ${fullName} | loyaltyTier=${customer.loyaltyTier ?? 'none'} | riskLevel=${level}
+Churn factors: ${factors.join('; ') || 'none'}
+
+Rules:
+- Output ONLY a single JSON object, no prose before/after.
+- SMS body MUST be in French, under 320 characters, friendly, first-person plural ("nous"), no emoji, no links.
+- If riskLevel is "medium": kind="REMINDER_SMS", no discount. Just a warm reminder inviting them back.
+- If riskLevel is "high": kind="DISCOUNT_SMS", include a discount. Choose EITHER percent (5-20) OR a fixed TND amount (20-100), whichever feels more appropriate for the factors. expiresAtDays between 7 and 30.
+- Address the customer by first name.
+- Mention the discount value + expiry in the SMS body when applicable (e.g. "15% valable jusqu'au DD/MM/YYYY").
+
+JSON schema:
+{
+  "kind": "REMINDER_SMS" | "DISCOUNT_SMS",
+  "messageBody": "<French SMS text>",
+  "discountKind": "PERCENT" | "AMOUNT" | null,
+  "discountValue": <number> | null,
+  "expiresAtDays": <number> | null
+}`;
+
+    try {
+      const res = await this.chat({ messages: [{ role: 'user', content: prompt }], context: 'churn_action_draft' });
+      const match = res.message.match(/\{[\s\S]*\}/);
+      if (!match) return null;
+      const parsed = JSON.parse(match[0]) as {
+        kind: string;
+        messageBody: string;
+        discountKind: string | null;
+        discountValue: number | null;
+        expiresAtDays: number | null;
+      };
+      const kind: AiActionKind = parsed.kind === 'DISCOUNT_SMS' ? 'DISCOUNT_SMS' : 'REMINDER_SMS';
+      const draft: Omit<ChurnActionDraft, 'churnRiskSnapshot' | 'factorsSnapshot'> = {
+        kind,
+        messageBody: parsed.messageBody.trim(),
+      };
+      if (kind === 'DISCOUNT_SMS' && parsed.discountKind && parsed.discountValue) {
+        draft.discountKind = parsed.discountKind === 'AMOUNT' ? 'AMOUNT' : 'PERCENT';
+        draft.discountValue = parsed.discountValue;
+        draft.expiresAtDays = parsed.expiresAtDays ?? 14;
+      }
+      return draft;
+    } catch (err) {
+      this.logger.warn(`proposeAction LLM failed, falling back to template: ${err}`);
+      return null;
+    }
+  }
+
+  private templatedActionDraft(
+    customer: { firstName: string },
+    level: 'low' | 'medium' | 'high',
+  ): Omit<ChurnActionDraft, 'churnRiskSnapshot' | 'factorsSnapshot'> {
+    const first = customer.firstName.trim();
+    if (level === 'high') {
+      const days = 14;
+      const expiry = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+      const dd = String(expiry.getDate()).padStart(2, '0');
+      const mm = String(expiry.getMonth() + 1).padStart(2, '0');
+      const yyyy = String(expiry.getFullYear());
+      return {
+        kind: 'DISCOUNT_SMS',
+        messageBody: `Bonjour ${first}, vous nous manquez ! Profitez de 10% de réduction sur votre prochaine visite. Valable jusqu'au ${dd}/${mm}/${yyyy}. Présentez ce SMS à l'atelier.`,
+        discountKind: 'PERCENT',
+        discountValue: 10,
+        expiresAtDays: days,
+      };
+    }
+    return {
+      kind: 'REMINDER_SMS',
+      messageBody: `Bonjour ${first}, il est temps de penser à l'entretien de votre véhicule. Nous serions ravis de vous revoir à l'atelier. À bientôt !`,
+    };
   }
 
   // ── Predictive Maintenance ─────────────────────────────────────

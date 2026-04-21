@@ -94,6 +94,26 @@ enum PaymentMethod {
   MOBILE_PAYMENT
 }
 
+enum AiActionKind {
+  REMINDER_SMS
+  DISCOUNT_SMS
+}
+
+enum AiActionStatus {
+  DRAFT
+  APPROVED
+  SENT
+  FAILED
+  SKIPPED
+  REDEEMED
+  EXPIRED
+}
+
+enum DiscountKind {
+  PERCENT
+  AMOUNT
+}
+
 enum NotificationType {
   APPOINTMENT_REMINDER
   APPOINTMENT_CREATED
@@ -136,6 +156,7 @@ model Garage {
   approvals        Approval[]
   notifications    Notification[]
   garageModules    GarageModule[]
+  aiActions        AiAction[]
 
   @@map("garages")
 }
@@ -158,6 +179,7 @@ model User {
 
   garage       Garage          @relation(fields: [garageId], references: [id], onDelete: Cascade)
   preferences  UserPreference?
+  approvedAiActions AiAction[]  @relation("AiActionApprover")
 
   @@map("users")
 }
@@ -190,6 +212,7 @@ model Customer {
   loyaltyTier  String?        // bronze, silver, gold, platinum
   totalSpent   Float          @default(0)
   visitCount   Int            @default(0)
+  smsOptIn     Boolean        @default(true)
   notes        String?
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
@@ -198,6 +221,7 @@ model Customer {
   cars         Car[]
   appointments Appointment[]
   invoices     Invoice[]
+  aiActions    AiAction[]
 
   @@map("customers")
 }
@@ -384,6 +408,7 @@ model Invoice {
   car          Car?          @relation(fields: [carId], references: [id], onDelete: SetNull)
   lineItems    InvoiceLineItem[]
   payments     Payment[]
+  redeemedAiActions AiAction[] @relation("AiActionRedemption")
 
   @@map("invoices")
 }
@@ -518,4 +543,37 @@ model GarageModule {
 
   @@unique([garageId, moduleId])
   @@map("garage_modules")
+}
+
+model AiAction {
+  id                  String         @id @default(uuid())
+  garageId            String
+  customerId          String
+  kind                AiActionKind
+  status              AiActionStatus @default(DRAFT)
+  messageBody         String
+  discountKind        DiscountKind?
+  discountValue       Float?
+  expiresAt           DateTime?
+  churnRiskSnapshot   Float
+  factorsSnapshot     String[]
+  providerMessageId   String?
+  errorMessage        String?
+  approvedByUserId    String?
+  redeemedInvoiceId   String?
+  createdAt           DateTime       @default(now())
+  approvedAt          DateTime?
+  sentAt              DateTime?
+  failedAt            DateTime?
+  redeemedAt          DateTime?
+  updatedAt           DateTime       @updatedAt
+
+  garage              Garage         @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  customer            Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  approvedBy          User?          @relation("AiActionApprover", fields: [approvedByUserId], references: [id], onDelete: SetNull)
+  redeemedInvoice     Invoice?       @relation("AiActionRedemption", fields: [redeemedInvoiceId], references: [id], onDelete: SetNull)
+
+  @@index([customerId, status])
+  @@index([garageId, status, createdAt])
+  @@map("ai_actions")
 }
