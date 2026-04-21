@@ -1,6 +1,7 @@
 import { Component, inject, signal, computed, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AppointmentService } from './services/appointment.service';
 import { AppointmentModalComponent } from './components/appointment-modal.component';
 import { SwipeDirective, SwipeEvent } from '../../shared/directives/swipe.directive';
@@ -24,6 +25,8 @@ export class AppointmentsComponent implements AfterViewInit {
   private languageService = inject(LanguageService);
   public translationService = inject(TranslationService);
   private toast = inject(ToastService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
   
   @ViewChild(AppointmentModalComponent) appointmentModal!: AppointmentModalComponent;
   
@@ -194,7 +197,55 @@ export class AppointmentsComponent implements AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    // Component initialization after view init
+    this.consumeSchedulingQueryParams();
+  }
+
+  /**
+   * Map predictive-maintenance service slugs to the modal's form values,
+   * then open the modal pre-filled. Used when an external surface
+   * (dashboard card / car detail) links here with scheduling context.
+   */
+  private consumeSchedulingQueryParams(): void {
+    const qp = this.route.snapshot.queryParamMap;
+    const carId = qp.get('carId');
+    const serviceType = qp.get('serviceType');
+    const scheduledDate = qp.get('scheduledDate');
+
+    if (!carId && !serviceType) return;
+
+    const serviceTypeMap: Record<string, string> = {
+      'oil-change': 'oil-change',
+      'brake-service': 'brake-repair',
+      'tire-rotation': 'tires',
+      'transmission-service': 'transmission',
+      'timing-belt': 'engine',
+      'air-filter': 'inspection',
+      'coolant-flush': 'inspection',
+      'general-inspection': 'inspection',
+    };
+    const mappedType = serviceType ? serviceTypeMap[serviceType] || serviceType : undefined;
+    const serviceNameKey = serviceType
+      ? `maintenance.predictions.service.${serviceType}`
+      : undefined;
+    const serviceName = serviceNameKey
+      ? this.translationService.instant(serviceNameKey)
+      : undefined;
+
+    this.showAddModal.set(true);
+    setTimeout(() => {
+      this.appointmentModal?.setInitialContext({
+        carId: carId || undefined,
+        serviceType: mappedType,
+        serviceName: serviceName && serviceName !== serviceNameKey ? serviceName : undefined,
+        scheduledDate: scheduledDate || undefined,
+      });
+      // Strip the query params so reopening the page doesn't re-trigger the modal.
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: {},
+        replaceUrl: true,
+      });
+    }, 0);
   }
 
   // Appointment actions

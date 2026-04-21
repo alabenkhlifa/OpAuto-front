@@ -760,3 +760,240 @@ describe('AiService – predictChurn', () => {
     );
   });
 });
+
+// ── predictMaintenance ───────────────────────────────────────────
+
+function makeCar(over: Partial<{
+  id: string;
+  make: string;
+  model: string;
+  year: number;
+  licensePlate: string;
+  mileage: number | null;
+  createdAt: Date;
+  customer: { firstName: string; lastName: string } | null;
+  appointments: Array<{ startTime: Date; type?: string | null; title?: string }>;
+  maintenanceJobs: Array<{ completionDate: Date; title: string }>;
+}> = {}) {
+  return {
+    id: over.id ?? 'car-1',
+    garageId: GARAGE_ID,
+    customerId: 'cust-1',
+    make: over.make ?? 'Peugeot',
+    model: over.model ?? '308',
+    year: over.year ?? 2019,
+    licensePlate: over.licensePlate ?? '123-TUN-4567',
+    mileage: over.mileage === undefined ? 50000 : over.mileage,
+    createdAt: over.createdAt ?? daysAgo(365 * 3),
+    customer: over.customer === undefined ? { firstName: 'Sami', lastName: 'B.' } : over.customer,
+    appointments: over.appointments ?? [],
+    maintenanceJobs: over.maintenanceJobs ?? [],
+  };
+}
+
+describe('AiService – predictMaintenance', () => {
+  let service: AiService;
+  let prisma: {
+    car: { findMany: jest.Mock };
+    customer: { findMany: jest.Mock };
+    employee: { findMany: jest.Mock };
+    appointment: { findMany: jest.Mock };
+  };
+  let configService: { get: jest.Mock };
+
+  beforeEach(async () => {
+    prisma = {
+      car: { findMany: jest.fn().mockResolvedValue([]) },
+      customer: { findMany: jest.fn().mockResolvedValue([]) },
+      employee: { findMany: jest.fn().mockResolvedValue([]) },
+      appointment: { findMany: jest.fn().mockResolvedValue([]) },
+    };
+    configService = { get: jest.fn().mockReturnValue(undefined) };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        AiService,
+        { provide: PrismaService, useValue: prisma },
+        { provide: ConfigService, useValue: configService },
+      ],
+    }).compile();
+
+    service = module.get<AiService>(AiService);
+  });
+
+  it('returns empty predictions when there are no cars', async () => {
+    prisma.car.findMany.mockResolvedValue([]);
+    const result = await service.predictMaintenance(GARAGE_ID, {});
+    expect(result.predictions).toEqual([]);
+    expect(result.provider).toBe('template');
+  });
+
+  it('flags a car with a year-old oil change as overdue (high urgency)', async () => {
+    prisma.car.findMany.mockResolvedValue([
+      makeCar({
+        id: 'car-overdue',
+        mileage: 60000,
+        appointments: [{ startTime: daysAgo(400), type: 'oil-change' }],
+      }),
+    ]);
+    const result = await service.predictMaintenance(GARAGE_ID, {});
+    const oil = result.predictions.find((p) => p.service === 'oil-change');
+    expect(oil).toBeDefined();
+    expect(oil!.urgency).toBe('high');
+    expect(oil!.carId).toBe('car-overdue');
+    expect(oil!.confidence).toBe(0.85);
+  });
+
+  it('flags a freshly-serviced oil change as low urgency', async () => {
+    prisma.car.findMany.mockResolvedValue([
+      makeCar({
+        id: 'car-fresh',
+        mileage: 50000,
+        appointments: [{ startTime: daysAgo(30), type: 'oil-change' }],
+      }),
+    ]);
+    const result = await service.predictMaintenance(GARAGE_ID, {});
+    const oil = result.predictions.find((p) => p.service === 'oil-change');
+    expect(oil).toBeDefined();
+    expect(oil!.urgency).toBe('low');
+  });
+
+  it('flags near-due services (within 30 days) as medium urgency', async () => {
+    // 160 days since oil change, interval 180 days → 20 days until due → medium
+    prisma.car.findMany.mockResolvedValue([
+      makeCar({
+        id: 'car-medium',
+        mileage: 50000,
+        appointments: [{ startTime: daysAgo(160), type: 'oil-change' }],
+      }),
+    ]);
+    const result = await service.predictMaintenance(GARAGE_ID, {});
+    const oil = result.predictions.find((p) => p.service === 'oil-change');
+    expect(oil).toBeDefined();
+    expect(oil!.urgency).toBe('medium');
+  });
+
+  it('uses mileage-based estimate when no service history exists', async () => {
+    prisma.car.findMany.mockResolvedValue([
+      makeCar({
+        id: 'car-nohistory',
+        mileage: 12000,
+        createdAt: daysAgo(365),
+        appointments: [],
+      }),
+    ]);
+    const result = await service.predictMaintenance(GARAGE_ID, {});
+    const oil = result.predictions.find((p) => p.service === 'oil-change');
+    expect(oil).toBeDefined();
+    // Confidence should be mileage-only (0.6) because no history
+    expect(oil!.confidence).toBe(0.6);
+  });
+
+  it('returns confidence 0.45 for a car with no history and no mileage', async () => {
+    prisma.car.findMany.mockResolvedValue([
+      makeCar({
+        id: 'car-blank',
+        mileage: null,
+        createdAt: daysAgo(400), // force at least one high-urgency prediction so it isn't filtered
+        appointments: [],
+      }),
+    ]);
+    const result = await service.predictMaintenance(GARAGE_ID, {});
+    const anyOverdue = result.predictions.find((p) => p.carId === 'car-blank');
+    expect(anyOverdue).toBeDefined();
+    expect(anyOverdue!.confidence).toBe(0.45);
+  });
+
+  it('builds a car label containing model, plate, and customer name', async () => {
+    prisma.car.findMany.mockResolvedValue([
+      makeCar({
+        id: 'car-label',
+        make: 'Renault',
+        model: 'Clio',
+        licensePlate: '999-TUN-1',
+        customer: { firstName: 'Ahmed', lastName: 'Trabelsi' },
+        appointments: [{ startTime: daysAgo(400), type: 'oil-change' }],
+      }),
+    ]);
+    const result = await service.predictMaintenance(GARAGE_ID, {});
+    const pred = result.predictions[0];
+    expect(pred.carLabel).toContain('Renault Clio');
+    expect(pred.carLabel).toContain('999-TUN-1');
+    expect(pred.carLabel).toContain('Ahmed Trabelsi');
+  });
+
+  it('sorts predictions by urgency desc, then soonest first', async () => {
+    prisma.car.findMany.mockResolvedValue([
+      makeCar({
+        id: 'car-sort',
+        mileage: 50000,
+        appointments: [
+          { startTime: daysAgo(400), type: 'oil-change' },    // overdue → high
+          { startTime: daysAgo(160), type: 'brake-service' }, // medium
+          { startTime: daysAgo(30), type: 'tire-rotation' },  // low
+        ],
+      }),
+    ]);
+    const result = await service.predictMaintenance(GARAGE_ID, {});
+    const urgencies = result.predictions
+      .filter((p) => ['oil-change', 'brake-service', 'tire-rotation'].includes(p.service))
+      .map((p) => p.urgency);
+    // At minimum, any 'high' alert must appear before any 'low' alert
+    const firstLow = urgencies.indexOf('low');
+    const firstHigh = urgencies.indexOf('high');
+    if (firstLow !== -1 && firstHigh !== -1) {
+      expect(firstHigh).toBeLessThan(firstLow);
+    }
+  });
+
+  it('filters to a single car when carId is provided', async () => {
+    prisma.car.findMany.mockResolvedValue([]);
+    await service.predictMaintenance(GARAGE_ID, { carId: 'specific-car' });
+    expect(prisma.car.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ garageId: GARAGE_ID, id: 'specific-car' }),
+      }),
+    );
+  });
+
+  it('infers service type from MaintenanceJob.title when appointment type is missing', async () => {
+    prisma.car.findMany.mockResolvedValue([
+      makeCar({
+        id: 'car-mj',
+        mileage: 50000,
+        appointments: [],
+        maintenanceJobs: [{ completionDate: daysAgo(30), title: 'Oil change and filter' }],
+      }),
+    ]);
+    const result = await service.predictMaintenance(GARAGE_ID, {});
+    const oil = result.predictions.find((p) => p.service === 'oil-change');
+    expect(oil).toBeDefined();
+    expect(oil!.confidence).toBe(0.85); // history was found
+    expect(oil!.urgency).toBe('low');
+  });
+
+  it('returns reason in the requested language (fr)', async () => {
+    prisma.car.findMany.mockResolvedValue([
+      makeCar({
+        id: 'car-fr',
+        mileage: 50000,
+        appointments: [{ startTime: daysAgo(400), type: 'oil-change' }],
+      }),
+    ]);
+    const result = await service.predictMaintenance(GARAGE_ID, { language: 'fr' });
+    const oil = result.predictions.find((p) => p.service === 'oil-change');
+    expect(oil!.reason).toMatch(/retard|Vidange/);
+  });
+
+  it('falls back to templated reason when no LLM keys are configured', async () => {
+    prisma.car.findMany.mockResolvedValue([
+      makeCar({
+        id: 'car-tmpl',
+        mileage: 50000,
+        appointments: [{ startTime: daysAgo(400), type: 'oil-change' }],
+      }),
+    ]);
+    const result = await service.predictMaintenance(GARAGE_ID, {});
+    expect(result.provider).toBe('template');
+  });
+});

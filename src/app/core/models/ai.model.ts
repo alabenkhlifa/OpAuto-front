@@ -91,8 +91,10 @@ export interface AiInsightsResponse {
   provider: string;
 }
 
-// Maintenance prediction (future)
+// Maintenance prediction
 export interface AiMaintenancePrediction {
+  carId: string;
+  carLabel: string;
   service: string;
   predictedDate: string;
   confidence: number;
@@ -101,8 +103,8 @@ export interface AiMaintenancePrediction {
 }
 
 export interface AiMaintenancePredictionRequest {
-  carId: string;
-  currentMileage: number;
+  carId?: string;
+  language?: string;
 }
 
 export interface AiMaintenancePredictionResponse {

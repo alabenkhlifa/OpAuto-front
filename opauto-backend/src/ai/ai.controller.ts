@@ -6,6 +6,7 @@ import {
   AiDiagnoseDto,
   AiEstimateDto,
   AiPredictChurnDto,
+  AiPredictMaintenanceDto,
   AiSuggestScheduleDto,
 } from './dto/chat.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -47,5 +48,13 @@ export class AiController {
     @Body() dto: AiPredictChurnDto,
   ) {
     return this.aiService.predictChurn(garageId, dto);
+  }
+
+  @Post('predict-maintenance')
+  predictMaintenance(
+    @CurrentUser('garageId') garageId: string,
+    @Body() dto: AiPredictMaintenanceDto,
+  ) {
+    return this.aiService.predictMaintenance(garageId, dto);
   }
 }

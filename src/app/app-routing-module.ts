@@ -38,6 +38,11 @@ const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'cars/:id',
+    loadComponent: () => import('./features/cars/car-detail/car-detail.component').then(m => m.CarDetailComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'inventory',
     loadComponent: () => import('./features/inventory/inventory.component').then(m => m.InventoryComponent),
     canActivate: [authGuard, ownerGuard, moduleGuard('inventory')]

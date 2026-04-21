@@ -76,8 +76,8 @@
 - [x] AI provider abstraction (frontend `core/services/ai.service.ts` — backend-delegating service with 7 methods)
 - [x] Smart Scheduling — "AI Suggest" on appointment form, backend endpoint, top 3 slots (+ Groq AI, i18n, skill matching)
 - [ ] Analytics Narrator — "Generate Insights" on dashboard, backend endpoint, NL bullet points
-- [ ] Predictive Maintenance — AI section on car detail view, backend endpoint, service timeline
-- [ ] Customer Churn Prediction — identify at-risk customers, backend endpoint, UI display
+- [x] Predictive Maintenance — fleet dashboard card + per-car alerts on /cars/:id, `/ai/predict-maintenance` endpoint with Groq-first reason polish, deterministic scorer across 8 service types
+- [x] Customer Churn Prediction — identify at-risk customers, backend endpoint, UI display
 
 ## Infrastructure Fixes (Session 2026-03-28)
 - [x] Tailwind v4 source scanning — utility classes (w-6, h-6) now generated correctly

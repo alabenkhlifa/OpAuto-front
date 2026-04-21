@@ -204,20 +204,22 @@ describe('AiService', () => {
   describe('predictMaintenance', () => {
     const maintenanceRequest: AiMaintenancePredictionRequest = {
       carId: 'car-123',
-      currentMileage: 50000,
+      language: 'en',
     };
 
     const maintenanceResponse: AiMaintenancePredictionResponse = {
       predictions: [
         {
-          service: 'Oil change',
+          carId: 'car-123',
+          carLabel: 'Peugeot 308 · 123-TUN-4567',
+          service: 'oil-change',
           predictedDate: '2026-05-01',
           confidence: 0.9,
           urgency: 'medium',
           reason: 'Based on mileage interval',
         },
       ],
-      provider: 'openai',
+      provider: 'groq',
     };
 
     it('should call ApiService.post with /ai/predict-maintenance and return the response', (done) => {
@@ -594,7 +596,7 @@ describe('AiService', () => {
       service.estimate({ serviceType: '' }).subscribe(checkDone);
       service.suggestSchedule({ appointmentType: '', estimatedDuration: 0 }).subscribe(checkDone);
       service.generateInsights({ period: 'week' }).subscribe(checkDone);
-      service.predictMaintenance({ carId: '', currentMileage: 0 }).subscribe(checkDone);
+      service.predictMaintenance({}).subscribe(checkDone);
       service.predictChurn({}).subscribe(checkDone);
     });
   });

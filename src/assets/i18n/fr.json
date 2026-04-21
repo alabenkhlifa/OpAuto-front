@@ -344,9 +344,44 @@
       "filters": "Rechercher et filtrer les véhicules par marque, modèle ou statut",
       "add_car": "Enregistrer un nouveau véhicule dans le système",
       "limit_info": "Suivre le nombre de véhicules par rapport aux limites d'abonnement"
+    },
+    "detail": {
+      "back": "Retour aux véhicules",
+      "loading": "Chargement du véhicule…",
+      "notFound": "Véhicule introuvable.",
+      "plate": "Plaque",
+      "owner": "Propriétaire",
+      "mileage": "Kilométrage actuel",
+      "lastService": "Dernier entretien",
+      "historyTitle": "Historique d'entretien",
+      "noHistory": "Aucun entretien terminé pour l'instant."
     }
   },
   "maintenance": {
+    "predictions": {
+      "title": "Rappels d'entretien à venir",
+      "subtitle": "Services prédits par l'IA selon le kilométrage, l'historique et les intervalles standards",
+      "refresh": "Analyser",
+      "loading": "Analyse…",
+      "hint": "Cliquez sur Analyser pour générer des prédictions pour votre flotte.",
+      "none": "Tous les véhicules sont à jour 🚗",
+      "scheduleCta": "Planifier",
+      "urgency": {
+        "low": "OK",
+        "medium": "Bientôt dû",
+        "high": "En retard"
+      },
+      "service": {
+        "oil-change": "Vidange",
+        "brake-service": "Freins",
+        "tire-rotation": "Rotation des pneus",
+        "air-filter": "Filtre à air",
+        "timing-belt": "Courroie de distribution",
+        "coolant-flush": "Vidange du liquide de refroidissement",
+        "transmission-service": "Entretien de la transmission",
+        "general-inspection": "Inspection générale"
+      }
+    },
     "new": {
       "title": "Nouveau travail de maintenance",
       "editTitle": "Modifier le travail",

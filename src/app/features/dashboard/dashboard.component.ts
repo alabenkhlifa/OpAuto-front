@@ -6,6 +6,7 @@ import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { forkJoin, of } from 'rxjs';
 
 import { LanguageToggleComponent } from '../../shared/components/language-toggle/language-toggle.component';
+import { MaintenanceAlertsCardComponent } from '../../shared/components/maintenance-alerts-card/maintenance-alerts-card.component';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { TranslationService } from '../../core/services/translation.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -48,7 +49,7 @@ interface ActiveJob {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, BaseChartDirective, LanguageToggleComponent, TranslatePipe, OnboardingTourComponent, TooltipDirective],
+  imports: [CommonModule, BaseChartDirective, LanguageToggleComponent, MaintenanceAlertsCardComponent, TranslatePipe, OnboardingTourComponent, TooltipDirective],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })

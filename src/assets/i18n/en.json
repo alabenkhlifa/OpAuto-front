@@ -333,9 +333,44 @@
       "filters": "Search and filter vehicles by make, model, or status",
       "add_car": "Register a new vehicle in the system",
       "limit_info": "Track your vehicle count against subscription limits"
+    },
+    "detail": {
+      "back": "Back to cars",
+      "loading": "Loading vehicle…",
+      "notFound": "Vehicle not found.",
+      "plate": "Plate",
+      "owner": "Owner",
+      "mileage": "Current mileage",
+      "lastService": "Last service",
+      "historyTitle": "Service history",
+      "noHistory": "No completed service jobs yet."
     }
   },
   "maintenance": {
+    "predictions": {
+      "title": "Upcoming Service Reminders",
+      "subtitle": "AI-predicted services based on mileage, history, and typical intervals",
+      "refresh": "Check Now",
+      "loading": "Analyzing…",
+      "hint": "Click Check Now to generate predictions for your fleet.",
+      "none": "All cars up to date 🚗",
+      "scheduleCta": "Schedule",
+      "urgency": {
+        "low": "On track",
+        "medium": "Due soon",
+        "high": "Overdue"
+      },
+      "service": {
+        "oil-change": "Oil change",
+        "brake-service": "Brake service",
+        "tire-rotation": "Tire rotation",
+        "air-filter": "Air filter",
+        "timing-belt": "Timing belt",
+        "coolant-flush": "Coolant flush",
+        "transmission-service": "Transmission service",
+        "general-inspection": "General inspection"
+      }
+    },
     "new": {
       "title": "New Maintenance Job",
       "editTitle": "Edit Maintenance Job",

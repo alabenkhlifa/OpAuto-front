@@ -253,12 +253,7 @@ export class CarsComponent implements OnInit {
   }
 
   onViewHistory(car: CarWithHistory): void {
-    this.router.navigate(['/maintenance'], { 
-      queryParams: { 
-        carId: car.id,
-        filter: 'history'
-      }
-    });
+    this.router.navigate(['/cars', car.id]);
   }
 
   openRegistrationForm(): void {

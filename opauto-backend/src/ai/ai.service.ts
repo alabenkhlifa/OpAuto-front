@@ -5,6 +5,7 @@ import {
   AiDiagnoseDto,
   AiEstimateDto,
   AiPredictChurnDto,
+  AiPredictMaintenanceDto,
   AiSuggestScheduleDto,
 } from './dto/chat.dto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -698,6 +699,347 @@ CRITICAL: The "action" field MUST be written ENTIRELY in ${responseLang}.
       },
     };
     return dict[lang]?.[level] || dict['en'][level];
+  }
+
+  // ── Predictive Maintenance ─────────────────────────────────────
+
+  private readonly MAINTENANCE_INTERVALS: Array<{
+    service: string;
+    mileageKm: number;
+    months: number;
+  }> = [
+    { service: 'oil-change', mileageKm: 10000, months: 6 },
+    { service: 'brake-service', mileageKm: 20000, months: 12 },
+    { service: 'tire-rotation', mileageKm: 10000, months: 6 },
+    { service: 'air-filter', mileageKm: 20000, months: 12 },
+    { service: 'timing-belt', mileageKm: 100000, months: 60 },
+    { service: 'coolant-flush', mileageKm: 60000, months: 24 },
+    { service: 'transmission-service', mileageKm: 60000, months: 36 },
+    { service: 'general-inspection', mileageKm: 20000, months: 12 },
+  ];
+
+  // Tunisian-market heuristic when a car has no historical mileage snapshot.
+  private readonly DEFAULT_KM_PER_YEAR = 15000;
+
+  async predictMaintenance(
+    garageId: string,
+    dto: AiPredictMaintenanceDto = {},
+  ): Promise<{
+    predictions: Array<{
+      carId: string;
+      carLabel: string;
+      service: string;
+      predictedDate: string;
+      confidence: number;
+      urgency: 'low' | 'medium' | 'high';
+      reason: string;
+    }>;
+    provider: string;
+  }> {
+    const where: any = { garageId };
+    if (dto.carId) where.id = dto.carId;
+
+    const cars = await this.prisma.car.findMany({
+      where,
+      include: {
+        customer: { select: { firstName: true, lastName: true } },
+        appointments: {
+          where: { status: 'COMPLETED' },
+          select: { startTime: true, type: true, title: true },
+        },
+        maintenanceJobs: {
+          where: { status: 'COMPLETED' },
+          select: { completionDate: true, title: true },
+        },
+      },
+    });
+
+    const now = new Date();
+    const lang = dto.language || 'en';
+
+    const all: Array<{
+      carId: string;
+      carLabel: string;
+      service: string;
+      predictedDate: string;
+      confidence: number;
+      urgency: 'low' | 'medium' | 'high';
+      reason: string;
+      _sortKey: number;
+    }> = [];
+
+    for (const car of cars) {
+      const scored = this.scoreMaintenanceForCar(car, now, lang);
+      for (const s of scored) all.push(s);
+    }
+
+    // Sort by urgency weight desc, then soonest first
+    all.sort((a, b) => b._sortKey - a._sortKey);
+
+    // LLM polish: only for alerts we're actually going to surface (non-low, top 10)
+    const atRisk = all.filter((p) => p.urgency !== 'low').slice(0, 10);
+    let provider: string = atRisk.length === 0 ? 'template' : 'template';
+
+    if (atRisk.length > 0 && (this.groqKey || this.anthropicKey || this.openaiKey || this.geminiKey)) {
+      try {
+        const langMap: Record<string, string> = { en: 'English', fr: 'French', ar: 'Arabic' };
+        const responseLang = langMap[lang] || 'English';
+        const prompt = `You are assisting a garage owner with preventive maintenance. For each vehicle alert below, write ONE short, specific reason (one sentence, max 20 words, in ${responseLang}) explaining why this service is due now.
+
+Alerts:
+${atRisk.map((a, i) => `${i}: ${a.carLabel} | ${a.service} | urgency=${a.urgency} | current context: ${a.reason}`).join('\n')}
+
+Respond ONLY with a JSON array in the same order, no other text.
+CRITICAL: The "reason" field MUST be written ENTIRELY in ${responseLang}.
+[{"index": 0, "reason": "..."}, ...]`;
+
+        const aiResponse = await this.chatForMaintenance({
+          messages: [{ role: 'user', content: prompt }],
+          context: 'maintenance_prediction',
+        });
+        const jsonMatch = aiResponse.message.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          const picks = JSON.parse(jsonMatch[0]) as Array<{ index: number; reason: string }>;
+          for (const p of picks) {
+            if (atRisk[p.index] && typeof p.reason === 'string' && p.reason.trim()) {
+              atRisk[p.index].reason = p.reason.trim();
+            }
+          }
+          provider = aiResponse.provider;
+        }
+      } catch (error) {
+        this.logger.warn('Maintenance LLM reason polish failed, falling back to template', error);
+      }
+    }
+
+    const predictions = all.map(({ _sortKey, ...rest }) => rest);
+    return { predictions, provider };
+  }
+
+  /**
+   * Groq-first chat fallback used by predictMaintenance. The generic `chat()`
+   * method prefers Claude/OpenAI/Gemini first — for maintenance reason polish
+   * we deliberately bias toward Groq's low latency, then fall through.
+   */
+  private async chatForMaintenance(
+    dto: AiChatDto,
+  ): Promise<{ message: string; provider: string }> {
+    if (this.groqKey) return this.chatWithGroq(dto);
+    if (this.anthropicKey) return this.chatWithClaude(dto);
+    if (this.openaiKey) return this.chatWithOpenAI(dto);
+    if (this.geminiKey) return this.chatWithGemini(dto);
+    return this.mockChat(dto);
+  }
+
+  private scoreMaintenanceForCar(
+    car: any,
+    now: Date,
+    language: string,
+  ): Array<{
+    carId: string;
+    carLabel: string;
+    service: string;
+    predictedDate: string;
+    confidence: number;
+    urgency: 'low' | 'medium' | 'high';
+    reason: string;
+    _sortKey: number;
+  }> {
+    const carLabel = this.buildCarLabel(car);
+    const currentMileage = typeof car.mileage === 'number' ? car.mileage : null;
+    const carCreatedMs = new Date(car.createdAt).getTime();
+
+    // Normalize history: index completed jobs by inferred service type.
+    // Appointments have a typed `.type` field; MaintenanceJob has free-text title.
+    const historyByService = new Map<string, number>(); // service → latest completion epoch ms
+    for (const appt of car.appointments || []) {
+      if (!appt.startTime) continue;
+      const type = this.normalizeServiceType(appt.type || appt.title);
+      if (!type) continue;
+      const t = new Date(appt.startTime).getTime();
+      const prev = historyByService.get(type) ?? 0;
+      if (t > prev) historyByService.set(type, t);
+    }
+    for (const job of car.maintenanceJobs || []) {
+      if (!job.completionDate) continue;
+      const type = this.normalizeServiceType(job.title);
+      if (!type) continue;
+      const t = new Date(job.completionDate).getTime();
+      const prev = historyByService.get(type) ?? 0;
+      if (t > prev) historyByService.set(type, t);
+    }
+
+    const out: Array<{
+      carId: string;
+      carLabel: string;
+      service: string;
+      predictedDate: string;
+      confidence: number;
+      urgency: 'low' | 'medium' | 'high';
+      reason: string;
+      _sortKey: number;
+    }> = [];
+    const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+    for (const interval of this.MAINTENANCE_INTERVALS) {
+      const lastMs = historyByService.get(interval.service) ?? null;
+      const baselineMs = lastMs ?? carCreatedMs;
+      const daysSince = Math.max(0, Math.floor((now.getTime() - baselineMs) / MS_PER_DAY));
+      const intervalDays = interval.months * 30;
+
+      // Time-based due date
+      const dueFromTimeMs = baselineMs + intervalDays * MS_PER_DAY;
+
+      // Mileage-based estimate. If we have no historical mileage snapshot,
+      // assume the car has accumulated DEFAULT_KM_PER_YEAR since baseline.
+      let dueFromMileageMs: number | null = null;
+      if (currentMileage !== null) {
+        const yearsSinceBaseline = Math.max(0, (now.getTime() - baselineMs) / (365 * MS_PER_DAY));
+        const mileageAtBaseline = Math.max(
+          0,
+          currentMileage - yearsSinceBaseline * this.DEFAULT_KM_PER_YEAR,
+        );
+        const kmUntilDue = interval.mileageKm - (currentMileage - mileageAtBaseline);
+        const kmPerDay = this.DEFAULT_KM_PER_YEAR / 365;
+        const daysUntilMileageDue = kmUntilDue / kmPerDay;
+        dueFromMileageMs = now.getTime() + daysUntilMileageDue * MS_PER_DAY;
+      }
+
+      // Predicted date = earliest of the two (soonest due wins)
+      const predictedMs =
+        dueFromMileageMs !== null
+          ? Math.min(dueFromTimeMs, dueFromMileageMs)
+          : dueFromTimeMs;
+
+      const daysUntilDue = Math.floor((predictedMs - now.getTime()) / MS_PER_DAY);
+
+      // Urgency bands
+      let urgency: 'low' | 'medium' | 'high';
+      if (daysUntilDue < 0) urgency = 'high';
+      else if (daysUntilDue <= 30) urgency = 'medium';
+      else urgency = 'low';
+
+      // Confidence: 0.85 when real history exists, 0.6 when inferred from mileage only,
+      // 0.45 for greenfield (no history and no mileage).
+      let confidence: number;
+      if (lastMs !== null) confidence = 0.85;
+      else if (currentMileage !== null) confidence = 0.6;
+      else confidence = 0.45;
+
+      // Skip low-urgency items without history AND without mileage: noise.
+      if (urgency === 'low' && lastMs === null && currentMileage === null) continue;
+
+      const reason = this.maintenanceReasonFallback(
+        language,
+        interval.service,
+        daysSince,
+        lastMs !== null,
+        daysUntilDue,
+      );
+
+      const urgencyWeight = urgency === 'high' ? 2 : urgency === 'medium' ? 1 : 0;
+      const sortKey = urgencyWeight * 1_000_000 - daysUntilDue;
+
+      out.push({
+        carId: car.id,
+        carLabel,
+        service: interval.service,
+        predictedDate: new Date(predictedMs).toISOString(),
+        confidence,
+        urgency,
+        reason,
+        _sortKey: sortKey,
+      });
+    }
+
+    return out;
+  }
+
+  private buildCarLabel(car: any): string {
+    const customer = car.customer
+      ? `${car.customer.firstName || ''} ${car.customer.lastName || ''}`.trim()
+      : '';
+    const plate = car.licensePlate || '';
+    const model = `${car.make || ''} ${car.model || ''}`.trim();
+    const parts = [model, plate].filter(Boolean);
+    const head = parts.join(' · ');
+    return customer ? `${head} (${customer})` : head;
+  }
+
+  private normalizeServiceType(input: string | null | undefined): string | null {
+    if (!input) return null;
+    const s = input.toLowerCase();
+    if (s.includes('oil')) return 'oil-change';
+    if (s.includes('brake')) return 'brake-service';
+    if (s.includes('tire') || s.includes('tyre') || s.includes('rotation')) return 'tire-rotation';
+    if (s.includes('air filter') || s.includes('air-filter')) return 'air-filter';
+    if (s.includes('timing belt') || s.includes('timing-belt')) return 'timing-belt';
+    if (s.includes('coolant') || s.includes('radiator')) return 'coolant-flush';
+    if (s.includes('transmission') || s.includes('gearbox')) return 'transmission-service';
+    if (s.includes('inspection') || s.includes('check-up') || s.includes('checkup')) return 'general-inspection';
+    return null;
+  }
+
+  private maintenanceReasonFallback(
+    lang: string,
+    service: string,
+    daysSince: number,
+    hasHistory: boolean,
+    daysUntilDue: number,
+  ): string {
+    const serviceLabel = this.serviceLabel(lang, service);
+    const dict: Record<string, (args: { label: string; days: number; hasHistory: boolean; until: number }) => string> = {
+      en: ({ label, days, hasHistory, until }) =>
+        until < 0
+          ? `${label} is overdue by ${Math.abs(until)} days${hasHistory ? ` (${days} days since last service)` : ''}.`
+          : `${label} is due in ${until} days${hasHistory ? ` (${days} days since last service)` : ' — no prior record'}.`,
+      fr: ({ label, days, hasHistory, until }) =>
+        until < 0
+          ? `${label} en retard de ${Math.abs(until)} jours${hasHistory ? ` (${days} jours depuis le dernier entretien)` : ''}.`
+          : `${label} dû dans ${until} jours${hasHistory ? ` (${days} jours depuis le dernier entretien)` : ' — aucun historique'}.`,
+      ar: ({ label, days, hasHistory, until }) =>
+        until < 0
+          ? `${label} متأخر بـ ${Math.abs(until)} يوم${hasHistory ? ` (${days} يوم منذ آخر صيانة)` : ''}.`
+          : `${label} مستحق خلال ${until} يوم${hasHistory ? ` (${days} يوم منذ آخر صيانة)` : ' — لا يوجد سجل سابق'}.`,
+    };
+    const fn = dict[lang] || dict['en'];
+    return fn({ label: serviceLabel, days: daysSince, hasHistory, until: daysUntilDue });
+  }
+
+  private serviceLabel(lang: string, service: string): string {
+    const labels: Record<string, Record<string, string>> = {
+      en: {
+        'oil-change': 'Oil change',
+        'brake-service': 'Brake service',
+        'tire-rotation': 'Tire rotation',
+        'air-filter': 'Air filter',
+        'timing-belt': 'Timing belt',
+        'coolant-flush': 'Coolant flush',
+        'transmission-service': 'Transmission service',
+        'general-inspection': 'General inspection',
+      },
+      fr: {
+        'oil-change': 'Vidange',
+        'brake-service': 'Freins',
+        'tire-rotation': 'Rotation des pneus',
+        'air-filter': 'Filtre à air',
+        'timing-belt': 'Courroie de distribution',
+        'coolant-flush': 'Vidange du liquide de refroidissement',
+        'transmission-service': 'Entretien de la transmission',
+        'general-inspection': 'Inspection générale',
+      },
+      ar: {
+        'oil-change': 'تغيير الزيت',
+        'brake-service': 'صيانة الفرامل',
+        'tire-rotation': 'تدوير الإطارات',
+        'air-filter': 'فلتر الهواء',
+        'timing-belt': 'سير التوقيت',
+        'coolant-flush': 'غسل سائل التبريد',
+        'transmission-service': 'صيانة ناقل الحركة',
+        'general-inspection': 'فحص عام',
+      },
+    };
+    return labels[lang]?.[service] || labels['en'][service] || service;
   }
 
   private async chatWithClaude(

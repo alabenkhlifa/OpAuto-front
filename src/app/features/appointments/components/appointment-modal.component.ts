@@ -591,6 +591,27 @@ export class AppointmentModalComponent {
     });
   }
 
+  /**
+   * Prefill the form with a car + service type (and optional predicted date)
+   * so the user can confirm or tweak before submitting. Used by the
+   * "Schedule" CTA on predictive-maintenance alerts.
+   */
+  setInitialContext(context: {
+    carId?: string;
+    serviceType?: string;
+    serviceName?: string;
+    scheduledDate?: string;
+  }): void {
+    const patch: Record<string, any> = {};
+    if (context.carId) patch['carId'] = context.carId;
+    if (context.serviceType) patch['serviceType'] = context.serviceType;
+    if (context.serviceName) patch['serviceName'] = context.serviceName;
+    if (context.scheduledDate) patch['scheduledDate'] = context.scheduledDate;
+    if (Object.keys(patch).length > 0) {
+      this.appointmentForm.patchValue(patch);
+    }
+  }
+
   // Method to set appointment for editing
   setEditAppointment(appointment: Appointment): void {
     this.editMode.set(true);

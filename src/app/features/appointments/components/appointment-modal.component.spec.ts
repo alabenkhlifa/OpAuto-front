@@ -585,4 +585,41 @@ describe('AppointmentModalComponent — AI Suggest', () => {
       expect((component as any).editMode()).toBe(false);
     });
   });
+
+  // ---------------------------------------------------------------
+  // setInitialContext — called by the predictive-maintenance card
+  // via a query-param handoff through AppointmentsComponent
+  // ---------------------------------------------------------------
+  describe('setInitialContext', () => {
+    it('prefills carId, serviceType, serviceName, and scheduledDate', () => {
+      fixture.detectChanges();
+      component.setInitialContext({
+        carId: 'car-xyz',
+        serviceType: 'oil-change',
+        serviceName: 'Vidange',
+        scheduledDate: '2026-05-15',
+      });
+
+      expect(component.appointmentForm.get('carId')?.value).toBe('car-xyz');
+      expect(component.appointmentForm.get('serviceType')?.value).toBe('oil-change');
+      expect(component.appointmentForm.get('serviceName')?.value).toBe('Vidange');
+      expect(component.appointmentForm.get('scheduledDate')?.value).toBe('2026-05-15');
+    });
+
+    it('skips fields that are not provided (does not wipe existing values)', () => {
+      fixture.detectChanges();
+      component.appointmentForm.patchValue({ serviceName: 'Existing' });
+      component.setInitialContext({ carId: 'car-xyz' });
+
+      expect(component.appointmentForm.get('carId')?.value).toBe('car-xyz');
+      expect(component.appointmentForm.get('serviceName')?.value).toBe('Existing');
+    });
+
+    it('does not flip the form into edit mode', () => {
+      fixture.detectChanges();
+      component.setInitialContext({ carId: 'car-xyz', serviceType: 'oil-change' });
+
+      expect((component as any).editMode()).toBe(false);
+    });
+  });
 });
