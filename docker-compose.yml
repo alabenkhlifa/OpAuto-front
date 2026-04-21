@@ -38,6 +38,13 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
       NODE_ENV: production
       PORT: 3000
+      # Churn AI executable-actions SMS delivery. Default 'mock' logs to the
+      # Nest logger; set SMS_PROVIDER=twilio and fill the Twilio creds in
+      # /opt/opauto/.env to send real SMS via Twilio.
+      SMS_PROVIDER: ${SMS_PROVIDER:-mock}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER:-}
     volumes:
       # Persist user-uploaded photos across container restarts. The backend
       # writes to /app/uploads (resolved via __dirname + '../../uploads' in
