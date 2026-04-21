@@ -98,3 +98,4 @@ Do NOT ask the user which command to use. Decide based on the request.
 | `docs/TECHNICAL.md` | You're writing new services, components, or tests. Covers coding conventions and dependency rules. |
 | `docs/MVP_PLAN.md` | You need context on a feature's purpose, the module system, or what's in/out of scope. |
 | `docs/MVP_PROGRESS.md` | You're starting or finishing a feature. Check what's done, update when completing work. |
+| `docs/DEPLOYMENT.md` | You need to SSH into the prod VPS, debug a deploy, apply/roll-back a migration, rotate a secret, or recover from an outage. Command-first runbook. |
