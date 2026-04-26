@@ -152,7 +152,11 @@ Phase 5 backend totals: 227 tests across 17 suites passing.
 - [ ] Set env vars on the backend: at least one of `GROQ_API_KEY` / `ANTHROPIC_API_KEY`; for email `RESEND_API_KEY` + `RESEND_FROM` + `EMAIL_PROVIDER=resend` (defaults to mock when unset).
 - [ ] Resolve the parallel pricing-feature work in `src/` (commit or stash) so Phase 3 (frontend chat widget) can launch without conflicts on i18n, sidebar, routing.
 - [ ] After Phase 3 ships, complete Phase 5 frontend hardening: E2E tests via Chrome DevTools MCP, cross-browser voice testing (Chrome/Safari), i18n key sync.
-- [ ] Production scaling: replace in-memory `ThrottlerStorage` with Redis-backed store before scaling to multiple Render instances.
+- [x] Production scaling: inline pattern documented in `opauto-backend/src/app.module.ts` (commit `dce53d7`). Swap to Redis-backed `ThrottlerStorage` is a 30-line config change + one npm install when you scale beyond a single Render instance.
+
+### Session 2026-04-26 — wrap-up
+
+11 commits delivered (`87b41e5` → `dce53d7`). AI Orchestrator backend + frontend are feature-complete and build-green in isolation. The user's pre-existing pricing-feature work is restored in the working tree and unblocks Phase 3 once their 4 conflict files are resolved (`app-routing-module.ts`, `translation.service.ts`, `sidebar.component.ts`, `sidebar.component.html`). Stash kept as `stash@{0}` for safety.
 
 ## Infrastructure Fixes (Session 2026-03-28)
 - [x] Tailwind v4 source scanning — utility classes (w-6, h-6) now generated correctly
