@@ -1,0 +1,57 @@
+/* Mic + speaker visual states layered over the global .btn-icon class. */
+
+.assistant-mic {
+  position: relative;
+  color: #ffffff;
+  transition: color 200ms ease, transform 200ms ease;
+}
+
+.assistant-mic[disabled] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.assistant-mic--listening {
+  color: #ff8400; /* OpAuto orange = active/listening */
+  animation: assistant-mic-pulse 1.4s ease-in-out infinite;
+}
+
+.assistant-mic--listening::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 132, 0, 0.6);
+  animation: assistant-mic-ring 1.4s ease-out infinite;
+  pointer-events: none;
+}
+
+.assistant-mic--unsupported {
+  color: #6b7280; /* gray-500: clearly disabled */
+}
+
+.assistant-speaker {
+  color: #9ca3af; /* gray-400: off */
+  transition: color 200ms ease;
+}
+
+.assistant-speaker--on {
+  color: #8fa0d8; /* OpAuto vista bleu = read-aloud is on */
+}
+
+@keyframes assistant-mic-pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.08); }
+}
+
+@keyframes assistant-mic-ring {
+  0%   { opacity: 0.8; transform: scale(0.9); }
+  100% { opacity: 0;   transform: scale(1.6); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .assistant-mic--listening,
+  .assistant-mic--listening::after {
+    animation: none;
+  }
+}

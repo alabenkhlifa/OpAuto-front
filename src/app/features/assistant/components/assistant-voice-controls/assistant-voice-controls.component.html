@@ -1,0 +1,80 @@
+@if (isSupported()) {
+  <div class="flex items-center gap-1" role="group">
+    <button
+      type="button"
+      class="btn-icon assistant-mic"
+      [class.assistant-mic--listening]="isListening()"
+      [class.assistant-mic--unsupported]="isUnsupported()"
+      [disabled]="disabled() || isUnsupported()"
+      (click)="toggleListening()"
+      [attr.aria-pressed]="isListening()"
+      [attr.aria-label]="
+        (isListening()
+          ? 'assistant.voice.stopListening'
+          : isUnsupported()
+            ? 'assistant.voice.unsupported'
+            : 'assistant.voice.startListening'
+        ) | translate
+      "
+      [title]="
+        (isListening()
+          ? 'assistant.voice.stopListening'
+          : isUnsupported()
+            ? 'assistant.voice.unsupported'
+            : 'assistant.voice.startListening'
+        ) | translate
+      ">
+      @if (isUnsupported()) {
+        <svg style="width:1rem;height:1rem" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 3l18 18" />
+        </svg>
+      } @else {
+        <svg style="width:1rem;height:1rem" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8" />
+        </svg>
+      }
+    </button>
+
+    <button
+      type="button"
+      class="btn-icon assistant-speaker"
+      [class.assistant-speaker--on]="readAloud()"
+      [disabled]="disabled()"
+      (click)="toggleReadAloud()"
+      [attr.aria-pressed]="readAloud()"
+      [attr.aria-label]="
+        (readAloud()
+          ? 'assistant.voice.readAloud.on'
+          : 'assistant.voice.readAloud.off'
+        ) | translate
+      "
+      [title]="
+        (readAloud()
+          ? 'assistant.voice.readAloud.on'
+          : 'assistant.voice.readAloud.off'
+        ) | translate
+      ">
+      @if (readAloud()) {
+        <svg style="width:1rem;height:1rem" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M11 5L6 9H2v6h4l5 4V5z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14" />
+        </svg>
+      } @else {
+        <svg style="width:1rem;height:1rem" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M11 5L6 9H2v6h4l5 4V5z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M23 9l-6 6M17 9l6 6" />
+        </svg>
+      }
+    </button>
+  </div>
+}

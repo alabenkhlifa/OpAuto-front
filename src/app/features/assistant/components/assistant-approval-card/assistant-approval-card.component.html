@@ -1,0 +1,120 @@
+@let p = pendingApproval();
+
+<div
+  class="approval-card glass-card"
+  [class.approval-card--expired]="isExpired()"
+  [class.approval-card--typed]="isTypedConfirm()"
+  role="region"
+  [attr.aria-label]="'assistant.approval.title' | translate"
+>
+  <div class="approval-card__stripe" aria-hidden="true"></div>
+
+  <header class="approval-card__header">
+    <div class="approval-card__title">
+      <span class="approval-card__title-text">
+        {{ 'assistant.approval.title' | translate }}
+      </span>
+    </div>
+
+    <div class="approval-card__header-right">
+      @if (isExpired()) {
+        <span class="badge badge-danger badge-sm approval-card__countdown">
+          {{ 'assistant.approval.expired' | translate }}
+        </span>
+      } @else {
+        <span
+          class="badge badge-pending badge-sm approval-card__countdown"
+          [attr.aria-live]="'polite'"
+        >
+          {{
+            'assistant.approval.expiresIn'
+              | translate: { minutes: minutesPart(), seconds: secondsPart() }
+          }}
+        </span>
+      }
+
+      @if (!settled() && !isExpired()) {
+        <button
+          type="button"
+          class="approval-card__dismiss"
+          (click)="dismiss()"
+          [attr.aria-label]="'assistant.approval.dismiss' | translate"
+        >
+          ×
+        </button>
+      }
+    </div>
+  </header>
+
+  <section class="approval-card__body">
+    <div class="approval-card__tool-row">
+      <code class="approval-card__tool-name">{{ p.toolName }}</code>
+    </div>
+
+    <button
+      type="button"
+      class="approval-card__args-toggle"
+      (click)="toggleArgs()"
+      [attr.aria-expanded]="argsExpanded()"
+    >
+      @if (!argsExpanded()) {
+        <span class="approval-card__args-summary">{{ argsSummary() }}</span>
+        <span class="approval-card__args-toggle-label">
+          {{ 'assistant.approval.expandArgs' | translate }}
+        </span>
+      } @else {
+        <span class="approval-card__args-toggle-label">
+          {{ 'assistant.approval.collapseArgs' | translate }}
+        </span>
+      }
+    </button>
+
+    @if (argsExpanded()) {
+      <pre class="approval-card__args-json">{{ argsPretty() }}</pre>
+    }
+
+    @if (isTypedConfirm()) {
+      <label class="approval-card__typed">
+        <span class="approval-card__typed-label">
+          {{
+            'assistant.approval.typeToConfirm'
+              | translate: { expectedConfirmation: expectedConfirmation() }
+          }}
+        </span>
+        <input
+          type="text"
+          class="approval-card__typed-input"
+          [value]="typedConfirmation()"
+          (input)="onTypedInput($any($event.target).value)"
+          (keydown)="onTypedKeydown($event)"
+          [disabled]="settled() || isExpired()"
+          autocomplete="off"
+          spellcheck="false"
+          [attr.aria-label]="
+            'assistant.approval.typeToConfirm'
+              | translate: { expectedConfirmation: expectedConfirmation() }
+          "
+        />
+      </label>
+    }
+  </section>
+
+  <footer class="approval-card__footer">
+    <button
+      type="button"
+      class="btn-secondary btn-sm approval-card__deny"
+      (click)="deny()"
+      [disabled]="denyDisabled()"
+    >
+      {{ 'assistant.approval.deny' | translate }}
+    </button>
+    <button
+      type="button"
+      class="btn-success btn-sm approval-card__approve"
+      (click)="approve()"
+      [disabled]="approveDisabled()"
+    >
+      {{ 'assistant.approval.approve' | translate }}
+    </button>
+  </footer>
+</div>

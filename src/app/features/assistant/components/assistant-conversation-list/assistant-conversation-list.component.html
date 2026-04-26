@@ -1,0 +1,101 @@
+<section
+  class="assistant-conversation-list"
+  [class.assistant-conversation-list--collapsed]="!accordionExpanded()"
+>
+  <header class="assistant-conversation-list__header">
+    <button
+      type="button"
+      class="assistant-conversation-list__accordion-toggle"
+      (click)="toggleAccordion()"
+      [attr.aria-expanded]="accordionExpanded()"
+      aria-controls="assistant-conversation-list-body"
+    >
+      <span class="assistant-conversation-list__title">
+        {{ 'assistant.conversation.title' | translate }}
+      </span>
+    </button>
+    <button
+      type="button"
+      class="btn-tertiary btn-sm assistant-conversation-list__new-btn"
+      (click)="requestNewConversation()"
+    >
+      <span aria-hidden="true">+</span>
+      <span>{{ 'assistant.conversation.new' | translate }}</span>
+    </button>
+  </header>
+
+  <div
+    id="assistant-conversation-list-body"
+    class="assistant-conversation-list__body"
+    [hidden]="!accordionExpanded()"
+  >
+    @if (isEmpty()) {
+      <div class="assistant-conversation-list__empty text-gray-400 text-sm">
+        {{ 'assistant.conversation.empty' | translate }}
+      </div>
+    } @else {
+      <nav
+        class="assistant-conversation-list__nav"
+        [attr.aria-label]="'assistant.conversation.title' | translate"
+      >
+        <ul role="list" class="assistant-conversation-list__items">
+          @for (conv of sortedConversations(); track trackById($index, conv)) {
+            <li role="listitem" class="assistant-conversation-list__item-wrapper">
+              <button
+                type="button"
+                class="assistant-conversation-list__item"
+                [class.assistant-conversation-list__item--selected]="isSelected(conv)"
+                [attr.aria-current]="isSelected(conv) ? 'true' : null"
+                (click)="selectConversation(conv)"
+              >
+                <span class="assistant-conversation-list__item-title">
+                  {{ titleFor(conv) }}
+                </span>
+                <span class="assistant-conversation-list__item-time text-gray-400 text-xs">
+                  {{ relativeTime(conv.updatedAt) }}
+                </span>
+              </button>
+              <div class="assistant-conversation-list__menu-wrapper">
+                <button
+                  type="button"
+                  class="assistant-conversation-list__menu-btn"
+                  [attr.aria-label]="'assistant.conversation.actionsMenu' | translate"
+                  [attr.aria-haspopup]="'menu'"
+                  [attr.aria-expanded]="openMenuId() === conv.id"
+                  (click)="toggleMenu($event, conv.id)"
+                  (keydown)="onMenuKeydown($event)"
+                >
+                  <span aria-hidden="true">⋮</span>
+                </button>
+                @if (openMenuId() === conv.id) {
+                  <div
+                    role="menu"
+                    class="assistant-conversation-list__menu glass-card"
+                    (keydown)="onMenuKeydown($event)"
+                  >
+                    <button
+                      type="button"
+                      role="menuitem"
+                      class="assistant-conversation-list__menu-item"
+                      (click)="clearConversation($event, conv)"
+                    >
+                      {{ 'assistant.conversation.clear' | translate }}
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      class="assistant-conversation-list__menu-item assistant-conversation-list__menu-item--danger"
+                      (click)="deleteConversation($event, conv)"
+                    >
+                      {{ 'assistant.conversation.delete' | translate }}
+                    </button>
+                  </div>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+      </nav>
+    }
+  </div>
+</section>

@@ -1,0 +1,244 @@
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { NavigationEnd, Router } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { filter, map, startWith } from 'rxjs/operators';
+import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
+import { TranslationService } from '../../../../core/services/translation.service';
+import { LanguageService } from '../../../../core/services/language.service';
+import { AssistantStateService } from '../../services/assistant-state.service';
+import { AssistantChatService } from '../../services/assistant-chat.service';
+import { AssistantContextService } from '../../services/assistant-context.service';
+import { AssistantPanelComponent } from '../assistant-panel/assistant-panel.component';
+import { AssistantConversationListComponent } from '../assistant-conversation-list/assistant-conversation-list.component';
+import { AssistantMessageListComponent } from '../assistant-message-list/assistant-message-list.component';
+import { AssistantApprovalCardComponent } from '../assistant-approval-card/assistant-approval-card.component';
+import { AssistantInputComponent } from '../assistant-input/assistant-input.component';
+import {
+  AssistantApprovalDecision,
+  AssistantConversationSummary,
+  AssistantLocale,
+  AssistantPendingApproval,
+  AssistantSseEvent,
+  AssistantUiMessage,
+} from '../../../../core/models/assistant.model';
+
+const AUTH_ROUTE_PREFIXES = ['/auth', '/login', '/register', '/forgot-password', '/reset-password'];
+
+/**
+ * Floating launcher button + composed panel host.
+ *
+ * Owns the orchestration glue between the five Phase-3 sub-components:
+ * conversation list (Q), message list (N), input + voice (O), approval
+ * card (P), and the panel/state/chat services (M). Translates SSE stream
+ * events into state-service updates so the children stay declarative.
+ */
+@Component({
+  selector: 'app-assistant-launcher',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    CommonModule,
+    TranslatePipe,
+    AssistantPanelComponent,
+    AssistantConversationListComponent,
+    AssistantMessageListComponent,
+    AssistantApprovalCardComponent,
+    AssistantInputComponent,
+  ],
+  templateUrl: './assistant-launcher.component.html',
+  styleUrls: ['./assistant-launcher.component.css'],
+})
+export class AssistantLauncherComponent implements OnInit {
+  state = inject(AssistantStateService);
+  private chat = inject(AssistantChatService);
+  private context = inject(AssistantContextService);
+  private translation = inject(TranslationService);
+  private language = inject(LanguageService);
+  private router = inject(Router);
+
+  readonly conversations = signal<AssistantConversationSummary[]>([]);
+
+  private readonly currentUrl = toSignal(
+    this.router.events.pipe(
+      filter(e => e instanceof NavigationEnd),
+      map((e: NavigationEnd) => e.urlAfterRedirects),
+      startWith(this.router.url),
+    ),
+    { initialValue: this.router.url },
+  );
+
+  readonly visible = computed(() => {
+    const url = this.currentUrl() || '/';
+    if (url === '/' || url === '') return false;
+    return !AUTH_ROUTE_PREFIXES.some(prefix => url.startsWith(prefix));
+  });
+
+  readonly hasPendingApproval = computed(() => this.state.hasPendingApproval());
+  readonly isOpen = computed(() => this.state.isOpen());
+
+  ngOnInit(): void {
+    this.refreshConversations();
+  }
+
+  toggle(): void {
+    this.state.togglePanel();
+    if (this.state.isOpen()) {
+      this.refreshConversations();
+    }
+  }
+
+  // ── Input → send a message ──────────────────────────────────────────────
+  onSubmit(text: string): void {
+    if (!text.trim() || this.state.isStreaming()) return;
+
+    const conversationId = this.state.currentConversationId() ?? undefined;
+    const userMessage: AssistantUiMessage = {
+      id: `local-${Date.now()}`,
+      conversationId: conversationId ?? '',
+      role: 'USER',
+      content: text,
+      createdAt: new Date().toISOString(),
+    };
+    this.state.appendMessage(userMessage);
+    this.state.startStreaming();
+
+    this.chat
+      .sendMessage({
+        conversationId,
+        userMessage: text,
+        locale: this.currentLocale(),
+        pageContext: this.context.current(),
+      })
+      .subscribe({
+        next: (event) => this.handleSseEvent(event),
+        error: () => {
+          this.state.setError(this.translation.instant('assistant.errors.connection'));
+          this.state.stopStreaming();
+        },
+        complete: () => {
+          this.state.stopStreaming();
+          this.refreshConversations();
+        },
+      });
+  }
+
+  // ── Approval card events ─────────────────────────────────────────────────
+  onApprovalDecided(decision: AssistantApprovalDecision): void {
+    const pending = this.state.pendingApproval();
+    if (!pending) return;
+    this.chat.decideApproval(pending.toolCallId, decision).subscribe({
+      next: () => {
+        this.state.clearPendingApproval();
+        if (decision.decision === 'approve') {
+          // Re-enter the orchestrator via the resume sentinel so the LLM gets
+          // the executed tool result and can produce a follow-up reply.
+          this.onSubmit(`__resume__:${pending.toolCallId}`);
+        }
+      },
+      error: () => {
+        this.state.setError(this.translation.instant('assistant.errors.connection'));
+      },
+    });
+  }
+
+  onApprovalDismissed(): void {
+    this.state.clearPendingApproval();
+  }
+
+  // ── Conversation list events ─────────────────────────────────────────────
+  onConvSelect(id: string): void {
+    this.state.setConversationId(id);
+    this.chat.getConversation(id).subscribe({
+      next: (conv) => {
+        const ui: AssistantUiMessage[] = (conv.messages ?? []).map((m) => ({
+          ...m,
+          conversationId: id,
+        }));
+        this.state.setMessages(ui);
+        this.state.setError(null);
+      },
+      error: () => {
+        this.state.setError(this.translation.instant('assistant.errors.connection'));
+      },
+    });
+  }
+
+  onNewConversation(): void {
+    this.state.reset();
+  }
+
+  onConvDelete(id: string): void {
+    this.chat.deleteConversation(id).subscribe(() => {
+      if (this.state.currentConversationId() === id) {
+        this.state.reset();
+      }
+      this.refreshConversations();
+    });
+  }
+
+  onConvClear(id: string): void {
+    this.chat.clearConversation(id).subscribe(() => {
+      if (this.state.currentConversationId() === id) {
+        this.state.setMessages([]);
+      }
+    });
+  }
+
+  onApprovalRequested(_payload: { toolCallId: string }): void {
+    // Already surfaced as a panel-slotted approval card via `pendingApproval`.
+    // No extra work needed; the message renderer's "Review" button is a UX
+    // affordance to focus the existing approval card.
+  }
+
+  // ── Internals ────────────────────────────────────────────────────────────
+  private handleSseEvent(event: AssistantSseEvent): void {
+    switch (event.type) {
+      case 'text':
+        this.state.appendStreamingDelta(event.delta);
+        break;
+      case 'approval_request': {
+        const pending: AssistantPendingApproval = {
+          toolCallId: event.toolCallId,
+          toolName: event.toolName,
+          args: event.args,
+          blastTier: event.blastTier,
+          expiresAt: event.expiresAt,
+          receivedAt: Date.now(),
+        };
+        this.state.setPendingApproval(pending);
+        break;
+      }
+      case 'budget_exceeded':
+        this.state.setError(this.translation.instant('assistant.errors.budgetExceeded'));
+        break;
+      case 'error':
+        this.state.setError(event.message);
+        break;
+      case 'done':
+        this.state.finalizeStreamingMessage(event.messageId);
+        break;
+      // tool_call / tool_result / agent_dispatch / agent_result / skill_loaded
+      // are surfaced via the message stream; for v1 we don't render them as
+      // separate UI events. Future work: enrich the in-flight assistant
+      // message with structured tool/agent receipts.
+      default:
+        break;
+    }
+  }
+
+  private refreshConversations(): void {
+    this.chat.listConversations().subscribe({
+      next: (list) => this.conversations.set(list),
+      error: () => {
+        // Non-critical: leave existing list in place.
+      },
+    });
+  }
+
+  private currentLocale(): AssistantLocale {
+    const lang = this.language.getCurrentLanguage();
+    if (lang === 'fr' || lang === 'ar') return lang;
+    return 'en';
+  }
+}

@@ -1,0 +1,60 @@
+<div class="assistant-input-shell flex flex-col gap-2 p-3 border-t border-white/10 bg-black/20">
+  @if (pendingApproval()) {
+    <p class="text-xs text-gray-400 px-1">
+      {{ 'assistant.input.pendingApprovalHint' | translate }}
+    </p>
+  }
+
+  <div class="flex items-end gap-2">
+    <div class="flex-1 min-w-0">
+      <textarea
+        #textareaRef
+        class="glass-input w-full resize-none leading-snug"
+        [rows]="rows()"
+        [disabled]="isLocked()"
+        [placeholder]="
+          isLocked()
+            ? ('assistant.input.disabled' | translate)
+            : ('assistant.input.placeholder' | translate)
+        "
+        [ngModel]="text()"
+        (ngModelChange)="onInput($event)"
+        (keydown)="onKeyDown($event)"
+        tabindex="0"
+        [attr.aria-label]="'assistant.input.placeholder' | translate">
+      </textarea>
+
+      @if (voiceService.mode() === 'listening' && voiceService.interimTranscript()) {
+        <p class="mt-1 text-xs text-gray-500 italic px-1 truncate">
+          {{ voiceService.interimTranscript() }}
+        </p>
+      }
+
+      @if (voiceService.error()) {
+        <p class="mt-1 text-xs text-red-400 px-1">
+          {{ voiceService.error()! | translate }}
+        </p>
+      }
+    </div>
+
+    <app-assistant-voice-controls
+      [locale]="currentLocale()"
+      [disabled]="isLocked()"
+      tabindex="0">
+    </app-assistant-voice-controls>
+
+    <button
+      type="button"
+      class="btn-primary btn-icon"
+      [disabled]="!canSubmit()"
+      (click)="submit()"
+      tabindex="0"
+      [attr.aria-label]="'assistant.input.send' | translate"
+      [title]="'assistant.input.send' | translate">
+      <svg style="width:1rem;height:1rem;flex-shrink:0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+      </svg>
+    </button>
+  </div>
+</div>

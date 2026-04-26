@@ -1,0 +1,26 @@
+<div class="assistant-message-list">
+  @if (isEmpty()) {
+    <div class="assistant-message-list__empty">
+      <p class="text-gray-400 text-sm text-center">
+        {{ 'assistant.message.emptyHint' | translate }}
+      </p>
+    </div>
+  } @else {
+    @for (m of messages(); track trackById($index, m)) {
+      <app-assistant-message
+        [message]="m"
+        (approvalRequested)="onApprovalRequested($event)"
+      />
+    }
+  }
+
+  @if (showThinking()) {
+    <div class="assistant-message-list__thinking">
+      <span class="badge badge-pending badge-sm">
+        {{ 'assistant.message.thinking' | translate }}
+      </span>
+    </div>
+  }
+
+  <div #scrollAnchor class="assistant-message-list__anchor" aria-hidden="true"></div>
+</div>

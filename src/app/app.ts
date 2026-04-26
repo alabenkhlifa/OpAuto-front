@@ -8,12 +8,13 @@ import { NotificationService } from './core/services/notification.service';
 import { SidebarComponent } from './shared/components/sidebar/sidebar.component';
 import { NotificationBellComponent } from './shared/components/notification-bell/notification-bell.component';
 import { ToastComponent } from './shared/components/toast/toast.component';
+import { AssistantLauncherComponent } from './features/assistant/components/assistant-launcher/assistant-launcher.component';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.html',
   standalone: true,
-  imports: [RouterOutlet, SidebarComponent, NotificationBellComponent, ToastComponent],
+  imports: [RouterOutlet, SidebarComponent, NotificationBellComponent, ToastComponent, AssistantLauncherComponent],
   styleUrl: './app.css'
 })
 export class App implements OnInit {

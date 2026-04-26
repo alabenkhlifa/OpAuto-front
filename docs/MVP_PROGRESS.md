@@ -124,7 +124,15 @@ Phase 2 totals: 28 tools registered with the assistant. Tool registry validates 
 
 Phase 4 totals: full assistant + email suite at **217 tests across 16 suites**, build clean. **Backend is feature-complete:** orchestrator + 28 tools + 4 skills × 3 locales + 3 agents + approval flow + audit + persistence.
 
-**Phase 3 — Frontend chat widget (parallel subagents M–Q, deferred):** waiting for the user's parallel pricing-feature work in `src/` to be committed/stashed before launching, to avoid i18n + sidebar + routing conflicts.
+**Phase 3 — Frontend chat widget (parallel subagents M–Q, committed):**
+- [x] Subagent M — AssistantLauncherComponent (floating button, RTL-aware) + AssistantPanelComponent (slide-in drawer with named ng-content slots) + AssistantStateService (signals, localStorage persistence) + AssistantChatService (SSE via `fetch`+ReadableStream, HTTP for non-streaming endpoints) + AssistantContextService (Router-listening). 37 tests.
+- [x] Subagent N — AssistantMessageListComponent + AssistantMessageComponent (role-aware bubbles, tool-call cards, agent receipts, streaming cursor, markdown-free pre-wrap). 16 tests.
+- [x] Subagent O — AssistantInputComponent (auto-resize textarea, Enter to send) + AssistantVoiceControlsComponent + AssistantVoiceService (Web Speech API, en/fr/ar locale mapping, graceful fallback for Safari/Firefox). 35 tests.
+- [x] Subagent P — AssistantApprovalCardComponent (CONFIRM_WRITE Approve/Deny + TYPED_CONFIRM_WRITE input check, live countdown, expired auto-dismiss). 11 tests.
+- [x] Subagent Q — AssistantConversationListComponent (list, select, delete, clear, relative timestamps, mobile accordion). 12 tests.
+- [x] Integration: launcher template composes all 5 children into the panel slots with full orchestration (SSE → state, approval flow, conversation switching, locale→Web Speech). Mounted globally in `app.html`. 86 keys added across `assets/i18n/{en,fr,ar}.json` under `assistant.*` namespace.
+
+Phase 3 totals: 5 components, 5 services, 111 frontend tests passing, full SSE-streaming chat UI on every authenticated route.
 
 **Phase 5 — Hardening (backend portion committed; frontend portion deferred):**
 - [x] Rate limiting via @nestjs/throttler — two named throttlers (`short` 30/60s keyed by userId, `long` 200/60s keyed by garageId). Custom `AssistantThrottlerGuard` returns structured 429 + Retry-After. **Note:** in-memory storage; for multi-instance deploys, swap in Redis-backed `ThrottlerStorage`.

@@ -1,0 +1,86 @@
+@if (visible()) {
+  <div class="assistant-launcher-root" [class.is-open]="isOpen()">
+    <button
+      type="button"
+      class="assistant-launcher__btn"
+      [class.is-open]="isOpen()"
+      [attr.aria-expanded]="isOpen()"
+      [attr.aria-label]="(isOpen() ? 'assistant.closeButton' : 'assistant.openButton') | translate"
+      (click)="toggle()"
+    >
+      @if (isOpen()) {
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      } @else {
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M12 3l1.6 4.6L18 9l-4.4 1.4L12 15l-1.6-4.6L6 9l4.4-1.4L12 3z"></path>
+          <path d="M19 14l.7 2.3L22 17l-2.3.7L19 20l-.7-2.3L16 17l2.3-.7L19 14z"></path>
+        </svg>
+      }
+
+      @if (hasPendingApproval()) {
+        <span class="assistant-launcher__dot" aria-hidden="true"></span>
+        <span class="sr-only">{{ 'assistant.pendingApproval' | translate }}</span>
+      }
+    </button>
+
+    <app-assistant-panel>
+      <app-assistant-conversation-list
+        data-slot="conversations"
+        [conversations]="conversations()"
+        [currentId]="state.currentConversationId()"
+        (conversationSelected)="onConvSelect($event)"
+        (newConversationRequested)="onNewConversation()"
+        (conversationDeleted)="onConvDelete($event)"
+        (conversationCleared)="onConvClear($event)"
+      />
+
+      <app-assistant-message-list
+        data-slot="messages"
+        [messages]="state.messages()"
+        [isStreaming]="state.isStreaming()"
+        (approvalRequested)="onApprovalRequested($event)"
+      />
+
+      @if (state.pendingApproval(); as pending) {
+        <app-assistant-approval-card
+          data-slot="approval"
+          [pendingApproval]="pending"
+          (decided)="onApprovalDecided($event)"
+          (dismissed)="onApprovalDismissed()"
+        />
+      }
+
+      <app-assistant-input
+        data-slot="input"
+        [disabled]="state.isStreaming()"
+        [pendingApproval]="hasPendingApproval()"
+        (submitted)="onSubmit($event)"
+      />
+    </app-assistant-panel>
+  </div>
+}

@@ -2596,5 +2596,82 @@
     "suggest": "اقتراح ذكي",
     "generateInsights": "إنشاء رؤى",
     "mockMode": "يعمل في وضع العرض التجريبي"
+  },
+  "assistant": {
+    "title": "المساعد",
+    "openButton": "افتح المساعد",
+    "closeButton": "أغلق المساعد",
+    "newConversation": "محادثة جديدة",
+    "streaming": "جارٍ التفكير…",
+    "pendingApproval": "بحاجة إلى موافقتك",
+    "errors": {
+      "connection": "تعذّر الوصول إلى المساعد. حاول مرة أخرى.",
+      "budgetExceeded": "بلغت هذه المحادثة الحدّ الأقصى للرموز. ابدأ محادثة جديدة للمتابعة."
+    },
+    "placeholders": {
+      "empty": "اسأل عن أي شيء يخص ورشتك…"
+    },
+    "message": {
+      "emptyHint": "لا توجد رسائل بعد. اطرح سؤالك.",
+      "thinking": "جارٍ التفكير…",
+      "toolCallStarted": "جارٍ استدعاء {{name}}…",
+      "toolCallExecuted": "{{name}} ({{ms}} م.ث)",
+      "toolCallFailed": "فشل {{name}}",
+      "toolCallPendingApproval": "بانتظار موافقتك",
+      "reviewApproval": "مراجعة",
+      "skillBadge": "مهارة: {{name}}",
+      "agentBadge": "وكيل: {{name}}",
+      "errorTitle": "حدث خطأ",
+      "expand": "توسيع",
+      "collapse": "طي"
+    },
+    "input": {
+      "placeholder": "اسأل عن أي شيء يخص ورشتك…",
+      "send": "إرسال",
+      "disabled": "جارٍ الإرسال…",
+      "pendingApprovalHint": "بانتظار موافقتك قبل المتابعة"
+    },
+    "voice": {
+      "startListening": "بدء الإدخال الصوتي",
+      "stopListening": "إيقاف الاستماع",
+      "unsupported": "الإدخال الصوتي غير مدعوم في هذا المتصفح",
+      "permissionDenied": "تم رفض إذن الميكروفون",
+      "noSpeech": "لم يُكتشف أي كلام",
+      "error": {
+        "unknown": "خطأ في الإدخال الصوتي"
+      },
+      "readAloud": {
+        "on": "قراءة الردود بصوتٍ مسموع",
+        "off": "كتم الصوت"
+      }
+    },
+    "approval": {
+      "title": "بحاجة إلى موافقتك",
+      "expiresIn": "ينتهي خلال {{minutes}}:{{seconds}}",
+      "expired": "انتهت صلاحية هذه الموافقة",
+      "typeToConfirm": "اكتب {{expectedConfirmation}} للتأكيد",
+      "approve": "موافقة",
+      "deny": "رفض",
+      "dismiss": "تجاهل",
+      "expandArgs": "إظهار التفاصيل",
+      "collapseArgs": "إخفاء التفاصيل"
+    },
+    "conversation": {
+      "title": "المحادثات",
+      "new": "+ جديدة",
+      "untitled": "محادثة بدون عنوان",
+      "empty": "لا توجد محادثات سابقة",
+      "actionsMenu": "المزيد من الإجراءات",
+      "delete": "حذف",
+      "clear": "مسح الرسائل",
+      "deleteConfirm": "هل تريد حذف هذه المحادثة؟ لا يمكن التراجع عن هذا الإجراء.",
+      "clearConfirm": "هل تريد مسح جميع رسائل هذه المحادثة؟",
+      "justNow": "الآن",
+      "minutesAgo": "منذ {{count}} د",
+      "hoursAgo": "منذ {{count}} س",
+      "daysAgo": "منذ {{count}} يوم",
+      "yesterday": "أمس",
+      "weeksAgo": "منذ {{count}} أسبوع"
+    }
   }
 }

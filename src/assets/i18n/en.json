@@ -2472,5 +2472,82 @@
     "suggest": "AI Suggest",
     "generateInsights": "Generate Insights",
     "mockMode": "Running in demo mode"
+  },
+  "assistant": {
+    "title": "Assistant",
+    "openButton": "Open assistant",
+    "closeButton": "Close assistant",
+    "newConversation": "New conversation",
+    "streaming": "Thinking…",
+    "pendingApproval": "Approval needed",
+    "errors": {
+      "connection": "Couldn't reach the assistant. Try again.",
+      "budgetExceeded": "This conversation reached its token budget. Start a new one to continue."
+    },
+    "placeholders": {
+      "empty": "Ask anything about your garage…"
+    },
+    "message": {
+      "emptyHint": "No messages yet. Ask anything.",
+      "thinking": "Thinking…",
+      "toolCallStarted": "Calling {{name}}…",
+      "toolCallExecuted": "{{name}} ({{ms}} ms)",
+      "toolCallFailed": "{{name}} failed",
+      "toolCallPendingApproval": "Awaiting your approval",
+      "reviewApproval": "Review",
+      "skillBadge": "Skill: {{name}}",
+      "agentBadge": "Agent: {{name}}",
+      "errorTitle": "Something went wrong",
+      "expand": "Expand",
+      "collapse": "Collapse"
+    },
+    "input": {
+      "placeholder": "Ask anything about your garage…",
+      "send": "Send",
+      "disabled": "Sending…",
+      "pendingApprovalHint": "Waiting for your approval before continuing"
+    },
+    "voice": {
+      "startListening": "Start voice input",
+      "stopListening": "Stop listening",
+      "unsupported": "Voice input not supported in this browser",
+      "permissionDenied": "Microphone permission denied",
+      "noSpeech": "No speech detected",
+      "error": {
+        "unknown": "Voice input error"
+      },
+      "readAloud": {
+        "on": "Read replies aloud",
+        "off": "Mute replies"
+      }
+    },
+    "approval": {
+      "title": "Approval needed",
+      "expiresIn": "Expires in {{minutes}}:{{seconds}}",
+      "expired": "This approval has expired",
+      "typeToConfirm": "Type {{expectedConfirmation}} to confirm",
+      "approve": "Approve",
+      "deny": "Deny",
+      "dismiss": "Dismiss",
+      "expandArgs": "Show details",
+      "collapseArgs": "Hide details"
+    },
+    "conversation": {
+      "title": "Conversations",
+      "new": "+ New",
+      "untitled": "Untitled chat",
+      "empty": "No previous conversations",
+      "actionsMenu": "More actions",
+      "delete": "Delete",
+      "clear": "Clear messages",
+      "deleteConfirm": "Delete this conversation? This can't be undone.",
+      "clearConfirm": "Clear all messages in this conversation?",
+      "justNow": "just now",
+      "minutesAgo": "{{count}} min ago",
+      "hoursAgo": "{{count}} h ago",
+      "daysAgo": "{{count}} d ago",
+      "yesterday": "yesterday",
+      "weeksAgo": "{{count}} w ago"
+    }
   }
 }

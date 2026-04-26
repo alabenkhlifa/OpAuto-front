@@ -1,0 +1,116 @@
+@let m = message();
+
+<div
+  class="assistant-message"
+  [class.assistant-message--user]="isUser()"
+  [class.assistant-message--assistant]="isAssistant()"
+  [class.assistant-message--tool]="isTool()"
+  [class.assistant-message--system]="isSystem()"
+>
+  @switch (role()) {
+    @case ('SYSTEM') {
+      <div class="assistant-message__system">
+        <span class="text-gray-400 italic text-xs">{{ m.content }}</span>
+        @if (m.createdAt) {
+          <span class="text-gray-500 text-xs ml-2">{{ m.createdAt | date: 'shortTime' }}</span>
+        }
+      </div>
+    }
+    @case ('TOOL') {
+      <div [class]="bubbleClasses()">
+        <button
+          type="button"
+          class="assistant-message__tool-toggle"
+          (click)="toggleToolExpand()"
+          [attr.aria-expanded]="toolExpanded()"
+        >
+          <span class="badge badge-pending">{{ m.toolCall?.toolName || 'tool' }}</span>
+          @if (!toolExpanded()) {
+            <code class="assistant-message__tool-preview text-gray-300">{{ toolResultPreview() }}</code>
+            <span class="text-gray-400 text-xs">{{ 'assistant.message.expand' | translate }}</span>
+          } @else {
+            <span class="text-gray-400 text-xs">{{ 'assistant.message.collapse' | translate }}</span>
+          }
+        </button>
+        @if (toolExpanded()) {
+          <pre
+            class="assistant-message__tool-json"
+            tabindex="0"
+            (keydown)="onJsonKeydown($event)"
+          >{{ toolResultPretty() }}</pre>
+        }
+      </div>
+    }
+    @default {
+      <div [class]="bubbleClasses()">
+        @if (isAssistant() && m.skill) {
+          <div class="assistant-message__meta">
+            <span class="badge badge-active badge-sm">
+              {{ 'assistant.message.skillBadge' | translate: { name: m.skill.name } }}
+            </span>
+          </div>
+        }
+
+        @if (m.agent) {
+          <div class="assistant-message__meta">
+            <span class="badge badge-active badge-sm">
+              {{ 'assistant.message.agentBadge' | translate: { name: m.agent.name } }}
+            </span>
+          </div>
+        }
+
+        <div class="assistant-message__content">
+          @if (m.agent?.result) {
+            <span>{{ m.agent?.result }}</span>
+          } @else {
+            <span>{{ m.content }}</span>
+          }
+          @if (m.isStreaming) {
+            <span class="assistant-message__cursor" aria-hidden="true">▍</span>
+          }
+        </div>
+
+        @if (m.toolCall && !m.pendingApproval) {
+          <div class="assistant-message__tool-inline">
+            <span class="badge badge-pending badge-sm">{{ m.toolCall.toolName }}</span>
+            <span class="text-gray-400 text-xs">
+              {{ toolCallStatusKey()! | translate }}
+            </span>
+            @if (m.toolCall.durationMs !== undefined && m.toolCall.durationMs !== null) {
+              <span class="text-gray-500 text-xs">{{ m.toolCall.durationMs }}ms</span>
+            }
+          </div>
+        }
+
+        @if (m.pendingApproval) {
+          <div class="assistant-message__approval glass-card">
+            <div class="text-white font-semibold">
+              {{ 'assistant.message.toolCallPendingApproval' | translate }}:
+              {{ m.pendingApproval.toolName }}
+            </div>
+            <button
+              type="button"
+              class="btn-primary btn-sm"
+              (click)="reviewApproval()"
+            >
+              {{ 'assistant.message.reviewApproval' | translate }}
+            </button>
+          </div>
+        }
+
+        @if (m.error) {
+          <div class="assistant-message__error">
+            <div class="text-white font-semibold text-sm">
+              {{ 'assistant.message.errorTitle' | translate }}
+            </div>
+            <div class="text-gray-300 text-sm">{{ m.error }}</div>
+          </div>
+        }
+
+        <div class="assistant-message__timestamp text-gray-500 text-xs">
+          {{ m.createdAt | date: 'shortTime' }}
+        </div>
+      </div>
+    }
+  }
+</div>

@@ -1,0 +1,32 @@
+/* Custom CSS justified: scrollable conversation pane with sticky-bottom anchor +
+   left-aligned thinking indicator. Existing utilities don't cover this exactly. */
+
+.assistant-message-list {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 0.75rem;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.assistant-message-list__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 2rem 1rem;
+}
+
+.assistant-message-list__thinking {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.assistant-message-list__anchor {
+  height: 1px;
+  width: 100%;
+}
