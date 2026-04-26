@@ -158,6 +158,15 @@ Phase 5 backend totals: 227 tests across 17 suites passing.
 
 11 commits delivered (`87b41e5` → `dce53d7`). AI Orchestrator backend + frontend are feature-complete and build-green in isolation. The user's pre-existing pricing-feature work is restored in the working tree and unblocks Phase 3 once their 4 conflict files are resolved (`app-routing-module.ts`, `translation.service.ts`, `sidebar.component.ts`, `sidebar.component.html`). Stash kept as `stash@{0}` for safety.
 
+### Orchestrator hardening (Session 2026-04-26 evening)
+
+- [x] `send_email` CSV invoice attachment: `attachInvoiceIds` triggers a garage-scoped Prisma fetch and produces a real `invoices.csv` attachment (number, status, customer, total, paid, outstanding, due, created).
+- [x] Pre-approval guard in orchestrator: catches obviously-malformed `send_email` calls (empty body + empty `attachInvoiceIds`) and feeds the error back to the LLM instead of asking the user to deny garbage.
+- [x] Action-chaining rules in system prompt + classifier prompt + tool description so the model fetches data first, then sends.
+- [x] Groq strict-validator workarounds: dropped `format: 'date-time'`/`format: 'email'` and `minLength: 1` on schemas the small llama model couldn't satisfy. Handlers still enforce the constraints.
+- [x] `safeParseArgs` normalises LLM-emitted `null` / primitives / arrays to `{}` so no-arg tools (e.g. `get_customer_count`) don't fail the registry's `type: 'object'` check.
+- [x] E2E verified live: "How many customers do I have?" → classifier picks 1/25 → tool call → "You currently have a total of 18 customers." (no fallback, no 429).
+
 ## Infrastructure Fixes (Session 2026-03-28)
 - [x] Tailwind v4 source scanning — utility classes (w-6, h-6) now generated correctly
 - [x] Mobile hamburger menu visibility — z-index fix + orange accent

@@ -849,7 +849,15 @@ export class OrchestratorService {
   private safeParseArgs(json: string): { value: unknown; error?: undefined } | { value: undefined; error: string } {
     if (!json || json.length === 0) return { value: {} };
     try {
-      return { value: JSON.parse(json) };
+      const parsed = JSON.parse(json);
+      // Llama models occasionally emit `null`, primitive strings, or arrays
+      // instead of an args object when the tool takes no required params.
+      // Normalise to `{}` so ajv's `type: 'object'` doesn't reject what is
+      // semantically a no-arg call.
+      if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        return { value: {} };
+      }
+      return { value: parsed };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       return { value: undefined, error: message };
