@@ -44,14 +44,23 @@ export class IntentClassifierService {
       .map((t) => `- ${t.name}: ${t.description}`)
       .join('\n');
 
-    const systemPrompt = `You are a tool router for a garage management assistant. Given the user's message and a list of tools, pick AT MOST ${MAX_TOOLS} tool names that may help answer the user.
+    const systemPrompt = `You are a tool router for a garage management assistant. Given the user's message and a list of tools, pick AT MOST ${MAX_TOOLS} tool names that the assistant will need to fully answer or fulfill the request.
 
-Strict rules:
-- Output ONLY a JSON array of strings (tool names from the list). Example: ["get_revenue_summary","list_top_customers"]
-- Return [] if the user is just greeting, chatting, asking what you can do, or asking for something no tool can help with.
-- Match by the user's intent in any language (the user message may be in English, French, or Arabic).
+Output rules:
+- Output ONLY a JSON array of strings (tool names from the list). Example: ["get_revenue_summary","send_email"]
 - Tool names must be EXACT matches from the list below. Never invent names.
-- Prefer fewer tools. 1-3 is typical; 5 is the cap.
+- Cap at ${MAX_TOOLS}. 1-3 is typical for read-only Q&A; 2-4 when the user asks to act on data they want fetched.
+
+Picking rules:
+- The user message may be in English, French, or Arabic — match by intent.
+- ALWAYS include the matching ACTION tool when the user uses an imperative verb that maps to one:
+    "send/email/notify" → send_sms or send_email
+    "create/book/schedule" → create_appointment
+    "cancel" → cancel_appointment
+    "record/log a payment" → record_payment
+    "generate/produce/export/get a PDF/report" → generate_invoices_pdf or generate_period_report
+- When the user asks to act on data they want fetched in the same turn (e.g. "email me a revenue summary"), include BOTH the data-read tool AND the action tool.
+- Return [] only when the user is genuinely just greeting, chatting, asking what you can do, or asking for something no tool can help with.
 
 Tools:
 ${list}`;
