@@ -12,6 +12,9 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
 }
 
 /* Vista-bleu stripe at the top — signals "attention required". */
@@ -48,7 +51,7 @@
 }
 
 .approval-card__title-text {
-  color: var(--color-text-primary);
+  color: #111827;
   font-weight: 600;
   font-size: 0.9375rem;
   letter-spacing: -0.01em;
@@ -70,9 +73,9 @@
   width: 1.5rem;
   height: 1.5rem;
   border-radius: 50%;
-  border: 1px solid var(--color-border);
+  border: 1px solid #e5e7eb;
   background: transparent;
-  color: var(--color-text-secondary);
+  color: #6b7280;
   font-size: 1rem;
   line-height: 1;
   cursor: pointer;
@@ -83,8 +86,8 @@
 }
 
 .approval-card__dismiss:hover {
-  background: var(--color-bg-tertiary);
-  color: var(--color-text-primary);
+  background: #f3f4f6;
+  color: #111827;
 }
 
 /* ---------- Body ---------- */
@@ -123,7 +126,7 @@
   padding: 0;
   text-align: start;
   cursor: pointer;
-  color: var(--color-text-secondary);
+  color: #6b7280;
   font-size: 0.8125rem;
   line-height: 1.4;
 }
@@ -154,14 +157,14 @@
 .approval-card__args-json {
   margin: 0;
   padding: 0.625rem 0.75rem;
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border);
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
   font-family:
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
   font-size: 0.75rem;
   line-height: 1.45;
-  color: var(--color-text-primary);
+  color: #111827;
   max-height: 12rem;
   overflow: auto;
   white-space: pre-wrap;
@@ -179,17 +182,17 @@
 
 .approval-card__typed-label {
   font-size: 0.8125rem;
-  color: var(--color-text-secondary);
+  color: #6b7280;
   line-height: 1.4;
 }
 
 .approval-card__typed-input {
   width: 100%;
   padding: 0.5rem 0.75rem;
-  border: 1px solid var(--color-border);
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
-  background: var(--color-bg-secondary);
-  color: var(--color-text-primary);
+  background: #f9fafb;
+  color: #111827;
   font-family:
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
   font-size: 0.875rem;
@@ -215,7 +218,7 @@
   justify-content: flex-end;
   gap: 0.5rem;
   padding: 0.5rem 1rem 0.875rem 1rem;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid #e5e7eb;
   margin-top: 0.25rem;
 }
 

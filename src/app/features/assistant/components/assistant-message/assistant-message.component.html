@@ -10,9 +10,9 @@
   @switch (role()) {
     @case ('SYSTEM') {
       <div class="assistant-message__system">
-        <span class="text-gray-400 italic text-xs">{{ m.content }}</span>
+        <span class="text-gray-500 italic text-xs">{{ m.content }}</span>
         @if (m.createdAt) {
-          <span class="text-gray-500 text-xs ml-2">{{ m.createdAt | date: 'shortTime' }}</span>
+          <span class="text-gray-400 text-xs ml-2">{{ m.createdAt | date: 'shortTime' }}</span>
         }
       </div>
     }
@@ -26,10 +26,10 @@
         >
           <span class="badge badge-pending">{{ m.toolCall?.toolName || 'tool' }}</span>
           @if (!toolExpanded()) {
-            <code class="assistant-message__tool-preview text-gray-300">{{ toolResultPreview() }}</code>
-            <span class="text-gray-400 text-xs">{{ 'assistant.message.expand' | translate }}</span>
+            <code class="assistant-message__tool-preview text-gray-700">{{ toolResultPreview() }}</code>
+            <span class="text-gray-500 text-xs">{{ 'assistant.message.expand' | translate }}</span>
           } @else {
-            <span class="text-gray-400 text-xs">{{ 'assistant.message.collapse' | translate }}</span>
+            <span class="text-gray-500 text-xs">{{ 'assistant.message.collapse' | translate }}</span>
           }
         </button>
         @if (toolExpanded()) {
@@ -73,7 +73,7 @@
         @if (m.toolCall && !m.pendingApproval) {
           <div class="assistant-message__tool-inline">
             <span class="badge badge-pending badge-sm">{{ m.toolCall.toolName }}</span>
-            <span class="text-gray-400 text-xs">
+            <span class="text-gray-600 text-xs">
               {{ toolCallStatusKey()! | translate }}
             </span>
             @if (m.toolCall.durationMs !== undefined && m.toolCall.durationMs !== null) {
@@ -83,8 +83,8 @@
         }
 
         @if (m.pendingApproval) {
-          <div class="assistant-message__approval glass-card">
-            <div class="text-white font-semibold">
+          <div class="assistant-message__approval">
+            <div class="text-gray-900 font-semibold">
               {{ 'assistant.message.toolCallPendingApproval' | translate }}:
               {{ m.pendingApproval.toolName }}
             </div>
@@ -100,14 +100,14 @@
 
         @if (m.error) {
           <div class="assistant-message__error">
-            <div class="text-white font-semibold text-sm">
+            <div class="font-semibold text-sm" style="color: #991b1b">
               {{ 'assistant.message.errorTitle' | translate }}
             </div>
-            <div class="text-gray-300 text-sm">{{ m.error }}</div>
+            <div class="text-sm" style="color: #b91c1c">{{ m.error }}</div>
           </div>
         }
 
-        <div class="assistant-message__timestamp text-gray-500 text-xs">
+        <div class="assistant-message__timestamp">
           {{ m.createdAt | date: 'shortTime' }}
         </div>
       </div>

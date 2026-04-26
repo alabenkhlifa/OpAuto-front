@@ -9,10 +9,11 @@ Read this BEFORE any UI changes. Use ONLY global classes from `/src/styles/`.
 - **Bleu Oxford** (dark/background): `#0B0829`
 
 ## Theme
-- **Permanent dark mode** — no theme switching
-- Glassmorphism: blur + transparency on dark backgrounds
-- Text: `text-white` (headings), `text-gray-300` (labels), `text-gray-400` (meta)
-- NO conditional `dark:` classes, NO `text-gray-900 dark:text-white` patterns
+- **Light theme** — white surfaces (`#ffffff`), light gray accents (`#f9fafb`), single source of truth (no dark mode toggle).
+- Text on light surfaces: `text-gray-900` / `#111827` (headings + body), `text-gray-700` (labels), `text-gray-500` (meta), `text-gray-400` (de-emphasized hints only).
+- Borders: `#e5e7eb` (gray-200) by default; `#FF8400` for focused/active states.
+- Accent surfaces: `#FF8400` background with `#ffffff` text for primary CTAs and selected states; `rgba(255,132,0,0.1)` tint for hover/selected list items.
+- NO conditional `dark:` classes. NO `text-white` on light surfaces — that's invisible. The Bleu Oxford `#0B0829` is reserved for narrow accents (e.g., overlay scrims), not as a default background.
 
 ---
 
@@ -140,11 +141,11 @@ Before ANY UI change, verify:
 - [ ] Cards use `glass-card` (not custom bg classes)
 - [ ] Buttons from global system (not custom classes)
 - [ ] Badges from global system (not component-specific)
-- [ ] Text uses `text-white|gray-300|gray-400` only
+- [ ] Text uses `text-gray-900|700|500|400` (NOT `text-white` on light surfaces)
 - [ ] No conditional `dark:` classes
-- [ ] Forms use `glass-input`, `form-select`, `filter-select`
+- [ ] Forms use the project's actual input classes (verify with grep before assuming `glass-input` exists)
 - [ ] Navigation toggles follow exact pattern above
-- [ ] Icons have proper contrast on dark backgrounds
+- [ ] Icons have proper contrast on light backgrounds (use `currentColor` + `text-gray-700` or accent `text-orange-500`)
 
 ## Verification Process
 After UI changes:

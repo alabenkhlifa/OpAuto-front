@@ -1,42 +1,42 @@
-<div class="assistant-input-shell flex flex-col gap-2 p-3 border-t border-white/10 bg-black/20">
+<div class="assistant-input-shell">
   @if (pendingApproval()) {
-    <p class="text-xs text-gray-400 px-1">
+    <p class="assistant-input__hint">
       {{ 'assistant.input.pendingApprovalHint' | translate }}
     </p>
   }
 
-  <div class="flex items-end gap-2">
-    <div class="flex-1 min-w-0">
-      <textarea
-        #textareaRef
-        class="glass-input w-full resize-none leading-snug"
-        [rows]="rows()"
-        [disabled]="isLocked()"
-        [placeholder]="
-          isLocked()
-            ? ('assistant.input.disabled' | translate)
-            : ('assistant.input.placeholder' | translate)
-        "
-        [ngModel]="text()"
-        (ngModelChange)="onInput($event)"
-        (keydown)="onKeyDown($event)"
-        tabindex="0"
-        [attr.aria-label]="'assistant.input.placeholder' | translate">
-      </textarea>
+  <div class="assistant-input__textarea-row">
+    <textarea
+      #textareaRef
+      class="assistant-input__textarea"
+      [rows]="rows()"
+      [disabled]="isLocked()"
+      [placeholder]="
+        isLocked()
+          ? ('assistant.input.disabled' | translate)
+          : ('assistant.input.placeholder' | translate)
+      "
+      [ngModel]="text()"
+      (ngModelChange)="onInput($event)"
+      (keydown)="onKeyDown($event)"
+      tabindex="0"
+      [attr.aria-label]="'assistant.input.placeholder' | translate">
+    </textarea>
+  </div>
 
-      @if (voiceService.mode() === 'listening' && voiceService.interimTranscript()) {
-        <p class="mt-1 text-xs text-gray-500 italic px-1 truncate">
-          {{ voiceService.interimTranscript() }}
-        </p>
-      }
+  @if (voiceService.mode() === 'listening' && voiceService.interimTranscript()) {
+    <p class="assistant-input__interim">
+      {{ voiceService.interimTranscript() }}
+    </p>
+  }
 
-      @if (voiceService.error()) {
-        <p class="mt-1 text-xs text-red-400 px-1">
-          {{ voiceService.error()! | translate }}
-        </p>
-      }
-    </div>
+  @if (voiceService.error()) {
+    <p class="assistant-input__error">
+      {{ voiceService.error()! | translate }}
+    </p>
+  }
 
+  <div class="assistant-input__actions-row">
     <app-assistant-voice-controls
       [locale]="currentLocale()"
       [disabled]="isLocked()"
@@ -45,16 +45,16 @@
 
     <button
       type="button"
-      class="btn-primary btn-icon"
+      class="assistant-input__send"
       [disabled]="!canSubmit()"
       (click)="submit()"
       tabindex="0"
       [attr.aria-label]="'assistant.input.send' | translate"
       [title]="'assistant.input.send' | translate">
-      <svg style="width:1rem;height:1rem;flex-shrink:0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+      <svg style="width:1rem;height:1rem;flex-shrink:0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path d="M3.105 2.288a.75.75 0 00-.926.94l1.414 4.926A1.5 1.5 0 005.135 9.25h6.115a.75.75 0 010 1.5H5.135a1.5 1.5 0 00-1.442 1.086L2.279 16.762a.75.75 0 00.926.94 28.897 28.897 0 0015.293-7.155.75.75 0 000-1.114A28.897 28.897 0 003.105 2.288z" />
       </svg>
+      <span>{{ 'assistant.input.send' | translate }}</span>
     </button>
   </div>
 </div>

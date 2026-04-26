@@ -1,6 +1,6 @@
 # Smart Garage (OpAuto) — Claude Instructions
 
-Mini-ERP for multi-specialty garages. Angular 15+ frontend + NestJS backend. Dark glassmorphism theme, i18n (en/fr/ar+RTL).
+Mini-ERP for multi-specialty garages. Angular 20+ (standalone components, signals, modern control-flow) + NestJS 10 backend with Prisma/PostgreSQL. Light theme (white surfaces, dark text on `--color-text-primary: #111827`), orange accent (#FF8400), i18n (en/fr/ar+RTL).
 
 ## Current Focus
 New feature development. All MVP batches complete (see `docs/MVP_PROGRESS.md`).

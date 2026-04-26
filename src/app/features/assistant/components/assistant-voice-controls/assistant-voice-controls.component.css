@@ -2,8 +2,21 @@
 
 .assistant-mic {
   position: relative;
-  color: #ffffff;
-  transition: color 200ms ease, transform 200ms ease;
+  color: #6b7280;
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  border-radius: 9999px;
+  width: 2.25rem;
+  height: 2.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 200ms ease, transform 200ms ease, background 200ms ease;
+}
+
+.assistant-mic:hover:not([disabled]) {
+  background: #f3f4f6;
+  color: #111827;
 }
 
 .assistant-mic[disabled] {

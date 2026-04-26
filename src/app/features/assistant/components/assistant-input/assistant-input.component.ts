@@ -37,6 +37,7 @@ import { AssistantVoiceControlsComponent } from '../assistant-voice-controls/ass
   imports: [CommonModule, FormsModule, TranslatePipe, AssistantVoiceControlsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './assistant-input.component.html',
+  styleUrls: ['./assistant-input.component.css'],
 })
 export class AssistantInputComponent implements AfterViewInit {
   private readonly languageService = inject(LanguageService);
@@ -54,8 +55,8 @@ export class AssistantInputComponent implements AfterViewInit {
   /** Local two-way bound text. */
   protected readonly text = signal<string>('');
 
-  /** Current row count for the textarea (1..6). */
-  protected readonly rows = signal<number>(1);
+  /** Current row count for the textarea (2..6 — start at 2 so longer placeholders aren't clipped). */
+  protected readonly rows = signal<number>(2);
 
   protected readonly canSubmit = computed(() => {
     if (this.disabled() || this.pendingApproval()) return false;
@@ -119,7 +120,7 @@ export class AssistantInputComponent implements AfterViewInit {
     if (!value) return;
     this.submitted.emit(value);
     this.text.set('');
-    this.rows.set(1);
+    this.rows.set(2);
     queueMicrotask(() => this.focusTextarea());
   }
 
@@ -130,13 +131,13 @@ export class AssistantInputComponent implements AfterViewInit {
   private adjustRows(): void {
     const value = this.text();
     if (!value) {
-      this.rows.set(1);
+      this.rows.set(2);
       return;
     }
     // Approximate rows from newlines and line wrapping at ~80 chars.
     const newlineRows = value.split('\n').length;
     const wrapRows = Math.ceil(value.length / 80);
-    const computed = Math.min(6, Math.max(1, Math.max(newlineRows, wrapRows)));
+    const computed = Math.min(6, Math.max(2, Math.max(newlineRows, wrapRows)));
     this.rows.set(computed);
   }
 
