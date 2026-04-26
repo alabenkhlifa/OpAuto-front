@@ -36,6 +36,16 @@ function makeEmailService(send: jest.Mock = jest.fn()) {
   };
 }
 
+function makePrisma(
+  findMany: jest.Mock = jest.fn().mockResolvedValue([]),
+) {
+  return {
+    invoice: { findMany },
+  } as unknown as import('../../../prisma/prisma.service').PrismaService & {
+    invoice: { findMany: jest.Mock };
+  };
+}
+
 function makeCustomersService(findOne: jest.Mock = jest.fn()) {
   return {
     findOne,
@@ -206,7 +216,7 @@ describe('communications tools', () => {
       const email = makeEmailService(
         jest.fn().mockResolvedValue({ providerMessageId: 'em_1', status: 'queued' }),
       );
-      const tool = createSendEmailTool({ emailService: email });
+      const tool = createSendEmailTool({ emailService: email, prisma: makePrisma() });
 
       const result = await tool.handler(
         {
@@ -222,13 +232,14 @@ describe('communications tools', () => {
         subject: 'Hi',
         html: undefined,
         text: 'Body',
+        attachments: undefined,
       });
       expect(result).toEqual({ providerMessageId: 'em_1', status: 'queued' });
     });
 
     it('returns missing_body error when neither html nor text is provided', async () => {
       const email = makeEmailService();
-      const tool = createSendEmailTool({ emailService: email });
+      const tool = createSendEmailTool({ emailService: email, prisma: makePrisma() });
 
       const result = await tool.handler(
         { to: 'a@b.com', subject: 'Hi' } as SendEmailArgs,
@@ -242,11 +253,25 @@ describe('communications tools', () => {
       expect(email.send).not.toHaveBeenCalled();
     });
 
-    it('returns attachmentsNotice when attachInvoiceIds is supplied (v1 deferred)', async () => {
+    it('attaches invoices.csv when attachInvoiceIds resolves to garage rows', async () => {
       const email = makeEmailService(
         jest.fn().mockResolvedValue({ providerMessageId: 'em_2', status: 'queued' }),
       );
-      const tool = createSendEmailTool({ emailService: email });
+      const prisma = makePrisma(
+        jest.fn().mockResolvedValue([
+          {
+            id: 'inv-1',
+            invoiceNumber: 'INV-001',
+            status: 'PAID',
+            total: 100,
+            dueDate: null,
+            createdAt: new Date('2026-01-01T00:00:00Z'),
+            customer: { firstName: 'A', lastName: 'B' },
+            payments: [{ amount: 100 }],
+          },
+        ]),
+      );
+      const tool = createSendEmailTool({ emailService: email, prisma });
 
       const result = await tool.handler(
         {
@@ -258,19 +283,35 @@ describe('communications tools', () => {
         ownerCtx,
       );
 
+      expect(prisma.invoice.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            id: { in: ['inv-1'] },
+            garageId: ownerCtx.garageId,
+          }),
+        }),
+      );
+      const sendArg = email.send.mock.calls[0][0];
+      expect(sendArg.attachments).toHaveLength(1);
+      expect(sendArg.attachments[0]).toMatchObject({
+        filename: 'invoices.csv',
+        contentType: 'text/csv',
+      });
       expect(result).toMatchObject({
         providerMessageId: 'em_2',
-        attachmentsNotice: expect.stringMatching(/attachments/i),
+        attachedInvoiceCount: 1,
       });
     });
 
-    it('rejects bad args via JSON Schema (missing to/subject, bad email)', () => {
+    it('rejects bad args via JSON Schema (missing to/subject)', () => {
       const registry = new ToolRegistryService();
-      registry.register(createSendEmailTool({ emailService: makeEmailService() }));
+      registry.register(
+        createSendEmailTool({ emailService: makeEmailService(), prisma: makePrisma() }),
+      );
 
       expect(registry.validateArgs('send_email', {}).valid).toBe(false);
       expect(
-        registry.validateArgs('send_email', { to: 'not-an-email', subject: 'x' }).valid,
+        registry.validateArgs('send_email', { to: 'a@b.com' }).valid,
       ).toBe(false);
       expect(
         registry.validateArgs('send_email', {
