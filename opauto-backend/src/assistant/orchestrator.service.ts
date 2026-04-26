@@ -241,8 +241,17 @@ export class OrchestratorService {
           return;
         }
 
+        // Once a tool has executed, swap the bulky system prompt (skill +
+        // agent descriptors + page context + chaining rules — ~2k tokens)
+        // for a minimal compose-only instruction. The follow-up LLM call
+        // doesn't need to pick tools; it just needs to phrase the answer
+        // around the tool result that's already in the message history.
+        // This is what keeps multi-step turns inside Groq's 6000 TPM.
+        const messagesForCall = toolHasFired
+          ? this.swapSystemPromptForComposeOnly(llmMessages, ctx.locale)
+          : llmMessages;
         const completion = await this.llm.complete({
-          messages: llmMessages,
+          messages: messagesForCall,
           tools: toolHasFired ? undefined : llmTools,
         });
 
@@ -656,15 +665,66 @@ export class OrchestratorService {
     // Classifier failed → keep behavior: send everything (slower but safe).
     if (picked === null) return allRealTools;
 
-    // Empty array means "chitchat — no tools needed". Returning [] here
-    // intentionally suppresses real-tool exposure; the orchestrator still
-    // adds reserved load_skill/dispatch_agent pseudo-tools so the model
-    // can dispatch a skill or agent if the user actually meant something
-    // multi-step.
-    if (picked.length === 0) return [];
+    // Empty array means classifier thinks this is chitchat. The small llama
+    // model is not always reliable here (it occasionally returns [] for
+    // obvious data questions like "do I have any low stock parts?"), so we
+    // run a deterministic keyword safety net. We deliberately pick a NARROW
+    // tool slice (not the full 25-tool registry) — Groq's free tier rejects
+    // requests over 6000 TPM and the full registry alone is ~8000 tokens.
+    if (picked.length === 0) {
+      const fallback = this.keywordFallback(userMessage);
+      if (fallback.length > 0) {
+        const set = new Set(fallback);
+        return allRealTools.filter((t) => set.has(t.name));
+      }
+      return [];
+    }
 
     const pickedSet = new Set(picked);
     return allRealTools.filter((t) => pickedSet.has(t.name));
+  }
+
+  /**
+   * Map common keyword patterns to a small tool slice (≤3 tools). Used as a
+   * safety net when the small classifier model returns []. Kept tight so the
+   * resulting LLM call stays well under Groq's 6000 TPM ceiling.
+   */
+  private keywordFallback(message: string): string[] {
+    const m = message.toLowerCase();
+    const groups: { kws: string[]; tools: string[] }[] = [
+      // inventory
+      { kws: ['stock', 'inventory', 'pièce', 'pieces', 'parts', 'مخزون'], tools: ['list_low_stock_parts', 'get_inventory_value'] },
+      // at-risk / churn
+      { kws: ['churn', 'at-risk', 'at risk', 'risque'], tools: ['list_at_risk_customers'] },
+      // top customers
+      { kws: ['top customer', 'best customer', 'biggest spender'], tools: ['list_top_customers'] },
+      // customer count
+      { kws: ['how many customer', 'customer count', 'new customer'], tools: ['get_customer_count'] },
+      // overdue invoices
+      { kws: ['overdue', 'unpaid', 'late invoice', 'impayé'], tools: ['list_overdue_invoices'] },
+      // invoices generic
+      { kws: ['invoice', 'facture', 'فاتورة'], tools: ['list_invoices'] },
+      // revenue
+      { kws: ['revenue', 'chiffre', 'sales today', 'sales this'], tools: ['get_revenue_summary'] },
+      // dashboard / kpis
+      { kws: ['dashboard', 'kpi', 'overview'], tools: ['get_dashboard_kpis'] },
+      // appointments
+      { kws: ['appointment', 'rendez-vous', 'rdv', 'موعد', 'schedule today', 'schedule for'], tools: ['list_appointments'] },
+      // available slot
+      { kws: ['available slot', 'free slot', 'when can i book'], tools: ['find_available_slot'] },
+      // active jobs
+      { kws: ['active job', 'in progress', "what's being worked"], tools: ['list_active_jobs'] },
+      // maintenance due
+      { kws: ['maintenance due', 'service due', 'needs service'], tools: ['list_maintenance_due'] },
+      // car lookup
+      { kws: ['plate', 'license plate', 'find car', 'find vehicle'], tools: ['find_car'] },
+      // customer lookup
+      { kws: ['find customer', 'search customer', 'look up customer'], tools: ['find_customer'] },
+    ];
+    for (const g of groups) {
+      if (g.kws.some((kw) => m.includes(kw))) return g.tools;
+    }
+    return [];
   }
 
   private buildLlmToolList(
@@ -812,6 +872,37 @@ export class OrchestratorService {
       return { role: 'system', content: h.content };
     }
     return { role: 'user', content: h.content };
+  }
+
+  /**
+   * Replace the verbose first-turn system prompt with a minimal compose-only
+   * one. Used after a tool has fired — the model only needs to answer the
+   * user using the tool results already in the conversation, not pick more
+   * tools. Saves ~2k input tokens per follow-up call which keeps the turn
+   * inside Groq free-tier 6000 TPM.
+   */
+  private swapSystemPromptForComposeOnly(
+    messages: LlmMessage[],
+    locale: AssistantUserContext['locale'],
+  ): LlmMessage[] {
+    const localeName = { en: 'English', fr: 'French', ar: 'Arabic' }[locale];
+    const compose: LlmMessage = {
+      role: 'system',
+      content:
+        `Respond to the user in ${localeName}. The conversation above contains the tool result you need. ` +
+        `Phrase a concise, direct answer using the data; do NOT call another tool. ` +
+        `Currency formatting: "1,234.56 TND" (English) or "1 234,56 DT" (French) — never prefix with a symbol.`,
+    };
+    // Keep all non-system messages; replace the first system message (the
+    // big buildSystemPrompt output) with the compose-only one. Other system
+    // messages (e.g. skill bodies prepended via load_skill) are preserved.
+    const first = messages.findIndex((m) => m.role === 'system');
+    if (first === -1) return [compose, ...messages];
+    return [
+      compose,
+      ...messages.slice(0, first),
+      ...messages.slice(first + 1),
+    ];
   }
 
   /**

@@ -55,11 +55,27 @@ Picking rules:
     "cancel" → cancel_appointment
     "record/log a payment" → record_payment
     "generate/produce/export/get a PDF/report" → generate_invoices_pdf or generate_period_report
+- READ intents — pick the matching read tool:
+    "how many customers / new customers" → get_customer_count
+    "top customers / best customers / biggest spenders" → list_top_customers
+    "at-risk / churn / who hasn't visited / about to leave" → list_at_risk_customers
+    "revenue today/this week/this month/this year/YTD" → get_revenue_summary
+    "dashboard / KPIs / overview" → get_dashboard_kpis
+    "active jobs / what's in progress" → list_active_jobs
+    "appointments today/tomorrow/this week" → list_appointments
+    "find available slot / when can I book" → find_available_slot
+    "invoices / unpaid / overdue invoices" → list_invoices or list_overdue_invoices
+    "low stock / running low / parts low / inventory low" → list_low_stock_parts
+    "inventory value / stock value / parts worth" → get_inventory_value
+    "find car / search by plate / vehicle lookup" → find_car
+    "service history / car details" → get_car
+    "find customer / search customer" → find_customer
+    "maintenance due / cars needing service" → list_maintenance_due
 - When the user asks to act on data they want fetched in the same turn, include BOTH the data-read tool AND the action tool. Examples:
     "email me a revenue summary" → ["get_revenue_summary","send_email"]
     "email me YTD invoices / attach the invoices as CSV / send invoice list" → ["list_invoices","send_email"] (the invoices CSV is built from list_invoices ids, NOT generate_invoices_pdf)
     "send a reminder to overdue customers" → ["list_overdue_invoices","send_sms"]
-- Return [] only when the user is genuinely just greeting, chatting, asking what you can do, or asking for something no tool can help with.
+- Return [] only when the user is genuinely just greeting, chatting, asking what you can do, or asking for something no tool can help with. NEVER return [] for a question that asks about garage data — if uncertain, pick the most plausible read tool from the list.
 
 Tools:
 ${list}`;
