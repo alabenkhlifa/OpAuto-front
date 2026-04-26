@@ -1,5 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { AssistantThrottlerGuard } from './assistant/assistant-throttler.guard';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
@@ -28,9 +32,28 @@ import { CommunicationsToolsModule } from './assistant/tools/communications/comm
 import { ReportsToolsModule } from './assistant/tools/reports/reports-tools.module';
 import { AgentsModule } from './assistant/agents/agents.module';
 
+// Per-throttler trackers: `short` keys on userId, `long` keys on garageId.
+// Both fall back to the request IP for any unauthenticated entry-point so the
+// guard never crashes when CurrentUser is missing (e.g. health checks).
+const userIdTracker = (req: Record<string, any>): string => {
+  const user = req.user;
+  return user?.userId ?? user?.id ?? req.ip ?? 'anon';
+};
+const garageIdTracker = (req: Record<string, any>): string => {
+  const user = req.user;
+  return user?.garageId ?? req.ip ?? 'anon';
+};
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ThrottlerModule.forRoot({
+      throttlers: [
+        { name: 'short', limit: 30, ttl: 60_000, getTracker: userIdTracker },
+        { name: 'long', limit: 200, ttl: 60_000, getTracker: garageIdTracker },
+      ],
+    }),
+    ScheduleModule.forRoot(),
     PrismaModule,
     AuthModule,
     UsersModule,
@@ -58,6 +81,9 @@ import { AgentsModule } from './assistant/agents/agents.module';
     CommunicationsToolsModule,
     ReportsToolsModule,
     AgentsModule,
+  ],
+  providers: [
+    { provide: APP_GUARD, useClass: AssistantThrottlerGuard },
   ],
 })
 export class AppModule {}

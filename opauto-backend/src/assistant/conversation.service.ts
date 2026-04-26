@@ -99,6 +99,24 @@ export class ConversationService {
     return rows.reverse();
   }
 
+  /**
+   * Sum of `tokensIn + tokensOut` across all messages in a conversation.
+   *
+   * Used by the orchestrator to enforce the per-conversation cost cap. Returns
+   * 0 when the conversation has no messages, or when none of the messages have
+   * recorded token counts (older rows from before token persistence shipped,
+   * or mock/test traffic).
+   */
+  async getTotalTokens(conversationId: string): Promise<number> {
+    const agg = await this.prisma.assistantMessage.aggregate({
+      _sum: { tokensIn: true, tokensOut: true },
+      where: { conversationId },
+    });
+    const tokensIn = agg._sum.tokensIn ?? 0;
+    const tokensOut = agg._sum.tokensOut ?? 0;
+    return tokensIn + tokensOut;
+  }
+
   async listForUser(
     garageId: string,
     userId: string,

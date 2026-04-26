@@ -182,6 +182,24 @@ const makePrismaMock = () => {
         }
         return { count: before - messages.size };
       }),
+      aggregate: jest.fn(async ({ where, _sum }: any) => {
+        const rows = [...messages.values()].filter((m) =>
+          matchesMsgWhere(m, where),
+        );
+        const sum: Record<string, number | null> = {};
+        for (const key of Object.keys(_sum ?? {})) {
+          if (!_sum[key]) continue;
+          const total = rows.reduce(
+            (acc, m) => acc + ((m as any)[key] ?? 0),
+            0,
+          );
+          // Mirror Prisma: returns null when there are no rows OR when every
+          // value is null. For the budget guard we rely on the null fall-back.
+          const anyValue = rows.some((m) => (m as any)[key] != null);
+          sum[key] = anyValue ? total : null;
+        }
+        return { _sum: sum };
+      }),
     },
   };
 };
@@ -214,6 +232,7 @@ const seedMessage = (
   role: AssistantMessageRole,
   content: string,
   createdAt: Date,
+  tokens: { in?: number | null; out?: number | null } = {},
 ): MsgRow => {
   const id = `seed-msg-${prisma.messages.size + 1}`;
   const row: MsgRow = {
@@ -224,8 +243,8 @@ const seedMessage = (
     toolCallId: null,
     skillUsed: null,
     agentUsed: null,
-    tokensIn: null,
-    tokensOut: null,
+    tokensIn: tokens.in ?? null,
+    tokensOut: tokens.out ?? null,
     llmProvider: null,
     createdAt,
   };
@@ -515,6 +534,58 @@ describe('ConversationService', () => {
       const title = await service.generateTitleFromFirstMessage(conv.id, summarizer);
 
       expect(title).toBe('Customer growth strategy');
+    });
+  });
+
+  describe('getTotalTokens', () => {
+    it('returns the sum of tokensIn + tokensOut across all messages of the conversation', async () => {
+      const conv = seedConversation(prisma, { id: 'c-tok' });
+      const other = seedConversation(prisma, { id: 'c-other' });
+      seedMessage(prisma, conv.id, AssistantMessageRole.USER, 'q', new Date(), {
+        in: 100,
+        out: 0,
+      });
+      seedMessage(prisma, conv.id, AssistantMessageRole.ASSISTANT, 'a', new Date(), {
+        in: 50,
+        out: 200,
+      });
+      // Other conversation must NOT influence the total.
+      seedMessage(prisma, other.id, AssistantMessageRole.USER, 'q', new Date(), {
+        in: 9999,
+        out: 9999,
+      });
+
+      const total = await service.getTotalTokens(conv.id);
+
+      expect(total).toBe(350);
+      expect(prisma.assistantMessage.aggregate).toHaveBeenCalledWith({
+        _sum: { tokensIn: true, tokensOut: true },
+        where: { conversationId: conv.id },
+      });
+    });
+
+    it('returns 0 when the conversation has no messages', async () => {
+      const conv = seedConversation(prisma, { id: 'empty' });
+      const total = await service.getTotalTokens(conv.id);
+      expect(total).toBe(0);
+    });
+
+    it('returns 0 when messages exist but none recorded token counts', async () => {
+      const conv = seedConversation(prisma, { id: 'untyped' });
+      seedMessage(prisma, conv.id, AssistantMessageRole.USER, 'q', new Date());
+      seedMessage(prisma, conv.id, AssistantMessageRole.ASSISTANT, 'a', new Date());
+      const total = await service.getTotalTokens(conv.id);
+      expect(total).toBe(0);
+    });
+
+    it('treats partial token columns as zero when only one side recorded', async () => {
+      const conv = seedConversation(prisma, { id: 'partial' });
+      // Only tokensIn recorded — tokensOut null. Sum must still resolve.
+      seedMessage(prisma, conv.id, AssistantMessageRole.USER, 'q', new Date(), {
+        in: 42,
+      });
+      const total = await service.getTotalTokens(conv.id);
+      expect(total).toBe(42);
     });
   });
 });

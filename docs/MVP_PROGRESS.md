@@ -124,7 +124,15 @@ Phase 4 totals: full assistant + email suite at **217 tests across 16 suites**, 
 
 **Phase 3 — Frontend chat widget (parallel subagents M–Q, deferred):** waiting for the user's parallel pricing-feature work in `src/` to be committed/stashed before launching, to avoid i18n + sidebar + routing conflicts.
 
-**Phase 5 — Hardening (sequential, pending):** rate limiting, cost cap, e2e via Chrome DevTools MCP, cross-browser voice, i18n key sync.
+**Phase 5 — Hardening (backend portion committed; frontend portion deferred):**
+- [x] Rate limiting via @nestjs/throttler — two named throttlers (`short` 30/60s keyed by userId, `long` 200/60s keyed by garageId). Custom `AssistantThrottlerGuard` returns structured 429 + Retry-After. **Note:** in-memory storage; for multi-instance deploys, swap in Redis-backed `ThrottlerStorage`.
+- [x] Cost cap per conversation — `ConversationService.getTotalTokens` aggregates `tokensIn + tokensOut`; `OrchestratorService` checks `CONVERSATION_TOKEN_BUDGET = 200_000` at start of every iteration; emits `budget_exceeded` SSE + persists SYSTEM message + ends turn.
+- [x] Approval expiry cron via @nestjs/schedule — `ApprovalSchedulerService` runs `@Cron(EVERY_MINUTE)` calling `ApprovalService.expireOverdue`. Errors logged, cron stays alive.
+- [ ] (deferred — needs Phase 3) E2E tests via Chrome DevTools MCP
+- [ ] (deferred — needs Phase 3) Cross-browser voice testing (Chrome, Safari)
+- [ ] (deferred — touches user's pricing-feature i18n files) i18n key sync across en/fr/ar
+
+Phase 5 backend totals: 227 tests across 17 suites passing.
 
 ## Infrastructure Fixes (Session 2026-03-28)
 - [x] Tailwind v4 source scanning — utility classes (w-6, h-6) now generated correctly

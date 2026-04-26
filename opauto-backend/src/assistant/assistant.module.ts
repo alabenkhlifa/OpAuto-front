@@ -10,6 +10,7 @@ import { ToolRegistryService } from './tool-registry.service';
 import { SkillRegistryService } from './skill-registry.service';
 import { AgentRunnerService } from './agent-runner.service';
 import { ApprovalService } from './approval.service';
+import { ApprovalSchedulerService } from './approval-scheduler.service';
 import { ConversationService } from './conversation.service';
 import { AuditService } from './audit.service';
 
@@ -23,6 +24,7 @@ import { AuditService } from './audit.service';
     SkillRegistryService,
     AgentRunnerService,
     ApprovalService,
+    ApprovalSchedulerService,
     ConversationService,
     AuditService,
   ],

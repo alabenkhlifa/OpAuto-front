@@ -53,6 +53,7 @@ interface PrismaMock {
     findMany: jest.Mock;
     findFirst: jest.Mock;
     deleteMany: jest.Mock;
+    aggregate: jest.Mock;
   };
   assistantConversation: {
     findUnique: jest.Mock;
@@ -108,6 +109,9 @@ function createPrismaMock(): {
       }),
       findFirst: jest.fn(async () => null),
       deleteMany: jest.fn(async () => ({ count: 0 })),
+      aggregate: jest.fn(async () => ({
+        _sum: { tokensIn: null, tokensOut: null },
+      })),
     },
     assistantConversation: {
       findUnique: jest.fn(async ({ where }: any) => ({

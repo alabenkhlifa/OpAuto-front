@@ -10,6 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Observable, map } from 'rxjs';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -38,6 +39,12 @@ export class AssistantController {
   ) {}
 
   @Post('chat')
+  // Per-user 30/min (short) and per-garage 200/min (long). Trackers configured
+  // globally in AppModule so each named throttler keys on the right field.
+  @Throttle({
+    short: { limit: 30, ttl: 60_000 },
+    long: { limit: 200, ttl: 60_000 },
+  })
   @Sse()
   async chat(
     @CurrentUser() user: any,

@@ -34,12 +34,13 @@ const makeLlm = (results: LlmCompletionResult[]): LlmGatewayService => {
   } as unknown as LlmGatewayService;
 };
 
-const makeConversation = (history: any[] = []) => ({
+const makeConversation = (history: any[] = [], totalTokens = 0) => ({
   appendMessage: jest.fn().mockImplementation(async (args: any) => ({
     id: `msg-${Math.random().toString(36).slice(2, 8)}`,
     ...args,
   })),
   getRecentHistory: jest.fn().mockResolvedValue(history),
+  getTotalTokens: jest.fn().mockResolvedValue(totalTokens),
   generateTitleFromFirstMessage: jest.fn().mockResolvedValue(null),
 });
 
@@ -541,5 +542,53 @@ describe('OrchestratorService', () => {
       'compute revenue',
       expect.objectContaining({ garageId: 'garage-1' }),
     );
+  });
+
+  it('emits budget_exceeded + done and skips the LLM when the conversation is over budget', async () => {
+    const conversation = makeConversation([], 250_000);
+    const llm = makeLlm([
+      { provider: 'groq', content: 'should never run', toolCalls: [] },
+    ]);
+    const orchestrator = await makeOrchestrator({ conversation, llm });
+
+    const events = await collectEvents(
+      orchestrator.run(ctx, 'conv-1', 'expensive question', undefined),
+    );
+
+    const types = events.map((e) => e.type);
+    expect(types).toContain('budget_exceeded');
+    expect(types).toContain('done');
+    const budget = events.find((e) => e.type === 'budget_exceeded');
+    expect(budget).toMatchObject({
+      message: expect.stringContaining('token budget'),
+    });
+
+    // LLM must NOT be called once the cap is hit.
+    expect(llm.complete).not.toHaveBeenCalled();
+
+    // System message persisted so the user sees a transcript record.
+    const sysMessages = conversation.appendMessage.mock.calls
+      .map((c: any[]) => c[0])
+      .filter((m: any) => m.role === AssistantMessageRole.SYSTEM);
+    expect(sysMessages).toHaveLength(1);
+    expect(sysMessages[0].content).toMatch(/token budget/i);
+  });
+
+  it('runs normally when token usage is below the per-conversation budget', async () => {
+    const conversation = makeConversation([], 199_999);
+    const llm = makeLlm([
+      { provider: 'groq', content: 'fine', toolCalls: [] },
+    ]);
+    const orchestrator = await makeOrchestrator({ conversation, llm });
+
+    const events = await collectEvents(
+      orchestrator.run(ctx, 'conv-1', 'still ok', undefined),
+    );
+
+    expect(events.find((e) => e.type === 'budget_exceeded')).toBeUndefined();
+    expect(llm.complete).toHaveBeenCalledTimes(1);
+    expect(events.find((e) => e.type === 'text')).toMatchObject({
+      delta: 'fine',
+    });
   });
 });

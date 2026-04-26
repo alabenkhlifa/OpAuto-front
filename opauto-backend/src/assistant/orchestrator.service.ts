@@ -26,6 +26,9 @@ const DEFAULT_ITERATION_CAP = 8;
 const TOTAL_TURN_TIMEOUT_MS = 90_000;
 const MAX_TOOL_RESULT_BYTES = 8 * 1024;
 const HISTORY_LIMIT = 20;
+const CONVERSATION_TOKEN_BUDGET = 200_000;
+const BUDGET_EXCEEDED_MESSAGE =
+  'This conversation has reached its token budget. Start a new conversation to continue.';
 
 const RESUME_PREFIX = '__resume__:';
 
@@ -174,6 +177,27 @@ export class OrchestratorService {
 
       // --- Iteration loop. -------------------------------------------------
       for (let step = 0; step < iterationCap; step++) {
+        // Cost cap: stop the conversation cold once the per-conversation
+        // token budget is exhausted. Checked before every LLM call so a
+        // mid-turn over-spend can't keep ratcheting up the bill.
+        const totalTokens = await this.conversation.getTotalTokens(
+          conversationId,
+        );
+        if (totalTokens >= CONVERSATION_TOKEN_BUDGET) {
+          subject.next({
+            type: 'budget_exceeded',
+            message: BUDGET_EXCEEDED_MESSAGE,
+          });
+          await this.conversation.appendMessage({
+            conversationId,
+            role: AssistantMessageRole.SYSTEM,
+            content: BUDGET_EXCEEDED_MESSAGE,
+          });
+          subject.next({ type: 'done' });
+          subject.complete();
+          return;
+        }
+
         if (Date.now() > turnDeadline) {
           await this.persistAssistant(
             conversationId,
