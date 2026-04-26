@@ -47,6 +47,18 @@ const garageIdTracker = (req: Record<string, any>): string => {
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    // Default in-memory ThrottlerStorage is per-instance, so on a multi-
+    // instance deploy each pod gets its own bucket and effective ceilings
+    // are `instances × limit`. To switch to Redis-backed storage when you
+    // scale, install `@nest-lab/throttler-storage-redis` (or equivalent)
+    // and replace this with:
+    //   ThrottlerModule.forRootAsync({
+    //     inject: [ConfigService],
+    //     useFactory: (config) => ({
+    //       throttlers: [...same as below...],
+    //       storage: new ThrottlerStorageRedisService(config.get('REDIS_URL')),
+    //     }),
+    //   })
     ThrottlerModule.forRoot({
       throttlers: [
         { name: 'short', limit: 30, ttl: 60_000, getTracker: userIdTracker },
