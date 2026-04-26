@@ -183,10 +183,6 @@ const routes: Routes = [
     canActivate: [authGuard]
   },
   {
-    path: 'pricing',
-    loadComponent: () => import('./features/pricing/pricing-page.component').then(m => m.PricingPageComponent)
-  },
-  {
     path: 'subscription',
     loadComponent: () => import('./features/subscription/subscription.component').then(m => m.SubscriptionComponent),
     canActivate: [authGuard, ownerGuard]

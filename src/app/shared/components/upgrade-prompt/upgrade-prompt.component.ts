@@ -18,16 +18,6 @@ export interface UpgradePromptConfig {
   showComparison?: boolean;
   showFeatureList?: boolean;
   ctaText?: string;
-  contextData?: {
-    benefits?: string[];
-    testimonial?: {
-      text: string;
-      author: string;
-      business: string;
-    };
-    icon?: string;
-    currentTier?: SubscriptionTierId;
-  };
 }
 
 @Component({
@@ -159,51 +149,6 @@ export interface UpgradePromptConfig {
                 type="button">
                 {{ config.ctaText || 'tiers.upgradeNow' | translate }}
               </button>
-            </div>
-          }
-
-          <!-- Context-Aware Benefits Section -->
-          @if (contextBenefits().length > 0) {
-            <div class="context-benefits-section">
-              <h4 class="benefits-title">
-                {{ 'upgrade.whatsIncluded' | translate }}
-              </h4>
-              <div class="context-benefits-grid">
-                @for (benefit of contextBenefits(); track benefit) {
-                  <div class="context-benefit-item">
-                    <div class="benefit-icon">
-                      <svg viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-green-400">
-                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                      </svg>
-                    </div>
-                    <span class="benefit-text">{{ benefit | translate }}</span>
-                  </div>
-                }
-              </div>
-            </div>
-          }
-
-          <!-- Testimonial Section -->
-          @if (contextTestimonial()) {
-            <div class="testimonial-section">
-              <div class="testimonial-card glass-card">
-                <div class="testimonial-content">
-                  <div class="quote-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8 text-blue-400">
-                      <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h4v10h-10z"/>
-                    </svg>
-                  </div>
-                  <blockquote class="testimonial-text">
-                    "{{ (contextTestimonial()?.text || '') | translate }}"
-                  </blockquote>
-                  <div class="testimonial-author">
-                    <div class="author-info">
-                      <cite class="author-name">{{ contextTestimonial()?.author || '' }}</cite>
-                      <div class="author-business">{{ contextTestimonial()?.business || '' }}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           }
         </div>
@@ -483,159 +428,6 @@ export interface UpgradePromptConfig {
         padding: 1rem;
       }
     }
-
-    /* Context-Aware Benefits Section */
-    .context-benefits-section {
-      margin: 2rem 0;
-      padding: 1.5rem;
-      background: rgba(17, 24, 39, 0.6);
-      border-radius: 12px;
-      border: 1px solid rgba(75, 85, 99, 0.3);
-    }
-
-    .benefits-title {
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: #ffffff;
-      margin-bottom: 1rem;
-      text-align: center;
-    }
-
-    .context-benefits-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 0.75rem;
-    }
-
-    .context-benefit-item {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.5rem 0;
-    }
-
-    .benefit-icon {
-      flex-shrink: 0;
-      width: 1.25rem;
-      height: 1.25rem;
-    }
-
-    .benefit-text {
-      color: #d1d5db;
-      font-size: 0.875rem;
-      line-height: 1.5;
-    }
-
-    /* Testimonial Section */
-    .testimonial-section {
-      margin: 2rem 0;
-    }
-
-    .testimonial-card {
-      background: rgba(17, 24, 39, 0.8);
-      border: 1px solid rgba(75, 85, 99, 0.4);
-      border-radius: 16px;
-      padding: 1.5rem;
-      position: relative;
-    }
-
-    .testimonial-content {
-      text-align: center;
-    }
-
-    .quote-icon {
-      margin: 0 auto 1rem;
-      width: 2rem;
-      height: 2rem;
-      opacity: 0.6;
-    }
-
-    .testimonial-text {
-      font-size: 1rem;
-      color: #e5e7eb;
-      font-style: italic;
-      line-height: 1.6;
-      margin-bottom: 1.5rem;
-      position: relative;
-    }
-
-    .testimonial-author {
-      border-top: 1px solid rgba(75, 85, 99, 0.3);
-      padding-top: 1rem;
-    }
-
-    .author-info {
-      text-align: center;
-    }
-
-    .author-name {
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: #ffffff;
-      font-style: normal;
-      display: block;
-      margin-bottom: 0.25rem;
-    }
-
-    .author-business {
-      font-size: 0.75rem;
-      color: #9ca3af;
-    }
-
-    /* Mobile responsive adjustments */
-    @media (max-width: 640px) {
-      .context-benefits-section,
-      .testimonial-section {
-        margin: 1.5rem 0;
-      }
-
-      .context-benefits-section {
-        padding: 1rem;
-      }
-
-      .testimonial-card {
-        padding: 1rem;
-      }
-
-      .benefits-title {
-        font-size: 1rem;
-      }
-
-      .context-benefit-item {
-        gap: 0.5rem;
-      }
-
-      .benefit-text {
-        font-size: 0.8rem;
-      }
-
-      .testimonial-text {
-        font-size: 0.875rem;
-      }
-    }
-
-    /* High contrast mode support */
-    @media (prefers-contrast: high) {
-      .context-benefits-section,
-      .testimonial-card {
-        border-width: 2px;
-        border-color: #ffffff;
-      }
-
-      .benefit-icon,
-      .quote-icon {
-        color: #ffffff !important;
-      }
-    }
-
-    /* RTL support */
-    [dir="rtl"] .context-benefit-item {
-      flex-direction: row-reverse;
-    }
-
-    [dir="rtl"] .testimonial-content {
-      text-align: right;
-    }
   `]
 })
 export class UpgradePromptComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -650,8 +442,6 @@ export class UpgradePromptComponent implements OnInit, OnDestroy, AfterViewInit 
   loading = signal(false);
   
   targetTier = computed(() => this.config.targetTier);
-  contextBenefits = computed(() => this.config.contextData?.benefits || []);
-  contextTestimonial = computed(() => this.config.contextData?.testimonial);
 
   private focusTrapCleanup?: () => void;
   private escapeKeyHandler?: () => void;
