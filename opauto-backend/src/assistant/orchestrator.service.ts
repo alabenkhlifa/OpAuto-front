@@ -20,6 +20,7 @@ import { SkillRegistryService } from './skill-registry.service';
 import { AgentRunnerService } from './agent-runner.service';
 import { ApprovalService } from './approval.service';
 import { AuditService } from './audit.service';
+import { IntentClassifierService } from './intent-classifier.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 const DEFAULT_ITERATION_CAP = 8;
@@ -76,6 +77,7 @@ export class OrchestratorService {
     private readonly agents: AgentRunnerService,
     private readonly approvals: ApprovalService,
     private readonly audit: AuditService,
+    private readonly classifier: IntentClassifierService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -127,9 +129,22 @@ export class OrchestratorService {
       }
 
       // --- Build tool descriptors visible to this user. --------------------
-      const realTools = this.tools.listForUser(ctx);
+      const allRealTools = this.tools.listForUser(ctx);
       const skillDescriptors = this.skills.list();
       const agentDescriptors = this.agents.list();
+
+      // --- Pre-filter tools via cheap intent classifier so we don't ship
+      // ~25 JSON schemas on every selection call. Saves ~3000 input tokens
+      // per LLM round-trip — keeps us inside Groq's free 8000 TPM. The
+      // classifier may return [] (chitchat — no real tools needed) or null
+      // (failure — fall back to full registry). On resume turns, skip
+      // classification entirely: the user input is a `__resume__:<id>`
+      // sentinel, not a real query, and the orchestrator just needs the
+      // composition LLM call which doesn't pick tools.
+      const realTools = isResume
+        ? allRealTools
+        : await this.filterToolsByIntent(userMessage, ctx.locale, allRealTools);
+
       const llmTools: ToolDescriptor[] = this.buildLlmToolList(
         realTools,
         skillDescriptors,
@@ -585,6 +600,38 @@ export class OrchestratorService {
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────
+
+  private async filterToolsByIntent(
+    userMessage: string,
+    locale: AssistantUserContext['locale'],
+    allRealTools: ToolDescriptor[],
+  ): Promise<ToolDescriptor[]> {
+    if (allRealTools.length === 0) return allRealTools;
+
+    const candidates = allRealTools.map((t) => ({
+      name: t.name,
+      description: t.description,
+    }));
+
+    const picked = await this.classifier.classify({
+      userMessage,
+      locale,
+      candidates,
+    });
+
+    // Classifier failed → keep behavior: send everything (slower but safe).
+    if (picked === null) return allRealTools;
+
+    // Empty array means "chitchat — no tools needed". Returning [] here
+    // intentionally suppresses real-tool exposure; the orchestrator still
+    // adds reserved load_skill/dispatch_agent pseudo-tools so the model
+    // can dispatch a skill or agent if the user actually meant something
+    // multi-step.
+    if (picked.length === 0) return [];
+
+    const pickedSet = new Set(picked);
+    return allRealTools.filter((t) => pickedSet.has(t.name));
+  }
 
   private buildLlmToolList(
     realTools: ToolDescriptor[],

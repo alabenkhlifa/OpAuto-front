@@ -9,6 +9,7 @@ import {
   AssistantToolCallStatus,
 } from '@prisma/client';
 import { OrchestratorService } from './orchestrator.service';
+import { IntentClassifierService } from './intent-classifier.service';
 import { ConversationService } from './conversation.service';
 import { LlmGatewayService } from './llm-gateway.service';
 import { ToolRegistryService } from './tool-registry.service';
@@ -237,6 +238,10 @@ async function buildModule(opts: BuildOpts): Promise<Built> {
       AuditService,
       { provide: LlmGatewayService, useValue: opts.llm },
       { provide: AgentRunnerService, useValue: opts.agents ?? createMockAgentRunner() },
+      // Integration tests pre-determine which tools are visible via
+      // registerTools(); bypass the classifier (return null → fall through to
+      // full registry) so the existing assertions keep working.
+      { provide: IntentClassifierService, useValue: { classify: async () => null } },
       { provide: PrismaService, useValue: prisma },
     ],
   }).compile();

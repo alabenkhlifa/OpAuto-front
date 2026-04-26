@@ -82,6 +82,13 @@ export interface LlmCompletionRequest {
   tools?: ToolDescriptor[];
   temperature?: number;
   maxTokens?: number;
+  /**
+   * Optional Groq model override for this single call. Defaults to the
+   * gateway's primary model when omitted. Useful when a caller has a
+   * cheap/non-reasoning task (e.g. intent classification) that pairs
+   * better with `llama-3.1-8b-instant` than with the heavier primary.
+   */
+  model?: string;
 }
 
 export interface LlmCompletionResult {

@@ -13,6 +13,7 @@ import { ApprovalService } from './approval.service';
 import { ApprovalSchedulerService } from './approval-scheduler.service';
 import { ConversationService } from './conversation.service';
 import { AuditService } from './audit.service';
+import { IntentClassifierService } from './intent-classifier.service';
 
 @Module({
   imports: [PrismaModule, AiModule, SmsModule, EmailModule],
@@ -27,6 +28,7 @@ import { AuditService } from './audit.service';
     ApprovalSchedulerService,
     ConversationService,
     AuditService,
+    IntentClassifierService,
   ],
   exports: [
     OrchestratorService,

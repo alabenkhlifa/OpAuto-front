@@ -170,7 +170,7 @@ export class LlmGatewayService {
   > {
     const startedAt = Date.now();
     const body: Record<string, unknown> = {
-      model: GROQ_MODEL,
+      model: request.model ?? GROQ_MODEL,
       messages: request.messages.map((m) => this.toOpenAiMessage(m)),
       max_tokens: request.maxTokens ?? DEFAULT_MAX_TOKENS,
     };

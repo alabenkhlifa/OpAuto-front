@@ -9,6 +9,7 @@ import { SkillRegistryService } from './skill-registry.service';
 import { AgentRunnerService } from './agent-runner.service';
 import { ApprovalService } from './approval.service';
 import { AuditService } from './audit.service';
+import { IntentClassifierService } from './intent-classifier.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AssistantUserContext, LlmCompletionResult, SseEvent } from './types';
 
@@ -99,6 +100,11 @@ const makePrisma = () => ({
   },
 });
 
+function makeClassifier(picked: string[] | null = null) {
+  // null → "always fall through" so existing tests see the full tool set
+  return { classify: jest.fn(async () => picked) };
+}
+
 async function makeOrchestrator(overrides: {
   llm?: LlmGatewayService;
   conversation?: any;
@@ -107,6 +113,7 @@ async function makeOrchestrator(overrides: {
   agents?: any;
   approvals?: any;
   audit?: any;
+  classifier?: any;
   prisma?: any;
 }) {
   const moduleRef: TestingModule = await Test.createTestingModule({
@@ -119,6 +126,7 @@ async function makeOrchestrator(overrides: {
       { provide: AgentRunnerService, useValue: overrides.agents ?? makeAgents() },
       { provide: ApprovalService, useValue: overrides.approvals ?? makeApprovals() },
       { provide: AuditService, useValue: overrides.audit ?? makeAudit() },
+      { provide: IntentClassifierService, useValue: overrides.classifier ?? makeClassifier() },
       { provide: PrismaService, useValue: overrides.prisma ?? makePrisma() },
     ],
   }).compile();
