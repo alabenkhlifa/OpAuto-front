@@ -177,6 +177,20 @@ export class SidebarComponent implements OnInit, OnDestroy {
       ownerOnly: true
     },
     {
+      id: 'pricing',
+      label: 'Pricing',
+      translationKey: 'navigation.pricing',
+      icon: 'dollar-sign',
+      route: '/pricing'
+    },
+    {
+      id: 'subscription',
+      label: 'Subscription',
+      translationKey: 'navigation.subscription',
+      icon: 'credit-card',
+      route: '/subscription'
+    },
+    {
       id: 'profile',
       label: 'Profile',
       translationKey: 'navigation.profile',

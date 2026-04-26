@@ -1,8 +1,9 @@
-import { Component, OnInit, signal, inject, computed } from '@angular/core';
+import { Component, OnInit, signal, inject, computed, ViewContainerRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+import { UpgradeModalService } from '../../shared/services/upgrade-modal.service';
 import { UserService } from '../../core/services/user.service';
 import { SubscriptionService } from '../../core/services/subscription.service';
 import { 
@@ -263,6 +264,8 @@ export class UsersComponent implements OnInit {
   private userService = inject(UserService);
   private subscriptionService = inject(SubscriptionService);
   private router = inject(Router);
+  private upgradeModalService = inject(UpgradeModalService);
+  private viewContainerRef = inject(ViewContainerRef);
 
   // Signals
   users = signal<User[]>([]);
@@ -298,6 +301,9 @@ export class UsersComponent implements OnInit {
 
   ngOnInit() {
     this.loadData();
+    
+    // Set up modal service view container
+    this.upgradeModalService.setViewContainer(this.viewContainerRef);
   }
 
   private loadData() {
@@ -407,6 +413,23 @@ export class UsersComponent implements OnInit {
   }
 
   showUpgradePrompt() {
+    // Option 1: Use context-aware modal service (new approach)
+    this.upgradeModalService.showUpgradePrompt('user_limit').subscribe({
+      next: (result) => {
+        if (result.action === 'upgrade' && result.tier) {
+          this.handleUpgrade(result.tier);
+        }
+      },
+      error: (error) => {
+        console.error('Error showing context-aware upgrade modal:', error);
+        // Fallback to legacy modal
+        this.showLegacyUpgradePrompt();
+      }
+    });
+  }
+
+  // Legacy upgrade prompt (fallback)
+  showLegacyUpgradePrompt() {
     this.subscriptionService.getTierComparison().subscribe({
       next: (comparison) => {
         if (comparison.recommendedTierId) {

@@ -9,7 +9,8 @@ import {
   signal,
   inject,
   ViewChild,
-  ElementRef
+  ElementRef,
+  ViewContainerRef
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -23,6 +24,7 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
 import { FeatureLockComponent } from '../feature-lock/feature-lock.component';
 import { UpgradePromptComponent } from '../upgrade-prompt/upgrade-prompt.component';
 import { PhotoGalleryComponent } from '../photo-gallery/photo-gallery.component';
+import { UpgradeModalService } from '../../services/upgrade-modal.service';
 
 export interface PhotoUploadEvent {
   photos: MaintenancePhoto[];
@@ -787,6 +789,8 @@ export class PhotoUploadComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private subscriptionService = inject(SubscriptionService);
   private photoService = inject(PhotoService);
+  private upgradeModalService = inject(UpgradeModalService);
+  private viewContainerRef = inject(ViewContainerRef);
   private destroy$ = new Subject<void>();
 
   // Reactive state
@@ -836,12 +840,18 @@ export class PhotoUploadComponent implements OnInit, OnDestroy {
     this.initializeForm();
     this.photos.set([...this.initialPhotos]);
     this.loadPhotos();
+    
+    // Set up modal service view container
+    this.upgradeModalService.setViewContainer(this.viewContainerRef);
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
     this.clearSelectedFiles();
+    
+    // Clean up modal service
+    this.upgradeModalService.closeModal();
   }
 
   private initializeForm(): void {
@@ -988,17 +998,35 @@ export class PhotoUploadComponent implements OnInit, OnDestroy {
   }
 
   showUpgradeModal(): void {
-    this.showUpgradePrompt.set(true);
+    // Use context-aware modal service for photo upload
+    this.upgradeModalService.showUpgradePrompt('photo_upload')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (result) => {
+          if (result.action === 'upgrade' && result.tier) {
+            this.onUpgradeAction({ tier: result.tier, feature: result.feature });
+          }
+        },
+        error: (error) => {
+          console.error('Error showing upgrade modal:', error);
+          // Fallback to simple prompt
+          this.showUpgradePrompt.set(true);
+        }
+      });
   }
 
   hideUpgradeModal(): void {
+    this.upgradeModalService.closeModal();
     this.showUpgradePrompt.set(false);
   }
 
   onUpgradeAction(event: { tier: string; feature?: string }): void {
     // In real app, this would initiate the upgrade process
-    console.log('Upgrade initiated for tier:', event.tier);
+    console.log('Upgrade initiated for tier:', event.tier, 'feature:', event.feature);
     this.hideUpgradeModal();
+    
+    // Here you would typically navigate to upgrade page or trigger upgrade flow
+    // Example: this.router.navigate(['/upgrade', event.tier]);
   }
 
   // Utility methods

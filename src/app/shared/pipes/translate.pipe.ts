@@ -25,7 +25,13 @@ export class TranslatePipe implements PipeTransform, OnDestroy {
 
     // Get the translation directly from the service
     const translation = this.translationService.instant(key, params);
-    this.lastValue = translation;
+    
+    // If translation changed, mark for check
+    if (translation !== this.lastValue) {
+      this.lastValue = translation;
+      this.cdr.markForCheck();
+    }
+    
     return translation;
   }
 
