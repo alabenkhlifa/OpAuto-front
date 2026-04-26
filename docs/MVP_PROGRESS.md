@@ -136,6 +136,16 @@ Phase 4 totals: full assistant + email suite at **217 tests across 16 suites**, 
 
 Phase 5 backend totals: 227 tests across 17 suites passing.
 
+---
+
+### Open before next AI Orchestrator session
+
+- [ ] Run `cd opauto-backend && npm run prisma:migrate` once Postgres is reachable (creates `assistant_conversations`, `assistant_messages`, `assistant_tool_calls`).
+- [ ] Set env vars on the backend: at least one of `GROQ_API_KEY` / `ANTHROPIC_API_KEY`; for email `RESEND_API_KEY` + `RESEND_FROM` + `EMAIL_PROVIDER=resend` (defaults to mock when unset).
+- [ ] Resolve the parallel pricing-feature work in `src/` (commit or stash) so Phase 3 (frontend chat widget) can launch without conflicts on i18n, sidebar, routing.
+- [ ] After Phase 3 ships, complete Phase 5 frontend hardening: E2E tests via Chrome DevTools MCP, cross-browser voice testing (Chrome/Safari), i18n key sync.
+- [ ] Production scaling: replace in-memory `ThrottlerStorage` with Redis-backed store before scaling to multiple Render instances.
+
 ## Infrastructure Fixes (Session 2026-03-28)
 - [x] Tailwind v4 source scanning — utility classes (w-6, h-6) now generated correctly
 - [x] Mobile hamburger menu visibility — z-index fix + orange accent
