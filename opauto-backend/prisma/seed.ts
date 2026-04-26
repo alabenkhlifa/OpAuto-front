@@ -1,12 +1,305 @@
-import { PrismaClient, UserRole, AppointmentStatus, CustomerStatus, EmployeeRole, EmployeeDepartment, EmployeeStatus, MaintenanceStatus, ApprovalStatus, ApprovalType, InvoiceStatus, PaymentMethod, NotificationType } from '@prisma/client';
+import {
+  PrismaClient,
+  UserRole,
+  AppointmentStatus,
+  CustomerStatus,
+  EmployeeRole,
+  EmployeeDepartment,
+  EmployeeStatus,
+  MaintenanceStatus,
+  InvoiceStatus,
+  PaymentMethod,
+  NotificationType,
+  AiActionKind,
+  AiActionStatus,
+  DiscountKind,
+} from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
-async function main() {
-  console.log('Seeding OpAuto database...');
+// ───────────────────────────────────────────────────────────────────────────
+// Deterministic RNG so consecutive seeds produce identical data
+// ───────────────────────────────────────────────────────────────────────────
+function mulberry32(seed: number) {
+  return function () {
+    seed |= 0;
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const rand = mulberry32(20260427);
+const randInt = (min: number, max: number) => Math.floor(rand() * (max - min + 1)) + min;
+const randFloat = (min: number, max: number) => rand() * (max - min) + min;
+const pick = <T>(arr: readonly T[]): T => arr[Math.floor(rand() * arr.length)];
+const pickN = <T>(arr: readonly T[], n: number): T[] => {
+  const copy = [...arr];
+  const out: T[] = [];
+  for (let i = 0; i < n && copy.length; i++) out.push(copy.splice(Math.floor(rand() * copy.length), 1)[0]);
+  return out;
+};
+const chance = (p: number) => rand() < p;
 
-  // Clean existing data
+// ───────────────────────────────────────────────────────────────────────────
+// Calendar
+// ───────────────────────────────────────────────────────────────────────────
+const TODAY = new Date('2026-04-27T12:00:00Z');
+const YEAR_START = new Date('2026-01-01T08:00:00Z');
+const YEAR_END = new Date('2026-12-31T18:00:00Z');
+
+const addDays = (d: Date, n: number) => new Date(d.getTime() + n * 86400000);
+const isWorkingDay = (d: Date) => d.getUTCDay() !== 0; // Sunday closed
+const setHM = (d: Date, h: number, m = 0) => {
+  const x = new Date(d);
+  x.setUTCHours(h, m, 0, 0);
+  return x;
+};
+const fmt = (d: Date) => d.toISOString().slice(0, 10);
+const monthsBetween = (a: Date, b: Date) =>
+  (b.getUTCFullYear() - a.getUTCFullYear()) * 12 + b.getUTCMonth() - a.getUTCMonth();
+
+// ───────────────────────────────────────────────────────────────────────────
+// Static catalogs
+// ───────────────────────────────────────────────────────────────────────────
+const CAR_FLEET = [
+  { make: 'Renault',    models: ['Clio','Megane','Symbol','Captur','Kadjar'] },
+  { make: 'Peugeot',    models: ['208','308','3008','Partner','2008'] },
+  { make: 'Volkswagen', models: ['Polo','Golf','Passat','Tiguan','T-Cross'] },
+  { make: 'Hyundai',    models: ['i10','i20','i30','Tucson','Kona'] },
+  { make: 'Kia',        models: ['Picanto','Rio','Sportage','Cerato'] },
+  { make: 'Dacia',      models: ['Sandero','Logan','Duster','Lodgy'] },
+  { make: 'Citroen',    models: ['C3','C4','Berlingo','C-Elysee'] },
+  { make: 'Fiat',       models: ['500','Tipo','Doblo','Panda'] },
+  { make: 'Toyota',     models: ['Yaris','Corolla','RAV4','Hilux'] },
+  { make: 'Ford',       models: ['Fiesta','Focus','Kuga','Ranger'] },
+  { make: 'Skoda',      models: ['Fabia','Octavia','Karoq'] },
+  { make: 'Seat',       models: ['Ibiza','Leon','Arona'] },
+] as const;
+
+const COLORS = ['White','Black','Silver','Gray','Red','Blue','Green','Beige'] as const;
+const ENGINES = ['petrol','diesel','hybrid'] as const;
+const TRANSMISSIONS = ['manual','automatic'] as const;
+
+const TUNISIAN_FIRSTS_M = ['Mohamed','Ahmed','Ali','Omar','Karim','Sami','Hatem','Mehdi','Walid','Skander','Nizar','Tarek','Yassine','Bilel','Hichem','Anis','Slim','Aymen','Khaled','Marwen','Riadh','Naoufel'];
+const TUNISIAN_FIRSTS_F = ['Fatma','Leila','Yasmine','Amira','Rim','Nadia','Ines','Sana','Hela','Asma','Sonia','Salma','Khaoula','Wafa','Donia','Houda','Mouna','Nesrine','Maha','Olfa'];
+const TUNISIAN_LASTS = ['Ben Ali','Ben Salah','Ben Mansour','Trabelsi','Mahmoud','Sassi','Gharbi','Khelifi','Bouzid','Jebali','Mrad','Zouari','Ferchichi','Belhaj','Mansouri','Chaabane','Hamdi','Ben Khlifa','Hamrouni','Ayadi','Ben Younes','Karoui','Bouazizi','Saidi','Romdhani','Hassine','Ben Ammar'];
+const TUNISIAN_CITIES = ['Tunis','La Marsa','Carthage','Sidi Bou Said','Ariana','Manouba','Ben Arous','Sousse','Hammamet','Nabeul','Bizerte','Sfax','Monastir','Mahdia','Kairouan','Gabes','Gafsa','Djerba','Kasserine','Beja'];
+
+// Service templates: each consumes a labor item + zero or more parts (matched by category/name)
+type ServiceTemplate = {
+  type: string;
+  title: string;
+  laborHours: [number, number];
+  laborRate: number; // TND per hour
+  partsNeeded: { category: string; namePrefix?: string; qty?: number }[];
+  priorityWeights: { low: number; medium: number; high: number };
+};
+const SERVICES: ServiceTemplate[] = [
+  { type: 'oil-change',          title: 'Oil & Filter Change',       laborHours: [0.75, 1.25], laborRate: 40, partsNeeded: [{ category: 'Filters', namePrefix: 'Oil Filter' }, { category: 'Fluids', namePrefix: 'Engine Oil' }],                          priorityWeights: { low: 60, medium: 35, high: 5 } },
+  { type: 'oil-change',          title: 'Major Service (oil + filters + plugs)', laborHours: [2.5, 3.5], laborRate: 40, partsNeeded: [{ category: 'Filters', namePrefix: 'Oil Filter' }, { category: 'Filters', namePrefix: 'Air Filter' }, { category: 'Filters', namePrefix: 'Cabin' }, { category: 'Fluids', namePrefix: 'Engine Oil' }, { category: 'Ignition', qty: 4 }],                          priorityWeights: { low: 10, medium: 60, high: 30 } },
+  { type: 'brake-service',       title: 'Front Brake Pads',           laborHours: [1.5, 2.5], laborRate: 45, partsNeeded: [{ category: 'Brakes', namePrefix: 'Brake Pads - Front' }],                                          priorityWeights: { low: 5, medium: 50, high: 45 } },
+  { type: 'brake-service',       title: 'Rear Brake Pads',            laborHours: [1.5, 2.5], laborRate: 45, partsNeeded: [{ category: 'Brakes', namePrefix: 'Brake Pads - Rear' }],                                           priorityWeights: { low: 5, medium: 50, high: 45 } },
+  { type: 'brake-service',       title: 'Front Brake Discs + Pads',   laborHours: [3, 4],     laborRate: 45, partsNeeded: [{ category: 'Brakes', namePrefix: 'Brake Pads - Front' }, { category: 'Brakes', namePrefix: 'Brake Disc' }], priorityWeights: { low: 0, medium: 30, high: 70 } },
+  { type: 'brake-service',       title: 'Brake Fluid Flush',          laborHours: [1, 1.5],   laborRate: 40, partsNeeded: [{ category: 'Fluids', namePrefix: 'Brake Fluid' }],                                                  priorityWeights: { low: 30, medium: 60, high: 10 } },
+  { type: 'tire-replacement',    title: 'Set of 4 New Tires',         laborHours: [1.5, 2],   laborRate: 30, partsNeeded: [{ category: 'Tires', qty: 4 }],                                                                       priorityWeights: { low: 30, medium: 60, high: 10 } },
+  { type: 'tire-replacement',    title: 'Wheel Alignment + Balance',  laborHours: [1, 1.5],   laborRate: 30, partsNeeded: [],                                                                                                    priorityWeights: { low: 50, medium: 45, high: 5 } },
+  { type: 'tire-replacement',    title: 'Tire Rotation',              laborHours: [0.5, 1],   laborRate: 25, partsNeeded: [],                                                                                                    priorityWeights: { low: 70, medium: 28, high: 2 } },
+  { type: 'electrical',          title: 'Battery Replacement',        laborHours: [0.5, 1],   laborRate: 35, partsNeeded: [{ category: 'Electrical', namePrefix: 'Battery' }],                                                  priorityWeights: { low: 10, medium: 60, high: 30 } },
+  { type: 'electrical',          title: 'Alternator Replacement',     laborHours: [3, 4],     laborRate: 45, partsNeeded: [{ category: 'Electrical', namePrefix: 'Alternator' }],                                               priorityWeights: { low: 0, medium: 30, high: 70 } },
+  { type: 'electrical',          title: 'AC Service & Recharge',      laborHours: [1, 2],     laborRate: 45, partsNeeded: [{ category: 'Fluids', namePrefix: 'AC Refrigerant' }],                                               priorityWeights: { low: 40, medium: 50, high: 10 } },
+  { type: 'engine-diagnostics',  title: 'ECU Diagnostics',            laborHours: [1, 2],     laborRate: 50, partsNeeded: [],                                                                                                    priorityWeights: { low: 20, medium: 60, high: 20 } },
+  { type: 'engine-diagnostics',  title: 'Spark Plug Replacement',     laborHours: [1, 1.5],   laborRate: 40, partsNeeded: [{ category: 'Ignition', qty: 4 }],                                                                    priorityWeights: { low: 30, medium: 60, high: 10 } },
+  { type: 'engine-diagnostics',  title: 'Timing Belt Replacement',    laborHours: [4, 6],     laborRate: 50, partsNeeded: [{ category: 'Belts', namePrefix: 'Timing Belt' }],                                                    priorityWeights: { low: 0, medium: 30, high: 70 } },
+  { type: 'transmission',        title: 'Transmission Fluid Service', laborHours: [1.5, 2.5], laborRate: 45, partsNeeded: [{ category: 'Fluids', namePrefix: 'Transmission Fluid' }],                                            priorityWeights: { low: 20, medium: 60, high: 20 } },
+  { type: 'transmission',        title: 'Clutch Replacement',         laborHours: [5, 7],     laborRate: 50, partsNeeded: [{ category: 'Transmission', namePrefix: 'Clutch' }],                                                  priorityWeights: { low: 0, medium: 20, high: 80 } },
+  { type: 'bodywork',            title: 'Dent & Paint Repair',        laborHours: [4, 8],     laborRate: 40, partsNeeded: [{ category: 'Bodywork', namePrefix: 'Paint' }],                                                       priorityWeights: { low: 50, medium: 40, high: 10 } },
+  { type: 'bodywork',            title: 'Bumper Repair',              laborHours: [3, 5],     laborRate: 40, partsNeeded: [{ category: 'Bodywork', namePrefix: 'Paint' }],                                                       priorityWeights: { low: 30, medium: 50, high: 20 } },
+  { type: 'bodywork',            title: 'Windshield Wipers',          laborHours: [0.25, 0.5], laborRate: 25, partsNeeded: [{ category: 'Accessories', namePrefix: 'Wiper' }],                                                   priorityWeights: { low: 80, medium: 18, high: 2 } },
+  { type: 'inspection',          title: 'Annual Inspection',          laborHours: [0.75, 1.25], laborRate: 35, partsNeeded: [],                                                                                                  priorityWeights: { low: 60, medium: 35, high: 5 } },
+];
+
+// Parts catalog: must include every category referenced above.
+type PartSpec = {
+  name: string;
+  partNumber: string;
+  category: string;
+  unitPrice: number;
+  costPrice: number;
+  initialQty: number;
+  minQuantity: number;
+};
+
+function buildPartsCatalog(): PartSpec[] {
+  const list: PartSpec[] = [];
+  // Filters
+  list.push({ name: 'Oil Filter - Universal',         partNumber: 'OF-UNI-001',  category: 'Filters', unitPrice: 18,  costPrice: 9,   initialQty: 80, minQuantity: 20 });
+  list.push({ name: 'Oil Filter - Renault',           partNumber: 'OF-REN-002',  category: 'Filters', unitPrice: 22,  costPrice: 11,  initialQty: 50, minQuantity: 15 });
+  list.push({ name: 'Oil Filter - Peugeot/Citroen',   partNumber: 'OF-PSA-003',  category: 'Filters', unitPrice: 21,  costPrice: 10,  initialQty: 50, minQuantity: 15 });
+  list.push({ name: 'Oil Filter - VW Group',          partNumber: 'OF-VAG-004',  category: 'Filters', unitPrice: 24,  costPrice: 12,  initialQty: 45, minQuantity: 15 });
+  list.push({ name: 'Oil Filter - Asian (HMC/Kia)',   partNumber: 'OF-HMC-005',  category: 'Filters', unitPrice: 20,  costPrice: 10,  initialQty: 40, minQuantity: 12 });
+  list.push({ name: 'Air Filter - Universal',         partNumber: 'AF-UNI-001',  category: 'Filters', unitPrice: 28,  costPrice: 14,  initialQty: 40, minQuantity: 12 });
+  list.push({ name: 'Air Filter - Renault',           partNumber: 'AF-REN-002',  category: 'Filters', unitPrice: 32,  costPrice: 16,  initialQty: 30, minQuantity: 10 });
+  list.push({ name: 'Air Filter - Peugeot',           partNumber: 'AF-PEU-003',  category: 'Filters', unitPrice: 30,  costPrice: 15,  initialQty: 30, minQuantity: 10 });
+  list.push({ name: 'Cabin Air Filter - Universal',   partNumber: 'CAF-UNI-001', category: 'Filters', unitPrice: 22,  costPrice: 11,  initialQty: 35, minQuantity: 10 });
+  list.push({ name: 'Cabin Air Filter - Carbon',      partNumber: 'CAF-C-002',   category: 'Filters', unitPrice: 30,  costPrice: 15,  initialQty: 20, minQuantity: 8  });
+  list.push({ name: 'Fuel Filter - Diesel',           partNumber: 'FF-DSL-001',  category: 'Filters', unitPrice: 38,  costPrice: 20,  initialQty: 25, minQuantity: 8  });
+  list.push({ name: 'Fuel Filter - Petrol',           partNumber: 'FF-PTR-002',  category: 'Filters', unitPrice: 30,  costPrice: 16,  initialQty: 25, minQuantity: 8  });
+
+  // Brakes
+  list.push({ name: 'Brake Pads - Front (Renault)',   partNumber: 'BP-F-REN',    category: 'Brakes',  unitPrice: 55,  costPrice: 30,  initialQty: 30, minQuantity: 10 });
+  list.push({ name: 'Brake Pads - Front (Peugeot)',   partNumber: 'BP-F-PEU',    category: 'Brakes',  unitPrice: 58,  costPrice: 32,  initialQty: 30, minQuantity: 10 });
+  list.push({ name: 'Brake Pads - Front (VW)',        partNumber: 'BP-F-VW',     category: 'Brakes',  unitPrice: 65,  costPrice: 36,  initialQty: 25, minQuantity: 8  });
+  list.push({ name: 'Brake Pads - Front (Hyundai/Kia)', partNumber: 'BP-F-HMC',  category: 'Brakes',  unitPrice: 52,  costPrice: 28,  initialQty: 25, minQuantity: 8  });
+  list.push({ name: 'Brake Pads - Front (Universal)', partNumber: 'BP-F-UNI',    category: 'Brakes',  unitPrice: 48,  costPrice: 26,  initialQty: 30, minQuantity: 10 });
+  list.push({ name: 'Brake Pads - Rear (Renault)',    partNumber: 'BP-R-REN',    category: 'Brakes',  unitPrice: 48,  costPrice: 26,  initialQty: 25, minQuantity: 8  });
+  list.push({ name: 'Brake Pads - Rear (Peugeot)',    partNumber: 'BP-R-PEU',    category: 'Brakes',  unitPrice: 50,  costPrice: 27,  initialQty: 25, minQuantity: 8  });
+  list.push({ name: 'Brake Pads - Rear (VW)',         partNumber: 'BP-R-VW',     category: 'Brakes',  unitPrice: 56,  costPrice: 30,  initialQty: 20, minQuantity: 6  });
+  list.push({ name: 'Brake Pads - Rear (Universal)',  partNumber: 'BP-R-UNI',    category: 'Brakes',  unitPrice: 42,  costPrice: 22,  initialQty: 25, minQuantity: 8  });
+  list.push({ name: 'Brake Disc - Front (small)',     partNumber: 'BD-F-S',      category: 'Brakes',  unitPrice: 95,  costPrice: 55,  initialQty: 18, minQuantity: 6  });
+  list.push({ name: 'Brake Disc - Front (medium)',    partNumber: 'BD-F-M',      category: 'Brakes',  unitPrice: 110, costPrice: 65,  initialQty: 16, minQuantity: 6  });
+  list.push({ name: 'Brake Disc - Front (large)',     partNumber: 'BD-F-L',      category: 'Brakes',  unitPrice: 135, costPrice: 80,  initialQty: 12, minQuantity: 4  });
+  list.push({ name: 'Brake Disc - Rear (medium)',     partNumber: 'BD-R-M',      category: 'Brakes',  unitPrice: 105, costPrice: 60,  initialQty: 12, minQuantity: 4  });
+
+  // Fluids
+  list.push({ name: 'Engine Oil 5W-30 (5L)',          partNumber: 'EO-5W30-5L',  category: 'Fluids',  unitPrice: 65,  costPrice: 38,  initialQty: 50, minQuantity: 18 });
+  list.push({ name: 'Engine Oil 5W-40 (5L)',          partNumber: 'EO-5W40-5L',  category: 'Fluids',  unitPrice: 60,  costPrice: 35,  initialQty: 50, minQuantity: 18 });
+  list.push({ name: 'Engine Oil 10W-40 (5L)',         partNumber: 'EO-10W40-5L', category: 'Fluids',  unitPrice: 52,  costPrice: 30,  initialQty: 35, minQuantity: 12 });
+  list.push({ name: 'Engine Oil 0W-20 Hybrid (5L)',   partNumber: 'EO-0W20-5L',  category: 'Fluids',  unitPrice: 80,  costPrice: 48,  initialQty: 18, minQuantity: 6  });
+  list.push({ name: 'Transmission Fluid ATF (1L)',    partNumber: 'TF-ATF-1L',   category: 'Fluids',  unitPrice: 25,  costPrice: 13,  initialQty: 35, minQuantity: 10 });
+  list.push({ name: 'Transmission Fluid CVT (1L)',    partNumber: 'TF-CVT-1L',   category: 'Fluids',  unitPrice: 32,  costPrice: 17,  initialQty: 20, minQuantity: 6  });
+  list.push({ name: 'Coolant Pre-mixed (5L)',         partNumber: 'CL-PM-5L',    category: 'Fluids',  unitPrice: 22,  costPrice: 11,  initialQty: 35, minQuantity: 10 });
+  list.push({ name: 'Brake Fluid DOT 4 (1L)',         partNumber: 'BF-DOT4-1L',  category: 'Fluids',  unitPrice: 18,  costPrice: 9,   initialQty: 30, minQuantity: 10 });
+  list.push({ name: 'AC Refrigerant R134a (kg)',      partNumber: 'AC-R134-KG',  category: 'Fluids',  unitPrice: 45,  costPrice: 25,  initialQty: 18, minQuantity: 5  });
+  list.push({ name: 'Power Steering Fluid (1L)',      partNumber: 'PS-1L',       category: 'Fluids',  unitPrice: 20,  costPrice: 10,  initialQty: 25, minQuantity: 8  });
+
+  // Ignition
+  list.push({ name: 'Spark Plug NGK Iridium',         partNumber: 'SP-NGK-IR',   category: 'Ignition', unitPrice: 18, costPrice: 9,   initialQty: 120, minQuantity: 40 });
+  list.push({ name: 'Spark Plug Bosch Platinum',      partNumber: 'SP-BOSCH-PT', category: 'Ignition', unitPrice: 16, costPrice: 8,   initialQty: 100, minQuantity: 32 });
+  list.push({ name: 'Spark Plug Standard',            partNumber: 'SP-STD',      category: 'Ignition', unitPrice: 9,  costPrice: 4,   initialQty: 80,  minQuantity: 25 });
+  list.push({ name: 'Ignition Coil Pack',             partNumber: 'IC-PACK',     category: 'Ignition', unitPrice: 95, costPrice: 55,  initialQty: 14, minQuantity: 4  });
+
+  // Electrical
+  list.push({ name: 'Battery 12V 60Ah',               partNumber: 'BAT-60AH',    category: 'Electrical', unitPrice: 145, costPrice: 90,  initialQty: 18, minQuantity: 6 });
+  list.push({ name: 'Battery 12V 70Ah',               partNumber: 'BAT-70AH',    category: 'Electrical', unitPrice: 175, costPrice: 110, initialQty: 14, minQuantity: 5 });
+  list.push({ name: 'Battery 12V 80Ah',               partNumber: 'BAT-80AH',    category: 'Electrical', unitPrice: 210, costPrice: 130, initialQty: 10, minQuantity: 4 });
+  list.push({ name: 'Battery 12V 100Ah AGM',          partNumber: 'BAT-100AGM',  category: 'Electrical', unitPrice: 320, costPrice: 200, initialQty: 6,  minQuantity: 2 });
+  list.push({ name: 'Alternator (small)',             partNumber: 'ALT-S',       category: 'Electrical', unitPrice: 380, costPrice: 230, initialQty: 6,  minQuantity: 2 });
+  list.push({ name: 'Alternator (medium)',            partNumber: 'ALT-M',       category: 'Electrical', unitPrice: 440, costPrice: 270, initialQty: 5,  minQuantity: 2 });
+  list.push({ name: 'Starter Motor',                  partNumber: 'STR-MTR',     category: 'Electrical', unitPrice: 320, costPrice: 195, initialQty: 5,  minQuantity: 2 });
+  list.push({ name: 'Headlight Bulb H4',              partNumber: 'HL-H4',       category: 'Electrical', unitPrice: 14,  costPrice: 6,   initialQty: 50, minQuantity: 15 });
+  list.push({ name: 'Headlight Bulb H7',              partNumber: 'HL-H7',       category: 'Electrical', unitPrice: 16,  costPrice: 7,   initialQty: 45, minQuantity: 15 });
+
+  // Belts
+  list.push({ name: 'Alternator Belt Standard',       partNumber: 'AB-STD',      category: 'Belts',    unitPrice: 38,  costPrice: 18,  initialQty: 25, minQuantity: 8 });
+  list.push({ name: 'Timing Belt Kit - Renault',      partNumber: 'TB-REN',      category: 'Belts',    unitPrice: 220, costPrice: 130, initialQty: 8,  minQuantity: 3 });
+  list.push({ name: 'Timing Belt Kit - Peugeot',      partNumber: 'TB-PEU',      category: 'Belts',    unitPrice: 230, costPrice: 135, initialQty: 8,  minQuantity: 3 });
+  list.push({ name: 'Timing Belt Kit - VW',           partNumber: 'TB-VW',       category: 'Belts',    unitPrice: 260, costPrice: 155, initialQty: 6,  minQuantity: 2 });
+  list.push({ name: 'Timing Belt Kit - Hyundai/Kia',  partNumber: 'TB-HMC',      category: 'Belts',    unitPrice: 200, costPrice: 120, initialQty: 6,  minQuantity: 2 });
+  list.push({ name: 'Serpentine Belt',                partNumber: 'SB-MULTI',    category: 'Belts',    unitPrice: 42,  costPrice: 20,  initialQty: 18, minQuantity: 6 });
+
+  // Tires
+  list.push({ name: 'Tire 175/65 R14',                partNumber: 'T-17565R14',  category: 'Tires',    unitPrice: 75,  costPrice: 50,  initialQty: 24, minQuantity: 8 });
+  list.push({ name: 'Tire 185/65 R15',                partNumber: 'T-18565R15',  category: 'Tires',    unitPrice: 85,  costPrice: 58,  initialQty: 28, minQuantity: 8 });
+  list.push({ name: 'Tire 195/65 R15',                partNumber: 'T-19565R15',  category: 'Tires',    unitPrice: 95,  costPrice: 65,  initialQty: 28, minQuantity: 8 });
+  list.push({ name: 'Tire 205/55 R16',                partNumber: 'T-20555R16',  category: 'Tires',    unitPrice: 110, costPrice: 75,  initialQty: 32, minQuantity: 10 });
+  list.push({ name: 'Tire 215/55 R17',                partNumber: 'T-21555R17',  category: 'Tires',    unitPrice: 135, costPrice: 90,  initialQty: 24, minQuantity: 8 });
+  list.push({ name: 'Tire 225/45 R18',                partNumber: 'T-22545R18',  category: 'Tires',    unitPrice: 175, costPrice: 120, initialQty: 16, minQuantity: 5 });
+  list.push({ name: 'Tire 235/55 R18 SUV',            partNumber: 'T-23555R18',  category: 'Tires',    unitPrice: 195, costPrice: 135, initialQty: 16, minQuantity: 5 });
+
+  // Transmission
+  list.push({ name: 'Clutch Kit - Small Engine',      partNumber: 'CLT-S',       category: 'Transmission', unitPrice: 280, costPrice: 170, initialQty: 5, minQuantity: 2 });
+  list.push({ name: 'Clutch Kit - Medium Engine',     partNumber: 'CLT-M',       category: 'Transmission', unitPrice: 340, costPrice: 210, initialQty: 5, minQuantity: 2 });
+  list.push({ name: 'Clutch Kit - SUV/Diesel',        partNumber: 'CLT-L',       category: 'Transmission', unitPrice: 420, costPrice: 260, initialQty: 4, minQuantity: 2 });
+
+  // Bodywork
+  list.push({ name: 'Paint - White Standard (1L)',    partNumber: 'PNT-WHT',     category: 'Bodywork', unitPrice: 65, costPrice: 38, initialQty: 18, minQuantity: 6 });
+  list.push({ name: 'Paint - Black Standard (1L)',    partNumber: 'PNT-BLK',     category: 'Bodywork', unitPrice: 65, costPrice: 38, initialQty: 18, minQuantity: 6 });
+  list.push({ name: 'Paint - Silver Metallic (1L)',   partNumber: 'PNT-SIL',     category: 'Bodywork', unitPrice: 95, costPrice: 58, initialQty: 14, minQuantity: 5 });
+  list.push({ name: 'Paint - Red Metallic (1L)',      partNumber: 'PNT-RED',     category: 'Bodywork', unitPrice: 95, costPrice: 58, initialQty: 12, minQuantity: 4 });
+  list.push({ name: 'Paint - Gray Metallic (1L)',     partNumber: 'PNT-GRY',     category: 'Bodywork', unitPrice: 95, costPrice: 58, initialQty: 14, minQuantity: 5 });
+  list.push({ name: 'Body Filler (kg)',               partNumber: 'BF-1KG',      category: 'Bodywork', unitPrice: 28, costPrice: 14, initialQty: 22, minQuantity: 8 });
+  list.push({ name: 'Sandpaper Assortment',           partNumber: 'SP-ASRT',     category: 'Bodywork', unitPrice: 18, costPrice: 8,  initialQty: 30, minQuantity: 10 });
+
+  // Accessories
+  list.push({ name: 'Wiper Blade Front - 22"',        partNumber: 'WB-F22',      category: 'Accessories', unitPrice: 24, costPrice: 11, initialQty: 35, minQuantity: 12 });
+  list.push({ name: 'Wiper Blade Front - 24"',        partNumber: 'WB-F24',      category: 'Accessories', unitPrice: 26, costPrice: 12, initialQty: 30, minQuantity: 10 });
+  list.push({ name: 'Wiper Blade Rear - 14"',         partNumber: 'WB-R14',      category: 'Accessories', unitPrice: 18, costPrice: 8,  initialQty: 25, minQuantity: 8  });
+  list.push({ name: 'Floor Mats Set',                 partNumber: 'FM-SET',      category: 'Accessories', unitPrice: 38, costPrice: 18, initialQty: 18, minQuantity: 6  });
+  list.push({ name: 'Air Freshener',                  partNumber: 'AIR-FRESH',   category: 'Accessories', unitPrice: 6,  costPrice: 2,  initialQty: 60, minQuantity: 20 });
+
+  // Hoses & misc
+  list.push({ name: 'Radiator Hose - Upper',          partNumber: 'RH-UPP',      category: 'Cooling',  unitPrice: 35, costPrice: 18, initialQty: 18, minQuantity: 6 });
+  list.push({ name: 'Radiator Hose - Lower',          partNumber: 'RH-LOW',      category: 'Cooling',  unitPrice: 38, costPrice: 20, initialQty: 18, minQuantity: 6 });
+  list.push({ name: 'Thermostat',                     partNumber: 'THERM-001',   category: 'Cooling',  unitPrice: 42, costPrice: 22, initialQty: 16, minQuantity: 5 });
+  list.push({ name: 'Water Pump - Standard',          partNumber: 'WP-STD',      category: 'Cooling',  unitPrice: 95, costPrice: 55, initialQty: 10, minQuantity: 4 });
+
+  // Suspension
+  list.push({ name: 'Shock Absorber Front - pair',    partNumber: 'SA-F-PR',     category: 'Suspension', unitPrice: 165, costPrice: 100, initialQty: 12, minQuantity: 4 });
+  list.push({ name: 'Shock Absorber Rear - pair',     partNumber: 'SA-R-PR',     category: 'Suspension', unitPrice: 145, costPrice: 90,  initialQty: 12, minQuantity: 4 });
+  list.push({ name: 'Strut Mount',                    partNumber: 'STR-MNT',     category: 'Suspension', unitPrice: 45,  costPrice: 22,  initialQty: 24, minQuantity: 8 });
+  list.push({ name: 'Control Arm Bushing',            partNumber: 'CA-BUSH',     category: 'Suspension', unitPrice: 28,  costPrice: 14,  initialQty: 30, minQuantity: 10 });
+  list.push({ name: 'Sway Bar Link',                  partNumber: 'SWB-LNK',     category: 'Suspension', unitPrice: 32,  costPrice: 16,  initialQty: 28, minQuantity: 10 });
+
+  // Exhaust
+  list.push({ name: 'Exhaust Muffler',                partNumber: 'EX-MUF',      category: 'Exhaust', unitPrice: 130, costPrice: 80,  initialQty: 8, minQuantity: 3 });
+  list.push({ name: 'Catalytic Converter (small)',    partNumber: 'CAT-S',       category: 'Exhaust', unitPrice: 380, costPrice: 240, initialQty: 4, minQuantity: 1 });
+  list.push({ name: 'Exhaust Gasket Set',             partNumber: 'EX-GSK',      category: 'Exhaust', unitPrice: 22,  costPrice: 11,  initialQty: 30, minQuantity: 10 });
+
+  return list;
+}
+
+// Customer archetypes — drive temporal patterns
+type Archetype = 'vip' | 'regular' | 'occasional' | 'atRisk' | 'churned' | 'new';
+const ARCHETYPE_PLAN: { kind: Archetype; count: number }[] = [
+  { kind: 'vip',        count: 6  },
+  { kind: 'regular',    count: 20 },
+  { kind: 'occasional', count: 12 },
+  { kind: 'atRisk',     count: 6  },
+  { kind: 'churned',    count: 4  },
+  { kind: 'new',        count: 4  },
+]; // total 52 customers
+
+// ───────────────────────────────────────────────────────────────────────────
+// MAIN
+// ───────────────────────────────────────────────────────────────────────────
+async function main() {
+  console.log('🌱 Seeding OpAuto with rich, coherent demo data…');
+  const t0 = Date.now();
+
+  await wipeAll();
+
+  const ctx = await seedAccounts();
+  await seedModules(ctx);
+
+  const { suppliers, parts } = await seedInventory(ctx);
+  const customers = await seedCustomers(ctx);
+  const cars = await seedCars(ctx, customers);
+
+  const jobs = await seedMaintenanceJobs(ctx, customers, cars, parts);
+  const invoices = await seedInvoicesFromJobs(ctx, jobs, parts);
+  await seedStockMovements(ctx, jobs, parts);
+
+  await seedAppointments(ctx, customers, cars, jobs);
+  await seedAiActions(ctx, customers);
+  await seedNotifications(ctx);
+
+  await computeRollups();
+  await verifyIntegrity();
+
+  console.log(`✅ Seed complete in ${Math.round((Date.now() - t0) / 1000)}s`);
+  console.log('Login: owner@autotech.tn / password123');
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// 1. Wipe (preserves nothing — recreates accounts identically)
+// ───────────────────────────────────────────────────────────────────────────
+async function wipeAll() {
+  await prisma.assistantToolCall.deleteMany();
+  await prisma.assistantMessage.deleteMany();
+  await prisma.assistantConversation.deleteMany();
+  await prisma.aiAction.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.garageModule.deleteMany();
   await prisma.approval.deleteMany();
@@ -24,13 +317,26 @@ async function main() {
   await prisma.car.deleteMany();
   await prisma.customer.deleteMany();
   await prisma.employee.deleteMany();
+  await prisma.userPreference.deleteMany();
   await prisma.user.deleteMany();
   await prisma.garage.deleteMany();
+  console.log('  ✓ wiped all transactional + assistant data');
+}
 
-  const hashedPassword = await bcrypt.hash('password123', 10);
-  const staffPassword = await bcrypt.hash('staff123', 10);
+// ───────────────────────────────────────────────────────────────────────────
+// 2. Accounts — garage + users + employees
+// ───────────────────────────────────────────────────────────────────────────
+type Ctx = {
+  garage: Awaited<ReturnType<typeof prisma.garage.create>>;
+  owner: Awaited<ReturnType<typeof prisma.user.create>>;
+  staff: Awaited<ReturnType<typeof prisma.user.create>>[];
+  employees: Awaited<ReturnType<typeof prisma.employee.create>>[];
+};
 
-  // Create Garage
+async function seedAccounts(): Promise<Ctx> {
+  const hashedOwner = await bcrypt.hash('password123', 10);
+  const hashedStaff = await bcrypt.hash('staff123', 10);
+
   const garage = await prisma.garage.create({
     data: {
       name: 'AutoTech Tunisia',
@@ -53,348 +359,968 @@ async function main() {
     },
   });
 
-  // Create Owner
   const owner = await prisma.user.create({
     data: {
-      garageId: garage.id,
-      email: 'owner@autotech.tn',
-      password: hashedPassword,
-      firstName: 'Ala',
-      lastName: 'Ben Khlifa',
-      role: UserRole.OWNER,
-      phone: '+216 98 123 456',
+      garageId: garage.id, email: 'owner@autotech.tn', password: hashedOwner,
+      firstName: 'Ala', lastName: 'Ben Khlifa', role: UserRole.OWNER, phone: '+216 98 123 456',
     },
   });
 
-  // Create Staff Users
-  const staffUsers = await Promise.all([
-    prisma.user.create({ data: { garageId: garage.id, username: 'mohamed', password: staffPassword, firstName: 'Mohamed', lastName: 'Trabelsi', role: UserRole.STAFF, phone: '+216 97 111 222' } }),
-    prisma.user.create({ data: { garageId: garage.id, username: 'khalil', password: staffPassword, firstName: 'Khalil', lastName: 'Bouazizi', role: UserRole.STAFF, phone: '+216 97 333 444' } }),
-    prisma.user.create({ data: { garageId: garage.id, username: 'youssef', password: staffPassword, firstName: 'Youssef', lastName: 'Gharbi', role: UserRole.STAFF, phone: '+216 97 555 666' } }),
-    prisma.user.create({ data: { garageId: garage.id, username: 'hichem', password: staffPassword, firstName: 'Hichem', lastName: 'Sassi', role: UserRole.STAFF, phone: '+216 97 777 888' } }),
-    prisma.user.create({ data: { garageId: garage.id, username: 'ali', password: staffPassword, firstName: 'Ali', lastName: 'Khelifi', role: UserRole.STAFF, phone: '+216 97 999 000' } }),
-  ]);
-
-  // Create Employees
-  const employees = await Promise.all([
-    prisma.employee.create({ data: { garageId: garage.id, userId: staffUsers[0].id, firstName: 'Mohamed', lastName: 'Trabelsi', email: 'mohamed@autotech.tn', phone: '+216 97 111 222', role: EmployeeRole.MECHANIC, department: EmployeeDepartment.MECHANICAL, status: EmployeeStatus.ACTIVE, hireDate: new Date('2022-01-15'), hourlyRate: 25, skills: ['engine_repair', 'oil_change', 'diagnostics'] } }),
-    prisma.employee.create({ data: { garageId: garage.id, userId: staffUsers[1].id, firstName: 'Khalil', lastName: 'Bouazizi', email: 'khalil@autotech.tn', phone: '+216 97 333 444', role: EmployeeRole.MECHANIC, department: EmployeeDepartment.MECHANICAL, status: EmployeeStatus.ACTIVE, hireDate: new Date('2022-06-01'), hourlyRate: 28, skills: ['brakes', 'suspension', 'steering'] } }),
-    prisma.employee.create({ data: { garageId: garage.id, userId: staffUsers[2].id, firstName: 'Youssef', lastName: 'Gharbi', email: 'youssef@autotech.tn', phone: '+216 97 555 666', role: EmployeeRole.ELECTRICIAN, department: EmployeeDepartment.ELECTRICAL, status: EmployeeStatus.ACTIVE, hireDate: new Date('2023-03-10'), hourlyRate: 30, skills: ['wiring', 'ecu_diagnostics', 'battery'] } }),
-    prisma.employee.create({ data: { garageId: garage.id, userId: staffUsers[3].id, firstName: 'Hichem', lastName: 'Sassi', email: 'hichem@autotech.tn', phone: '+216 97 777 888', role: EmployeeRole.BODYWORK_SPECIALIST, department: EmployeeDepartment.BODYWORK, status: EmployeeStatus.ACTIVE, hireDate: new Date('2021-09-20'), hourlyRate: 27, skills: ['painting', 'dent_repair', 'panel_replacement'] } }),
-    prisma.employee.create({ data: { garageId: garage.id, userId: staffUsers[4].id, firstName: 'Ali', lastName: 'Khelifi', email: 'ali@autotech.tn', phone: '+216 97 999 000', role: EmployeeRole.TIRE_SPECIALIST, department: EmployeeDepartment.TIRE_ALIGNMENT, status: EmployeeStatus.ACTIVE, hireDate: new Date('2023-08-15'), hourlyRate: 22, skills: ['tire_change', 'balancing', 'alignment'] } }),
-  ]);
-
-  // Create Customers (Tunisian names)
-  const customers = await Promise.all([
-    prisma.customer.create({ data: { garageId: garage.id, firstName: 'Ahmed', lastName: 'Ben Ali', email: 'ahmed.benali@email.tn', phone: '+216 22 111 222', address: 'Rue de la Liberté, Tunis', status: CustomerStatus.VIP, loyaltyTier: 'gold', totalSpent: 4500, visitCount: 15 } }),
-    prisma.customer.create({ data: { garageId: garage.id, firstName: 'Fatima', lastName: 'Mahmoud', email: 'fatima.m@email.tn', phone: '+216 22 333 444', address: 'Avenue Farhat Hached, Sousse', status: CustomerStatus.ACTIVE, loyaltyTier: 'silver', totalSpent: 2200, visitCount: 8 } }),
-    prisma.customer.create({ data: { garageId: garage.id, firstName: 'Omar', lastName: 'Trabelsi', email: 'omar.t@email.tn', phone: '+216 22 555 666', address: 'Rue Ibn Khaldoun, Sfax', status: CustomerStatus.ACTIVE, loyaltyTier: 'bronze', totalSpent: 1100, visitCount: 4 } }),
-    prisma.customer.create({ data: { garageId: garage.id, firstName: 'Leila', lastName: 'Sassi', email: 'leila.s@email.tn', phone: '+216 22 777 888', address: 'Boulevard 7 Novembre, Bizerte', status: CustomerStatus.VIP, loyaltyTier: 'platinum', totalSpent: 8900, visitCount: 25 } }),
-    prisma.customer.create({ data: { garageId: garage.id, firstName: 'Sami', lastName: 'Gharbi', phone: '+216 22 999 000', address: 'Tunis', status: CustomerStatus.ACTIVE, loyaltyTier: 'bronze', totalSpent: 600, visitCount: 2 } }),
-    prisma.customer.create({ data: { garageId: garage.id, firstName: 'Nadia', lastName: 'Khelifi', email: 'nadia.k@email.tn', phone: '+216 23 111 222', address: 'Nabeul', status: CustomerStatus.ACTIVE, totalSpent: 950, visitCount: 3 } }),
-    prisma.customer.create({ data: { garageId: garage.id, firstName: 'Sami', lastName: 'Chaabane', phone: '+216 23 333 444', address: 'La Marsa', status: CustomerStatus.ACTIVE, totalSpent: 1800, visitCount: 6 } }),
-    prisma.customer.create({ data: { garageId: garage.id, firstName: 'Nadia', lastName: 'Bouzid', email: 'nadia.b@email.tn', phone: '+216 23 555 666', address: 'Ariana', status: CustomerStatus.ACTIVE, loyaltyTier: 'silver', totalSpent: 3200, visitCount: 10 } }),
-    prisma.customer.create({ data: { garageId: garage.id, firstName: 'Yasmine', lastName: 'Hamdi', phone: '+216 23 777 888', address: 'Ben Arous', status: CustomerStatus.ACTIVE, totalSpent: 450, visitCount: 2 } }),
-    prisma.customer.create({ data: { garageId: garage.id, firstName: 'Karim', lastName: 'Jebali', email: 'karim.j@email.tn', phone: '+216 24 111 222', address: 'Monastir', status: CustomerStatus.ACTIVE, totalSpent: 2100, visitCount: 7 } }),
-    prisma.customer.create({ data: { garageId: garage.id, firstName: 'Amira', lastName: 'Mrad', phone: '+216 24 333 444', address: 'Hammamet', status: CustomerStatus.ACTIVE, totalSpent: 780, visitCount: 3 } }),
-    prisma.customer.create({ data: { garageId: garage.id, firstName: 'Walid', lastName: 'Zouari', phone: '+216 24 555 666', address: 'Gabes', status: CustomerStatus.INACTIVE, totalSpent: 350, visitCount: 1 } }),
-    prisma.customer.create({ data: { garageId: garage.id, firstName: 'Ines', lastName: 'Ferchichi', email: 'ines.f@email.tn', phone: '+216 24 777 888', address: 'Manouba', status: CustomerStatus.VIP, loyaltyTier: 'gold', totalSpent: 5600, visitCount: 18 } }),
-    prisma.customer.create({ data: { garageId: garage.id, firstName: 'Hatem', lastName: 'Belhaj', phone: '+216 25 111 222', address: 'Kasserine', status: CustomerStatus.ACTIVE, totalSpent: 900, visitCount: 3 } }),
-    prisma.customer.create({ data: { garageId: garage.id, firstName: 'Rim', lastName: 'Mansouri', email: 'rim.m@email.tn', phone: '+216 25 333 444', address: 'Djerba', status: CustomerStatus.ACTIVE, loyaltyTier: 'silver', totalSpent: 2800, visitCount: 9 } }),
-  ]);
-
-  // Create Cars
-  const cars = await Promise.all([
-    prisma.car.create({ data: { garageId: garage.id, customerId: customers[0].id, make: 'Peugeot', model: '308', year: 2020, licensePlate: '123TUN456', color: 'White', mileage: 45000, engineType: 'diesel', transmission: 'manual' } }),
-    prisma.car.create({ data: { garageId: garage.id, customerId: customers[0].id, make: 'Volkswagen', model: 'Golf 8', year: 2022, licensePlate: '234TUN567', color: 'Gray', mileage: 22000, engineType: 'petrol', transmission: 'automatic' } }),
-    prisma.car.create({ data: { garageId: garage.id, customerId: customers[1].id, make: 'Renault', model: 'Clio', year: 2019, licensePlate: '789TUN123', color: 'Red', mileage: 62000, engineType: 'petrol', transmission: 'manual' } }),
-    prisma.car.create({ data: { garageId: garage.id, customerId: customers[2].id, make: 'BMW', model: 'X3', year: 2021, licensePlate: '456TUN789', color: 'Black', mileage: 35000, engineType: 'diesel', transmission: 'automatic' } }),
-    prisma.car.create({ data: { garageId: garage.id, customerId: customers[3].id, make: 'Ford', model: 'Focus', year: 2018, licensePlate: '321TUN654', color: 'Blue', mileage: 78000, engineType: 'petrol', transmission: 'manual' } }),
-    prisma.car.create({ data: { garageId: garage.id, customerId: customers[4].id, make: 'Hyundai', model: 'Tucson', year: 2023, licensePlate: '555TUN888', color: 'Silver', mileage: 12000, engineType: 'hybrid', transmission: 'automatic' } }),
-    prisma.car.create({ data: { garageId: garage.id, customerId: customers[5].id, make: 'Kia', model: 'Sportage', year: 2022, licensePlate: '999TUN111', color: 'White', mileage: 18000, engineType: 'diesel', transmission: 'automatic' } }),
-    prisma.car.create({ data: { garageId: garage.id, customerId: customers[6].id, make: 'Volkswagen', model: 'Golf', year: 2020, licensePlate: '987TUN321', color: 'Gray', mileage: 40000, engineType: 'petrol', transmission: 'manual' } }),
-    prisma.car.create({ data: { garageId: garage.id, customerId: customers[7].id, make: 'Toyota', model: 'Corolla', year: 2019, licensePlate: '654TUN987', color: 'White', mileage: 55000, engineType: 'petrol', transmission: 'automatic' } }),
-    prisma.car.create({ data: { garageId: garage.id, customerId: customers[8].id, make: 'Nissan', model: 'Qashqai', year: 2021, licensePlate: '333TUN777', color: 'Red', mileage: 28000, engineType: 'diesel', transmission: 'automatic' } }),
-    prisma.car.create({ data: { garageId: garage.id, customerId: customers[9].id, make: 'Mercedes', model: 'C-Class', year: 2020, licensePlate: '777TUN333', color: 'Black', mileage: 42000, engineType: 'diesel', transmission: 'automatic' } }),
-    prisma.car.create({ data: { garageId: garage.id, customerId: customers[10].id, make: 'Fiat', model: '500', year: 2021, licensePlate: '111TUN999', color: 'Yellow', mileage: 15000, engineType: 'petrol', transmission: 'manual' } }),
-    prisma.car.create({ data: { garageId: garage.id, customerId: customers[11].id, make: 'Citroen', model: 'C3', year: 2018, licensePlate: '444TUN666', color: 'White', mileage: 72000, engineType: 'diesel', transmission: 'manual' } }),
-    prisma.car.create({ data: { garageId: garage.id, customerId: customers[12].id, make: 'Audi', model: 'A4', year: 2022, licensePlate: '888TUN222', color: 'Silver', mileage: 20000, engineType: 'petrol', transmission: 'automatic' } }),
-    prisma.car.create({ data: { garageId: garage.id, customerId: customers[13].id, make: 'Renault', model: 'Megane', year: 2019, licensePlate: '222TUN888', color: 'Gray', mileage: 58000, engineType: 'diesel', transmission: 'manual' } }),
-  ]);
-
-  // Create Appointments (April – July 2026)
-  const d = (month: number, day: number, hour: number, min = 0) =>
-    new Date(2026, month - 1, day, hour, min);
-
-  const apt = (cust: number, car: number, emp: number | null, title: string, start: Date, end: Date, status: AppointmentStatus, type: string, priority = 'medium') =>
-    prisma.appointment.create({ data: { garageId: garage.id, customerId: customers[cust].id, carId: cars[car].id, ...(emp !== null ? { employeeId: employees[emp].id } : {}), title, startTime: start, endTime: end, status, type, priority } });
-
-  const appointments = await Promise.all([
-    // ── April 2026 ──
-    // Past (completed)
-    apt(0, 0, 0, 'Oil Change + Inspection', d(4,10,9), d(4,10,10), AppointmentStatus.COMPLETED, 'oil-change'),
-    apt(1, 2, 1, 'Brake System Repair', d(4,10,10,30), d(4,10,13,30), AppointmentStatus.COMPLETED, 'brake-service', 'high'),
-    apt(6, 7, 0, 'Oil Change', d(4,11,9), d(4,11,10), AppointmentStatus.COMPLETED, 'oil-change', 'low'),
-    apt(7, 8, 3, 'Dent Repair', d(4,11,10), d(4,11,16), AppointmentStatus.COMPLETED, 'bodywork'),
-    // Today / upcoming this week
-    apt(2, 3, 2, 'Engine Diagnostics', d(4,14,9), d(4,14,11), AppointmentStatus.SCHEDULED, 'engine-diagnostics'),
-    apt(3, 4, null, 'Transmission Service', d(4,14,14), d(4,14,18), AppointmentStatus.SCHEDULED, 'transmission', 'high'),
-    apt(4, 5, 4, 'Tire Replacement', d(4,14,15), d(4,14,16), AppointmentStatus.SCHEDULED, 'tire-replacement', 'low'),
-    apt(5, 6, 2, 'AC Service', d(4,15,9), d(4,15,11), AppointmentStatus.CONFIRMED, 'electrical'),
-    apt(8, 9, 0, 'Battery Replacement', d(4,15,10), d(4,15,11), AppointmentStatus.CONFIRMED, 'electrical', 'low'),
-    apt(9, 10, 1, 'Suspension Check', d(4,16,8), d(4,16,10), AppointmentStatus.SCHEDULED, 'inspection'),
-    apt(10, 11, 4, 'Tire Balancing', d(4,16,10), d(4,16,11), AppointmentStatus.SCHEDULED, 'tire-replacement', 'low'),
-    apt(11, 12, 3, 'Paint Touch-up', d(4,17,9), d(4,17,12), AppointmentStatus.SCHEDULED, 'bodywork'),
-    apt(12, 13, 0, 'Full Service', d(4,17,14), d(4,17,17), AppointmentStatus.SCHEDULED, 'oil-change', 'high'),
-    // Rest of April
-    apt(0, 1, 2, 'ECU Diagnostics', d(4,21,9), d(4,21,11), AppointmentStatus.SCHEDULED, 'engine-diagnostics'),
-    apt(13, 14, 1, 'Brake Pad Replacement', d(4,21,14), d(4,21,16), AppointmentStatus.SCHEDULED, 'brake-service'),
-    apt(14, 14, 4, 'Wheel Alignment', d(4,22,8), d(4,22,9,30), AppointmentStatus.SCHEDULED, 'tire-replacement', 'low'),
-    apt(1, 2, 0, 'Oil Change', d(4,23,9), d(4,23,10), AppointmentStatus.SCHEDULED, 'oil-change', 'low'),
-    apt(5, 6, 2, 'Alternator Repair', d(4,24,10), d(4,24,13), AppointmentStatus.SCHEDULED, 'electrical', 'high'),
-    apt(3, 4, 3, 'Body Panel Repair', d(4,25,9), d(4,25,14), AppointmentStatus.SCHEDULED, 'bodywork', 'high'),
-    apt(8, 9, 0, 'Timing Belt Replacement', d(4,28,8), d(4,28,12), AppointmentStatus.SCHEDULED, 'engine-diagnostics', 'high'),
-    apt(9, 10, 1, 'Brake Fluid Flush', d(4,28,14), d(4,28,15,30), AppointmentStatus.SCHEDULED, 'brake-service'),
-    apt(6, 7, 4, 'Tire Rotation', d(4,29,9), d(4,29,10), AppointmentStatus.SCHEDULED, 'tire-replacement', 'low'),
-    apt(2, 3, 2, 'Check Engine Light', d(4,30,10), d(4,30,12), AppointmentStatus.SCHEDULED, 'engine-diagnostics'),
-
-    // ── May 2026 ──
-    apt(0, 0, 0, 'Oil Change', d(5,4,9), d(5,4,10), AppointmentStatus.SCHEDULED, 'oil-change', 'low'),
-    apt(12, 13, 1, 'Brake Inspection', d(5,4,10), d(5,4,11,30), AppointmentStatus.SCHEDULED, 'brake-service'),
-    apt(4, 5, 2, 'Battery Test', d(5,5,9), d(5,5,10), AppointmentStatus.SCHEDULED, 'electrical', 'low'),
-    apt(7, 8, 3, 'Bumper Repair', d(5,5,10), d(5,5,14), AppointmentStatus.SCHEDULED, 'bodywork', 'high'),
-    apt(10, 11, 4, 'New Tires', d(5,6,8), d(5,6,10), AppointmentStatus.SCHEDULED, 'tire-replacement'),
-    apt(1, 2, 0, 'Clutch Adjustment', d(5,7,9), d(5,7,11), AppointmentStatus.SCHEDULED, 'transmission'),
-    apt(3, 4, 2, 'Wiring Repair', d(5,8,14), d(5,8,17), AppointmentStatus.SCHEDULED, 'electrical', 'high'),
-    apt(5, 6, 1, 'Front Brake Replacement', d(5,11,9), d(5,11,12), AppointmentStatus.SCHEDULED, 'brake-service', 'high'),
-    apt(6, 7, 0, 'Oil & Filter Change', d(5,12,9), d(5,12,10), AppointmentStatus.SCHEDULED, 'oil-change', 'low'),
-    apt(14, 14, 3, 'Scratch Repair', d(5,12,14), d(5,12,16), AppointmentStatus.SCHEDULED, 'bodywork'),
-    apt(8, 9, 4, 'Tire Pressure Sensors', d(5,13,10), d(5,13,11,30), AppointmentStatus.SCHEDULED, 'tire-replacement'),
-    apt(2, 3, 2, 'Engine Mount Replacement', d(5,14,8), d(5,14,12), AppointmentStatus.SCHEDULED, 'engine-diagnostics', 'high'),
-    apt(9, 10, 0, 'Coolant Flush', d(5,18,9), d(5,18,10,30), AppointmentStatus.SCHEDULED, 'oil-change'),
-    apt(11, 12, 1, 'ABS Sensor Check', d(5,19,14), d(5,19,16), AppointmentStatus.SCHEDULED, 'brake-service'),
-    apt(0, 1, 4, 'Wheel Balancing', d(5,20,8), d(5,20,9), AppointmentStatus.SCHEDULED, 'tire-replacement', 'low'),
-    apt(13, 14, 3, 'Door Dent Repair', d(5,21,10), d(5,21,13), AppointmentStatus.SCHEDULED, 'bodywork'),
-    apt(4, 5, 2, 'Headlight Wiring', d(5,22,9), d(5,22,11), AppointmentStatus.SCHEDULED, 'electrical'),
-    apt(7, 8, 0, 'Full Service 60k', d(5,25,8), d(5,25,12), AppointmentStatus.SCHEDULED, 'oil-change', 'high'),
-    apt(1, 2, 1, 'Rear Brake Pads', d(5,26,14), d(5,26,16), AppointmentStatus.SCHEDULED, 'brake-service'),
-    apt(3, 4, 2, 'Starter Motor', d(5,27,9), d(5,27,12), AppointmentStatus.SCHEDULED, 'electrical', 'high'),
-
-    // ── June 2026 ──
-    apt(0, 0, 0, 'Oil Change', d(6,1,9), d(6,1,10), AppointmentStatus.SCHEDULED, 'oil-change', 'low'),
-    apt(5, 6, 1, 'Brake Disc Replacement', d(6,1,10), d(6,1,13), AppointmentStatus.SCHEDULED, 'brake-service', 'high'),
-    apt(10, 11, 4, 'Summer Tires', d(6,2,8), d(6,2,10), AppointmentStatus.SCHEDULED, 'tire-replacement'),
-    apt(2, 3, 2, 'AC Recharge', d(6,3,9), d(6,3,10,30), AppointmentStatus.SCHEDULED, 'electrical'),
-    apt(12, 13, 3, 'Full Respray', d(6,4,8), d(6,4,17), AppointmentStatus.SCHEDULED, 'bodywork', 'high'),
-    apt(8, 9, 0, 'Transmission Fluid', d(6,8,9), d(6,8,10,30), AppointmentStatus.SCHEDULED, 'transmission'),
-    apt(6, 7, 1, 'Handbrake Cable', d(6,9,14), d(6,9,16), AppointmentStatus.SCHEDULED, 'brake-service'),
-    apt(14, 14, 2, 'Alternator Belt', d(6,10,9), d(6,10,10,30), AppointmentStatus.SCHEDULED, 'electrical'),
-    apt(9, 10, 4, 'Tire Replacement', d(6,11,8), d(6,11,9,30), AppointmentStatus.SCHEDULED, 'tire-replacement', 'low'),
-    apt(4, 5, 0, 'Full Service', d(6,15,8), d(6,15,12), AppointmentStatus.SCHEDULED, 'oil-change'),
-    apt(1, 2, 3, 'Windshield Chip Repair', d(6,16,10), d(6,16,11), AppointmentStatus.SCHEDULED, 'bodywork', 'low'),
-    apt(11, 12, 1, 'Brake Fluid Change', d(6,17,9), d(6,17,10), AppointmentStatus.SCHEDULED, 'brake-service'),
-    apt(3, 4, 2, 'AC Compressor', d(6,18,9), d(6,18,13), AppointmentStatus.SCHEDULED, 'electrical', 'high'),
-    apt(7, 8, 0, 'Oil Change', d(6,22,9), d(6,22,10), AppointmentStatus.SCHEDULED, 'oil-change', 'low'),
-    apt(0, 1, 4, 'Alignment Check', d(6,23,14), d(6,23,15,30), AppointmentStatus.SCHEDULED, 'tire-replacement'),
-    apt(13, 14, 1, 'Brake Caliper Rebuild', d(6,24,8), d(6,24,12), AppointmentStatus.SCHEDULED, 'brake-service', 'high'),
-    apt(5, 6, 3, 'Side Mirror Replacement', d(6,25,10), d(6,25,11,30), AppointmentStatus.SCHEDULED, 'bodywork'),
-    apt(2, 3, 0, 'Spark Plug Replacement', d(6,29,9), d(6,29,10,30), AppointmentStatus.SCHEDULED, 'engine-diagnostics'),
-    apt(8, 9, 2, 'Power Window Fix', d(6,30,14), d(6,30,16), AppointmentStatus.SCHEDULED, 'electrical'),
-
-    // ── July 2026 ──
-    apt(6, 7, 0, 'Oil Change', d(7,1,9), d(7,1,10), AppointmentStatus.SCHEDULED, 'oil-change', 'low'),
-    apt(9, 10, 1, 'Front Brakes', d(7,1,10), d(7,1,12), AppointmentStatus.SCHEDULED, 'brake-service'),
-    apt(4, 5, 4, 'Tire Rotation', d(7,2,8), d(7,2,9), AppointmentStatus.SCHEDULED, 'tire-replacement', 'low'),
-    apt(12, 13, 2, 'Battery Replacement', d(7,2,9), d(7,2,10), AppointmentStatus.SCHEDULED, 'electrical'),
-    apt(1, 2, 3, 'Fender Repair', d(7,6,9), d(7,6,14), AppointmentStatus.SCHEDULED, 'bodywork', 'high'),
-    apt(0, 0, 0, 'Full Service 80k', d(7,7,8), d(7,7,12), AppointmentStatus.SCHEDULED, 'oil-change', 'high'),
-    apt(3, 4, 1, 'Brake Inspection', d(7,8,9), d(7,8,10,30), AppointmentStatus.SCHEDULED, 'brake-service'),
-    apt(14, 14, 2, 'Headlight Adjustment', d(7,9,14), d(7,9,15), AppointmentStatus.SCHEDULED, 'electrical', 'low'),
-    apt(10, 11, 4, 'New Summer Tires', d(7,13,8), d(7,13,10), AppointmentStatus.SCHEDULED, 'tire-replacement'),
-    apt(7, 8, 0, 'Engine Tune-up', d(7,14,9), d(7,14,12), AppointmentStatus.SCHEDULED, 'engine-diagnostics'),
-    apt(5, 6, 3, 'Hood Repaint', d(7,15,8), d(7,15,15), AppointmentStatus.SCHEDULED, 'bodywork', 'high'),
-    apt(11, 12, 1, 'Emergency Brake Fix', d(7,16,14), d(7,16,16), AppointmentStatus.SCHEDULED, 'brake-service', 'high'),
-    apt(2, 3, 2, 'Fuel Pump Replacement', d(7,20,9), d(7,20,13), AppointmentStatus.SCHEDULED, 'engine-diagnostics', 'high'),
-    apt(8, 9, 0, 'Oil Change', d(7,21,9), d(7,21,10), AppointmentStatus.SCHEDULED, 'oil-change', 'low'),
-    apt(13, 14, 4, 'Wheel Alignment', d(7,22,8), d(7,22,9,30), AppointmentStatus.SCHEDULED, 'tire-replacement'),
-    apt(0, 1, 1, 'Rear Brakes', d(7,23,14), d(7,23,16,30), AppointmentStatus.SCHEDULED, 'brake-service'),
-    apt(6, 7, 2, 'AC Service', d(7,27,9), d(7,27,11), AppointmentStatus.SCHEDULED, 'electrical'),
-    apt(9, 10, 3, 'Bumper Respray', d(7,28,10), d(7,28,14), AppointmentStatus.SCHEDULED, 'bodywork'),
-    apt(4, 5, 0, 'Transmission Check', d(7,29,9), d(7,29,11), AppointmentStatus.SCHEDULED, 'transmission'),
-    apt(1, 2, 4, 'Tire Inspection', d(7,30,8), d(7,30,9), AppointmentStatus.SCHEDULED, 'tire-replacement', 'low'),
-  ]);
-
-  // ── Churn-risk customers ───────────────────────────────────────────────────
-  // Three customers crafted so the Customers dashboard "At-Risk Customers" card
-  // has something to show on a fresh seed. Dates are relative to now() so they
-  // stay overdue no matter when the seed runs. Each gets one car + one
-  // COMPLETED appointment backdated far enough to trip the churn scorer.
-  //
-  // Scoring reminder (from ai.service.ts):
-  //   avgInterval = max(30, customerAgeDays / visitCount)
-  //   ratio       = daysSinceLastActivity / avgInterval
-  //   <1 → low · <2 → medium (0.3) · <3 → medium-to-high (0.6) · ≥3 → high (0.9)
-  //   status=INACTIVE clamps score ≥ 0.7
-  const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000);
-  const churnCustomers = await Promise.all([
-    // High risk: 150 days since last visit, 30-day typical cadence → ratio 5
-    prisma.customer.create({ data: {
-      garageId: garage.id,
-      firstName: 'Skander', lastName: 'Khaled',
-      email: 'skander.k@email.tn', phone: '+216 26 111 222',
-      address: 'Kairouan',
-      status: CustomerStatus.ACTIVE, loyaltyTier: 'silver',
-      totalSpent: 3400, visitCount: 12,
-      createdAt: daysAgo(400),
-    } }),
-    // High risk (INACTIVE clamp): 100 days since last visit, marked inactive
-    prisma.customer.create({ data: {
-      garageId: garage.id,
-      firstName: 'Dorra', lastName: 'Mansour',
-      email: 'dorra.m@email.tn', phone: '+216 26 333 444',
-      address: 'Mahdia',
-      status: CustomerStatus.INACTIVE,
-      totalSpent: 1600, visitCount: 8,
-      createdAt: daysAgo(300),
-    } }),
-    // Medium risk: 50 days since last visit, 30-day cadence → ratio 1.67
-    prisma.customer.create({ data: {
-      garageId: garage.id,
-      firstName: 'Mehdi', lastName: 'Trabelsi',
-      email: 'mehdi.t@email.tn', phone: '+216 26 555 666',
-      address: 'Gafsa',
-      status: CustomerStatus.ACTIVE,
-      totalSpent: 1150, visitCount: 5,
-      createdAt: daysAgo(200),
-    } }),
-  ]);
-
-  const churnCars = await Promise.all([
-    prisma.car.create({ data: { garageId: garage.id, customerId: churnCustomers[0].id, make: 'Skoda', model: 'Octavia', year: 2017, licensePlate: '112CHR001', color: 'Silver', mileage: 142000, engineType: 'diesel', transmission: 'manual' } }),
-    prisma.car.create({ data: { garageId: garage.id, customerId: churnCustomers[1].id, make: 'Dacia', model: 'Duster',  year: 2018, licensePlate: '112CHR002', color: 'White',  mileage:  98000, engineType: 'diesel', transmission: 'manual' } }),
-    prisma.car.create({ data: { garageId: garage.id, customerId: churnCustomers[2].id, make: 'Seat',  model: 'Ibiza',   year: 2019, licensePlate: '112CHR003', color: 'Red',    mileage:  64000, engineType: 'petrol', transmission: 'manual' } }),
-  ]);
-
-  await Promise.all([
-    prisma.appointment.create({ data: {
-      garageId: garage.id, customerId: churnCustomers[0].id, carId: churnCars[0].id,
-      title: 'Full Service', type: 'oil-change', priority: 'medium',
-      status: AppointmentStatus.COMPLETED,
-      startTime: daysAgo(150), endTime: daysAgo(150),
-    } }),
-    prisma.appointment.create({ data: {
-      garageId: garage.id, customerId: churnCustomers[1].id, carId: churnCars[1].id,
-      title: 'Brake Inspection', type: 'brake-service', priority: 'medium',
-      status: AppointmentStatus.COMPLETED,
-      startTime: daysAgo(100), endTime: daysAgo(100),
-    } }),
-    prisma.appointment.create({ data: {
-      garageId: garage.id, customerId: churnCustomers[2].id, carId: churnCars[2].id,
-      title: 'Oil Change', type: 'oil-change', priority: 'low',
-      status: AppointmentStatus.COMPLETED,
-      startTime: daysAgo(50), endTime: daysAgo(50),
-    } }),
-  ]);
-
-  // Create Suppliers
-  const suppliers = await Promise.all([
-    prisma.supplier.create({ data: { garageId: garage.id, name: 'TunisAuto Parts', email: 'orders@tunisauto.tn', phone: '+216 71 888 999', address: 'Zone Industrielle, Tunis' } }),
-    prisma.supplier.create({ data: { garageId: garage.id, name: 'MaghrEb Pièces', email: 'contact@maghrebpieces.tn', phone: '+216 71 777 666', address: 'Sousse' } }),
-  ]);
-
-  // Create Parts (50+)
-  const partData = [
-    { name: 'Oil Filter - Universal', partNumber: 'OF-001', category: 'Filters', quantity: 25, minQuantity: 10, unitPrice: 15, costPrice: 8 },
-    { name: 'Air Filter - Peugeot 308', partNumber: 'AF-P308', category: 'Filters', quantity: 8, minQuantity: 5, unitPrice: 25, costPrice: 14 },
-    { name: 'Brake Pads - Front (Universal)', partNumber: 'BP-F001', category: 'Brakes', quantity: 12, minQuantity: 6, unitPrice: 45, costPrice: 25 },
-    { name: 'Brake Pads - Rear (Universal)', partNumber: 'BP-R001', category: 'Brakes', quantity: 10, minQuantity: 6, unitPrice: 40, costPrice: 22 },
-    { name: 'Brake Disc - Front', partNumber: 'BD-F001', category: 'Brakes', quantity: 4, minQuantity: 4, unitPrice: 85, costPrice: 50 },
-    { name: 'Engine Oil 5W-40 (5L)', partNumber: 'EO-5W40', category: 'Fluids', quantity: 30, minQuantity: 15, unitPrice: 55, costPrice: 32 },
-    { name: 'Transmission Fluid ATF (1L)', partNumber: 'TF-ATF', category: 'Fluids', quantity: 15, minQuantity: 8, unitPrice: 22, costPrice: 12 },
-    { name: 'Coolant (5L)', partNumber: 'CL-5L', category: 'Fluids', quantity: 20, minQuantity: 10, unitPrice: 18, costPrice: 10 },
-    { name: 'Spark Plug - NGK', partNumber: 'SP-NGK01', category: 'Ignition', quantity: 40, minQuantity: 20, unitPrice: 12, costPrice: 6 },
-    { name: 'Battery 12V 60Ah', partNumber: 'BAT-60', category: 'Electrical', quantity: 5, minQuantity: 3, unitPrice: 120, costPrice: 75 },
-    { name: 'Alternator Belt', partNumber: 'AB-001', category: 'Belts', quantity: 8, minQuantity: 4, unitPrice: 35, costPrice: 18 },
-    { name: 'Timing Belt Kit', partNumber: 'TB-KIT01', category: 'Belts', quantity: 3, minQuantity: 2, unitPrice: 180, costPrice: 110 },
-    { name: 'Wiper Blades (pair)', partNumber: 'WB-001', category: 'Accessories', quantity: 15, minQuantity: 8, unitPrice: 20, costPrice: 10 },
-    { name: 'Cabin Air Filter', partNumber: 'CAF-001', category: 'Filters', quantity: 3, minQuantity: 5, unitPrice: 18, costPrice: 9 },
-    { name: 'Tire 205/55 R16', partNumber: 'T-20555R16', category: 'Tires', quantity: 8, minQuantity: 4, unitPrice: 95, costPrice: 65 },
+  const staffSpecs = [
+    { username: 'mohamed', firstName: 'Mohamed', lastName: 'Trabelsi', phone: '+216 97 111 222', role: EmployeeRole.MECHANIC,           dept: EmployeeDepartment.MECHANICAL,   skills: ['engine_repair','oil_change','diagnostics'] },
+    { username: 'khalil',  firstName: 'Khalil',  lastName: 'Bouazizi', phone: '+216 97 333 444', role: EmployeeRole.MECHANIC,           dept: EmployeeDepartment.MECHANICAL,   skills: ['brakes','suspension','transmission'] },
+    { username: 'youssef', firstName: 'Youssef', lastName: 'Gharbi',   phone: '+216 97 555 666', role: EmployeeRole.ELECTRICIAN,        dept: EmployeeDepartment.ELECTRICAL,   skills: ['ecu_diag','ac_systems','battery'] },
+    { username: 'hichem',  firstName: 'Hichem',  lastName: 'Sassi',    phone: '+216 97 777 888', role: EmployeeRole.BODYWORK_SPECIALIST, dept: EmployeeDepartment.BODYWORK,    skills: ['paint','dent_repair','panel_alignment'] },
+    { username: 'ali',     firstName: 'Ali',     lastName: 'Khelifi',  phone: '+216 97 999 000', role: EmployeeRole.TIRE_SPECIALIST,    dept: EmployeeDepartment.TIRE_ALIGNMENT, skills: ['alignment','balancing','tpms'] },
   ];
+  const staff: Ctx['staff'] = [];
+  const employees: Ctx['employees'] = [];
+  for (const s of staffSpecs) {
+    const u = await prisma.user.create({
+      data: { garageId: garage.id, username: s.username, password: hashedStaff, firstName: s.firstName, lastName: s.lastName, role: UserRole.STAFF, phone: s.phone },
+    });
+    staff.push(u);
+    const e = await prisma.employee.create({
+      data: {
+        garageId: garage.id, userId: u.id, firstName: s.firstName, lastName: s.lastName,
+        email: `${s.username}@autotech.tn`, phone: s.phone,
+        role: s.role, department: s.dept, status: EmployeeStatus.ACTIVE,
+        hireDate: new Date('2022-01-15'), hourlyRate: s.role === EmployeeRole.BODYWORK_SPECIALIST ? 32 : 28,
+        skills: s.skills, isAvailable: true,
+      },
+    });
+    employees.push(e);
+  }
 
-  const parts = await Promise.all(
-    partData.map((p, i) =>
-      prisma.part.create({
-        data: { ...p, garageId: garage.id, supplierId: i % 2 === 0 ? suppliers[0].id : suppliers[1].id, location: `Shelf ${String.fromCharCode(65 + (i % 5))}-${Math.floor(i / 5) + 1}` },
-      })
-    )
-  );
+  console.log(`  ✓ accounts: 1 garage, ${1 + staff.length} users, ${employees.length} employees`);
+  return { garage, owner, staff, employees };
+}
 
-  // Create Maintenance Jobs
-  const maintenanceJobs = await Promise.all([
-    prisma.maintenanceJob.create({ data: { garageId: garage.id, carId: cars[2].id, employeeId: employees[1].id, title: 'Complete Brake Overhaul', description: 'Replace all brake pads, front discs, and bleed system', status: MaintenanceStatus.IN_PROGRESS, priority: 'high', estimatedHours: 4, estimatedCost: 450, startDate: new Date() } }),
-    prisma.maintenanceJob.create({ data: { garageId: garage.id, carId: cars[7].id, employeeId: employees[0].id, title: 'Major Service - 60k km', description: 'Oil change, all filters, spark plugs, timing belt inspection', status: MaintenanceStatus.QUALITY_CHECK, priority: 'medium', estimatedHours: 3, actualHours: 2.5, estimatedCost: 350, actualCost: 320 } }),
-    prisma.maintenanceJob.create({ data: { garageId: garage.id, carId: cars[8].id, employeeId: employees[3].id, title: 'Rear Fender Dent Repair', description: 'Minor dent repair and paint touch-up on rear left fender', status: MaintenanceStatus.COMPLETED, priority: 'low', estimatedHours: 6, actualHours: 5, estimatedCost: 600, actualCost: 550, completionDate: new Date(Date.now() - 86400000) } }),
-    prisma.maintenanceJob.create({ data: { garageId: garage.id, carId: cars[3].id, employeeId: employees[2].id, title: 'ECU Diagnostics', description: 'Check engine light diagnostics and sensor inspection', status: MaintenanceStatus.PENDING, priority: 'medium', estimatedHours: 2, estimatedCost: 150 } }),
-    prisma.maintenanceJob.create({ data: { garageId: garage.id, carId: cars[4].id, title: 'Transmission Fluid Change', description: 'Full transmission fluid flush and filter replacement', status: MaintenanceStatus.WAITING_APPROVAL, priority: 'high', estimatedHours: 3, estimatedCost: 280 } }),
-  ]);
-
-  // Create Invoices (spread across Jan–Apr 2026 for revenue chart)
-  const invoiceData = [
-    // January 2026
-    { customerId: customers[0].id, invoiceNumber: 'INV-202601-0001', status: InvoiceStatus.PAID, subtotal: 280, taxAmount: 53.2, total: 333.2, createdAt: new Date('2026-01-10'), dueDate: new Date('2026-01-24'), paidAt: new Date('2026-01-15') },
-    { customerId: customers[3].id, invoiceNumber: 'INV-202601-0002', status: InvoiceStatus.PAID, subtotal: 650, taxAmount: 123.5, total: 773.5, createdAt: new Date('2026-01-22'), dueDate: new Date('2026-02-05'), paidAt: new Date('2026-01-28') },
-    // February 2026
-    { customerId: customers[1].id, invoiceNumber: 'INV-202602-0001', status: InvoiceStatus.PAID, subtotal: 420, taxAmount: 79.8, total: 499.8, createdAt: new Date('2026-02-05'), dueDate: new Date('2026-02-19'), paidAt: new Date('2026-02-12') },
-    { customerId: customers[7].id, invoiceNumber: 'INV-202602-0002', status: InvoiceStatus.PAID, subtotal: 890, taxAmount: 169.1, total: 1059.1, createdAt: new Date('2026-02-18'), dueDate: new Date('2026-03-04'), paidAt: new Date('2026-02-25') },
-    { customerId: customers[4].id, invoiceNumber: 'INV-202602-0003', status: InvoiceStatus.PAID, subtotal: 180, taxAmount: 34.2, total: 214.2, createdAt: new Date('2026-02-26'), dueDate: new Date('2026-03-12'), paidAt: new Date('2026-03-02') },
-    // March 2026
-    { customerId: customers[6].id, invoiceNumber: 'INV-202603-0001', status: InvoiceStatus.PAID, subtotal: 550, taxAmount: 104.5, total: 654.5, createdAt: new Date('2026-03-03'), dueDate: new Date('2026-03-17'), paidAt: new Date('2026-03-10') },
-    { customerId: customers[9].id, invoiceNumber: 'INV-202603-0002', status: InvoiceStatus.PAID, subtotal: 1200, taxAmount: 228, total: 1428, createdAt: new Date('2026-03-15'), dueDate: new Date('2026-03-29'), paidAt: new Date('2026-03-22') },
-    { customerId: customers[12].id, invoiceNumber: 'INV-202603-0003', status: InvoiceStatus.PAID, subtotal: 320, taxAmount: 60.8, total: 380.8, createdAt: new Date('2026-03-28'), dueDate: new Date('2026-04-11'), paidAt: new Date('2026-04-02') },
-    // April 2026
-    { customerId: customers[0].id, invoiceNumber: 'INV-202604-0001', status: InvoiceStatus.PAID, subtotal: 750, taxAmount: 142.5, total: 892.5, createdAt: new Date('2026-04-02'), dueDate: new Date('2026-04-16'), paidAt: new Date('2026-04-08') },
-    { customerId: customers[1].id, invoiceNumber: 'INV-202604-0002', status: InvoiceStatus.SENT, subtotal: 450, taxAmount: 85.5, total: 535.5, createdAt: new Date('2026-04-10'), dueDate: new Date('2026-04-24') },
-    { customerId: customers[3].id, invoiceNumber: 'INV-202604-0003', status: InvoiceStatus.DRAFT, subtotal: 380, taxAmount: 72.2, total: 452.2, createdAt: new Date('2026-04-13') },
-    { customerId: customers[14].id, invoiceNumber: 'INV-202604-0004', status: InvoiceStatus.OVERDUE, subtotal: 290, taxAmount: 55.1, total: 345.1, createdAt: new Date('2026-04-01'), dueDate: new Date('2026-04-08') },
-  ];
-
-  const invoices = await Promise.all(
-    invoiceData.map(inv => prisma.invoice.create({ data: { garageId: garage.id, ...inv } }))
-  );
-
-  // Create Payment records for PAID invoices so paid/remaining/progress reflect reality
-  await Promise.all(
-    invoices
-      .filter(inv => inv.status === InvoiceStatus.PAID && inv.paidAt)
-      .map(inv => prisma.payment.create({
-        data: {
-          invoiceId: inv.id,
-          amount: inv.total,
-          method: PaymentMethod.CASH,
-          paidAt: inv.paidAt!,
-        },
-      }))
-  );
-
-  // Create Notifications
-  await Promise.all([
-    prisma.notification.create({ data: { garageId: garage.id, userId: owner.id, type: NotificationType.APPOINTMENT_REMINDER, title: 'Upcoming Appointment', message: 'Ahmed Ben Ali - Peugeot 308 at 09:00 tomorrow', isRead: false } }),
-    prisma.notification.create({ data: { garageId: garage.id, type: NotificationType.MAINTENANCE_STATUS, title: 'Job Completed', message: 'Oil change for VW Golf completed by Mohamed', isRead: false } }),
-    prisma.notification.create({ data: { garageId: garage.id, userId: owner.id, type: NotificationType.APPROVAL_REQUEST, title: 'Approval Required', message: 'Additional brake disc replacement - 450 TND for Fatima Mahmoud', isRead: false } }),
-    prisma.notification.create({ data: { garageId: garage.id, type: NotificationType.LOW_STOCK, title: 'Low Stock Alert', message: 'Cabin Air Filter (CAF-001) - Only 3 remaining (min: 5)', isRead: false } }),
-    prisma.notification.create({ data: { garageId: garage.id, userId: owner.id, type: NotificationType.INVOICE_OVERDUE, title: 'Overdue Invoice', message: 'Invoice INV-202603-0006 for Karim Jebali is 5 days overdue', isRead: true } }),
-    prisma.notification.create({ data: { garageId: garage.id, type: NotificationType.SYSTEM, title: 'System Update', message: 'New module available: AI Features - Get AI-powered diagnostics', isRead: true } }),
-  ]);
-
-  // Activate all modules for demo
-  const allModules = ['dashboard', 'customers', 'cars', 'appointments', 'calendar', 'maintenance', 'invoicing', 'inventory', 'employees', 'reports', 'approvals', 'users', 'settings', 'ai', 'notifications'];
+async function seedModules(ctx: Ctx) {
+  const modules = ['dashboard','customers','cars','appointments','calendar','maintenance','invoicing','inventory','employees','reports','approvals','users','settings','ai','notifications'];
   await prisma.garageModule.createMany({
-    data: allModules.map(moduleId => ({ garageId: garage.id, moduleId })),
+    data: modules.map(m => ({ garageId: ctx.garage.id, moduleId: m })),
   });
+}
 
-  console.log('Seed completed successfully!');
-  console.log(`Created: 1 garage, ${1 + staffUsers.length} users, ${employees.length} employees, ${customers.length + churnCustomers.length} customers, ${cars.length + churnCars.length} cars`);
-  console.log(`Login credentials: owner@autotech.tn / password123 (owner), mohamed/staff123 (staff)`);
+// ───────────────────────────────────────────────────────────────────────────
+// 3. Inventory — suppliers + parts catalog (no movements yet)
+// ───────────────────────────────────────────────────────────────────────────
+async function seedInventory(ctx: Ctx) {
+  const supplierData = [
+    { name: 'TunisAuto Parts',     email: 'orders@tunisauto.tn',     phone: '+216 71 888 999', address: 'Zone Industrielle, Tunis' },
+    { name: 'MaghrEb Pièces',      email: 'contact@maghrebpieces.tn', phone: '+216 71 777 666', address: 'Sousse'                  },
+    { name: 'Atlas Auto Imports',  email: 'sales@atlasauto.tn',      phone: '+216 71 555 777', address: 'Ariana'                  },
+    { name: 'Med Lubrifiants',     email: 'commande@medlub.tn',      phone: '+216 73 222 111', address: 'Sfax'                    },
+    { name: 'Tire World Tunisia',  email: 'pro@tireworld.tn',        phone: '+216 71 666 555', address: 'Ben Arous'               },
+    { name: 'PaintPro Maghreb',    email: 'b2b@paintpro.tn',         phone: '+216 73 444 888', address: 'Sousse'                  },
+  ];
+  const suppliers = await Promise.all(
+    supplierData.map(s => prisma.supplier.create({ data: { garageId: ctx.garage.id, ...s } })),
+  );
+
+  const catalog = buildPartsCatalog();
+  const parts = await Promise.all(
+    catalog.map((spec, i) => prisma.part.create({
+      data: {
+        garageId: ctx.garage.id,
+        supplierId: suppliers[i % suppliers.length].id,
+        name: spec.name,
+        partNumber: spec.partNumber,
+        category: spec.category,
+        quantity: spec.initialQty,
+        minQuantity: spec.minQuantity,
+        unitPrice: spec.unitPrice,
+        costPrice: spec.costPrice,
+        location: `Shelf ${String.fromCharCode(65 + (i % 8))}-${Math.floor(i / 8) + 1}`,
+      },
+    })),
+  );
+
+  console.log(`  ✓ inventory: ${suppliers.length} suppliers, ${parts.length} parts`);
+  return { suppliers, parts };
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// 4. Customers — built from archetype plan
+// ───────────────────────────────────────────────────────────────────────────
+type CustomerWithPlan = Awaited<ReturnType<typeof prisma.customer.create>> & { archetype: Archetype };
+
+async function seedCustomers(ctx: Ctx): Promise<CustomerWithPlan[]> {
+  const usedNames = new Set<string>();
+  const usedPhones = new Set<string>();
+
+  const out: CustomerWithPlan[] = [];
+
+  for (const plan of ARCHETYPE_PLAN) {
+    for (let i = 0; i < plan.count; i++) {
+      let firstName: string, lastName: string, key: string;
+      let attempts = 0;
+      do {
+        firstName = chance(0.55) ? pick(TUNISIAN_FIRSTS_M) : pick(TUNISIAN_FIRSTS_F);
+        lastName = pick(TUNISIAN_LASTS);
+        key = `${firstName} ${lastName}`;
+        attempts++;
+      } while (usedNames.has(key) && attempts < 50);
+      usedNames.add(key);
+
+      let phone: string;
+      do {
+        const prefix = pick(['20','21','22','23','24','25','26','27','28','29','50','55','58','90','95','97','98','99']);
+        phone = `+216 ${prefix} ${randInt(100,999)} ${randInt(100,999)}`;
+      } while (usedPhones.has(phone));
+      usedPhones.add(phone);
+
+      const address = pick(TUNISIAN_CITIES);
+      const email = chance(0.65)
+        ? `${firstName.toLowerCase().replace(/\s+/g,'.')}.${lastName.toLowerCase().replace(/\s+/g,'.')}@email.tn`
+        : null;
+
+      // Status: VIPs get VIP, churned go INACTIVE, rest ACTIVE
+      const status =
+        plan.kind === 'vip'     ? CustomerStatus.VIP :
+        plan.kind === 'churned' ? CustomerStatus.INACTIVE :
+                                   CustomerStatus.ACTIVE;
+
+      // createdAt: archetype-aware
+      let createdAt: Date;
+      if (plan.kind === 'new') {
+        createdAt = addDays(TODAY, -randInt(3, 25));
+      } else if (plan.kind === 'churned') {
+        createdAt = addDays(TODAY, -randInt(500, 900));
+      } else if (plan.kind === 'vip') {
+        createdAt = addDays(TODAY, -randInt(700, 1400));
+      } else if (plan.kind === 'atRisk') {
+        createdAt = addDays(TODAY, -randInt(300, 700));
+      } else {
+        createdAt = addDays(TODAY, -randInt(150, 600));
+      }
+
+      const c = await prisma.customer.create({
+        data: {
+          garageId: ctx.garage.id,
+          firstName, lastName, email, phone, address,
+          status,
+          loyaltyTier: null, // computed later
+          totalSpent: 0,     // computed later
+          visitCount: 0,     // computed later
+          smsOptIn: chance(0.85),
+          notes: plan.kind === 'churned' ? 'Hasn’t visited in 6+ months' :
+                 plan.kind === 'atRisk'  ? 'Visit cadence has slowed — follow up.' :
+                 plan.kind === 'vip'     ? 'VIP customer — priority handling.' :
+                 plan.kind === 'new'     ? 'New customer (April 2026).' : null,
+          createdAt,
+        },
+      });
+      out.push(Object.assign(c, { archetype: plan.kind }));
+    }
+  }
+
+  console.log(`  ✓ customers: ${out.length} (${ARCHETYPE_PLAN.map(p => `${p.count} ${p.kind}`).join(', ')})`);
+  return out;
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// 5. Cars — 1–2 per customer (mostly 1)
+// ───────────────────────────────────────────────────────────────────────────
+type CarWithCust = Awaited<ReturnType<typeof prisma.car.create>>;
+async function seedCars(ctx: Ctx, customers: CustomerWithPlan[]): Promise<CarWithCust[]> {
+  const cars: CarWithCust[] = [];
+  const usedPlates = new Set<string>();
+  const usedVins = new Set<string>();
+
+  for (const cust of customers) {
+    const carCount =
+      cust.archetype === 'vip'     ? (chance(0.5) ? 2 : 1) :
+      cust.archetype === 'regular' ? (chance(0.25) ? 2 : 1) :
+      cust.archetype === 'churned' ? 1 :
+      cust.archetype === 'new'     ? 1 :
+                                     (chance(0.15) ? 2 : 1);
+
+    for (let i = 0; i < carCount; i++) {
+      const make = pick(CAR_FLEET);
+      const model = pick(make.models);
+      const year = randInt(2014, 2025);
+      const mileage = (2026 - year) * randInt(8000, 18000) + randInt(0, 5000);
+
+      let plate: string;
+      do {
+        plate = `${randInt(1,9999).toString().padStart(3,'0')} TUN ${randInt(100,999)}`;
+      } while (usedPlates.has(plate));
+      usedPlates.add(plate);
+
+      let vin: string | null = null;
+      if (chance(0.7)) {
+        do {
+          vin = Array.from({length:17}, () => '0123456789ABCDEFGHJKLMNPRSTUVWXYZ'[Math.floor(rand()*32)]).join('');
+        } while (usedVins.has(vin));
+        usedVins.add(vin);
+      }
+
+      const car = await prisma.car.create({
+        data: {
+          garageId: ctx.garage.id,
+          customerId: cust.id,
+          make: make.make,
+          model,
+          year,
+          vin,
+          licensePlate: plate,
+          color: pick(COLORS),
+          mileage,
+          engineType: pick(ENGINES),
+          transmission: pick(TRANSMISSIONS),
+          // lastServiceDate / nextServiceDate computed in rollups
+        },
+      });
+      cars.push(car);
+    }
+  }
+
+  console.log(`  ✓ cars: ${cars.length}`);
+  return cars;
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// 6. Maintenance Jobs — paced visits per archetype
+// ───────────────────────────────────────────────────────────────────────────
+type GeneratedJob = {
+  id: string;
+  garageId: string;
+  customerId: string;
+  carId: string;
+  employeeId: string | null;
+  template: ServiceTemplate;
+  startDate: Date;
+  completionDate: Date | null;
+  status: MaintenanceStatus;
+  laborHours: number;
+  laborTotal: number;
+  partsConsumed: { partId: string; partName: string; qty: number; unitPrice: number; lineTotal: number; partNumber: string }[];
+  invoiceCandidate: boolean; // true if status COMPLETED past today
+};
+
+async function seedMaintenanceJobs(
+  ctx: Ctx,
+  customers: CustomerWithPlan[],
+  cars: CarWithCust[],
+  parts: Awaited<ReturnType<typeof prisma.part.create>>[],
+): Promise<GeneratedJob[]> {
+  const partsByCategory = new Map<string, typeof parts>();
+  for (const p of parts) {
+    if (!partsByCategory.has(p.category!)) partsByCategory.set(p.category!, []);
+    partsByCategory.get(p.category!)!.push(p);
+  }
+
+  // Mirror Part.quantity locally so we can simulate stock without going negative
+  const stockOnHand = new Map<string, number>();
+  for (const p of parts) stockOnHand.set(p.id, p.quantity);
+
+  // Build per-customer visit schedule
+  const carsByCust = new Map<string, typeof cars>();
+  for (const c of cars) {
+    if (!carsByCust.has(c.customerId)) carsByCust.set(c.customerId, []);
+    carsByCust.get(c.customerId)!.push(c);
+  }
+
+  // Distribute visits per customer
+  type Visit = { cust: CustomerWithPlan; car: typeof cars[number]; date: Date };
+  const visits: Visit[] = [];
+
+  for (const cust of customers) {
+    const carsOfCust = carsByCust.get(cust.id) ?? [];
+    if (carsOfCust.length === 0) continue;
+
+    if (cust.archetype === 'vip') {
+      // 12–16 visits Jan→Apr 27 (≈3–4 per month)
+      const n = randInt(12, 16);
+      visits.push(...spreadVisits(cust, carsOfCust, YEAR_START, addDays(TODAY, -1), n));
+    } else if (cust.archetype === 'regular') {
+      // 4–6 visits Jan→Apr 27
+      const n = randInt(4, 6);
+      visits.push(...spreadVisits(cust, carsOfCust, YEAR_START, addDays(TODAY, -1), n));
+    } else if (cust.archetype === 'occasional') {
+      const n = randInt(2, 3);
+      visits.push(...spreadVisits(cust, carsOfCust, YEAR_START, addDays(TODAY, -1), n));
+    } else if (cust.archetype === 'atRisk') {
+      // Last visit 90–110 days ago, 1–2 earlier visits
+      const lastVisit = addDays(TODAY, -randInt(90, 110));
+      const earlier = randInt(1, 2);
+      const earlierStart = addDays(lastVisit, -randInt(60, 120));
+      visits.push(...spreadVisits(cust, carsOfCust, earlierStart, addDays(lastVisit, -1), earlier));
+      visits.push({ cust, car: pick(carsOfCust), date: lastVisit });
+    } else if (cust.archetype === 'churned') {
+      // Last visit 200–280 days ago (in 2025), so NO 2026 maintenance jobs.
+      // Skip — they have no visits in our seed window.
+    } else if (cust.archetype === 'new') {
+      // Created ≤25 days ago, has 1 visit in last 14 days
+      const visitDate = addDays(TODAY, -randInt(2, 14));
+      visits.push({ cust, car: pick(carsOfCust), date: visitDate });
+    }
+  }
+
+  // Sort visits chronologically
+  visits.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+  // Materialize each visit as a MaintenanceJob (status COMPLETED for past dates)
+  const jobs: GeneratedJob[] = [];
+
+  for (const v of visits) {
+    const tpl = pickService(v.cust.archetype);
+    const employee = pickEmployeeFor(ctx.employees, tpl);
+
+    const startDate = setHM(v.date, randInt(8, 15), pick([0, 30]));
+    const laborHours = round(randFloat(tpl.laborHours[0], tpl.laborHours[1]), 1);
+    const completion = setHM(addDays(startDate, 0), startDate.getUTCHours() + Math.ceil(laborHours), 0);
+    const laborTotal = round(laborHours * tpl.laborRate, 2);
+
+    // Pick parts respecting category/name matching + stock availability
+    const consumed: GeneratedJob['partsConsumed'] = [];
+    for (const need of tpl.partsNeeded) {
+      const candidates = (partsByCategory.get(need.category) ?? []).filter(p =>
+        !need.namePrefix || p.name.toLowerCase().startsWith(need.namePrefix.toLowerCase()),
+      );
+      if (candidates.length === 0) continue;
+      // Try top 3 by stock until one has enough
+      const sorted = candidates.slice().sort((a, b) => (stockOnHand.get(b.id) ?? 0) - (stockOnHand.get(a.id) ?? 0));
+      for (const cand of sorted.slice(0, 3)) {
+        const qty = need.qty ?? 1;
+        if ((stockOnHand.get(cand.id) ?? 0) >= qty) {
+          stockOnHand.set(cand.id, (stockOnHand.get(cand.id) ?? 0) - qty);
+          consumed.push({
+            partId: cand.id,
+            partName: cand.name,
+            partNumber: cand.partNumber ?? '',
+            qty,
+            unitPrice: cand.unitPrice,
+            lineTotal: round(qty * cand.unitPrice, 2),
+          });
+          break;
+        }
+      }
+    }
+
+    const job = await prisma.maintenanceJob.create({
+      data: {
+        garageId: ctx.garage.id,
+        carId: v.car.id,
+        employeeId: employee?.id ?? null,
+        title: tpl.title,
+        description: `${tpl.title} for ${v.car.make} ${v.car.model} (${v.car.licensePlate})`,
+        status: MaintenanceStatus.COMPLETED,
+        priority: weightedPriority(tpl),
+        estimatedHours: tpl.laborHours[1],
+        actualHours: laborHours,
+        estimatedCost: round(tpl.laborHours[1] * tpl.laborRate + consumed.reduce((s, c) => s + c.lineTotal, 0), 2),
+        actualCost: round(laborTotal + consumed.reduce((s, c) => s + c.lineTotal, 0), 2),
+        startDate,
+        completionDate: completion,
+        notes: chance(0.25) ? 'Customer informed; pickup confirmed.' : null,
+      },
+    });
+
+    // tasks (1–3 simple ones marked done)
+    const taskTitles = pickN([
+      'Diagnostic check', 'Drain & refill fluids', 'Inspect & torque',
+      'Replace consumed parts', 'Test drive', 'Final QC',
+    ], randInt(2, 3));
+    for (const t of taskTitles) {
+      await prisma.maintenanceTask.create({
+        data: {
+          maintenanceJobId: job.id,
+          title: t,
+          isCompleted: true,
+          estimatedMinutes: randInt(20, 90),
+          actualMinutes: randInt(15, 100),
+        },
+      });
+    }
+
+    jobs.push({
+      id: job.id,
+      garageId: ctx.garage.id,
+      customerId: v.cust.id,
+      carId: v.car.id,
+      employeeId: employee?.id ?? null,
+      template: tpl,
+      startDate,
+      completionDate: completion,
+      status: MaintenanceStatus.COMPLETED,
+      laborHours,
+      laborTotal,
+      partsConsumed: consumed,
+      invoiceCandidate: true,
+    });
+  }
+
+  // A few in-progress / waiting jobs for current state realism
+  const inProgressCount = 4;
+  for (let i = 0; i < inProgressCount; i++) {
+    const cust = pick(customers.filter(c => c.archetype === 'regular' || c.archetype === 'vip'));
+    const carsOfCust = carsByCust.get(cust.id) ?? [];
+    if (carsOfCust.length === 0) continue;
+    const car = pick(carsOfCust);
+    const tpl = pick(SERVICES);
+    const startDate = setHM(addDays(TODAY, -randInt(0, 2)), randInt(8, 11), 0);
+    const status = pick([MaintenanceStatus.IN_PROGRESS, MaintenanceStatus.QUALITY_CHECK, MaintenanceStatus.WAITING_PARTS] as const);
+    const laborHours = round(randFloat(tpl.laborHours[0], tpl.laborHours[1]), 1);
+    const job = await prisma.maintenanceJob.create({
+      data: {
+        garageId: ctx.garage.id,
+        carId: car.id,
+        employeeId: pickEmployeeFor(ctx.employees, tpl)?.id ?? null,
+        title: tpl.title,
+        description: `${tpl.title} for ${car.make} ${car.model}`,
+        status,
+        priority: weightedPriority(tpl),
+        estimatedHours: tpl.laborHours[1],
+        estimatedCost: round(tpl.laborHours[1] * tpl.laborRate + 100, 2),
+        startDate,
+      },
+    });
+    jobs.push({
+      id: job.id,
+      garageId: ctx.garage.id,
+      customerId: cust.id,
+      carId: car.id,
+      employeeId: null,
+      template: tpl,
+      startDate,
+      completionDate: null,
+      status,
+      laborHours,
+      laborTotal: round(laborHours * tpl.laborRate, 2),
+      partsConsumed: [],
+      invoiceCandidate: false,
+    });
+  }
+
+  console.log(`  ✓ maintenance jobs: ${jobs.length} (${jobs.filter(j => j.status === MaintenanceStatus.COMPLETED).length} completed, ${jobs.length - jobs.filter(j => j.status === MaintenanceStatus.COMPLETED).length} in-progress)`);
+  return jobs;
+}
+
+function spreadVisits(cust: CustomerWithPlan, cars: CarWithCust[], from: Date, to: Date, n: number) {
+  const span = to.getTime() - from.getTime();
+  const out: { cust: CustomerWithPlan; car: CarWithCust; date: Date }[] = [];
+  for (let i = 0; i < n; i++) {
+    const t = from.getTime() + (span * (i + rand() * 0.6) / n);
+    let d = new Date(t);
+    while (!isWorkingDay(d)) d = addDays(d, 1);
+    out.push({ cust, car: pick(cars), date: d });
+  }
+  return out;
+}
+
+function pickService(arch: Archetype): ServiceTemplate {
+  // Bias: VIP gets a wider variety incl bodywork; new customers get oil-change-ish first visits
+  if (arch === 'new') {
+    const fresh = SERVICES.filter(s => s.type === 'oil-change' || s.type === 'inspection');
+    return pick(fresh);
+  }
+  if (arch === 'vip') return pick(SERVICES);
+  // Bias regulars/occasional toward maintenance basics
+  const weights = SERVICES.map(s =>
+    s.type === 'oil-change' ? 4 :
+    s.type === 'brake-service' ? 3 :
+    s.type === 'tire-replacement' ? 2 :
+    s.type === 'electrical' ? 2 :
+    s.type === 'inspection' ? 2 :
+    s.type === 'engine-diagnostics' ? 1.5 :
+    s.type === 'transmission' ? 1 :
+    s.type === 'bodywork' ? 1 :
+    1,
+  );
+  const total = weights.reduce((a, b) => a + b, 0);
+  let r = rand() * total;
+  for (let i = 0; i < SERVICES.length; i++) {
+    r -= weights[i];
+    if (r < 0) return SERVICES[i];
+  }
+  return SERVICES[0];
+}
+
+function pickEmployeeFor(employees: Ctx['employees'], tpl: ServiceTemplate) {
+  const wantDept =
+    tpl.type === 'electrical'         ? EmployeeDepartment.ELECTRICAL :
+    tpl.type === 'bodywork'           ? EmployeeDepartment.BODYWORK :
+    tpl.type === 'tire-replacement'   ? EmployeeDepartment.TIRE_ALIGNMENT :
+                                        EmployeeDepartment.MECHANICAL;
+  const matches = employees.filter(e => e.department === wantDept);
+  return matches.length ? pick(matches) : pick(employees);
+}
+
+function weightedPriority(tpl: ServiceTemplate): string {
+  const total = tpl.priorityWeights.low + tpl.priorityWeights.medium + tpl.priorityWeights.high;
+  const r = rand() * total;
+  if (r < tpl.priorityWeights.low) return 'low';
+  if (r < tpl.priorityWeights.low + tpl.priorityWeights.medium) return 'medium';
+  return 'high';
+}
+
+const round = (n: number, places: number) => Math.round(n * 10 ** places) / 10 ** places;
+
+// ───────────────────────────────────────────────────────────────────────────
+// 7. Invoices — generated 1:1 from completed jobs
+// ───────────────────────────────────────────────────────────────────────────
+async function seedInvoicesFromJobs(
+  ctx: Ctx,
+  jobs: GeneratedJob[],
+  parts: Awaited<ReturnType<typeof prisma.part.create>>[],
+) {
+  const TAX_RATE = 0.19;
+  let invoiceCounter: Record<string, number> = {};
+  const monthKey = (d: Date) => `${d.getUTCFullYear()}${(d.getUTCMonth() + 1).toString().padStart(2, '0')}`;
+
+  const completed = jobs.filter(j => j.invoiceCandidate);
+  const invoices: Awaited<ReturnType<typeof prisma.invoice.create>>[] = [];
+
+  // Status mix: 70% PAID, 15% SENT, 10% OVERDUE, 5% DRAFT (only for very recent jobs)
+  for (const job of completed) {
+    const ageDays = (TODAY.getTime() - (job.completionDate ?? job.startDate).getTime()) / 86400000;
+    let status: InvoiceStatus;
+    const r = rand();
+    if (ageDays > 30) {
+      // Older: most paid, some overdue
+      status = r < 0.85 ? InvoiceStatus.PAID : r < 0.95 ? InvoiceStatus.OVERDUE : InvoiceStatus.SENT;
+    } else if (ageDays > 14) {
+      status = r < 0.7 ? InvoiceStatus.PAID : r < 0.9 ? InvoiceStatus.SENT : InvoiceStatus.OVERDUE;
+    } else if (ageDays > 5) {
+      status = r < 0.45 ? InvoiceStatus.PAID : r < 0.85 ? InvoiceStatus.SENT : InvoiceStatus.DRAFT;
+    } else {
+      status = r < 0.2 ? InvoiceStatus.PAID : r < 0.6 ? InvoiceStatus.SENT : InvoiceStatus.DRAFT;
+    }
+
+    const subtotal = round(job.laborTotal + job.partsConsumed.reduce((s, p) => s + p.lineTotal, 0), 2);
+    const discount = job.template.type === 'inspection' && chance(0.2) ? round(subtotal * 0.05, 2) : 0;
+    const taxedBase = subtotal - discount;
+    const taxAmount = round(taxedBase * TAX_RATE, 2);
+    const total = round(taxedBase + taxAmount, 2);
+
+    const mk = monthKey(job.completionDate ?? job.startDate);
+    invoiceCounter[mk] = (invoiceCounter[mk] ?? 0) + 1;
+    const invoiceNumber = `INV-${mk}-${invoiceCounter[mk].toString().padStart(4, '0')}`;
+
+    const createdAt = job.completionDate ?? job.startDate;
+    const dueDate = addDays(createdAt, 14);
+    const paidAt = status === InvoiceStatus.PAID ? addDays(createdAt, randInt(0, 12)) : null;
+
+    const invoice = await prisma.invoice.create({
+      data: {
+        garageId: ctx.garage.id,
+        customerId: job.customerId,
+        carId: job.carId,
+        invoiceNumber,
+        status,
+        subtotal,
+        discount,
+        taxAmount,
+        total,
+        dueDate,
+        paidAt,
+        notes: status === InvoiceStatus.OVERDUE ? 'Reminder sent — payment overdue.' : null,
+        createdAt,
+      },
+    });
+
+    // Line items: one labor + one per part
+    await prisma.invoiceLineItem.create({
+      data: {
+        invoiceId: invoice.id,
+        description: `Labor — ${job.template.title} (${job.laborHours}h)`,
+        quantity: job.laborHours,
+        unitPrice: job.template.laborRate,
+        total: job.laborTotal,
+        type: 'labor',
+      },
+    });
+    for (const part of job.partsConsumed) {
+      await prisma.invoiceLineItem.create({
+        data: {
+          invoiceId: invoice.id,
+          description: `${part.partName}${part.partNumber ? ` (${part.partNumber})` : ''}`,
+          quantity: part.qty,
+          unitPrice: part.unitPrice,
+          total: part.lineTotal,
+          type: 'part',
+        },
+      });
+    }
+
+    if (status === InvoiceStatus.PAID && paidAt) {
+      const method = pick([PaymentMethod.CASH, PaymentMethod.CARD, PaymentMethod.BANK_TRANSFER, PaymentMethod.MOBILE_PAYMENT] as const);
+      await prisma.payment.create({
+        data: {
+          invoiceId: invoice.id,
+          amount: total,
+          method,
+          paidAt,
+          reference: method === PaymentMethod.BANK_TRANSFER ? `TR-${randInt(100000, 999999)}` : null,
+        },
+      });
+    }
+
+    invoices.push(invoice);
+  }
+
+  console.log(`  ✓ invoices: ${invoices.length} (${invoices.filter(i => i.status === InvoiceStatus.PAID).length} paid, ${invoices.filter(i => i.status === InvoiceStatus.SENT).length} sent, ${invoices.filter(i => i.status === InvoiceStatus.OVERDUE).length} overdue, ${invoices.filter(i => i.status === InvoiceStatus.DRAFT).length} draft)`);
+  return invoices;
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// 8. Stock movements — OUT per consumed part + monthly IN restocks
+// ───────────────────────────────────────────────────────────────────────────
+async function seedStockMovements(
+  ctx: Ctx,
+  jobs: GeneratedJob[],
+  parts: Awaited<ReturnType<typeof prisma.part.create>>[],
+) {
+  let outCount = 0;
+  let inCount = 0;
+
+  // OUT: one per consumed part per job
+  for (const job of jobs) {
+    for (const p of job.partsConsumed) {
+      await prisma.stockMovement.create({
+        data: {
+          partId: p.partId,
+          type: 'out',
+          quantity: p.qty,
+          reason: `Job ${job.template.title}`,
+          reference: `MAINT-${job.id.slice(0, 8)}`,
+          createdAt: job.completionDate ?? job.startDate,
+        },
+      });
+      outCount++;
+    }
+  }
+
+  // IN: monthly restocks Jan 5, Feb 5, Mar 5, Apr 5 — restock parts that fell below 1.5x minQuantity
+  const restockDates = [
+    new Date('2026-01-05T08:00:00Z'),
+    new Date('2026-02-05T08:00:00Z'),
+    new Date('2026-03-05T08:00:00Z'),
+    new Date('2026-04-05T08:00:00Z'),
+  ];
+  for (const restockDate of restockDates) {
+    // Compute notional stock at this date by walking OUT movements
+    const stockSnapshot = new Map<string, number>();
+    for (const p of parts) stockSnapshot.set(p.id, p.quantity);
+    for (const job of jobs) {
+      const when = job.completionDate ?? job.startDate;
+      if (when < restockDate) {
+        for (const c of job.partsConsumed) {
+          stockSnapshot.set(c.partId, (stockSnapshot.get(c.partId) ?? 0) - c.qty);
+        }
+      }
+    }
+    for (const p of parts) {
+      const cur = stockSnapshot.get(p.id) ?? 0;
+      if (cur < p.minQuantity * 1.5) {
+        const restockQty = Math.max(p.minQuantity * 2 - cur, 0);
+        if (restockQty > 0) {
+          await prisma.stockMovement.create({
+            data: {
+              partId: p.id,
+              type: 'in',
+              quantity: restockQty,
+              reason: 'Monthly restock',
+              reference: `PO-${fmt(restockDate)}`,
+              createdAt: restockDate,
+            },
+          });
+          inCount++;
+        }
+      }
+    }
+  }
+
+  // Now update part.quantity = initial + IN - OUT (final state for AI tools)
+  const partRefresh = await prisma.part.findMany();
+  for (const p of partRefresh) {
+    const movements = await prisma.stockMovement.findMany({ where: { partId: p.id } });
+    const delta = movements.reduce((s, m) => s + (m.type === 'in' ? m.quantity : -m.quantity), 0);
+    const newQty = Math.max(0, p.quantity + delta);
+    await prisma.part.update({ where: { id: p.id }, data: { quantity: newQty } });
+  }
+
+  console.log(`  ✓ stock movements: ${outCount} out, ${inCount} in`);
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// 9. Appointments — past completed (1 per job) + future scheduled
+// ───────────────────────────────────────────────────────────────────────────
+async function seedAppointments(
+  ctx: Ctx,
+  customers: CustomerWithPlan[],
+  cars: CarWithCust[],
+  jobs: GeneratedJob[],
+) {
+  // Past appointments: every COMPLETED job has a corresponding appointment
+  let past = 0;
+  for (const job of jobs.filter(j => j.status === MaintenanceStatus.COMPLETED && j.completionDate)) {
+    const car = cars.find(c => c.id === job.carId)!;
+    const cust = customers.find(c => c.id === car.customerId)!;
+    const start = job.startDate;
+    const end = setHM(start, start.getUTCHours() + Math.max(1, Math.ceil(job.laborHours)));
+    await prisma.appointment.create({
+      data: {
+        garageId: ctx.garage.id,
+        customerId: cust.id,
+        carId: car.id,
+        employeeId: job.employeeId,
+        title: job.template.title,
+        type: job.template.type,
+        priority: weightedPriority(job.template),
+        status: AppointmentStatus.COMPLETED,
+        startTime: start,
+        endTime: end,
+      },
+    });
+    past++;
+  }
+
+  // Future appointments: ~150 across May→Dec, biased to next 6 weeks
+  let future = 0;
+  const futureStart = addDays(TODAY, 1);
+  const customersForFuture = customers.filter(c => c.archetype !== 'churned');
+  for (let i = 0; i < 150; i++) {
+    const cust = pick(customersForFuture);
+    const carsOfCust = cars.filter(c => c.customerId === cust.id);
+    if (carsOfCust.length === 0) continue;
+    const car = pick(carsOfCust);
+    const tpl = pickService(cust.archetype);
+    const employee = pickEmployeeFor(ctx.employees, tpl);
+
+    // Bias: 60% in next 6 weeks, 40% spread May→Dec
+    let date: Date;
+    if (chance(0.6)) {
+      date = addDays(futureStart, randInt(0, 42));
+    } else {
+      const remainingDays = Math.floor((YEAR_END.getTime() - addDays(futureStart, 42).getTime()) / 86400000);
+      date = addDays(addDays(futureStart, 42), randInt(0, remainingDays));
+    }
+    while (!isWorkingDay(date)) date = addDays(date, 1);
+
+    const startHour = randInt(8, 15);
+    const start = setHM(date, startHour, pick([0, 30]));
+    const durationH = Math.max(1, Math.ceil(randFloat(tpl.laborHours[0], tpl.laborHours[1])));
+    const end = setHM(start, startHour + durationH);
+
+    const status = chance(0.35)
+      ? AppointmentStatus.CONFIRMED
+      : chance(0.95) // 0.65 * (1 - 0.05) ≈ 0.62 SCHEDULED, ~0.03 CANCELLED
+        ? AppointmentStatus.SCHEDULED
+        : AppointmentStatus.CANCELLED;
+
+    await prisma.appointment.create({
+      data: {
+        garageId: ctx.garage.id,
+        customerId: cust.id,
+        carId: car.id,
+        employeeId: employee?.id ?? null,
+        title: tpl.title,
+        type: tpl.type,
+        priority: weightedPriority(tpl),
+        status,
+        startTime: start,
+        endTime: end,
+      },
+    });
+    future++;
+  }
+
+  console.log(`  ✓ appointments: ${past + future} (${past} past completed + ${future} future)`);
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// 10. AI actions — retention drafts/sent for at-risk + churned
+// ───────────────────────────────────────────────────────────────────────────
+async function seedAiActions(ctx: Ctx, customers: CustomerWithPlan[]) {
+  const targets = customers.filter(c => c.archetype === 'atRisk' || c.archetype === 'churned');
+  let count = 0;
+  for (const c of targets) {
+    const isSent = chance(0.5);
+    const churnRisk = c.archetype === 'churned' ? randFloat(0.85, 0.98) : randFloat(0.55, 0.78);
+    const factors = c.archetype === 'churned'
+      ? ['silent_6+_months', 'inactive_status']
+      : ['silent_3+_months', 'declining_visit_frequency'];
+
+    await prisma.aiAction.create({
+      data: {
+        garageId: ctx.garage.id,
+        customerId: c.id,
+        kind: AiActionKind.DISCOUNT_SMS,
+        status: isSent ? AiActionStatus.SENT : AiActionStatus.DRAFT,
+        messageBody: `Bonjour ${c.firstName}, ça fait un moment ! Profitez de -15% sur votre prochaine visite chez AutoTech. Code: REVIENS15`,
+        discountKind: DiscountKind.PERCENT,
+        discountValue: 15,
+        expiresAt: addDays(TODAY, 30),
+        churnRiskSnapshot: round(churnRisk, 2),
+        factorsSnapshot: factors,
+        sentAt: isSent ? addDays(TODAY, -randInt(1, 7)) : null,
+      },
+    });
+    count++;
+  }
+  console.log(`  ✓ ai actions: ${count} retention drafts/sent for at-risk + churned`);
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// 11. Notifications
+// ───────────────────────────────────────────────────────────────────────────
+async function seedNotifications(ctx: Ctx) {
+  const lowParts = await prisma.part.findMany({ where: { quantity: { lte: 5 } }, take: 3 });
+  const overdueInv = await prisma.invoice.findFirst({ where: { status: InvoiceStatus.OVERDUE } });
+  await prisma.notification.create({
+    data: {
+      garageId: ctx.garage.id,
+      userId: ctx.owner.id,
+      type: NotificationType.SYSTEM,
+      title: 'Welcome to AutoTech',
+      message: 'Demo data loaded. Try asking the assistant about your top customers, low stock parts, or overdue invoices.',
+      isRead: false,
+    },
+  });
+  for (const p of lowParts) {
+    await prisma.notification.create({
+      data: {
+        garageId: ctx.garage.id,
+        userId: ctx.owner.id,
+        type: NotificationType.LOW_STOCK,
+        title: 'Low Stock Alert',
+        message: `${p.name} (${p.partNumber}) — only ${p.quantity} remaining (min ${p.minQuantity})`,
+        isRead: false,
+      },
+    });
+  }
+  if (overdueInv) {
+    await prisma.notification.create({
+      data: {
+        garageId: ctx.garage.id,
+        userId: ctx.owner.id,
+        type: NotificationType.INVOICE_OVERDUE,
+        title: 'Overdue Invoice',
+        message: `Invoice ${overdueInv.invoiceNumber} is overdue (${overdueInv.total} TND).`,
+        isRead: false,
+      },
+    });
+  }
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// 12. Compute rollups — DERIVED FROM TRANSACTIONS, not literals
+// ───────────────────────────────────────────────────────────────────────────
+async function computeRollups() {
+  // Customer.totalSpent = SUM(invoices.total WHERE status=PAID)
+  // Customer.visitCount = COUNT(MaintenanceJob WHERE status=COMPLETED)
+  // Customer.loyaltyTier = derive from totalSpent
+  const customers = await prisma.customer.findMany({ select: { id: true, status: true } });
+  for (const c of customers) {
+    const paidAgg = await prisma.invoice.aggregate({
+      where: { customerId: c.id, status: InvoiceStatus.PAID },
+      _sum: { total: true },
+    });
+    const totalSpent = round(paidAgg._sum.total ?? 0, 2);
+
+    // visitCount = completed maintenance jobs across all customer's cars
+    const carIds = (await prisma.car.findMany({ where: { customerId: c.id }, select: { id: true } })).map(x => x.id);
+    const visitCount = carIds.length === 0 ? 0 : await prisma.maintenanceJob.count({
+      where: { carId: { in: carIds }, status: MaintenanceStatus.COMPLETED },
+    });
+
+    let loyaltyTier: string | null = null;
+    if (totalSpent >= 3000) loyaltyTier = 'gold';
+    else if (totalSpent >= 1500) loyaltyTier = 'silver';
+    else if (totalSpent >= 500) loyaltyTier = 'bronze';
+
+    await prisma.customer.update({
+      where: { id: c.id },
+      data: { totalSpent, visitCount, loyaltyTier },
+    });
+  }
+
+  // Car.lastServiceDate = MAX(MaintenanceJob.completionDate)
+  // Car.nextServiceDate = lastServiceDate + 6 months
+  // Car.totalServices isn't a column — but lastService dates ARE.
+  const cars = await prisma.car.findMany({ select: { id: true } });
+  for (const c of cars) {
+    const lastJob = await prisma.maintenanceJob.findFirst({
+      where: { carId: c.id, status: MaintenanceStatus.COMPLETED, completionDate: { not: null } },
+      orderBy: { completionDate: 'desc' },
+      select: { completionDate: true },
+    });
+    if (lastJob?.completionDate) {
+      const next = new Date(lastJob.completionDate);
+      next.setUTCMonth(next.getUTCMonth() + 6);
+      await prisma.car.update({
+        where: { id: c.id },
+        data: { lastServiceDate: lastJob.completionDate, nextServiceDate: next },
+      });
+    }
+  }
+
+  console.log('  ✓ rollups computed (totalSpent, visitCount, loyaltyTier, lastServiceDate, nextServiceDate)');
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// 13. Verify integrity — fail loudly if anything is incoherent
+// ───────────────────────────────────────────────────────────────────────────
+async function verifyIntegrity() {
+  const errors: string[] = [];
+  const near = (a: number, b: number, eps = 0.05) => Math.abs(a - b) < eps;
+
+  // Invoice arithmetic
+  const invoices = await prisma.invoice.findMany({ include: { lineItems: true, payments: true } });
+  for (const inv of invoices) {
+    const expected = round((inv.subtotal - inv.discount) * 1.19, 2);
+    if (Math.abs(expected - inv.total) > 0.5 && Math.abs(inv.taxAmount - round((inv.subtotal - inv.discount) * 0.19, 2)) > 0.5) {
+      errors.push(`invoice ${inv.invoiceNumber} total ${inv.total} ≠ ${expected}`);
+    }
+    const linesum = round(inv.lineItems.reduce((s, li) => s + li.total, 0), 2);
+    if (!near(linesum, inv.subtotal, 0.5)) {
+      errors.push(`invoice ${inv.invoiceNumber} lineSum ${linesum} ≠ subtotal ${inv.subtotal}`);
+    }
+    if (inv.lineItems.length === 0) {
+      errors.push(`invoice ${inv.invoiceNumber} has no line items`);
+    }
+    if (inv.status === InvoiceStatus.PAID) {
+      const paid = inv.payments.reduce((s, p) => s + p.amount, 0);
+      if (!near(paid, inv.total, 0.5)) errors.push(`invoice ${inv.invoiceNumber} status=PAID but payments ${paid} ≠ total ${inv.total}`);
+      if (!inv.paidAt) errors.push(`invoice ${inv.invoiceNumber} status=PAID but no paidAt`);
+    }
+  }
+
+  // Customer rollups
+  const customers = await prisma.customer.findMany();
+  for (const c of customers) {
+    const paidSum = await prisma.invoice.aggregate({ where: { customerId: c.id, status: InvoiceStatus.PAID }, _sum: { total: true } });
+    const expected = round(paidSum._sum.total ?? 0, 2);
+    if (!near(expected, c.totalSpent, 0.5)) {
+      errors.push(`customer ${c.firstName} ${c.lastName} totalSpent ${c.totalSpent} ≠ paid invoices sum ${expected}`);
+    }
+  }
+
+  // Appointments — startTime < endTime
+  const apps = await prisma.appointment.findMany({ select: { id: true, startTime: true, endTime: true } });
+  for (const a of apps) {
+    if (a.endTime.getTime() <= a.startTime.getTime()) {
+      errors.push(`appointment ${a.id} has endTime ≤ startTime`);
+    }
+  }
+
+  // Inventory non-negative
+  const parts = await prisma.part.findMany({ select: { id: true, name: true, quantity: true } });
+  for (const p of parts) {
+    if (p.quantity < 0) errors.push(`part ${p.name} quantity ${p.quantity} < 0`);
+  }
+
+  if (errors.length) {
+    console.error(`\n❌ Integrity check failed with ${errors.length} errors:`);
+    for (const e of errors.slice(0, 20)) console.error('   ' + e);
+    if (errors.length > 20) console.error(`   ...+${errors.length - 20} more`);
+    throw new Error('Seed verification failed');
+  }
+  console.log(`  ✓ integrity verified: ${invoices.length} invoices, ${customers.length} customers, ${apps.length} appointments, ${parts.length} parts`);
 }
 
 main()
