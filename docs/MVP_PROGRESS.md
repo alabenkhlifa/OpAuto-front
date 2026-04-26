@@ -80,6 +80,30 @@
 - [x] Customer Churn Prediction — identify at-risk customers, backend endpoint, UI display
 - [x] Executable Churn AI actions (2026-04-21) — AI drafts French SMS + optional %/TND discount; manager one-click approves → Twilio send (mock driver by default, swap via `SMS_PROVIDER=twilio`). New `AiAction` table (DRAFT→APPROVED→SENT/FAILED→REDEEMED/EXPIRED lifecycle), `Customer.smsOptIn` opt-out, inline approval on At-Risk card, `/ai/actions` REST endpoints, 17 new tests.
 
+## AI Orchestrator (Session 2026-04-26 — in progress)
+> Full design spec: `docs/superpowers/specs/2026-04-26-ai-orchestrator-design.md`. Goal: Claude-Code-style chat assistant with tool-calling, voice (Web Speech API), Groq-first / Claude-fallback LLM routing, blast-tier-based approval gating, persistent conversations.
+
+**Phase 0 — Foundations (sequential):**
+- [x] Prisma models — `AssistantConversation`, `AssistantMessage`, `AssistantToolCall` + 3 new enums. Migration must be run with DB available.
+- [x] Email module skeleton — `opauto-backend/src/email/` (Resend driver + mock + factory provider). New env vars: `RESEND_API_KEY`, `RESEND_FROM`, `EMAIL_PROVIDER`.
+- [x] Assistant module skeleton — `opauto-backend/src/assistant/` (controller with SSE chat endpoint, shared types, DTOs, stub services). Wired into `app.module.ts`.
+
+**Phase 1 — Backend core (parallel subagents A–F, in progress):**
+- [ ] Subagent A — Orchestrator + LLM Gateway (Groq-first, Claude fallback, tool-calling, SSE streaming, iteration cap)
+- [ ] Subagent B — Tool Registry (Ajv validation, module/role filtering, blast-tier resolution, timed handler execution)
+- [ ] Subagent C — Skill Registry (markdown loading, frontmatter, en/fr/ar locale fallback)
+- [ ] Subagent D — Agent Runner (sub-LLM contexts with tool whitelists)
+- [ ] Subagent E — Approval Service (deferred-turn state machine, 5-min expiry, typed-confirm validation)
+- [ ] Subagent F — Conversation Service (sliding-window history, title generation)
+
+**Phase 2 — Tool catalog (parallel subagents G–L, pending):** analytics, customers/cars, appointments, invoicing/inventory, communications, reports.
+
+**Phase 3 — Frontend chat widget (parallel subagents M–Q, pending):** floating launcher, message list, voice/input, approval cards, conversation history.
+
+**Phase 4 — Skills + agents (parallel subagents R–T, pending):** 4 skills × 3 locales, 3 agents (Analytics, Communications, Growth), integration tests.
+
+**Phase 5 — Hardening (sequential, pending):** rate limiting, cost cap, e2e via Chrome DevTools MCP, cross-browser voice, i18n key sync.
+
 ## Infrastructure Fixes (Session 2026-03-28)
 - [x] Tailwind v4 source scanning — utility classes (w-6, h-6) now generated correctly
 - [x] Mobile hamburger menu visibility — z-index fix + orange accent

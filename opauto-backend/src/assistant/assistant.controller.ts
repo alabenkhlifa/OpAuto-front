@@ -63,11 +63,18 @@ export class AssistantController {
 
   @Post('approvals/:id/decide')
   async decide(
-    @CurrentUser('userId') userId: string,
+    @CurrentUser() user: any,
     @Param('id') id: string,
     @Body() dto: ApprovalDecisionDto,
   ) {
-    return this.approvals.decide(id, dto.decision, userId, dto.typedConfirmation);
+    const userId = user.userId ?? user.id;
+    return this.approvals.decide(
+      id,
+      dto.decision,
+      userId,
+      user.garageId,
+      dto.typedConfirmation,
+    );
   }
 
   @Get('conversations')
