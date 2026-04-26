@@ -9,7 +9,12 @@ import {
 } from './types';
 
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_MODEL = 'llama-3.3-70b-versatile';
+// openai/gpt-oss-20b is OpenAI's open-weight model hosted on Groq. Tool-call
+// reliability with large schemas (~25 tools) is markedly better than
+// llama-3.3-70b-versatile, which consistently emits malformed JSON in this
+// configuration. Keep llama-3.3 commented for quick A/B if needed.
+const GROQ_MODEL = 'openai/gpt-oss-20b';
+// const GROQ_MODEL = 'llama-3.3-70b-versatile';
 
 const CLAUDE_URL = 'https://api.anthropic.com/v1/messages';
 // Match the model id used in the existing AiService so we share a single
