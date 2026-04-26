@@ -9,12 +9,23 @@ import {
 } from './types';
 
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
-// openai/gpt-oss-20b is OpenAI's open-weight model hosted on Groq. Tool-call
-// reliability with large schemas (~25 tools) is markedly better than
-// llama-3.3-70b-versatile, which consistently emits malformed JSON in this
-// configuration. Keep llama-3.3 commented for quick A/B if needed.
-const GROQ_MODEL = 'openai/gpt-oss-20b';
-// const GROQ_MODEL = 'llama-3.3-70b-versatile';
+// llama-3.1-8b-instant: non-reasoning, fast, supports OpenAI-format
+// tool-calling, and fits the classifier-narrowed (≤5) tool list cleanly
+// inside the 1024-token budget. With the IntentClassifierService
+// pre-filter this model now selects the right tool reliably without
+// burning budget on reasoning (which is what blew up gpt-oss-20b and
+// qwen3-32b — both reasoning models, both starved their content/tool
+// output).
+//
+// Tested + rejected:
+//  - llama-3.3-70b-versatile: malformed JSON with 25 tools, narrates
+//    instead of calling with ≤5 tools.
+//  - openai/gpt-oss-20b: emits tool_calls but reasoning tokens leave 0
+//    bytes of content/tool output within budget.
+//  - qwen/qwen3-32b: tool_calls land in dev probes but selection is
+//    inconsistent under our prompt + leaks <think> trace into content;
+//    6000 TPM ceiling is also tight.
+const GROQ_MODEL = 'llama-3.1-8b-instant';
 
 const CLAUDE_URL = 'https://api.anthropic.com/v1/messages';
 // Match the model id used in the existing AiService so we share a single
@@ -24,6 +35,9 @@ const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
 const CLAUDE_VERSION = '2023-06-01';
 
 const DEFAULT_TIMEOUT_MS = 30_000;
+// 1024 fits qwen3-32b's reasoning trace + tool_calls + content with room to
+// spare in normal turns. Higher values eat into Groq's tight free-tier TPM
+// budget (qwen3-32b: 6000 TPM) and trigger 429s on multi-step turns.
 const DEFAULT_MAX_TOKENS = 1024;
 
 interface GroqToolCall {
@@ -240,7 +254,20 @@ export class LlmGatewayService {
       }
     }
 
-    const content = typeof message.content === 'string' ? message.content : null;
+    // Some Groq-hosted reasoning models (qwen3, gpt-oss) occasionally leak
+    // their internal <think>…</think> trace into `content` when no tool was
+    // chosen. Strip it so callers (especially the title summariser) don't
+    // surface reasoning as user-visible text.
+    let content =
+      typeof message.content === 'string' ? message.content : null;
+    if (content) {
+      content = content
+        .replace(/<think[\s\S]*?<\/think>/gi, '')
+        .replace(/<\|channel\|>[\s\S]*?(?=<\|message\|>|$)/g, '')
+        .replace(/<\|message\|>/g, '')
+        .trim();
+      if (!content) content = null;
+    }
 
     const latency = Date.now() - startedAt;
     this.logger.log(

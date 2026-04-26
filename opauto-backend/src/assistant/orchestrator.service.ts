@@ -191,6 +191,12 @@ export class OrchestratorService {
       }
 
       // --- Iteration loop. -------------------------------------------------
+      // After a tool has executed at least once we drop the schemas from
+      // the LLM payload — the model only needs to compose prose around the
+      // tool result on subsequent calls, not pick another tool. This keeps
+      // the second LLM round-trip lean (no 2-3k tokens of schemas re-sent)
+      // so the whole turn fits inside Groq's free-tier 6000 TPM ceiling.
+      let toolHasFired = false;
       for (let step = 0; step < iterationCap; step++) {
         // Cost cap: stop the conversation cold once the per-conversation
         // token budget is exhausted. Checked before every LLM call so a
@@ -226,7 +232,7 @@ export class OrchestratorService {
 
         const completion = await this.llm.complete({
           messages: llmMessages,
-          tools: llmTools,
+          tools: toolHasFired ? undefined : llmTools,
         });
 
         const toolCalls = completion.toolCalls ?? [];
@@ -374,6 +380,7 @@ export class OrchestratorService {
         const exec = await this.tools.execute(call.name, parsedArgs.value, ctx);
         if (exec.ok) {
           const successExec = exec as { ok: true; result: unknown; durationMs: number };
+          toolHasFired = true;
           subject.next({
             type: 'tool_result',
             toolCallId: call.id,
