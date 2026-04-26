@@ -1,7 +1,13 @@
-import { Component, computed, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { marked } from 'marked';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { AssistantUiMessage } from '../../../../core/models/assistant.model';
+
+// Configure marked once. `breaks: true` turns single newlines into <br> for
+// chat-style flow; `gfm: true` enables tables, fenced code, and autolinks.
+marked.setOptions({ breaks: true, gfm: true });
 
 @Component({
   selector: 'app-assistant-message',
@@ -11,12 +17,30 @@ import { AssistantUiMessage } from '../../../../core/models/assistant.model';
   styleUrl: './assistant-message.component.css',
 })
 export class AssistantMessageComponent {
+  private readonly sanitizer = inject(DomSanitizer);
+
   readonly message = input.required<AssistantUiMessage>();
   readonly approvalRequested = output<{ toolCallId: string }>();
 
   readonly toolExpanded = signal(false);
 
   readonly role = computed(() => this.message().role);
+
+  /**
+   * Renders the message body as HTML for assistant turns (markdown via
+   * marked + Angular's DomSanitizer for XSS safety) and as plain text for
+   * user/system messages where markdown wouldn't make sense.
+   */
+  readonly renderedBody = computed<SafeHtml | string>(() => {
+    const m = this.message();
+    const text = m.agent?.result ?? m.content ?? '';
+    if (!text) return '';
+    if (m.role === 'ASSISTANT') {
+      const html = marked.parse(text, { async: false }) as string;
+      return this.sanitizer.bypassSecurityTrustHtml(html);
+    }
+    return text;
+  });
   readonly isUser = computed(() => this.role() === 'USER');
   readonly isAssistant = computed(() => this.role() === 'ASSISTANT');
   readonly isTool = computed(() => this.role() === 'TOOL');

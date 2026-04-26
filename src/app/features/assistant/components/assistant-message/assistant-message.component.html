@@ -60,10 +60,10 @@
         }
 
         <div class="assistant-message__content">
-          @if (m.agent?.result) {
-            <span>{{ m.agent?.result }}</span>
+          @if (isAssistant()) {
+            <span class="assistant-message__markdown" [innerHTML]="renderedBody()"></span>
           } @else {
-            <span>{{ m.content }}</span>
+            <span>{{ renderedBody() }}</span>
           }
           @if (m.isStreaming) {
             <span class="assistant-message__cursor" aria-hidden="true">▍</span>
