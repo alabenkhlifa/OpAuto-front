@@ -102,7 +102,16 @@ Wave 2 (committed):
 
 Phase 1 totals: 6 services, 92 unit tests + 13 orchestrator integration tests = 105 passing.
 
-**Phase 2 — Tool catalog (parallel subagents G–L, pending):** analytics, customers/cars, appointments, invoicing/inventory, communications, reports.
+**Phase 2 — Tool catalog (parallel subagents G–L, committed):**
+- [x] Subagent G — Analytics tools: `get_dashboard_kpis`, `get_revenue_summary`, `get_customer_count`, `list_active_jobs`, `get_invoices_summary`. 17 tests.
+- [x] Subagent H — Customer + Car tools: `find_customer`, `get_customer`, `list_at_risk_customers`, `list_top_customers`, `find_car`, `get_car`, `list_maintenance_due`. 25 tests.
+- [x] Subagent I — Appointment tools: `list_appointments`, `find_available_slot`, `create_appointment`, `cancel_appointment`. 13 tests.
+- [x] Subagent J — Invoicing + Inventory tools: `list_invoices`, `get_invoice`, `list_overdue_invoices`, `record_payment` (typed-confirm), `list_low_stock_parts`, `get_inventory_value`. 14 tests.
+- [x] Subagent K — Communications tools: `send_sms`, `send_email` (dynamic tier: AUTO_WRITE if self / CONFIRM_WRITE otherwise), `propose_retention_action`. 18 tests.
+- [x] Subagent L — Reports tools: `generate_invoices_pdf`, `generate_period_report` (placeholder signed URLs — real PDF/CSV rendering deferred to Phase 5). 11 tests.
+- [x] Integration: 6 tool sub-modules wired into AppModule (avoiding cyclic AssistantModule import). Combined build green; full assistant + email suite at **203 tests passing**.
+
+Phase 2 totals: 28 tools registered with the assistant. Tool registry validates args via Ajv, filters by module/role, enforces blast tiers, and audits every call.
 
 **Phase 3 — Frontend chat widget (parallel subagents M–Q, pending):** floating launcher, message list, voice/input, approval cards, conversation history.
 

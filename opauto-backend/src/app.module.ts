@@ -20,6 +20,12 @@ import { AiActionsModule } from './ai-actions/ai-actions.module';
 import { SmsModule } from './sms/sms.module';
 import { EmailModule } from './email/email.module';
 import { AssistantModule } from './assistant/assistant.module';
+import { AnalyticsToolsModule } from './assistant/tools/analytics/analytics-tools.module';
+import { CustomersCarsToolsModule } from './assistant/tools/customers-cars/customers-cars-tools.module';
+import { AppointmentsToolsModule } from './assistant/tools/appointments/appointments-tools.module';
+import { InvoicingInventoryToolsModule } from './assistant/tools/invoicing-inventory/invoicing-inventory-tools.module';
+import { CommunicationsToolsModule } from './assistant/tools/communications/communications-tools.module';
+import { ReportsToolsModule } from './assistant/tools/reports/reports-tools.module';
 
 @Module({
   imports: [
@@ -44,6 +50,12 @@ import { AssistantModule } from './assistant/assistant.module';
     EmailModule,
     AiActionsModule,
     AssistantModule,
+    AnalyticsToolsModule,
+    CustomersCarsToolsModule,
+    AppointmentsToolsModule,
+    InvoicingInventoryToolsModule,
+    CommunicationsToolsModule,
+    ReportsToolsModule,
   ],
 })
 export class AppModule {}
