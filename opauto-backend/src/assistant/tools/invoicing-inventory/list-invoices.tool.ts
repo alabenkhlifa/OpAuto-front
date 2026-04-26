@@ -60,13 +60,13 @@ export function buildListInvoicesTool(
         },
         from: {
           type: 'string',
-          format: 'date-time',
-          description: 'Lower bound on createdAt (inclusive), ISO 8601.',
+          description:
+            'Lower bound on createdAt (inclusive). Accepts YYYY-MM-DD or full ISO 8601.',
         },
         to: {
           type: 'string',
-          format: 'date-time',
-          description: 'Upper bound on createdAt (inclusive), ISO 8601.',
+          description:
+            'Upper bound on createdAt (inclusive). Accepts YYYY-MM-DD or full ISO 8601.',
         },
       },
       required: [],

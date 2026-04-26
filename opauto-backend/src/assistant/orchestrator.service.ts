@@ -355,6 +355,22 @@ export class OrchestratorService {
 
         const tier = this.tools.resolveBlastTier(tool, parsedArgs.value, ctx);
 
+        // Pre-approval guard: catch obviously-malformed write calls (empty
+        // payloads, missing required content) BEFORE asking the user to
+        // approve. Letting the LLM fix its own mistake is far better UX than
+        // surfacing an empty-body approval card the user has to deny.
+        const preCheck = this.preApprovalCheck(call.name, parsedArgs.value);
+        if (preCheck) {
+          subject.next({
+            type: 'tool_result',
+            toolCallId: call.id,
+            result: preCheck,
+            status: 'failed',
+          });
+          this.appendToolMessage(llmMessages, call.id, preCheck);
+          continue;
+        }
+
         if (
           tier === AssistantBlastTier.CONFIRM_WRITE ||
           tier === AssistantBlastTier.TYPED_CONFIRM_WRITE
@@ -739,6 +755,12 @@ export class OrchestratorService {
         `- Round currency to 2 decimal places.\n` +
         `- Reference customer/car/invoice IDs as monospace code (\`abc-123\`) when you must show them; prefer human-readable names otherwise.`,
     );
+    parts.push(
+      `Action chaining rules:\n` +
+        `- When the user asks you to email/send a report or summary, FIRST call the relevant read tool to fetch real data (e.g. list_invoices, get_revenue_summary, list_at_risk_customers), THEN call send_email with a body that includes those concrete numbers. Do NOT write placeholder bodies like "please find the data below" without the data inline.\n` +
+        `- When the user wants invoices attached to an email, call list_invoices first to get the invoice IDs, then pass them as attachInvoiceIds in send_email — the backend converts them to a CSV attachment automatically.\n` +
+        `- Self-sends (recipient == the user's own email) execute immediately without approval. External recipients require approval — pre-fetch all data BEFORE asking the LLM to call send_email so the user only approves once.`,
+    );
     if (skillDescriptors.length > 0) {
       parts.push(
         `Skills you can load via the load_skill tool:\n` +
@@ -790,6 +812,38 @@ export class OrchestratorService {
       return { role: 'system', content: h.content };
     }
     return { role: 'user', content: h.content };
+  }
+
+  /**
+   * Catch tool-specific malformed write calls before holding for user approval.
+   * Returns a tool-error payload to feed back to the LLM, or null if args are
+   * acceptable to surface for approval. Keeping this orchestrator-side avoids
+   * wiring a per-tool hook for the one or two cases where Groq's small model
+   * routinely emits empty-payload writes.
+   */
+  private preApprovalCheck(
+    toolName: string,
+    args: unknown,
+  ): { error: string; message: string } | null {
+    if (toolName !== 'send_email') return null;
+    if (typeof args !== 'object' || args === null) return null;
+    const a = args as Record<string, unknown>;
+    const html = typeof a.html === 'string' ? a.html.trim() : '';
+    const text = typeof a.text === 'string' ? a.text.trim() : '';
+    const ids = Array.isArray(a.attachInvoiceIds) ? a.attachInvoiceIds : [];
+    if (html.length === 0 && text.length === 0 && ids.length === 0) {
+      return {
+        error: 'empty_email_payload',
+        message:
+          'send_email was called with an empty body and no attachInvoiceIds. ' +
+          'You must populate `text` (or `html`) with the actual content first. ' +
+          'If the user asked for invoices/data attached, call list_invoices ' +
+          '(or the relevant read tool) first to get real data, then call ' +
+          'send_email again with a populated body and the fetched ids in ' +
+          'attachInvoiceIds.',
+      };
+    }
+    return null;
   }
 
   private safeParseArgs(json: string): { value: unknown; error?: undefined } | { value: undefined; error: string } {

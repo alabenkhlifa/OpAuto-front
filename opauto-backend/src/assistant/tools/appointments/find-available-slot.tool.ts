@@ -33,8 +33,8 @@ export function buildFindAvailableSlotTool(
       properties: {
         date: {
           type: 'string',
-          format: 'date-time',
-          description: 'Preferred date (ISO). Search window is ±3 days around this date.',
+          description:
+            'Preferred date. Accepts YYYY-MM-DD or full ISO 8601. Search window is ±3 days around this date.',
         },
         durationMinutes: {
           type: 'integer',

@@ -41,8 +41,8 @@ export function buildCreateAppointmentTool(
         carId: { type: 'string', minLength: 1 },
         scheduledAt: {
           type: 'string',
-          format: 'date-time',
-          description: 'ISO date-time for the appointment start.',
+          description:
+            'Appointment start time. Accepts YYYY-MM-DDTHH:mm or full ISO 8601 (e.g. 2026-04-30T14:30:00Z).',
         },
         durationMinutes: {
           type: 'integer',

@@ -4,6 +4,7 @@ import { SmsService } from '../../../sms/sms.service';
 import { EmailService } from '../../../email/email.service';
 import { CustomersService } from '../../../customers/customers.service';
 import { AiActionsService } from '../../../ai-actions/ai-actions.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 import { createSendSmsTool } from './send-sms.tool';
 import { createSendEmailTool } from './send-email.tool';
 import { createProposeRetentionActionTool } from './propose-retention-action.tool';
@@ -23,6 +24,7 @@ export class CommunicationsToolsRegistrar implements OnModuleInit {
     private readonly emailService: EmailService,
     private readonly customersService: CustomersService,
     private readonly aiActionsService: AiActionsService,
+    private readonly prisma: PrismaService,
   ) {}
 
   onModuleInit(): void {
@@ -33,7 +35,10 @@ export class CommunicationsToolsRegistrar implements OnModuleInit {
       }),
     );
     this.registry.register(
-      createSendEmailTool({ emailService: this.emailService }),
+      createSendEmailTool({
+        emailService: this.emailService,
+        prisma: this.prisma,
+      }),
     );
     this.registry.register(
       createProposeRetentionActionTool({

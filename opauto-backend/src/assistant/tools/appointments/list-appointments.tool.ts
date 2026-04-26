@@ -37,13 +37,11 @@ export function buildListAppointmentsTool(
       properties: {
         from: {
           type: 'string',
-          format: 'date-time',
-          description: 'Inclusive ISO date-time lower bound. If omitted, no lower bound applied.',
+          description: 'Inclusive lower bound. Accepts YYYY-MM-DD or full ISO 8601.',
         },
         to: {
           type: 'string',
-          format: 'date-time',
-          description: 'Inclusive ISO date-time upper bound. If omitted, no upper bound applied.',
+          description: 'Inclusive upper bound. Accepts YYYY-MM-DD or full ISO 8601.',
         },
         mechanicId: {
           type: 'string',

@@ -4,10 +4,6 @@ import { Locale } from './types';
 
 const MAX_TOOLS = 5;
 const CLASSIFIER_MAX_TOKENS = 120;
-// llama-3.1-8b-instant: cheap, non-reasoning, ~30k TPM ceiling on Groq.
-// Pairs perfectly with this short JSON-extraction task. The orchestrator's
-// main loop keeps the heavier primary model (openai/gpt-oss-20b) for
-// real tool-calling reasoning.
 const CLASSIFIER_MODEL = 'llama-3.1-8b-instant';
 
 export interface ClassifyArgs {
@@ -59,7 +55,10 @@ Picking rules:
     "cancel" → cancel_appointment
     "record/log a payment" → record_payment
     "generate/produce/export/get a PDF/report" → generate_invoices_pdf or generate_period_report
-- When the user asks to act on data they want fetched in the same turn (e.g. "email me a revenue summary"), include BOTH the data-read tool AND the action tool.
+- When the user asks to act on data they want fetched in the same turn, include BOTH the data-read tool AND the action tool. Examples:
+    "email me a revenue summary" → ["get_revenue_summary","send_email"]
+    "email me YTD invoices / attach the invoices as CSV / send invoice list" → ["list_invoices","send_email"] (the invoices CSV is built from list_invoices ids, NOT generate_invoices_pdf)
+    "send a reminder to overdue customers" → ["list_overdue_invoices","send_sms"]
 - Return [] only when the user is genuinely just greeting, chatting, asking what you can do, or asking for something no tool can help with.
 
 Tools:
