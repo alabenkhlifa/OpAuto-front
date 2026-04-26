@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Observable, Subject } from 'rxjs';
+import { Observable, ReplaySubject } from 'rxjs';
 import { randomUUID } from 'crypto';
 import {
   AssistantBlastTier,
@@ -88,7 +88,13 @@ export class OrchestratorService {
     pageContext: PageContext | undefined,
     options: RunOptions = {},
   ): Observable<SseEvent> {
-    const subject = new Subject<SseEvent>();
+    // ReplaySubject replays any events emitted before the controller's
+    // @Sse() subscriber attaches — important for the up-front
+    // `{type:'conversation'}` event which would otherwise race past the
+    // subscription and get dropped (Subject only delivers to current
+    // subscribers). Buffer is bounded; one subscriber per turn so no
+    // memory concern.
+    const subject = new ReplaySubject<SseEvent>(64);
     const iterationCap = options.iterationCap ?? DEFAULT_ITERATION_CAP;
     const totalTimeoutMs = options.totalTimeoutMs ?? TOTAL_TURN_TIMEOUT_MS;
 
@@ -110,7 +116,7 @@ export class OrchestratorService {
     conversationId: string,
     userMessage: string,
     pageContext: PageContext | undefined,
-    subject: Subject<SseEvent>,
+    subject: ReplaySubject<SseEvent>,
     iterationCap: number,
     totalTimeoutMs: number,
   ): Promise<void> {
@@ -118,6 +124,11 @@ export class OrchestratorService {
     const isResume = userMessage.startsWith(RESUME_PREFIX);
 
     try {
+      // Emit the conversation id up-front so the client can sync its
+      // currentConversationId and stitch follow-up turns (especially the
+      // __resume__ flow after an approval) into the same conversation.
+      subject.next({ type: 'conversation', conversationId });
+
       // --- Persist user input (or skip on resume; the original user message
       // was already persisted on the prior turn). ----------------------------
       if (!isResume) {
@@ -441,7 +452,7 @@ export class OrchestratorService {
     conversationId: string,
     toolCallId: string,
     llmMessages: LlmMessage[],
-    subject: Subject<SseEvent>,
+    subject: ReplaySubject<SseEvent>,
   ): Promise<boolean> {
     const row = await this.prisma.assistantToolCall.findUnique({
       where: { id: toolCallId },
@@ -538,7 +549,7 @@ export class OrchestratorService {
     call: LlmToolCall,
     locale: Locale,
     llmMessages: LlmMessage[],
-    subject: Subject<SseEvent>,
+    subject: ReplaySubject<SseEvent>,
   ): Promise<boolean> {
     const parsed = this.safeParseArgs(call.argsJson);
     if (parsed.error) {
@@ -569,7 +580,7 @@ export class OrchestratorService {
     call: LlmToolCall,
     ctx: AssistantUserContext,
     llmMessages: LlmMessage[],
-    subject: Subject<SseEvent>,
+    subject: ReplaySubject<SseEvent>,
   ): Promise<void> {
     const parsed = this.safeParseArgs(call.argsJson);
     if (parsed.error) {

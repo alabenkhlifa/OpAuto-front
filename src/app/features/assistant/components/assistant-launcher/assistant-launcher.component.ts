@@ -93,14 +93,20 @@ export class AssistantLauncherComponent implements OnInit {
     if (!text.trim() || this.state.isStreaming()) return;
 
     const conversationId = this.state.currentConversationId() ?? undefined;
-    const userMessage: AssistantUiMessage = {
-      id: `local-${Date.now()}`,
-      conversationId: conversationId ?? '',
-      role: 'USER',
-      content: text,
-      createdAt: new Date().toISOString(),
-    };
-    this.state.appendMessage(userMessage);
+    // The __resume__:<toolCallId> sentinel is an internal protocol marker
+    // — don't render it as a user-visible bubble. Same for any future
+    // hidden-control message we add. Real user messages render as before.
+    const isHidden = text.startsWith('__resume__:');
+    if (!isHidden) {
+      const userMessage: AssistantUiMessage = {
+        id: `local-${Date.now()}`,
+        conversationId: conversationId ?? '',
+        role: 'USER',
+        content: text,
+        createdAt: new Date().toISOString(),
+      };
+      this.state.appendMessage(userMessage);
+    }
     this.state.startStreaming();
 
     this.chat
@@ -194,6 +200,15 @@ export class AssistantLauncherComponent implements OnInit {
   // ── Internals ────────────────────────────────────────────────────────────
   private handleSseEvent(event: AssistantSseEvent): void {
     switch (event.type) {
+      case 'conversation':
+        // Sync our local id with whatever the server stitched this turn
+        // into. Critical for the resume-after-approval flow so the next
+        // POST /chat lands in the same conversation rather than spinning
+        // up a fresh one.
+        if (this.state.currentConversationId() !== event.conversationId) {
+          this.state.setConversationId(event.conversationId);
+        }
+        break;
       case 'text':
         this.state.appendStreamingDelta(event.delta);
         break;

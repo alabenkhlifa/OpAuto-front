@@ -100,6 +100,7 @@ export interface LlmCompletionResult {
 }
 
 export type SseEvent =
+  | { type: 'conversation'; conversationId: string }
   | { type: 'text'; delta: string }
   | { type: 'tool_call'; toolCallId: string; name: string; args: unknown }
   | { type: 'tool_result'; toolCallId: string; result: unknown; status: 'executed' | 'failed' }

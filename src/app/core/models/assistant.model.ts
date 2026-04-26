@@ -58,6 +58,7 @@ export interface AssistantToolCallView {
 }
 
 export type AssistantSseEvent =
+  | { type: 'conversation'; conversationId: string }
   | { type: 'text'; delta: string }
   | { type: 'tool_call'; toolCallId: string; name: string; args: unknown }
   | {
