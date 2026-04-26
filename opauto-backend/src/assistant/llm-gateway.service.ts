@@ -95,9 +95,46 @@ export class LlmGatewayService {
       if (groq.ok) {
         return groq.result;
       }
-      this.logger.warn(
-        `Groq failed (${(groq as { reason: string }).reason}); falling back to Claude`,
-      );
+      const reason = (groq as { reason: string }).reason;
+
+      // Llama 3.3 sometimes chokes when given many tool schemas. The
+      // user-visible failure is `tool_use_failed`. Retry the SAME prompt
+      // against Groq without the tools — the model can still compose a
+      // helpful text answer (no data lookup, but a coherent response is
+      // far better than the mock apology).
+      //
+      // We also inject a "no tools available" system message so the model
+      // doesn't hallucinate fake tool calls (e.g. "Je vais utiliser l'outil
+      // ..."). Without this, the model still tries to act on the original
+      // tool descriptions in the system prompt.
+      if (
+        request.tools &&
+        request.tools.length > 0 &&
+        (reason.includes('tool_use_failed') || reason.includes('tool_call_'))
+      ) {
+        this.logger.warn(`Groq tool-call failed (${reason}); retrying without tools`);
+        const noToolsMessages: LlmMessage[] = [
+          ...request.messages,
+          {
+            role: 'system',
+            content:
+              "IMPORTANT: tool calls are temporarily unavailable for this turn. Do NOT describe calling any tool, do NOT use placeholders like '(tool result)' or '(call to tool)', and do NOT promise to look something up. If the user asked for specific data you would need a tool for, briefly apologize that you can't fetch it right now and ask them to retry or rephrase. Otherwise answer their question directly using your general knowledge.",
+          },
+        ];
+        const retry = await this.callGroq({
+          ...request,
+          messages: noToolsMessages,
+          tools: undefined,
+        });
+        if (retry.ok) {
+          return retry.result;
+        }
+        this.logger.warn(
+          `Groq tools-less retry also failed (${(retry as { reason: string }).reason})`,
+        );
+      } else {
+        this.logger.warn(`Groq failed (${reason}); falling back to Claude`);
+      }
     }
 
     if (this.anthropicKey) {
