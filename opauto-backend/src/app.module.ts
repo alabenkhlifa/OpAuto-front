@@ -26,6 +26,7 @@ import { AppointmentsToolsModule } from './assistant/tools/appointments/appointm
 import { InvoicingInventoryToolsModule } from './assistant/tools/invoicing-inventory/invoicing-inventory-tools.module';
 import { CommunicationsToolsModule } from './assistant/tools/communications/communications-tools.module';
 import { ReportsToolsModule } from './assistant/tools/reports/reports-tools.module';
+import { AgentsModule } from './assistant/agents/agents.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { ReportsToolsModule } from './assistant/tools/reports/reports-tools.modu
     InvoicingInventoryToolsModule,
     CommunicationsToolsModule,
     ReportsToolsModule,
+    AgentsModule,
   ],
 })
 export class AppModule {}

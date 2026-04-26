@@ -115,7 +115,14 @@ Phase 2 totals: 28 tools registered with the assistant. Tool registry validates 
 
 **Phase 3 — Frontend chat widget (parallel subagents M–Q, pending):** floating launcher, message list, voice/input, approval cards, conversation history.
 
-**Phase 4 — Skills + agents (parallel subagents R–T, pending):** 4 skills × 3 locales, 3 agents (Analytics, Communications, Growth), integration tests.
+**Phase 4 — Skills + agents (parallel subagents R–T, committed — moved up to avoid frontend conflict):**
+- [x] Subagent R — 4 skills × 3 locales (12 markdown files: daily-briefing, growth-advisor, email-composition, retention-suggestions). All tool whitelists validated against the Phase 2 catalog.
+- [x] Subagent S — 3 agents registered (`analytics-agent`, `communications-agent`, `growth-agent`), AgentsModule wired into AppModule. 7 tests.
+- [x] Subagent T — Orchestrator integration tests covering 7 end-to-end scenarios: read-tool happy path, CONFIRM_WRITE deferral, approval resumption via `__resume__:<toolCallId>`, skill loading, agent dispatch, iteration cap, multi-tenancy. No orchestrator bugs surfaced.
+
+Phase 4 totals: full assistant + email suite at **217 tests across 16 suites**, build clean. **Backend is feature-complete:** orchestrator + 28 tools + 4 skills × 3 locales + 3 agents + approval flow + audit + persistence.
+
+**Phase 3 — Frontend chat widget (parallel subagents M–Q, deferred):** waiting for the user's parallel pricing-feature work in `src/` to be committed/stashed before launching, to avoid i18n + sidebar + routing conflicts.
 
 **Phase 5 — Hardening (sequential, pending):** rate limiting, cost cap, e2e via Chrome DevTools MCP, cross-browser voice, i18n key sync.
 
