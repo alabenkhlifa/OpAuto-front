@@ -89,12 +89,18 @@
 - [x] Assistant module skeleton — `opauto-backend/src/assistant/` (controller with SSE chat endpoint, shared types, DTOs, stub services). Wired into `app.module.ts`.
 
 **Phase 1 — Backend core (parallel subagents A–F, in progress):**
-- [ ] Subagent A — Orchestrator + LLM Gateway (Groq-first, Claude fallback, tool-calling, SSE streaming, iteration cap)
-- [ ] Subagent B — Tool Registry (Ajv validation, module/role filtering, blast-tier resolution, timed handler execution)
-- [ ] Subagent C — Skill Registry (markdown loading, frontmatter, en/fr/ar locale fallback)
-- [ ] Subagent D — Agent Runner (sub-LLM contexts with tool whitelists)
-- [ ] Subagent E — Approval Service (deferred-turn state machine, 5-min expiry, typed-confirm validation)
-- [ ] Subagent F — Conversation Service (sliding-window history, title generation)
+
+Wave 1 (committed):
+- [x] Subagent B — Tool Registry (Ajv validation, module/role filtering, blast-tier resolution, timed handler execution). 19 tests.
+- [x] Subagent C — Skill Registry (markdown loading via gray-matter, frontmatter, en/fr/ar locale fallback, dist asset copy). 12 tests.
+- [x] Subagent E — Approval Service (deferred-turn state machine, 5-min expiry, typed-confirm validation, multi-tenant scoping). 14 tests.
+- [x] Subagent F — Conversation Service (sliding-window history, title generation via injected summarizer, multi-tenant scoping). 23 tests.
+
+Wave 2 (committed):
+- [x] Subagent A — Orchestrator + LLM Gateway (Groq-first, Claude fallback, tool-calling, SSE streaming, 8-iteration cap, 90s turn timeout, approval-gating, resumption sentinel `__resume__:<toolCallId>`, fire-and-forget title summarization). 21 tests.
+- [x] Subagent D — Agent Runner (sub-LLM contexts with tool whitelists, blast-tier refusal of write actions, 6-iteration default cap, 60s run timeout). 14 tests.
+
+Phase 1 totals: 6 services, 92 unit tests + 13 orchestrator integration tests = 105 passing.
 
 **Phase 2 — Tool catalog (parallel subagents G–L, pending):** analytics, customers/cars, appointments, invoicing/inventory, communications, reports.
 
