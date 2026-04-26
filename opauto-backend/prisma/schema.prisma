@@ -128,6 +128,29 @@ enum NotificationType {
   SYSTEM
 }
 
+enum AssistantMessageRole {
+  USER
+  ASSISTANT
+  TOOL
+  SYSTEM
+}
+
+enum AssistantToolCallStatus {
+  PENDING_APPROVAL
+  APPROVED
+  DENIED
+  EXECUTED
+  FAILED
+  EXPIRED
+}
+
+enum AssistantBlastTier {
+  READ
+  AUTO_WRITE
+  CONFIRM_WRITE
+  TYPED_CONFIRM_WRITE
+}
+
 // ── Models ──────────────────────────────────────────────
 
 model Garage {
@@ -157,6 +180,7 @@ model Garage {
   notifications    Notification[]
   garageModules    GarageModule[]
   aiActions        AiAction[]
+  assistantConversations AssistantConversation[]
 
   @@map("garages")
 }
@@ -180,6 +204,8 @@ model User {
   garage       Garage          @relation(fields: [garageId], references: [id], onDelete: Cascade)
   preferences  UserPreference?
   approvedAiActions AiAction[]  @relation("AiActionApprover")
+  assistantConversations AssistantConversation[]
+  approvedAssistantToolCalls AssistantToolCall[] @relation("AssistantToolCallApprover")
 
   @@map("users")
 }
@@ -576,4 +602,70 @@ model AiAction {
   @@index([customerId, status])
   @@index([garageId, status, createdAt])
   @@map("ai_actions")
+}
+
+model AssistantConversation {
+  id          String    @id @default(uuid())
+  garageId    String
+  userId      String
+  title       String?
+  pinned      Boolean   @default(false)
+  archivedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  garage      Garage              @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages    AssistantMessage[]
+  toolCalls   AssistantToolCall[]
+
+  @@index([garageId, userId, updatedAt])
+  @@map("assistant_conversations")
+}
+
+model AssistantMessage {
+  id              String               @id @default(uuid())
+  conversationId  String
+  role            AssistantMessageRole
+  content         String               @db.Text
+  toolCallId      String?
+  skillUsed       String?
+  agentUsed       String?
+  tokensIn        Int?
+  tokensOut       Int?
+  llmProvider     String?
+  createdAt       DateTime             @default(now())
+
+  conversation    AssistantConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  toolCall        AssistantToolCall?    @relation("AssistantMessageToolCall", fields: [toolCallId], references: [id], onDelete: SetNull)
+  emittedToolCalls AssistantToolCall[]  @relation("AssistantToolCallEmitter")
+
+  @@index([conversationId, createdAt])
+  @@map("assistant_messages")
+}
+
+model AssistantToolCall {
+  id                String                  @id @default(uuid())
+  conversationId    String
+  messageId         String?
+  toolName          String
+  argsJson          Json
+  resultJson        Json?
+  status            AssistantToolCallStatus @default(EXECUTED)
+  blastTier         AssistantBlastTier
+  approvedByUserId  String?
+  approvedAt        DateTime?
+  expiresAt         DateTime?
+  errorMessage      String?
+  durationMs        Int?
+  createdAt         DateTime                @default(now())
+
+  conversation      AssistantConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  emitter           AssistantMessage?     @relation("AssistantToolCallEmitter", fields: [messageId], references: [id], onDelete: SetNull)
+  resultMessages    AssistantMessage[]    @relation("AssistantMessageToolCall")
+  approvedBy        User?                 @relation("AssistantToolCallApprover", fields: [approvedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([conversationId, status])
+  @@index([status, expiresAt])
+  @@map("assistant_tool_calls")
 }
