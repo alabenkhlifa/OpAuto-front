@@ -611,7 +611,7 @@ describe('OrchestratorService', () => {
     }
 
     it('adds send_email when classifier picked only the read tool for "email me invoices"', async () => {
-      const tools = makeTools(['list_invoices', 'send_email', 'get_dashboard_kpis']);
+      const tools = makeTools(['list_invoices', 'send_email', 'find_customer', 'get_dashboard_kpis']);
       const llm = makeLlm([{ provider: 'groq', content: 'ok', toolCalls: [] }]);
       const classifier = makeClassifier(['list_invoices']);
       const orchestrator = await makeOrchestrator({ tools, llm, classifier });
@@ -627,6 +627,41 @@ describe('OrchestratorService', () => {
 
       const names = toolNamesFromFirstCall(llm);
       expect(names).toEqual(expect.arrayContaining(['list_invoices', 'send_email']));
+    });
+
+    it('pairs find_customer with send_sms so the LLM can resolve a recipient by name', async () => {
+      const tools = makeTools(['list_overdue_invoices', 'send_sms', 'find_customer']);
+      const llm = makeLlm([{ provider: 'groq', content: 'ok', toolCalls: [] }]);
+      const classifier = makeClassifier(['list_overdue_invoices']);
+      const orchestrator = await makeOrchestrator({ tools, llm, classifier });
+
+      await collectEvents(
+        orchestrator.run(
+          ctx,
+          'conv-1',
+          'send a polite SMS reminder to Ali Ben Salah about their overdue invoice',
+          undefined,
+        ),
+      );
+
+      const names = toolNamesFromFirstCall(llm);
+      expect(names).toEqual(
+        expect.arrayContaining(['list_overdue_invoices', 'send_sms', 'find_customer']),
+      );
+    });
+
+    it('pairs find_customer with send_email for "email <name> a reminder" requests', async () => {
+      const tools = makeTools(['send_email', 'find_customer']);
+      const llm = makeLlm([{ provider: 'groq', content: 'ok', toolCalls: [] }]);
+      const classifier = makeClassifier([]);
+      const orchestrator = await makeOrchestrator({ tools, llm, classifier });
+
+      await collectEvents(
+        orchestrator.run(ctx, 'conv-1', 'email Sarah a service reminder', undefined),
+      );
+
+      const names = toolNamesFromFirstCall(llm);
+      expect(names).toEqual(expect.arrayContaining(['send_email', 'find_customer']));
     });
 
     it('adds send_email when classifier returned [] (chitchat) but the message asks to email', async () => {

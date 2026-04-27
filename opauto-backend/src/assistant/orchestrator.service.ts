@@ -704,32 +704,49 @@ export class OrchestratorService {
    * (`my email address` should NOT add `send_email`).
    */
   private actionAugmentation(message: string): string[] {
-    const m = message.toLowerCase();
     const out: string[] = [];
+    // Stopwords after `email`/`sms`/`text` that mean "talking ABOUT email" not
+    // "send an email" — guards against false positives like "email address",
+    // "sms history", "text settings".
+    const emailNounStopwords =
+      'address|account|history|settings|list|lists|server|servers|template|templates|domain|domains|provider|signature';
+    const smsNounStopwords =
+      'history|notifications?|settings|server|servers|template|templates|messages?|history|provider';
+
     const emailPatterns: RegExp[] = [
-      /\bemail\s+(me|it|this|them|us|the)\b/,
-      /\bsend\s+(me\s+|us\s+)?(an?\s+)?e-?mails?\b/,
-      /\bsend\s+(it|them|this)\s+(via|by|as)\s+e-?mail\b/,
-      /\bmail\s+(me|it|this)\b/,
-      /\bforward\s+(me|it|this)\b/,
-      /\b(via|by|as\s+an?|to\s+my)\s+(personal\s+)?e-?mail\b/,
-      /\benvoie[zr]?[\s-]+(moi|nous)?\s*(un\s+|le\s+)?(e-?mail|courriel)\b/,
-      /\bpar\s+(e-?mail|courriel)\b/,
+      // "email me" / "email Sarah" / "email customer" — but NOT "email address"
+      new RegExp(`\\bemail\\s+(?!(?:${emailNounStopwords})\\b)\\w+`, 'i'),
+      /\bsend\s+(?:\w+\s+)*(an?\s+)?e-?mails?\b/i, // "send me an email", "send Ali an email"
+      /\bmail\s+(me|it|this|him|her)\b/i,
+      /\bforward\s+(me|it|this)\b/i,
+      /\b(via|by|as\s+an?|to\s+my)\s+(personal\s+)?e-?mail\b/i,
+      /\benvoie[zr]?[\s-]+(moi|nous)?\s*(un\s+|le\s+)?(e-?mail|courriel)\b/i,
+      /\bpar\s+(e-?mail|courriel)\b/i,
       /إيميل|بريد\s*(إلكتروني|الكتروني)/,
     ];
-    if (emailPatterns.some((p) => p.test(m))) {
+    if (emailPatterns.some((p) => p.test(message))) {
       out.push('send_email');
     }
     const smsPatterns: RegExp[] = [
-      /\b(sms|text)\s+(me|us|them)\b/,
-      /\bsend\s+(me\s+|us\s+|them\s+)?(an?\s+)?(sms|text)\b/,
-      /\b(via|by|as\s+an?|by\s+a)\s+(sms|text)\b/,
-      /\benvoie[zr]?[\s-]+(moi|nous)?\s*(un\s+)?(sms|texto)\b/,
-      /\bpar\s+(sms|texto)\b/,
+      // "sms Ali" / "text Sarah" / "sms reminder" — but NOT "sms history"
+      new RegExp(`\\b(sms|text)\\s+(?!(?:${smsNounStopwords})\\b)\\w+`, 'i'),
+      /\bsend\s+(?:\w+\s+)*(sms|text|texts?)\b/i, // "send a polite SMS", "send Ali a text"
+      /\bdraft\s+(?:\w+\s+)*(sms|text)\b/i,
+      /\b(via|by|as\s+an?|by\s+a)\s+(sms|text)\b/i,
+      /\benvoie[zr]?[\s-]+(moi|nous)?\s*(un\s+)?(sms|texto)\b/i,
+      /\bpar\s+(sms|texto)\b/i,
       /أرسل\s+رسالة|ابعث\s+رسالة/,
     ];
-    if (smsPatterns.some((p) => p.test(m))) {
+    if (smsPatterns.some((p) => p.test(message))) {
       out.push('send_sms');
+    }
+    // Whenever a customer-facing action tool (send_sms / send_email to a third
+    // party) is added, also pull in `find_customer` so the LLM can resolve the
+    // recipient's phone / id from a name in the message instead of asking the
+    // user for it. The cost is one extra schema (~200 tokens) — the LLM simply
+    // skips it when no name is present.
+    if (out.length > 0) {
+      out.push('find_customer');
     }
     return out;
   }
