@@ -10,12 +10,22 @@ export class CustomersService {
   async findAll(garageId: string, search?: string) {
     const where: any = { garageId };
     if (search) {
-      where.OR = [
-        { firstName: { contains: search, mode: 'insensitive' } },
-        { lastName: { contains: search, mode: 'insensitive' } },
-        { phone: { contains: search } },
-        { email: { contains: search, mode: 'insensitive' } },
-      ];
+      // Tokenise on whitespace and AND-match each token across the four
+      // searchable fields. Without this, a multi-word query like
+      // "Ali Ben Salah" misses customer {firstName: "Ali", lastName: "Ben
+      // Salah"} because no single column contains the whole string.
+      // Single-token queries collapse to the original OR semantics.
+      const tokens = search.trim().split(/\s+/).filter((t) => t.length > 0);
+      if (tokens.length > 0) {
+        where.AND = tokens.map((token) => ({
+          OR: [
+            { firstName: { contains: token, mode: 'insensitive' } },
+            { lastName: { contains: token, mode: 'insensitive' } },
+            { phone: { contains: token } },
+            { email: { contains: token, mode: 'insensitive' } },
+          ],
+        }));
+      }
     }
     return this.prisma.customer.findMany({
       where,
