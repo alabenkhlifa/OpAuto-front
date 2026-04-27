@@ -230,19 +230,46 @@ describe('LlmGatewayService', () => {
     expect(result.toolCalls).toEqual([]);
   });
 
-  it('falls back to Cerebras when Groq returns 429 (TPM exceeded)', async () => {
+  it('falls back to Mistral when Groq returns 429 (TPM exceeded)', async () => {
     const fetchMock: FetchMock = jest
       .fn()
       .mockResolvedValueOnce(errJson(429, { error: { message: 'TPM' } }))
       .mockResolvedValueOnce(
         okJson({
-          choices: [{ message: { role: 'assistant', content: 'cerebras hi' } }],
+          choices: [{ message: { role: 'assistant', content: 'mistral hi' } }],
           usage: { prompt_tokens: 100, completion_tokens: 20 },
         }),
       );
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
     const service = await makeService({
       GROQ_API_KEY: 'g',
+      MISTRAL_API_KEY: 'm',
+    });
+
+    const result = await service.complete(baseRequest);
+
+    expect(result.provider).toBe('mistral');
+    expect(result.content).toBe('mistral hi');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(String(fetchMock.mock.calls[1][0])).toMatch(/mistral\.ai/);
+  });
+
+  it('falls back to Cerebras when Groq + Mistral both fail', async () => {
+    const fetchMock: FetchMock = jest
+      .fn()
+      .mockResolvedValueOnce(errJson(429, { error: { message: 'g' } }))
+      .mockResolvedValueOnce(errJson(500, { error: { message: 'm' } }))
+      .mockResolvedValueOnce(
+        okJson({
+          choices: [
+            { message: { role: 'assistant', content: 'cerebras hi' } },
+          ],
+        }),
+      );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    const service = await makeService({
+      GROQ_API_KEY: 'g',
+      MISTRAL_API_KEY: 'm',
       CEREBRAS_API_KEY: 'c',
     });
 
@@ -250,8 +277,8 @@ describe('LlmGatewayService', () => {
 
     expect(result.provider).toBe('cerebras');
     expect(result.content).toBe('cerebras hi');
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(String(fetchMock.mock.calls[1][0])).toMatch(/cerebras\.ai/);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(String(fetchMock.mock.calls[2][0])).toMatch(/cerebras\.ai/);
   });
 
   it('uses default Cerebras model when caller passes a Groq-only model id', async () => {
@@ -279,33 +306,6 @@ describe('LlmGatewayService', () => {
       String(fetchMock.mock.calls[1][1]?.body),
     );
     expect(cerebrasBody.model).toBe('qwen-3-235b-a22b-instruct-2507');
-  });
-
-  it('falls back to Mistral when both Groq and Cerebras fail', async () => {
-    const fetchMock: FetchMock = jest
-      .fn()
-      .mockResolvedValueOnce(errJson(429, { error: { message: 'g' } }))
-      .mockResolvedValueOnce(errJson(500, { error: { message: 'c' } }))
-      .mockResolvedValueOnce(
-        okJson({
-          choices: [
-            { message: { role: 'assistant', content: 'mistral hi' } },
-          ],
-        }),
-      );
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
-    const service = await makeService({
-      GROQ_API_KEY: 'g',
-      CEREBRAS_API_KEY: 'c',
-      MISTRAL_API_KEY: 'm',
-    });
-
-    const result = await service.complete(baseRequest);
-
-    expect(result.provider).toBe('mistral');
-    expect(result.content).toBe('mistral hi');
-    expect(fetchMock).toHaveBeenCalledTimes(3);
-    expect(String(fetchMock.mock.calls[2][0])).toMatch(/mistral\.ai/);
   });
 
   it('returns Cerebras tool calls in the same shape as Groq', async () => {

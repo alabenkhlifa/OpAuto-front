@@ -159,13 +159,16 @@ interface GeminiResponse {
  * Provider-agnostic completion gateway.
  *
  * Order: Gemini (250k TPM, primary) → Groq (fast 8b model, classifier-friendly)
- * → Cerebras (1M tokens/day, no per-minute throttle, handles tool-heavy main
- * turns Groq's 6k TPM rejects) → Mistral (1B tokens/month free, deeper safety
- * net) → Claude (quality, last resort). On any recoverable failure (network,
- * non-2xx, malformed tool-call JSON) we fall through. If everything is
- * unavailable or unconfigured, we return a `mock` result with content rather
- * than throwing — the orchestrator depends on always receiving a result so it
- * can persist a graceful assistant message.
+ * → Mistral (1B tokens/month free, emits proper OpenAI `tool_calls` —
+ * preferred for tool-using main turns Groq's 6k TPM rejects) → Cerebras
+ * (1M tokens/day backup; Cerebras-served qwen/llama models often dump tool
+ * calls as `<function=name>{args}</function>` text instead of structured
+ * tool_calls, so it's the fallback rather than the primary tool path) →
+ * Claude (quality, last resort). On any recoverable failure (network, non-2xx,
+ * malformed tool-call JSON) we fall through. If everything is unavailable or
+ * unconfigured, we return a `mock` result with content rather than throwing —
+ * the orchestrator depends on always receiving a result so it can persist a
+ * graceful assistant message.
  */
 @Injectable()
 export class LlmGatewayService {
@@ -254,18 +257,8 @@ export class LlmGatewayService {
           `Groq tools-less retry also failed (${(retry as { reason: string }).reason})`,
         );
       } else {
-        this.logger.warn(`Groq failed (${reason}); falling back to Cerebras`);
+        this.logger.warn(`Groq failed (${reason}); falling back to Mistral`);
       }
-    }
-
-    if (this.cerebrasKey) {
-      const cerebras = await this.callCerebras(request);
-      if (cerebras.ok) {
-        return cerebras.result;
-      }
-      this.logger.warn(
-        `Cerebras failed (${(cerebras as { reason: string }).reason}); falling back to Mistral`,
-      );
     }
 
     if (this.mistralKey) {
@@ -274,7 +267,17 @@ export class LlmGatewayService {
         return mistral.result;
       }
       this.logger.warn(
-        `Mistral failed (${(mistral as { reason: string }).reason}); falling back to Claude`,
+        `Mistral failed (${(mistral as { reason: string }).reason}); falling back to Cerebras`,
+      );
+    }
+
+    if (this.cerebrasKey) {
+      const cerebras = await this.callCerebras(request);
+      if (cerebras.ok) {
+        return cerebras.result;
+      }
+      this.logger.warn(
+        `Cerebras failed (${(cerebras as { reason: string }).reason}); falling back to Claude`,
       );
     }
 
