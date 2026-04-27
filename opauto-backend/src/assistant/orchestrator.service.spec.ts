@@ -599,4 +599,142 @@ describe('OrchestratorService', () => {
       delta: 'fine',
     });
   });
+
+  describe('action-verb tool augmentation', () => {
+    const arabicCtx: AssistantUserContext = { ...ctx, locale: 'ar' };
+    const frenchCtx: AssistantUserContext = { ...ctx, locale: 'fr' };
+
+    function toolNamesFromFirstCall(llm: LlmGatewayService): string[] {
+      const firstCallArgs = (llm.complete as jest.Mock).mock.calls[0][0];
+      const tools = firstCallArgs.tools ?? [];
+      return tools.map((t: { name: string }) => t.name);
+    }
+
+    it('adds send_email when classifier picked only the read tool for "email me invoices"', async () => {
+      const tools = makeTools(['list_invoices', 'send_email', 'get_dashboard_kpis']);
+      const llm = makeLlm([{ provider: 'groq', content: 'ok', toolCalls: [] }]);
+      const classifier = makeClassifier(['list_invoices']);
+      const orchestrator = await makeOrchestrator({ tools, llm, classifier });
+
+      await collectEvents(
+        orchestrator.run(
+          ctx,
+          'conv-1',
+          'send me an email with the first 3 invoices of this year to my personal email',
+          undefined,
+        ),
+      );
+
+      const names = toolNamesFromFirstCall(llm);
+      expect(names).toEqual(expect.arrayContaining(['list_invoices', 'send_email']));
+    });
+
+    it('adds send_email when classifier returned [] (chitchat) but the message asks to email', async () => {
+      const tools = makeTools(['list_invoices', 'send_email']);
+      const llm = makeLlm([{ provider: 'groq', content: 'ok', toolCalls: [] }]);
+      const classifier = makeClassifier([]);
+      const orchestrator = await makeOrchestrator({ tools, llm, classifier });
+
+      await collectEvents(
+        orchestrator.run(ctx, 'conv-1', 'email me the invoices please', undefined),
+      );
+
+      const names = toolNamesFromFirstCall(llm);
+      // keywordFallback adds list_invoices via "invoice"; augmenter adds send_email
+      expect(names).toEqual(expect.arrayContaining(['list_invoices', 'send_email']));
+    });
+
+    it('adds send_sms for "text me" requests', async () => {
+      const tools = makeTools(['list_overdue_invoices', 'send_sms']);
+      const llm = makeLlm([{ provider: 'groq', content: 'ok', toolCalls: [] }]);
+      const classifier = makeClassifier(['list_overdue_invoices']);
+      const orchestrator = await makeOrchestrator({ tools, llm, classifier });
+
+      await collectEvents(
+        orchestrator.run(
+          ctx,
+          'conv-1',
+          'text me the list of overdue customers',
+          undefined,
+        ),
+      );
+
+      const names = toolNamesFromFirstCall(llm);
+      expect(names).toEqual(expect.arrayContaining(['list_overdue_invoices', 'send_sms']));
+    });
+
+    it('augments French "envoie-moi un email" → send_email', async () => {
+      const tools = makeTools(['get_revenue_summary', 'send_email']);
+      const llm = makeLlm([{ provider: 'groq', content: 'ok', toolCalls: [] }]);
+      const classifier = makeClassifier(['get_revenue_summary']);
+      const orchestrator = await makeOrchestrator({ tools, llm, classifier });
+
+      await collectEvents(
+        orchestrator.run(
+          frenchCtx,
+          'conv-1',
+          "envoie-moi un email avec le chiffre d'affaires du mois",
+          undefined,
+        ),
+      );
+
+      const names = toolNamesFromFirstCall(llm);
+      expect(names).toEqual(expect.arrayContaining(['get_revenue_summary', 'send_email']));
+    });
+
+    it('augments Arabic "أرسل ... إيميل" → send_email', async () => {
+      const tools = makeTools(['list_invoices', 'send_email']);
+      const llm = makeLlm([{ provider: 'groq', content: 'ok', toolCalls: [] }]);
+      const classifier = makeClassifier(['list_invoices']);
+      const orchestrator = await makeOrchestrator({ tools, llm, classifier });
+
+      await collectEvents(
+        orchestrator.run(
+          arabicCtx,
+          'conv-1',
+          'أرسل لي إيميل بفواتير هذا الشهر',
+          undefined,
+        ),
+      );
+
+      const names = toolNamesFromFirstCall(llm);
+      expect(names).toEqual(expect.arrayContaining(['list_invoices', 'send_email']));
+    });
+
+    it('does NOT add send_email for bare-noun "email" in non-action queries', async () => {
+      const tools = makeTools(['get_customer', 'send_email']);
+      const llm = makeLlm([{ provider: 'groq', content: 'ok', toolCalls: [] }]);
+      const classifier = makeClassifier(['get_customer']);
+      const orchestrator = await makeOrchestrator({ tools, llm, classifier });
+
+      await collectEvents(
+        orchestrator.run(
+          ctx,
+          'conv-1',
+          "what's the customer's email address?",
+          undefined,
+        ),
+      );
+
+      const names = toolNamesFromFirstCall(llm);
+      expect(names).toEqual(expect.arrayContaining(['get_customer']));
+      expect(names).not.toContain('send_email');
+    });
+
+    it('does NOT inject augmenter tools that are not in the user-visible registry', async () => {
+      // send_email is missing from the user's tool slice (e.g. role-gated).
+      const tools = makeTools(['list_invoices']);
+      const llm = makeLlm([{ provider: 'groq', content: 'ok', toolCalls: [] }]);
+      const classifier = makeClassifier(['list_invoices']);
+      const orchestrator = await makeOrchestrator({ tools, llm, classifier });
+
+      await collectEvents(
+        orchestrator.run(ctx, 'conv-1', 'email me the invoices', undefined),
+      );
+
+      const names = toolNamesFromFirstCall(llm);
+      expect(names).toEqual(expect.arrayContaining(['list_invoices']));
+      expect(names).not.toContain('send_email');
+    });
+  });
 });

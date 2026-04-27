@@ -418,6 +418,48 @@ describe('Customers + Cars tools', () => {
       expect(filtered.map((p) => p.carId).sort()).toEqual(['c1', 'c3']);
     });
 
+    it('orders by soonest dueWithinDays by default and respects limit', async () => {
+      jest.spyOn(Date, 'now').mockReturnValue(fakeNow.getTime());
+      const inFive = new Date(fakeNow.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString();
+      const inSixty = new Date(fakeNow.getTime() + 60 * 24 * 60 * 60 * 1000).toISOString();
+      const overdue = new Date(fakeNow.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString();
+
+      const predictMaintenance = jest.fn().mockResolvedValue({
+        provider: 'mock',
+        predictions: [
+          { carId: 'far', carLabel: 'A', service: 's', predictedDate: inSixty, confidence: 0.5, urgency: 'low' as const, reason: 'r' },
+          { carId: 'overdue', carLabel: 'B', service: 's', predictedDate: overdue, confidence: 0.8, urgency: 'high' as const, reason: 'r' },
+          { carId: 'near', carLabel: 'C', service: 's', predictedDate: inFive, confidence: 0.7, urgency: 'medium' as const, reason: 'r' },
+        ],
+      });
+      const tool = createListMaintenanceDueTool({ aiService: { predictMaintenance } as any });
+
+      const result = await tool.handler({ limit: 2 }, ownerCtx);
+
+      // Default sort = soonest (ascending dueWithinDays). Overdue (-3) first, then near (5).
+      expect(result.map((p) => p.carId)).toEqual(['overdue', 'near']);
+    });
+
+    it('honors orderBy="most_urgent" → high before medium before low', async () => {
+      jest.spyOn(Date, 'now').mockReturnValue(fakeNow.getTime());
+      const future = new Date(fakeNow.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      const sooner = new Date(fakeNow.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString();
+
+      const predictMaintenance = jest.fn().mockResolvedValue({
+        provider: 'mock',
+        predictions: [
+          { carId: 'lowSoon', carLabel: 'A', service: 's', predictedDate: sooner, confidence: 0.5, urgency: 'low' as const, reason: 'r' },
+          { carId: 'highLater', carLabel: 'B', service: 's', predictedDate: future, confidence: 0.9, urgency: 'high' as const, reason: 'r' },
+          { carId: 'medSoon', carLabel: 'C', service: 's', predictedDate: sooner, confidence: 0.7, urgency: 'medium' as const, reason: 'r' },
+        ],
+      });
+      const tool = createListMaintenanceDueTool({ aiService: { predictMaintenance } as any });
+
+      const result = await tool.handler({ orderBy: 'most_urgent' }, ownerCtx);
+
+      expect(result.map((p) => p.carId)).toEqual(['highLater', 'medSoon', 'lowSoon']);
+    });
+
     afterEach(() => {
       jest.restoreAllMocks();
     });

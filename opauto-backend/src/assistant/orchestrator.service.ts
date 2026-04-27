@@ -665,23 +665,73 @@ export class OrchestratorService {
     // Classifier failed → keep behavior: send everything (slower but safe).
     if (picked === null) return allRealTools;
 
-    // Empty array means classifier thinks this is chitchat. The small llama
-    // model is not always reliable here (it occasionally returns [] for
-    // obvious data questions like "do I have any low stock parts?"), so we
-    // run a deterministic keyword safety net. We deliberately pick a NARROW
-    // tool slice (not the full 25-tool registry) — Groq's free tier rejects
-    // requests over 6000 TPM and the full registry alone is ~8000 tokens.
-    if (picked.length === 0) {
-      const fallback = this.keywordFallback(userMessage);
-      if (fallback.length > 0) {
-        const set = new Set(fallback);
-        return allRealTools.filter((t) => set.has(t.name));
-      }
-      return [];
+    // Always union the deterministic action-verb augmenter with the
+    // classifier's picks. The small llama-3.1-8b model is unreliable for
+    // compound action+read intents — it may pick `list_invoices` for
+    // "email me my invoices" but drop `send_email`. The augmenter scans for
+    // imperative send/email/sms verbs in en/fr/ar and forces the matching
+    // action tool back in. False positives cost a few hundred tokens of
+    // unused schema; false negatives strand the LLM without the tool it
+    // needs and produce an "I can't send emails" reply.
+    const augmented = new Set<string>(picked);
+    for (const name of this.actionAugmentation(userMessage)) {
+      augmented.add(name);
     }
 
-    const pickedSet = new Set(picked);
-    return allRealTools.filter((t) => pickedSet.has(t.name));
+    // Classifier returned [] (chitchat) — run the deterministic keyword
+    // safety net in addition to the action augmenter. The small llama model
+    // is not always reliable here (it occasionally returns [] for obvious
+    // data questions like "do I have any low stock parts?"). We deliberately
+    // pick a NARROW tool slice (not the full 25-tool registry) — Groq's free
+    // tier rejects requests over 6000 TPM and the full registry alone is
+    // ~8000 tokens.
+    if (picked.length === 0) {
+      for (const name of this.keywordFallback(userMessage)) {
+        augmented.add(name);
+      }
+    }
+
+    if (augmented.size === 0) return [];
+    return allRealTools.filter((t) => augmented.has(t.name));
+  }
+
+  /**
+   * Deterministic post-classifier augmenter. Detects imperative send/email/sms
+   * verbs in en/fr/ar and returns the action tool names that must appear in
+   * the LLM's tool list regardless of what the classifier picked. Keep the
+   * patterns NARROW: only fire on phrases that clearly request transmission
+   * (`email me`, `send me an email`, `par email`, `إيميل`), not bare nouns
+   * (`my email address` should NOT add `send_email`).
+   */
+  private actionAugmentation(message: string): string[] {
+    const m = message.toLowerCase();
+    const out: string[] = [];
+    const emailPatterns: RegExp[] = [
+      /\bemail\s+(me|it|this|them|us|the)\b/,
+      /\bsend\s+(me\s+|us\s+)?(an?\s+)?e-?mails?\b/,
+      /\bsend\s+(it|them|this)\s+(via|by|as)\s+e-?mail\b/,
+      /\bmail\s+(me|it|this)\b/,
+      /\bforward\s+(me|it|this)\b/,
+      /\b(via|by|as\s+an?|to\s+my)\s+(personal\s+)?e-?mail\b/,
+      /\benvoie[zr]?[\s-]+(moi|nous)?\s*(un\s+|le\s+)?(e-?mail|courriel)\b/,
+      /\bpar\s+(e-?mail|courriel)\b/,
+      /إيميل|بريد\s*(إلكتروني|الكتروني)/,
+    ];
+    if (emailPatterns.some((p) => p.test(m))) {
+      out.push('send_email');
+    }
+    const smsPatterns: RegExp[] = [
+      /\b(sms|text)\s+(me|us|them)\b/,
+      /\bsend\s+(me\s+|us\s+|them\s+)?(an?\s+)?(sms|text)\b/,
+      /\b(via|by|as\s+an?|by\s+a)\s+(sms|text)\b/,
+      /\benvoie[zr]?[\s-]+(moi|nous)?\s*(un\s+)?(sms|texto)\b/,
+      /\bpar\s+(sms|texto)\b/,
+      /أرسل\s+رسالة|ابعث\s+رسالة/,
+    ];
+    if (smsPatterns.some((p) => p.test(m))) {
+      out.push('send_sms');
+    }
+    return out;
   }
 
   /**

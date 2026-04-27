@@ -167,6 +167,12 @@ Phase 5 backend totals: 227 tests across 17 suites passing.
 - [x] `safeParseArgs` normalises LLM-emitted `null` / primitives / arrays to `{}` so no-arg tools (e.g. `get_customer_count`) don't fail the registry's `type: 'object'` check.
 - [x] E2E verified live: "How many customers do I have?" → classifier picks 1/25 → tool call → "You currently have a total of 18 customers." (no fallback, no 429).
 
+### Orchestrator hardening (Session 2026-04-27 evening)
+
+- [x] **Action-verb tool augmenter** in `OrchestratorService.filterToolsByIntent` — deterministic en/fr/ar regex layer that unconditionally adds `send_email`/`send_sms` to the picked tool slice when the user message contains imperative send/email/sms phrases. Fixes "I can't send emails" responses caused by the small llama-3.1-8b classifier dropping action tools on compound action+read intents (e.g. "email me my invoices").
+- [x] **List-tool ordering & pagination params** — added `orderBy` + `limit` to `list_invoices`, `list_appointments`, `list_overdue_invoices`, `list_low_stock_parts`, `list_maintenance_due`. Each tool description now teaches the LLM which value maps to "first/earliest/most-urgent" vs "latest/most-recent". Fixes the bug where "first 3 invoices of this year" returned the latest 3 (because `list_invoices` was hardcoded to `createdAt desc` with no slice control).
+- [x] 16 new tests across orchestrator, invoicing-inventory, customers-cars, and appointments specs. Full assistant suite: **263 tests / 17 suites passing**.
+
 ## Infrastructure Fixes (Session 2026-03-28)
 - [x] Tailwind v4 source scanning — utility classes (w-6, h-6) now generated correctly
 - [x] Mobile hamburger menu visibility — z-index fix + orange accent

@@ -2,10 +2,14 @@ import { AssistantBlastTier } from '@prisma/client';
 import { AppointmentsService } from '../../../appointments/appointments.service';
 import { AssistantUserContext, ToolDefinition } from '../../types';
 
+type ListAppointmentsOrder = 'soonest' | 'latest';
+
 interface ListAppointmentsArgs {
   from?: string;
   to?: string;
   mechanicId?: string;
+  orderBy?: ListAppointmentsOrder;
+  limit?: number;
 }
 
 interface ListedAppointment {
@@ -29,7 +33,11 @@ export function buildListAppointmentsTool(
   return {
     name: 'list_appointments',
     description:
-      'List appointments for the current garage in an optional date range. Use this to see scheduled, ongoing, or completed appointments. Optionally filter by mechanic (employeeId).',
+      'List appointments for the current garage in an optional date range. Use this to see scheduled, ongoing, or completed appointments. Optionally filter by mechanic (employeeId). ' +
+      'IMPORTANT — ORDERING: pass `orderBy: "soonest"` (default) for "next/upcoming/first appointment(s)"; ' +
+      '`orderBy: "latest"` for "last/most recent" appointments. Combine with `limit` to answer ' +
+      '"first/next/last N appointments" (e.g. "next 3 appointments today" → ' +
+      '{from:"2026-04-27", to:"2026-04-28", orderBy:"soonest", limit:3}).',
     blastTier: AssistantBlastTier.READ,
     parameters: {
       type: 'object',
@@ -47,6 +55,20 @@ export function buildListAppointmentsTool(
           type: 'string',
           description: 'Optional employee/mechanic id to filter on.',
         },
+        orderBy: {
+          type: 'string',
+          enum: ['soonest', 'latest'],
+          description:
+            'Sort by startTime. "soonest" (default) returns earliest first — use for "next/upcoming/first"; ' +
+            '"latest" returns most recent first — use for "last/recent".',
+        },
+        limit: {
+          type: 'integer',
+          minimum: 1,
+          maximum: 100,
+          description:
+            'Max number of appointments to return (1-100). Use with orderBy for "first/last N" requests.',
+        },
       },
     },
     handler: async (args, ctx: AssistantUserContext) => {
@@ -55,7 +77,14 @@ export function buildListAppointmentsTool(
       const filtered = args.mechanicId
         ? all.filter((a: any) => a.employeeId === args.mechanicId)
         : all;
-      const projected: ListedAppointment[] = filtered.map((a: any) => ({
+      const direction = args.orderBy === 'latest' ? -1 : 1;
+      const sorted = [...filtered].sort((a: any, b: any) => {
+        const ta = new Date(a.startTime).getTime();
+        const tb = new Date(b.startTime).getTime();
+        return (ta - tb) * direction;
+      });
+      const sliced = args.limit ? sorted.slice(0, args.limit) : sorted;
+      const projected: ListedAppointment[] = sliced.map((a: any) => ({
         id: a.id,
         title: a.title,
         status: a.status,

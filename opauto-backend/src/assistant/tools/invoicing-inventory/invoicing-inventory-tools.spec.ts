@@ -82,6 +82,63 @@ describe('Invoicing + Inventory Tools', () => {
       const result = registry.validateArgs('list_invoices', { status: 'BOGUS' });
       expect(result.valid).toBe(false);
     });
+
+    it('defaults to descending createdAt when orderBy is omitted', async () => {
+      const findMany = jest.fn().mockResolvedValue([]);
+      const prisma = makePrismaMock({ invoice: { findMany } });
+      const tool = buildListInvoicesTool(prisma as never);
+
+      await tool.handler({}, ownerCtx);
+
+      const call = findMany.mock.calls[0][0];
+      expect(call.orderBy).toEqual({ createdAt: 'desc' });
+      expect(call.take).toBeUndefined();
+    });
+
+    it('honors orderBy="oldest" so "first N" requests return earliest invoices', async () => {
+      const findMany = jest.fn().mockResolvedValue([]);
+      const prisma = makePrismaMock({ invoice: { findMany } });
+      const tool = buildListInvoicesTool(prisma as never);
+
+      await tool.handler(
+        { from: '2026-01-01', orderBy: 'oldest', limit: 3 },
+        ownerCtx,
+      );
+
+      const call = findMany.mock.calls[0][0];
+      expect(call.orderBy).toEqual({ createdAt: 'asc' });
+      expect(call.take).toBe(3);
+      expect(call.where.createdAt.gte).toEqual(new Date('2026-01-01'));
+    });
+
+    it('honors orderBy="newest" + limit for "latest N" requests', async () => {
+      const findMany = jest.fn().mockResolvedValue([]);
+      const prisma = makePrismaMock({ invoice: { findMany } });
+      const tool = buildListInvoicesTool(prisma as never);
+
+      await tool.handler({ orderBy: 'newest', limit: 5 }, ownerCtx);
+
+      const call = findMany.mock.calls[0][0];
+      expect(call.orderBy).toEqual({ createdAt: 'desc' });
+      expect(call.take).toBe(5);
+    });
+
+    it('rejects an invalid orderBy at schema level', () => {
+      const tool = buildListInvoicesTool(makePrismaMock() as never);
+      const registry = new ToolRegistryService();
+      registry.register(tool);
+      const result = registry.validateArgs('list_invoices', { orderBy: 'random' });
+      expect(result.valid).toBe(false);
+    });
+
+    it('rejects a limit outside the allowed range', () => {
+      const tool = buildListInvoicesTool(makePrismaMock() as never);
+      const registry = new ToolRegistryService();
+      registry.register(tool);
+      expect(registry.validateArgs('list_invoices', { limit: 0 }).valid).toBe(false);
+      expect(registry.validateArgs('list_invoices', { limit: 101 }).valid).toBe(false);
+      expect(registry.validateArgs('list_invoices', { limit: 50 }).valid).toBe(true);
+    });
   });
 
   describe('get_invoice', () => {
@@ -136,6 +193,51 @@ describe('Invoicing + Inventory Tools', () => {
       expect(where.garageId).toBe('garage-1');
       expect(where.status).toEqual({ notIn: ['PAID', 'CANCELLED'] });
       expect(where.dueDate.lt).toBeInstanceOf(Date);
+    });
+
+    it('defaults to dueDate ascending (most_overdue) without limit', async () => {
+      const findMany = jest.fn().mockResolvedValue([]);
+      const prisma = makePrismaMock({ invoice: { findMany } });
+      const tool = buildListOverdueInvoicesTool(prisma as never);
+
+      await tool.handler({}, ownerCtx);
+
+      const call = findMany.mock.calls[0][0];
+      expect(call.orderBy).toEqual({ dueDate: 'asc' });
+      expect(call.take).toBeUndefined();
+    });
+
+    it('honors orderBy="highest_amount" + limit', async () => {
+      const findMany = jest.fn().mockResolvedValue([]);
+      const prisma = makePrismaMock({ invoice: { findMany } });
+      const tool = buildListOverdueInvoicesTool(prisma as never);
+
+      await tool.handler({ orderBy: 'highest_amount', limit: 5 }, ownerCtx);
+
+      const call = findMany.mock.calls[0][0];
+      expect(call.orderBy).toEqual({ total: 'desc' });
+      expect(call.take).toBe(5);
+    });
+
+    it('honors orderBy="least_overdue" → dueDate desc', async () => {
+      const findMany = jest.fn().mockResolvedValue([]);
+      const prisma = makePrismaMock({ invoice: { findMany } });
+      const tool = buildListOverdueInvoicesTool(prisma as never);
+
+      await tool.handler({ orderBy: 'least_overdue' }, ownerCtx);
+
+      const call = findMany.mock.calls[0][0];
+      expect(call.orderBy).toEqual({ dueDate: 'desc' });
+    });
+
+    it('rejects an invalid orderBy at schema level', () => {
+      const tool = buildListOverdueInvoicesTool(makePrismaMock() as never);
+      const registry = new ToolRegistryService();
+      registry.register(tool);
+      const result = registry.validateArgs('list_overdue_invoices', {
+        orderBy: 'whatever',
+      });
+      expect(result.valid).toBe(false);
     });
   });
 
@@ -300,6 +402,32 @@ describe('Invoicing + Inventory Tools', () => {
     it('is gated by the inventory module flag', () => {
       const tool = buildListLowStockPartsTool(makePrismaMock() as never);
       expect(tool.requiredModule).toBe('inventory');
+    });
+
+    it('orders by largest deficit when orderBy="most_critical" and respects limit', async () => {
+      const prisma = makePrismaMock({
+        part: {
+          findMany: jest.fn().mockResolvedValue([
+            { id: 'p1', name: 'Brake Pad', quantity: 2, minQuantity: 5, unitPrice: 40 }, // deficit 3
+            { id: 'p3', name: 'Spark Plug', quantity: 4, minQuantity: 4, unitPrice: 6 }, // deficit 0
+            { id: 'p4', name: 'Oil', quantity: 0, minQuantity: 10, unitPrice: 8 }, // deficit 10
+          ]),
+        },
+      });
+      const tool = buildListLowStockPartsTool(prisma as never);
+
+      const result = await tool.handler({ orderBy: 'most_critical', limit: 2 }, ownerCtx);
+
+      expect(result.parts.map((p) => p.id)).toEqual(['p4', 'p1']);
+    });
+
+    it('rejects an invalid orderBy at schema level', () => {
+      const tool = buildListLowStockPartsTool(makePrismaMock() as never);
+      const registry = new ToolRegistryService();
+      registry.register(tool);
+      expect(
+        registry.validateArgs('list_low_stock_parts', { orderBy: 'random' }).valid,
+      ).toBe(false);
     });
   });
 

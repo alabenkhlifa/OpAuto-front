@@ -2,10 +2,14 @@ import { AssistantBlastTier, InvoiceStatus } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AssistantUserContext, ToolDefinition } from '../../types';
 
+export type ListInvoicesOrder = 'newest' | 'oldest';
+
 export interface ListInvoicesArgs {
   status?: InvoiceStatus;
   from?: string;
   to?: string;
+  orderBy?: ListInvoicesOrder;
+  limit?: number;
 }
 
 export interface InvoiceListItem {
@@ -49,7 +53,14 @@ export function buildListInvoicesTool(
       'createdAt date range (from/to ISO 8601). Returns a projected list ' +
       'with id, invoiceNumber, customerId, status, total, dueDate, paidAt, ' +
       'createdAt. Use when the user asks "show invoices", "what invoices ' +
-      'are unpaid", "invoices this month", etc.',
+      'are unpaid", "invoices this month", etc. ' +
+      'IMPORTANT — ORDERING: pass `orderBy: "oldest"` when the user asks for ' +
+      '"first", "earliest", "initial", "from the start of the year/month", or ' +
+      'any phrasing that implies chronologically earliest. Pass ' +
+      '`orderBy: "newest"` (default) for "latest", "most recent", "last N", ' +
+      '"recent invoices". Combine with `limit` to cap the response, e.g. ' +
+      '"first 3 invoices of this year" → ' +
+      '{from: "2026-01-01", orderBy: "oldest", limit: 3}.',
     parameters: {
       type: 'object',
       properties: {
@@ -67,6 +78,21 @@ export function buildListInvoicesTool(
           type: 'string',
           description:
             'Upper bound on createdAt (inclusive). Accepts YYYY-MM-DD or full ISO 8601.',
+        },
+        orderBy: {
+          type: 'string',
+          enum: ['newest', 'oldest'],
+          description:
+            'Sort by createdAt. "newest" (default) returns most-recent first; ' +
+            '"oldest" returns earliest first — use this for "first/earliest" requests.',
+        },
+        limit: {
+          type: 'integer',
+          minimum: 1,
+          maximum: 100,
+          description:
+            'Maximum number of invoices to return (1-100). Use with orderBy to ' +
+            'answer "first/last N invoices" questions without paging through all rows.',
         },
       },
       required: [],
@@ -89,9 +115,11 @@ export function buildListInvoicesTool(
         where.createdAt = created;
       }
 
+      const direction = args.orderBy === 'oldest' ? 'asc' : 'desc';
       const rows = await prisma.invoice.findMany({
         where: where as never,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: direction },
+        ...(args.limit ? { take: args.limit } : {}),
         select: {
           id: true,
           invoiceNumber: true,

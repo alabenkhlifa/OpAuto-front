@@ -2,8 +2,12 @@ import { AssistantBlastTier } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AssistantUserContext, ToolDefinition } from '../../types';
 
+export type ListLowStockPartsOrder = 'most_critical' | 'name';
+
 export interface ListLowStockPartsArgs {
   threshold?: number;
+  orderBy?: ListLowStockPartsOrder;
+  limit?: number;
 }
 
 export interface LowStockPartItem {
@@ -35,7 +39,9 @@ export function buildListLowStockPartsTool(
       'where quantity <= minQuantity (per-part threshold). If a numeric ' +
       'threshold argument is provided, returns parts where quantity <= ' +
       'threshold instead. Use when the user asks "what parts are low", ' +
-      '"do I need to reorder", "running low on parts", etc.',
+      '"do I need to reorder", "running low on parts", etc. ' +
+      'Pass `orderBy: "most_critical"` and a small `limit` for "top N most ' +
+      'urgent restocks" — sorts by largest deficit (minQuantity - quantity) first.',
     parameters: {
       type: 'object',
       properties: {
@@ -45,6 +51,19 @@ export function buildListLowStockPartsTool(
           description:
             'Optional explicit quantity threshold. If omitted, each part is ' +
             'compared to its own minQuantity field.',
+        },
+        orderBy: {
+          type: 'string',
+          enum: ['most_critical', 'name'],
+          description:
+            '"most_critical" sorts by largest deficit (minQuantity - quantity) first — ' +
+            'use for "top N most urgent restocks". "name" (default) sorts alphabetically.',
+        },
+        limit: {
+          type: 'integer',
+          minimum: 1,
+          maximum: 100,
+          description: 'Max rows to return (1-100). Use for "top N" requests.',
         },
       },
       required: [],
@@ -70,9 +89,17 @@ export function buildListLowStockPartsTool(
       });
 
       const explicit = typeof args.threshold === 'number';
-      const parts = all.filter((p) =>
+      const filtered = all.filter((p) =>
         explicit ? p.quantity <= (args.threshold as number) : p.quantity <= p.minQuantity,
       );
+
+      const sorted =
+        args.orderBy === 'most_critical'
+          ? [...filtered].sort(
+              (a, b) => b.minQuantity - b.quantity - (a.minQuantity - a.quantity),
+            )
+          : filtered;
+      const parts = args.limit ? sorted.slice(0, args.limit) : sorted;
 
       return {
         parts,

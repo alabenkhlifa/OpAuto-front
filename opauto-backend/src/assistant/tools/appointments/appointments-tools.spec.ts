@@ -65,6 +65,36 @@ describe('Appointments tools', () => {
       const result = await tool.handler({ mechanicId: 'emp2' }, ownerCtx);
       expect(result.appointments.map((a) => a.id)).toEqual(['a2']);
     });
+
+    it('orders by soonest startTime by default', async () => {
+      const findAll = jest.fn().mockResolvedValue([
+        { id: 'late', title: 't', status: 'SCHEDULED', type: null, startTime: new Date('2026-05-03T10:00:00Z'), endTime: new Date(), customerId: 'c', carId: 'car', employeeId: null, customer: null, car: null, employee: null },
+        { id: 'early', title: 't', status: 'SCHEDULED', type: null, startTime: new Date('2026-05-01T10:00:00Z'), endTime: new Date(), customerId: 'c', carId: 'car', employeeId: null, customer: null, car: null, employee: null },
+        { id: 'mid', title: 't', status: 'SCHEDULED', type: null, startTime: new Date('2026-05-02T10:00:00Z'), endTime: new Date(), customerId: 'c', carId: 'car', employeeId: null, customer: null, car: null, employee: null },
+      ]);
+      const tool = buildListAppointmentsTool({ findAll } as any);
+      const result = await tool.handler({}, ownerCtx);
+      expect(result.appointments.map((a) => a.id)).toEqual(['early', 'mid', 'late']);
+    });
+
+    it('honors orderBy="latest" + limit for "last N appointments"', async () => {
+      const findAll = jest.fn().mockResolvedValue([
+        { id: 'a', title: 't', status: 'SCHEDULED', type: null, startTime: new Date('2026-05-01T10:00:00Z'), endTime: new Date(), customerId: 'c', carId: 'car', employeeId: null, customer: null, car: null, employee: null },
+        { id: 'b', title: 't', status: 'SCHEDULED', type: null, startTime: new Date('2026-05-02T10:00:00Z'), endTime: new Date(), customerId: 'c', carId: 'car', employeeId: null, customer: null, car: null, employee: null },
+        { id: 'c', title: 't', status: 'SCHEDULED', type: null, startTime: new Date('2026-05-03T10:00:00Z'), endTime: new Date(), customerId: 'c', carId: 'car', employeeId: null, customer: null, car: null, employee: null },
+      ]);
+      const tool = buildListAppointmentsTool({ findAll } as any);
+      const result = await tool.handler({ orderBy: 'latest', limit: 2 }, ownerCtx);
+      expect(result.appointments.map((a) => a.id)).toEqual(['c', 'b']);
+    });
+
+    it('rejects an invalid orderBy at schema level', () => {
+      const tool = buildListAppointmentsTool({ findAll: jest.fn() } as any);
+      const registry = new ToolRegistryService();
+      registry.register(tool);
+      expect(registry.validateArgs('list_appointments', { orderBy: 'random' }).valid).toBe(false);
+      expect(registry.validateArgs('list_appointments', { orderBy: 'soonest', limit: 5 }).valid).toBe(true);
+    });
   });
 
   describe('find_available_slot', () => {
