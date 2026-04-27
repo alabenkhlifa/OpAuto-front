@@ -4,7 +4,6 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { AssistantUserContext, ToolDefinition } from '../../types';
 
 export interface SendEmailArgs {
-  to: string;
   subject: string;
   html?: string;
   text?: string;
@@ -21,12 +20,14 @@ export interface SendEmailArgs {
 export interface SendEmailResult {
   providerMessageId: string;
   status: string;
+  /** Recipient that was actually used (always the authenticated user's email). */
+  to: string;
   /** Number of invoices included in the CSV attachment, if any. */
   attachedInvoiceCount?: number;
 }
 
 export interface SendEmailError {
-  error: 'missing_body' | 'send_failed';
+  error: 'missing_body' | 'missing_recipient' | 'send_failed';
   message: string;
 }
 
@@ -78,22 +79,6 @@ function invoicesToCsv(rows: InvoiceCsvRow[]): string {
   return `${header}\n${body}\n`;
 }
 
-export function resolveSendEmailBlastTier(
-  args: SendEmailArgs,
-  ctx: AssistantUserContext,
-): AssistantBlastTier {
-  // Self-facing send: owner emailing themselves (e.g. "email me today's report")
-  // does not require approval. External recipients always require approval.
-  if (
-    ctx.email &&
-    typeof args.to === 'string' &&
-    args.to.trim().toLowerCase() === ctx.email.trim().toLowerCase()
-  ) {
-    return AssistantBlastTier.AUTO_WRITE;
-  }
-  return AssistantBlastTier.CONFIRM_WRITE;
-}
-
 export function createSendEmailTool(deps: {
   emailService: EmailService;
   prisma: PrismaService;
@@ -101,25 +86,21 @@ export function createSendEmailTool(deps: {
   return {
     name: 'send_email',
     description:
-      'Send a transactional email. The blast tier is resolved at runtime: AUTO_WRITE when the ' +
-      'recipient is the authenticated user (self-send, e.g. "email me the daily report"), and ' +
-      'CONFIRM_WRITE for any other recipient. At least one of `html` or `text` MUST be a ' +
-      'non-empty string — empty bodies are rejected before the user is asked to approve. ' +
+      'Send a transactional email to the authenticated user (the garage owner). The recipient ' +
+      'is always resolved server-side from the session — the LLM never specifies it. Use this ' +
+      'for "email me the daily report", "send me the at-risk customer list", etc. At least one ' +
+      'of `html` or `text` MUST be a non-empty string. ' +
       'IMPORTANT: do NOT call this tool with empty `text`/`html` and an empty ' +
       '`attachInvoiceIds` array. If the user asked for data attached or summarised, call the ' +
       'relevant read tool (list_invoices, get_revenue_summary, list_at_risk_customers, etc.) ' +
       'FIRST, then call send_email with the fetched data baked into `text` and (when invoices ' +
       'were requested as a CSV) the fetched ids passed in `attachInvoiceIds`. ' +
       'When `attachInvoiceIds` is provided, those invoices are fetched (garage-scoped) and ' +
-      'attached to the email as a single `invoices.csv` file (number, status, customer, total, ' +
-      'paid, outstanding, due, created).',
+      'attached as a single `invoices.csv` file (number, status, customer, total, paid, ' +
+      'outstanding, due, created).',
     parameters: {
       type: 'object',
       properties: {
-        to: {
-          type: 'string',
-          description: 'Recipient email address (e.g. user@example.com).',
-        },
         subject: {
           type: 'string',
           minLength: 1,
@@ -140,18 +121,28 @@ export function createSendEmailTool(deps: {
           type: 'array',
           items: { type: 'string', minLength: 1 },
           description:
-            'Optional list of invoice ids to attach as PDFs. Deferred in v1 — provided value is logged but no attachments are added.',
+            'Optional list of invoice ids to attach as a single CSV file. Foreign-garage ids are silently filtered out.',
         },
       },
-      required: ['to', 'subject'],
+      required: ['subject'],
       additionalProperties: false,
     },
-    blastTier: AssistantBlastTier.CONFIRM_WRITE,
-    resolveBlastTier: resolveSendEmailBlastTier,
+    blastTier: AssistantBlastTier.AUTO_WRITE,
     handler: async (
       args: SendEmailArgs,
       ctx: AssistantUserContext,
     ): Promise<SendEmailResult | SendEmailError> => {
+      // Recipient is *always* the authenticated user. The LLM cannot redirect
+      // mail elsewhere — that's a hard tenancy boundary, not a default.
+      const recipient = ctx.email?.trim();
+      if (!recipient) {
+        return {
+          error: 'missing_recipient',
+          message:
+            'Cannot send email: the authenticated session has no email address on record. Ask the owner to set their account email under Settings → Profile.',
+        };
+      }
+
       // JSON Schema can't easily express "at least one of html/text" without
       // oneOf gymnastics; enforce here so the error message is friendly.
       if (
@@ -210,7 +201,7 @@ export function createSendEmailTool(deps: {
 
       try {
         const result = await deps.emailService.send({
-          to: args.to,
+          to: recipient,
           subject: args.subject,
           html: args.html,
           text: args.text,
@@ -220,6 +211,7 @@ export function createSendEmailTool(deps: {
         const out: SendEmailResult = {
           providerMessageId: result.providerMessageId,
           status: result.status,
+          to: recipient,
         };
         if (attachedInvoiceCount > 0) {
           out.attachedInvoiceCount = attachedInvoiceCount;

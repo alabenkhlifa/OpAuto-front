@@ -4,7 +4,6 @@ import { AssistantUserContext } from '../../types';
 import { createSendSmsTool, SendSmsArgs } from './send-sms.tool';
 import {
   createSendEmailTool,
-  resolveSendEmailBlastTier,
   SendEmailArgs,
 } from './send-email.tool';
 import {
@@ -178,41 +177,16 @@ describe('communications tools', () => {
   });
 
   describe('send_email', () => {
-    describe('resolveBlastTier (resolver function)', () => {
-      it('returns AUTO_WRITE when `to` matches ctx.email', () => {
-        const tier = resolveSendEmailBlastTier(
-          { to: 'owner@example.com', subject: 's', text: 'b' },
-          ownerCtx,
-        );
-        expect(tier).toBe(AssistantBlastTier.AUTO_WRITE);
+    it('always advertises AUTO_WRITE blast tier (no per-call resolver)', () => {
+      const tool = createSendEmailTool({
+        emailService: makeEmailService(),
+        prisma: makePrisma(),
       });
-
-      it('returns AUTO_WRITE for case-insensitive self-match', () => {
-        const tier = resolveSendEmailBlastTier(
-          { to: 'OWNER@Example.COM', subject: 's', text: 'b' },
-          ownerCtx,
-        );
-        expect(tier).toBe(AssistantBlastTier.AUTO_WRITE);
-      });
-
-      it('returns CONFIRM_WRITE for any other recipient', () => {
-        const tier = resolveSendEmailBlastTier(
-          { to: 'someone-else@example.com', subject: 's', text: 'b' },
-          ownerCtx,
-        );
-        expect(tier).toBe(AssistantBlastTier.CONFIRM_WRITE);
-      });
-
-      it('returns CONFIRM_WRITE when ctx.email is missing', () => {
-        const tier = resolveSendEmailBlastTier(
-          { to: 'owner@example.com', subject: 's', text: 'b' },
-          { ...ownerCtx, email: null },
-        );
-        expect(tier).toBe(AssistantBlastTier.CONFIRM_WRITE);
-      });
+      expect(tool.blastTier).toBe(AssistantBlastTier.AUTO_WRITE);
+      expect(tool.resolveBlastTier).toBeUndefined();
     });
 
-    it('sends with subject + text (happy path)', async () => {
+    it('always sends to the authenticated user (recipient is server-resolved, not LLM-supplied)', async () => {
       const email = makeEmailService(
         jest.fn().mockResolvedValue({ providerMessageId: 'em_1', status: 'queued' }),
       );
@@ -220,7 +194,6 @@ describe('communications tools', () => {
 
       const result = await tool.handler(
         {
-          to: 'someone@example.com',
           subject: 'Hi',
           text: 'Body',
         } satisfies SendEmailArgs,
@@ -228,13 +201,33 @@ describe('communications tools', () => {
       );
 
       expect(email.send).toHaveBeenCalledWith({
-        to: 'someone@example.com',
+        to: 'owner@example.com',
         subject: 'Hi',
         html: undefined,
         text: 'Body',
         attachments: undefined,
       });
-      expect(result).toEqual({ providerMessageId: 'em_1', status: 'queued' });
+      expect(result).toMatchObject({
+        providerMessageId: 'em_1',
+        status: 'queued',
+        to: 'owner@example.com',
+      });
+    });
+
+    it('returns missing_recipient error when ctx.email is null', async () => {
+      const email = makeEmailService();
+      const tool = createSendEmailTool({ emailService: email, prisma: makePrisma() });
+
+      const result = await tool.handler(
+        { subject: 'Hi', text: 'Body' } satisfies SendEmailArgs,
+        { ...ownerCtx, email: null },
+      );
+
+      expect(result).toEqual({
+        error: 'missing_recipient',
+        message: expect.stringMatching(/no email address/i),
+      });
+      expect(email.send).not.toHaveBeenCalled();
     });
 
     it('returns missing_body error when neither html nor text is provided', async () => {
@@ -242,7 +235,7 @@ describe('communications tools', () => {
       const tool = createSendEmailTool({ emailService: email, prisma: makePrisma() });
 
       const result = await tool.handler(
-        { to: 'a@b.com', subject: 'Hi' } as SendEmailArgs,
+        { subject: 'Hi' } as SendEmailArgs,
         ownerCtx,
       );
 
@@ -275,7 +268,6 @@ describe('communications tools', () => {
 
       const result = await tool.handler(
         {
-          to: 'someone@example.com',
           subject: 'Hi',
           text: 'Body',
           attachInvoiceIds: ['inv-1'],
@@ -292,6 +284,7 @@ describe('communications tools', () => {
         }),
       );
       const sendArg = email.send.mock.calls[0][0];
+      expect(sendArg.to).toBe('owner@example.com');
       expect(sendArg.attachments).toHaveLength(1);
       expect(sendArg.attachments[0]).toMatchObject({
         filename: 'invoices.csv',
@@ -299,26 +292,30 @@ describe('communications tools', () => {
       });
       expect(result).toMatchObject({
         providerMessageId: 'em_2',
+        to: 'owner@example.com',
         attachedInvoiceCount: 1,
       });
     });
 
-    it('rejects bad args via JSON Schema (missing to/subject)', () => {
+    it('rejects bad args via JSON Schema (missing subject, or stray `to`)', () => {
       const registry = new ToolRegistryService();
       registry.register(
         createSendEmailTool({ emailService: makeEmailService(), prisma: makePrisma() }),
       );
 
+      // Missing subject
       expect(registry.validateArgs('send_email', {}).valid).toBe(false);
-      expect(
-        registry.validateArgs('send_email', { to: 'a@b.com' }).valid,
-      ).toBe(false);
+      // Stray `to` is not allowed (additionalProperties: false)
       expect(
         registry.validateArgs('send_email', {
           to: 'a@b.com',
           subject: 'x',
           text: 'y',
         }).valid,
+      ).toBe(false);
+      // Subject + text alone is valid — recipient is implicit
+      expect(
+        registry.validateArgs('send_email', { subject: 'x', text: 'y' }).valid,
       ).toBe(true);
     });
   });

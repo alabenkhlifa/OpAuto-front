@@ -1,8 +1,17 @@
 /**
- * Live send via Resend sandbox to prove the send_email tool delivers an
- * email with the CSV invoice attachment.
+ * Live send via Resend to prove the send_email tool delivers an email
+ * with the CSV invoice attachment.
  *
- *   npx ts-node scripts/send-email-live.ts <recipient-email>
+ * The recipient is *not* passed in — the tool always sends to the
+ * authenticated user (ctx.email). This script overrides ctx.email at
+ * the top so you can pick which mailbox to test against.
+ *
+ *   npx ts-node scripts/send-email-live.ts [override-email]
+ *
+ *   - With no arg, uses owner@autotech.tn (the seeded owner).
+ *   - With an arg, runs the tool *as if* that address were the
+ *     authenticated user — useful for testing against your real inbox
+ *     in Resend's sandbox.
  */
 
 import 'dotenv/config';
@@ -14,12 +23,7 @@ import { EmailService } from '../src/email/email.service';
 import { ResendEmailDriver } from '../src/email/providers/resend-email.driver';
 import { createSendEmailTool } from '../src/assistant/tools/communications/send-email.tool';
 
-const recipient = process.argv[2];
-if (!recipient || !recipient.includes('@')) {
-  console.error('usage: npx ts-node scripts/send-email-live.ts <recipient-email>');
-  process.exit(1);
-}
-
+const overrideEmail = process.argv[2];
 const prismaClient = new PrismaClient();
 const prisma = prismaClient as unknown as PrismaService;
 
@@ -31,7 +35,9 @@ const prisma = prismaClient as unknown as PrismaService;
   const ctx: AssistantUserContext = {
     userId: owner.id,
     garageId: owner.garageId,
-    email: owner.email,
+    // The tool reads ctx.email and sends there. Override here lets us
+    // smoke-test a real inbox without re-seeding the owner row.
+    email: overrideEmail || owner.email,
     role: owner.role as 'OWNER',
     enabledModules: ['ai', 'invoicing'],
     locale: 'en',
@@ -46,7 +52,7 @@ const prisma = prismaClient as unknown as PrismaService;
   const ids = sample.map((i) => i.id);
 
   console.log(`from:        onboarding@resend.dev  (Resend sandbox)`);
-  console.log(`to:          ${recipient}`);
+  console.log(`to:          ${ctx.email}  (server-resolved from session)`);
   console.log(`attachments: invoices.csv (${sample.length} rows)`);
   console.log(`first row:   ${sample[0].invoiceNumber} · ${sample[0].customer.firstName} ${sample[0].customer.lastName} · ${sample[0].total} TND\n`);
 
@@ -59,12 +65,10 @@ const prisma = prismaClient as unknown as PrismaService;
     sample
       .map((i, idx) => `${idx + 1}. ${i.invoiceNumber} — ${i.customer.firstName} ${i.customer.lastName} — ${i.status} — ${i.total.toFixed(2)} TND`)
       .join('\n') +
-    `\n\n— sent by send_email tool, validated against the database.`;
+    `\n\n— sent by send_email tool, recipient resolved from ctx.email server-side.`;
 
-  const result = await tool.handler(
-    { to: recipient, subject, text, attachInvoiceIds: ids },
-    ctx,
-  );
+  // Note: no `to` arg — the tool reads ctx.email itself.
+  const result = await tool.handler({ subject, text, attachInvoiceIds: ids }, ctx);
 
   console.log('---');
   console.log(JSON.stringify(result, null, 2));
