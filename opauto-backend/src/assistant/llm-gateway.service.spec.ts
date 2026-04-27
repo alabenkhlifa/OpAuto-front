@@ -278,7 +278,7 @@ describe('LlmGatewayService', () => {
     const cerebrasBody = JSON.parse(
       String(fetchMock.mock.calls[1][1]?.body),
     );
-    expect(cerebrasBody.model).toBe('llama-3.3-70b');
+    expect(cerebrasBody.model).toBe('llama3.1-8b');
   });
 
   it('falls back to Mistral when both Groq and Cerebras fail', async () => {

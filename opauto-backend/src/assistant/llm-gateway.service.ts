@@ -33,16 +33,17 @@ const GROQ_MODEL = 'llama-3.1-8b-instant';
 // classifier slice. Same wire format as Groq (OpenAI chat-completions shape),
 // different model ids.
 const CEREBRAS_URL = 'https://api.cerebras.ai/v1/chat/completions';
-// llama-3.3-70b on Cerebras's WSE-3 chips runs ~2000 tok/s and handles the
-// orchestrator's tool-call patterns reliably even with 5+ schemas in a single
-// request. Stays close to the Llama family the existing system prompt was
-// tuned against.
-const CEREBRAS_MODEL = 'llama-3.3-70b';
-// Cerebras model-id prefixes we recognise. Cerebras hosts llama-3.3+ and
-// llama-4 — NOT llama-3.1 (that's Groq's classifier model). We must reject
-// `llama-3.1-8b-instant` so it doesn't 404 against Cerebras's catalog.
-const CEREBRAS_MODEL_PATTERN =
-  /^(llama-?3\.3|llama-?4|qwen-?3|deepseek-?(v3|r1))/i;
+// llama3.1-8b is the model available on this account's free tier. Same
+// family Groq's classifier uses, but on Cerebras's WSE-3 chips with no
+// per-minute TPM throttle that resembles Groq's 6000 ceiling — purpose-built
+// to absorb tool-heavy turns when Groq is rate-limited. Note Cerebras's id
+// format omits the hyphen between `llama` and the version: it's
+// `llama3.1-8b`, not Groq's `llama-3.1-8b-instant`.
+const CEREBRAS_MODEL = 'llama3.1-8b';
+// Cerebras model-id prefixes we recognise. Strict so the classifier's
+// Groq-specific `llama-3.1-8b-instant` (with hyphen + suffix) is rejected
+// and we override with CEREBRAS_MODEL.
+const CEREBRAS_MODEL_PATTERN = /^(llama3\.|qwen-?3-|gpt-oss-|zai-glm-)/i;
 
 // Mistral OpenAI-compatible endpoint. Free tier: 1B tokens/month with phone
 // verification — a deeper safety net than Cerebras's daily bucket. Sits below
