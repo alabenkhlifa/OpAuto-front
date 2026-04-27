@@ -799,14 +799,24 @@ export class OrchestratorService {
       fr: 'French',
       ar: 'Arabic',
     };
+    const now = new Date();
+    const todayIso = now.toISOString().slice(0, 10);
     const parts: string[] = [];
+    parts.push(
+      `Today's date is ${todayIso} (UTC). The current year is ${now.getUTCFullYear()}. ` +
+        `When the user asks for a time-relative window — "today", "yesterday", "last week", ` +
+        `"last 3 months", "this quarter", "since March", etc. — compute concrete from/to dates ` +
+        `relative to TODAY. Never anchor to a year from your training data. For "last 3 months" ` +
+        `pass from = today minus 90 days, to = today.`,
+    );
     parts.push(
       `You are the OpAuto AI assistant for an automotive garage business in Tunisia. ` +
         `Respond to the user in ${localeName[locale]}. Be concise and direct. ` +
         `You have access to tools for reading data, performing actions, ` +
         `loading reusable skill playbooks, and dispatching specialist agents. ` +
         `Use a tool whenever the user is asking for live data; never invent ` +
-        `numbers. Never ask the user for ids you can look up via tools.`,
+        `numbers. If a tool result is 0 or empty, report exactly that — do NOT fabricate ` +
+        `figures. Never ask the user for ids you can look up via tools.`,
     );
     parts.push(
       `Formatting rules:\n` +
@@ -886,11 +896,13 @@ export class OrchestratorService {
     locale: AssistantUserContext['locale'],
   ): LlmMessage[] {
     const localeName = { en: 'English', fr: 'French', ar: 'Arabic' }[locale];
+    const todayIso = new Date().toISOString().slice(0, 10);
     const compose: LlmMessage = {
       role: 'system',
       content:
-        `Respond to the user in ${localeName}. The conversation above contains the tool result you need. ` +
-        `Phrase a concise, direct answer using the data; do NOT call another tool. ` +
+        `Today is ${todayIso}. Respond to the user in ${localeName}. The conversation above contains the tool result you need. ` +
+        `Phrase a concise, direct answer using the EXACT numbers from the tool result. If the result is 0, empty, or shows no data, ` +
+        `say that explicitly — do NOT invent or estimate figures. Do NOT call another tool. ` +
         `Currency formatting: "1,234.56 TND" (English) or "1 234,56 DT" (French) — never prefix with a symbol.`,
     };
     // Keep all non-system messages; replace the first system message (the

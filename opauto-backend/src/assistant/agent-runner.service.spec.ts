@@ -210,11 +210,15 @@ describe('AgentRunnerService', () => {
 
       expect(out).toEqual({ result: 'all done' });
       expect(llm.calls).toHaveLength(1);
-      expect(llm.calls[0].messages[0]).toEqual({
+      // First system message anchors today's date — prevents the LLM from using
+      // stale training-data years for "last 3 months" / "yesterday" / etc.
+      expect(llm.calls[0].messages[0].role).toBe('system');
+      expect(llm.calls[0].messages[0].content).toMatch(/Today's date is \d{4}-\d{2}-\d{2}/);
+      expect(llm.calls[0].messages[1]).toEqual({
         role: 'system',
         content: 'You are an analyst.',
       });
-      expect(llm.calls[0].messages[1]).toEqual({
+      expect(llm.calls[0].messages[2]).toEqual({
         role: 'user',
         content: 'compute X',
       });

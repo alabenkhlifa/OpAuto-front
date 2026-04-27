@@ -120,7 +120,15 @@ export class AgentRunnerService {
       whitelist.has(d.name),
     );
 
+    const todayIso = new Date().toISOString().slice(0, 10);
     const messages: LlmMessage[] = [
+      {
+        role: 'system',
+        content:
+          `Today's date is ${todayIso} (UTC). When asked for time-relative data (last week, last 3 months, since X), ` +
+          `compute concrete from/to dates relative to TODAY. Never anchor to a year from your training data. ` +
+          `If a tool result is empty or zero, report that exactly — do not invent numbers.`,
+      },
       { role: 'system', content: agent.systemPrompt },
       { role: 'user', content: input },
     ];
