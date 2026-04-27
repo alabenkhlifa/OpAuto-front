@@ -79,14 +79,14 @@ describe('assistant agents', () => {
   });
 
   describe('AgentsRegistrar', () => {
-    it('registers exactly 3 agents on module init', () => {
+    it('registers exactly 6 agents on module init', () => {
       const register = jest.fn();
       const runner = { register } as unknown as AgentRunnerService;
 
       const registrar = new AgentsRegistrar(runner);
       registrar.onModuleInit();
 
-      expect(register).toHaveBeenCalledTimes(3);
+      expect(register).toHaveBeenCalledTimes(6);
       const registeredNames = register.mock.calls.map(
         (args) => (args[0] as AgentDefinition).name,
       );
@@ -95,6 +95,9 @@ describe('assistant agents', () => {
           'analytics-agent',
           'communications-agent',
           'growth-agent',
+          'inventory-agent',
+          'scheduling-agent',
+          'finance-agent',
         ]),
       );
     });

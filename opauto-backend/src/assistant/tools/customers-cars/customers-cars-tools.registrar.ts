@@ -11,6 +11,7 @@ import { createListTopCustomersTool } from './list-top-customers.tool';
 import { createFindCarTool } from './find-car.tool';
 import { createGetCarTool } from './get-car.tool';
 import { createListMaintenanceDueTool } from './list-maintenance-due.tool';
+import { createListReturningCustomersTool } from './list-returning-customers.tool';
 
 @Injectable()
 export class CustomersCarsToolsRegistrar implements OnModuleInit {
@@ -44,8 +45,11 @@ export class CustomersCarsToolsRegistrar implements OnModuleInit {
     this.toolRegistry.register(
       createListMaintenanceDueTool({ aiService: this.aiService }),
     );
+    this.toolRegistry.register(
+      createListReturningCustomersTool({ prisma: this.prisma }),
+    );
     this.logger.log(
-      'Registered customers + cars tools: find_customer, get_customer, list_at_risk_customers, list_top_customers, find_car, get_car, list_maintenance_due',
+      'Registered customers + cars tools: find_customer, get_customer, list_at_risk_customers, list_top_customers, find_car, get_car, list_maintenance_due, list_returning_customers',
     );
   }
 }

@@ -4,6 +4,9 @@ import { AgentDefinition } from '../types';
 import { createAnalyticsAgent } from './analytics-agent';
 import { createCommunicationsAgent } from './communications-agent';
 import { createGrowthAgent } from './growth-agent';
+import { createInventoryAgent } from './inventory-agent';
+import { createSchedulingAgent } from './scheduling-agent';
+import { createFinanceAgent } from './finance-agent';
 
 /**
  * Registers all v1 sub-agents with AgentRunnerService at module init. Mirrors
@@ -21,6 +24,9 @@ export class AgentsRegistrar implements OnModuleInit {
       createAnalyticsAgent(),
       createCommunicationsAgent(),
       createGrowthAgent(),
+      createInventoryAgent(),
+      createSchedulingAgent(),
+      createFinanceAgent(),
     ];
 
     for (const agent of agents) {
