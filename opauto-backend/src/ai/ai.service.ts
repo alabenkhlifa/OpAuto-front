@@ -225,6 +225,12 @@ export class AiService {
       (windowEnd.getTime() - windowStart.getTime()) / (1000 * 60 * 60 * 24),
     );
 
+    // Per-employee cap so the first employee in the list can't gobble all 20
+    // global slots before later employees ever get a turn. Without this, a
+    // less-busy mechanic appears unrankable because they have no candidates.
+    const perEmpCap = Math.max(2, Math.ceil(20 / Math.max(1, employees.length)));
+    const empSlotCount = new Map<string, number>();
+
     for (let d = 0; d < dayCount && candidates.length < 20; d++) {
       const dayDate = new Date(windowStart);
       dayDate.setDate(dayDate.getDate() + d);
@@ -324,7 +330,8 @@ export class AiService {
 
           while (
             slotStart.getTime() + durationMs <= w.to.getTime() &&
-            candidates.length < 20
+            candidates.length < 20 &&
+            (empSlotCount.get(emp.id) || 0) < perEmpCap
           ) {
             const slotEnd = new Date(slotStart.getTime() + durationMs);
             candidates.push({
@@ -333,6 +340,7 @@ export class AiService {
               mechanicId: emp.id,
               mechanicName: `${emp.firstName} ${emp.lastName}`,
             });
+            empSlotCount.set(emp.id, (empSlotCount.get(emp.id) || 0) + 1);
             // Move to next 30-minute boundary
             slotStart = new Date(slotStart.getTime() + 30 * 60 * 1000);
           }
