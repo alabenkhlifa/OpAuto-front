@@ -1223,7 +1223,10 @@ CRITICAL: The "reason" field MUST be written ENTIRELY in ${responseLang}.
               {
                 role: 'system',
                 content:
-                  'You are an AI assistant for OpAuto, a garage management ERP.',
+                  `Today's date is ${new Date().toISOString().slice(0, 10)} (UTC). ` +
+                  'You are an AI assistant for OpAuto, a garage management ERP. ' +
+                  'For any time-relative question (warranty windows, "since last service", ' +
+                  '"last month", etc.) compute dates relative to today, never from your training data.',
               },
               ...dto.messages,
             ],
@@ -1315,7 +1318,11 @@ CRITICAL: The "reason" field MUST be written ENTIRELY in ${responseLang}.
               {
                 role: 'system',
                 content:
-                  'You are an AI assistant for OpAuto, a garage management ERP. Help with automotive diagnostics, scheduling, and business insights.',
+                  `Today's date is ${new Date().toISOString().slice(0, 10)} (UTC). ` +
+                  'You are an AI assistant for OpAuto, a garage management ERP. Help with ' +
+                  'automotive diagnostics, scheduling, and business insights. For any ' +
+                  'time-relative question (warranty windows, "since last service", "last month", etc.) ' +
+                  'compute dates relative to today, never from your training data.',
               },
               ...dto.messages,
             ],
