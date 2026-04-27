@@ -35,10 +35,18 @@ const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
 const CLAUDE_VERSION = '2023-06-01';
 
 // Gemini free tier: 250k TPM (vs Groq's 6k) — primary provider so a single
-// query can't saturate the per-minute budget. Flash gives 10 RPM / 250 RPD
-// which is enough for the demo; bump to Pro when paid.
+// query can't saturate the per-minute budget.
+//
+// Model choice: gemini-2.5-flash-lite is the right default for free tier:
+//   - 15 RPM (vs Flash's 10 RPM) → ~50% more headroom per minute
+//   - Higher daily quota than Flash on the post-Dec-2025 free tier (Flash is
+//     down to 20 RPD; Flash-Lite has its own bucket and a higher cap).
+//   - Quotas are per-model-per-project, so falling back to Flash for harder
+//     queries when Flash-Lite is exhausted is a viable future enhancement.
+//   - Quality on tool routing + short narrative composition is comparable for
+//     our use case; bump to Flash or Pro when we have a paid key.
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
-const GEMINI_MODEL = 'gemini-2.5-flash';
+const GEMINI_MODEL = 'gemini-2.5-flash-lite';
 
 // JSON Schema fields Gemini's strict OpenAPI-3.0-subset parser rejects.
 // Stripped recursively before sending tool declarations.
