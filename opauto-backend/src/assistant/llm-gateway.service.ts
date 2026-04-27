@@ -34,6 +34,12 @@ const CLAUDE_URL = 'https://api.anthropic.com/v1/messages';
 const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
 const CLAUDE_VERSION = '2023-06-01';
 
+// Gemini free tier: 250k TPM (vs Groq's 6k) — primary provider so a single
+// query can't saturate the per-minute budget. Flash gives 10 RPM / 250 RPD
+// which is enough for the demo; bump to Pro when paid.
+const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
+const GEMINI_MODEL = 'gemini-2.5-flash';
+
 const DEFAULT_TIMEOUT_MS = 30_000;
 // 1024 fits qwen3-32b's reasoning trace + tool_calls + content with room to
 // spare in normal turns. Higher values eat into Groq's tight free-tier TPM
@@ -76,30 +82,50 @@ interface ClaudeResponse {
   error?: { message?: string };
 }
 
+interface GeminiPart {
+  text?: string;
+  functionCall?: { name?: string; args?: unknown };
+  functionResponse?: { name?: string; response?: unknown };
+}
+
+interface GeminiContent {
+  role?: string;
+  parts?: GeminiPart[];
+}
+
+interface GeminiResponse {
+  candidates?: Array<{ content?: GeminiContent; finishReason?: string }>;
+  usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number };
+  error?: { message?: string; code?: number };
+}
+
 /**
  * Provider-agnostic completion gateway.
  *
- * Order: Groq (fast/cheap) → Claude (quality fallback). On any recoverable
- * failure (network, non-2xx, malformed tool-call JSON) we fall through. If
- * both providers are unavailable or unconfigured, we return a `mock` result
- * with content rather than throwing — the orchestrator depends on always
- * receiving a result so it can persist a graceful assistant message.
+ * Order: Gemini (250k TPM, primary) → Groq (fast 8b model, secondary) →
+ * Claude (quality, last resort). On any recoverable failure (network,
+ * non-2xx, malformed tool-call JSON) we fall through. If everything is
+ * unavailable or unconfigured, we return a `mock` result with content
+ * rather than throwing — the orchestrator depends on always receiving a
+ * result so it can persist a graceful assistant message.
  */
 @Injectable()
 export class LlmGatewayService {
   private readonly logger = new Logger(LlmGatewayService.name);
+  private readonly geminiKey: string | undefined;
   private readonly groqKey: string | undefined;
   private readonly anthropicKey: string | undefined;
 
   constructor(private readonly config: ConfigService) {
+    this.geminiKey = this.config.get<string>('GEMINI_API_KEY');
     this.groqKey = this.config.get<string>('GROQ_API_KEY');
     this.anthropicKey = this.config.get<string>('ANTHROPIC_API_KEY');
   }
 
   async complete(request: LlmCompletionRequest): Promise<LlmCompletionResult> {
-    if (!this.groqKey && !this.anthropicKey) {
+    if (!this.geminiKey && !this.groqKey && !this.anthropicKey) {
       this.logger.warn(
-        'No LLM provider configured (GROQ_API_KEY / ANTHROPIC_API_KEY missing); returning mock completion',
+        'No LLM provider configured (GEMINI_API_KEY / GROQ_API_KEY / ANTHROPIC_API_KEY missing); returning mock completion',
       );
       return {
         provider: 'mock',
@@ -107,6 +133,14 @@ export class LlmGatewayService {
           "I can't reach an LLM provider right now — no API key is configured on the server.",
         toolCalls: [],
       };
+    }
+
+    if (this.geminiKey) {
+      const gem = await this.callGemini(request);
+      if (gem.ok) return gem.result;
+      this.logger.warn(
+        `Gemini failed (${(gem as { reason: string }).reason}); falling back to Groq`,
+      );
     }
 
     if (this.groqKey) {
@@ -385,6 +419,192 @@ export class LlmGatewayService {
         tokensOut: raw.usage?.output_tokens,
       },
     };
+  }
+
+  // ── Gemini ───────────────────────────────────────────────────────────
+
+  private async callGemini(
+    request: LlmCompletionRequest,
+  ): Promise<
+    | { ok: true; result: LlmCompletionResult }
+    | { ok: false; reason: string }
+  > {
+    const startedAt = Date.now();
+    const { systemInstruction, contents } = this.toGeminiPayload(request.messages);
+    const body: Record<string, unknown> = {
+      contents,
+      generationConfig: {
+        maxOutputTokens: request.maxTokens ?? DEFAULT_MAX_TOKENS,
+        ...(typeof request.temperature === 'number'
+          ? { temperature: request.temperature }
+          : {}),
+      },
+    };
+    if (systemInstruction) {
+      body.systemInstruction = { parts: [{ text: systemInstruction }] };
+    }
+    if (request.tools && request.tools.length > 0) {
+      body.tools = [
+        {
+          functionDeclarations: request.tools.map((t) => this.toGeminiTool(t)),
+        },
+      ];
+    }
+
+    const model = request.model ?? GEMINI_MODEL;
+    const url = `${GEMINI_BASE}/${model}:generateContent?key=${this.geminiKey}`;
+
+    let raw: GeminiResponse;
+    try {
+      const response = await this.fetchWithTimeout(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!response.ok) {
+        const text = await this.safeText(response);
+        return {
+          ok: false,
+          reason: `http_${response.status}${text ? `: ${text.slice(0, 200)}` : ''}`,
+        };
+      }
+      raw = (await response.json()) as GeminiResponse;
+    } catch (err) {
+      return { ok: false, reason: this.errMessage(err) };
+    }
+
+    const candidate = raw.candidates?.[0];
+    if (!candidate?.content?.parts) {
+      return { ok: false, reason: 'missing_content' };
+    }
+
+    let textOut = '';
+    const toolCalls: LlmToolCall[] = [];
+    for (const part of candidate.content.parts) {
+      if (typeof part.text === 'string') {
+        textOut += part.text;
+      } else if (part.functionCall) {
+        const name = part.functionCall.name;
+        if (typeof name !== 'string' || name.length === 0) {
+          return { ok: false, reason: 'tool_call_missing_name' };
+        }
+        let argsJson: string;
+        try {
+          argsJson = JSON.stringify(part.functionCall.args ?? {});
+        } catch (err) {
+          return {
+            ok: false,
+            reason: `tool_call_serialize_${this.errMessage(err)}`,
+          };
+        }
+        toolCalls.push({
+          id: `call_${Math.random().toString(36).slice(2, 10)}`,
+          name,
+          argsJson,
+        });
+      }
+    }
+
+    const content = textOut.length > 0 ? textOut : null;
+    const latency = Date.now() - startedAt;
+    this.logger.log(
+      `Gemini completion ok in ${latency}ms (toolCalls=${toolCalls.length}, contentLen=${content?.length ?? 0})`,
+    );
+
+    return {
+      ok: true,
+      result: {
+        provider: 'gemini',
+        content,
+        toolCalls,
+        tokensIn: raw.usageMetadata?.promptTokenCount,
+        tokensOut: raw.usageMetadata?.candidatesTokenCount,
+      },
+    };
+  }
+
+  private toGeminiTool(t: ToolDescriptor): Record<string, unknown> {
+    return {
+      name: t.name,
+      description: t.description,
+      parameters: t.parameters,
+    };
+  }
+
+  /**
+   * Convert our normalized message log into Gemini's `contents` array plus
+   * a separate `systemInstruction`. Gemini uses 'user' / 'model' roles only;
+   * tool calls and tool results are encoded as `functionCall` /
+   * `functionResponse` parts within those roles.
+   */
+  private toGeminiPayload(messages: LlmMessage[]): {
+    systemInstruction: string;
+    contents: Array<Record<string, unknown>>;
+  } {
+    const systemParts: string[] = [];
+    const contents: Array<Record<string, unknown>> = [];
+
+    for (const m of messages) {
+      if (m.role === 'system') {
+        if (m.content) systemParts.push(m.content);
+        continue;
+      }
+
+      if (m.role === 'tool') {
+        // Tool results: a 'user' message with a functionResponse part. Gemini
+        // expects an object for `response`; if the tool returned a string,
+        // wrap it so the API doesn't reject the payload.
+        let response: unknown;
+        try {
+          response = m.content ? JSON.parse(m.content) : {};
+        } catch {
+          response = { result: m.content ?? '' };
+        }
+        contents.push({
+          role: 'user',
+          parts: [
+            {
+              functionResponse: {
+                // Best-effort: we don't carry tool name through tool-role
+                // messages, so use a stable placeholder. Gemini matches by
+                // position in practice.
+                name: 'tool',
+                response,
+              },
+            },
+          ],
+        });
+        continue;
+      }
+
+      if (m.role === 'assistant') {
+        const parts: Array<Record<string, unknown>> = [];
+        if (m.content && m.content.length > 0) {
+          parts.push({ text: m.content });
+        }
+        if (m.toolCalls) {
+          for (const tc of m.toolCalls) {
+            let args: unknown = {};
+            try {
+              args = tc.argsJson ? JSON.parse(tc.argsJson) : {};
+            } catch {
+              args = {};
+            }
+            parts.push({ functionCall: { name: tc.name, args } });
+          }
+        }
+        contents.push({
+          role: 'model',
+          parts: parts.length > 0 ? parts : [{ text: m.content ?? '' }],
+        });
+        continue;
+      }
+
+      // user
+      contents.push({ role: 'user', parts: [{ text: m.content ?? '' }] });
+    }
+
+    return { systemInstruction: systemParts.join('\n\n'), contents };
   }
 
   // ── Translation helpers ──────────────────────────────────────────────
