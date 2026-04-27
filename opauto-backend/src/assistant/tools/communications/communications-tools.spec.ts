@@ -297,6 +297,66 @@ describe('communications tools', () => {
       });
     });
 
+    it('produces a PDF attachment when attachInvoiceFormat=pdf', async () => {
+      const email = makeEmailService(
+        jest.fn().mockResolvedValue({ providerMessageId: 'em_pdf', status: 'queued' }),
+      );
+      const prisma = makePrisma(
+        jest.fn().mockResolvedValue([
+          {
+            id: 'inv-1',
+            invoiceNumber: 'INV-001',
+            status: 'PAID',
+            subtotal: 100,
+            discount: 0,
+            taxAmount: 19,
+            total: 119,
+            dueDate: new Date('2026-04-30T00:00:00Z'),
+            paidAt: new Date('2026-04-25T00:00:00Z'),
+            createdAt: new Date('2026-04-10T00:00:00Z'),
+            customer: {
+              firstName: 'A',
+              lastName: 'B',
+              phone: '+216 22 111 222',
+              email: 'a.b@example.tn',
+              address: 'Tunis',
+            },
+            car: { make: 'Renault', model: 'Clio', year: 2020, licensePlate: '123 TUN 456' },
+            payments: [{ amount: 119 }],
+            lineItems: [
+              { description: 'Oil & Filter Change', quantity: 1, unitPrice: 80, total: 80 },
+              { description: 'Engine Oil 5W-40 (5L)', quantity: 1, unitPrice: 20, total: 20 },
+            ],
+            garage: { name: 'AutoTech Tunisia', address: 'Tunis', phone: '+216 71 234 567', email: 'contact@autotech.tn' },
+          },
+        ]),
+      );
+      const tool = createSendEmailTool({ emailService: email, prisma });
+
+      const result = await tool.handler(
+        {
+          subject: 'Invoice copy',
+          text: 'Attached.',
+          attachInvoiceIds: ['inv-1'],
+          attachInvoiceFormat: 'pdf',
+        },
+        ownerCtx,
+      );
+
+      const sendArg = email.send.mock.calls[0][0];
+      expect(sendArg.attachments).toHaveLength(1);
+      expect(sendArg.attachments[0].filename).toBe('invoices.pdf');
+      expect(sendArg.attachments[0].contentType).toBe('application/pdf');
+      // PDF magic header is %PDF-1.x — verify the base64 decodes to that
+      const decoded = Buffer.from(sendArg.attachments[0].content, 'base64');
+      expect(decoded.subarray(0, 5).toString('ascii')).toBe('%PDF-');
+      expect(result).toMatchObject({
+        providerMessageId: 'em_pdf',
+        attachedInvoiceCount: 1,
+        attachmentFormat: 'pdf',
+      });
+    });
+
     it('rejects bad args via JSON Schema (missing subject, or stray `to`)', () => {
       const registry = new ToolRegistryService();
       registry.register(

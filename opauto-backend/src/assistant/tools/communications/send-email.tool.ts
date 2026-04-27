@@ -2,28 +2,34 @@ import { AssistantBlastTier } from '@prisma/client';
 import { EmailService } from '../../../email/email.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AssistantUserContext, ToolDefinition } from '../../types';
+import { invoicesToPdf, InvoicePdfRow } from './invoice-pdf';
+
+export type AttachmentFormat = 'csv' | 'pdf';
 
 export interface SendEmailArgs {
   subject: string;
   html?: string;
   text?: string;
   /**
-   * Optional list of invoice ids to attach as a single CSV. Each invoice
-   * row in the CSV includes invoice number, status, customer, total,
-   * paid amount, due date, and created date. Foreign-garage ids are
-   * silently filtered out — the email still sends with whatever the
-   * user is authorised to access.
+   * Optional list of invoice ids to attach. The invoices are fetched
+   * (garage-scoped) and packaged according to `attachInvoiceFormat`.
+   * Foreign-garage ids are silently filtered out.
    */
   attachInvoiceIds?: string[];
+  /**
+   * Format for the invoice attachment. Default 'csv' (single spreadsheet
+   * row per invoice). 'pdf' produces a multi-page document, one full
+   * invoice per page (header, line items, totals, payment status).
+   */
+  attachInvoiceFormat?: AttachmentFormat;
 }
 
 export interface SendEmailResult {
   providerMessageId: string;
   status: string;
-  /** Recipient that was actually used (always the authenticated user's email). */
   to: string;
-  /** Number of invoices included in the CSV attachment, if any. */
   attachedInvoiceCount?: number;
+  attachmentFormat?: AttachmentFormat;
 }
 
 export interface SendEmailError {
@@ -94,10 +100,14 @@ export function createSendEmailTool(deps: {
       '`attachInvoiceIds` array. If the user asked for data attached or summarised, call the ' +
       'relevant read tool (list_invoices, get_revenue_summary, list_at_risk_customers, etc.) ' +
       'FIRST, then call send_email with the fetched data baked into `text` and (when invoices ' +
-      'were requested as a CSV) the fetched ids passed in `attachInvoiceIds`. ' +
+      'were requested) the fetched ids passed in `attachInvoiceIds`. ' +
       'When `attachInvoiceIds` is provided, those invoices are fetched (garage-scoped) and ' +
-      'attached as a single `invoices.csv` file (number, status, customer, total, paid, ' +
-      'outstanding, due, created).',
+      'packaged according to `attachInvoiceFormat`: ' +
+      "'csv' (default) — a single spreadsheet `invoices.csv` with one row per invoice; " +
+      "'pdf' — a multi-page `invoices.pdf` document with one full invoice (header, line items, " +
+      "totals, payment status) per page. Use 'pdf' when the user wants 'invoices', 'invoice " +
+      "documents', 'PDFs', 'printable copies', or anything that suggests a billing artifact " +
+      "rather than a spreadsheet export.",
     parameters: {
       type: 'object',
       properties: {
@@ -121,7 +131,14 @@ export function createSendEmailTool(deps: {
           type: 'array',
           items: { type: 'string', minLength: 1 },
           description:
-            'Optional list of invoice ids to attach as a single CSV file. Foreign-garage ids are silently filtered out.',
+            'Optional list of invoice ids to attach. Foreign-garage ids are silently filtered out.',
+        },
+        attachInvoiceFormat: {
+          type: 'string',
+          enum: ['csv', 'pdf'],
+          description:
+            "Attachment format. Default 'csv' (one row per invoice). 'pdf' renders one full " +
+            'invoice per page, suitable for printing or sharing with a customer.',
         },
       },
       required: ['subject'],
@@ -132,8 +149,6 @@ export function createSendEmailTool(deps: {
       args: SendEmailArgs,
       ctx: AssistantUserContext,
     ): Promise<SendEmailResult | SendEmailError> => {
-      // Recipient is *always* the authenticated user. The LLM cannot redirect
-      // mail elsewhere — that's a hard tenancy boundary, not a default.
       const recipient = ctx.email?.trim();
       if (!recipient) {
         return {
@@ -143,8 +158,6 @@ export function createSendEmailTool(deps: {
         };
       }
 
-      // JSON Schema can't easily express "at least one of html/text" without
-      // oneOf gymnastics; enforce here so the error message is friendly.
       if (
         (!args.html || args.html.trim().length === 0) &&
         (!args.text || args.text.trim().length === 0)
@@ -155,46 +168,115 @@ export function createSendEmailTool(deps: {
         };
       }
 
+      const format: AttachmentFormat = args.attachInvoiceFormat ?? 'csv';
       let attachments:
         | { filename: string; content: string; contentType: string }[]
         | undefined;
       let attachedInvoiceCount = 0;
 
       if (args.attachInvoiceIds && args.attachInvoiceIds.length > 0) {
+        const include =
+          format === 'pdf'
+            ? {
+                customer: true,
+                car: { select: { make: true, model: true, licensePlate: true, year: true } },
+                payments: { select: { amount: true } },
+                lineItems: true,
+                garage: { select: { name: true, address: true, phone: true, email: true } },
+              }
+            : {
+                customer: { select: { firstName: true, lastName: true } },
+                payments: { select: { amount: true } },
+              };
+
         const rows = await deps.prisma.invoice.findMany({
           where: {
             id: { in: args.attachInvoiceIds },
             garageId: ctx.garageId,
           },
-          include: {
-            customer: { select: { firstName: true, lastName: true } },
-            payments: { select: { amount: true } },
-          },
+          include: include as any,
           orderBy: { createdAt: 'desc' },
         });
 
         if (rows.length > 0) {
-          const csvRows: InvoiceCsvRow[] = rows.map((inv) => {
-            const paid = inv.payments.reduce((s, p) => s + p.amount, 0);
-            return {
-              invoiceNumber: inv.invoiceNumber,
-              status: inv.status,
-              customer: `${inv.customer.firstName} ${inv.customer.lastName}`.trim(),
-              total: inv.total,
-              paid,
-              outstanding: Math.max(0, inv.total - paid),
-              dueDate: inv.dueDate ? inv.dueDate.toISOString().slice(0, 10) : '',
-              createdAt: inv.createdAt.toISOString().slice(0, 10),
+          if (format === 'pdf') {
+            const garage = (rows[0] as any).garage as {
+              name: string;
+              address: string | null;
+              phone: string | null;
+              email: string | null;
             };
-          });
-          const csv = invoicesToCsv(csvRows);
-          attachments = [
-            {
-              filename: 'invoices.csv',
-              content: Buffer.from(csv, 'utf8').toString('base64'),
-              contentType: 'text/csv',
-            },
-          ];
+            const pdfRows: InvoicePdfRow[] = rows.map((inv: any) => {
+              const paid = (inv.payments ?? []).reduce(
+                (s: number, p: any) => s + p.amount,
+                0,
+              );
+              return {
+                invoiceNumber: inv.invoiceNumber,
+                status: inv.status,
+                customer: `${inv.customer.firstName} ${inv.customer.lastName}`.trim(),
+                customerPhone: inv.customer.phone ?? null,
+                customerEmail: inv.customer.email ?? null,
+                customerAddress: inv.customer.address ?? null,
+                carLabel: inv.car
+                  ? `${inv.car.year} ${inv.car.make} ${inv.car.model} · ${inv.car.licensePlate}`
+                  : null,
+                subtotal: inv.subtotal,
+                discount: inv.discount,
+                taxAmount: inv.taxAmount,
+                total: inv.total,
+                paid,
+                outstanding: Math.max(0, inv.total - paid),
+                dueDate: inv.dueDate ? inv.dueDate.toISOString().slice(0, 10) : '',
+                createdAt: inv.createdAt.toISOString().slice(0, 10),
+                paidAt: inv.paidAt ? inv.paidAt.toISOString().slice(0, 10) : null,
+                lineItems: (inv.lineItems ?? []).map((li: any) => ({
+                  description: li.description,
+                  quantity: li.quantity,
+                  unitPrice: li.unitPrice,
+                  total: li.total,
+                })),
+              };
+            });
+            const pdfBuffer = await invoicesToPdf(pdfRows, {
+              garageName: garage.name,
+              garageAddress: garage.address,
+              garagePhone: garage.phone,
+              garageEmail: garage.email,
+            });
+            attachments = [
+              {
+                filename: 'invoices.pdf',
+                content: pdfBuffer.toString('base64'),
+                contentType: 'application/pdf',
+              },
+            ];
+          } else {
+            const csvRows: InvoiceCsvRow[] = rows.map((inv: any) => {
+              const paid = inv.payments.reduce(
+                (s: number, p: any) => s + p.amount,
+                0,
+              );
+              return {
+                invoiceNumber: inv.invoiceNumber,
+                status: inv.status,
+                customer: `${inv.customer.firstName} ${inv.customer.lastName}`.trim(),
+                total: inv.total,
+                paid,
+                outstanding: Math.max(0, inv.total - paid),
+                dueDate: inv.dueDate ? inv.dueDate.toISOString().slice(0, 10) : '',
+                createdAt: inv.createdAt.toISOString().slice(0, 10),
+              };
+            });
+            const csv = invoicesToCsv(csvRows);
+            attachments = [
+              {
+                filename: 'invoices.csv',
+                content: Buffer.from(csv, 'utf8').toString('base64'),
+                contentType: 'text/csv',
+              },
+            ];
+          }
           attachedInvoiceCount = rows.length;
         }
       }
@@ -215,6 +297,7 @@ export function createSendEmailTool(deps: {
         };
         if (attachedInvoiceCount > 0) {
           out.attachedInvoiceCount = attachedInvoiceCount;
+          out.attachmentFormat = format;
         }
         return out;
       } catch (err) {

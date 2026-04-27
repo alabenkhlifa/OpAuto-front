@@ -24,6 +24,7 @@ import { ResendEmailDriver } from '../src/email/providers/resend-email.driver';
 import { createSendEmailTool } from '../src/assistant/tools/communications/send-email.tool';
 
 const overrideEmail = process.argv[2];
+const format = (process.argv[3] === 'pdf' ? 'pdf' : 'csv') as 'csv' | 'pdf';
 const prismaClient = new PrismaClient();
 const prisma = prismaClient as unknown as PrismaService;
 
@@ -53,22 +54,26 @@ const prisma = prismaClient as unknown as PrismaService;
 
   console.log(`from:        onboarding@resend.dev  (Resend sandbox)`);
   console.log(`to:          ${ctx.email}  (server-resolved from session)`);
-  console.log(`attachments: invoices.csv (${sample.length} rows)`);
-  console.log(`first row:   ${sample[0].invoiceNumber} · ${sample[0].customer.firstName} ${sample[0].customer.lastName} · ${sample[0].total} TND\n`);
+  console.log(`format:      ${format}`);
+  console.log(`attachments: invoices.${format} (${sample.length} ${format === 'pdf' ? 'pages' : 'rows'})`);
+  console.log(`first item:  ${sample[0].invoiceNumber} · ${sample[0].customer.firstName} ${sample[0].customer.lastName} · ${sample[0].total} TND\n`);
 
   const driver = new ResendEmailDriver(new ConfigService());
   const tool = createSendEmailTool({ emailService: new EmailService(driver), prisma });
 
-  const subject = `OpAuto demo · 5 recent invoices · ${new Date().toISOString().slice(0, 16).replace('T', ' ')}`;
+  const subject = `OpAuto demo · 5 recent invoices (${format}) · ${new Date().toISOString().slice(0, 16).replace('T', ' ')}`;
   const text =
-    `Hi,\n\nAttached is a CSV of the 5 most recent invoices from the OpAuto demo.\n\n` +
+    `Hi,\n\nAttached is a ${format.toUpperCase()} of the 5 most recent invoices from the OpAuto demo.\n\n` +
     sample
       .map((i, idx) => `${idx + 1}. ${i.invoiceNumber} — ${i.customer.firstName} ${i.customer.lastName} — ${i.status} — ${i.total.toFixed(2)} TND`)
       .join('\n') +
     `\n\n— sent by send_email tool, recipient resolved from ctx.email server-side.`;
 
   // Note: no `to` arg — the tool reads ctx.email itself.
-  const result = await tool.handler({ subject, text, attachInvoiceIds: ids }, ctx);
+  const result = await tool.handler(
+    { subject, text, attachInvoiceIds: ids, attachInvoiceFormat: format },
+    ctx,
+  );
 
   console.log('---');
   console.log(JSON.stringify(result, null, 2));
