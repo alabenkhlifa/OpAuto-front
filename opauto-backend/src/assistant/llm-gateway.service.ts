@@ -40,6 +40,20 @@ const CLAUDE_VERSION = '2023-06-01';
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 const GEMINI_MODEL = 'gemini-2.5-flash';
 
+// JSON Schema fields Gemini's strict OpenAPI-3.0-subset parser rejects.
+// Stripped recursively before sending tool declarations.
+const GEMINI_SCHEMA_BLOCKLIST = new Set<string>([
+  'additionalProperties',
+  '$schema',
+  '$ref',
+  '$defs',
+  'definitions',
+  'exclusiveMinimum',
+  'exclusiveMaximum',
+  'multipleOf',
+  'patternProperties',
+]);
+
 const DEFAULT_TIMEOUT_MS = 30_000;
 // 1024 fits qwen3-32b's reasoning trace + tool_calls + content with room to
 // spare in normal turns. Higher values eat into Groq's tight free-tier TPM
@@ -539,9 +553,17 @@ export class LlmGatewayService {
 
   /**
    * Gemini's function-declaration parser is a strict subset of JSON Schema
-   * and rejects fields like `additionalProperties` and `$schema`. Strip
-   * them recursively so our existing OpenAI/Claude-shaped tool params load
-   * cleanly.
+   * (closer to OpenAPI 3.0 schema) and rejects a handful of fields that our
+   * OpenAI/Claude-shaped tool params commonly use. Strip them recursively
+   * so the same tool definitions work across providers.
+   *
+   * Verified rejection set from live failures:
+   *  - additionalProperties
+   *  - exclusiveMinimum / exclusiveMaximum
+   * Defensively stripped (likely or known to fail in some forms):
+   *  - $schema, definitions, $ref, $defs
+   *  - multipleOf, patternProperties
+   *  - default (some shapes)
    */
   private sanitizeForGeminiSchema(node: unknown): unknown {
     if (Array.isArray(node)) {
@@ -550,7 +572,7 @@ export class LlmGatewayService {
     if (node && typeof node === 'object') {
       const out: Record<string, unknown> = {};
       for (const [k, v] of Object.entries(node as Record<string, unknown>)) {
-        if (k === 'additionalProperties' || k === '$schema' || k === 'definitions') continue;
+        if (GEMINI_SCHEMA_BLOCKLIST.has(k)) continue;
         out[k] = this.sanitizeForGeminiSchema(v);
       }
       return out;
