@@ -230,6 +230,133 @@ describe('LlmGatewayService', () => {
     expect(result.toolCalls).toEqual([]);
   });
 
+  it('falls back to Cerebras when Groq returns 429 (TPM exceeded)', async () => {
+    const fetchMock: FetchMock = jest
+      .fn()
+      .mockResolvedValueOnce(errJson(429, { error: { message: 'TPM' } }))
+      .mockResolvedValueOnce(
+        okJson({
+          choices: [{ message: { role: 'assistant', content: 'cerebras hi' } }],
+          usage: { prompt_tokens: 100, completion_tokens: 20 },
+        }),
+      );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    const service = await makeService({
+      GROQ_API_KEY: 'g',
+      CEREBRAS_API_KEY: 'c',
+    });
+
+    const result = await service.complete(baseRequest);
+
+    expect(result.provider).toBe('cerebras');
+    expect(result.content).toBe('cerebras hi');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(String(fetchMock.mock.calls[1][0])).toMatch(/cerebras\.ai/);
+  });
+
+  it('uses default Cerebras model when caller passes a Groq-only model id', async () => {
+    const fetchMock: FetchMock = jest
+      .fn()
+      .mockResolvedValueOnce(errJson(429, { error: { message: 'TPM' } }))
+      .mockResolvedValueOnce(
+        okJson({
+          choices: [{ message: { role: 'assistant', content: 'ok' } }],
+        }),
+      );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    const service = await makeService({
+      GROQ_API_KEY: 'g',
+      CEREBRAS_API_KEY: 'c',
+    });
+
+    await service.complete({
+      messages: baseRequest.messages,
+      // Groq-shaped id with `-instant` suffix that Cerebras doesn't host.
+      model: 'llama-3.1-8b-instant',
+    });
+
+    const cerebrasBody = JSON.parse(
+      String(fetchMock.mock.calls[1][1]?.body),
+    );
+    expect(cerebrasBody.model).toBe('llama-3.3-70b');
+  });
+
+  it('falls back to Mistral when both Groq and Cerebras fail', async () => {
+    const fetchMock: FetchMock = jest
+      .fn()
+      .mockResolvedValueOnce(errJson(429, { error: { message: 'g' } }))
+      .mockResolvedValueOnce(errJson(500, { error: { message: 'c' } }))
+      .mockResolvedValueOnce(
+        okJson({
+          choices: [
+            { message: { role: 'assistant', content: 'mistral hi' } },
+          ],
+        }),
+      );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    const service = await makeService({
+      GROQ_API_KEY: 'g',
+      CEREBRAS_API_KEY: 'c',
+      MISTRAL_API_KEY: 'm',
+    });
+
+    const result = await service.complete(baseRequest);
+
+    expect(result.provider).toBe('mistral');
+    expect(result.content).toBe('mistral hi');
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(String(fetchMock.mock.calls[2][0])).toMatch(/mistral\.ai/);
+  });
+
+  it('returns Cerebras tool calls in the same shape as Groq', async () => {
+    const fetchMock: FetchMock = jest
+      .fn()
+      .mockResolvedValueOnce(errJson(429, { error: { message: 'TPM' } }))
+      .mockResolvedValueOnce(
+        okJson({
+          choices: [
+            {
+              message: {
+                role: 'assistant',
+                content: null,
+                tool_calls: [
+                  {
+                    id: 'call_x',
+                    type: 'function',
+                    function: {
+                      name: 'list_overdue_invoices',
+                      arguments: '{"limit":3}',
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        }),
+      );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    const service = await makeService({
+      GROQ_API_KEY: 'g',
+      CEREBRAS_API_KEY: 'c',
+    });
+
+    const result = await service.complete({
+      messages: baseRequest.messages,
+      tools: [
+        {
+          name: 'list_overdue_invoices',
+          description: 'd',
+          parameters: { type: 'object', properties: {} },
+        },
+      ],
+    });
+
+    expect(result.provider).toBe('cerebras');
+    expect(result.toolCalls).toEqual([
+      { id: 'call_x', name: 'list_overdue_invoices', argsJson: '{"limit":3}' },
+    ]);
+  });
+
   it('does not throw when Groq fetch itself rejects', async () => {
     const fetchMock: FetchMock = jest
       .fn()

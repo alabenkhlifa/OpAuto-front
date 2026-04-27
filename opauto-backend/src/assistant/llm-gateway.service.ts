@@ -27,6 +27,37 @@ const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 //    6000 TPM ceiling is also tight.
 const GROQ_MODEL = 'llama-3.1-8b-instant';
 
+// Cerebras OpenAI-compatible endpoint. Free tier: 1M tokens/day with no
+// per-minute throttle that resembles Groq's 6000 TPM ceiling — purpose-built
+// for tool-heavy turns the orchestrator emits when the augmenter expands the
+// classifier slice. Same wire format as Groq (OpenAI chat-completions shape),
+// different model ids.
+const CEREBRAS_URL = 'https://api.cerebras.ai/v1/chat/completions';
+// llama-3.3-70b on Cerebras's WSE-3 chips runs ~2000 tok/s and handles the
+// orchestrator's tool-call patterns reliably even with 5+ schemas in a single
+// request. Stays close to the Llama family the existing system prompt was
+// tuned against.
+const CEREBRAS_MODEL = 'llama-3.3-70b';
+// Cerebras model-id prefixes we recognise. Cerebras hosts llama-3.3+ and
+// llama-4 — NOT llama-3.1 (that's Groq's classifier model). We must reject
+// `llama-3.1-8b-instant` so it doesn't 404 against Cerebras's catalog.
+const CEREBRAS_MODEL_PATTERN =
+  /^(llama-?3\.3|llama-?4|qwen-?3|deepseek-?(v3|r1))/i;
+
+// Mistral OpenAI-compatible endpoint. Free tier: 1B tokens/month with phone
+// verification — a deeper safety net than Cerebras's daily bucket. Sits below
+// Cerebras in the chain so tool-heavy turns hit Cerebras first (faster), and
+// only spill over to Mistral if Cerebras itself is having a bad day.
+const MISTRAL_URL = 'https://api.mistral.ai/v1/chat/completions';
+// mistral-small-latest is the right default for the free tier:
+//   - Tool-calling supported and reliable for our 5-7 tool slice.
+//   - Open-weight family covered by the 1B-token monthly free quota
+//     (the larger commercial models are not).
+//   - 24B params — quality is comparable to Llama 3.3 70B on tool routing
+//     for our orchestrator's narrow prompts.
+const MISTRAL_MODEL = 'mistral-small-latest';
+const MISTRAL_MODEL_PATTERN = /^(mistral|ministral|open-)/i;
+
 const CLAUDE_URL = 'https://api.anthropic.com/v1/messages';
 // Match the model id used in the existing AiService so we share a single
 // Anthropic version across the codebase. Bumping to a newer Sonnet should be
@@ -124,30 +155,42 @@ interface GeminiResponse {
 /**
  * Provider-agnostic completion gateway.
  *
- * Order: Gemini (250k TPM, primary) → Groq (fast 8b model, secondary) →
- * Claude (quality, last resort). On any recoverable failure (network,
+ * Order: Gemini (250k TPM, primary) → Groq (fast 8b model, classifier-friendly)
+ * → Cerebras (1M tokens/day, no per-minute throttle, handles tool-heavy main
+ * turns Groq's 6k TPM rejects) → Mistral (1B tokens/month free, deeper safety
+ * net) → Claude (quality, last resort). On any recoverable failure (network,
  * non-2xx, malformed tool-call JSON) we fall through. If everything is
- * unavailable or unconfigured, we return a `mock` result with content
- * rather than throwing — the orchestrator depends on always receiving a
- * result so it can persist a graceful assistant message.
+ * unavailable or unconfigured, we return a `mock` result with content rather
+ * than throwing — the orchestrator depends on always receiving a result so it
+ * can persist a graceful assistant message.
  */
 @Injectable()
 export class LlmGatewayService {
   private readonly logger = new Logger(LlmGatewayService.name);
   private readonly geminiKey: string | undefined;
   private readonly groqKey: string | undefined;
+  private readonly cerebrasKey: string | undefined;
+  private readonly mistralKey: string | undefined;
   private readonly anthropicKey: string | undefined;
 
   constructor(private readonly config: ConfigService) {
     this.geminiKey = this.config.get<string>('GEMINI_API_KEY');
     this.groqKey = this.config.get<string>('GROQ_API_KEY');
+    this.cerebrasKey = this.config.get<string>('CEREBRAS_API_KEY');
+    this.mistralKey = this.config.get<string>('MISTRAL_API_KEY');
     this.anthropicKey = this.config.get<string>('ANTHROPIC_API_KEY');
   }
 
   async complete(request: LlmCompletionRequest): Promise<LlmCompletionResult> {
-    if (!this.geminiKey && !this.groqKey && !this.anthropicKey) {
+    if (
+      !this.geminiKey &&
+      !this.groqKey &&
+      !this.cerebrasKey &&
+      !this.mistralKey &&
+      !this.anthropicKey
+    ) {
       this.logger.warn(
-        'No LLM provider configured (GEMINI_API_KEY / GROQ_API_KEY / ANTHROPIC_API_KEY missing); returning mock completion',
+        'No LLM provider configured (GEMINI_API_KEY / GROQ_API_KEY / CEREBRAS_API_KEY / MISTRAL_API_KEY / ANTHROPIC_API_KEY missing); returning mock completion',
       );
       return {
         provider: 'mock',
@@ -208,8 +251,28 @@ export class LlmGatewayService {
           `Groq tools-less retry also failed (${(retry as { reason: string }).reason})`,
         );
       } else {
-        this.logger.warn(`Groq failed (${reason}); falling back to Claude`);
+        this.logger.warn(`Groq failed (${reason}); falling back to Cerebras`);
       }
+    }
+
+    if (this.cerebrasKey) {
+      const cerebras = await this.callCerebras(request);
+      if (cerebras.ok) {
+        return cerebras.result;
+      }
+      this.logger.warn(
+        `Cerebras failed (${(cerebras as { reason: string }).reason}); falling back to Mistral`,
+      );
+    }
+
+    if (this.mistralKey) {
+      const mistral = await this.callMistral(request);
+      if (mistral.ok) {
+        return mistral.result;
+      }
+      this.logger.warn(
+        `Mistral failed (${(mistral as { reason: string }).reason}); falling back to Claude`,
+      );
     }
 
     if (this.anthropicKey) {
@@ -334,6 +397,156 @@ export class LlmGatewayService {
       ok: true,
       result: {
         provider: 'groq',
+        content,
+        toolCalls,
+        tokensIn: raw.usage?.prompt_tokens,
+        tokensOut: raw.usage?.completion_tokens,
+      },
+    };
+  }
+
+  // ── Cerebras ─────────────────────────────────────────────────────────
+
+  private async callCerebras(
+    request: LlmCompletionRequest,
+  ): Promise<
+    | { ok: true; result: LlmCompletionResult }
+    | { ok: false; reason: string }
+  > {
+    return this.callOpenAiCompatible({
+      provider: 'cerebras',
+      url: CEREBRAS_URL,
+      apiKey: this.cerebrasKey!,
+      defaultModel: CEREBRAS_MODEL,
+      modelPattern: CEREBRAS_MODEL_PATTERN,
+      request,
+    });
+  }
+
+  // ── Mistral ──────────────────────────────────────────────────────────
+
+  private async callMistral(
+    request: LlmCompletionRequest,
+  ): Promise<
+    | { ok: true; result: LlmCompletionResult }
+    | { ok: false; reason: string }
+  > {
+    return this.callOpenAiCompatible({
+      provider: 'mistral',
+      url: MISTRAL_URL,
+      apiKey: this.mistralKey!,
+      defaultModel: MISTRAL_MODEL,
+      modelPattern: MISTRAL_MODEL_PATTERN,
+      request,
+    });
+  }
+
+  /**
+   * Shared OpenAI-compatible chat-completions caller. Used by Cerebras,
+   * Mistral, and any future OpenAI-shape provider. Groq stays on its own
+   * implementation because it carries a couple of provider-specific quirks
+   * (reasoning-trace stripping, tool_call_json_parse retry semantics) that
+   * we don't want bleeding into other providers.
+   */
+  private async callOpenAiCompatible(opts: {
+    provider: 'cerebras' | 'mistral';
+    url: string;
+    apiKey: string;
+    defaultModel: string;
+    modelPattern: RegExp;
+    request: LlmCompletionRequest;
+  }): Promise<
+    | { ok: true; result: LlmCompletionResult }
+    | { ok: false; reason: string }
+  > {
+    const { provider, url, apiKey, defaultModel, modelPattern, request } = opts;
+    const startedAt = Date.now();
+    const model =
+      request.model && modelPattern.test(request.model)
+        ? request.model
+        : defaultModel;
+    const body: Record<string, unknown> = {
+      model,
+      messages: request.messages.map((m) => this.toOpenAiMessage(m)),
+      max_tokens: request.maxTokens ?? DEFAULT_MAX_TOKENS,
+    };
+    if (typeof request.temperature === 'number') {
+      body.temperature = request.temperature;
+    }
+    if (request.tools && request.tools.length > 0) {
+      body.tools = request.tools.map((t) => this.toOpenAiTool(t));
+      body.tool_choice = 'auto';
+    }
+
+    let raw: GroqResponse;
+    try {
+      const response = await this.fetchWithTimeout(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        const text = await this.safeText(response);
+        return {
+          ok: false,
+          reason: `http_${response.status}${text ? `: ${text.slice(0, 200)}` : ''}`,
+        };
+      }
+      raw = (await response.json()) as GroqResponse;
+    } catch (err) {
+      return { ok: false, reason: this.errMessage(err) };
+    }
+
+    const choice = raw.choices?.[0];
+    const message = choice?.message;
+    if (!message) {
+      return { ok: false, reason: 'missing_message' };
+    }
+
+    const toolCalls: LlmToolCall[] = [];
+    if (Array.isArray(message.tool_calls)) {
+      for (const tc of message.tool_calls) {
+        const name = tc.function?.name;
+        const argsRaw = tc.function?.arguments ?? '';
+        if (typeof name !== 'string' || name.length === 0) {
+          return { ok: false, reason: 'tool_call_missing_name' };
+        }
+        try {
+          if (argsRaw.length > 0) {
+            JSON.parse(argsRaw);
+          }
+        } catch (err) {
+          return {
+            ok: false,
+            reason: `tool_call_json_parse_${this.errMessage(err)}`,
+          };
+        }
+        toolCalls.push({
+          id: tc.id ?? `call_${Math.random().toString(36).slice(2, 10)}`,
+          name,
+          argsJson: argsRaw.length > 0 ? argsRaw : '{}',
+        });
+      }
+    }
+
+    const content =
+      typeof message.content === 'string' && message.content.length > 0
+        ? message.content
+        : null;
+
+    const latency = Date.now() - startedAt;
+    this.logger.log(
+      `${provider[0].toUpperCase()}${provider.slice(1)} completion ok in ${latency}ms (toolCalls=${toolCalls.length}, contentLen=${content?.length ?? 0})`,
+    );
+
+    return {
+      ok: true,
+      result: {
+        provider,
         content,
         toolCalls,
         tokensIn: raw.usage?.prompt_tokens,

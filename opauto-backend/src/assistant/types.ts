@@ -92,7 +92,14 @@ export interface LlmCompletionRequest {
 }
 
 export interface LlmCompletionResult {
-  provider: 'groq' | 'claude' | 'openai' | 'gemini' | 'mock';
+  provider:
+    | 'groq'
+    | 'claude'
+    | 'openai'
+    | 'gemini'
+    | 'cerebras'
+    | 'mistral'
+    | 'mock';
   content: string | null;
   toolCalls: LlmToolCall[];
   tokensIn?: number;
