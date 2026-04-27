@@ -451,7 +451,13 @@ export class LlmGatewayService {
       ];
     }
 
-    const model = request.model ?? GEMINI_MODEL;
+    // request.model is set by callers expecting Groq's model ids. Only honour
+    // it when it actually refers to a Gemini model — otherwise fall back to
+    // our default so cross-provider routing doesn't 404.
+    const model =
+      request.model && /^gemini[-/]/i.test(request.model)
+        ? request.model
+        : GEMINI_MODEL;
     const url = `${GEMINI_BASE}/${model}:generateContent?key=${this.geminiKey}`;
 
     let raw: GeminiResponse;
@@ -527,8 +533,29 @@ export class LlmGatewayService {
     return {
       name: t.name,
       description: t.description,
-      parameters: t.parameters,
+      parameters: this.sanitizeForGeminiSchema(t.parameters),
     };
+  }
+
+  /**
+   * Gemini's function-declaration parser is a strict subset of JSON Schema
+   * and rejects fields like `additionalProperties` and `$schema`. Strip
+   * them recursively so our existing OpenAI/Claude-shaped tool params load
+   * cleanly.
+   */
+  private sanitizeForGeminiSchema(node: unknown): unknown {
+    if (Array.isArray(node)) {
+      return node.map((n) => this.sanitizeForGeminiSchema(n));
+    }
+    if (node && typeof node === 'object') {
+      const out: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(node as Record<string, unknown>)) {
+        if (k === 'additionalProperties' || k === '$schema' || k === 'definitions') continue;
+        out[k] = this.sanitizeForGeminiSchema(v);
+      }
+      return out;
+    }
+    return node;
   }
 
   /**
