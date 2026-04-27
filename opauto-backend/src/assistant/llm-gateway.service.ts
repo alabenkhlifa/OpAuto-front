@@ -33,13 +33,15 @@ const GROQ_MODEL = 'llama-3.1-8b-instant';
 // classifier slice. Same wire format as Groq (OpenAI chat-completions shape),
 // different model ids.
 const CEREBRAS_URL = 'https://api.cerebras.ai/v1/chat/completions';
-// llama3.1-8b is the model available on this account's free tier. Same
-// family Groq's classifier uses, but on Cerebras's WSE-3 chips with no
-// per-minute TPM throttle that resembles Groq's 6000 ceiling — purpose-built
-// to absorb tool-heavy turns when Groq is rate-limited. Note Cerebras's id
-// format omits the hyphen between `llama` and the version: it's
-// `llama3.1-8b`, not Groq's `llama-3.1-8b-instant`.
-const CEREBRAS_MODEL = 'llama3.1-8b';
+// qwen-3-235b-a22b-instruct-2507 is the largest instruction-tuned (non-
+// "thinking") model on this account's free tier. The 8b llama variant on the
+// same tier returned tool-call payloads as plain JSON in the content field
+// instead of the OpenAI `tool_calls` structure once the augmenter pushed the
+// tool list past 5 — so the orchestrator parsed zero tool calls and dumped
+// raw JSON to the user. The 235B instruct model handles structured tool
+// calling reliably and doesn't leak <think> traces (that's the "thinking"
+// variant; this one is instruction-only).
+const CEREBRAS_MODEL = 'qwen-3-235b-a22b-instruct-2507';
 // Cerebras model-id prefixes we recognise. Strict so the classifier's
 // Groq-specific `llama-3.1-8b-instant` (with hyphen + suffix) is rejected
 // and we override with CEREBRAS_MODEL.
