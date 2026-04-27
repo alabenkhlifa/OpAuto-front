@@ -89,6 +89,63 @@ describe('analytics tools', () => {
       expect(result.valid).toBe(false);
     });
 
+    it('accepts custom from+to range and labels the period as "custom"', async () => {
+      const aggregate = jest
+        .fn()
+        .mockResolvedValue({ _sum: { total: 5128.9 }, _count: 7 });
+      const prisma = { invoice: { aggregate } } as any;
+      const tool = buildGetRevenueSummaryTool(prisma);
+
+      const result = await tool.handler(
+        { from: '2026-02-01', to: '2026-04-30' },
+        ownerCtx,
+      );
+
+      expect(result.period).toBe('custom');
+      expect(result.totalRevenue).toBe(5128.9);
+      expect(result.paidInvoiceCount).toBe(7);
+      const where = aggregate.mock.calls[0][0].where;
+      expect(where.paidAt.gte.toISOString()).toBe('2026-02-01T00:00:00.000Z');
+      // Date-only `to` should advance to next-day midnight so 04-30 is included.
+      expect(where.paidAt.lt.toISOString()).toBe('2026-05-01T00:00:00.000Z');
+    });
+
+    it('rejects partial range (only from, no to) at handler level', async () => {
+      const tool = buildGetRevenueSummaryTool({ invoice: { aggregate: jest.fn() } } as any);
+      await expect(
+        tool.handler({ from: '2026-02-01' } as any, ownerCtx),
+      ).rejects.toThrow(/from.*to.*together/i);
+    });
+
+    it('rejects from >= to', async () => {
+      const tool = buildGetRevenueSummaryTool({ invoice: { aggregate: jest.fn() } } as any);
+      await expect(
+        tool.handler({ from: '2026-04-30', to: '2026-04-01' }, ownerCtx),
+      ).rejects.toThrow(/Invalid range/);
+    });
+
+    it('defaults to ytd when no args are supplied', async () => {
+      const aggregate = jest
+        .fn()
+        .mockResolvedValue({ _sum: { total: 100 }, _count: 1 });
+      const prisma = { invoice: { aggregate } } as any;
+      const tool = buildGetRevenueSummaryTool(prisma);
+      const result = await tool.handler({}, ownerCtx);
+      expect(result.period).toBe('ytd');
+    });
+
+    it('schema accepts {period} alone, {from,to} alone, and rejects extras', () => {
+      const tool = buildGetRevenueSummaryTool({ invoice: { aggregate: jest.fn() } } as any);
+      expect(registerAndValidate(tool, { period: 'month' }).valid).toBe(true);
+      expect(
+        registerAndValidate(tool, { from: '2026-01-01', to: '2026-04-01' }).valid,
+      ).toBe(true);
+      expect(registerAndValidate(tool, {}).valid).toBe(true); // schema-allowed; defaults to ytd at handler
+      expect(
+        registerAndValidate(tool, { period: 'ytd', whatever: 1 } as any).valid,
+      ).toBe(false);
+    });
+
     it('returns a sensible window for "today"', () => {
       const now = new Date('2026-04-26T15:30:00Z');
       const { from, to } = resolveRevenuePeriod('today', now);
