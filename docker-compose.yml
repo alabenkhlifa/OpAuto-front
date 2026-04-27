@@ -45,6 +45,12 @@ services:
       TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
       TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
       TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER:-}
+      # Email delivery. Default 'mock' logs to the Nest logger; set
+      # EMAIL_PROVIDER=resend and fill RESEND_* in /opt/opauto/.env to
+      # send real email via Resend.
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-mock}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM: ${RESEND_FROM:-}
     volumes:
       # Persist user-uploaded photos across container restarts. The backend
       # writes to /app/uploads (resolved via __dirname + '../../uploads' in
