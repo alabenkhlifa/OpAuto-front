@@ -650,8 +650,14 @@ async function seedMaintenanceJobs(
       visits.push(...spreadVisits(cust, carsOfCust, earlierStart, addDays(lastVisit, -1), earlier));
       visits.push({ cust, car: pick(carsOfCust), date: lastVisit });
     } else if (cust.archetype === 'churned') {
-      // Last visit 200–280 days ago (in 2025), so NO 2026 maintenance jobs.
-      // Skip — they have no visits in our seed window.
+      // Were active customers in 2024–2025 then went silent. Generate 3–5
+      // historical visits, with the most recent 200–280 days ago, so the churn
+      // model has enough history (visitCount ≥ 2) to flag them as high-risk.
+      const lastVisit = addDays(TODAY, -randInt(200, 280));
+      const earlier = randInt(2, 4);
+      const earlierStart = addDays(lastVisit, -randInt(180, 365));
+      visits.push(...spreadVisits(cust, carsOfCust, earlierStart, addDays(lastVisit, -1), earlier));
+      visits.push({ cust, car: pick(carsOfCust), date: lastVisit });
     } else if (cust.archetype === 'new') {
       // Created ≤25 days ago, has 1 visit in last 14 days
       const visitDate = addDays(TODAY, -randInt(2, 14));
