@@ -69,10 +69,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 132, 0, 0.1);
   border-radius: 12px;
-  border: 1px solid rgba(255, 132, 0, 0.2);
+  overflow: hidden;
   flex-shrink: 0;
+}
+
+.logo-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }
 
 .logo-text {

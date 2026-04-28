@@ -53,16 +53,16 @@
     "subscription": "Subscription",
     "profile": "Profile",
     "logout": "Logout",
-    "opAuto": "OpAuto",
+    "opAuto": "Smart Garage",
     "garageManagement": "Garage Management",
-    "version": "OpAuto v1.0.0",
+    "version": "Smart Garage v1.0.0",
     "expandSidebar": "Click to expand sidebar",
     "collapseSidebar": "Collapse sidebar",
     "openMenu": "Open menu",
     "closeMenu": "Close menu"
   },
   "dashboard": {
-    "title": "OpAuto Dashboard",
+    "title": "Smart Garage Dashboard",
     "subtitle": "{{date}}",
     "quickActions": {
       "title": "Quick Actions",
@@ -1435,7 +1435,7 @@
         "apiKey": "SMS API Key",
         "apiKeyPlaceholder": "Enter your SMS API key",
         "senderName": "SMS Sender Name",
-        "senderNamePlaceholder": "OpAuto",
+        "senderNamePlaceholder": "Smart Garage",
         "testing": "Testing...",
         "testConnection": "Test Connection"
       },
@@ -1523,7 +1523,7 @@
     }
   },
   "auth": {
-    "title": "OpAuto",
+    "title": "Smart Garage",
     "subtitle": "Garage Management System",
     "ownerOnly": "Only the garage owner can access this page.",
     "signIn": "Sign In",
@@ -1550,7 +1550,7 @@
     },
     "registration": {
       "title": "Create Account",
-      "subtitle": "Join OpAuto today",
+      "subtitle": "Join Smart Garage today",
       "personalInfo": "Personal Information",
       "businessInfo": "Business Information",
       "accountInfo": "Account Information",
@@ -1596,7 +1596,7 @@
       "staff": "Staff"
     },
     "footer": {
-      "systemName": "OpAuto Garage Management System v1.0"
+      "systemName": "Smart Garage Garage Management System v1.0"
     }
   },
   "staff": {
@@ -1678,7 +1678,7 @@
       "browserNotifications": "Browser Notifications",
       "browserNotificationsDescription": "Show desktop notifications",
       "onboardingTour": "Onboarding Tour",
-      "onboardingTourDescription": "Restart the interactive tour to learn about OpAuto features",
+      "onboardingTourDescription": "Restart the interactive tour to learn about Smart Garage features",
       "restartTour": "Restart Tour"
     },
     "security": {
@@ -2260,7 +2260,7 @@
     "complete": "Complete Tour",
     "solo": {
       "welcome": {
-        "title": "Welcome to OpAuto Solo!",
+        "title": "Welcome to Smart Garage Solo!",
         "description": "Let's take a quick tour of your garage management system. This tour will help you get started with the essential features."
       },
       "dashboard": {
@@ -2290,7 +2290,7 @@
     },
     "starter": {
       "welcome": {
-        "title": "Welcome to OpAuto Starter!",
+        "title": "Welcome to Smart Garage Starter!",
         "description": "You've unlocked powerful team collaboration features. Let's explore what's new for your growing garage."
       },
       "dashboard": {
@@ -2324,7 +2324,7 @@
     },
     "professional": {
       "welcome": {
-        "title": "Welcome to OpAuto Professional!",
+        "title": "Welcome to Smart Garage Professional!",
         "description": "You have full access to all features. Let's explore the advanced capabilities of your Professional plan."
       },
       "dashboard": {
@@ -2358,7 +2358,7 @@
     },
     "staff": {
       "welcome": {
-        "title": "Welcome to OpAuto!",
+        "title": "Welcome to Smart Garage!",
         "description": "Let's get you familiar with your workspace. This quick tour will show you the essential features you'll use daily."
       },
       "dashboard": {

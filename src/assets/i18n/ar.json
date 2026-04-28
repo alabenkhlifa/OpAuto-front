@@ -53,16 +53,16 @@
     "subscription": "الاشتراك",
     "profile": "الملف الشخصي",
     "logout": "تسجيل خروج",
-    "opAuto": "أوب أوتو",
+    "opAuto": "الورشة الذكية",
     "garageManagement": "إدارة الورشة",
-    "version": "أوب أوتو الإصدار 1.0.0",
+    "version": "الورشة الذكية الإصدار 1.0.0",
     "expandSidebar": "انقر لتوسيع الشريط الجانبي",
     "collapseSidebar": "طي الشريط الجانبي",
     "openMenu": "فتح القائمة",
     "closeMenu": "إغلاق القائمة"
   },
   "dashboard": {
-    "title": "لوحة تحكم أوب أوتو",
+    "title": "لوحة تحكم الورشة الذكية",
     "subtitle": "{{date}}",
     "quickActions": {
       "title": "الإجراءات السريعة",
@@ -1439,7 +1439,7 @@
         "apiKey": "مفتاح API للرسائل النصية",
         "apiKeyPlaceholder": "أدخل مفتاح API للرسائل النصية",
         "senderName": "اسم مرسل الرسائل النصية",
-        "senderNamePlaceholder": "OpAuto",
+        "senderNamePlaceholder": "الورشة الذكية",
         "testing": "جارٍ الاختبار...",
         "testConnection": "اختبار الاتصال"
       },
@@ -1527,7 +1527,7 @@
     }
   },
   "auth": {
-    "title": "OpAuto",
+    "title": "الورشة الذكية",
     "subtitle": "نظام إدارة الورش",
     "ownerOnly": "فقط مالك الورشة يمكنه الوصول إلى هذه الصفحة.",
     "signIn": "تسجيل الدخول",
@@ -1554,7 +1554,7 @@
     },
     "registration": {
       "title": "إنشاء حساب",
-      "subtitle": "انضم إلى OpAuto اليوم",
+      "subtitle": "انضم إلى الورشة الذكية اليوم",
       "personalInfo": "المعلومات الشخصية",
       "businessInfo": "معلومات العمل",
       "accountInfo": "معلومات الحساب",
@@ -1604,7 +1604,7 @@
       "mechanicCredentials": "mechanic@opauto.tn / mech123"
     },
     "footer": {
-      "systemName": "OpAuto نظام إدارة الورش الإصدار 1.0"
+      "systemName": "الورشة الذكية نظام إدارة الورش الإصدار 1.0"
     }
   },
   "profile": {
@@ -1642,7 +1642,7 @@
       "browserNotifications": "إشعارات المتصفح",
       "browserNotificationsDescription": "عرض إشعارات سطح المكتب",
       "onboardingTour": "جولة التعريف",
-      "onboardingTourDescription": "إعادة تشغيل الجولة التفاعلية للتعرف على ميزات OpAuto",
+      "onboardingTourDescription": "إعادة تشغيل الجولة التفاعلية للتعرف على ميزات الورشة الذكية",
       "restartTour": "إعادة تشغيل الجولة"
     },
     "security": {
@@ -2384,7 +2384,7 @@
     "complete": "إنهاء الجولة",
     "solo": {
       "welcome": {
-        "title": "مرحبًا بك في OpAuto Solo!",
+        "title": "مرحبًا بك في الورشة الذكية Solo!",
         "description": "لنقم بجولة سريعة في نظام إدارة الورشة الخاص بك. ستساعدك هذه الجولة على البدء بالميزات الأساسية."
       },
       "dashboard": {
@@ -2414,7 +2414,7 @@
     },
     "starter": {
       "welcome": {
-        "title": "مرحبًا بك في OpAuto Starter!",
+        "title": "مرحبًا بك في الورشة الذكية Starter!",
         "description": "لقد فتحت ميزات تعاون الفريق القوية. لنستكشف ما الجديد لورشتك المتنامية."
       },
       "dashboard": {
@@ -2448,7 +2448,7 @@
     },
     "professional": {
       "welcome": {
-        "title": "مرحبًا بك في OpAuto Professional!",
+        "title": "مرحبًا بك في الورشة الذكية Professional!",
         "description": "لديك وصول كامل إلى جميع الميزات. لنستكشف القدرات المتقدمة لخطتك Professional."
       },
       "dashboard": {
@@ -2482,7 +2482,7 @@
     },
     "staff": {
       "welcome": {
-        "title": "مرحبًا بك في OpAuto!",
+        "title": "مرحبًا بك في الورشة الذكية!",
         "description": "لنتعرف على مساحة العمل الخاصة بك. ستوضح لك هذه الجولة السريعة الميزات الأساسية التي ستستخدمها يوميًا."
       },
       "dashboard": {

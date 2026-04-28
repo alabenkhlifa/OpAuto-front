@@ -329,3 +329,8 @@ BUG-063, 065, 066, 067, 068, 069, 071, 073, 074 exercised end-to-end. BUG-089/09
 - [x] Detail page `onPrint()` calls `window.print()` — verified real native print dialog
 - [x] List-card Print was a no-op (`$event.stopPropagation()` only) → now navigates to `/invoices/:id?autoPrint=1`; detail `ngOnInit` consumes the query param and auto-triggers `window.print()` ~300ms after the invoice renders
 - [x] PDF is served via the browser's "Save as PDF" print destination (onDownloadPDF just calls onPrint) — not a dedicated PDF endpoint but acceptable for MVP
+
+## Branding (2026-04-28)
+- [x] Platform renamed from "OpAuto" to "Smart Garage" (en/fr) / "الورشة الذكية" (ar) across all i18n strings, sidebar header, dashboard title, version footer, auth subtitle, system name, onboarding tour, welcome modals, sender placeholder
+- [x] Sidebar logo swapped from inline car SVG to `public/garage-pro.png`; `.logo-icon` background tint removed, `overflow: hidden` added so the bitmap fills the rounded frame
+- [x] `index.html` and `404.html` `<title>` updated to "Smart Garage - Garage Management System"

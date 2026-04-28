@@ -53,16 +53,16 @@
     "modules": "Modules",
     "subscription": "Abonnement",
     "logout": "Déconnexion",
-    "opAuto": "OpAuto",
+    "opAuto": "Smart Garage",
     "garageManagement": "Gestion de Garage",
-    "version": "OpAuto v1.0.0",
+    "version": "Smart Garage v1.0.0",
     "expandSidebar": "Cliquez pour étendre la barre latérale",
     "collapseSidebar": "Réduire la barre latérale",
     "openMenu": "Ouvrir le menu",
     "closeMenu": "Fermer le menu"
   },
   "dashboard": {
-    "title": "Tableau de bord OpAuto",
+    "title": "Tableau de bord Smart Garage",
     "subtitle": "{{date}}",
     "quickActions": {
       "title": "Actions rapides",
@@ -1439,7 +1439,7 @@
         "apiKey": "Clé API SMS",
         "apiKeyPlaceholder": "Entrez votre clé API SMS",
         "senderName": "Nom de l'expéditeur SMS",
-        "senderNamePlaceholder": "OpAuto",
+        "senderNamePlaceholder": "Smart Garage",
         "testing": "Test en cours...",
         "testConnection": "Tester la connexion"
       },
@@ -1527,7 +1527,7 @@
     }
   },
   "auth": {
-    "title": "OpAuto",
+    "title": "Smart Garage",
     "subtitle": "Système de Gestion de Garage",
     "ownerOnly": "Seul le propriétaire du garage peut accéder à cette page.",
     "signIn": "Connexion",
@@ -1554,7 +1554,7 @@
     },
     "registration": {
       "title": "Créer un compte",
-      "subtitle": "Rejoignez OpAuto aujourd'hui",
+      "subtitle": "Rejoignez Smart Garage aujourd'hui",
       "personalInfo": "Informations personnelles",
       "businessInfo": "Informations professionnelles",
       "accountInfo": "Informations du compte",
@@ -1602,7 +1602,7 @@
       "mechanicCredentials": "mechanic@opauto.tn / mech123"
     },
     "footer": {
-      "systemName": "OpAuto Système de Gestion de Garage v1.0"
+      "systemName": "Smart Garage Système de Gestion de Garage v1.0"
     }
   },
   "profile": {
@@ -1640,7 +1640,7 @@
       "browserNotifications": "Notifications du navigateur",
       "browserNotificationsDescription": "Afficher les notifications sur le bureau",
       "onboardingTour": "Visite Guidée",
-      "onboardingTourDescription": "Redémarrer la visite interactive pour découvrir les fonctionnalités d'OpAuto",
+      "onboardingTourDescription": "Redémarrer la visite interactive pour découvrir les fonctionnalités d'Smart Garage",
       "restartTour": "Redémarrer la Visite"
     },
     "security": {
@@ -2346,7 +2346,7 @@
     "complete": "Terminer la visite",
     "solo": {
       "welcome": {
-        "title": "Bienvenue sur OpAuto Solo!",
+        "title": "Bienvenue sur Smart Garage Solo!",
         "description": "Faisons un tour rapide de votre système de gestion de garage. Cette visite vous aidera à démarrer avec les fonctionnalités essentielles."
       },
       "dashboard": {
@@ -2376,7 +2376,7 @@
     },
     "starter": {
       "welcome": {
-        "title": "Bienvenue sur OpAuto Starter!",
+        "title": "Bienvenue sur Smart Garage Starter!",
         "description": "Vous avez débloqué de puissantes fonctionnalités de collaboration d'équipe. Explorons ce qui est nouveau pour votre garage en croissance."
       },
       "dashboard": {
@@ -2410,7 +2410,7 @@
     },
     "professional": {
       "welcome": {
-        "title": "Bienvenue sur OpAuto Professional!",
+        "title": "Bienvenue sur Smart Garage Professional!",
         "description": "Vous avez un accès complet à toutes les fonctionnalités. Explorons les capacités avancées de votre plan Professional."
       },
       "dashboard": {
@@ -2444,7 +2444,7 @@
     },
     "staff": {
       "welcome": {
-        "title": "Bienvenue sur OpAuto!",
+        "title": "Bienvenue sur Smart Garage!",
         "description": "Familiarisons-nous avec votre espace de travail. Cette visite rapide vous montrera les fonctionnalités essentielles que vous utiliserez quotidiennement."
       },
       "dashboard": {
