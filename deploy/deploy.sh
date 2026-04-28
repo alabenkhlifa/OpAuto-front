@@ -1,5 +1,9 @@
 #!/bin/bash
 set -e
+# pipefail catches failures in pipe members — without it, `git fetch | tee`
+# masks git errors because tee always exits 0. Project memory documented
+# this regression: stale images shipped because git failures were swallowed.
+set -o pipefail
 
 APP_DIR="/opt/opauto"
 LOG_FILE="/var/log/opauto-deploy.log"
@@ -46,7 +50,33 @@ if [ ! -f "$SEED_MARKER" ]; then
   touch "$SEED_MARKER"
 fi
 
-# Restart nginx to pick up new backend (and to re-mount the new dist/)
-docker compose restart nginx 2>&1 | tee -a "$LOG_FILE"
+# Force-recreate nginx so the bind mount re-evaluates against the freshly
+# rebuilt dist/. `docker compose restart` keeps the existing container,
+# which keeps the OLD inode of dist/OpAuto-front/browser/ — when the build
+# step does `rm -rf dist`, the new dist sits at a new inode, but the running
+# nginx container still serves from the deleted (empty) inode → SPA returns
+# 500 with `directory index forbidden` until someone manually recreates it.
+# `up -d --force-recreate nginx` destroys + recreates the container so the
+# mount picks up the current dist directory.
+echo "Recreating nginx with fresh bind mount..." | tee -a "$LOG_FILE"
+docker compose up -d --force-recreate nginx 2>&1 | tee -a "$LOG_FILE"
+
+# Verify the SPA actually loads. Without this, a broken bind mount /
+# missing index.html / nginx config typo silently ships and the deploy log
+# still says "completed". Fail loudly so the next person sees it.
+echo "Verifying frontend serves..." | tee -a "$LOG_FILE"
+for i in $(seq 1 12); do
+  status=$(curl -s -o /dev/null -w '%{http_code}' http://localhost/ || echo "000")
+  if [ "$status" = "200" ]; then
+    echo "Frontend reachable (HTTP $status) after ${i}x2s" | tee -a "$LOG_FILE"
+    break
+  fi
+  if [ "$i" = "12" ]; then
+    echo "ERROR: frontend not reachable after 24s — last status=$status" \
+      | tee -a "$LOG_FILE"
+    exit 1
+  fi
+  sleep 2
+done
 
 echo "=== Deploy completed at $(date) ===" | tee -a "$LOG_FILE"
