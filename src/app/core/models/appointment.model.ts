@@ -14,7 +14,7 @@ export interface Appointment {
   updatedAt: Date;
 }
 
-export type AppointmentStatus = 'scheduled' | 'in-progress' | 'completed' | 'cancelled';
+export type AppointmentStatus = 'scheduled' | 'confirmed' | 'pending' | 'in-progress' | 'completed' | 'cancelled';
 export type AppointmentPriority = 'low' | 'medium' | 'high';
 
 export interface AppointmentSlot {

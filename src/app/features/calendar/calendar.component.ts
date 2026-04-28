@@ -390,7 +390,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
     return status === 'pending' || status === 'confirmed';
   }
 
-  readonly availableStatuses: AppointmentStatus[] = ['scheduled', 'in-progress', 'completed', 'cancelled'];
+  readonly availableStatuses: AppointmentStatus[] = ['scheduled', 'confirmed', 'pending', 'in-progress', 'completed'];
 
   statusKey(status: string | undefined): string {
     return (status || '').toLowerCase().replace('-', '_');

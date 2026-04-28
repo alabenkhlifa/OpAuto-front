@@ -385,13 +385,15 @@ export class AppointmentsComponent implements AfterViewInit {
   }
 
   getStatusColor(status: AppointmentStatus): string {
-    const colors = {
-      'scheduled': '#FF8400', // blue
-      'in-progress': '#7B8CC4', // amber  
-      'completed': '#10b981', // green
-      'cancelled': '#ef4444' // red
+    const colors: Record<AppointmentStatus, string> = {
+      'scheduled': '#FF8400',
+      'confirmed': '#0ea5e9',
+      'pending': '#f59e0b',
+      'in-progress': '#7B8CC4',
+      'completed': '#10b981',
+      'cancelled': '#ef4444'
     };
-    return colors[status];
+    return colors[status] || '#6b7280';
   }
 
   getPriorityColor(priority: string): string {

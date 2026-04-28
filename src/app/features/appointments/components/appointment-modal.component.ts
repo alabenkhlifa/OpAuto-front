@@ -309,12 +309,14 @@ import { TranslationService } from '../../../core/services/translation.service';
     }
 
     .form-input[type="date"] {
-      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='1.5'%3e%3cpath d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'/%3e%3c/svg%3e");
-      background-position: right 0.75rem center; background-repeat: no-repeat;
-      background-size: 1.25em 1.25em; padding-right: 2.5rem;
+      padding-right: 0.75rem;
     }
     .form-input[type="date"]::-webkit-calendar-picker-indicator {
-      opacity: 0; position: absolute; left: 0; top: 0; width: 100%; height: 100%; cursor: pointer; margin: 0; padding: 0;
+      cursor: pointer;
+      opacity: 0.6;
+    }
+    .form-input[type="date"]::-webkit-calendar-picker-indicator:hover {
+      opacity: 1;
     }
 
     .quick-add-btn {

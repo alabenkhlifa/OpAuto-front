@@ -350,3 +350,13 @@ BUG-063, 065, 066, 067, 068, 069, 071, 073, 074 exercised end-to-end. BUG-089/09
 
 ## Calendar made free (2026-04-28)
 - [x] `calendar` module is now free instead of 29 TND/month. Updated both frontend (`src/app/core/models/module.model.ts` — `FREE_MODULES` + catalog `price: 0, isFree: true`) and backend (`opauto-backend/src/modules/modules.service.ts` — `FREE_MODULES` + catalog `price: 0`). Calendar route is no longer gated by purchase — `hasAccess('calendar')` and `moduleGuard('calendar')` both pass for any garage
+
+## Calendar + Maintenance polish (2026-04-29)
+- [x] Sidebar: removed standalone Appointments tab, renamed Calendar to "Calendar & Appointments" (`navigation.calendarAndAppointments` in en/fr/ar)
+- [x] Cars page: Filters toggle now shows an X icon when expanded (re-click collapses); Schedule button on car card opens the AppointmentModal in place instead of redirecting to `/appointments`
+- [x] Calendar event side panel: added Change Status dropdown above Edit. Now exposes all 6 appointment states (Scheduled, Confirmed, Pending, In Progress, Completed, Cancelled) via expanded `AppointmentStatus` type; status persists via `appointmentService.updateAppointment`
+- [x] Maintenance Active Jobs: each job card now has an inline status dropdown (Waiting → Cancelled including Quality Check) so jobs can be progressed without opening details
+- [x] Maintenance Schedule subtab: was always 0 because seed data has no PENDING jobs — broadened filter to "all open jobs" (excludes completed/cancelled). Adds `excludeStatus` predicate to `getViewFilter`
+- [x] Maintenance details page (`/maintenance/details/:id`): translated all hardcoded strings (Job Information, Tasks, Photos, Approval Requests, Timeline, Cost, Time Tracking, Reject modal) — adds `maintenance.details.*` namespace in en/fr/ar
+- [x] Added `quality-check` to `MaintenanceStatus` enum + status label/color maps + en/fr/ar `maintenance.status.qualityCheck` (was rendering as "Completed" via fallback)
+- [x] Dashboard ar.json: Generate Invoice quick action title changed from "إنشاء فاتورة" to "الفوترة" to match sidebar Invoicing tab name
