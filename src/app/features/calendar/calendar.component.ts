@@ -13,7 +13,7 @@ import { AppointmentService } from '../appointments/services/appointment.service
 import { TranslationService } from '../../core/services/translation.service';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { SidebarService } from '../../core/services/sidebar.service';
-import { Appointment } from '../../core/models/appointment.model';
+import { Appointment, AppointmentStatus } from '../../core/models/appointment.model';
 import { AppointmentModalComponent } from '../appointments/components/appointment-modal.component';
 import { RescheduleConflictModalComponent } from './components/reschedule-conflict-modal.component';
 import { AiService } from '../../core/services/ai.service';
@@ -388,6 +388,34 @@ export class CalendarComponent implements OnInit, OnDestroy {
   canCancel(): boolean {
     const status = this.selectedEvent()?.status?.toLowerCase()?.replace('-', '_');
     return status === 'pending' || status === 'confirmed';
+  }
+
+  readonly availableStatuses: AppointmentStatus[] = ['scheduled', 'in-progress', 'completed', 'cancelled'];
+
+  statusKey(status: string | undefined): string {
+    return (status || '').toLowerCase().replace('-', '_');
+  }
+
+  onStatusChange(newStatus: string) {
+    const event = this.selectedEvent();
+    if (!event?.id || !newStatus) return;
+    const current = this.statusKey(event.status);
+    if (this.statusKey(newStatus) === current) return;
+
+    this.appointmentService.updateAppointment(event.id, { status: newStatus as AppointmentStatus }).subscribe({
+      next: () => {
+        this.toast.success(this.t('calendar.toast.statusUpdated'));
+        this.appointmentService.getAppointments().subscribe(appts => {
+          this.appointments = appts;
+          this.loadEvents();
+          const updated = appts.find(a => a.id === event.id);
+          if (updated) {
+            this.selectedEvent.set({ ...event, status: updated.status });
+          }
+        });
+      },
+      error: () => this.toast.error(this.t('calendar.toast.statusUpdateFailed'))
+    });
   }
 
   t(key: string): string {

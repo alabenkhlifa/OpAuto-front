@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
@@ -6,6 +6,7 @@ import { CarService, CarWithHistory } from './services/car.service';
 import { Customer } from '../../core/models/appointment.model';
 import { CarCardComponent } from './components/car-card.component';
 import { CarRegistrationFormComponent } from './components/car-registration-form.component';
+import { AppointmentModalComponent } from '../appointments/components/appointment-modal.component';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { SubscriptionService } from '../../core/services/subscription.service';
 import { UpgradePromptComponent } from '../../shared/components/upgrade-prompt/upgrade-prompt.component';
@@ -20,7 +21,7 @@ import { ToastService } from '../../shared/services/toast.service';
 @Component({
   selector: 'app-cars',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, CarCardComponent, CarRegistrationFormComponent, TranslatePipe, UpgradePromptComponent, TooltipDirective],
+  imports: [CommonModule, FormsModule, RouterModule, CarCardComponent, CarRegistrationFormComponent, AppointmentModalComponent, TranslatePipe, UpgradePromptComponent, TooltipDirective],
   templateUrl: './cars.component.html',
   styleUrl: './cars.component.css'
 })
@@ -33,12 +34,16 @@ export class CarsComponent implements OnInit {
   private router = inject(Router);
   private toast = inject(ToastService);
 
+  @ViewChild(AppointmentModalComponent) appointmentModal?: AppointmentModalComponent;
+
   cars = signal<CarWithHistory[]>([]);
   private customerMap = new Map<string, string>();
   subscriptionStatus = signal<SubscriptionStatus | null>(null);
   isLoading = signal(false);
   showRegistrationForm = signal(false);
   showUpgradePrompt = signal(false);
+  showScheduleModal = signal(false);
+  scheduleCarContext = signal<CarWithHistory | null>(null);
 
   searchQuery = signal('');
   selectedMake = signal('all');
@@ -241,15 +246,21 @@ export class CarsComponent implements OnInit {
   }
 
   onScheduleService(car: CarWithHistory): void {
-    this.router.navigate(['/appointments'], { 
-      queryParams: { 
-        carId: car.id,
-        licensePlate: car.licensePlate,
-        make: car.make,
-        model: car.model,
-        customerId: car.customerId
-      }
+    this.scheduleCarContext.set(car);
+    this.showScheduleModal.set(true);
+    setTimeout(() => {
+      this.appointmentModal?.setInitialContext({ carId: car.id });
     });
+  }
+
+  closeScheduleModal(): void {
+    this.showScheduleModal.set(false);
+    this.scheduleCarContext.set(null);
+  }
+
+  onScheduleSaved(): void {
+    this.toast.success(this.translationService.instant('appointments.toast.created') || 'Appointment created');
+    this.closeScheduleModal();
   }
 
   onViewHistory(car: CarWithHistory): void {

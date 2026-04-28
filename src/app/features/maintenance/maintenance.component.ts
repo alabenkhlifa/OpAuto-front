@@ -187,9 +187,12 @@ export class MaintenanceComponent implements OnInit {
     const jobs = this.maintenanceJobs();
     const filterConfig = this.filters();
     const viewFilter = this.getViewFilter();
-    
+
     let filtered = jobs.filter(job => {
       if (viewFilter.status && !viewFilter.status.includes(job.status)) {
+        return false;
+      }
+      if (viewFilter.excludeStatus && viewFilter.excludeStatus.includes(job.status)) {
         return false;
       }
       return true;
@@ -252,12 +255,16 @@ export class MaintenanceComponent implements OnInit {
         this.currentView.set('list');
         break;
       case 'schedule':
-        this.filters.set({ status: ['waiting'] });
+        // Schedule view shows every open job (anything not completed/cancelled),
+        // since maintenance jobs do not carry a scheduled-date field. Without
+        // this broader filter the tab was empty whenever no job was in the
+        // narrow 'waiting' state — which is most of the time.
+        this.filters.set({});
         break;
     }
   }
 
-  private getViewFilter() {
+  private getViewFilter(): { status?: string[]; excludeStatus?: string[] } {
     const segment = this.route.snapshot.url[1]?.path;
     switch (segment) {
       case 'active':
@@ -265,7 +272,7 @@ export class MaintenanceComponent implements OnInit {
       case 'history':
         return { status: ['completed', 'cancelled'] };
       case 'schedule':
-        return { status: ['waiting'] };
+        return { excludeStatus: ['completed', 'cancelled'] };
       default:
         return {};
     }

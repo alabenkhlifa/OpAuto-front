@@ -5,11 +5,13 @@ import { FormsModule } from '@angular/forms';
 import { MaintenanceService } from '../../../core/services/maintenance.service';
 import { MaintenanceJob, ApprovalRequest, TaskStatus } from '../../../core/models/maintenance.model';
 import { PhotoUploadComponent } from '../../../shared/components/photo-upload/photo-upload.component';
+import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
+import { TranslationService } from '../../../core/services/translation.service';
 
 @Component({
   selector: 'app-maintenance-details',
   standalone: true,
-  imports: [CommonModule, FormsModule, PhotoUploadComponent],
+  imports: [CommonModule, FormsModule, PhotoUploadComponent, TranslatePipe],
   template: `
     <div class="p-6 max-w-6xl mx-auto">
       
@@ -34,7 +36,7 @@ import { PhotoUploadComponent } from '../../../shared/components/photo-upload/ph
                   </span>
                   <span class="inline-flex items-center px-4 py-2 rounded-xl text-base font-semibold backdrop-filter backdrop-blur-sm"
                         [class]="getPriorityClasses(job()!.priority)">
-                    {{ job()!.priority | titlecase }}
+                    {{ getPriorityLabel(job()!.priority) }}
                   </span>
                 </div>
               </div>
@@ -59,10 +61,10 @@ import { PhotoUploadComponent } from '../../../shared/components/photo-upload/ph
                   <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
-                  Edit
+                  {{ 'maintenance.actions.edit' | translate }}
                 </button>
               }
-              
+
               <!-- Status Action Button -->
               @switch (job()!.status) {
                 @case ('waiting') {
@@ -70,7 +72,7 @@ import { PhotoUploadComponent } from '../../../shared/components/photo-upload/ph
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m-3-5h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    Start Job
+                    {{ 'maintenance.actions.startJob' | translate }}
                   </button>
                 }
                 @case ('in-progress') {
@@ -78,7 +80,7 @@ import { PhotoUploadComponent } from '../../../shared/components/photo-upload/ph
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
-                    Complete Job
+                    {{ 'maintenance.actions.completeJob' | translate }}
                   </button>
                 }
               }
@@ -94,37 +96,37 @@ import { PhotoUploadComponent } from '../../../shared/components/photo-upload/ph
             
             <!-- Job Information -->
             <div class="glass-card">
-              <h2 class="text-lg font-semibold text-gray-900 mb-4">Job Information</h2>
-              
+              <h2 class="text-lg font-semibold text-gray-900 mb-4">{{ 'maintenance.details.jobInformation' | translate }}</h2>
+
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <p class="text-sm text-gray-500">Customer</p>
+                  <p class="text-sm text-gray-500">{{ 'maintenance.details.customer' | translate }}</p>
                   <p class="font-medium text-gray-900">{{ job()!.customerName }}</p>
                 </div>
                 <div>
-                  <p class="text-sm text-gray-500">Assigned Mechanic</p>
+                  <p class="text-sm text-gray-500">{{ 'maintenance.details.assignedMechanic' | translate }}</p>
                   <p class="font-medium text-gray-900">{{ job()!.mechanicName }}</p>
                 </div>
                 <div>
-                  <p class="text-sm text-gray-500">Current Mileage</p>
+                  <p class="text-sm text-gray-500">{{ 'maintenance.details.currentMileage' | translate }}</p>
                   <p class="font-medium text-gray-900">{{ job()!.currentMileage | number }} km</p>
                 </div>
                 <div>
-                  <p class="text-sm text-gray-500">Estimated Cost</p>
+                  <p class="text-sm text-gray-500">{{ 'maintenance.details.estimatedCost' | translate }}</p>
                   <p class="font-medium text-gray-900">{{ formatCurrency(job()!.estimatedCost) }}</p>
                 </div>
               </div>
 
               @if (job()!.description) {
                 <div class="mt-4">
-                  <p class="text-sm text-gray-500">Description</p>
+                  <p class="text-sm text-gray-500">{{ 'maintenance.details.description' | translate }}</p>
                   <p class="text-gray-900">{{ job()!.description }}</p>
                 </div>
               }
 
               @if (job()!.notes) {
                 <div class="mt-4">
-                  <p class="text-sm text-gray-500">Notes</p>
+                  <p class="text-sm text-gray-500">{{ 'maintenance.details.notes' | translate }}</p>
                   <p class="text-gray-900">{{ job()!.notes }}</p>
                 </div>
               }
@@ -133,14 +135,14 @@ import { PhotoUploadComponent } from '../../../shared/components/photo-upload/ph
             <!-- Tasks -->
             <div class="glass-card">
               <div class="flex items-center justify-between mb-4">
-                <h2 class="text-lg font-semibold text-gray-900">Tasks</h2>
+                <h2 class="text-lg font-semibold text-gray-900">{{ 'maintenance.details.tasks' | translate }}</h2>
                 <div class="text-sm text-gray-500">
-                  {{ getCompletedTasksCount() }} of {{ job()!.tasks.length }} completed
+                  {{ 'maintenance.details.tasksProgress' | translate: { completed: getCompletedTasksCount(), total: job()!.tasks.length } }}
                 </div>
               </div>
 
               @if (job()!.tasks.length === 0) {
-                <p class="text-gray-500 text-center py-8">No tasks defined for this job.</p>
+                <p class="text-gray-500 text-center py-8">{{ 'maintenance.details.noTasks' | translate }}</p>
               } @else {
                 <div class="space-y-3">
                   @for (task of job()!.tasks; track task.id) {
@@ -156,19 +158,19 @@ import { PhotoUploadComponent } from '../../../shared/components/photo-upload/ph
                             <div class="w-2 h-2 bg-white rounded-full"></div>
                           }
                         </div>
-                        
+
                         <div class="flex-1">
                           <h3 class="font-medium text-gray-900">{{ task.name }}</h3>
                           @if (task.description) {
                             <p class="text-sm text-gray-500">{{ task.description }}</p>
                           }
                           <div class="flex items-center space-x-4 mt-1 text-xs text-gray-500">
-                            <span>Est: {{ task.estimatedTime }}min</span>
+                            <span>{{ 'maintenance.details.estimatedShort' | translate }}: {{ task.estimatedTime }}{{ 'maintenance.details.minutes' | translate }}</span>
                             @if (task.actualTime) {
-                              <span>Actual: {{ task.actualTime }}min</span>
+                              <span>{{ 'maintenance.details.actualShort' | translate }}: {{ task.actualTime }}{{ 'maintenance.details.minutes' | translate }}</span>
                             }
                             @if (task.completedAt) {
-                              <span>Completed: {{ task.completedAt | date:'short' }}</span>
+                              <span>{{ 'maintenance.details.completedAt' | translate }}: {{ task.completedAt | date:'short' }}</span>
                             }
                           </div>
                         </div>
@@ -179,13 +181,13 @@ import { PhotoUploadComponent } from '../../../shared/components/photo-upload/ph
                         <button
                           class="px-3 py-1 text-xs bg-green-600 text-white rounded-md hover:bg-green-700"
                           (click)="updateTaskStatus(task.id, 'completed')">
-                          Complete
+                          {{ 'maintenance.actions.complete' | translate }}
                         </button>
                       } @else if (task.status === 'completed' && job()!.status === 'in-progress') {
                         <button
                           class="px-3 py-1 text-xs bg-gray-400 text-white rounded-md hover:bg-gray-500"
                           (click)="updateTaskStatus(task.id, 'pending')">
-                          Reopen
+                          {{ 'maintenance.actions.reopen' | translate }}
                         </button>
                       }
                     </div>
@@ -195,7 +197,7 @@ import { PhotoUploadComponent } from '../../../shared/components/photo-upload/ph
                 <!-- Progress Bar -->
                 <div class="mt-4">
                   <div class="flex justify-between text-sm mb-2">
-                    <span class="text-gray-600">Overall Progress</span>
+                    <span class="text-gray-600">{{ 'maintenance.details.overallProgress' | translate }}</span>
                     <span class="text-gray-900">{{ getTaskProgress() }}%</span>
                   </div>
                   <div class="w-full bg-gray-200 rounded-full h-3">
@@ -208,7 +210,7 @@ import { PhotoUploadComponent } from '../../../shared/components/photo-upload/ph
 
             <!-- Photos -->
             <div class="glass-card">
-              <h2 class="text-lg font-semibold text-gray-900 mb-4">Photos</h2>
+              <h2 class="text-lg font-semibold text-gray-900 mb-4">{{ 'maintenance.details.photos' | translate }}</h2>
               @if (job()?.id) {
                 <app-photo-upload [jobId]="job()!.id"></app-photo-upload>
               }
@@ -217,8 +219,8 @@ import { PhotoUploadComponent } from '../../../shared/components/photo-upload/ph
             <!-- Approval Requests -->
             @if (job()!.approvalRequests.length > 0) {
               <div class="glass-card">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4">Approval Requests</h2>
-                
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">{{ 'maintenance.details.approvalRequests' | translate }}</h2>
+
                 <div class="space-y-4">
                   @for (request of job()!.approvalRequests; track request.id) {
                     <div class="p-4 border border-gray-200 rounded-lg">
@@ -228,24 +230,24 @@ import { PhotoUploadComponent } from '../../../shared/components/photo-upload/ph
                             <h3 class="font-medium text-gray-900">{{ getRequestTypeLabel(request.type) }}</h3>
                             <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
                                   [class]="getRequestStatusClasses(request.status)">
-                              {{ request.status | titlecase }}
+                              {{ getApprovalStatusLabel(request.status) }}
                             </span>
                             <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
                                   [class]="getUrgencyClasses(request.urgency)">
-                              {{ request.urgency | titlecase }}
+                              {{ getUrgencyLabel(request.urgency) }}
                             </span>
                           </div>
-                          
+
                           <p class="text-gray-700 mb-2">{{ request.description }}</p>
-                          
+
                           <div class="text-sm text-gray-500">
-                            <p>Estimated Price: {{ formatCurrency(request.estimatedPrice) }}</p>
-                            <p>Requested by: {{ request.requestedBy }} on {{ request.requestedAt | date:'short' }}</p>
+                            <p>{{ 'maintenance.details.estimatedPrice' | translate }}: {{ formatCurrency(request.estimatedPrice) }}</p>
+                            <p>{{ 'maintenance.details.requestedBy' | translate }}: {{ request.requestedBy }} — {{ request.requestedAt | date:'short' }}</p>
                             @if (request.approvedAt) {
-                              <p>Approved by: {{ request.approvedBy }} on {{ request.approvedAt | date:'short' }}</p>
+                              <p>{{ 'maintenance.details.approvedBy' | translate }}: {{ request.approvedBy }} — {{ request.approvedAt | date:'short' }}</p>
                             }
                             @if (request.rejectionReason) {
-                              <p class="text-red-600">Rejected: {{ request.rejectionReason }}</p>
+                              <p class="text-red-600">{{ 'maintenance.details.rejectedReason' | translate }}: {{ request.rejectionReason }}</p>
                             }
                           </div>
                         </div>
@@ -253,15 +255,15 @@ import { PhotoUploadComponent } from '../../../shared/components/photo-upload/ph
                         <!-- Approval Actions -->
                         @if (request.status === 'pending') {
                           <div class="flex space-x-2 ml-4">
-                            <button 
+                            <button
                               class="px-3 py-1 text-sm bg-green-600 text-white rounded-md hover:bg-green-700"
                               (click)="approveRequest(request.id)">
-                              Approve
+                              {{ 'maintenance.actions.approve' | translate }}
                             </button>
-                            <button 
+                            <button
                               class="px-3 py-1 text-sm bg-red-600 text-white rounded-md hover:bg-red-700"
                               (click)="showRejectModal(request.id)">
-                              Reject
+                              {{ 'maintenance.actions.reject' | translate }}
                             </button>
                           </div>
                         }
@@ -276,44 +278,44 @@ import { PhotoUploadComponent } from '../../../shared/components/photo-upload/ph
 
           <!-- Right Column - Sidebar Info -->
           <div class="space-y-6">
-            
+
             <!-- Timeline -->
             <div class="glass-card">
-              <h3 class="text-lg font-semibold text-gray-900 mb-4">Timeline</h3>
-              
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ 'maintenance.details.timeline' | translate }}</h3>
+
               <div class="space-y-4">
                 <div class="flex items-center space-x-3">
                   <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
                   <div>
-                    <p class="text-sm font-medium text-gray-900">Job Created</p>
+                    <p class="text-sm font-medium text-gray-900">{{ 'maintenance.details.jobCreated' | translate }}</p>
                     <p class="text-xs text-gray-500">{{ job()!.createdAt | date:'short' }}</p>
                   </div>
                 </div>
-                
+
                 @if (job()!.startDate) {
                   <div class="flex items-center space-x-3">
                     <div class="w-3 h-3 bg-orange-500 rounded-full"></div>
                     <div>
-                      <p class="text-sm font-medium text-gray-900">Work Started</p>
+                      <p class="text-sm font-medium text-gray-900">{{ 'maintenance.details.workStarted' | translate }}</p>
                       <p class="text-xs text-gray-500">{{ job()!.startDate | date:'short' }}</p>
                     </div>
                   </div>
                 }
-                
+
                 @if (job()!.completionDate) {
                   <div class="flex items-center space-x-3">
                     <div class="w-3 h-3 bg-green-500 rounded-full"></div>
                     <div>
-                      <p class="text-sm font-medium text-gray-900">Job Completed</p>
+                      <p class="text-sm font-medium text-gray-900">{{ 'maintenance.details.jobCompleted' | translate }}</p>
                       <p class="text-xs text-gray-500">{{ job()!.completionDate | date:'short' }}</p>
                     </div>
                   </div>
                 }
-                
+
                 <div class="flex items-center space-x-3">
                   <div class="w-3 h-3 bg-gray-400 rounded-full"></div>
                   <div>
-                    <p class="text-sm font-medium text-gray-900">Last Updated</p>
+                    <p class="text-sm font-medium text-gray-900">{{ 'maintenance.details.lastUpdated' | translate }}</p>
                     <p class="text-xs text-gray-500">{{ job()!.updatedAt | date:'short' }}</p>
                   </div>
                 </div>
@@ -322,26 +324,26 @@ import { PhotoUploadComponent } from '../../../shared/components/photo-upload/ph
 
             <!-- Cost Information -->
             <div class="glass-card">
-              <h3 class="text-lg font-semibold text-gray-900 mb-4">Cost Information</h3>
-              
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ 'maintenance.details.costInformation' | translate }}</h3>
+
               <div class="space-y-3">
                 <div class="flex justify-between">
-                  <span class="text-gray-600">Estimated Cost:</span>
+                  <span class="text-gray-600">{{ 'maintenance.details.estimatedCost' | translate }}:</span>
                   <span class="font-medium text-gray-900">{{ formatCurrency(job()!.estimatedCost) }}</span>
                 </div>
-                
+
                 @if (job()!.actualCost) {
                   <div class="flex justify-between">
-                    <span class="text-gray-600">Actual Cost:</span>
+                    <span class="text-gray-600">{{ 'maintenance.details.actualCost' | translate }}:</span>
                     <span class="font-medium text-gray-900">{{ formatCurrency(job()!.actualCost || 0) }}</span>
                   </div>
-                  
+
                   @if (job()!.actualCost !== job()!.estimatedCost) {
                     <div class="flex justify-between text-sm">
-                      <span class="text-gray-500">Variance:</span>
+                      <span class="text-gray-500">{{ 'maintenance.details.variance' | translate }}:</span>
                       <span [class]="(job()!.actualCost || 0) > job()!.estimatedCost ? 'text-red-600' : 'text-green-600'">
                         {{ formatCurrency(getAbsoluteValue((job()!.actualCost || 0) - job()!.estimatedCost)) }}
-                        {{ (job()!.actualCost || 0) > job()!.estimatedCost ? 'over' : 'under' }}
+                        {{ ((job()!.actualCost || 0) > job()!.estimatedCost ? 'maintenance.details.over' : 'maintenance.details.under') | translate }}
                       </span>
                     </div>
                   }
@@ -351,24 +353,24 @@ import { PhotoUploadComponent } from '../../../shared/components/photo-upload/ph
 
             <!-- Time Information -->
             <div class="glass-card">
-              <h3 class="text-lg font-semibold text-gray-900 mb-4">Time Tracking</h3>
-              
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ 'maintenance.details.timeTracking' | translate }}</h3>
+
               <div class="space-y-3">
                 <div class="flex justify-between">
-                  <span class="text-gray-600">Estimated Duration:</span>
-                  <span class="font-medium text-gray-900">{{ job()!.estimatedDuration }}min</span>
+                  <span class="text-gray-600">{{ 'maintenance.details.estimatedDuration' | translate }}:</span>
+                  <span class="font-medium text-gray-900">{{ job()!.estimatedDuration }}{{ 'maintenance.details.minutes' | translate }}</span>
                 </div>
-                
+
                 @if (job()!.actualDuration) {
                   <div class="flex justify-between">
-                    <span class="text-gray-600">Actual Duration:</span>
-                    <span class="font-medium text-gray-900">{{ job()!.actualDuration }}min</span>
+                    <span class="text-gray-600">{{ 'maintenance.details.actualDuration' | translate }}:</span>
+                    <span class="font-medium text-gray-900">{{ job()!.actualDuration }}{{ 'maintenance.details.minutes' | translate }}</span>
                   </div>
                 }
-                
+
                 @if (job()!.startDate && !job()!.completionDate) {
                   <div class="flex justify-between">
-                    <span class="text-gray-600">Time Elapsed:</span>
+                    <span class="text-gray-600">{{ 'maintenance.details.timeElapsed' | translate }}:</span>
                     <span class="font-medium text-orange-600">{{ getElapsedTime() }}</span>
                   </div>
                 }
@@ -387,7 +389,7 @@ import { PhotoUploadComponent } from '../../../shared/components/photo-upload/ph
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <p class="text-gray-500">Loading job details...</p>
+            <p class="text-gray-500">{{ 'maintenance.details.loadingDetails' | translate }}</p>
           </div>
         </div>
       }
@@ -399,27 +401,27 @@ import { PhotoUploadComponent } from '../../../shared/components/photo-upload/ph
       <div class="fixed inset-0 z-50 overflow-y-auto">
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
           <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" (click)="hideRejectModal()"></div>
-          
+
           <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
             <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-              <h3 class="text-lg font-medium text-gray-900 mb-4">Reject Approval Request</h3>
+              <h3 class="text-lg font-medium text-gray-900 mb-4">{{ 'maintenance.details.rejectModalTitle' | translate }}</h3>
               <textarea
                 [(ngModel)]="rejectionReason"
                 rows="4"
-                placeholder="Please provide a reason for rejection..."
+                [placeholder]="'maintenance.details.rejectReasonPlaceholder' | translate"
                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
               </textarea>
             </div>
             <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-              <button 
+              <button
                 class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
                 (click)="confirmReject()">
-                Reject
+                {{ 'maintenance.details.rejectAction' | translate }}
               </button>
-              <button 
+              <button
                 class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                 (click)="hideRejectModal()">
-                Cancel
+                {{ 'maintenance.details.cancelAction' | translate }}
               </button>
             </div>
           </div>
@@ -490,6 +492,7 @@ export class MaintenanceDetailsComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private maintenanceService = inject(MaintenanceService);
+  private translationService = inject(TranslationService);
 
   job = signal<MaintenanceJob | null>(null);
   showRejectModalSignal = signal(false);
@@ -604,15 +607,48 @@ export class MaintenanceDetailsComponent implements OnInit {
 
   // Helper methods
   getStatusLabel(status: string): string {
-    const labels = {
-      'waiting': 'Waiting',
-      'in-progress': 'In Progress',
-      'waiting-approval': 'Needs Approval',
-      'waiting-parts': 'Waiting for Parts',
-      'completed': 'Completed',
-      'cancelled': 'Cancelled'
+    const keyMap: Record<string, string> = {
+      'waiting': 'maintenance.status.waiting',
+      'in-progress': 'maintenance.status.inProgress',
+      'waiting-approval': 'maintenance.status.needsApproval',
+      'waiting-parts': 'maintenance.status.waitingParts',
+      'quality-check': 'maintenance.status.qualityCheck',
+      'completed': 'maintenance.status.completed',
+      'cancelled': 'maintenance.status.cancelled'
     };
-    return labels[status as keyof typeof labels] || status;
+    const k = keyMap[status];
+    return k ? this.translationService.instant(k) : status;
+  }
+
+  getApprovalStatusLabel(status: string): string {
+    const keyMap: Record<string, string> = {
+      'pending': 'maintenance.status.waiting',
+      'approved': 'maintenance.status.completed',
+      'rejected': 'maintenance.status.cancelled'
+    };
+    const k = keyMap[status];
+    return k ? this.translationService.instant(k) : status;
+  }
+
+  getUrgencyLabel(urgency: string): string {
+    const keyMap: Record<string, string> = {
+      'low': 'maintenance.priority.low',
+      'medium': 'maintenance.priority.medium',
+      'high': 'maintenance.priority.high'
+    };
+    const k = keyMap[urgency];
+    return k ? this.translationService.instant(k) : urgency;
+  }
+
+  getPriorityLabel(priority: string): string {
+    const keyMap: Record<string, string> = {
+      'low': 'maintenance.priority.low',
+      'medium': 'maintenance.priority.medium',
+      'high': 'maintenance.priority.high',
+      'urgent': 'maintenance.priority.urgent'
+    };
+    const k = keyMap[priority];
+    return k ? this.translationService.instant(k) : priority;
   }
 
   getStatusClasses(status: string): string {
@@ -621,6 +657,7 @@ export class MaintenanceDetailsComponent implements OnInit {
       'in-progress': 'status-badge-in-progress',
       'waiting-approval': 'status-badge-waiting-approval',
       'waiting-parts': 'status-badge-waiting-approval',
+      'quality-check': 'status-badge-in-progress',
       'completed': 'status-badge-completed',
       'cancelled': 'status-badge-waiting'
     };
@@ -648,12 +685,13 @@ export class MaintenanceDetailsComponent implements OnInit {
   }
 
   getRequestTypeLabel(type: string): string {
-    const labels = {
-      'part-purchase': 'Part Purchase',
-      'additional-work': 'Additional Work',
-      'cost-estimate': 'Cost Estimate Update'
+    const keyMap: Record<string, string> = {
+      'part-purchase': 'maintenance.details.requestType.partPurchase',
+      'additional-work': 'maintenance.details.requestType.additionalWork',
+      'cost-estimate': 'maintenance.details.requestType.costEstimate'
     };
-    return labels[type as keyof typeof labels] || type;
+    const k = keyMap[type];
+    return k ? this.translationService.instant(k) : type;
   }
 
   getRequestStatusClasses(status: string): string {

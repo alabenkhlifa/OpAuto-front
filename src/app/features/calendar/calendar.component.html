@@ -79,6 +79,19 @@
         </div>
       </div>
       <div class="panel-actions">
+        <div class="status-update">
+          <label class="status-update-label" for="event-status-select">
+            {{ 'calendar.detail.changeStatus' | translate }}
+          </label>
+          <select id="event-status-select"
+                  class="status-update-select"
+                  [ngModel]="statusKey(selectedEvent().status)"
+                  (ngModelChange)="onStatusChange($event)">
+            @for (s of availableStatuses; track s) {
+              <option [value]="statusKey(s)">{{ 'dashboard.status.' + statusKey(s) | translate }}</option>
+            }
+          </select>
+        </div>
         <button class="btn-secondary" (click)="onEditAppointment()">
           {{ 'calendar.detail.edit' | translate }}
         </button>

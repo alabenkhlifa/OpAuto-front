@@ -48,6 +48,7 @@
     "reports": "التقارير",
     "employees": "الموظفين",
     "calendar": "التقويم",
+    "calendarAndAppointments": "التقويم والمواعيد",
     "notifications": "الإشعارات",
     "modules": "الوحدات",
     "subscription": "الاشتراك",
@@ -75,7 +76,7 @@
         "description": "حجز خدمة مستقبلية"
       },
       "generateInvoice": {
-        "title": "إنشاء فاتورة",
+        "title": "الفوترة",
         "description": "إنشاء فاتورة لعمل مكتمل"
       },
       "qualityCheck": {
@@ -490,6 +491,7 @@
       "completed": "مكتمل",
       "needsApproval": "يحتاج موافقة",
       "waitingParts": "في انتظار القطع",
+      "qualityCheck": "فحص الجودة",
       "cancelled": "ملغي"
     },
     "actions": {
@@ -497,7 +499,58 @@
       "edit": "تعديل",
       "complete": "إكمال",
       "approve": "موافقة",
-      "reject": "رفض"
+      "reject": "رفض",
+      "reopen": "إعادة فتح",
+      "startJob": "بدء العمل",
+      "completeJob": "إكمال العمل",
+      "changeStatus": "تغيير الحالة"
+    },
+    "details": {
+      "jobInformation": "معلومات العمل",
+      "customer": "العميل",
+      "assignedMechanic": "الميكانيكي المعين",
+      "currentMileage": "المسافة الحالية",
+      "estimatedCost": "التكلفة التقديرية",
+      "description": "الوصف",
+      "notes": "ملاحظات",
+      "tasks": "المهام",
+      "tasksProgress": "{{completed}} من {{total}} مكتملة",
+      "noTasks": "لا توجد مهام محددة لهذا العمل.",
+      "estimatedShort": "متوقع",
+      "actualShort": "فعلي",
+      "completedAt": "اكتمل",
+      "minutes": "دقيقة",
+      "overallProgress": "التقدم الإجمالي",
+      "photos": "الصور",
+      "approvalRequests": "طلبات الموافقة",
+      "estimatedPrice": "السعر التقديري",
+      "requestedBy": "طلب من قبل",
+      "approvedBy": "تمت الموافقة من قبل",
+      "rejectedReason": "مرفوض",
+      "timeline": "الجدول الزمني",
+      "jobCreated": "تم إنشاء العمل",
+      "workStarted": "بدء العمل",
+      "jobCompleted": "اكتمل العمل",
+      "lastUpdated": "آخر تحديث",
+      "costInformation": "معلومات التكلفة",
+      "actualCost": "التكلفة الفعلية",
+      "variance": "الفرق",
+      "over": "زيادة",
+      "under": "أقل",
+      "timeTracking": "تتبع الوقت",
+      "estimatedDuration": "المدة التقديرية",
+      "actualDuration": "المدة الفعلية",
+      "timeElapsed": "الوقت المنقضي",
+      "loadingDetails": "جاري تحميل تفاصيل العمل...",
+      "rejectModalTitle": "رفض طلب الموافقة",
+      "rejectReasonPlaceholder": "يرجى تقديم سبب الرفض...",
+      "rejectAction": "رفض",
+      "cancelAction": "إلغاء",
+      "requestType": {
+        "partPurchase": "شراء قطعة",
+        "additionalWork": "عمل إضافي",
+        "costEstimate": "تحديث تقدير التكلفة"
+      }
     },
     "filters": {
       "title": "المرشحات",
@@ -2524,7 +2577,8 @@
       "status": "الحالة",
       "time": "الوقت",
       "edit": "تعديل",
-      "cancel": "إلغاء الموعد"
+      "cancel": "إلغاء الموعد",
+      "changeStatus": "تغيير الحالة"
     },
     "confirmCancel": "هل أنت متأكد أنك تريد إلغاء هذا الموعد؟",
     "mechanics": "الميكانيكيون",
@@ -2533,6 +2587,8 @@
       "rescheduleFailed": "فشل في إعادة جدولة الموعد",
       "cancelled": "تم إلغاء الموعد",
       "cancelFailed": "فشل في إلغاء الموعد",
+      "statusUpdated": "تم تحديث حالة الموعد",
+      "statusUpdateFailed": "فشل في تحديث حالة الموعد",
       "cannotMoveCompleted": "لا يمكن نقل موعد مكتمل",
       "cannotMoveCancelled": "لا يمكن نقل موعد ملغى",
       "cannotMovePast": "لا يمكن نقل موعد سابق",

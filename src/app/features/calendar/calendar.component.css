@@ -299,6 +299,7 @@
 
 .panel-actions {
   display: flex;
+  flex-direction: column;
   gap: 0.75rem;
   padding: 1.5rem;
   border-top: 1px solid #f1f5f9;
@@ -307,6 +308,45 @@
 .panel-actions .btn-secondary,
 .panel-actions .btn-danger {
   flex: 1;
+}
+
+.status-update {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin-bottom: 0.25rem;
+}
+
+.status-update-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-update-select {
+  padding: 0.5rem 2.25rem 0.5rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  background-color: #fff;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.625rem center;
+  background-size: 1rem;
+  color: #111827;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.status-update-select:hover,
+.status-update-select:focus {
+  border-color: #FF8400;
+  outline: none;
 }
 
 .detail-row {

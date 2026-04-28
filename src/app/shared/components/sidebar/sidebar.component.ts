@@ -58,18 +58,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
     },
     {
       id: 'calendar',
-      label: 'Calendar',
-      translationKey: 'navigation.calendar',
+      label: 'Calendar & Appointments',
+      translationKey: 'navigation.calendarAndAppointments',
       icon: 'calendar-view',
       route: '/calendar',
       requiresModule: 'calendar'
-    },
-    {
-      id: 'appointments',
-      label: 'Appointments',
-      translationKey: 'navigation.appointments',
-      icon: 'calendar',
-      route: '/appointments'
     },
     {
       id: 'cars',

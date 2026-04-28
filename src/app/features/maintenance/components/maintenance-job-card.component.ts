@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MaintenanceJob, MaintenanceStatus } from '../../../core/models/maintenance.model';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 import { TranslationService } from '../../../core/services/translation.service';
@@ -8,7 +9,7 @@ import { AuthService } from '../../../core/services/auth.service';
 @Component({
   selector: 'app-maintenance-job-card',
   standalone: true,
-  imports: [CommonModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   template: `
     <div class="glass-card">
       
@@ -107,44 +108,38 @@ import { AuthService } from '../../../core/services/auth.service';
         }
       </div>
 
+      <!-- Status Change Dropdown -->
+      @if (job.status !== 'completed' && job.status !== 'cancelled') {
+        <div class="status-change-row mb-3">
+          <label class="status-change-label" [for]="'job-status-' + job.id">
+            {{ 'maintenance.actions.changeStatus' | translate }}
+          </label>
+          <select [id]="'job-status-' + job.id"
+                  class="status-change-select"
+                  [ngModel]="job.status"
+                  (ngModelChange)="changeStatus($event)"
+                  (click)="$event.stopPropagation()">
+            @for (s of availableStatuses; track s) {
+              <option [value]="s">{{ getStatusLabel(s) }}</option>
+            }
+          </select>
+        </div>
+      }
+
       <!-- Actions -->
       <div class="flex space-x-2" [class]="view === 'list' ? 'justify-end' : ''">
-        <button 
+        <button
           [class]="view === 'list' ? 'btn-tertiary btn-sm' : 'flex-1 btn-tertiary'"
           (click)="viewDetails.emit(job.id)">
           {{ 'maintenance.actions.viewDetails' | translate }}
         </button>
-        
+
         @if (job.status !== 'completed' && job.status !== 'cancelled') {
-          <button 
+          <button
             [class]="view === 'list' ? 'btn-warning btn-sm' : 'flex-1 btn-warning'"
             (click)="edit.emit(job.id)">
             {{ 'maintenance.actions.edit' | translate }}
           </button>
-        }
-
-        <!-- Status Actions -->
-        @switch (job.status) {
-          @case ('waiting') {
-            <button 
-              [class]="view === 'list' ? 'btn-success btn-sm btn-icon' : 'btn-success btn-icon'"
-              (click)="changeStatus('in-progress')"
-              [title]="'maintenance.startJob' | translate">
-              <svg [class]="view === 'list' ? 'w-3 h-3' : 'w-4 h-4'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m-3-5h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </button>
-          }
-          @case ('in-progress') {
-            <button 
-              [class]="view === 'list' ? 'btn-success btn-sm btn-icon' : 'btn-success btn-icon'"
-              (click)="changeStatus('completed')"
-              [title]="'maintenance.completeJob' | translate">
-              <svg [class]="view === 'list' ? 'w-3 h-3' : 'w-4 h-4'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-              </svg>
-            </button>
-          }
         }
       </div>
 
@@ -180,18 +175,60 @@ import { AuthService } from '../../../core/services/auth.service';
       0%, 100% { opacity: 1; }
       50% { opacity: 0.8; }
     }
+
+    .status-change-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.375rem;
+    }
+
+    .status-change-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .status-change-select {
+      padding: 0.45rem 2.25rem 0.45rem 0.625rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.5rem;
+      background-color: #fff;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 0.625rem center;
+      background-size: 1rem;
+      color: #111827;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: border-color 0.15s;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+    }
+
+    .status-change-select:hover,
+    .status-change-select:focus {
+      border-color: #FF8400;
+      outline: none;
+    }
   `]
 })
 export class MaintenanceJobCardComponent {
   private translationService = inject(TranslationService);
   authService = inject(AuthService);
-  
+
   @Input() job!: MaintenanceJob;
   @Input() view: 'list' | 'grid' = 'grid';
-  
+
   @Output() statusChange = new EventEmitter<{jobId: string, status: MaintenanceStatus}>();
   @Output() edit = new EventEmitter<string>();
   @Output() viewDetails = new EventEmitter<string>();
+
+  readonly availableStatuses: MaintenanceStatus[] = [
+    'waiting', 'in-progress', 'waiting-approval', 'waiting-parts', 'quality-check', 'completed', 'cancelled'
+  ];
 
   getStatusLabel(status: MaintenanceStatus): string {
     const statusKeys = {
@@ -199,10 +236,11 @@ export class MaintenanceJobCardComponent {
       'in-progress': 'inProgress',
       'waiting-approval': 'needsApproval',
       'waiting-parts': 'waitingParts',
+      'quality-check': 'qualityCheck',
       'completed': 'completed',
       'cancelled': 'cancelled'
     };
-    const key = statusKeys[status as keyof typeof statusKeys] || 'completed';
+    const key = statusKeys[status as keyof typeof statusKeys] || 'waiting';
     return this.translationService.instant(`maintenance.status.${key}`);
   }
 
@@ -212,6 +250,7 @@ export class MaintenanceJobCardComponent {
       'in-progress': 'bg-blue-500',
       'waiting-approval': 'bg-orange-500',
       'waiting-parts': 'bg-purple-500',
+      'quality-check': 'bg-cyan-500',
       'completed': 'bg-green-500',
       'cancelled': 'bg-gray-500'
     };
@@ -224,6 +263,7 @@ export class MaintenanceJobCardComponent {
       'in-progress': 'text-blue-700',
       'waiting-approval': 'text-orange-700',
       'waiting-parts': 'text-purple-700',
+      'quality-check': 'text-cyan-700',
       'completed': 'text-green-700',
       'cancelled': 'text-gray-700'
     };

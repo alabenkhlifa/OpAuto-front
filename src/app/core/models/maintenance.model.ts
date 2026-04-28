@@ -64,12 +64,13 @@ export interface ApprovalRequest {
   comments?: string;
 }
 
-export type MaintenanceStatus = 
-  | 'waiting' 
-  | 'in-progress' 
-  | 'waiting-approval' 
-  | 'waiting-parts' 
-  | 'completed' 
+export type MaintenanceStatus =
+  | 'waiting'
+  | 'in-progress'
+  | 'waiting-approval'
+  | 'waiting-parts'
+  | 'quality-check'
+  | 'completed'
   | 'cancelled';
 
 export type MaintenancePriority = 'low' | 'medium' | 'high' | 'urgent';
