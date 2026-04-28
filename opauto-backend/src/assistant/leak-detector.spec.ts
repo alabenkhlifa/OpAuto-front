@@ -1,0 +1,181 @@
+import {
+  ProviderToolLeakError,
+  detectToolCallLeak,
+  salvageToolCall,
+  scrubLeakFromContent,
+} from './leak-detector';
+
+const KNOWN = new Set<string>([
+  'send_sms',
+  'send_email',
+  'find_customer',
+  'list_overdue_invoices',
+  'load_skill',
+  'dispatch_agent',
+]);
+
+describe('leak-detector', () => {
+  describe('detectToolCallLeak', () => {
+    it('returns null for clean prose', () => {
+      expect(detectToolCallLeak('Hello, your invoice is overdue.')).toBeNull();
+    });
+
+    it('returns null for null/empty', () => {
+      expect(detectToolCallLeak(null)).toBeNull();
+      expect(detectToolCallLeak('')).toBeNull();
+    });
+
+    it('detects a single XML-tag tool call', () => {
+      const leak = detectToolCallLeak(
+        'Sure, sending now: <function=send_sms>{"to":"+216","body":"hi"}</function>',
+      );
+      expect(leak?.kind).toBe('xml_tag');
+      expect(leak?.matches.length).toBe(1);
+    });
+
+    it('detects multiple chained XML-tag tool calls', () => {
+      const leak = detectToolCallLeak(
+        '<function=find_customer>{"q":"Ali"}</function><function=send_sms>{"to":"x"}</function>',
+      );
+      expect(leak?.kind).toBe('xml_tag');
+      expect(leak?.matches.length).toBe(2);
+    });
+
+    it('detects raw JSON tool-call dump (the qwen failure mode)', () => {
+      const leak = detectToolCallLeak(
+        '{"type": "function", "name": "send_sms", "arguments": {"to": "+216", "body": "hi"}}',
+      );
+      expect(leak?.kind).toBe('raw_json');
+      expect(leak?.matches.length).toBe(1);
+    });
+
+    it('detects the user-reported 5-call semicolon-chain', () => {
+      const content =
+        '{"type": "function", "name": "load_skill", "arguments": {"name": "invoice-collections"}}; ' +
+        '{"type": "function", "name": "dispatch_agent", "arguments": {"input": "send SMS", "name": "communications-agent"}}; ' +
+        '{"type": "function", "name": "find_customer", "arguments": {"query": "Ali Ben Salah"}}; ' +
+        '{"type": "function", "name": "list_overdue_invoices", "arguments": {"limit": "5"}}; ' +
+        '{"type": "function", "name": "send_sms", "arguments": {"to": "+21656829196", "body": "Hi"}}';
+      const leak = detectToolCallLeak(content);
+      expect(leak?.kind).toBe('raw_json');
+      expect(leak?.matches.length).toBe(5);
+    });
+
+    it('handles nested objects in arguments via brace counting', () => {
+      const content =
+        '{"type":"function","name":"send_email","arguments":{"to":"x","meta":{"a":1,"b":[2,3]}}}';
+      const leak = detectToolCallLeak(content);
+      expect(leak?.matches.length).toBe(1);
+      expect(JSON.parse(leak!.matches[0]).name).toBe('send_email');
+    });
+
+    it('does not match prose that mentions tools by name', () => {
+      const content =
+        'I will use the send_sms tool to message Ali. The function name is send_sms.';
+      expect(detectToolCallLeak(content)).toBeNull();
+    });
+  });
+
+  describe('salvageToolCall', () => {
+    it('salvages a single XML-tag call when the tool name is known', () => {
+      const leak = detectToolCallLeak(
+        '<function=send_sms>{"to":"+216","body":"Hi"}</function>',
+      )!;
+      const call = salvageToolCall(leak, KNOWN);
+      expect(call).not.toBeNull();
+      expect(call?.name).toBe('send_sms');
+      expect(JSON.parse(call!.argsJson)).toEqual({ to: '+216', body: 'Hi' });
+    });
+
+    it('salvages a single raw-JSON call', () => {
+      const leak = detectToolCallLeak(
+        '{"type":"function","name":"find_customer","arguments":{"query":"Ali"}}',
+      )!;
+      const call = salvageToolCall(leak, KNOWN);
+      expect(call?.name).toBe('find_customer');
+      expect(JSON.parse(call!.argsJson)).toEqual({ query: 'Ali' });
+    });
+
+    it('rejects multi-call leaks (cannot pick just one)', () => {
+      const leak = detectToolCallLeak(
+        '{"type":"function","name":"find_customer","arguments":{}}; ' +
+          '{"type":"function","name":"send_sms","arguments":{"to":"x","body":"y"}}',
+      )!;
+      expect(salvageToolCall(leak, KNOWN)).toBeNull();
+    });
+
+    it('rejects when the tool name is unknown', () => {
+      const leak = detectToolCallLeak(
+        '<function=hallucinated_tool>{"x":1}</function>',
+      )!;
+      expect(salvageToolCall(leak, KNOWN)).toBeNull();
+    });
+
+    it('rejects when args are unparseable', () => {
+      const leak = detectToolCallLeak('<function=send_sms>not-json</function>')!;
+      expect(salvageToolCall(leak, KNOWN)).toBeNull();
+    });
+
+    it('treats empty/missing args as `{}`', () => {
+      const leak = detectToolCallLeak('<function=send_sms>  </function>')!;
+      const call = salvageToolCall(leak, KNOWN);
+      expect(call?.argsJson).toBe('{}');
+    });
+
+    it('accepts arguments delivered as a JSON string (qwen variant)', () => {
+      const leak = detectToolCallLeak(
+        '{"type":"function","name":"send_sms","arguments":"{\\"to\\":\\"x\\",\\"body\\":\\"y\\"}"}',
+      )!;
+      const call = salvageToolCall(leak, KNOWN);
+      expect(call?.name).toBe('send_sms');
+      expect(JSON.parse(call!.argsJson)).toEqual({ to: 'x', body: 'y' });
+    });
+  });
+
+  describe('scrubLeakFromContent', () => {
+    it('strips XML-tag tool calls and trims', () => {
+      const content =
+        'Sure thing. <function=send_sms>{"to":"x"}</function>\n\nLet me know if you need more.';
+      const out = scrubLeakFromContent(content);
+      expect(out).toContain('Sure thing.');
+      expect(out).toContain('Let me know if you need more.');
+      expect(out).not.toContain('<function');
+    });
+
+    it('strips raw JSON tool calls', () => {
+      const out = scrubLeakFromContent(
+        'Here you go: {"type":"function","name":"send_sms","arguments":{"to":"x"}};',
+      );
+      expect(out).toBe('Here you go:');
+    });
+
+    it('returns null when only leaks remain', () => {
+      const out = scrubLeakFromContent(
+        '<function=send_sms>{"to":"x"}</function>',
+      );
+      expect(out).toBeNull();
+    });
+
+    it('preserves clean prose untouched (idempotent on no leak)', () => {
+      const clean = 'Your invoice number is INV-1234 and it is overdue.';
+      expect(scrubLeakFromContent(clean)).toBe(clean);
+    });
+
+    it('passes through null', () => {
+      expect(scrubLeakFromContent(null)).toBeNull();
+    });
+  });
+
+  describe('ProviderToolLeakError', () => {
+    it('carries provider, kind, and count', () => {
+      const leak = detectToolCallLeak(
+        '<function=send_sms>{"to":"x"}</function>',
+      )!;
+      const err = new ProviderToolLeakError('cerebras', leak);
+      expect(err.provider).toBe('cerebras');
+      expect(err.leakKind).toBe('xml_tag');
+      expect(err.callCount).toBe(1);
+      expect(err.message).toContain('cerebras');
+    });
+  });
+});

@@ -89,7 +89,21 @@ export interface LlmCompletionRequest {
    * better with `llama-3.1-8b-instant` than with the heavier primary.
    */
   model?: string;
+  /**
+   * Optional caller-side validator run after each provider's successful
+   * response and before it's returned. Lets callers reject results that are
+   * structurally OK but semantically broken (e.g. tool-call JSON leaked into
+   * the `content` field) and trigger fallthrough to the next provider in the
+   * chain. May also mutate the result to apply transforms like content
+   * scrubbing or salvaged tool-call injection — return the mutated value as
+   * `result`.
+   */
+  validateResult?: (result: LlmCompletionResult) => LlmValidationOutcome;
 }
+
+export type LlmValidationOutcome =
+  | { ok: true; result: LlmCompletionResult }
+  | { ok: false; reason: string };
 
 export interface LlmCompletionResult {
   provider:

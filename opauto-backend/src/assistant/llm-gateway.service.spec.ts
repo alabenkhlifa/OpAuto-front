@@ -1,7 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { LlmGatewayService } from './llm-gateway.service';
-import { LlmCompletionRequest } from './types';
+import {
+  LlmCompletionRequest,
+  LlmCompletionResult,
+  LlmValidationOutcome,
+} from './types';
 
 type FetchMock = jest.Mock<Promise<Response>, [RequestInfo | URL, RequestInit?]>;
 
@@ -417,5 +421,128 @@ describe('LlmGatewayService', () => {
     });
     // Claude should NOT receive tools in OpenAI shape.
     expect(body.tools[0].function).toBeUndefined();
+  });
+
+  // ── Caller-side validator (text-mode tool-call leak handling) ──────────
+  describe('validateResult callback', () => {
+    it('falls through when validator rejects the first provider', async () => {
+      const fetchMock: FetchMock = jest
+        .fn()
+        // Gemini returns OK content but the validator will reject it.
+        .mockResolvedValueOnce(
+          okJson({
+            candidates: [
+              {
+                content: {
+                  parts: [
+                    {
+                      text:
+                        '{"type":"function","name":"send_sms","arguments":{"to":"x","body":"y"}}',
+                    },
+                  ],
+                },
+              },
+            ],
+          }),
+        )
+        // Claude rescues with clean prose. (No Groq/Mistral/Cerebras keys
+        // configured in this test, so the chain skips straight to Claude.)
+        .mockResolvedValueOnce(
+          okJson({ content: [{ type: 'text', text: 'rescued by claude' }] }),
+        );
+      globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+      const service = await makeService({
+        GEMINI_API_KEY: 'gem',
+        ANTHROPIC_API_KEY: 'a',
+      });
+
+      const validateResult = jest.fn(
+        (result: LlmCompletionResult): LlmValidationOutcome => {
+          if (result.content?.includes('"type":"function"')) {
+            return { ok: false, reason: 'tool_call_leak_raw_json_count=1' };
+          }
+          return { ok: true, result };
+        },
+      );
+
+      const result = await service.complete({
+        ...baseRequest,
+        validateResult,
+      });
+
+      expect(result.provider).toBe('claude');
+      expect(result.content).toBe('rescued by claude');
+      // Validator runs on each successful provider response.
+      expect(validateResult).toHaveBeenCalledTimes(2);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    it('returns the validator-mutated result when accepted', async () => {
+      const fetchMock: FetchMock = jest.fn().mockResolvedValueOnce(
+        okJson({
+          candidates: [
+            {
+              content: {
+                parts: [{ text: 'original content' }],
+              },
+            },
+          ],
+        }),
+      );
+      globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+      const service = await makeService({ GEMINI_API_KEY: 'gem' });
+
+      const validateResult = jest.fn(
+        (result: LlmCompletionResult): LlmValidationOutcome => ({
+          ok: true,
+          result: { ...result, content: 'transformed' },
+        }),
+      );
+
+      const result = await service.complete({
+        ...baseRequest,
+        validateResult,
+      });
+
+      expect(result.provider).toBe('gemini');
+      expect(result.content).toBe('transformed');
+    });
+
+    it('treats validator throws as rejection rather than crashing the chain', async () => {
+      const fetchMock: FetchMock = jest
+        .fn()
+        .mockResolvedValueOnce(
+          okJson({
+            candidates: [
+              {
+                content: { parts: [{ text: 'gemini content' }] },
+              },
+            ],
+          }),
+        )
+        .mockResolvedValueOnce(
+          okJson({ content: [{ type: 'text', text: 'claude rescue' }] }),
+        );
+      globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+      const service = await makeService({
+        GEMINI_API_KEY: 'gem',
+        ANTHROPIC_API_KEY: 'a',
+      });
+
+      let firstCall = true;
+      const result = await service.complete({
+        ...baseRequest,
+        validateResult: (r): LlmValidationOutcome => {
+          if (firstCall) {
+            firstCall = false;
+            throw new Error('boom');
+          }
+          return { ok: true, result: r };
+        },
+      });
+
+      expect(result.provider).toBe('claude');
+      expect(result.content).toBe('claude rescue');
+    });
   });
 });

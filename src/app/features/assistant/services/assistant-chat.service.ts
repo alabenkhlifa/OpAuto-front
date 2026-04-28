@@ -14,6 +14,15 @@ import {
 
 const ASSISTANT_BASE = '/assistant';
 
+// Defensive frontend signatures mirror the backend leak-detector. The backend
+// validator should normally strip these before they reach the SSE stream;
+// this is a last-ditch sanitiser so a backend miss never lets raw tool-call
+// JSON render in the chat UI. We only check for presence (not full structure)
+// because nested-brace JSON is hard to balance with regex — if a leak shape is
+// detected, we drop the entire delta rather than try to splice it.
+const LEAK_XML_TAG_DETECT_RE = /<function\s*=\s*[A-Za-z_][A-Za-z0-9_]*\s*>/i;
+const LEAK_RAW_OBJECT_DETECT_RE = /\{\s*"type"\s*:\s*"function"\s*,\s*"name"\s*:/;
+
 /**
  * Wraps the assistant HTTP + SSE endpoints.
  *
@@ -185,11 +194,32 @@ export class AssistantChatService {
     try {
       const parsed = JSON.parse(payload);
       if (parsed && typeof parsed === 'object' && typeof parsed.type === 'string') {
-        return parsed as AssistantSseEvent;
+        return this.sanitizeEvent(parsed as AssistantSseEvent);
       }
       return null;
     } catch {
       return null;
     }
+  }
+
+  /**
+   * Last-ditch defence against backend leaks. If the backend validator missed
+   * a text-mode tool call (raw JSON object or `<function=...>` markup) and it
+   * arrives in a `text` event delta, drop the entire delta. We deliberately
+   * don't try to splice partial JSON out (nested braces are hard to balance
+   * in a regex); the backend validator is the right place to scrub mixed
+   * content. Dropping a tainted frame is strictly better than letting the
+   * JSON render in the chat UI.
+   */
+  private sanitizeEvent(event: AssistantSseEvent): AssistantSseEvent | null {
+    if (event.type !== 'text') return event;
+    if (
+      LEAK_XML_TAG_DETECT_RE.test(event.delta) ||
+      LEAK_RAW_OBJECT_DETECT_RE.test(event.delta)
+    ) {
+      console.warn('[assistant] dropped tool-call leak in text delta');
+      return null;
+    }
+    return event;
   }
 }

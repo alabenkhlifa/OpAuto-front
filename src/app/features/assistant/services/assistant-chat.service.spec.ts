@@ -118,6 +118,76 @@ describe('AssistantChatService', () => {
       });
     });
 
+    it('drops text deltas that are pure tool-call JSON leaks', (done) => {
+      spyOn(window, 'fetch').and.returnValue(
+        Promise.resolve(
+          buildStreamResponse([
+            'data: {"type":"text","delta":"{\\"type\\":\\"function\\",\\"name\\":\\"send_sms\\",\\"arguments\\":{\\"to\\":\\"x\\"}}"}\n\n',
+            'data: {"type":"text","delta":"clean prose follows"}\n\n',
+            'data: {"type":"done"}\n\n',
+          ]),
+        ),
+      );
+      const events: AssistantSseEvent[] = [];
+      service.sendMessage({ userMessage: 'hi' }).subscribe({
+        next: e => events.push(e),
+        complete: () => {
+          // The leak frame is dropped; only the clean prose and done events survive.
+          expect(events.length).toBe(2);
+          expect(events[0]).toEqual({ type: 'text', delta: 'clean prose follows' });
+          expect(events[1].type).toBe('done');
+          done();
+        },
+      });
+    });
+
+    it('drops mixed-content text deltas containing tool-call markup', (done) => {
+      // The frontend sanitiser intentionally drops the whole tainted delta
+      // rather than spliced-out scrubbing — backend is responsible for
+      // delivering clean prose. Belt-and-suspenders only.
+      spyOn(window, 'fetch').and.returnValue(
+        Promise.resolve(
+          buildStreamResponse([
+            'data: {"type":"text","delta":"Here is your answer. <function=send_sms>{\\"to\\":\\"x\\"}</function>"}\n\n',
+            'data: {"type":"text","delta":"clean follow-up"}\n\n',
+            'data: {"type":"done"}\n\n',
+          ]),
+        ),
+      );
+      const events: AssistantSseEvent[] = [];
+      service.sendMessage({ userMessage: 'hi' }).subscribe({
+        next: e => events.push(e),
+        complete: () => {
+          // First (tainted) delta is dropped; clean delta + done survive.
+          expect(events.length).toBe(2);
+          expect(events[0]).toEqual({ type: 'text', delta: 'clean follow-up' });
+          expect(events[1].type).toBe('done');
+          done();
+        },
+      });
+    });
+
+    it('passes through non-text events unchanged', (done) => {
+      spyOn(window, 'fetch').and.returnValue(
+        Promise.resolve(
+          buildStreamResponse([
+            'data: {"type":"tool_call","toolCallId":"t1","name":"send_sms","args":{"to":"x"}}\n\n',
+            'data: {"type":"done"}\n\n',
+          ]),
+        ),
+      );
+      const events: AssistantSseEvent[] = [];
+      service.sendMessage({ userMessage: 'hi' }).subscribe({
+        next: e => events.push(e),
+        complete: () => {
+          // tool_call frames carry tool args legitimately — sanitiser must not
+          // touch them or the approval card breaks.
+          expect(events[0].type).toBe('tool_call');
+          done();
+        },
+      });
+    });
+
     it('errors when fetch responds non-OK', (done) => {
       spyOn(window, 'fetch').and.returnValue(
         Promise.resolve(new Response('nope', { status: 500, statusText: 'Server Error' })),

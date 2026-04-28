@@ -6,13 +6,20 @@ import {
   AssistantMessageRole,
   AssistantToolCallStatus,
   AssistantUserContext,
+  LlmCompletionResult,
   LlmMessage,
   LlmToolCall,
+  LlmValidationOutcome,
   Locale,
   PageContext,
   SseEvent,
   ToolDescriptor,
 } from './types';
+import {
+  detectToolCallLeak,
+  salvageToolCall,
+  scrubLeakFromContent,
+} from './leak-detector';
 import { ConversationService } from './conversation.service';
 import { LlmGatewayService } from './llm-gateway.service';
 import { ToolRegistryService } from './tool-registry.service';
@@ -250,9 +257,11 @@ export class OrchestratorService {
         const messagesForCall = toolHasFired
           ? this.swapSystemPromptForComposeOnly(llmMessages, ctx.locale)
           : llmMessages;
+        const offeredTools = toolHasFired ? undefined : llmTools;
         const completion = await this.llm.complete({
           messages: messagesForCall,
-          tools: toolHasFired ? undefined : llmTools,
+          tools: offeredTools,
+          validateResult: this.buildLeakValidator(offeredTools),
         });
 
         const toolCalls = completion.toolCalls ?? [];
@@ -890,7 +899,8 @@ export class OrchestratorService {
         `- Use Markdown: **bold** for emphasis, lists with - or 1., backticks for code, links as [text](url). The chat UI renders Markdown.\n` +
         `- Currency is Tunisian Dinar. Format amounts as "1,234.56 TND" (English) or "1 234,56 DT" (French). NEVER prefix with a currency symbol — no ₸, no د.ت, no $, no €. Just the number and the code.\n` +
         `- Round currency to 2 decimal places.\n` +
-        `- Reference customer/car/invoice IDs as monospace code (\`abc-123\`) when you must show them; prefer human-readable names otherwise.`,
+        `- Reference customer/car/invoice IDs as monospace code (\`abc-123\`) when you must show them; prefer human-readable names otherwise.\n` +
+        `- NEVER write tool-call markup in your reply. Do NOT print JSON like \`{"type":"function","name":"...","arguments":...}\`, do NOT use \`<function=name>{...}</function>\` tags, and do NOT narrate "I will call tool X". Either invoke the tool through the structured tool-use channel (the assistant runtime executes it) or describe the result in plain prose. Tool-call JSON in your reply text is treated as a malformed response and discarded.`,
     );
     parts.push(
       `Action chaining rules:\n` +
@@ -1014,6 +1024,75 @@ export class OrchestratorService {
       };
     }
     return null;
+  }
+
+  /**
+   * Build a per-call validator that catches text-mode tool-call leaks (raw
+   * JSON or `<function=...>` markup in `content`) before they reach the user.
+   *
+   * Behaviour:
+   *  - Result has structured `toolCalls` AND content has a leak: scrub the
+   *    content (defensive — model executed correctly but also dumped JSON in
+   *    prose) and accept.
+   *  - Result has zero structured tool calls AND content has a leak:
+   *    - If exactly one valid call salvages cleanly → inject it as
+   *      `toolCalls`, scrub the content, accept.
+   *    - Otherwise → reject so the gateway advances to the next provider.
+   *  - On a tool-less turn (e.g. compose-only after a tool fired): scrub any
+   *    leak but never reject — there are no tools to retry against and the
+   *    next provider would only re-emit the same prose.
+   *  - No leak detected: pass through unchanged.
+   */
+  private buildLeakValidator(
+    offeredTools: ToolDescriptor[] | undefined,
+  ): (result: LlmCompletionResult) => LlmValidationOutcome {
+    const toolNames = new Set<string>(
+      (offeredTools ?? []).map((t) => t.name),
+    );
+    const wasOfferedTools = toolNames.size > 0;
+    return (result) => {
+      const leak = detectToolCallLeak(result.content);
+      if (!leak) {
+        return { ok: true, result };
+      }
+
+      if (result.toolCalls.length > 0 || !wasOfferedTools) {
+        // Either the model made a structured call (and incidentally dumped
+        // JSON), or this is a compose-only turn where retrying buys us
+        // nothing. Scrub and pass through.
+        const scrubbed = scrubLeakFromContent(result.content);
+        this.logger.warn(
+          `assistant.leak.scrubbed provider=${result.provider} kind=${leak.kind} count=${leak.matches.length} hadStructured=${result.toolCalls.length > 0} offeredTools=${wasOfferedTools}`,
+        );
+        return { ok: true, result: { ...result, content: scrubbed } };
+      }
+
+      // No structured calls but the model emitted text-mode tool calls. Try
+      // to salvage one clean call.
+      const salvaged = salvageToolCall(leak, toolNames);
+      if (salvaged) {
+        const scrubbed = scrubLeakFromContent(result.content);
+        this.logger.warn(
+          `assistant.leak.salvaged provider=${result.provider} kind=${leak.kind} tool=${salvaged.name}`,
+        );
+        return {
+          ok: true,
+          result: {
+            ...result,
+            content: scrubbed,
+            toolCalls: [salvaged],
+          },
+        };
+      }
+
+      this.logger.warn(
+        `assistant.leak.fallthrough provider=${result.provider} kind=${leak.kind} count=${leak.matches.length} preview=${(result.content ?? '').slice(0, 120)}`,
+      );
+      return {
+        ok: false,
+        reason: `tool_call_leak_${leak.kind}_count=${leak.matches.length}`,
+      };
+    };
   }
 
   private safeParseArgs(json: string): { value: unknown; error?: undefined } | { value: undefined; error: string } {

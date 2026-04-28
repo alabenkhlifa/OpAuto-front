@@ -5,6 +5,7 @@ import {
   LlmCompletionResult,
   LlmMessage,
   LlmToolCall,
+  LlmValidationOutcome,
   ToolDescriptor,
 } from './types';
 
@@ -208,87 +209,119 @@ export class LlmGatewayService {
 
     if (this.geminiKey) {
       const gem = await this.callGemini(request);
-      if (gem.ok) return gem.result;
-      this.logger.warn(
-        `Gemini failed (${(gem as { reason: string }).reason}); falling back to Groq`,
-      );
+      if (gem.ok) {
+        const validated = this.runValidator(gem.result, request);
+        if (validated.ok) return validated.result;
+        this.logger.warn(
+          `Gemini result rejected (${(validated as { ok: false; reason: string }).reason}); falling back to Groq`,
+        );
+      } else {
+        this.logger.warn(
+          `Gemini failed (${(gem as { reason: string }).reason}); falling back to Groq`,
+        );
+      }
     }
 
     if (this.groqKey) {
       const groq = await this.callGroq(request);
       if (groq.ok) {
-        return groq.result;
-      }
-      const reason = (groq as { reason: string }).reason;
-
-      // Llama 3.3 sometimes chokes when given many tool schemas. The
-      // user-visible failure is `tool_use_failed`. Retry the SAME prompt
-      // against Groq without the tools — the model can still compose a
-      // helpful text answer (no data lookup, but a coherent response is
-      // far better than the mock apology).
-      //
-      // We also inject a "no tools available" system message so the model
-      // doesn't hallucinate fake tool calls (e.g. "Je vais utiliser l'outil
-      // ..."). Without this, the model still tries to act on the original
-      // tool descriptions in the system prompt.
-      if (
-        request.tools &&
-        request.tools.length > 0 &&
-        (reason.includes('tool_use_failed') || reason.includes('tool_call_'))
-      ) {
-        this.logger.warn(`Groq tool-call failed (${reason}); retrying without tools`);
-        const noToolsMessages: LlmMessage[] = [
-          ...request.messages,
-          {
-            role: 'system',
-            content:
-              "IMPORTANT: tool calls are temporarily unavailable for this turn. Do NOT describe calling any tool, do NOT use placeholders like '(tool result)' or '(call to tool)', and do NOT promise to look something up. If the user asked for specific data you would need a tool for, briefly apologize that you can't fetch it right now and ask them to retry or rephrase. Otherwise answer their question directly using your general knowledge.",
-          },
-        ];
-        const retry = await this.callGroq({
-          ...request,
-          messages: noToolsMessages,
-          tools: undefined,
-        });
-        if (retry.ok) {
-          return retry.result;
-        }
+        const validated = this.runValidator(groq.result, request);
+        if (validated.ok) return validated.result;
         this.logger.warn(
-          `Groq tools-less retry also failed (${(retry as { reason: string }).reason})`,
+          `Groq result rejected (${(validated as { ok: false; reason: string }).reason}); falling back to Mistral`,
         );
       } else {
-        this.logger.warn(`Groq failed (${reason}); falling back to Mistral`);
+        const reason = (groq as { reason: string }).reason;
+
+        // Llama 3.3 sometimes chokes when given many tool schemas. The
+        // user-visible failure is `tool_use_failed`. Retry the SAME prompt
+        // against Groq without the tools — the model can still compose a
+        // helpful text answer (no data lookup, but a coherent response is
+        // far better than the mock apology).
+        //
+        // We also inject a "no tools available" system message so the model
+        // doesn't hallucinate fake tool calls (e.g. "Je vais utiliser l'outil
+        // ..."). Without this, the model still tries to act on the original
+        // tool descriptions in the system prompt.
+        if (
+          request.tools &&
+          request.tools.length > 0 &&
+          (reason.includes('tool_use_failed') || reason.includes('tool_call_'))
+        ) {
+          this.logger.warn(`Groq tool-call failed (${reason}); retrying without tools`);
+          const noToolsMessages: LlmMessage[] = [
+            ...request.messages,
+            {
+              role: 'system',
+              content:
+                "IMPORTANT: tool calls are temporarily unavailable for this turn. Do NOT describe calling any tool, do NOT use placeholders like '(tool result)' or '(call to tool)', and do NOT promise to look something up. If the user asked for specific data you would need a tool for, briefly apologize that you can't fetch it right now and ask them to retry or rephrase. Otherwise answer their question directly using your general knowledge.",
+            },
+          ];
+          const retry = await this.callGroq({
+            ...request,
+            messages: noToolsMessages,
+            tools: undefined,
+          });
+          if (retry.ok) {
+            const retryValidated = this.runValidator(retry.result, request);
+            if (retryValidated.ok) return retryValidated.result;
+            this.logger.warn(
+              `Groq tools-less retry rejected (${(retryValidated as { ok: false; reason: string }).reason})`,
+            );
+          } else {
+            this.logger.warn(
+              `Groq tools-less retry also failed (${(retry as { reason: string }).reason})`,
+            );
+          }
+        } else {
+          this.logger.warn(`Groq failed (${reason}); falling back to Mistral`);
+        }
       }
     }
 
     if (this.mistralKey) {
       const mistral = await this.callMistral(request);
       if (mistral.ok) {
-        return mistral.result;
+        const validated = this.runValidator(mistral.result, request);
+        if (validated.ok) return validated.result;
+        this.logger.warn(
+          `Mistral result rejected (${(validated as { ok: false; reason: string }).reason}); falling back to Cerebras`,
+        );
+      } else {
+        this.logger.warn(
+          `Mistral failed (${(mistral as { reason: string }).reason}); falling back to Cerebras`,
+        );
       }
-      this.logger.warn(
-        `Mistral failed (${(mistral as { reason: string }).reason}); falling back to Cerebras`,
-      );
     }
 
     if (this.cerebrasKey) {
       const cerebras = await this.callCerebras(request);
       if (cerebras.ok) {
-        return cerebras.result;
+        const validated = this.runValidator(cerebras.result, request);
+        if (validated.ok) return validated.result;
+        this.logger.warn(
+          `Cerebras result rejected (${(validated as { ok: false; reason: string }).reason}); falling back to Claude`,
+        );
+      } else {
+        this.logger.warn(
+          `Cerebras failed (${(cerebras as { reason: string }).reason}); falling back to Claude`,
+        );
       }
-      this.logger.warn(
-        `Cerebras failed (${(cerebras as { reason: string }).reason}); falling back to Claude`,
-      );
     }
 
     if (this.anthropicKey) {
       const claude = await this.callClaude(request);
       if (claude.ok) {
-        return claude.result;
+        const validated = this.runValidator(claude.result, request);
+        if (validated.ok) return validated.result;
+        this.logger.warn(
+          `Claude result rejected (${(validated as { ok: false; reason: string }).reason})`,
+        );
+      } else {
+        this.logger.warn(
+          `Claude failed (${(claude as { reason: string }).reason})`,
+        );
       }
-      this.logger.warn(
-        `Claude failed (${(claude as { reason: string }).reason})`,
-      );
     }
 
     return {
@@ -1020,5 +1053,23 @@ export class LlmGatewayService {
   private errMessage(err: unknown): string {
     if (err instanceof Error) return err.message;
     return String(err);
+  }
+
+  /**
+   * Apply the optional caller-side result validator. If the request didn't
+   * supply one, the result passes through unchanged. If the validator throws,
+   * we surface that as a rejection so the chain advances rather than aborting
+   * the whole turn.
+   */
+  private runValidator(
+    result: LlmCompletionResult,
+    request: LlmCompletionRequest,
+  ): LlmValidationOutcome {
+    if (!request.validateResult) return { ok: true, result };
+    try {
+      return request.validateResult(result);
+    } catch (err) {
+      return { ok: false, reason: `validator_threw_${this.errMessage(err)}` };
+    }
   }
 }
