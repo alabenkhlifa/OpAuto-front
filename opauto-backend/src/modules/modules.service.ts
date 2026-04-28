@@ -6,7 +6,7 @@ const MODULE_CATALOG = [
   { id: 'customers', name: 'Customers', price: 0, description: 'Customer management' },
   { id: 'cars', name: 'Cars', price: 0, description: 'Vehicle registry' },
   { id: 'appointments', name: 'Appointments', price: 0, description: 'Basic scheduling' },
-  { id: 'calendar', name: 'Calendar', price: 29, description: 'Advanced calendar with drag-drop' },
+  { id: 'calendar', name: 'Calendar', price: 0, description: 'Advanced calendar with drag-drop' },
   { id: 'maintenance', name: 'Maintenance', price: 39, description: 'Job tracking and workflows' },
   { id: 'invoicing', name: 'Invoicing', price: 29, description: 'Invoice and payment management' },
   { id: 'inventory', name: 'Inventory', price: 29, description: 'Parts and stock management' },
@@ -19,7 +19,7 @@ const MODULE_CATALOG = [
   { id: 'notifications', name: 'Notifications', price: 19, description: 'Smart notifications' },
 ];
 
-const FREE_MODULES = ['dashboard', 'customers', 'cars', 'appointments'];
+const FREE_MODULES = ['dashboard', 'customers', 'cars', 'appointments', 'calendar'];
 
 @Injectable()
 export class ModulesService {

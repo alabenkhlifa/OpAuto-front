@@ -336,4 +336,7 @@ BUG-063, 065, 066, 067, 068, 069, 071, 073, 074 exercised end-to-end. BUG-089/09
 - [x] `index.html` and `404.html` `<title>` updated to "Smart Garage - Garage Management System"
 
 ## Module marketplace grouping (2026-04-28)
-- [x] Modules page (`/modules`) now groups `appointments` (free basic) + `calendar` (paid advanced) into a single "Calendar & Appointments" card with two tiers — basic shows Free/Included, advanced keeps Activate/Deactivate/Renew/Reactivate flow with expiry/cancellation states. Underlying `MODULE_CATALOG` and access guards are unchanged; the merge is presentation-only in `subscription.component.ts`
+- [x] ~~Modules page (`/modules`) groups `appointments` + `calendar` into a single "Calendar & Appointments" card~~ — **reverted**. Tried a merged two-tier card, then a dedicated top section; user wanted them to look like every other module. Final state: `subscription.component.ts` renders Appointments inline in Free Modules and Calendar inline in Paid Modules, no special section. `MODULE_CATALOG` was never touched
+
+## Calendar made free (2026-04-28)
+- [x] `calendar` module is now free instead of 29 TND/month. Updated both frontend (`src/app/core/models/module.model.ts` — `FREE_MODULES` + catalog `price: 0, isFree: true`) and backend (`opauto-backend/src/modules/modules.service.ts` — `FREE_MODULES` + catalog `price: 0`). Calendar route is no longer gated by purchase — `hasAccess('calendar')` and `moduleGuard('calendar')` both pass for any garage

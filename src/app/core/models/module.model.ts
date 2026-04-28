@@ -28,14 +28,14 @@ export interface GarageModule {
   expiresAt?: string;
 }
 
-export const FREE_MODULES: ModuleId[] = ['dashboard', 'customers', 'cars', 'appointments'];
+export const FREE_MODULES: ModuleId[] = ['dashboard', 'customers', 'cars', 'appointments', 'calendar'];
 
 export const MODULE_CATALOG: Omit<GarageModule, 'isActive'>[] = [
   { id: 'dashboard', name: 'Dashboard', description: 'Overview and KPIs', price: 0, icon: 'dashboard', isFree: true },
   { id: 'customers', name: 'Customers', description: 'Customer management', price: 0, icon: 'people', isFree: true },
   { id: 'cars', name: 'Cars', description: 'Vehicle registry', price: 0, icon: 'car', isFree: true },
   { id: 'appointments', name: 'Appointments', description: 'Basic scheduling', price: 0, icon: 'calendar', isFree: true },
-  { id: 'calendar', name: 'Calendar', description: 'Advanced calendar with drag-drop', price: 29, icon: 'calendar-view', isFree: false },
+  { id: 'calendar', name: 'Calendar', description: 'Advanced calendar with drag-drop', price: 0, icon: 'calendar-view', isFree: true },
   { id: 'maintenance', name: 'Maintenance', description: 'Job tracking and workflows', price: 39, icon: 'wrench', isFree: false },
   { id: 'invoicing', name: 'Invoicing', description: 'Invoice and payment management', price: 29, icon: 'invoice', isFree: false },
   { id: 'inventory', name: 'Inventory', description: 'Parts and stock management', price: 29, icon: 'inventory', isFree: false },

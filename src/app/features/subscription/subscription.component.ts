@@ -37,65 +37,6 @@ const MODULE_EMOJI: Record<string, string> = {
         </div>
       </div>
 
-      <!-- Calendar & Appointments (grouped) -->
-      @if (schedulingTiers(); as tiers) {
-        <h2 class="section-title">Calendar & Appointments</h2>
-        <div class="modules-grid">
-          <!-- Basic (free) -->
-          <div class="glass-card module-card active">
-            <div class="module-header">
-              <div class="module-icon">{{ getEmoji(tiers.basic.icon) }}</div>
-              <span class="module-name">{{ tiers.basic.name }}</span>
-            </div>
-            <p class="module-desc">{{ tiers.basic.description }}</p>
-            <div class="module-footer">
-              <span class="module-price free">Free</span>
-              <span class="free-badge">Included</span>
-            </div>
-          </div>
-
-          <!-- Advanced (paid) -->
-          <div class="glass-card module-card"
-               [class.active]="tiers.advanced.isActive"
-               [class.cancelled]="isCancelled(tiers.advanced)"
-               [class.expired]="isExpired(tiers.advanced)">
-            <div class="module-header">
-              <div class="module-icon">{{ getEmoji(tiers.advanced.icon) }}</div>
-              <div class="module-title-row">
-                <span class="module-name">{{ tiers.advanced.name }}</span>
-                @if (isExpired(tiers.advanced)) {
-                  <span class="expired-badge">Expired</span>
-                } @else if (isCancelled(tiers.advanced)) {
-                  <span class="cancelled-badge">Cancelled</span>
-                }
-              </div>
-            </div>
-            <p class="module-desc">{{ tiers.advanced.description }}</p>
-            @if (tiers.advanced.isActive && tiers.advanced.expiresAt) {
-              <div class="expiry-info">
-                @if (isCancelled(tiers.advanced)) {
-                  <span class="expiry-text cancelled-text">Access ends in {{ getDaysRemaining(tiers.advanced) }} days</span>
-                } @else {
-                  <span class="expiry-text">{{ getDaysRemaining(tiers.advanced) }} days remaining</span>
-                }
-              </div>
-            }
-            <div class="module-footer">
-              <span class="module-price">{{ tiers.advanced.price }} TND/month</span>
-              @if (isExpired(tiers.advanced)) {
-                <button class="activate-btn renew" (click)="renewModule(tiers.advanced)">Renew</button>
-              } @else if (isCancelled(tiers.advanced)) {
-                <button class="activate-btn renew" (click)="renewModule(tiers.advanced)">Reactivate</button>
-              } @else if (tiers.advanced.isActive) {
-                <button class="activate-btn deactivate" (click)="toggleModule(tiers.advanced)">Deactivate</button>
-              } @else {
-                <button class="activate-btn inactive" (click)="toggleModule(tiers.advanced)">Activate</button>
-              }
-            </div>
-          </div>
-        </div>
-      }
-
       <!-- Free Modules -->
       <h2 class="section-title">Free Modules</h2>
       <div class="modules-grid">
@@ -220,20 +161,8 @@ export class SubscriptionComponent {
   modules = this.moduleService.modules;
   confirmingDeactivation = signal<GarageModule | null>(null);
 
-  schedulingTiers = computed(() => {
-    const all = this.modules();
-    const basic = all.find(m => m.id === 'appointments');
-    const advanced = all.find(m => m.id === 'calendar');
-    if (!basic || !advanced) return null;
-    return { basic, advanced };
-  });
-
-  freeModules = computed(() =>
-    this.modules().filter(m => m.isFree && m.id !== 'appointments')
-  );
-  paidModules = computed(() =>
-    this.modules().filter(m => !m.isFree && m.id !== 'calendar')
-  );
+  freeModules = computed(() => this.modules().filter(m => m.isFree));
+  paidModules = computed(() => this.modules().filter(m => !m.isFree));
 
   activeCount = computed(() => this.modules().filter(m => m.isActive).length);
   monthlyCost = computed(() =>
