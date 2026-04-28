@@ -111,7 +111,8 @@
       "title": "السيارات قيد العمل حالياً",
       "progress": "التقدم",
       "mechanic": "الميكانيكي",
-      "estimatedComplete": "الانتهاء المقدر"
+      "estimatedComplete": "الانتهاء المقدر",
+      "noActiveJobs": "لا توجد سيارات قيد الإصلاح حاليًا. جميع المواقف متاحة."
     },
     "status": {
       "scheduled": "مجدول",

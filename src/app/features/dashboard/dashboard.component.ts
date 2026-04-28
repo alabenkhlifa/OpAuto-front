@@ -18,6 +18,7 @@ import { CustomerService } from '../../core/services/customer.service';
 import { EmployeeService } from '../../core/services/employee.service';
 import { PartService } from '../../core/services/part.service';
 import { InvoiceService } from '../../core/services/invoice.service';
+import { MaintenanceService } from '../../core/services/maintenance.service';
 
 Chart.register(...registerables);
 
@@ -63,6 +64,7 @@ export class DashboardComponent implements OnInit {
   private employeeService = inject(EmployeeService);
   private partService = inject(PartService);
   private invoiceService = inject(InvoiceService);
+  private maintenanceService = inject(MaintenanceService);
 
   isOwner = signal(false);
 
@@ -191,9 +193,10 @@ export class DashboardComponent implements OnInit {
       employees: this.employeeService.getEmployees(),
       parts: isOwner ? this.partService.getParts() : of([]),
       invoices: isOwner ? this.invoiceService.getInvoices() : of([]),
-      cars: this.appointmentService.getCars()
+      cars: this.appointmentService.getCars(),
+      maintenanceJobs: this.maintenanceService.getMaintenanceJobs()
     }).subscribe({
-      next: ({ appointments, customers, employees, parts, invoices, cars }) => {
+      next: ({ appointments, customers, employees, parts, invoices, cars, maintenanceJobs }) => {
         const today = new Date();
         const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
         const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
@@ -241,29 +244,30 @@ export class DashboardComponent implements OnInit {
           };
         }).sort((a, b) => a.time.localeCompare(b.time));
 
-        // Active jobs (in-progress appointments)
-        this.activeJobs = appointments.filter(a => a.status === 'in-progress').map(a => {
-          const start = new Date(a.scheduledDate);
-          const end = new Date(start.getTime() + a.estimatedDuration * 60000);
+        // Active jobs come from maintenance jobs being worked on, not appointments —
+        // appointments only flag the visit; the actual work tracked in /maintenance/active.
+        const activeStatuses = new Set(['in-progress', 'quality-check', 'waiting-parts', 'waiting-approval']);
+        this.activeJobs = maintenanceJobs.filter(j => activeStatuses.has(j.status)).map(j => {
+          const start = j.startDate ? new Date(j.startDate) : new Date(j.createdAt);
+          const end = new Date(start.getTime() + j.estimatedDuration * 60000);
           const now = Date.now();
           const totalMs = end.getTime() - start.getTime();
           const elapsedMs = now - start.getTime();
-          const progress = Math.min(100, Math.max(0, Math.round((elapsedMs / totalMs) * 100)));
-          const mechanic = employees.find(e => e.id === a.mechanicId);
-          const customer = customers.find(c => c.id === a.customerId);
-          const car = cars.find(c => c.id === a.carId);
+          const progress = totalMs > 0
+            ? Math.min(100, Math.max(0, Math.round((elapsedMs / totalMs) * 100)))
+            : 0;
 
           return {
-            id: a.id,
-            customerName: customer?.name || '',
-            carModel: car ? `${car.make} ${car.model}` : '',
-            licensePlate: car?.licensePlate || '',
-            services: [a.serviceName],
+            id: j.id,
+            customerName: j.customerName || '',
+            carModel: j.carDetails || '',
+            licensePlate: j.licensePlate || '',
+            services: [j.jobTitle],
             startedAt: start.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
             estimatedCompletion: end.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-            mechanic: mechanic?.personalInfo?.fullName || '',
+            mechanic: j.mechanicName || '',
             progress,
-            status: 'in_repair'
+            status: j.status.replace(/-/g, '_')
           };
         });
 

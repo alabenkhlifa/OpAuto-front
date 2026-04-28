@@ -101,6 +101,17 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.empty-state-card {
+  text-align: center;
+  padding: 2.5rem 2rem;
+}
+
+.empty-state-text {
+  color: #6b7280;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
 .card-header {
   display: flex;
   justify-content: space-between;

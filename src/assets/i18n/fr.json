@@ -111,7 +111,8 @@
       "title": "Voitures actuellement en cours de traitement",
       "progress": "Progrès",
       "mechanic": "Mécanicien",
-      "estimatedComplete": "Fin estimée"
+      "estimatedComplete": "Fin estimée",
+      "noActiveJobs": "Aucune voiture en cours de réparation. Tous les box sont libres."
     },
     "status": {
       "scheduled": "Programmé",

@@ -111,7 +111,8 @@
       "title": "Cars Currently Being Worked On",
       "progress": "Progress",
       "mechanic": "Mechanic",
-      "estimatedComplete": "Est. Complete"
+      "estimatedComplete": "Est. Complete",
+      "noActiveJobs": "No cars are currently being worked on. All bays are free."
     },
     "status": {
       "scheduled": "Scheduled",
