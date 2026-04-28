@@ -41,61 +41,56 @@ const MODULE_EMOJI: Record<string, string> = {
       @if (schedulingTiers(); as tiers) {
         <h2 class="section-title">Calendar & Appointments</h2>
         <div class="modules-grid">
-          <div class="glass-card module-card grouped"
+          <!-- Basic (free) -->
+          <div class="glass-card module-card active">
+            <div class="module-header">
+              <div class="module-icon">{{ getEmoji(tiers.basic.icon) }}</div>
+              <span class="module-name">{{ tiers.basic.name }}</span>
+            </div>
+            <p class="module-desc">{{ tiers.basic.description }}</p>
+            <div class="module-footer">
+              <span class="module-price free">Free</span>
+              <span class="free-badge">Included</span>
+            </div>
+          </div>
+
+          <!-- Advanced (paid) -->
+          <div class="glass-card module-card"
                [class.active]="tiers.advanced.isActive"
                [class.cancelled]="isCancelled(tiers.advanced)"
                [class.expired]="isExpired(tiers.advanced)">
             <div class="module-header">
-              <div class="module-icon">📅</div>
+              <div class="module-icon">{{ getEmoji(tiers.advanced.icon) }}</div>
               <div class="module-title-row">
-                <span class="module-name">Calendar & Appointments</span>
+                <span class="module-name">{{ tiers.advanced.name }}</span>
                 @if (isExpired(tiers.advanced)) {
-                  <span class="expired-badge">Advanced expired</span>
+                  <span class="expired-badge">Expired</span>
                 } @else if (isCancelled(tiers.advanced)) {
-                  <span class="cancelled-badge">Advanced cancelled</span>
+                  <span class="cancelled-badge">Cancelled</span>
                 }
               </div>
             </div>
-            <p class="module-desc">Schedule jobs and manage your day. Upgrade for the advanced calendar with drag-drop, multi-mechanic views, and conflict detection.</p>
-
-            <div class="tier-list">
-              <div class="tier-row">
-                <div class="tier-info">
-                  <span class="tier-label">Basic scheduling</span>
-                  <span class="tier-desc">{{ tiers.basic.description }}</span>
-                </div>
-                <div class="tier-action">
-                  <span class="module-price free">Free</span>
-                  <span class="free-badge">Included</span>
-                </div>
+            <p class="module-desc">{{ tiers.advanced.description }}</p>
+            @if (tiers.advanced.isActive && tiers.advanced.expiresAt) {
+              <div class="expiry-info">
+                @if (isCancelled(tiers.advanced)) {
+                  <span class="expiry-text cancelled-text">Access ends in {{ getDaysRemaining(tiers.advanced) }} days</span>
+                } @else {
+                  <span class="expiry-text">{{ getDaysRemaining(tiers.advanced) }} days remaining</span>
+                }
               </div>
-              <div class="tier-row">
-                <div class="tier-info">
-                  <span class="tier-label">Advanced calendar</span>
-                  <span class="tier-desc">{{ tiers.advanced.description }}</span>
-                  @if (tiers.advanced.isActive && tiers.advanced.expiresAt) {
-                    <span class="expiry-text" [class.cancelled-text]="isCancelled(tiers.advanced)">
-                      @if (isCancelled(tiers.advanced)) {
-                        Access ends in {{ getDaysRemaining(tiers.advanced) }} days
-                      } @else {
-                        {{ getDaysRemaining(tiers.advanced) }} days remaining
-                      }
-                    </span>
-                  }
-                </div>
-                <div class="tier-action">
-                  <span class="module-price">{{ tiers.advanced.price }} TND/month</span>
-                  @if (isExpired(tiers.advanced)) {
-                    <button class="activate-btn renew" (click)="renewModule(tiers.advanced)">Renew</button>
-                  } @else if (isCancelled(tiers.advanced)) {
-                    <button class="activate-btn renew" (click)="renewModule(tiers.advanced)">Reactivate</button>
-                  } @else if (tiers.advanced.isActive) {
-                    <button class="activate-btn deactivate" (click)="toggleModule(tiers.advanced)">Deactivate</button>
-                  } @else {
-                    <button class="activate-btn inactive" (click)="toggleModule(tiers.advanced)">Activate</button>
-                  }
-                </div>
-              </div>
+            }
+            <div class="module-footer">
+              <span class="module-price">{{ tiers.advanced.price }} TND/month</span>
+              @if (isExpired(tiers.advanced)) {
+                <button class="activate-btn renew" (click)="renewModule(tiers.advanced)">Renew</button>
+              } @else if (isCancelled(tiers.advanced)) {
+                <button class="activate-btn renew" (click)="renewModule(tiers.advanced)">Reactivate</button>
+              } @else if (tiers.advanced.isActive) {
+                <button class="activate-btn deactivate" (click)="toggleModule(tiers.advanced)">Deactivate</button>
+              } @else {
+                <button class="activate-btn inactive" (click)="toggleModule(tiers.advanced)">Activate</button>
+              }
             </div>
           </div>
         </div>
@@ -210,15 +205,6 @@ const MODULE_EMOJI: Record<string, string> = {
     .activate-btn.renew { background: rgba(255, 132, 0, 0.1); color: #FF8400; border: 1px solid rgba(255, 132, 0, 0.4); }
     .activate-btn.deactivate { background: rgba(239, 68, 68, 0.08); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.3); }
     .activate-btn:hover { transform: translateY(-1px); }
-
-    .module-card.grouped { gap: 0.5rem; }
-    .tier-list { display: flex; flex-direction: column; gap: 0.5rem; margin-top: auto; padding-top: 0.75rem; border-top: 1px solid #f1f5f9; }
-    .tier-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.5rem 0; }
-    .tier-row + .tier-row { border-top: 1px dashed #e5e7eb; }
-    .tier-info { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
-    .tier-label { font-size: 0.875rem; font-weight: 600; color: #111827; }
-    .tier-desc { font-size: 0.75rem; color: #6b7280; line-height: 1.3; }
-    .tier-action { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
 
     .dialog-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 50; }
     .dialog-box { max-width: 420px; width: 90%; padding: 1.5rem; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; box-shadow: 0 25px 50px rgba(0,0,0,0.15); }
