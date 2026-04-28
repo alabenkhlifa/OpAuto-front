@@ -176,6 +176,16 @@ Phase 5 backend totals: 227 tests across 17 suites passing.
 - [x] **Resend wired through compose** — `EMAIL_PROVIDER` / `RESEND_API_KEY` / `RESEND_FROM` were being added to `/opt/opauto/.env` but never reached the running container; compose only passes through what's listed in the backend service `environment:` block. Same change for `CEREBRAS_API_KEY` / `MISTRAL_API_KEY`.
 - [x] 22 new tests across orchestrator, gateway, invoicing-inventory, customers-cars, and appointments specs. Full assistant suite: **269 tests / 17 suites passing**.
 
+### Orchestrator hardening (Session 2026-04-28 evening)
+
+- [x] **Tool-call JSON leak defense** — Cerebras qwen and (sometimes) Groq llama-3.1-8b emit tool calls as TEXT in the `content` field instead of structured `tool_calls`, causing raw `{"type":"function","name":"send_sms",...}` chains and `<function=...>` markup to render in chat. Five-layer defense in depth:
+    - New `leak-detector.ts` module — brace-balanced raw-JSON matcher + XML-tag matcher + salvage + scrub. Pure functions, 21 unit tests.
+    - `LlmCompletionRequest.validateResult` callback in the gateway protocol — orchestrator builds a per-call validator that scrubs incidental leaks, salvages a single clean call when possible, and rejects multi-call/unsalvageable leaks so the chain advances to the next provider.
+    - System-prompt rule explicitly forbidding tool-call JSON / function-tag markup in reply text.
+    - Frontend SSE sanitiser (`AssistantChatService.sanitizeEvent`) drops text deltas containing leak signatures as a last-ditch belt-and-suspenders.
+    - Structured `assistant.leak.{scrubbed,salvaged,fallthrough}` warning logs with provider/model/kind/count.
+- [x] E2E verified live: real prompt ("send SMS to Ali Ben Salah about overdue invoice") → Gemini quota-exhausted → Mistral made structured tool call → Groq composed clean prose. No JSON dump in the chat. Backend assistant suite: **293 tests / 18 suites passing**; frontend chat-service tests still green.
+
 ## Infrastructure Fixes (Session 2026-03-28)
 - [x] Tailwind v4 source scanning — utility classes (w-6, h-6) now generated correctly
 - [x] Mobile hamburger menu visibility — z-index fix + orange accent

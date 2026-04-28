@@ -139,7 +139,19 @@ assistant/
 - `GET /api/assistant/registry` — list available tools, skills, agents (filtered by user's permissions). Used by the frontend for "what can the assistant do?" panel.
 
 ### 5.3 Provider chain
-`LlmGatewayService` wraps the existing `AiService` but exposes a tool-calling-aware `complete(messages, tools, options)` method. Order: **Groq → Claude**. Both use OpenAI-compatible function-calling format (Claude's tool-use API is mapped server-side). On Groq tool-call schema-parse failure (Llama models occasionally emit malformed JSON), the gateway retries on Claude before giving up. Existing one-shot AI features keep their current chain order.
+`LlmGatewayService` wraps the existing `AiService` but exposes a tool-calling-aware `complete(messages, tools, options)` method. Order: **Gemini → Groq → Mistral → Cerebras → Claude → mock**. All non-Gemini providers use OpenAI-compatible function-calling format; Gemini's `functionCall` parts and Claude's `tool_use` blocks are mapped server-side into the shared `LlmToolCall[]` shape. On structurally invalid responses (malformed tool-call JSON, missing fields), the gateway falls through to the next provider before giving up. Existing one-shot AI features keep their current chain order.
+
+#### Provider response validation (caller-side leak detection)
+Some providers — notably Cerebras's qwen variants and occasionally Groq's `llama-3.1-8b-instant` under tool-list pressure — emit tool calls as **text** inside the `content` field instead of in the structured tool-use field. Without intervention the orchestrator sees `toolCalls=[]` and ships raw JSON (or `<function=name>{...}</function>` markup) to the user verbatim. Two protocol additions guard against this:
+
+1. **`LlmCompletionRequest.validateResult` callback** — optional caller-side validator run after each provider's successful response and before it's returned. The gateway accepts/rejects based on the validator's verdict; rejection advances to the next provider, exactly like a transport failure. The validator may also mutate the result (e.g. content scrubbing, salvaged tool-call injection) and return the cleaned value.
+2. **`leak-detector.ts` module** — pure functions: `detectToolCallLeak`, `salvageToolCall`, `scrubLeakFromContent`. Brace-balanced raw-JSON matcher + XML-tag matcher. The orchestrator builds a per-call validator that:
+    - **Scrubs** content of incidental leaks when the model also made a structured tool call (defensive — pass-through with cleaned content).
+    - **Salvages** a single clean tool-call leak into a real `LlmToolCall` when the call's tool name is in the registry and its args parse as a JSON object — then continues normal execution.
+    - **Rejects** multi-call, malformed, or unknown-tool leaks → fallthrough to the next provider.
+    - On compose-only turns (no tools offered, after a tool already fired), scrubs but never rejects: the next provider has nothing better to offer.
+
+A defensive frontend SSE sanitiser (`AssistantChatService.sanitizeEvent`) drops any text-frame deltas containing leak signatures as a last-ditch belt-and-suspenders. Every leak event emits a structured `assistant.leak.{scrubbed,salvaged,fallthrough}` warning log with provider/model/kind/count for after-the-fact triage.
 
 ### 5.4 Multi-tenancy & permissions
 - `JwtAuthGuard` on all assistant routes.
