@@ -334,3 +334,6 @@ BUG-063, 065, 066, 067, 068, 069, 071, 073, 074 exercised end-to-end. BUG-089/09
 - [x] Platform renamed from "OpAuto" to "Smart Garage" (en/fr) / "الورشة الذكية" (ar) across all i18n strings, sidebar header, dashboard title, version footer, auth subtitle, system name, onboarding tour, welcome modals, sender placeholder
 - [x] Sidebar logo swapped from inline car SVG to `public/garage-pro.png`; `.logo-icon` background tint removed, `overflow: hidden` added so the bitmap fills the rounded frame
 - [x] `index.html` and `404.html` `<title>` updated to "Smart Garage - Garage Management System"
+
+## Module marketplace grouping (2026-04-28)
+- [x] Modules page (`/modules`) now groups `appointments` (free basic) + `calendar` (paid advanced) into a single "Calendar & Appointments" card with two tiers — basic shows Free/Included, advanced keeps Activate/Deactivate/Renew/Reactivate flow with expiry/cancellation states. Underlying `MODULE_CATALOG` and access guards are unchanged; the merge is presentation-only in `subscription.component.ts`

@@ -37,6 +37,70 @@ const MODULE_EMOJI: Record<string, string> = {
         </div>
       </div>
 
+      <!-- Calendar & Appointments (grouped) -->
+      @if (schedulingTiers(); as tiers) {
+        <h2 class="section-title">Calendar & Appointments</h2>
+        <div class="modules-grid">
+          <div class="glass-card module-card grouped"
+               [class.active]="tiers.advanced.isActive"
+               [class.cancelled]="isCancelled(tiers.advanced)"
+               [class.expired]="isExpired(tiers.advanced)">
+            <div class="module-header">
+              <div class="module-icon">📅</div>
+              <div class="module-title-row">
+                <span class="module-name">Calendar & Appointments</span>
+                @if (isExpired(tiers.advanced)) {
+                  <span class="expired-badge">Advanced expired</span>
+                } @else if (isCancelled(tiers.advanced)) {
+                  <span class="cancelled-badge">Advanced cancelled</span>
+                }
+              </div>
+            </div>
+            <p class="module-desc">Schedule jobs and manage your day. Upgrade for the advanced calendar with drag-drop, multi-mechanic views, and conflict detection.</p>
+
+            <div class="tier-list">
+              <div class="tier-row">
+                <div class="tier-info">
+                  <span class="tier-label">Basic scheduling</span>
+                  <span class="tier-desc">{{ tiers.basic.description }}</span>
+                </div>
+                <div class="tier-action">
+                  <span class="module-price free">Free</span>
+                  <span class="free-badge">Included</span>
+                </div>
+              </div>
+              <div class="tier-row">
+                <div class="tier-info">
+                  <span class="tier-label">Advanced calendar</span>
+                  <span class="tier-desc">{{ tiers.advanced.description }}</span>
+                  @if (tiers.advanced.isActive && tiers.advanced.expiresAt) {
+                    <span class="expiry-text" [class.cancelled-text]="isCancelled(tiers.advanced)">
+                      @if (isCancelled(tiers.advanced)) {
+                        Access ends in {{ getDaysRemaining(tiers.advanced) }} days
+                      } @else {
+                        {{ getDaysRemaining(tiers.advanced) }} days remaining
+                      }
+                    </span>
+                  }
+                </div>
+                <div class="tier-action">
+                  <span class="module-price">{{ tiers.advanced.price }} TND/month</span>
+                  @if (isExpired(tiers.advanced)) {
+                    <button class="activate-btn renew" (click)="renewModule(tiers.advanced)">Renew</button>
+                  } @else if (isCancelled(tiers.advanced)) {
+                    <button class="activate-btn renew" (click)="renewModule(tiers.advanced)">Reactivate</button>
+                  } @else if (tiers.advanced.isActive) {
+                    <button class="activate-btn deactivate" (click)="toggleModule(tiers.advanced)">Deactivate</button>
+                  } @else {
+                    <button class="activate-btn inactive" (click)="toggleModule(tiers.advanced)">Activate</button>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
       <!-- Free Modules -->
       <h2 class="section-title">Free Modules</h2>
       <div class="modules-grid">
@@ -147,6 +211,15 @@ const MODULE_EMOJI: Record<string, string> = {
     .activate-btn.deactivate { background: rgba(239, 68, 68, 0.08); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.3); }
     .activate-btn:hover { transform: translateY(-1px); }
 
+    .module-card.grouped { gap: 0.5rem; }
+    .tier-list { display: flex; flex-direction: column; gap: 0.5rem; margin-top: auto; padding-top: 0.75rem; border-top: 1px solid #f1f5f9; }
+    .tier-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.5rem 0; }
+    .tier-row + .tier-row { border-top: 1px dashed #e5e7eb; }
+    .tier-info { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+    .tier-label { font-size: 0.875rem; font-weight: 600; color: #111827; }
+    .tier-desc { font-size: 0.75rem; color: #6b7280; line-height: 1.3; }
+    .tier-action { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+
     .dialog-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 50; }
     .dialog-box { max-width: 420px; width: 90%; padding: 1.5rem; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; box-shadow: 0 25px 50px rgba(0,0,0,0.15); }
     .dialog-title { color: #111827; font-size: 1.1rem; font-weight: 600; margin: 0 0 0.75rem; }
@@ -161,8 +234,20 @@ export class SubscriptionComponent {
   modules = this.moduleService.modules;
   confirmingDeactivation = signal<GarageModule | null>(null);
 
-  freeModules = computed(() => this.modules().filter(m => m.isFree));
-  paidModules = computed(() => this.modules().filter(m => !m.isFree));
+  schedulingTiers = computed(() => {
+    const all = this.modules();
+    const basic = all.find(m => m.id === 'appointments');
+    const advanced = all.find(m => m.id === 'calendar');
+    if (!basic || !advanced) return null;
+    return { basic, advanced };
+  });
+
+  freeModules = computed(() =>
+    this.modules().filter(m => m.isFree && m.id !== 'appointments')
+  );
+  paidModules = computed(() =>
+    this.modules().filter(m => !m.isFree && m.id !== 'calendar')
+  );
 
   activeCount = computed(() => this.modules().filter(m => m.isActive).length);
   monthlyCost = computed(() =>
