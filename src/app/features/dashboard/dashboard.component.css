@@ -142,17 +142,46 @@
   gap: 0.25rem;
 }
 
+.job-card__plate-row {
+  display: flex;
+  justify-content: center;
+}
+
 .job-card__plate {
-  font-family: 'SF Mono', 'Monaco', 'Cascadia Mono', 'Roboto Mono', Consolas, monospace;
-  font-size: 0.6875rem;
-  font-weight: 500;
-  color: var(--color-text-primary);
-  background: #f3f4f6;
-  border: 1px solid #e5e7eb;
+  display: inline-grid;
+  grid-template-columns: 38% 24% 38%;
+  align-items: center;
+  width: 152px;
+  height: 33px;
+  padding: 0;
+  background-image: url('/plate.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
   border-radius: 4px;
-  padding: 0.125rem 0.4375rem;
+  border: none;
+  font-family: 'Helvetica Neue', 'Arial Narrow', Arial, sans-serif;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  color: #f5ecd6;
   letter-spacing: 0.02em;
+  line-height: 1;
   white-space: nowrap;
+  flex-shrink: 0;
+  direction: ltr;
+}
+
+.job-card__plate-number {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.job-card__plate-number--left {
+  grid-column: 1;
+}
+
+.job-card__plate-number--right {
+  grid-column: 3;
 }
 
 .job-card__service-tag {

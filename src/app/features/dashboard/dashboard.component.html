@@ -161,8 +161,15 @@
             </span>
           </div>
 
+          @let parsedJobPlate = parsePlate(job.licensePlate);
+          <div class="job-card__plate-row">
+            <span class="job-card__plate" [attr.aria-label]="job.licensePlate">
+              <span class="job-card__plate-number job-card__plate-number--left">{{ parsedJobPlate.left }}</span>
+              <span class="job-card__plate-number job-card__plate-number--right">{{ parsedJobPlate.right }}</span>
+            </span>
+          </div>
+
           <div class="job-card__chips">
-            <span class="job-card__plate">{{ job.licensePlate }}</span>
             @for (service of job.services; track service) {
               <span class="job-card__service-tag">{{ service }}</span>
             }
