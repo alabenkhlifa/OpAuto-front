@@ -67,13 +67,14 @@
     "subtitle": "{{date}}",
     "quickActions": {
       "title": "الإجراءات السريعة",
+      "subtitle": "أكثر نقاط الدخول استخداماً",
       "newCarEntry": {
         "title": "إدخال سيارة جديدة",
         "description": "تسجيل عميل بدون موعد"
       },
       "scheduleAppointment": {
         "title": "جدولة موعد",
-        "description": "حجز خدمة مستقبلية"
+        "description": "حجز موعد خدمة مستقبلي"
       },
       "generateInvoice": {
         "title": "الفوترة",

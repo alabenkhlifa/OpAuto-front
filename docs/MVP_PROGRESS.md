@@ -372,3 +372,6 @@ BUG-063, 065, 066, 067, 068, 069, 071, 073, 074 exercised end-to-end. BUG-089/09
 - [x] Missing `invoicing.loading` translation key added to en/fr/ar (was logging 20× warnings on `/invoices`)
 - [x] Predictive Maintenance "Check Now" predictions now persist across navigation for 24h via `localStorage` key `opauto.maintenance_predictions.<carId|fleet>`. Cache invalidates on language change or TTL expiry
 - [x] +42 unit/integration tests across `dashboard.component.spec`, `cars.component.spec`, `maintenance-alerts-card.component.spec`, `sidebar.component.spec` — covers chart axis, navigation methods, query-param wiring, language-rebuild, cache restore/save/eviction, and aria-expanded toggling
+
+## Dashboard Quick Actions redesign (2026-04-29)
+- [x] Quick Actions tiles redesigned: white card + soft pastel icon (orange/indigo/slate/emerald), "Most common entry points" subtitle. Updated en/fr/ar copy to sentence case + tighter wording ("Book a future service slot", "Create bill for a completed job")

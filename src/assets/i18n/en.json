@@ -66,22 +66,23 @@
     "title": "Smart Garage Dashboard",
     "subtitle": "{{date}}",
     "quickActions": {
-      "title": "Quick Actions",
+      "title": "Quick actions",
+      "subtitle": "Most common entry points",
       "newCarEntry": {
-        "title": "New Car Entry",
+        "title": "New car entry",
         "description": "Register a walk-in customer"
       },
       "scheduleAppointment": {
-        "title": "Schedule Appointment",
-        "description": "Book future service"
+        "title": "Schedule appointment",
+        "description": "Book a future service slot"
       },
       "generateInvoice": {
-        "title": "Generate Invoice",
-        "description": "Create bill for completed job"
+        "title": "Generate invoice",
+        "description": "Create bill for a completed job"
       },
       "qualityCheck": {
-        "title": "Quality Check",
-        "description": "Mark job as completed"
+        "title": "Quality check",
+        "description": "Mark a job as completed"
       }
     },
     "urgentActions": {

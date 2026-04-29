@@ -67,13 +67,14 @@
     "subtitle": "{{date}}",
     "quickActions": {
       "title": "Actions rapides",
+      "subtitle": "Points d'entrée les plus courants",
       "newCarEntry": {
         "title": "Nouvelle entrée de voiture",
         "description": "Enregistrer un client sans rendez-vous"
       },
       "scheduleAppointment": {
         "title": "Programmer un rendez-vous",
-        "description": "Réserver un service futur"
+        "description": "Réserver un créneau de service"
       },
       "generateInvoice": {
         "title": "Générer une facture",
@@ -81,7 +82,7 @@
       },
       "qualityCheck": {
         "title": "Contrôle qualité",
-        "description": "Marquer le travail comme terminé"
+        "description": "Marquer un travail comme terminé"
       }
     },
     "urgentActions": {
