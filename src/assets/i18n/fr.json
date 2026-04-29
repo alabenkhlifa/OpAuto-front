@@ -160,6 +160,60 @@
       "completed": "Terminé",
       "inProgress": "En cours"
     },
+    "mechanicPerformance": {
+      "subtitle": {
+        "day": "Travaux terminés aujourd'hui",
+        "week": "Travaux terminés cette semaine",
+        "month": "Travaux terminés ce mois"
+      },
+      "period": {
+        "day": "Jour",
+        "week": "Semaine",
+        "month": "Mois"
+      },
+      "jobsDone": "Travaux effectués",
+      "hoursBilled": "Heures facturées",
+      "avgUtilization": "Utilisation moy.",
+      "jobsShort": "travaux",
+      "empty": "Aucun travail terminé sur cette période."
+    },
+    "jobTypes": {
+      "subtitle": {
+        "7d": "7 derniers jours",
+        "30d": "30 derniers jours",
+        "all": "Tout l'historique"
+      },
+      "period": {
+        "all": "Tout"
+      },
+      "jobs": "travaux",
+      "mostBooked": "service le plus demandé",
+      "other": "Autre",
+      "empty": "Aucune réservation sur cette période.",
+      "categories": {
+        "oil-change": "Vidange & filtre",
+        "oil_change": "Vidange & filtre",
+        "brake-service": "Plaquettes & disques",
+        "brake_service": "Plaquettes & disques",
+        "brakes": "Plaquettes & disques",
+        "engine-diagnostic": "Diagnostic moteur",
+        "diagnostic": "Diagnostic moteur",
+        "diagnostics": "Diagnostic moteur",
+        "tire-rotation": "Permutation pneus",
+        "tires": "Permutation pneus",
+        "tire_service": "Permutation pneus",
+        "alignment": "Géométrie des roues",
+        "bodywork": "Carrosserie — pare-chocs",
+        "paint": "Peinture",
+        "ac-service": "Climatisation",
+        "ac_service": "Climatisation",
+        "battery": "Batterie",
+        "inspection": "Contrôle technique",
+        "general-service": "Entretien général",
+        "general_service": "Entretien général",
+        "other": "Autre"
+      }
+    },
     "tooltips": {
       "quick_actions": "Accéder rapidement aux tâches courantes de gestion du garage",
       "metrics": "Afficher les métriques et statistiques de performance en temps réel",

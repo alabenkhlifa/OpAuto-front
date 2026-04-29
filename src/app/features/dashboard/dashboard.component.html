@@ -204,28 +204,169 @@
     </div>
   </div>
 
-  <!-- Charts Row 2: Mechanic Performance + Job Type Distribution -->
-  <div class="chart-row-equal">
-    <div class="glass-card chart-card">
-      <h3 class="chart-title">{{ 'dashboard.charts.mechanicPerformance' | translate }}</h3>
-      <div class="chart-container">
-        <canvas baseChart
-          [data]="mechanicChartData"
-          [options]="mechanicChartOptions"
-          type="bar">
-        </canvas>
+  <!-- Mechanic Performance (full row) -->
+  <div class="glass-card chart-card mechanic-card">
+    <div class="mechanic-header">
+      <div class="mechanic-titles">
+        <h3 class="chart-title mechanic-title">{{ 'dashboard.charts.mechanicPerformance' | translate }}</h3>
+        <p class="mechanic-subtitle">{{ mechanicVM().subtitleKey | translate }}</p>
+      </div>
+      <div class="range-toggle" role="tablist" aria-label="Mechanic period">
+        <button type="button" role="tab" class="range-toggle__btn"
+                [class.range-toggle__btn--active]="mechanicPeriod() === 'day'"
+                [attr.aria-selected]="mechanicPeriod() === 'day'"
+                (click)="setMechanicPeriod('day')">
+          {{ 'dashboard.mechanicPerformance.period.day' | translate }}
+        </button>
+        <button type="button" role="tab" class="range-toggle__btn"
+                [class.range-toggle__btn--active]="mechanicPeriod() === 'week'"
+                [attr.aria-selected]="mechanicPeriod() === 'week'"
+                (click)="setMechanicPeriod('week')">
+          {{ 'dashboard.mechanicPerformance.period.week' | translate }}
+        </button>
+        <button type="button" role="tab" class="range-toggle__btn"
+                [class.range-toggle__btn--active]="mechanicPeriod() === 'month'"
+                [attr.aria-selected]="mechanicPeriod() === 'month'"
+                (click)="setMechanicPeriod('month')">
+          {{ 'dashboard.mechanicPerformance.period.month' | translate }}
+        </button>
       </div>
     </div>
-    <div class="glass-card chart-card">
-      <h3 class="chart-title">{{ 'dashboard.charts.jobTypeDistribution' | translate }}</h3>
-      <div class="chart-container">
-        <canvas baseChart
-          [data]="jobTypeChartData"
-          [options]="jobTypeChartOptions"
-          type="doughnut">
-        </canvas>
+
+    <div class="mechanic-totals">
+      <div class="mechanic-total">
+        <p class="mechanic-total__label">{{ 'dashboard.mechanicPerformance.jobsDone' | translate }}</p>
+        <p class="mechanic-total__value">{{ formatHoursDisplay(mechanicVM().totalJobs) }}</p>
+      </div>
+      <div class="mechanic-total">
+        <p class="mechanic-total__label">{{ 'dashboard.mechanicPerformance.hoursBilled' | translate }}</p>
+        <p class="mechanic-total__value">
+          {{ formatHoursDisplay(mechanicVM().totalHours) }}<span class="mechanic-total__unit">h</span>
+        </p>
+      </div>
+      <div class="mechanic-total">
+        <p class="mechanic-total__label">{{ 'dashboard.mechanicPerformance.avgUtilization' | translate }}</p>
+        <p class="mechanic-total__value">
+          {{ formatHoursDisplay(mechanicVM().avgUtilization) }}<span class="mechanic-total__unit">%</span>
+        </p>
       </div>
     </div>
+
+    <div class="mechanic-divider"></div>
+
+    @if (mechanicVM().rows.length === 0) {
+      <p class="mechanic-empty">{{ 'dashboard.mechanicPerformance.empty' | translate }}</p>
+    }
+
+    <div class="mechanic-rows">
+      @for (row of mechanicVM().rows; track row.id) {
+        <div class="mechanic-row">
+          <div class="mechanic-avatar" [style.background-color]="row.color">{{ row.initials }}</div>
+          <div class="mechanic-meta">
+            <p class="mechanic-name">{{ row.fullName }}</p>
+            <p class="mechanic-stats">
+              <span class="mechanic-rating">★ {{ formatRatingDisplay(row.rating) }}</span>
+              <span class="mechanic-dot">·</span>
+              <span class="mechanic-hours">{{ formatHoursDisplay(row.hours) }}h</span>
+            </p>
+          </div>
+          <div class="mechanic-bar-wrap">
+            <div class="mechanic-bar">
+              <div class="mechanic-bar__fill"
+                   [style.width.%]="row.jobsBarPct"
+                   [style.background-color]="row.color">
+                @if (row.jobsBarPct >= 18) {
+                  <span class="mechanic-bar__label">{{ row.jobs }} {{ 'dashboard.mechanicPerformance.jobsShort' | translate }}</span>
+                }
+              </div>
+              @if (row.jobsBarPct < 18) {
+                <span class="mechanic-bar__label mechanic-bar__label--outside">{{ row.jobs }} {{ 'dashboard.mechanicPerformance.jobsShort' | translate }}</span>
+              }
+            </div>
+          </div>
+          <div class="mechanic-utilization">{{ formatHoursDisplay(row.utilization) }}%</div>
+          <div class="mechanic-trend"
+               [class.mechanic-trend--up]="row.trend > 0"
+               [class.mechanic-trend--down]="row.trend < 0"
+               [class.mechanic-trend--flat]="row.trend === 0">
+            @if (row.trend > 0) {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 19V5"/><path d="M5 12l7-7 7 7"/>
+              </svg>
+              <span>{{ formatTrendDisplay(row.trend) }}</span>
+            } @else if (row.trend < 0) {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/>
+              </svg>
+              <span>{{ formatTrendDisplay(row.trend) }}</span>
+            } @else {
+              <span class="mechanic-trend__flat">—</span>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Job Type Distribution (full row) -->
+  <div class="glass-card chart-card jobtype-card">
+    <div class="jobtype-header">
+      <div class="jobtype-titles">
+        <h3 class="chart-title jobtype-title">{{ 'dashboard.charts.jobTypeDistribution' | translate }}</h3>
+        <p class="jobtype-subtitle">
+          {{ jobTypeVM().subtitleKey | translate }} · <strong>{{ jobTypeVM().subtitleParams.jobs }} {{ 'dashboard.jobTypes.jobs' | translate }}</strong>
+        </p>
+      </div>
+      <div class="range-toggle" role="tablist" aria-label="Job type period">
+        <button type="button" role="tab" class="range-toggle__btn"
+                [class.range-toggle__btn--active]="jobTypePeriod() === '7d'"
+                [attr.aria-selected]="jobTypePeriod() === '7d'"
+                (click)="setJobTypePeriod('7d')">
+          {{ 'dashboard.charts.range7d' | translate }}
+        </button>
+        <button type="button" role="tab" class="range-toggle__btn"
+                [class.range-toggle__btn--active]="jobTypePeriod() === '30d'"
+                [attr.aria-selected]="jobTypePeriod() === '30d'"
+                (click)="setJobTypePeriod('30d')">
+          {{ 'dashboard.charts.range30d' | translate }}
+        </button>
+        <button type="button" role="tab" class="range-toggle__btn"
+                [class.range-toggle__btn--active]="jobTypePeriod() === 'all'"
+                [attr.aria-selected]="jobTypePeriod() === 'all'"
+                (click)="setJobTypePeriod('all')">
+          {{ 'dashboard.jobTypes.period.all' | translate }}
+        </button>
+      </div>
+    </div>
+
+    @if (jobTypeVM().slices.length === 0) {
+      <p class="jobtype-empty">{{ 'dashboard.jobTypes.empty' | translate }}</p>
+    } @else {
+      <div class="jobtype-headline">
+        <span class="jobtype-headline__pct">{{ jobTypeVM().topPercent }}%</span>
+        <span class="jobtype-headline__text">{{ jobTypeVM().topLabel }} — {{ 'dashboard.jobTypes.mostBooked' | translate }}</span>
+      </div>
+
+      <div class="jobtype-bar" role="img" [attr.aria-label]="('dashboard.charts.jobTypeDistribution' | translate)">
+        @for (slice of jobTypeVM().slices; track slice.key) {
+          <div class="jobtype-bar__seg"
+               [style.width.%]="slice.percent"
+               [style.background-color]="slice.color"
+               [attr.title]="slice.label + ' — ' + slice.percent + '%'"></div>
+        }
+      </div>
+
+      <div class="jobtype-legend">
+        @for (slice of jobTypeVM().slices; track slice.key) {
+          <div class="jobtype-legend__row">
+            <span class="jobtype-legend__dot" [style.background-color]="slice.color"></span>
+            <span class="jobtype-legend__label">{{ slice.label }}</span>
+            <span class="jobtype-legend__count">{{ slice.count }}</span>
+            <span class="jobtype-legend__pct">{{ slice.percent }}%</span>
+          </div>
+        }
+      </div>
+    }
   </div>
 
   <!-- Today's Schedule (full width row) -->

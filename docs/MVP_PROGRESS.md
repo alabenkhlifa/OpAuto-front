@@ -215,6 +215,7 @@ Phase 5 backend totals: 227 tests across 17 suites passing.
 - [x] Calendar drag-and-drop rescheduling — AI-validated with conflict modal showing alternatives
 - [x] Login page light theme — white card, warm gradient bg, dark text, amber demo credentials
 - [x] Global toast notification system — success/error/warning/info toasts in top-right corner
+- [x] Dashboard mechanic performance + job type distribution redesign — replaced ng2-charts with custom full-row cards: Day/Week/Month + 7d/30d/All toggles, totals row (jobs/hours/utilization), per-mechanic rows with avatar/rating/jobs bar/utilization/trend, stacked horizontal bar with top-6+Other rollup. Added `customerRating` to backend Employee model.
 
 ## Verification
 - [x] Frontend builds: `ng build` passes with no errors

@@ -85,9 +85,9 @@ function mapFromBackend(b: any): Employee {
       maxWorkload: 4,
     },
     performance: {
-      completedJobs: 0,
+      completedJobs: b._count?.maintenanceJobs || 0,
       averageJobDuration: 0,
-      customerRating: 0,
+      customerRating: b.customerRating ?? 0,
       totalRevenue: 0,
       efficiencyScore: 0,
     },
@@ -116,6 +116,10 @@ function mapToBackend(f: Partial<Employee>): any {
 
   if (f.skills?.specialties) {
     payload.skills = f.skills.specialties;
+  }
+
+  if (f.performance?.customerRating != null) {
+    payload.customerRating = f.performance.customerRating;
   }
 
   if (f.availability) {

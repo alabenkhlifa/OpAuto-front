@@ -12,6 +12,8 @@ export class CreateEmployeeDto {
   @ApiProperty({ enum: EmployeeStatus, required: false }) @IsEnum(EmployeeStatus) @IsOptional() status?: EmployeeStatus;
   @ApiProperty() @IsDateString() hireDate: string;
   @ApiProperty({ required: false }) @IsNumber() @IsOptional() hourlyRate?: number;
+  @ApiProperty({ required: false, description: 'Customer rating, 0-5 scale' })
+  @IsNumber() @IsOptional() customerRating?: number;
   @ApiProperty({ required: false }) @IsArray() @IsOptional() skills?: string[];
   @ApiProperty({ required: false }) @IsBoolean() @IsOptional() isAvailable?: boolean;
   @ApiProperty({ required: false }) @IsString() @IsOptional() unavailableReason?: string;

@@ -443,4 +443,432 @@ describe('DashboardComponent', () => {
       expect(component.getStatusBadgeClass('waiting_parts')).toBe('badge badge-pending');
     });
   });
+
+  // ---------------------------------------------------------------
+  // setMechanicPeriod / setJobTypePeriod — signal flips + rebuilds
+  // ---------------------------------------------------------------
+  describe('setMechanicPeriod()', () => {
+    it('flips the signal and rebuilds with subtitleKey for "day"', () => {
+      (component as any).cachedEmployees = [];
+      component.cachedMaintenanceJobs = [];
+
+      component.setMechanicPeriod('day');
+
+      expect(component.mechanicPeriod()).toBe('day');
+      expect(component.mechanicVM().subtitleKey).toBe('dashboard.mechanicPerformance.subtitle.day');
+    });
+
+    it('flips the signal and rebuilds with subtitleKey for "month"', () => {
+      (component as any).cachedEmployees = [];
+      component.cachedMaintenanceJobs = [];
+
+      component.setMechanicPeriod('month');
+
+      expect(component.mechanicPeriod()).toBe('month');
+      expect(component.mechanicVM().subtitleKey).toBe('dashboard.mechanicPerformance.subtitle.month');
+    });
+
+    it('is a no-op when period matches current value', () => {
+      (component as any).cachedEmployees = [];
+      component.cachedMaintenanceJobs = [];
+      component.setMechanicPeriod('week'); // same as default
+      const vmRef = component.mechanicVM();
+
+      component.setMechanicPeriod('week');
+
+      expect(component.mechanicVM()).toBe(vmRef);
+    });
+  });
+
+  describe('setJobTypePeriod()', () => {
+    it('flips the signal and rebuilds with subtitleKey for "7d"', () => {
+      (component as any).cachedAppointments = [];
+
+      component.setJobTypePeriod('7d');
+
+      expect(component.jobTypePeriod()).toBe('7d');
+      expect(component.jobTypeVM().subtitleKey).toBe('dashboard.jobTypes.subtitle.7d');
+    });
+
+    it('flips the signal and rebuilds with subtitleKey for "30d"', () => {
+      (component as any).cachedAppointments = [];
+
+      component.setJobTypePeriod('30d');
+
+      expect(component.jobTypePeriod()).toBe('30d');
+      expect(component.jobTypeVM().subtitleKey).toBe('dashboard.jobTypes.subtitle.30d');
+    });
+
+    it('is a no-op when period matches current value', () => {
+      (component as any).cachedAppointments = [];
+      const vmRef = component.jobTypeVM();
+
+      component.setJobTypePeriod('all');
+
+      expect(component.jobTypeVM()).toBe(vmRef);
+    });
+  });
+
+  // ---------------------------------------------------------------
+  // buildMechanicPerformance() — integration of seeded employees + jobs
+  // ---------------------------------------------------------------
+  describe('buildMechanicPerformance()', () => {
+    const seedTwoMechanics = () => {
+      (component as any).cachedEmployees = [
+        {
+          id: 'm1',
+          personalInfo: { fullName: 'Sami Ben Ali', firstName: 'Sami', lastName: 'Ben Ali' },
+          employment: { role: 'mechanic', department: 'workshop' },
+          performance: { customerRating: 4.8 },
+        },
+        {
+          id: 'm2',
+          personalInfo: { fullName: 'Karim Nasri', firstName: 'Karim', lastName: 'Nasri' },
+          employment: { role: 'mechanic', department: 'workshop' },
+          performance: { customerRating: 4.2 },
+        },
+      ];
+    };
+
+    // Helper: build a date inside the current "week" window (last 7 days).
+    const dateWithinWeek = (daysAgo: number): string => {
+      const now = new Date();
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysAgo, 12, 0, 0);
+      return d.toISOString();
+    };
+
+    // Helper: build a date inside the previous week window.
+    const dateInPrevWeek = (daysAgo: number): string => {
+      const now = new Date();
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysAgo, 12, 0, 0);
+      return d.toISOString();
+    };
+
+    it('builds rows sorted by jobs desc with proportional jobsBarPct', () => {
+      seedTwoMechanics();
+      // m1 = 3 completed jobs in week, m2 = 1 completed job in week.
+      component.cachedMaintenanceJobs = [
+        { id: 'j1', mechanicId: 'm1', status: 'completed', completionDate: dateWithinWeek(1), actualDuration: 120 },
+        { id: 'j2', mechanicId: 'm1', status: 'completed', completionDate: dateWithinWeek(2), actualDuration: 60 },
+        { id: 'j3', mechanicId: 'm1', status: 'completed', completionDate: dateWithinWeek(3), actualDuration: 60 },
+        { id: 'j4', mechanicId: 'm2', status: 'completed', completionDate: dateWithinWeek(0), actualDuration: 90 },
+      ];
+
+      (component as any).buildMechanicPerformance();
+
+      const vm = component.mechanicVM();
+      expect(vm.rows.length).toBe(2);
+      expect(vm.rows[0].id).toBe('m1');
+      expect(vm.rows[0].jobs).toBe(3);
+      expect(vm.rows[1].id).toBe('m2');
+      expect(vm.rows[1].jobs).toBe(1);
+      // m1 = max => 100, m2 = round(1/3 * 100) = 33
+      expect(vm.rows[0].jobsBarPct).toBe(100);
+      expect(vm.rows[1].jobsBarPct).toBe(33);
+    });
+
+    it('computes hours from actualDuration (minutes) and utilization vs (workdays * 8h)', () => {
+      seedTwoMechanics();
+      // m1 only — 240 min completed in week => 4 hours. workdays(week) = round(7*6/7) = 6 => available = 48h.
+      // utilization = round(4/48 * 100) = 8
+      component.cachedMaintenanceJobs = [
+        { id: 'j1', mechanicId: 'm1', status: 'completed', completionDate: dateWithinWeek(1), actualDuration: 240 },
+      ];
+
+      (component as any).buildMechanicPerformance();
+
+      const vm = component.mechanicVM();
+      const m1 = vm.rows.find(r => r.id === 'm1');
+      expect(m1?.hours).toBe(4);
+      expect(m1?.utilization).toBe(8);
+    });
+
+    it('caps utilization at 100 when hours exceed available', () => {
+      seedTwoMechanics();
+      // 100h logged in week => clearly over the 48h cap.
+      component.cachedMaintenanceJobs = [
+        { id: 'j1', mechanicId: 'm1', status: 'completed', completionDate: dateWithinWeek(1), actualDuration: 100 * 60 },
+      ];
+
+      (component as any).buildMechanicPerformance();
+
+      const m1 = component.mechanicVM().rows.find(r => r.id === 'm1');
+      expect(m1?.utilization).toBe(100);
+    });
+
+    it('falls back to estimatedDuration when actualDuration is missing', () => {
+      seedTwoMechanics();
+      component.cachedMaintenanceJobs = [
+        { id: 'j1', mechanicId: 'm1', status: 'completed', completionDate: dateWithinWeek(1), estimatedDuration: 180 },
+      ];
+
+      (component as any).buildMechanicPerformance();
+
+      const m1 = component.mechanicVM().rows.find(r => r.id === 'm1');
+      expect(m1?.hours).toBe(3);
+    });
+
+    it('trend is current period count minus previous period count', () => {
+      seedTwoMechanics();
+      // m1: 2 in current week (1 + 2 days ago), 1 in previous week (10 days ago) => trend 1
+      // m2: 0 current, 0 previous (1 in current week => trend = 1 - 0 = 1)
+      component.cachedMaintenanceJobs = [
+        { id: 'j1', mechanicId: 'm1', status: 'completed', completionDate: dateWithinWeek(1), actualDuration: 60 },
+        { id: 'j2', mechanicId: 'm1', status: 'completed', completionDate: dateWithinWeek(2), actualDuration: 60 },
+        { id: 'j3', mechanicId: 'm1', status: 'completed', completionDate: dateInPrevWeek(10), actualDuration: 60 },
+        { id: 'j4', mechanicId: 'm2', status: 'completed', completionDate: dateWithinWeek(0), actualDuration: 60 },
+      ];
+
+      (component as any).buildMechanicPerformance();
+
+      const vm = component.mechanicVM();
+      const m1 = vm.rows.find(r => r.id === 'm1');
+      const m2 = vm.rows.find(r => r.id === 'm2');
+      expect(m1?.trend).toBe(1);
+      expect(m2?.trend).toBe(1);
+    });
+
+    it('excludes mechanics with zero jobs and zero hours', () => {
+      seedTwoMechanics();
+      // Only m1 has activity.
+      component.cachedMaintenanceJobs = [
+        { id: 'j1', mechanicId: 'm1', status: 'completed', completionDate: dateWithinWeek(1), actualDuration: 60 },
+      ];
+
+      (component as any).buildMechanicPerformance();
+
+      const vm = component.mechanicVM();
+      expect(vm.rows.length).toBe(1);
+      expect(vm.rows[0].id).toBe('m1');
+    });
+
+    it('ignores jobs whose completionDate falls outside the window', () => {
+      seedTwoMechanics();
+      // Both jobs are 60 days ago — well outside week, week-prev, and even month windows.
+      component.cachedMaintenanceJobs = [
+        { id: 'j1', mechanicId: 'm1', status: 'completed', completionDate: dateInPrevWeek(60), actualDuration: 60 },
+      ];
+
+      (component as any).buildMechanicPerformance();
+
+      expect(component.mechanicVM().rows.length).toBe(0);
+    });
+
+    it('ignores jobs that are not completed', () => {
+      seedTwoMechanics();
+      component.cachedMaintenanceJobs = [
+        { id: 'j1', mechanicId: 'm1', status: 'in-progress', completionDate: dateWithinWeek(1), actualDuration: 60 },
+      ];
+
+      (component as any).buildMechanicPerformance();
+
+      expect(component.mechanicVM().rows.length).toBe(0);
+    });
+
+    it('aggregates totals (totalJobs, totalHours, avgUtilization) and sets subtitleKey', () => {
+      seedTwoMechanics();
+      // m1: 2 jobs, 120 minutes => 2h, util = round(2/48*100)=4
+      // m2: 1 job, 60 minutes => 1h, util = round(1/48*100)=2
+      component.cachedMaintenanceJobs = [
+        { id: 'j1', mechanicId: 'm1', status: 'completed', completionDate: dateWithinWeek(1), actualDuration: 60 },
+        { id: 'j2', mechanicId: 'm1', status: 'completed', completionDate: dateWithinWeek(2), actualDuration: 60 },
+        { id: 'j3', mechanicId: 'm2', status: 'completed', completionDate: dateWithinWeek(1), actualDuration: 60 },
+      ];
+
+      (component as any).buildMechanicPerformance();
+
+      const vm = component.mechanicVM();
+      expect(vm.totalJobs).toBe(3);
+      expect(vm.totalHours).toBe(3);
+      // round((4 + 2) / 2) = 3
+      expect(vm.avgUtilization).toBe(3);
+      expect(vm.subtitleKey).toBe('dashboard.mechanicPerformance.subtitle.week');
+    });
+
+    it('preserves the customerRating from performance on each row', () => {
+      seedTwoMechanics();
+      component.cachedMaintenanceJobs = [
+        { id: 'j1', mechanicId: 'm1', status: 'completed', completionDate: dateWithinWeek(1), actualDuration: 60 },
+        { id: 'j2', mechanicId: 'm2', status: 'completed', completionDate: dateWithinWeek(1), actualDuration: 60 },
+      ];
+
+      (component as any).buildMechanicPerformance();
+
+      const vm = component.mechanicVM();
+      const m1 = vm.rows.find(r => r.id === 'm1');
+      const m2 = vm.rows.find(r => r.id === 'm2');
+      expect(m1?.rating).toBe(4.8);
+      expect(m2?.rating).toBe(4.2);
+    });
+
+    it('excludes admin/manager/receptionist/service-advisor and management dept', () => {
+      (component as any).cachedEmployees = [
+        { id: 'mech1', personalInfo: { fullName: 'A B' }, employment: { role: 'mechanic', department: 'workshop' }, performance: { customerRating: 4 } },
+        { id: 'recep1', personalInfo: { fullName: 'C D' }, employment: { role: 'receptionist', department: 'frontdesk' }, performance: { customerRating: 4 } },
+        { id: 'admin1', personalInfo: { fullName: 'E F' }, employment: { role: 'admin', department: 'office' }, performance: { customerRating: 4 } },
+        { id: 'mgr1', personalInfo: { fullName: 'G H' }, employment: { role: 'manager', department: 'management' }, performance: { customerRating: 4 } },
+        { id: 'svc1', personalInfo: { fullName: 'I J' }, employment: { role: 'service-advisor', department: 'workshop' }, performance: { customerRating: 4 } },
+        { id: 'tech1', personalInfo: { fullName: 'K L' }, employment: { role: 'technician', department: 'management' }, performance: { customerRating: 4 } },
+      ];
+      component.cachedMaintenanceJobs = [
+        { id: 'j1', mechanicId: 'mech1', status: 'completed', completionDate: dateWithinWeek(1), actualDuration: 60 },
+        { id: 'j2', mechanicId: 'recep1', status: 'completed', completionDate: dateWithinWeek(1), actualDuration: 60 },
+        { id: 'j3', mechanicId: 'admin1', status: 'completed', completionDate: dateWithinWeek(1), actualDuration: 60 },
+        { id: 'j4', mechanicId: 'mgr1', status: 'completed', completionDate: dateWithinWeek(1), actualDuration: 60 },
+        { id: 'j5', mechanicId: 'svc1', status: 'completed', completionDate: dateWithinWeek(1), actualDuration: 60 },
+        { id: 'j6', mechanicId: 'tech1', status: 'completed', completionDate: dateWithinWeek(1), actualDuration: 60 },
+      ];
+
+      (component as any).buildMechanicPerformance();
+
+      const vm = component.mechanicVM();
+      const ids = vm.rows.map(r => r.id).sort();
+      expect(ids).toEqual(['mech1']);
+    });
+  });
+
+  // ---------------------------------------------------------------
+  // buildJobTypeDistribution() — grouping, sorting, top-6 + Other
+  // ---------------------------------------------------------------
+  describe('buildJobTypeDistribution()', () => {
+    // Helper: keep dates safely inside any of 7d/30d/all windows.
+    const recentDate = (daysAgo = 1): string => {
+      const now = new Date();
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysAgo, 12, 0, 0);
+      return d.toISOString();
+    };
+
+    it('groups by serviceType with counts and percentages summing close to 100', () => {
+      (component as any).cachedAppointments = [
+        { id: 'a1', serviceType: 'oil-change', scheduledDate: recentDate(0) },
+        { id: 'a2', serviceType: 'oil-change', scheduledDate: recentDate(1) },
+        { id: 'a3', serviceType: 'oil-change', scheduledDate: recentDate(1) },
+        { id: 'a4', serviceType: 'brakes', scheduledDate: recentDate(2) },
+      ];
+
+      (component as any).buildJobTypeDistribution();
+
+      const vm = component.jobTypeVM();
+      expect(vm.totalJobs).toBe(4);
+      const sum = vm.slices.reduce((s, sl) => s + sl.percent, 0);
+      expect(Math.abs(sum - 100)).toBeLessThanOrEqual(2);
+    });
+
+    it('sorts slices by count descending and reports topLabel + topPercent', () => {
+      (component as any).cachedAppointments = [
+        { id: 'a1', serviceType: 'oil-change', scheduledDate: recentDate(0) },
+        { id: 'a2', serviceType: 'oil-change', scheduledDate: recentDate(1) },
+        { id: 'a3', serviceType: 'oil-change', scheduledDate: recentDate(2) },
+        { id: 'a4', serviceType: 'brakes', scheduledDate: recentDate(2) },
+      ];
+
+      (component as any).buildJobTypeDistribution();
+
+      const vm = component.jobTypeVM();
+      // First slice should be the dominant category (oil-change, 3 of 4 = 75%).
+      expect(vm.slices[0].count).toBe(3);
+      expect(vm.slices[1].count).toBe(1);
+      expect(vm.topLabel).toBe(vm.slices[0].label);
+      expect(vm.topPercent).toBe(75);
+    });
+
+    it('rolls everything beyond top 6 into an "Other" bucket', () => {
+      // 7 distinct categories; the 7th gets folded into "Other".
+      const types = ['oil', 'brakes', 'tires', 'battery', 'belt', 'filter', 'wiper'];
+      (component as any).cachedAppointments = types.flatMap((t, i) =>
+        // give each type a unique count (i+1) so sorting order is deterministic.
+        Array.from({ length: i + 1 }, (_, k) => ({
+          id: `${t}-${k}`,
+          serviceType: t,
+          scheduledDate: recentDate(1),
+        }))
+      );
+
+      (component as any).buildJobTypeDistribution();
+
+      const vm = component.jobTypeVM();
+      expect(vm.slices.length).toBe(7); // 6 top + 1 Other
+      const lastSlice = vm.slices[vm.slices.length - 1];
+      expect(lastSlice.key).toBe('other');
+      // The smallest type (oil = count 1) gets rolled into Other.
+      expect(lastSlice.count).toBe(1);
+    });
+
+    it('does NOT add an Other slice when total categories <= 6', () => {
+      const types = ['oil', 'brakes', 'tires'];
+      (component as any).cachedAppointments = types.map((t, i) => ({
+        id: `${t}-${i}`,
+        serviceType: t,
+        scheduledDate: recentDate(1),
+      }));
+
+      (component as any).buildJobTypeDistribution();
+
+      const vm = component.jobTypeVM();
+      expect(vm.slices.length).toBe(3);
+      expect(vm.slices.find(s => s.key === 'other')).toBeUndefined();
+    });
+
+    it('sets subtitleKey + subtitleParams for the active period', () => {
+      (component as any).cachedAppointments = [
+        { id: 'a1', serviceType: 'oil-change', scheduledDate: recentDate(0) },
+        { id: 'a2', serviceType: 'brakes', scheduledDate: recentDate(0) },
+      ];
+
+      (component as any).buildJobTypeDistribution();
+
+      const vm = component.jobTypeVM();
+      expect(vm.subtitleKey).toBe('dashboard.jobTypes.subtitle.all');
+      expect(vm.subtitleParams).toEqual({ jobs: 2 });
+    });
+
+    it('handles empty appointment lists gracefully', () => {
+      (component as any).cachedAppointments = [];
+
+      (component as any).buildJobTypeDistribution();
+
+      const vm = component.jobTypeVM();
+      expect(vm.slices).toEqual([]);
+      expect(vm.totalJobs).toBe(0);
+      expect(vm.topLabel).toBe('');
+      expect(vm.topPercent).toBe(0);
+    });
+  });
+
+  // ---------------------------------------------------------------
+  // formatRatingDisplay / formatTrendDisplay — locale-aware helpers
+  // ---------------------------------------------------------------
+  describe('formatRatingDisplay()', () => {
+    it('returns em-dash for 0', () => {
+      expect(component.formatRatingDisplay(0)).toBe('—');
+    });
+
+    it('returns one-decimal formatted rating for non-zero (en or fr)', () => {
+      mockLanguage.getCurrentLanguage.and.returnValue('en');
+      const en = component.formatRatingDisplay(4.9);
+      expect(['4.9', '4,9']).toContain(en);
+
+      mockLanguage.getCurrentLanguage.and.returnValue('fr');
+      const fr = component.formatRatingDisplay(4.9);
+      expect(['4.9', '4,9']).toContain(fr);
+    });
+  });
+
+  describe('formatTrendDisplay()', () => {
+    it('returns em-dash for 0', () => {
+      expect(component.formatTrendDisplay(0)).toBe('—');
+    });
+
+    it('returns absolute formatted value for positive numbers', () => {
+      mockLanguage.getCurrentLanguage.and.returnValue('en');
+      expect(component.formatTrendDisplay(3)).toBe('3');
+    });
+
+    it('returns absolute formatted value for negative numbers', () => {
+      mockLanguage.getCurrentLanguage.and.returnValue('en');
+      // The sign is rendered separately by the template; the helper only
+      // formats the magnitude.
+      expect(component.formatTrendDisplay(-5)).toBe('5');
+    });
+  });
 });

@@ -367,11 +367,11 @@ async function seedAccounts(): Promise<Ctx> {
   });
 
   const staffSpecs = [
-    { username: 'mohamed', firstName: 'Mohamed', lastName: 'Trabelsi', phone: '+216 97 111 222', role: EmployeeRole.MECHANIC,           dept: EmployeeDepartment.MECHANICAL,   skills: ['engine_repair','oil_change','diagnostics'] },
-    { username: 'khalil',  firstName: 'Khalil',  lastName: 'Bouazizi', phone: '+216 97 333 444', role: EmployeeRole.MECHANIC,           dept: EmployeeDepartment.MECHANICAL,   skills: ['brakes','suspension','transmission'] },
-    { username: 'youssef', firstName: 'Youssef', lastName: 'Gharbi',   phone: '+216 97 555 666', role: EmployeeRole.ELECTRICIAN,        dept: EmployeeDepartment.ELECTRICAL,   skills: ['ecu_diag','ac_systems','battery'] },
-    { username: 'hichem',  firstName: 'Hichem',  lastName: 'Sassi',    phone: '+216 97 777 888', role: EmployeeRole.BODYWORK_SPECIALIST, dept: EmployeeDepartment.BODYWORK,    skills: ['paint','dent_repair','panel_alignment'] },
-    { username: 'ali',     firstName: 'Ali',     lastName: 'Khelifi',  phone: '+216 97 999 000', role: EmployeeRole.TIRE_SPECIALIST,    dept: EmployeeDepartment.TIRE_ALIGNMENT, skills: ['alignment','balancing','tpms'] },
+    { username: 'mohamed', firstName: 'Mohamed', lastName: 'Trabelsi', phone: '+216 97 111 222', role: EmployeeRole.MECHANIC,           dept: EmployeeDepartment.MECHANICAL,   skills: ['engine_repair','oil_change','diagnostics'], rating: 4.9 },
+    { username: 'khalil',  firstName: 'Khalil',  lastName: 'Bouazizi', phone: '+216 97 333 444', role: EmployeeRole.MECHANIC,           dept: EmployeeDepartment.MECHANICAL,   skills: ['brakes','suspension','transmission'], rating: 4.7 },
+    { username: 'youssef', firstName: 'Youssef', lastName: 'Gharbi',   phone: '+216 97 555 666', role: EmployeeRole.ELECTRICIAN,        dept: EmployeeDepartment.ELECTRICAL,   skills: ['ecu_diag','ac_systems','battery'], rating: 4.6 },
+    { username: 'hichem',  firstName: 'Hichem',  lastName: 'Sassi',    phone: '+216 97 777 888', role: EmployeeRole.BODYWORK_SPECIALIST, dept: EmployeeDepartment.BODYWORK,    skills: ['paint','dent_repair','panel_alignment'], rating: 4.5 },
+    { username: 'ali',     firstName: 'Ali',     lastName: 'Khelifi',  phone: '+216 97 999 000', role: EmployeeRole.TIRE_SPECIALIST,    dept: EmployeeDepartment.TIRE_ALIGNMENT, skills: ['alignment','balancing','tpms'], rating: 4.4 },
   ];
   const staff: Ctx['staff'] = [];
   const employees: Ctx['employees'] = [];
@@ -386,7 +386,7 @@ async function seedAccounts(): Promise<Ctx> {
         email: `${s.username}@autotech.tn`, phone: s.phone,
         role: s.role, department: s.dept, status: EmployeeStatus.ACTIVE,
         hireDate: new Date('2022-01-15'), hourlyRate: s.role === EmployeeRole.BODYWORK_SPECIALIST ? 32 : 28,
-        skills: s.skills, isAvailable: true,
+        skills: s.skills, isAvailable: true, customerRating: s.rating,
       },
     });
     employees.push(e);

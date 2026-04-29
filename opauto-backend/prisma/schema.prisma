@@ -321,6 +321,7 @@ model Employee {
   schedule     Json?              // Weekly schedule
   skills       String[]
   avatar       String?
+  customerRating Float?           // 0-5 scale, customer satisfaction
   isAvailable  Boolean            @default(true)
   unavailableReason String?
   unavailableUntil  DateTime?

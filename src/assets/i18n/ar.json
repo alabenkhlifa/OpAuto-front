@@ -160,6 +160,60 @@
       "completed": "مكتمل",
       "inProgress": "قيد التنفيذ"
     },
+    "mechanicPerformance": {
+      "subtitle": {
+        "day": "الأعمال المنجزة اليوم",
+        "week": "الأعمال المنجزة هذا الأسبوع",
+        "month": "الأعمال المنجزة هذا الشهر"
+      },
+      "period": {
+        "day": "يوم",
+        "week": "أسبوع",
+        "month": "شهر"
+      },
+      "jobsDone": "الأعمال المنجزة",
+      "hoursBilled": "ساعات الفوترة",
+      "avgUtilization": "متوسط الاستخدام",
+      "jobsShort": "عمل",
+      "empty": "لا توجد أعمال منجزة في هذه الفترة."
+    },
+    "jobTypes": {
+      "subtitle": {
+        "7d": "آخر ٧ أيام",
+        "30d": "آخر ٣٠ يومًا",
+        "all": "كل الفترة"
+      },
+      "period": {
+        "all": "الكل"
+      },
+      "jobs": "عمل",
+      "mostBooked": "الخدمة الأكثر طلبًا",
+      "other": "أخرى",
+      "empty": "لا توجد حجوزات في هذه الفترة.",
+      "categories": {
+        "oil-change": "تغيير الزيت والفلتر",
+        "oil_change": "تغيير الزيت والفلتر",
+        "brake-service": "تيل وأقراص الفرامل",
+        "brake_service": "تيل وأقراص الفرامل",
+        "brakes": "تيل وأقراص الفرامل",
+        "engine-diagnostic": "تشخيص المحرك",
+        "diagnostic": "تشخيص المحرك",
+        "diagnostics": "تشخيص المحرك",
+        "tire-rotation": "تبديل الإطارات",
+        "tires": "تبديل الإطارات",
+        "tire_service": "تبديل الإطارات",
+        "alignment": "ضبط الزوايا",
+        "bodywork": "صدامة أمامية — هيكل",
+        "paint": "طلاء",
+        "ac-service": "خدمة التكييف",
+        "ac_service": "خدمة التكييف",
+        "battery": "خدمة البطارية",
+        "inspection": "فحص فني",
+        "general-service": "خدمة عامة",
+        "general_service": "خدمة عامة",
+        "other": "أخرى"
+      }
+    },
     "tooltips": {
       "quick_actions": "الوصول السريع إلى مهام إدارة الورشة الشائعة",
       "metrics": "عرض مقاييس وإحصائيات الأداء في الوقت الفعلي",

@@ -67,6 +67,47 @@ interface GlanceCard {
   color: GlanceColor;
 }
 
+type MechanicPeriod = 'day' | 'week' | 'month';
+type JobTypePeriod = '7d' | '30d' | 'all';
+
+interface MechanicRow {
+  id: string;
+  initials: string;
+  fullName: string;
+  rating: number;
+  hours: number;
+  jobs: number;
+  jobsBarPct: number;
+  utilization: number;
+  trend: number;
+  color: string;
+}
+
+interface MechanicPerformanceVM {
+  rows: MechanicRow[];
+  totalJobs: number;
+  totalHours: number;
+  avgUtilization: number;
+  subtitleKey: string;
+}
+
+interface JobTypeSlice {
+  key: string;
+  label: string;
+  count: number;
+  percent: number;
+  color: string;
+}
+
+interface JobTypeDistributionVM {
+  slices: JobTypeSlice[];
+  totalJobs: number;
+  topLabel: string;
+  topPercent: number;
+  subtitleKey: string;
+  subtitleParams: { jobs: number };
+}
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -162,22 +203,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
     },
   };
 
-  jobTypeChartData: ChartConfiguration<'doughnut'>['data'] = { labels: [], datasets: [] };
-  jobTypeChartOptions: ChartConfiguration<'doughnut'>['options'] = {
-    responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { position: 'right', labels: { color: '#94a3b8', padding: 12, font: { size: 12 } } } },
-    cutout: '65%',
-  };
+  // Mechanic Performance
+  mechanicPeriod = signal<MechanicPeriod>('week');
+  mechanicVM = signal<MechanicPerformanceVM>({ rows: [], totalJobs: 0, totalHours: 0, avgUtilization: 0, subtitleKey: 'dashboard.mechanicPerformance.subtitle.week' });
 
-  mechanicChartData: ChartConfiguration<'bar'>['data'] = { labels: [], datasets: [] };
-  mechanicChartOptions: ChartConfiguration<'bar'>['options'] = {
-    responsive: true, maintainAspectRatio: false,
-    scales: {
-      x: { grid: { display: false }, ticks: { color: '#94a3b8' }, stacked: true },
-      y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' }, stacked: true }
-    },
-    plugins: { legend: { labels: { color: '#94a3b8' } } }
-  };
+  // Job Type Distribution
+  jobTypePeriod = signal<JobTypePeriod>('all');
+  jobTypeVM = signal<JobTypeDistributionVM>({ slices: [], totalJobs: 0, topLabel: '', topPercent: 0, subtitleKey: 'dashboard.jobTypes.subtitle.all', subtitleParams: { jobs: 0 } });
+
+  private readonly mechanicColors = ['#FF8400', '#3b5bdb', '#16a34a', '#a855f7', '#0ea5e9', '#f59e0b', '#ec4899', '#6b7280'];
+  private readonly jobTypeColors = ['#FF8400', '#3b5bdb', '#16a34a', '#a855f7', '#f59e0b', '#0ea5e9', '#9ca3af'];
 
   ngOnInit(): void {
     this.isOwner.set(this.authService.isOwner());
@@ -210,14 +245,26 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (!this.cachedAppointments.length && !this.cachedInvoices.length) return;
     this.rebuildGlanceCards();
     this.buildRevenueChart(this.cachedInvoices);
-    this.buildJobTypeChart(this.cachedAppointments);
-    this.buildMechanicChart(this.cachedAppointments, this.cachedEmployees);
+    this.buildJobTypeDistribution();
+    this.buildMechanicPerformance();
   }
 
   setRevenueRange(days: 7 | 30 | 90): void {
     if (this.revenueRange() === days) return;
     this.revenueRange.set(days);
     this.buildRevenueChart(this.cachedInvoices);
+  }
+
+  setMechanicPeriod(p: MechanicPeriod): void {
+    if (this.mechanicPeriod() === p) return;
+    this.mechanicPeriod.set(p);
+    this.buildMechanicPerformance();
+  }
+
+  setJobTypePeriod(p: JobTypePeriod): void {
+    if (this.jobTypePeriod() === p) return;
+    this.jobTypePeriod.set(p);
+    this.buildJobTypeDistribution();
   }
 
   revenueRangeSubtitleParams = computed(() => ({ days: this.revenueRange() }));
@@ -595,11 +642,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
         // Revenue chart — group invoices by month
         this.buildRevenueChart(invoices);
 
-        // Job type chart — group appointments by serviceType
-        this.buildJobTypeChart(appointments);
+        // Job type distribution — group appointments by serviceType, period-filtered
+        this.buildJobTypeDistribution();
 
-        // Mechanic chart — group appointments by mechanic
-        this.buildMechanicChart(appointments, employees);
+        // Mechanic performance — per-mechanic jobs/hours/utilization, period-filtered
+        this.buildMechanicPerformance();
       },
       error: () => {
         // If API fails, leave defaults (empty)
@@ -660,50 +707,206 @@ export class DashboardComponent implements OnInit, OnDestroy {
     };
   }
 
-  private buildJobTypeChart(appointments: any[]): void {
-    const typeCounts: Record<string, number> = {};
-    appointments.forEach(a => {
-      const type = a.serviceType || a.serviceName || 'Other';
-      typeCounts[type] = (typeCounts[type] || 0) + 1;
-    });
-
-    const labels = Object.keys(typeCounts);
-    const data = Object.values(typeCounts);
-    const colors = ['#FF8400', '#8FA0D8', '#F9DFC6', '#22c55e', '#a855f7', '#06b6d4', '#f97316', '#ec4899'];
-
-    this.jobTypeChartData = {
-      labels: labels.length ? labels : ['No data'],
-      datasets: [{
-        data: data.length ? data : [1],
-        backgroundColor: colors.slice(0, Math.max(labels.length, 1)),
-        borderColor: '#ffffff', borderWidth: 2,
-      }]
-    };
+  private mechanicPeriodWindow(p: MechanicPeriod): { start: Date; end: Date; prevStart: Date; prevEnd: Date; workdays: number } {
+    const now = new Date();
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    let start: Date;
+    if (p === 'day') {
+      start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    } else if (p === 'week') {
+      // Last 7 days, including today
+      start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6);
+    } else {
+      // Last 30 days, including today
+      start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29);
+    }
+    const lengthMs = end.getTime() - start.getTime();
+    const prevEnd = new Date(start.getTime() - 1);
+    const prevStart = new Date(prevEnd.getTime() - lengthMs);
+    const days = p === 'day' ? 1 : p === 'week' ? 7 : 30;
+    // Workdays: Mon–Sat (6 days/week). For day=1 if today is Sunday => 0 else 1.
+    const workdays = p === 'day'
+      ? (now.getDay() === 0 ? 0 : 1)
+      : Math.round(days * 6 / 7);
+    return { start, end, prevStart, prevEnd, workdays };
   }
 
-  private buildMechanicChart(appointments: any[], employees: any[]): void {
-    const mechanicStats: Record<string, { completed: number; inProgress: number; name: string }> = {};
+  private jobTypePeriodWindow(p: JobTypePeriod): { start: Date; end: Date; days: number } {
+    const now = new Date();
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    let start: Date;
+    let days: number;
+    if (p === '7d') {
+      start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6);
+      days = 7;
+    } else if (p === '30d') {
+      start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29);
+      days = 30;
+    } else {
+      // All: include every appointment we have, so anchor start at the epoch
+      start = new Date(0);
+      days = Math.max(1, Math.round((end.getTime() - start.getTime()) / 86400000));
+    }
+    return { start, end, days };
+  }
 
-    appointments.forEach(a => {
-      const empId = a.mechanicId;
-      if (!empId) return;
-      if (!mechanicStats[empId]) {
-        const emp = employees.find(e => e.id === empId);
-        mechanicStats[empId] = { completed: 0, inProgress: 0, name: emp?.personalInfo?.fullName || emp?.personalInfo?.firstName || empId };
-      }
-      if (a.status === 'completed') mechanicStats[empId].completed++;
-      else if (a.status === 'in-progress') mechanicStats[empId].inProgress++;
+  private buildMechanicPerformance(): void {
+    const period = this.mechanicPeriod();
+    const { start, end, prevStart, prevEnd, workdays } = this.mechanicPeriodWindow(period);
+    const completedStatuses = new Set(['completed', 'COMPLETED']);
+    const dailyHours = 8;
+
+    const inWindow = (d: Date | undefined, s: Date, e: Date) =>
+      !!d && !isNaN(d.getTime()) && d.getTime() >= s.getTime() && d.getTime() <= e.getTime();
+
+    const employees = this.cachedEmployees.filter(e => {
+      const role = e.employment?.role || '';
+      const dept = e.employment?.department || '';
+      return role && role !== 'receptionist' && role !== 'service-advisor' && role !== 'admin' && role !== 'manager' && dept !== 'management';
     });
 
-    const entries = Object.values(mechanicStats);
-    const labels = entries.map(e => e.name);
+    const rows: MechanicRow[] = employees.map((emp, idx) => {
+      const empJobs = this.cachedMaintenanceJobs.filter(j => j.mechanicId === emp.id);
+      const currJobs = empJobs.filter(j => completedStatuses.has(j.status) && inWindow(j.completionDate ? new Date(j.completionDate) : undefined, start, end));
+      const prevJobs = empJobs.filter(j => completedStatuses.has(j.status) && inWindow(j.completionDate ? new Date(j.completionDate) : undefined, prevStart, prevEnd));
 
-    this.mechanicChartData = {
-      labels: labels.length ? labels : ['No data'],
-      datasets: [
-        { data: entries.map(e => e.completed), label: this.translationService.instant('dashboard.charts.completed'), backgroundColor: '#FF8400', borderRadius: 6 },
-        { data: entries.map(e => e.inProgress), label: this.translationService.instant('dashboard.charts.inProgress'), backgroundColor: '#8FA0D8', borderRadius: 6 },
-      ]
-    };
+      const hours = currJobs.reduce((sum, j) => {
+        const minutes = j.actualDuration ?? j.estimatedDuration ?? 0;
+        return sum + minutes / 60;
+      }, 0);
+
+      const availableHours = workdays * dailyHours;
+      const utilization = availableHours > 0 ? Math.min(100, Math.round((hours / availableHours) * 100)) : 0;
+
+      const initials = this.computeInitials(emp.personalInfo?.firstName, emp.personalInfo?.lastName, emp.personalInfo?.fullName);
+
+      return {
+        id: emp.id,
+        initials,
+        fullName: emp.personalInfo?.fullName || initials,
+        rating: emp.performance?.customerRating || 0,
+        hours,
+        jobs: currJobs.length,
+        jobsBarPct: 0,
+        utilization,
+        trend: currJobs.length - prevJobs.length,
+        color: this.mechanicColors[idx % this.mechanicColors.length],
+      };
+    }).filter(r => r.jobs > 0 || r.hours > 0);
+
+    rows.sort((a, b) => b.jobs - a.jobs || b.hours - a.hours);
+
+    const maxJobs = rows.reduce((m, r) => Math.max(m, r.jobs), 0);
+    rows.forEach(r => { r.jobsBarPct = maxJobs > 0 ? Math.round((r.jobs / maxJobs) * 100) : 0; });
+
+    const totalJobs = rows.reduce((s, r) => s + r.jobs, 0);
+    const totalHours = rows.reduce((s, r) => s + r.hours, 0);
+    const avgUtilization = rows.length > 0
+      ? Math.round(rows.reduce((s, r) => s + r.utilization, 0) / rows.length)
+      : 0;
+
+    this.mechanicVM.set({
+      rows,
+      totalJobs,
+      totalHours,
+      avgUtilization,
+      subtitleKey: `dashboard.mechanicPerformance.subtitle.${period}`,
+    });
+  }
+
+  private computeInitials(first?: string, last?: string, full?: string): string {
+    if (first && last) return (first[0] + last[0]).toUpperCase();
+    if (full) {
+      const parts = full.trim().split(/\s+/);
+      if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+      return parts[0]?.slice(0, 2).toUpperCase() || '??';
+    }
+    return '??';
+  }
+
+  private buildJobTypeDistribution(): void {
+    const period = this.jobTypePeriod();
+    const { start, end } = this.jobTypePeriodWindow(period);
+
+    const inWindow = this.cachedAppointments.filter(a => {
+      const d = new Date(a.scheduledDate);
+      return !isNaN(d.getTime()) && d.getTime() >= start.getTime() && d.getTime() <= end.getTime();
+    });
+
+    const counts: Record<string, { count: number; label: string }> = {};
+    inWindow.forEach(a => {
+      const raw: string = (a.serviceType || a.serviceName || 'other').toString();
+      const key = raw.toLowerCase().trim();
+      const labelKey = `dashboard.jobTypes.categories.${key}`;
+      const translated = this.translationService.instant(labelKey);
+      const label = translated && translated !== labelKey
+        ? translated
+        : (a.serviceName || raw.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()));
+      if (!counts[key]) counts[key] = { count: 0, label };
+      counts[key].count++;
+    });
+
+    const totalJobs = Object.values(counts).reduce((s, v) => s + v.count, 0);
+    const sorted = Object.entries(counts)
+      .map(([key, v]) => ({ key, label: v.label, count: v.count }))
+      .sort((a, b) => b.count - a.count);
+
+    // Cap to top 6, group rest as "Other"
+    const TOP_N = 6;
+    let slices: JobTypeSlice[] = [];
+    if (sorted.length > TOP_N) {
+      const top = sorted.slice(0, TOP_N);
+      const rest = sorted.slice(TOP_N).reduce((s, v) => s + v.count, 0);
+      const otherLabel = this.translationService.instant('dashboard.jobTypes.other');
+      slices = top.map((t, i) => ({
+        key: t.key,
+        label: t.label,
+        count: t.count,
+        percent: totalJobs > 0 ? Math.round((t.count / totalJobs) * 100) : 0,
+        color: this.jobTypeColors[i % this.jobTypeColors.length],
+      }));
+      if (rest > 0) {
+        slices.push({
+          key: 'other',
+          label: otherLabel === 'dashboard.jobTypes.other' ? 'Other' : otherLabel,
+          count: rest,
+          percent: totalJobs > 0 ? Math.round((rest / totalJobs) * 100) : 0,
+          color: this.jobTypeColors[this.jobTypeColors.length - 1],
+        });
+      }
+    } else {
+      slices = sorted.map((t, i) => ({
+        key: t.key,
+        label: t.label,
+        count: t.count,
+        percent: totalJobs > 0 ? Math.round((t.count / totalJobs) * 100) : 0,
+        color: this.jobTypeColors[i % this.jobTypeColors.length],
+      }));
+    }
+
+    const top = slices[0];
+    this.jobTypeVM.set({
+      slices,
+      totalJobs,
+      topLabel: top?.label || '',
+      topPercent: top?.percent || 0,
+      subtitleKey: `dashboard.jobTypes.subtitle.${period}`,
+      subtitleParams: { jobs: totalJobs },
+    });
+  }
+
+  formatHoursDisplay(hours: number): string {
+    return new Intl.NumberFormat(this.numberLocale(), { maximumFractionDigits: 0 }).format(Math.round(hours));
+  }
+
+  formatRatingDisplay(rating: number): string {
+    if (!rating) return '—';
+    return new Intl.NumberFormat(this.numberLocale(), { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(rating);
+  }
+
+  formatTrendDisplay(trend: number): string {
+    if (trend === 0) return '—';
+    const abs = Math.abs(trend);
+    return new Intl.NumberFormat(this.numberLocale(), { maximumFractionDigits: 0 }).format(abs);
   }
 }

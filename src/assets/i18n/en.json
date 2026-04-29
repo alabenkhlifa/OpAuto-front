@@ -155,10 +155,64 @@
       "range7d": "7d",
       "range30d": "30d",
       "range90d": "90d",
-      "jobTypeDistribution": "Job Type Distribution",
-      "mechanicPerformance": "Mechanic Performance",
+      "jobTypeDistribution": "Job type distribution",
+      "mechanicPerformance": "Mechanic performance",
       "completed": "Completed",
       "inProgress": "In Progress"
+    },
+    "mechanicPerformance": {
+      "subtitle": {
+        "day": "Jobs completed today",
+        "week": "Jobs completed this week",
+        "month": "Jobs completed this month"
+      },
+      "period": {
+        "day": "Day",
+        "week": "Week",
+        "month": "Month"
+      },
+      "jobsDone": "Jobs done",
+      "hoursBilled": "Hours billed",
+      "avgUtilization": "Avg. utilization",
+      "jobsShort": "jobs",
+      "empty": "No completed jobs in this period."
+    },
+    "jobTypes": {
+      "subtitle": {
+        "7d": "Last 7 days",
+        "30d": "Last 30 days",
+        "all": "All time"
+      },
+      "period": {
+        "all": "All"
+      },
+      "jobs": "jobs",
+      "mostBooked": "most-booked service",
+      "other": "Other",
+      "empty": "No bookings in this period.",
+      "categories": {
+        "oil-change": "Oil & filter change",
+        "oil_change": "Oil & filter change",
+        "brake-service": "Brake pads & discs",
+        "brake_service": "Brake pads & discs",
+        "brakes": "Brake pads & discs",
+        "engine-diagnostic": "Engine diagnostic",
+        "diagnostic": "Engine diagnostic",
+        "diagnostics": "Engine diagnostic",
+        "tire-rotation": "Tire rotation",
+        "tires": "Tire rotation",
+        "tire_service": "Tire rotation",
+        "alignment": "Wheel alignment",
+        "bodywork": "Bodywork — front bumper",
+        "paint": "Paint job",
+        "ac-service": "A/C service",
+        "ac_service": "A/C service",
+        "battery": "Battery service",
+        "inspection": "Inspection",
+        "general-service": "General service",
+        "general_service": "General service",
+        "other": "Other"
+      }
     },
     "tooltips": {
       "quick_actions": "Quickly access common garage management tasks",
