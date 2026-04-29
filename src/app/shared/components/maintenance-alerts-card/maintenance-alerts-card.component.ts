@@ -1,10 +1,19 @@
-import { Component, Input, inject, signal, computed } from '@angular/core';
+import { Component, Input, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AiService } from '../../../core/services/ai.service';
 import { AiMaintenancePrediction } from '../../../core/models/ai.model';
 import { LanguageService } from '../../../core/services/language.service';
 import { TranslatePipe } from '../../pipes/translate.pipe';
+
+const PREDICTIONS_CACHE_PREFIX = 'opauto.maintenance_predictions.';
+const PREDICTIONS_TTL_MS = 24 * 60 * 60 * 1000;
+
+interface PredictionsCacheEntry {
+  savedAt: number;
+  language: string;
+  predictions: AiMaintenancePrediction[];
+}
 
 @Component({
   selector: 'app-maintenance-alerts-card',
@@ -94,7 +103,7 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
     </div>
   `,
 })
-export class MaintenanceAlertsCardComponent {
+export class MaintenanceAlertsCardComponent implements OnInit {
   /**
    * If set, the card runs in per-car mode: shows all urgency levels for that car,
    * no row click-through. If omitted, the card runs in fleet mode: shows only
@@ -119,6 +128,10 @@ export class MaintenanceAlertsCardComponent {
     return all.filter((a) => a.urgency !== 'low').slice(0, 5);
   });
 
+  ngOnInit(): void {
+    this.restoreCachedPredictions();
+  }
+
   refresh(): void {
     this.loading.set(true);
     this.error.set(null);
@@ -130,9 +143,11 @@ export class MaintenanceAlertsCardComponent {
 
     this.aiService.predictMaintenance(request).subscribe({
       next: (response) => {
-        this.alerts.set(response.predictions || []);
+        const predictions = response.predictions || [];
+        this.alerts.set(predictions);
         this.loading.set(false);
         this.hasRun.set(true);
+        this.savePredictions(predictions, lang);
       },
       error: (err) => {
         this.error.set(err?.message || 'Failed to load maintenance predictions');
@@ -140,6 +155,40 @@ export class MaintenanceAlertsCardComponent {
         this.hasRun.set(true);
       },
     });
+  }
+
+  private getCacheKey(): string {
+    return `${PREDICTIONS_CACHE_PREFIX}${this.carId ?? 'fleet'}`;
+  }
+
+  private restoreCachedPredictions(): void {
+    if (typeof localStorage === 'undefined') return;
+    const raw = localStorage.getItem(this.getCacheKey());
+    if (!raw) return;
+
+    try {
+      const entry = JSON.parse(raw) as PredictionsCacheEntry;
+      const fresh = Date.now() - entry.savedAt < PREDICTIONS_TTL_MS;
+      const sameLang = entry.language === this.languageService.getCurrentLanguage();
+      if (!fresh || !sameLang) {
+        localStorage.removeItem(this.getCacheKey());
+        return;
+      }
+      this.alerts.set(entry.predictions);
+      this.hasRun.set(true);
+    } catch {
+      localStorage.removeItem(this.getCacheKey());
+    }
+  }
+
+  private savePredictions(predictions: AiMaintenancePrediction[], language: string): void {
+    if (typeof localStorage === 'undefined') return;
+    const entry: PredictionsCacheEntry = { savedAt: Date.now(), language, predictions };
+    try {
+      localStorage.setItem(this.getCacheKey(), JSON.stringify(entry));
+    } catch {
+      // Ignore quota errors — predictions just won't persist this session.
+    }
   }
 
   openCar(id: string): void {

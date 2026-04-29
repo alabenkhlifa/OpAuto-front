@@ -362,3 +362,13 @@ BUG-063, 065, 066, 067, 068, 069, 071, 073, 074 exercised end-to-end. BUG-089/09
 - [x] Dashboard ar.json: Generate Invoice quick action title changed from "إنشاء فاتورة" to "الفوترة" to match sidebar Invoicing tab name
 - [x] Appointment modal date input: removed `::-webkit-calendar-picker-indicator` 100%×100% absolute overlay that turned the whole field into a click-trap and made the picker undismissable
 - [x] Dashboard "Cars Currently Being Worked On" rewired: was filtering appointments by `in-progress` (always 0 — appointments don't track work state); now reads from `MaintenanceService.getMaintenanceJobs()` filtered by `in-progress | quality-check | waiting-parts | waiting-approval`. KPI Active Jobs now reflects real work in progress. Adds an empty-state card ("All bays are free.") when nothing is active
+
+## Dashboard E2E pass (2026-04-29)
+- [x] Revenue Trend chart: x-axis was rendering newest-on-left (insertion-order from `Object.keys`); now generates the last 12 months chronologically (oldest left → newest right) keyed by `YYYY-MM` and labelled in the active locale
+- [x] Quick Actions "New Car Entry" was landing on `/cars` list (forced a second click); now navigates with `?action=add` and `cars.component` opens the Register New Car modal directly via `ActivatedRoute.queryParamMap`, then strips the param from the URL
+- [x] Dashboard schedule timeline items + Active Jobs cards are now `<button>`s with `(click)` handlers — schedule items go to `/calendar?appointmentId=:id`, job cards go to `/maintenance/details/:id`. Adds `cursor:pointer`, hover, and `:focus-visible` outline styles
+- [x] Dashboard date header + KPI subtitles ("X today / aujourd'hui / اليوم") were stuck in English under FR/AR. Subscribed `getCurrentDate` + `kpiCards` to `TranslationService.translations$` (not `LanguageService.currentLanguage$` — the latter fires before the new translation file finishes loading, leaving `instant()` reading stale cached EN). Locale string in `Intl` calls switched to `fr-FR`
+- [x] Sidebar parent items (Maintenance, Invoicing) now expose `aria-expanded`; was missing on submenu parents
+- [x] Missing `invoicing.loading` translation key added to en/fr/ar (was logging 20× warnings on `/invoices`)
+- [x] Predictive Maintenance "Check Now" predictions now persist across navigation for 24h via `localStorage` key `opauto.maintenance_predictions.<carId|fleet>`. Cache invalidates on language change or TTL expiry
+- [x] +42 unit/integration tests across `dashboard.component.spec`, `cars.component.spec`, `maintenance-alerts-card.component.spec`, `sidebar.component.spec` — covers chart axis, navigation methods, query-param wiring, language-rebuild, cache restore/save/eviction, and aria-expanded toggling

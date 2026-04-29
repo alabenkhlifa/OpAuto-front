@@ -81,7 +81,7 @@ describe('AssistantInputComponent', () => {
   }
 
   function getSubmitButton(): HTMLButtonElement {
-    return fixture.nativeElement.querySelector('button.btn-primary') as HTMLButtonElement;
+    return fixture.nativeElement.querySelector('button.assistant-input__send') as HTMLButtonElement;
   }
 
   it('disables submit when input is empty or whitespace', () => {

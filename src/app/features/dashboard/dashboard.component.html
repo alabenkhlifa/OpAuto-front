@@ -200,7 +200,10 @@
 
       <div class="schedule-timeline">
         @for (appointment of todayAppointments; track appointment.id) {
-          <div class="timeline-item" [ngClass]="getTimelineItemClass(appointment.status)">
+          <button type="button"
+                  class="timeline-item timeline-item-clickable"
+                  [ngClass]="getTimelineItemClass(appointment.status)"
+                  (click)="onTimelineItemClick(appointment)">
             <div class="timeline-dot" [ngClass]="getTimelineDotClass(appointment.status)">
               <div class="timeline-dot-inner"></div>
             </div>
@@ -217,7 +220,7 @@
                 </div>
               </div>
             </div>
-          </div>
+          </button>
         }
       </div>
     </div>
@@ -233,7 +236,9 @@
     }
     <div class="active-jobs-grid">
       @for (job of activeJobs; track job.id) {
-        <div class="glass-card job-card">
+        <button type="button"
+                class="glass-card job-card job-card-clickable"
+                (click)="onJobCardClick(job)">
           <div class="job-header">
             <div class="car-info">
               <h3 class="customer-name">{{ job.customerName }}</h3>
@@ -273,7 +278,7 @@
               <span class="completion-time">{{ job.estimatedCompletion }}</span>
             </div>
           </div>
-        </div>
+        </button>
       }
     </div>
   </div>

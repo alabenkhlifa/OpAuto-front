@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap, ParamMap } from '@angular/router';
 import { of, BehaviorSubject } from 'rxjs';
 import { CarsComponent } from './cars.component';
 import { CarService, CarWithHistory } from './services/car.service';
@@ -18,6 +18,7 @@ describe('CarsComponent', () => {
   let mockCarService: jasmine.SpyObj<CarService>;
   let mockSubscriptionService: jasmine.SpyObj<SubscriptionService>;
   let mockRouter: jasmine.SpyObj<Router>;
+  let queryParamMap$: BehaviorSubject<ParamMap>;
 
   const mockSoloTier: SubscriptionTier = {
     id: 'solo',
@@ -131,6 +132,8 @@ describe('CarsComponent', () => {
     accessibilityServiceSpy.handleEscapeKey.and.returnValue(() => {});
     accessibilityServiceSpy.createFocusTrap.and.returnValue(() => {});
 
+    queryParamMap$ = new BehaviorSubject<ParamMap>(convertToParamMap({}));
+
     await TestBed.configureTestingModule({
       imports: [CarsComponent, HttpClientTestingModule],
       providers: [
@@ -140,7 +143,11 @@ describe('CarsComponent', () => {
         { provide: Router, useValue: routerSpy },
         { provide: LanguageService, useValue: languageSpy },
         { provide: TranslationService, useValue: translationServiceSpy },
-        { provide: AccessibilityService, useValue: accessibilityServiceSpy }
+        { provide: AccessibilityService, useValue: accessibilityServiceSpy },
+        {
+          provide: ActivatedRoute,
+          useValue: { queryParamMap: queryParamMap$.asObservable() }
+        }
       ]
     }).compileComponents();
 
@@ -154,6 +161,10 @@ describe('CarsComponent', () => {
     mockCarService.getCars.and.returnValue(of(mockCars));
     mockCarService.getAvailableMakes.and.returnValue(['BMW', 'Honda']);
     mockCarService.getCustomerById.and.returnValue({ id: 'customer1', name: 'Test Customer', phone: '+216-20-123-456', email: 'test@example.com' });
+    // Default subscription so ngOnInit doesn't crash on tests that don't set it explicitly
+    mockSubscriptionService.getCurrentSubscriptionStatus.and.returnValue(
+      of(createMockSubscriptionStatus(mockSoloTier, 2))
+    );
   });
 
   it('should create', () => {
@@ -348,6 +359,88 @@ describe('CarsComponent', () => {
       expect(counts.upToDate).toBe(1);
       expect(counts.dueSoon).toBe(1);
       expect(counts.overdue).toBe(0);
+    });
+  });
+
+  describe('?action=add query param handling', () => {
+    it('opens the registration form and clears the query param when ?action=add is present', () => {
+      mockSubscriptionService.getCurrentSubscriptionStatus.and.returnValue(
+        of(createMockSubscriptionStatus(mockSoloTier, 5))
+      );
+      mockCarService.getCars.and.returnValue(of(mockCars));
+      queryParamMap$.next(convertToParamMap({ action: 'add' }));
+
+      component.ngOnInit();
+
+      expect(component.showRegistrationForm()).toBe(true);
+      expect(component.showUpgradePrompt()).toBe(false);
+      expect(mockRouter.navigate).toHaveBeenCalledWith(
+        [],
+        jasmine.objectContaining({
+          queryParams: { action: null },
+          queryParamsHandling: 'merge',
+          replaceUrl: true,
+        })
+      );
+    });
+
+    it('does NOT open the registration form when no query param is present', () => {
+      mockSubscriptionService.getCurrentSubscriptionStatus.and.returnValue(
+        of(createMockSubscriptionStatus(mockSoloTier, 5))
+      );
+      mockCarService.getCars.and.returnValue(of(mockCars));
+      // queryParamMap$ defaults to empty map
+
+      component.ngOnInit();
+
+      expect(component.showRegistrationForm()).toBe(false);
+      expect(mockRouter.navigate).not.toHaveBeenCalledWith(
+        [],
+        jasmine.objectContaining({ queryParams: { action: null } })
+      );
+    });
+
+    it('does NOT open the registration form when at car limit — opens upgrade prompt instead', () => {
+      mockSubscriptionService.getCurrentSubscriptionStatus.and.returnValue(
+        of(createMockSubscriptionStatus(mockSoloTier, 50))
+      );
+      const limitCars = Array(50).fill(null).map((_, i) => ({
+        ...mockCars[0],
+        id: `car${i + 1}`,
+        licensePlate: `${i + 1} TUN 2024`,
+      }));
+      mockCarService.getCars.and.returnValue(of(limitCars));
+      queryParamMap$.next(convertToParamMap({ action: 'add' }));
+
+      component.ngOnInit();
+
+      expect(component.isAtCarLimit()).toBe(true);
+      expect(component.showRegistrationForm()).toBe(false);
+      expect(component.showUpgradePrompt()).toBe(true);
+      // The query-param clear navigate is still called even when the prompt
+      // takes over — important so the user can close the prompt and not get
+      // re-prompted on next render cycle.
+      expect(mockRouter.navigate).toHaveBeenCalledWith(
+        [],
+        jasmine.objectContaining({
+          queryParams: { action: null },
+          queryParamsHandling: 'merge',
+          replaceUrl: true,
+        })
+      );
+    });
+
+    it('ignores unrelated query param values', () => {
+      mockSubscriptionService.getCurrentSubscriptionStatus.and.returnValue(
+        of(createMockSubscriptionStatus(mockSoloTier, 5))
+      );
+      mockCarService.getCars.and.returnValue(of(mockCars));
+      queryParamMap$.next(convertToParamMap({ action: 'edit' }));
+
+      component.ngOnInit();
+
+      expect(component.showRegistrationForm()).toBe(false);
+      expect(component.showUpgradePrompt()).toBe(false);
     });
   });
 });

@@ -1,7 +1,7 @@
 import { Component, inject, signal, computed, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { CarService, CarWithHistory } from './services/car.service';
 import { Customer } from '../../core/models/appointment.model';
 import { CarCardComponent } from './components/car-card.component';
@@ -32,6 +32,7 @@ export class CarsComponent implements OnInit {
   private translationService = inject(TranslationService);
   private customerService = inject(CustomerService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private toast = inject(ToastService);
 
   @ViewChild(AppointmentModalComponent) appointmentModal?: AppointmentModalComponent;
@@ -150,6 +151,13 @@ export class CarsComponent implements OnInit {
   ngOnInit(): void {
     this.loadCars();
     this.loadSubscriptionStatus();
+
+    this.route.queryParamMap.subscribe(params => {
+      if (params.get('action') === 'add') {
+        this.openRegistrationForm();
+        this.router.navigate([], { queryParams: { action: null }, queryParamsHandling: 'merge', replaceUrl: true });
+      }
+    });
   }
 
   private loadCars(): void {

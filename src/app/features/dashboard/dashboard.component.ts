@@ -1,14 +1,15 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { BaseChartDirective } from 'ng2-charts';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
-import { forkJoin, of } from 'rxjs';
+import { forkJoin, of, Subscription } from 'rxjs';
 
 import { LanguageToggleComponent } from '../../shared/components/language-toggle/language-toggle.component';
 import { MaintenanceAlertsCardComponent } from '../../shared/components/maintenance-alerts-card/maintenance-alerts-card.component';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { TranslationService } from '../../core/services/translation.service';
+import { LanguageService } from '../../core/services/language.service';
 import { AuthService } from '../../core/services/auth.service';
 import { OnboardingService } from '../../core/services/onboarding.service';
 import { OnboardingTourComponent } from '../../shared/components/onboarding-tour/onboarding-tour.component';
@@ -54,9 +55,10 @@ interface ActiveJob {
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private translationService = inject(TranslationService);
+  private languageService = inject(LanguageService);
   private authService = inject(AuthService);
   private onboardingService = inject(OnboardingService);
   private appointmentService = inject(AppointmentService);
@@ -65,6 +67,11 @@ export class DashboardComponent implements OnInit {
   private partService = inject(PartService);
   private invoiceService = inject(InvoiceService);
   private maintenanceService = inject(MaintenanceService);
+
+  private languageSub?: Subscription;
+  private cachedInvoices: any[] = [];
+  private cachedAppointments: any[] = [];
+  private cachedEmployees: any[] = [];
 
   isOwner = signal(false);
 
@@ -121,14 +128,44 @@ export class DashboardComponent implements OnInit {
     this.isOwner.set(this.authService.isOwner());
     this.loadDashboardData();
     setTimeout(() => this.onboardingService.startTourForCurrentUser(), 1000);
+
+    // Rebuild after translations finish loading (translations$ fires AFTER the
+    // new language file is fetched; currentLanguage$ fires before, which would
+    // pick up stale cached translations on language switch).
+    this.languageSub = this.translationService.translations$.subscribe(() => {
+      this.rebuildLocalizedViews();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.languageSub?.unsubscribe();
   }
 
   getCurrentDate(): string {
-    const lang = localStorage.getItem('preferred_language') || 'en';
-    const locale = lang === 'ar' ? 'ar-TN' : lang === 'fr' ? 'fr-TN' : 'en-US';
+    const lang = this.languageService.getCurrentLanguage();
+    const locale = lang === 'ar' ? 'ar-TN' : lang === 'fr' ? 'fr-FR' : 'en-US';
     return new Date().toLocaleDateString(locale, {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
     });
+  }
+
+  private rebuildLocalizedViews(): void {
+    if (!this.cachedAppointments.length && !this.cachedInvoices.length) return;
+    this.rebuildKpiCards();
+    this.buildRevenueChart(this.cachedInvoices);
+    this.buildJobTypeChart(this.cachedAppointments);
+    this.buildMechanicChart(this.cachedAppointments, this.cachedEmployees);
+  }
+
+  private rebuildKpiCards(): void {
+    const occupiedBays = this.metrics.totalSlots - this.metrics.availableSlots;
+    const todayLabel = this.translationService.instant('dashboard.kpi.today');
+    this.kpiCards = [
+      { labelKey: 'dashboard.kpi.revenue', value: this.formatCurrency(this.metrics.todayRevenue), trend: '', trendDirection: 'up', trendLabelKey: 'dashboard.kpi.today', icon: 'revenue' },
+      { labelKey: 'dashboard.kpi.appointments', value: `${this.metrics.totalCarsToday} ${todayLabel}`, trend: '', trendDirection: 'up', trendLabelKey: '', icon: 'appointments' },
+      { labelKey: 'dashboard.kpi.utilization', value: `${Math.round(this.getCapacityPercentage())}%`, trend: `${occupiedBays}/${this.metrics.totalSlots}`, trendDirection: 'up', trendLabelKey: 'dashboard.kpi.baysOccupied', icon: 'utilization' },
+      { labelKey: 'dashboard.kpi.activeJobs', value: `${this.activeJobs.length}`, trend: '', trendDirection: 'up', trendLabelKey: '', icon: 'jobs' },
+    ];
   }
 
   formatCurrency(amount: number): string {
@@ -180,10 +217,18 @@ export class DashboardComponent implements OnInit {
     return translated === fullKey ? '' : translated;
   }
 
-  navigateToNewCar(): void { this.router.navigate(['/cars']); }
-  navigateToAppointments(): void { this.router.navigate(['/appointments']); }
+  navigateToNewCar(): void { this.router.navigate(['/cars'], { queryParams: { action: 'add' } }); }
+  navigateToAppointments(): void { this.router.navigate(['/calendar']); }
   navigateToInvoicing(): void { this.router.navigate(['/invoices/create']); }
   navigateToQualityCheck(): void { this.router.navigate(['/maintenance/active']); }
+
+  onTimelineItemClick(appointment: TodayAppointment): void {
+    this.router.navigate(['/calendar'], { queryParams: { appointmentId: appointment.id } });
+  }
+
+  onJobCardClick(job: ActiveJob): void {
+    this.router.navigate(['/maintenance/details', job.id]);
+  }
 
   private loadDashboardData(): void {
     const isOwner = this.authService.isOwner();
@@ -197,6 +242,9 @@ export class DashboardComponent implements OnInit {
       maintenanceJobs: this.maintenanceService.getMaintenanceJobs()
     }).subscribe({
       next: ({ appointments, customers, employees, parts, invoices, cars, maintenanceJobs }) => {
+        this.cachedAppointments = appointments;
+        this.cachedInvoices = invoices;
+        this.cachedEmployees = employees;
         const today = new Date();
         const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
         const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
@@ -272,13 +320,7 @@ export class DashboardComponent implements OnInit {
         });
 
         // KPI cards
-        const occupiedBays = this.metrics.totalSlots - this.metrics.availableSlots;
-        this.kpiCards = [
-          { labelKey: 'dashboard.kpi.revenue', value: this.formatCurrency(this.metrics.todayRevenue), trend: '', trendDirection: 'up', trendLabelKey: 'dashboard.kpi.today', icon: 'revenue' },
-          { labelKey: 'dashboard.kpi.appointments', value: `${todayAppts.length} ${this.translationService.instant('dashboard.kpi.today')}`, trend: '', trendDirection: 'up', trendLabelKey: '', icon: 'appointments' },
-          { labelKey: 'dashboard.kpi.utilization', value: `${Math.round(this.getCapacityPercentage())}%`, trend: `${occupiedBays}/${this.metrics.totalSlots}`, trendDirection: 'up', trendLabelKey: 'dashboard.kpi.baysOccupied', icon: 'utilization' },
-          { labelKey: 'dashboard.kpi.activeJobs', value: `${this.activeJobs.length}`, trend: '', trendDirection: 'up', trendLabelKey: '', icon: 'jobs' },
-        ];
+        this.rebuildKpiCards();
 
         // Revenue chart — group invoices by month
         this.buildRevenueChart(invoices);
@@ -296,21 +338,36 @@ export class DashboardComponent implements OnInit {
   }
 
   private buildRevenueChart(invoices: any[]): void {
-    const monthlyRevenue: Record<string, number> = {};
+    // Sum revenue by year-month key, then render the last 12 months chronologically
+    // (oldest on the left, newest on the right).
+    const totals = new Map<string, number>();
     invoices.forEach(inv => {
       const d = new Date(inv.issueDate || inv.createdAt || inv.date);
       if (isNaN(d.getTime())) return;
-      const key = d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
-      monthlyRevenue[key] = (monthlyRevenue[key] || 0) + (inv.totalAmount || inv.total || 0);
+      const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      totals.set(ym, (totals.get(ym) || 0) + (inv.totalAmount || inv.total || 0));
     });
 
-    const labels = Object.keys(monthlyRevenue);
-    const data = Object.values(monthlyRevenue);
+    const lang = this.languageService.getCurrentLanguage();
+    const locale = lang === 'ar' ? 'ar-TN' : lang === 'fr' ? 'fr-FR' : 'en-US';
+    const months: { ym: string; label: string }[] = [];
+    const now = new Date();
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({
+        ym: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+        label: d.toLocaleDateString(locale, { month: 'short', year: '2-digit' }),
+      });
+    }
+
+    const labels = months.map(m => m.label);
+    const data = months.map(m => totals.get(m.ym) || 0);
+    const hasData = data.some(v => v > 0);
 
     this.revenueChartData = {
-      labels: labels.length ? labels : ['No data'],
+      labels,
       datasets: [{
-        data: data.length ? data : [0],
+        data: hasData ? data : labels.map(() => 0),
         label: this.translationService.instant('dashboard.kpi.revenue'),
         fill: true, tension: 0.4,
         borderColor: '#FF8400', backgroundColor: 'rgba(255, 132, 0, 0.1)',

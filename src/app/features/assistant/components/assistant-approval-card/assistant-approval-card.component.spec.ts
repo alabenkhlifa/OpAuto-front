@@ -218,8 +218,20 @@ describe('AssistantApprovalCardComponent', () => {
   // ---------------------------------------------------------------------------
 
   describe('countdown', () => {
+    const baseNow = new Date('2026-04-26T10:00:00Z').getTime();
+
     beforeEach(() => {
+      // Mock the clock BEFORE rebuilding the fixture so the component's `now`
+      // signal (initialized at construction with `Date.now()`) is anchored to
+      // the same fake clock the test ticks. The outer beforeEach already
+      // created a fixture, but its `now` reflects the real wall clock — which
+      // makes secondsRemaining clamp to 0 against any test-relative expiresAt.
+      fixture.destroy();
       jasmine.clock().install();
+      jasmine.clock().mockDate(new Date(baseNow));
+
+      fixture = TestBed.createComponent(AssistantApprovalCardComponent);
+      component = fixture.componentInstance;
     });
 
     afterEach(() => {
@@ -227,9 +239,6 @@ describe('AssistantApprovalCardComponent', () => {
     });
 
     it('ticks every second and re-evaluates secondsRemaining', () => {
-      const baseNow = new Date('2026-04-26T10:00:00Z').getTime();
-      jasmine.clock().mockDate(new Date(baseNow));
-
       fixture.componentRef.setInput(
         'pendingApproval',
         buildPending({

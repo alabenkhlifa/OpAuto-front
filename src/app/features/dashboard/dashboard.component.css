@@ -703,6 +703,43 @@
   position: relative;
 }
 
+.timeline-item-clickable {
+  width: 100%;
+  background: transparent;
+  border: none;
+  text-align: inherit;
+  cursor: pointer;
+  border-radius: 0.5rem;
+  transition: background-color 150ms ease;
+}
+
+.timeline-item-clickable:hover {
+  background-color: var(--color-surface-hover, rgba(0, 0, 0, 0.03));
+}
+
+.timeline-item-clickable:focus-visible {
+  outline: 2px solid var(--color-primary, #FF8400);
+  outline-offset: 2px;
+}
+
+.job-card-clickable {
+  cursor: pointer;
+  text-align: inherit;
+  font: inherit;
+  color: inherit;
+  width: 100%;
+}
+
+.job-card-clickable:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.job-card-clickable:focus-visible {
+  outline: 2px solid var(--color-primary, #FF8400);
+  outline-offset: 2px;
+}
+
 .timeline-item:not(:last-child)::after {
   content: '';
   position: absolute;

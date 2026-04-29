@@ -54,7 +54,8 @@ describe('AssistantConversationListComponent', () => {
     overrides: Partial<AssistantConversationSummary> & { id: string },
   ): AssistantConversationSummary => ({
     id: overrides.id,
-    title: overrides.title ?? `Conversation ${overrides.id}`,
+    // Use 'title' in overrides so an explicit null/empty-string is preserved.
+    title: 'title' in overrides ? overrides.title! : `Conversation ${overrides.id}`,
     pinned: overrides.pinned ?? false,
     updatedAt: overrides.updatedAt ?? new Date(baseTime).toISOString(),
     createdAt: overrides.createdAt ?? new Date(baseTime).toISOString(),

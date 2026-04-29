@@ -59,6 +59,7 @@
               [class.has-children]="item.children"
               [class.locked]="isModuleLocked(item)"
               (click)="onNavItemClick(item, $event)"
+              [attr.aria-expanded]="item.children ? !!item.isExpanded : null"
               [attr.title]="isCollapsed() && !isHovered() ? (item.translationKey | translate) : null">
               
               <!-- Icon -->

@@ -1732,6 +1732,7 @@
   "invoicing": {
     "title": "Facturation",
     "subtitle": "Générer et gérer les factures",
+    "loading": "Chargement des factures...",
     "create": {
       "title": "Créer une facture",
       "subtitle": "Générer une nouvelle facture pour un client",

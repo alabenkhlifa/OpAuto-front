@@ -1770,6 +1770,7 @@
   "invoicing": {
     "title": "Invoicing",
     "subtitle": "Generate and manage invoices",
+    "loading": "Loading invoices...",
     "create": {
       "title": "Create Invoice",
       "subtitle": "Generate a new invoice for a customer",
