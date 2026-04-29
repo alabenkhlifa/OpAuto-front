@@ -44,50 +44,11 @@
   flex: 1;
 }
 
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 0.5rem;
-}
-
 @media (max-width: 768px) {
   .header-content {
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
-  }
-  
-  .header-actions {
-    align-self: flex-end;
-    margin-top: 0;
-  }
-}
-
-.dashboard-title {
-  font-size: 2.25rem;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin-bottom: 0.5rem;
-}
-
-.dashboard-subtitle {
-  color: var(--color-text-secondary);
-  font-size: 1.125rem;
-}
-
-/* Overview Grid - Critical Information First */
-.overview-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 2rem;
-  margin-bottom: 3rem;
-}
-
-@media (max-width: 1024px) {
-  .overview-grid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
   }
 }
 
@@ -112,119 +73,10 @@
   margin: 0;
 }
 
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.card-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
-/* Today's Schedule Card */
-.schedule-card {
-  min-height: 400px;
-}
-
-.schedule-summary {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-}
-
-.schedule-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.appointment-item {
-  display: grid;
-  grid-template-columns: 80px 1fr;
-  gap: 1rem;
-  padding: 1rem;
-  background: #f8fafc;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-}
-
-
-.appointment-item.completed {
-  opacity: 0.7;
-  background: rgba(34, 197, 94, 0.2);
-  border-color: rgba(34, 197, 94, 0.4);
-}
-
-.appointment-time {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--color-primary);
-  text-align: center;
-  align-self: center;
-}
-
-.appointment-details {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.customer-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
+/* Card title styles used by .customer-name etc. inside active jobs */
 .customer-name {
   font-weight: 600;
   color: var(--color-text-primary);
-}
-
-.car-info {
-  font-size: 0.875rem;
-  color: var(--color-text-secondary);
-}
-
-.service-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-}
-
-.service-type {
-  font-size: 0.875rem;
-  color: var(--color-text-secondary);
-}
-
-/* Status Badges - Use Global Badge System */
-/* Removed local .status-badge styles to use global badge system */
-
-/* Stats Card */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.5rem;
-}
-
-.stat-item {
-  text-align: center;
-}
-
-.stat-value {
-  font-size: 1.875rem;
-  font-weight: 700;
-  margin-bottom: 0.25rem;
-}
-
-.stat-label {
-  font-size: 0.875rem;
-  color: var(--color-text-secondary);
 }
 
 /* Section Containers */
@@ -507,118 +359,166 @@
   line-height: 1.35;
 }
 
-/* Language Toggle Enhanced Visibility */
-::ng-deep app-language-toggle button {
-  border: 2px solid #e2e8f0 !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+/* ==================== TODAY AT A GLANCE ==================== */
+
+.glance-header {
+  margin-bottom: 1rem;
 }
 
-::ng-deep app-language-toggle button:hover {
-  border-color: #cbd5e1 !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
-  transform: translateY(-1px);
-}
-
-/* Remove borders from language dropdown items */
-::ng-deep app-language-toggle .absolute button:not(:first-child),
-::ng-deep app-language-toggle div[class*="py-2"] button,
-::ng-deep app-language-toggle div[class*="backdrop-blur"] button:not([class*="flex items-center gap-2"]) {
-  border: none !important;
-  box-shadow: none !important;
-}
-
-::ng-deep app-language-toggle .absolute button:not(:first-child):hover,
-::ng-deep app-language-toggle div[class*="py-2"] button:hover,
-::ng-deep app-language-toggle div[class*="backdrop-blur"] button:not([class*="flex items-center gap-2"]):hover {
-  border: none !important;
-  box-shadow: none !important;
-  transform: none !important;
-}
-
-/* ==================== KPI CARDS ==================== */
-
-.kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.kpi-card {
-  padding: 1.25rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.kpi-icon-wrapper {
-  width: 3rem;
-  height: 3rem;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.kpi-icon-revenue {
-  background: linear-gradient(135deg, rgba(255, 132, 0, 0.2), rgba(255, 132, 0, 0.3));
-  color: #FF8400;
-  border: 1px solid rgba(255, 132, 0, 0.3);
-}
-
-.kpi-icon-appointments {
-  background: linear-gradient(135deg, rgba(143, 160, 216, 0.2), rgba(143, 160, 216, 0.3));
-  color: #8FA0D8;
-  border: 1px solid rgba(143, 160, 216, 0.3);
-}
-
-.kpi-icon-utilization {
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.3));
-  color: #22c55e;
-  border: 1px solid rgba(34, 197, 94, 0.3);
-}
-
-.kpi-icon-jobs {
-  background: linear-gradient(135deg, rgba(249, 223, 198, 0.2), rgba(249, 223, 198, 0.3));
-  color: #F9DFC6;
-  border: 1px solid rgba(249, 223, 198, 0.3);
-}
-
-.kpi-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.kpi-value {
-  font-size: 1.75rem;
+.glance-title {
+  font-size: 1.25rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text-primary);
+  margin: 0;
   line-height: 1.2;
 }
 
-.kpi-label {
-  font-size: 0.85rem;
-  color: #6b7280;
+.glance-subtitle {
+  font-size: 0.875rem;
+  color: var(--color-text-tertiary, #9ca3af);
+  margin: 0.25rem 0 0 0;
+}
+
+.glance-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.glance-card {
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(17, 24, 39, 0.04);
+  transition: box-shadow 200ms ease, transform 200ms ease, border-color 200ms ease;
+}
+
+.glance-card:hover {
+  box-shadow: 0 4px 16px rgba(17, 24, 39, 0.06);
+  border-color: #d1d5db;
+}
+
+.glance-body {
+  padding: 1.25rem 1.25rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  flex: 1;
+}
+
+.glance-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9ca3af;
+  margin: 0;
+}
+
+.glance-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.375rem;
+}
+
+.glance-value {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.glance-unit {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.glance-delta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
   margin-top: 0.25rem;
 }
 
-.kpi-trend {
-  display: flex;
+.glance-pill {
+  display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  font-size: 0.8rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.8125rem;
   font-weight: 600;
-  margin-top: 0.5rem;
+  line-height: 1;
+  white-space: nowrap;
 }
 
-.kpi-trend.up {
-  color: #22c55e;
+.glance-pill svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
 }
 
-.kpi-trend.down {
-  color: #ef4444;
+.glance-pill--up {
+  background: #ecfdf5;
+  color: #059669;
 }
+
+.glance-pill--down {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.glance-pill--neutral {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.glance-comparison {
+  font-size: 0.8125rem;
+  color: #9ca3af;
+  white-space: nowrap;
+}
+
+.glance-sparkline {
+  height: 44px;
+  width: 100%;
+  margin-top: auto;
+}
+
+.glance-sparkline svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.glance-spark-line {
+  fill: none;
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.glance-card--orange .glance-spark-line { stroke: #FF8400; }
+.glance-card--orange .glance-spark-area { fill: rgba(255, 132, 0, 0.12); }
+
+.glance-card--blue .glance-spark-line { stroke: #3b5bdb; }
+.glance-card--blue .glance-spark-area { fill: rgba(59, 91, 219, 0.10); }
+
+.glance-card--green .glance-spark-line { stroke: #16a34a; }
+.glance-card--green .glance-spark-area { fill: rgba(22, 163, 74, 0.12); }
+
+.glance-card--gray .glance-spark-line { stroke: #4b5563; }
+.glance-card--gray .glance-spark-area { fill: rgba(75, 85, 99, 0.10); }
 
 /* ==================== CHART SECTIONS ==================== */
 
@@ -881,158 +781,10 @@
 /* Status Pills - Use Global Badge System */
 /* Removed local .status-pill styles to use global badge system */
 
-/* Stats Card Redesigned */
-.stats-card-redesigned {
-  min-height: 450px;
-}
-
-.stats-grid-redesigned {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.stat-card {
-  background: #f8fafc;
-  border-radius: 16px;
-  padding: 1.5rem;
-  border: 1px solid #e2e8f0;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-
-.stat-icon-wrapper {
-  width: 3rem;
-  height: 3rem;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.completed-icon {
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.3));
-  color: #22c55e;
-  border: 1px solid rgba(34, 197, 94, 0.4);
-}
-
-.progress-icon {
-  background: linear-gradient(135deg, rgba(255, 132, 0, 0.2), rgba(204, 106, 0, 0.3));
-  color: #FF8400;
-  border: 1px solid rgba(255, 132, 0, 0.4);
-}
-
-.approval-icon {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.3));
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.4);
-}
-
-.slots-icon {
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.3));
-  color: #8FA0D8;
-  border: 1px solid rgba(251, 191, 36, 0.4);
-}
-
-.stat-content {
-  flex: 1;
-}
-
-.stat-number {
-  font-size: 1.875rem;
-  font-weight: 700;
-  line-height: 1;
-  margin-bottom: 0.25rem;
-}
-
-.completed-color { color: #22c55e; }
-.progress-color { color: #FF8400; }
-.approval-color { color: #ef4444; }
-.slots-color { color: #8FA0D8; }
-
-.stat-label {
-  font-size: 0.875rem;
-  color: var(--color-text-secondary);
-  font-weight: 500;
-}
-
-/* Revenue Section Redesigned */
-.revenue-section-redesigned {
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(22, 163, 74, 0.05));
-  border: 1px solid rgba(34, 197, 94, 0.2);
-  border-radius: 16px;
-  padding: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-
-.revenue-icon-wrapper {
-  width: 3.5rem;
-  height: 3.5rem;
-  border-radius: 16px;
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.3));
-  color: #22c55e;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(34, 197, 94, 0.4);
-}
-
-.revenue-content {
-  flex: 1;
-}
-
-.revenue-amount-redesigned {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #22c55e;
-  line-height: 1;
-  margin-bottom: 0.25rem;
-}
-
-.revenue-label-redesigned {
-  font-size: 0.875rem;
-  color: var(--color-text-secondary);
-  font-weight: 500;
-}
-
-.revenue-trend {
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(34, 197, 94, 0.2);
-  color: #22c55e;
-  border: 1px solid rgba(34, 197, 94, 0.3);
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
   .dashboard-container {
     padding: 1rem;
-  }
-
-  .overview-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-  }
-
-  /* Fix Today's Status section for mobile - One KPI per row */
-  .stats-grid-redesigned {
-    grid-template-columns: 1fr;
-    gap: 1rem;
   }
 
   .active-jobs-grid {
@@ -1041,10 +793,6 @@
 
   .quick-actions-grid {
     grid-template-columns: repeat(2, 1fr);
-  }
-
-  .appointment-item {
-    grid-template-columns: 60px 1fr;
   }
 
   .urgent-content {
@@ -1057,34 +805,14 @@
     gap: 0.5rem;
   }
 
-  /* Mobile-optimized stat cards */
-  .stat-card {
-    padding: 1.25rem;
+  .glance-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .stat-number {
-    font-size: 1.5rem;
+  .glance-value {
+    font-size: 1.875rem;
   }
 
-  /* Optimize revenue section for mobile */
-  .revenue-section-redesigned {
-    padding: 1.25rem;
-  }
-
-  .revenue-amount-redesigned {
-    font-size: 1.5rem;
-  }
-
-  /* KPI grid responsive */
-  .kpi-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .kpi-value {
-    font-size: 1.35rem;
-  }
-
-  /* Chart rows responsive */
   .chart-row,
   .chart-row-equal {
     grid-template-columns: 1fr;
@@ -1100,44 +828,12 @@
     grid-template-columns: 1fr;
   }
 
-  .stats-grid {
+  .glance-grid {
     grid-template-columns: 1fr;
-    gap: 1rem;
   }
 
-  /* Ensure Today's Status is still single column on small screens */
-  .stats-grid-redesigned {
-    grid-template-columns: 1fr;
-    gap: 0.875rem;
-  }
-
-  /* Further optimize for very small screens */
-  .stat-card {
-    padding: 1rem;
-    gap: 0.75rem;
-  }
-
-  .stat-icon-wrapper {
-    width: 2.5rem;
-    height: 2.5rem;
-  }
-
-  .stat-number {
-    font-size: 1.25rem;
-  }
-
-  .revenue-icon-wrapper {
-    width: 3rem;
-    height: 3rem;
-  }
-
-  .revenue-amount-redesigned {
-    font-size: 1.25rem;
-  }
-
-  /* KPI grid single column on very small screens */
-  .kpi-grid {
-    grid-template-columns: 1fr;
+  .glance-value {
+    font-size: 1.625rem;
   }
 
   .chart-container {

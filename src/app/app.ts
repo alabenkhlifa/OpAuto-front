@@ -7,6 +7,8 @@ import { ModuleService } from './core/services/module.service';
 import { NotificationService } from './core/services/notification.service';
 import { SidebarComponent } from './shared/components/sidebar/sidebar.component';
 import { NotificationBellComponent } from './shared/components/notification-bell/notification-bell.component';
+import { LanguageToggleComponent } from './shared/components/language-toggle/language-toggle.component';
+import { UserProfilePillComponent } from './shared/components/user-profile-pill/user-profile-pill.component';
 import { ToastComponent } from './shared/components/toast/toast.component';
 import { AssistantLauncherComponent } from './features/assistant/components/assistant-launcher/assistant-launcher.component';
 
@@ -14,7 +16,7 @@ import { AssistantLauncherComponent } from './features/assistant/components/assi
   selector: 'app-root',
   templateUrl: './app.html',
   standalone: true,
-  imports: [RouterOutlet, SidebarComponent, NotificationBellComponent, ToastComponent, AssistantLauncherComponent],
+  imports: [RouterOutlet, SidebarComponent, NotificationBellComponent, LanguageToggleComponent, UserProfilePillComponent, ToastComponent, AssistantLauncherComponent],
   styleUrl: './app.css'
 })
 export class App implements OnInit {

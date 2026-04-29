@@ -38,7 +38,7 @@
   z-index: 10;
 }
 
-/* Top Bar with Notification Bell */
+/* Top Bar with Notification, Language, User Profile pills */
 .top-bar {
   display: flex;
   align-items: center;
@@ -53,6 +53,21 @@
 
 .top-bar-spacer {
   flex: 1;
+}
+
+.top-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+@media (max-width: 640px) {
+  .top-bar {
+    padding: 0.625rem 1rem;
+  }
+  .top-bar-actions {
+    gap: 0.5rem;
+  }
 }
 
 /* Page Content */

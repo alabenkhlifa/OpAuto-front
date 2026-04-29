@@ -10,23 +10,22 @@ import { TranslationService } from '../../../core/services/translation.service';
   imports: [CommonModule],
   template: `
     <div class="relative">
-      <!-- Language Toggle Button - Glassmorphism Style -->
-      <button 
-        class="flex items-center gap-2 px-3 py-2 rounded-lg backdrop-blur-sm border transition-all duration-200 bg-slate-800 bg-opacity-50 border-slate-700 hover:bg-opacity-70 hover:border-slate-600 hover:transform hover:scale-105"
+      <!-- Language Toggle Pill -->
+      <button
+        type="button"
+        class="lang-pill"
         (click)="toggleDropdown()"
         [attr.aria-label]="'Change language. Current: ' + getCurrentLanguageOption()?.nativeName">
-        
+
         <!-- Flag Icon -->
-        <span class="text-lg leading-none">{{ getCurrentLanguageOption()?.flag }}</span>
-        
+        <span class="lang-pill__flag">{{ getCurrentLanguageOption()?.flag }}</span>
+
         <!-- Language Code -->
-        <span class="text-xs font-medium uppercase text-white">
-          {{ currentLanguage() }}
-        </span>
-        
+        <span class="lang-pill__code">{{ currentLanguage() }}</span>
+
         <!-- Dropdown Arrow -->
-        <svg class="w-3 h-3 transition-transform duration-200 text-gray-300"
-             [class.rotate-180]="isDropdownOpen()" 
+        <svg class="lang-pill__arrow"
+             [class.lang-pill__arrow--open]="isDropdownOpen()"
              fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
         </svg>
@@ -88,7 +87,54 @@ import { TranslationService } from '../../../core/services/translation.service';
     </div>
   `,
   styles: [`
-    .rotate-180 {
+    .lang-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.875rem;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 9999px;
+      cursor: pointer;
+      box-shadow: 0 1px 2px rgba(17, 24, 39, 0.04);
+      transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+      font: inherit;
+      color: #111827;
+      height: 44px;
+    }
+
+    .lang-pill:hover {
+      border-color: #d1d5db;
+      box-shadow: 0 2px 6px rgba(17, 24, 39, 0.06);
+      transform: translateY(-1px);
+    }
+
+    .lang-pill:focus-visible {
+      outline: 2px solid #FF8400;
+      outline-offset: 2px;
+    }
+
+    .lang-pill__flag {
+      font-size: 1.125rem;
+      line-height: 1;
+    }
+
+    .lang-pill__code {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #111827;
+      letter-spacing: 0.02em;
+    }
+
+    .lang-pill__arrow {
+      width: 0.875rem;
+      height: 0.875rem;
+      color: #6b7280;
+      transition: transform 200ms ease;
+    }
+
+    .lang-pill__arrow--open {
       transform: rotate(180deg);
     }
 

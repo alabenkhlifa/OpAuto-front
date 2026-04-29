@@ -312,13 +312,10 @@ describe('DashboardComponent', () => {
   });
 
   // ---------------------------------------------------------------
-  // KPI rebuild on language change
+  // Glance cards — structure + rebuild on language change
   // ---------------------------------------------------------------
-  describe('language change rebuilds localized views', () => {
-    it('rebuilds kpiCards when TranslationService.translations$ emits — appointments KPI uses new translation', () => {
-      // Seed cached state by running ngOnInit with one appointment so
-      // rebuildLocalizedViews short-circuit (which checks cachedAppointments
-      // length) doesn't bail.
+  describe('glance cards', () => {
+    const seedAppointment = () => {
       const today = new Date();
       mockAppointment.getAppointments.and.returnValue(of([
         {
@@ -332,68 +329,69 @@ describe('DashboardComponent', () => {
           mechanicId: 'm1',
         } as any,
       ]));
+    };
 
-      // First emission → "today"
-      mockTranslation.instant.and.callFake((k: string) =>
-        k === 'dashboard.kpi.today' ? 'today' : k
-      );
-
+    it('builds 4 glance cards (revenue, appointments, utilization, active jobs) after data load', () => {
+      seedAppointment();
       component.ngOnInit();
 
-      const beforeCards = component.kpiCards;
-      const apptCardBefore = beforeCards.find((c) => c.icon === 'appointments');
-      expect(apptCardBefore).toBeTruthy();
-      expect(apptCardBefore!.value).toContain('today');
+      expect(component.glanceCards.length).toBe(4);
+      const labels = component.glanceCards.map((c) => c.labelKey);
+      expect(labels).toEqual([
+        'dashboard.kpi.revenueToday',
+        'dashboard.kpi.appointmentsToday',
+        'dashboard.kpi.bayUtilization',
+        'dashboard.kpi.activeJobs',
+      ]);
+    });
 
-      // Now flip the translation map and emit new translations (simulating
-      // the new language file finishing its HTTP load).
-      mockTranslation.instant.and.callFake((k: string) =>
-        k === 'dashboard.kpi.today' ? "aujourd'hui" : k
-      );
-      translations$.next({ dashboard: { kpi: { today: "aujourd'hui" } } });
+    it('utilization card carries a detail delta with occupied/total params', () => {
+      seedAppointment();
+      component.ngOnInit();
 
-      const apptCardAfter = component.kpiCards.find((c) => c.icon === 'appointments');
-      expect(apptCardAfter).toBeTruthy();
-      expect(apptCardAfter!.value).toContain("aujourd'hui");
-      expect(apptCardAfter!.value).not.toContain('today');
+      const utilization = component.glanceCards.find((c) => c.labelKey === 'dashboard.kpi.bayUtilization');
+      expect(utilization?.delta?.kind).toBe('detail');
+      if (utilization?.delta?.kind === 'detail') {
+        expect(utilization.delta.params).toEqual(jasmine.objectContaining({ total: 8 }));
+      }
+    });
+
+    it('rebuilds glance cards when TranslationService.translations$ emits', () => {
+      seedAppointment();
+      component.ngOnInit();
+
+      const beforeRef = component.glanceCards;
+      translations$.next({ dashboard: { kpi: { vsLastWeek: 'vs sem.' } } });
+      expect(component.glanceCards).not.toBe(beforeRef);
     });
 
     it('does NOT rebuild after ngOnDestroy unsubscribes', () => {
-      // Seed so rebuildLocalizedViews would normally fire.
-      const today = new Date();
-      mockAppointment.getAppointments.and.returnValue(of([
-        {
-          id: 'a1',
-          scheduledDate: today.toISOString(),
-          customerId: 'c1',
-          carId: 'car1',
-          serviceName: 'Oil change',
-          status: 'scheduled',
-          estimatedDuration: 60,
-          mechanicId: 'm1',
-        } as any,
-      ]));
-
-      mockTranslation.instant.and.callFake((k: string) =>
-        k === 'dashboard.kpi.today' ? 'today' : k
-      );
-
+      seedAppointment();
       component.ngOnInit();
-      const cardsRef = component.kpiCards;
+      const cardsRef = component.glanceCards;
 
       component.ngOnDestroy();
+      translations$.next({ dashboard: { kpi: { vsLastWeek: 'CHANGED' } } });
 
-      // Change translation + emit a new language. Subscription is gone, so
-      // kpiCards should NOT change.
-      mockTranslation.instant.and.callFake((k: string) =>
-        k === 'dashboard.kpi.today' ? 'CHANGED' : k
-      );
-      translations$.next({ dashboard: { kpi: { today: 'CHANGED' } } });
+      expect(component.glanceCards).toBe(cardsRef);
+    });
+  });
 
-      // Reference equality is the strongest signal that no rebuild happened.
-      expect(component.kpiCards).toBe(cardsRef);
-      const apptCard = component.kpiCards.find((c) => c.icon === 'appointments');
-      expect(apptCard!.value).not.toContain('CHANGED');
+  // ---------------------------------------------------------------
+  // Sparkline path generator
+  // ---------------------------------------------------------------
+  describe('buildSparklinePath()', () => {
+    it('returns empty paths for fewer than 2 points', () => {
+      expect(component.buildSparklinePath([])).toEqual({ line: '', area: '' });
+      expect(component.buildSparklinePath([5])).toEqual({ line: '', area: '' });
+    });
+
+    it('returns a Move + Cubic line and a closed area path for valid input', () => {
+      const out = component.buildSparklinePath([1, 2, 3, 4]);
+      expect(out.line).toMatch(/^M[\d.,\- ]+/);
+      expect(out.line).toContain('C');
+      expect(out.area.endsWith('Z')).toBeTrue();
+      expect(out.area).toContain(out.line);
     });
   });
 

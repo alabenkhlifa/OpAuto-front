@@ -129,15 +129,25 @@
       "diagnosis": "التشخيص",
       "waiting_approval": "في انتظار الموافقة"
     },
+    "glance": {
+      "title": "نظرة سريعة على اليوم",
+      "asOf": "حتى الساعة"
+    },
     "kpi": {
       "revenue": "الإيرادات",
       "appointments": "المواعيد",
       "utilization": "الاستخدام",
       "activeJobs": "الأعمال النشطة",
+      "revenueToday": "إيرادات اليوم",
+      "appointmentsToday": "مواعيد اليوم",
+      "bayUtilization": "استخدام الحجرات",
       "today": "اليوم",
       "baysOccupied": "حجرات مشغولة",
+      "baysOf": "{{occupied}} من {{total}} حجرات مشغولة",
       "fromLastWeek": "مقارنة بالأسبوع الماضي",
-      "fromYesterday": "مقارنة بالأمس"
+      "fromYesterday": "مقارنة بالأمس",
+      "vsLastWeek": "مقابل الأسبوع الماضي",
+      "vsYesterday": "مقابل الأمس"
     },
     "charts": {
       "revenueTrend": "اتجاه الإيرادات",
@@ -2269,7 +2279,8 @@
     "owner": "المالك",
     "admin": "مسؤول",
     "mechanic": "ميكانيكي",
-    "viewer": "مشاهد"
+    "viewer": "مشاهد",
+    "staff": "موظف"
   },
   "status": {
     "active": "نشط",

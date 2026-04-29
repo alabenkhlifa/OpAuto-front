@@ -66,38 +66,50 @@ import { NotificationService } from '../../../core/services/notification.service
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      background: transparent;
-      border: 1px solid var(--color-border);
+      width: 44px;
+      height: 44px;
+      border-radius: 9999px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
       color: #6b7280;
       cursor: pointer;
-      transition: all 0.2s;
+      box-shadow: 0 1px 2px rgba(17, 24, 39, 0.04);
+      transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease, color 150ms ease;
     }
 
-    .bell-btn:hover, .bell-btn.has-unread {
-      color: #FF8400;
-      border-color: rgba(255, 132, 0, 0.3);
-      background: rgba(255, 132, 0, 0.05);
+    .bell-btn:hover {
+      color: #111827;
+      border-color: #d1d5db;
+      box-shadow: 0 2px 6px rgba(17, 24, 39, 0.06);
+      transform: translateY(-1px);
+    }
+
+    .bell-btn.has-unread {
+      color: #111827;
+    }
+
+    .bell-btn:focus-visible {
+      outline: 2px solid #FF8400;
+      outline-offset: 2px;
     }
 
     .unread-badge {
       position: absolute;
-      top: -4px;
-      right: -4px;
-      min-width: 18px;
-      height: 18px;
-      border-radius: 9px;
+      top: -2px;
+      right: -2px;
+      min-width: 20px;
+      height: 20px;
+      border-radius: 9999px;
       background: #FF8400;
       color: #fff;
-      font-size: 0.65rem;
+      font-size: 0.7rem;
       font-weight: 700;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 0 4px;
+      padding: 0 5px;
       border: 2px solid #ffffff;
+      box-shadow: 0 1px 3px rgba(255, 132, 0, 0.35);
     }
 
     .notification-dropdown {

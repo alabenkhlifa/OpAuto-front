@@ -5,7 +5,6 @@ import { BaseChartDirective } from 'ng2-charts';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { forkJoin, of, Subscription } from 'rxjs';
 
-import { LanguageToggleComponent } from '../../shared/components/language-toggle/language-toggle.component';
 import { MaintenanceAlertsCardComponent } from '../../shared/components/maintenance-alerts-card/maintenance-alerts-card.component';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { TranslationService } from '../../core/services/translation.service';
@@ -48,10 +47,30 @@ interface ActiveJob {
   status: string;
 }
 
+type GlanceColor = 'orange' | 'blue' | 'green' | 'gray';
+
+interface GlanceDelta {
+  kind: 'change' | 'detail';
+  text?: string;
+  direction?: 'up' | 'down';
+  textKey?: string;
+  params?: Record<string, unknown>;
+}
+
+interface GlanceCard {
+  labelKey: string;
+  value: string;
+  unit?: string;
+  delta: GlanceDelta | null;
+  comparisonKey?: string;
+  sparkline: number[];
+  color: GlanceColor;
+}
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, BaseChartDirective, LanguageToggleComponent, MaintenanceAlertsCardComponent, TranslatePipe, OnboardingTourComponent, TooltipDirective],
+  imports: [CommonModule, BaseChartDirective, MaintenanceAlertsCardComponent, TranslatePipe, OnboardingTourComponent, TooltipDirective],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
@@ -93,8 +112,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   todayAppointments: TodayAppointment[] = [];
   activeJobs: ActiveJob[] = [];
+  cachedMaintenanceJobs: any[] = [];
 
-  kpiCards: { labelKey: string; value: string; trend: string; trendDirection: 'up' | 'down'; trendLabelKey: string; icon: string }[] = [];
+  glanceCards: GlanceCard[] = [];
+  asOfTime = '';
 
   // Charts
   revenueChartData: ChartConfiguration<'line'>['data'] = { labels: [], datasets: [] };
@@ -133,8 +154,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     // new language file is fetched; currentLanguage$ fires before, which would
     // pick up stale cached translations on language switch).
     this.languageSub = this.translationService.translations$.subscribe(() => {
+      this.updateAsOfTime();
       this.rebuildLocalizedViews();
     });
+    this.updateAsOfTime();
   }
 
   ngOnDestroy(): void {
@@ -151,21 +174,174 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   private rebuildLocalizedViews(): void {
     if (!this.cachedAppointments.length && !this.cachedInvoices.length) return;
-    this.rebuildKpiCards();
+    this.rebuildGlanceCards();
     this.buildRevenueChart(this.cachedInvoices);
     this.buildJobTypeChart(this.cachedAppointments);
     this.buildMechanicChart(this.cachedAppointments, this.cachedEmployees);
   }
 
-  private rebuildKpiCards(): void {
+  private rebuildGlanceCards(): void {
+    const lang = this.languageService.getCurrentLanguage();
+    const numLocale = lang === 'ar' ? 'ar-TN' : lang === 'fr' ? 'fr-FR' : 'en-US';
+
+    // 8-day window: index 0 = 7 days ago (same day last week), index 7 = today.
+    const WINDOW = 8;
+    const revenueSeries = this.dailyRevenueSeries(this.cachedInvoices, WINDOW);
+    const apptSeries = this.dailyAppointmentSeries(this.cachedAppointments, WINDOW);
+    const utilizationSeries = apptSeries.map(c => Math.min(100, (c / this.metrics.totalSlots) * 100));
+    const activeJobsSeries = this.dailyActiveJobsSeries(this.cachedMaintenanceJobs, WINDOW);
+
+    const lastIdx = WINDOW - 1;
     const occupiedBays = this.metrics.totalSlots - this.metrics.availableSlots;
-    const todayLabel = this.translationService.instant('dashboard.kpi.today');
-    this.kpiCards = [
-      { labelKey: 'dashboard.kpi.revenue', value: this.formatCurrency(this.metrics.todayRevenue), trend: '', trendDirection: 'up', trendLabelKey: 'dashboard.kpi.today', icon: 'revenue' },
-      { labelKey: 'dashboard.kpi.appointments', value: `${this.metrics.totalCarsToday} ${todayLabel}`, trend: '', trendDirection: 'up', trendLabelKey: '', icon: 'appointments' },
-      { labelKey: 'dashboard.kpi.utilization', value: `${Math.round(this.getCapacityPercentage())}%`, trend: `${occupiedBays}/${this.metrics.totalSlots}`, trendDirection: 'up', trendLabelKey: 'dashboard.kpi.baysOccupied', icon: 'utilization' },
-      { labelKey: 'dashboard.kpi.activeJobs', value: `${this.activeJobs.length}`, trend: '', trendDirection: 'up', trendLabelKey: '', icon: 'jobs' },
+    const revenueDelta = this.percentDelta(revenueSeries[lastIdx], revenueSeries[0]);
+    const apptDelta = this.absoluteDelta(apptSeries[lastIdx], apptSeries[0]);
+    const activeJobsToday = this.activeJobs.length;
+    const activeJobsYesterday = activeJobsSeries[lastIdx - 1] ?? activeJobsToday;
+    const activeJobsDelta = this.absoluteDelta(activeJobsToday, activeJobsYesterday);
+
+    this.glanceCards = [
+      {
+        labelKey: 'dashboard.kpi.revenueToday',
+        value: this.formatNumber(this.metrics.todayRevenue, numLocale),
+        unit: 'TND',
+        delta: revenueDelta !== null
+          ? { kind: 'change', text: this.formatSignedPercent(revenueDelta, numLocale), direction: revenueDelta >= 0 ? 'up' : 'down' }
+          : null,
+        comparisonKey: 'dashboard.kpi.vsLastWeek',
+        sparkline: revenueSeries,
+        color: 'orange',
+      },
+      {
+        labelKey: 'dashboard.kpi.appointmentsToday',
+        value: this.formatNumber(this.metrics.totalCarsToday, numLocale),
+        delta: apptDelta !== null
+          ? { kind: 'change', text: this.formatSignedNumber(apptDelta, numLocale), direction: apptDelta >= 0 ? 'up' : 'down' }
+          : null,
+        comparisonKey: 'dashboard.kpi.vsLastWeek',
+        sparkline: apptSeries,
+        color: 'blue',
+      },
+      {
+        labelKey: 'dashboard.kpi.bayUtilization',
+        value: this.formatNumber(Math.round(this.getCapacityPercentage()), numLocale),
+        unit: '%',
+        delta: {
+          kind: 'detail',
+          textKey: 'dashboard.kpi.baysOf',
+          params: { occupied: occupiedBays, total: this.metrics.totalSlots },
+        },
+        sparkline: utilizationSeries,
+        color: 'green',
+      },
+      {
+        labelKey: 'dashboard.kpi.activeJobs',
+        value: this.formatNumber(activeJobsToday, numLocale),
+        delta: activeJobsDelta !== null && activeJobsDelta !== 0
+          ? { kind: 'change', text: this.formatSignedNumber(activeJobsDelta, numLocale), direction: activeJobsDelta >= 0 ? 'up' : 'down' }
+          : null,
+        comparisonKey: 'dashboard.kpi.vsYesterday',
+        sparkline: activeJobsSeries,
+        color: 'gray',
+      },
     ];
+  }
+
+  private dailyRevenueSeries(invoices: any[], days: number): number[] {
+    const buckets: number[] = new Array(days).fill(0);
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    invoices.forEach(inv => {
+      if (inv.status !== 'paid') return;
+      const d = new Date(inv.issueDate || inv.createdAt || inv.date);
+      if (isNaN(d.getTime())) return;
+      const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const diffDays = Math.floor((startOfToday.getTime() - dayStart.getTime()) / 86400000);
+      if (diffDays >= 0 && diffDays < days) {
+        const idx = days - 1 - diffDays;
+        buckets[idx] += inv.paidAmount || inv.totalAmount || inv.total || 0;
+      }
+    });
+    return buckets;
+  }
+
+  private dailyAppointmentSeries(appointments: any[], days: number): number[] {
+    const buckets: number[] = new Array(days).fill(0);
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    appointments.forEach(a => {
+      const d = new Date(a.scheduledDate);
+      if (isNaN(d.getTime())) return;
+      const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const diffDays = Math.floor((startOfToday.getTime() - dayStart.getTime()) / 86400000);
+      if (diffDays >= 0 && diffDays < days) {
+        buckets[days - 1 - diffDays]++;
+      }
+    });
+    return buckets;
+  }
+
+  private dailyActiveJobsSeries(jobs: any[], days: number): number[] {
+    // End-of-day snapshot: a job counts on day i if it had started by the end
+    // of that day AND was not yet completed by the end of that day. Currently
+    // active jobs (no completedAt, status in activeStatuses) are treated as
+    // open-ended; jobs with neither completedAt nor an active status have an
+    // unknown end time and are skipped.
+    const activeStatuses = new Set(['in-progress', 'quality-check', 'waiting-parts', 'waiting-approval']);
+    const buckets: number[] = new Array(days).fill(0);
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    for (let i = 0; i < days; i++) {
+      const dayStart = new Date(startOfToday.getTime() - (days - 1 - i) * 86400000);
+      const dayEnd = new Date(dayStart.getTime() + 86400000);
+      buckets[i] = jobs.filter(j => {
+        const startSrc = j.startDate || j.createdAt;
+        if (!startSrc) return false;
+        const start = new Date(startSrc);
+        if (isNaN(start.getTime())) return false;
+        if (start.getTime() > dayEnd.getTime()) return false;
+
+        let endTime: number;
+        if (j.completedAt) {
+          const c = new Date(j.completedAt);
+          if (isNaN(c.getTime())) return false;
+          endTime = c.getTime();
+        } else if (activeStatuses.has(j.status)) {
+          endTime = Number.POSITIVE_INFINITY;
+        } else {
+          return false;
+        }
+        return endTime > dayEnd.getTime();
+      }).length;
+    }
+    return buckets;
+  }
+
+  private percentDelta(curr: number, prev: number): number | null {
+    if (!isFinite(curr) || !isFinite(prev)) return null;
+    if (prev === 0) return curr === 0 ? 0 : null;
+    return ((curr - prev) / Math.abs(prev)) * 100;
+  }
+
+  private absoluteDelta(curr: number, prev: number): number | null {
+    if (!isFinite(curr) || !isFinite(prev)) return null;
+    return curr - prev;
+  }
+
+  private formatSignedPercent(value: number, locale: string): string {
+    const sign = value > 0 ? '+' : value < 0 ? '−' : '';
+    const abs = Math.abs(Math.round(value));
+    return `${sign}${new Intl.NumberFormat(locale).format(abs)}%`;
+  }
+
+  private formatSignedNumber(value: number, locale: string): string {
+    const sign = value > 0 ? '+' : value < 0 ? '−' : '';
+    const abs = Math.abs(Math.round(value));
+    return `${sign}${new Intl.NumberFormat(locale).format(abs)}`;
+  }
+
+  private formatNumber(value: number, locale: string): string {
+    return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(Math.round(value));
   }
 
   formatCurrency(amount: number): string {
@@ -175,6 +351,41 @@ export class DashboardComponent implements OnInit, OnDestroy {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount);
+  }
+
+  buildSparklinePath(values: number[], width = 100, height = 36, padding = 2): { line: string; area: string } {
+    const empty = { line: '', area: '' };
+    if (!values || values.length < 2) return empty;
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const range = max - min || 1;
+    const innerH = height - padding * 2;
+    const stepX = width / (values.length - 1);
+    const pts: [number, number][] = values.map((v, i) => [
+      i * stepX,
+      padding + innerH - ((v - min) / range) * innerH,
+    ]);
+
+    let line = `M${pts[0][0].toFixed(2)},${pts[0][1].toFixed(2)}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[i - 1] || pts[i];
+      const p1 = pts[i];
+      const p2 = pts[i + 1];
+      const p3 = pts[i + 2] || p2;
+      const cp1x = p1[0] + (p2[0] - p0[0]) / 6;
+      const cp1y = p1[1] + (p2[1] - p0[1]) / 6;
+      const cp2x = p2[0] - (p3[0] - p1[0]) / 6;
+      const cp2y = p2[1] - (p3[1] - p1[1]) / 6;
+      line += ` C${cp1x.toFixed(2)},${cp1y.toFixed(2)} ${cp2x.toFixed(2)},${cp2y.toFixed(2)} ${p2[0].toFixed(2)},${p2[1].toFixed(2)}`;
+    }
+    const area = `${line} L${width.toFixed(2)},${height} L0,${height} Z`;
+    return { line, area };
+  }
+
+  private updateAsOfTime(): void {
+    const lang = this.languageService.getCurrentLanguage();
+    const locale = lang === 'ar' ? 'ar-TN' : lang === 'fr' ? 'fr-FR' : 'en-US';
+    this.asOfTime = new Date().toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' });
   }
 
   getCapacityPercentage(): number {
@@ -245,6 +456,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.cachedAppointments = appointments;
         this.cachedInvoices = invoices;
         this.cachedEmployees = employees;
+        this.cachedMaintenanceJobs = maintenanceJobs;
         const today = new Date();
         const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
         const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
@@ -319,8 +531,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
           };
         });
 
-        // KPI cards
-        this.rebuildKpiCards();
+        // Glance cards
+        this.updateAsOfTime();
+        this.rebuildGlanceCards();
 
         // Revenue chart — group invoices by month
         this.buildRevenueChart(invoices);

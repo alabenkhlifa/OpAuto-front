@@ -129,15 +129,25 @@
       "diagnosis": "Diagnosis",
       "waiting_approval": "Waiting Approval"
     },
+    "glance": {
+      "title": "Today at a glance",
+      "asOf": "As of"
+    },
     "kpi": {
       "revenue": "Revenue",
       "appointments": "Appointments",
       "utilization": "Utilization",
       "activeJobs": "Active Jobs",
+      "revenueToday": "Revenue today",
+      "appointmentsToday": "Appointments today",
+      "bayUtilization": "Bay utilization",
       "today": "today",
       "baysOccupied": "bays occupied",
+      "baysOf": "{{occupied}} of {{total}} bays occupied",
       "fromLastWeek": "from last week",
-      "fromYesterday": "from yesterday"
+      "fromYesterday": "from yesterday",
+      "vsLastWeek": "vs. last week",
+      "vsYesterday": "vs. yesterday"
     },
     "charts": {
       "revenueTrend": "Revenue Trend",
@@ -2171,7 +2181,8 @@
     "owner": "Owner",
     "admin": "Administrator",
     "mechanic": "Mechanic",
-    "viewer": "Viewer"
+    "viewer": "Viewer",
+    "staff": "Staff"
   },
   "status": {
     "active": "Active",
