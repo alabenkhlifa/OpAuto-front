@@ -37,8 +37,12 @@ export class AuthService {
     const user = this.getUserFromStorage();
 
     if (token && user) {
-      // Restore session optimistically
-      this.currentUserSubject.next(user);
+      // Restore session optimistically. Normalize cached payload so legacy
+      // shapes (uppercase role, firstName/lastName without name) match the
+      // current User contract before any consumer reads it.
+      const normalized = this.mapUserFromBackend(user);
+      localStorage.setItem(USER_KEY, JSON.stringify(normalized));
+      this.currentUserSubject.next(normalized);
       this.isAuthenticatedSubject.next(true);
 
       // Validate in background — if it fails, keep cached user (interceptor handles real expiry)
