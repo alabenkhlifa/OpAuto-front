@@ -19,20 +19,26 @@ interface PredictionsCacheEntry {
   selector: 'app-maintenance-alerts-card',
   standalone: true,
   imports: [CommonModule, TranslatePipe],
+  styles: [`
+    /* Defeat global '.text-white { color: var(--color-text-primary) !important }'
+       so the high-urgency Overdue pill keeps readable white text on red. */
+    .urgency-badge.bg-red-400,
+    .urgency-badge.bg-red-500 {
+      color: #ffffff !important;
+    }
+  `],
   template: `
     <div class="glass-card">
-      <div class="flex items-center justify-between mb-4">
-        <div>
-          <h3 class="text-lg font-semibold">
-            {{ 'maintenance.predictions.title' | translate }}
-          </h3>
-          <p class="text-sm text-gray-500 mt-1">
-            {{ 'maintenance.predictions.subtitle' | translate }}
-          </p>
-        </div>
+      <div class="mb-4">
+        <h3 class="text-lg font-semibold">
+          {{ 'maintenance.predictions.title' | translate }}
+        </h3>
+        <p class="text-sm text-gray-500 mt-1">
+          {{ 'maintenance.predictions.subtitle' | translate }}
+        </p>
         <button
           type="button"
-          class="btn-ai"
+          class="btn-ai btn-ai--block mt-3"
           [disabled]="loading()"
           (click)="refresh()">
           <ng-container *ngIf="loading(); else idleBtn">
@@ -72,7 +78,7 @@ interface PredictionsCacheEntry {
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 flex-wrap mb-2">
                 <span
-                  class="text-xs px-2 py-0.5 rounded-full font-medium"
+                  class="urgency-badge text-xs px-2 py-0.5 rounded-full font-medium"
                   [ngClass]="badgeClass(alert.urgency)">
                   {{ ('maintenance.predictions.urgency.' + alert.urgency) | translate }}
                 </span>
@@ -222,7 +228,7 @@ export class MaintenanceAlertsCardComponent implements OnInit {
   badgeClass(urgency: 'low' | 'medium' | 'high'): string {
     switch (urgency) {
       case 'high':
-        return 'bg-red-500 text-white';
+        return 'bg-red-400 text-white';
       case 'medium':
         return 'bg-amber-500 text-amber-950';
       default:

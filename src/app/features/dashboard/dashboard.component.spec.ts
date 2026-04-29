@@ -209,77 +209,54 @@ describe('DashboardComponent', () => {
 
   // ---------------------------------------------------------------
   // buildRevenueChart — exercised via loadDashboardData (private)
-  // We call ngOnInit and inspect the chart data afterward.
+  // Daily aggregation over a selectable range (default: 30 days).
   // ---------------------------------------------------------------
-  describe('revenue chart (last 12 months chronologically)', () => {
+  describe('revenue chart (daily aggregation)', () => {
     const now = new Date();
-    const ymKey = (d: Date) =>
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    const expected12MonthKeys = (): string[] => {
-      const keys: string[] = [];
-      for (let i = 11; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        keys.push(ymKey(d));
-      }
-      return keys;
-    };
-
-    it('renders 12 chronological labels ending with the current month', () => {
+    it('defaults to 30 daily buckets ending today', () => {
       mockInvoice.getInvoices.and.returnValue(of([]));
       component.ngOnInit();
 
+      expect(component.revenueRange()).toBe(30);
       const labels = component.revenueChartData.labels as string[];
-      expect(labels.length).toBe(12);
+      expect(labels.length).toBe(30);
 
-      // Build the expected localized labels and compare positionally.
-      const expectedLabels: string[] = [];
-      for (let i = 11; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        expectedLabels.push(
-          d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
-        );
+      const expected: string[] = [];
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date(startOfToday.getTime() - i * 86400000);
+        expected.push(d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' }));
       }
-      expect(labels).toEqual(expectedLabels);
-      // Last label = current month (oldest left → newest right).
-      expect(labels[11]).toBe(expectedLabels[11]);
+      expect(labels).toEqual(expected);
     });
 
-    it('with NO invoices, all 12 data points are 0 (no "No data" placeholder)', () => {
+    it('with NO invoices, all 30 data points are 0', () => {
       mockInvoice.getInvoices.and.returnValue(of([]));
       component.ngOnInit();
 
-      const datasets = component.revenueChartData.datasets;
-      expect(datasets.length).toBe(1);
-      const data = datasets[0].data as number[];
-      expect(data.length).toBe(12);
+      const data = component.revenueChartData.datasets[0].data as number[];
+      expect(data.length).toBe(30);
       expect(data.every((v) => v === 0)).toBe(true);
-
-      const labels = component.revenueChartData.labels as string[];
-      expect(labels.includes('No data')).toBe(false);
     });
 
-    it('aggregates invoices by YYYY-MM and places totals in the correct slot', () => {
-      // Pick an invoice that lands in the current month and one in 2 months ago.
-      const currentMonth = new Date(now.getFullYear(), now.getMonth(), 15);
-      const twoMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 10);
+    it('places invoice totals in the correct daily slot', () => {
+      const today = new Date(startOfToday);
+      const fiveDaysAgo = new Date(startOfToday.getTime() - 5 * 86400000);
 
       mockInvoice.getInvoices.and.returnValue(of([
-        { issueDate: currentMonth.toISOString(), totalAmount: 100 } as any,
-        { issueDate: currentMonth.toISOString(), totalAmount: 50 } as any,
-        { issueDate: twoMonthsAgo.toISOString(), totalAmount: 200 } as any,
+        { issueDate: today.toISOString(), totalAmount: 100 } as any,
+        { issueDate: today.toISOString(), totalAmount: 50 } as any,
+        { issueDate: fiveDaysAgo.toISOString(), totalAmount: 200 } as any,
       ]));
 
       component.ngOnInit();
 
       const data = component.revenueChartData.datasets[0].data as number[];
-      // Newest is at index 11 (current month) → 100 + 50 = 150
-      expect(data[11]).toBe(150);
-      // Two months ago → index 9 (since 11 = current, 10 = last month, 9 = two months ago)
-      expect(data[9]).toBe(200);
-      // All other slots should be 0.
+      expect(data[29]).toBe(150);
+      expect(data[24]).toBe(200);
       data.forEach((v, idx) => {
-        if (idx !== 11 && idx !== 9) expect(v).toBe(0);
+        if (idx !== 29 && idx !== 24) expect(v).toBe(0);
       });
     });
 
@@ -293,21 +270,62 @@ describe('DashboardComponent', () => {
       expect(data.every((v) => v === 0)).toBe(true);
     });
 
-    it('uses French month labels when language is fr', () => {
+    it('uses French day-month labels when language is fr', () => {
       mockLanguage.getCurrentLanguage.and.returnValue('fr');
       mockInvoice.getInvoices.and.returnValue(of([]));
 
       component.ngOnInit();
 
       const labels = component.revenueChartData.labels as string[];
-      expect(labels.length).toBe(12);
-      // Build expected with the same locale used in the component.
+      expect(labels.length).toBe(30);
       const expected: string[] = [];
-      for (let i = 11; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        expected.push(d.toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' }));
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date(startOfToday.getTime() - i * 86400000);
+        expected.push(d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }));
       }
       expect(labels).toEqual(expected);
+    });
+
+    it('setRevenueRange(7) rebuilds chart with 7 daily buckets', () => {
+      mockInvoice.getInvoices.and.returnValue(of([]));
+      component.ngOnInit();
+
+      component.setRevenueRange(7);
+
+      expect(component.revenueRange()).toBe(7);
+      const labels = component.revenueChartData.labels as string[];
+      expect(labels.length).toBe(7);
+      const data = component.revenueChartData.datasets[0].data as number[];
+      expect(data.length).toBe(7);
+    });
+
+    it('setRevenueRange(90) rebuilds chart with 90 daily buckets', () => {
+      mockInvoice.getInvoices.and.returnValue(of([]));
+      component.ngOnInit();
+
+      component.setRevenueRange(90);
+
+      expect(component.revenueRange()).toBe(90);
+      expect((component.revenueChartData.labels as string[]).length).toBe(90);
+      expect((component.revenueChartData.datasets[0].data as number[]).length).toBe(90);
+    });
+
+    it('setRevenueRange is a no-op when range matches current value', () => {
+      mockInvoice.getInvoices.and.returnValue(of([]));
+      component.ngOnInit();
+
+      const prevData = component.revenueChartData;
+      component.setRevenueRange(30);
+      expect(component.revenueChartData).toBe(prevData);
+    });
+
+    it('revenueRangeSubtitleParams reflects current range', () => {
+      mockInvoice.getInvoices.and.returnValue(of([]));
+      component.ngOnInit();
+
+      expect(component.revenueRangeSubtitleParams()).toEqual({ days: 30 });
+      component.setRevenueRange(7);
+      expect(component.revenueRangeSubtitleParams()).toEqual({ days: 7 });
     });
   });
 

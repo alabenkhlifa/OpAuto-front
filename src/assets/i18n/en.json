@@ -150,7 +150,11 @@
       "vsYesterday": "vs. yesterday"
     },
     "charts": {
-      "revenueTrend": "Revenue Trend",
+      "revenueTrend": "Revenue trend",
+      "revenueTrendSubtitle": "Last {{days}} days · Daily revenue (TND)",
+      "range7d": "7d",
+      "range30d": "30d",
+      "range90d": "90d",
       "jobTypeDistribution": "Job Type Distribution",
       "mechanicPerformance": "Mechanic Performance",
       "completed": "Completed",

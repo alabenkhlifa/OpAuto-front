@@ -151,6 +151,10 @@
     },
     "charts": {
       "revenueTrend": "اتجاه الإيرادات",
+      "revenueTrendSubtitle": "آخر {{days}} يوم · الإيراد اليومي (د.ت)",
+      "range7d": "٧ أيام",
+      "range30d": "٣٠ يومًا",
+      "range90d": "٩٠ يومًا",
       "jobTypeDistribution": "توزيع أنواع العمل",
       "mechanicPerformance": "أداء الميكانيكيين",
       "completed": "مكتمل",

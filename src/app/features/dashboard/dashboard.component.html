@@ -156,22 +156,51 @@
     </div>
   </div>
 
-  <!-- Predictive Maintenance Alerts (fleet-wide) -->
-  <div class="section-container mb-6">
-    <app-maintenance-alerts-card></app-maintenance-alerts-card>
-  </div>
-
-  <!-- Charts Row 1: Revenue Trend (wide) -->
+  <!-- Charts Row 1: Revenue Trend + Predictive Maintenance Alerts -->
   <div class="chart-row">
-    <div class="glass-card chart-card" style="flex: 2;">
-      <h3 class="chart-title">{{ 'dashboard.charts.revenueTrend' | translate }}</h3>
-      <div class="chart-container">
+    <div class="glass-card chart-card revenue-card">
+      <div class="revenue-header">
+        <div class="revenue-titles">
+          <h3 class="chart-title revenue-title">{{ 'dashboard.charts.revenueTrend' | translate }}</h3>
+          <p class="revenue-subtitle">{{ 'dashboard.charts.revenueTrendSubtitle' | translate:revenueRangeSubtitleParams() }}</p>
+        </div>
+        <div class="range-toggle" role="tablist" aria-label="Revenue range">
+          <button type="button"
+                  role="tab"
+                  class="range-toggle__btn"
+                  [class.range-toggle__btn--active]="revenueRange() === 7"
+                  [attr.aria-selected]="revenueRange() === 7"
+                  (click)="setRevenueRange(7)">
+            {{ 'dashboard.charts.range7d' | translate }}
+          </button>
+          <button type="button"
+                  role="tab"
+                  class="range-toggle__btn"
+                  [class.range-toggle__btn--active]="revenueRange() === 30"
+                  [attr.aria-selected]="revenueRange() === 30"
+                  (click)="setRevenueRange(30)">
+            {{ 'dashboard.charts.range30d' | translate }}
+          </button>
+          <button type="button"
+                  role="tab"
+                  class="range-toggle__btn"
+                  [class.range-toggle__btn--active]="revenueRange() === 90"
+                  [attr.aria-selected]="revenueRange() === 90"
+                  (click)="setRevenueRange(90)">
+            {{ 'dashboard.charts.range90d' | translate }}
+          </button>
+        </div>
+      </div>
+      <div class="chart-container revenue-chart-container">
         <canvas baseChart
           [data]="revenueChartData"
           [options]="revenueChartOptions"
           type="line">
         </canvas>
       </div>
+    </div>
+    <div class="chart-side">
+      <app-maintenance-alerts-card></app-maintenance-alerts-card>
     </div>
   </div>
 

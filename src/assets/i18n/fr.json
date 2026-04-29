@@ -151,6 +151,10 @@
     },
     "charts": {
       "revenueTrend": "Tendance des revenus",
+      "revenueTrendSubtitle": "{{days}} derniers jours · Revenu quotidien (TND)",
+      "range7d": "7j",
+      "range30d": "30j",
+      "range90d": "90j",
       "jobTypeDistribution": "Répartition par type de travail",
       "mechanicPerformance": "Performance des mécaniciens",
       "completed": "Terminé",

@@ -375,3 +375,6 @@ BUG-063, 065, 066, 067, 068, 069, 071, 073, 074 exercised end-to-end. BUG-089/09
 
 ## Dashboard Quick Actions redesign (2026-04-29)
 - [x] Quick Actions tiles redesigned: white card + soft pastel icon (orange/indigo/slate/emerald), "Most common entry points" subtitle. Updated en/fr/ar copy to sentence case + tighter wording ("Book a future service slot", "Create bill for a completed job")
+
+## Dashboard Revenue Trend redesign (2026-04-29)
+- [x] Revenue Trend chart switched from monthly (last 12 months) to daily aggregation with 7d/30d/90d segmented range toggle (default 30d). Smooth orange area chart with vertical gradient fill, k-formatted y-axis ticks (e.g. "1.6k"), localized day-month x-axis labels. Subtitle "Last {{days}} days · Daily revenue (TND)" reflects active range. Predictive Maintenance Alerts ("Upcoming Service Reminders") moved into the same row (2fr/1fr grid) instead of its own block — uses the empty space next to the chart.

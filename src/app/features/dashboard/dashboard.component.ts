@@ -118,14 +118,48 @@ export class DashboardComponent implements OnInit, OnDestroy {
   asOfTime = '';
 
   // Charts
+  revenueRange = signal<7 | 30 | 90>(30);
   revenueChartData: ChartConfiguration<'line'>['data'] = { labels: [], datasets: [] };
   revenueChartOptions: ChartConfiguration<'line'>['options'] = {
-    responsive: true, maintainAspectRatio: false,
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { intersect: false, mode: 'index' },
     scales: {
-      x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
-      y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', callback: (v) => v + ' TND' } }
+      x: {
+        grid: { display: false },
+        border: { display: false },
+        ticks: {
+          color: '#9ca3af',
+          font: { size: 12 },
+          maxRotation: 0,
+          autoSkip: true,
+          autoSkipPadding: 16,
+        },
+      },
+      y: {
+        beginAtZero: true,
+        grid: { color: 'rgba(17, 24, 39, 0.06)' },
+        border: { display: false },
+        ticks: {
+          color: '#9ca3af',
+          font: { size: 12 },
+          callback: (v) => this.formatRevenueTick(Number(v)),
+        },
+      },
     },
-    plugins: { legend: { display: false } }
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#111827',
+        titleColor: '#ffffff',
+        bodyColor: '#ffffff',
+        padding: 10,
+        displayColors: false,
+        callbacks: {
+          label: (ctx) => `${this.formatNumber(Number(ctx.parsed.y), this.numberLocale())} TND`,
+        },
+      },
+    },
   };
 
   jobTypeChartData: ChartConfiguration<'doughnut'>['data'] = { labels: [], datasets: [] };
@@ -178,6 +212,29 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.buildRevenueChart(this.cachedInvoices);
     this.buildJobTypeChart(this.cachedAppointments);
     this.buildMechanicChart(this.cachedAppointments, this.cachedEmployees);
+  }
+
+  setRevenueRange(days: 7 | 30 | 90): void {
+    if (this.revenueRange() === days) return;
+    this.revenueRange.set(days);
+    this.buildRevenueChart(this.cachedInvoices);
+  }
+
+  revenueRangeSubtitleParams = computed(() => ({ days: this.revenueRange() }));
+
+  private numberLocale(): string {
+    const lang = this.languageService.getCurrentLanguage();
+    return lang === 'ar' ? 'ar-TN' : lang === 'fr' ? 'fr-FR' : 'en-US';
+  }
+
+  private formatRevenueTick(value: number): string {
+    const locale = this.numberLocale();
+    if (Math.abs(value) >= 1000) {
+      const k = value / 1000;
+      const formatted = new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(k);
+      return `${formatted}k`;
+    }
+    return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(value);
   }
 
   private rebuildGlanceCards(): void {
@@ -551,42 +608,55 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   private buildRevenueChart(invoices: any[]): void {
-    // Sum revenue by year-month key, then render the last 12 months chronologically
-    // (oldest on the left, newest on the right).
-    const totals = new Map<string, number>();
+    const days = this.revenueRange();
+    const locale = this.numberLocale();
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const totals: number[] = new Array(days).fill(0);
     invoices.forEach(inv => {
       const d = new Date(inv.issueDate || inv.createdAt || inv.date);
       if (isNaN(d.getTime())) return;
-      const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      totals.set(ym, (totals.get(ym) || 0) + (inv.totalAmount || inv.total || 0));
+      const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const diffDays = Math.floor((startOfToday.getTime() - dayStart.getTime()) / 86400000);
+      if (diffDays >= 0 && diffDays < days) {
+        totals[days - 1 - diffDays] += inv.totalAmount || inv.total || 0;
+      }
     });
 
-    const lang = this.languageService.getCurrentLanguage();
-    const locale = lang === 'ar' ? 'ar-TN' : lang === 'fr' ? 'fr-FR' : 'en-US';
-    const months: { ym: string; label: string }[] = [];
-    const now = new Date();
-    for (let i = 11; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      months.push({
-        ym: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
-        label: d.toLocaleDateString(locale, { month: 'short', year: '2-digit' }),
-      });
+    const labels: string[] = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(startOfToday.getTime() - i * 86400000);
+      labels.push(d.toLocaleDateString(locale, { day: 'numeric', month: 'short' }));
     }
-
-    const labels = months.map(m => m.label);
-    const data = months.map(m => totals.get(m.ym) || 0);
-    const hasData = data.some(v => v > 0);
 
     this.revenueChartData = {
       labels,
       datasets: [{
-        data: hasData ? data : labels.map(() => 0),
+        data: totals,
         label: this.translationService.instant('dashboard.kpi.revenue'),
-        fill: true, tension: 0.4,
-        borderColor: '#FF8400', backgroundColor: 'rgba(255, 132, 0, 0.1)',
-        pointBackgroundColor: '#FF8400', pointBorderColor: '#FF8400',
-        pointHoverBackgroundColor: '#fff', pointHoverBorderColor: '#FF8400',
-      }]
+        fill: true,
+        tension: 0.45,
+        cubicInterpolationMode: 'monotone',
+        borderColor: '#FF8400',
+        borderWidth: 2.5,
+        backgroundColor: (ctx) => {
+          const chart = ctx.chart;
+          const { ctx: c, chartArea } = chart;
+          if (!chartArea) return 'rgba(255, 132, 0, 0.18)';
+          const gradient = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+          gradient.addColorStop(0, 'rgba(255, 132, 0, 0.32)');
+          gradient.addColorStop(1, 'rgba(255, 132, 0, 0.04)');
+          return gradient;
+        },
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        pointBackgroundColor: '#FF8400',
+        pointBorderColor: '#ffffff',
+        pointBorderWidth: 2,
+        pointHoverBackgroundColor: '#FF8400',
+        pointHoverBorderColor: '#ffffff',
+      }],
     };
   }
 
