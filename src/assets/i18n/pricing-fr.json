@@ -1,0 +1,109 @@
+{
+  "pricing": {
+    "hero": {
+      "title": "Choose the Perfect Plan for Your Garage",
+      "subtitle": "Transparent pricing designed for Tunisian garages. From solo mechanics to large operations, we have a plan that fits your business.",
+      "benefit1": "14-day free trial",
+      "benefit2": "Cancel anytime",
+      "benefit3": "No setup fees"
+    },
+    "plans": {
+      "title": "Simple, Transparent Pricing",
+      "subtitle": "All plans include our core features with different limits to match your business size"
+    },
+    "mostPopular": "Most Popular",
+    "currentPlan": "Current Plan",
+    "choosePlan": "Choose Plan",
+    "perYear": "/year",
+    "month": "month",
+    "targetRevenue": "Target Revenue",
+    "costAsPercentage": "Cost as % of Revenue",
+    "perfectFor": "Perfect for",
+    "included": "What's included",
+    "featureComparison": "Compare All Features",
+    "featureComparisonTable": "Feature comparison table showing all plans",
+    "features": "Features",
+    "tierCard": "pricing tier option",
+    "valueProps": {
+      "solo": {
+        "independent": "Independent mechanics",
+        "mobile": "Mobile mechanics",
+        "homebased": "Home-based operations",
+        "singleowner": "Single-owner garages"
+      },
+      "starter": {
+        "smallteam": "Small teams (1-3 employees)",
+        "growing": "Growing neighborhood garages",
+        "neighborhood": "Established local garages",
+        "coordination": "Need team coordination"
+      },
+      "professional": {
+        "large": "Large garages (4+ employees)",
+        "multibay": "Multi-bay operations",
+        "inventory": "Complex inventory needs",
+        "enterprise": "Enterprise-level features"
+      }
+    },
+    "features": {
+      "users": "User Accounts",
+      "cars": "Car Database",
+      "appointments": "Appointments",
+      "textLogs": "Text-based Logs",
+      "photos": "Photo Documentation",
+      "sms": "SMS Notifications",
+      "inventory": "Inventory Management",
+      "reporting": "Reporting & Analytics",
+      "approvals": "Internal Approvals",
+      "export": "Data Export"
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "billing": {
+        "question": "How does billing work?",
+        "answer": "All plans are billed annually upfront. We accept bank transfers, checks, and Poste Tunisienne payments. Prices are locked for 2-year commitments."
+      },
+      "cancellation": {
+        "question": "Can I cancel anytime?",
+        "answer": "Yes, you can cancel at any time. We offer a 14-day trial period with full refund if not satisfied. No cancellation fees."
+      },
+      "upgrade": {
+        "question": "Can I upgrade my plan?",
+        "answer": "Absolutely! You can upgrade to a higher tier anytime. We'll pro-rate the billing and you get immediate access to new features."
+      },
+      "support": {
+        "question": "What support is included?",
+        "answer": "Solo: Email support (48h response), Starter: Email support (24h response), Professional: Priority email + phone support (4h response)."
+      },
+      "customization": {
+        "question": "Do you offer custom solutions?",
+        "answer": "Yes! For larger operations with specific needs, we offer custom pricing and features. Contact us to discuss your requirements."
+      },
+      "data": {
+        "question": "What about my data?",
+        "answer": "Your data is always yours. We provide data export capabilities and guarantee 99.9% uptime. All data is securely encrypted and backed up daily."
+      }
+    },
+    "trust": {
+      "title": "Why Choose OpAuto?",
+      "security": {
+        "title": "Bank-level Security",
+        "description": "256-bit SSL encryption, daily backups, and SOC 2 compliance ensure your data is always safe."
+      },
+      "uptime": {
+        "title": "99.9% Uptime",
+        "description": "Reliable cloud infrastructure with guaranteed uptime and 24/7 monitoring for peace of mind."
+      },
+      "support": {
+        "title": "Local Support",
+        "description": "Tunisian-based support team that understands your business needs and local regulations."
+      }
+    },
+    "contact": {
+      "title": "Need Help Choosing?",
+      "description": "Our team is here to help you find the perfect plan for your garage. Get personalized recommendations based on your specific needs.",
+      "email": "Email Us",
+      "phone": "Call Us",
+      "enterprise": "Enterprise customers: Contact us for volume discounts and custom features"
+    }
+  }
+}

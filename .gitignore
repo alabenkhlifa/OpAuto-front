@@ -41,6 +41,14 @@ testem.log
 
 # Claude Code
 .claude/settings.local.json
+.claude/scheduled_tasks.lock
+
+# i18n dev artifacts (backups / WIP splits)
+src/assets/i18n/*-backup.json
+src/assets/i18n/*-extended.json
+src/assets/i18n/*-main.json
+src/assets/i18n/*-temp.json
+src/assets/i18n/*.json.tmp
 
 # Testing / Browser automation
 /.playwright-mcp/
