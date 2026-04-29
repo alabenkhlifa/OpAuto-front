@@ -533,6 +533,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return m > 0 ? `${h}h ${m}m` : `${h}h`;
   }
 
+  parsePlate(plate: string | null | undefined): { left: string; right: string } {
+    if (!plate) return { left: '', right: '' };
+    const groups = plate.match(/\d+/g) ?? [];
+    if (groups.length >= 2) {
+      return { left: groups[0]!, right: groups[groups.length - 1]! };
+    }
+    if (groups.length === 1) {
+      const d = groups[0]!;
+      if (d.length > 4) return { left: d.slice(0, -4), right: d.slice(-4) };
+      return { left: '', right: d };
+    }
+    return { left: '', right: plate };
+  }
+
   getRemainingAppointmentsCount(): number {
     const closed = new Set(['completed', 'cancelled', 'no_show', 'delayed']);
     return this.todayAppointments.filter(a => !closed.has(a.status)).length;

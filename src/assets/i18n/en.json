@@ -33,7 +33,8 @@
     "price": "Price",
     "quantity": "Quantity",
     "notes": "Notes",
-    "clearFilters": "Clear Filters"
+    "clearFilters": "Clear Filters",
+    "filtersActive": "Filters Active"
   },
   "navigation": {
     "main": "Main",

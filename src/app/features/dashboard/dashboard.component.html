@@ -119,7 +119,11 @@
                 <h4 class="schedule-row__customer-name">{{ appointment.customerName }}</h4>
                 <p class="schedule-row__car-info">{{ appointment.year ? appointment.carModel + ' · ' + appointment.year : appointment.carModel }}</p>
               </div>
-              <span class="schedule-row__plate">{{ appointment.licensePlate }}</span>
+              @let parsedPlate = parsePlate(appointment.licensePlate);
+              <span class="schedule-row__plate" [attr.aria-label]="appointment.licensePlate">
+                <span class="schedule-row__plate-number schedule-row__plate-number--left">{{ parsedPlate.left }}</span>
+                <span class="schedule-row__plate-number schedule-row__plate-number--right">{{ parsedPlate.right }}</span>
+              </span>
               <span class="schedule-row__service">{{ appointment.serviceType }}</span>
               <span class="schedule-row__status">
                 <span class="schedule-row__status-dot" aria-hidden="true"></span>

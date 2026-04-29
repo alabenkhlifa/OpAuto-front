@@ -33,7 +33,8 @@
     "price": "السعر",
     "quantity": "الكمية",
     "notes": "ملاحظات",
-    "clearFilters": "مسح المرشحات"
+    "clearFilters": "مسح المرشحات",
+    "filtersActive": "المرشحات نشطة"
   },
   "navigation": {
     "main": "الرئيسي",
