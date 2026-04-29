@@ -562,13 +562,22 @@ export class ProfileComponent implements OnInit, OnDestroy {
     });
   }
 
+  private formsInitialized = false;
+
   private loadCurrentUser() {
     this.authService.currentUser$
       .pipe(takeUntil(this.destroy$))
       .subscribe(user => {
         if (user) {
           this.currentUser.set(user);
-          this.populateForms(user);
+          // Populate the form once on first load, and on subsequent emits only
+          // when the user hasn't started editing — otherwise an in-flight
+          // session update (e.g. our own profile PUT broadcasting back through
+          // AuthService) would wipe values the user just typed.
+          if (!this.formsInitialized || (this.profileForm.pristine && this.preferencesForm.pristine)) {
+            this.populateForms(user);
+            this.formsInitialized = true;
+          }
         } else {
           this.router.navigate(['/auth']);
         }
@@ -608,20 +617,23 @@ export class ProfileComponent implements OnInit, OnDestroy {
       const firstName = firstSpace === -1 ? fullName : fullName.slice(0, firstSpace);
       const lastName = firstSpace === -1 ? '' : fullName.slice(firstSpace + 1);
 
-      this.http.put('/users/me', {
+      this.http.put<any>('/users/me', {
         firstName,
         lastName,
         email: formValue.email,
         phone: formValue.phoneNumber || undefined,
       }).pipe(takeUntil(this.destroy$)).subscribe({
-        next: () => {
+        next: (response) => {
           this.isLoading.set(false);
           this.successMessage.set('Profile updated successfully');
           this.clearSuccessMessage();
-          const user = this.currentUser();
-          if (user) {
-            this.currentUser.set({ ...user, name: fullName, email: formValue.email, phoneNumber: formValue.phoneNumber || '' });
-          }
+          const fresh = this.authService.updateCurrentUser(response);
+          if (fresh) this.currentUser.set(fresh);
+          // Reset dirty/touched state so the form reflects the saved values
+          // and stale validation hints (e.g. an empty garageName flagged earlier)
+          // disappear after a successful round-trip.
+          this.profileForm.markAsPristine();
+          this.profileForm.markAsUntouched();
         },
         error: (err) => {
           this.isLoading.set(false);

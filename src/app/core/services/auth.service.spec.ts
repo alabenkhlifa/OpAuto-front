@@ -119,4 +119,49 @@ describe('AuthService — cached user normalization', () => {
     expect(user).toBeNull();
     httpMock.expectNone('/auth/profile');
   });
+
+  it('updateCurrentUser merges a backend payload, broadcasts, and persists', async () => {
+    localStorage.setItem(ACCESS_TOKEN_KEY, 'fake-token');
+    localStorage.setItem(USER_KEY, JSON.stringify({
+      id: '1',
+      email: 'owner@autotech.tn',
+      name: 'Old Name',
+      role: 'owner',
+      garageName: 'AutoTech',
+      isActive: true,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    }));
+
+    const { service, httpMock: hm } = bootstrap();
+    httpMock = hm;
+    httpMock.expectOne('/auth/profile').flush(null, { status: 401, statusText: 'Unauthorized' });
+
+    const broadcast: Array<string | undefined> = [];
+    service.currentUser$.subscribe(u => broadcast.push(u?.name));
+
+    const fresh = service.updateCurrentUser({
+      id: '1',
+      email: 'owner@autotech.tn',
+      firstName: 'New',
+      lastName: 'Name',
+      role: 'OWNER',
+    });
+
+    expect(fresh!.name).toBe('New Name');
+    expect(fresh!.role).toBe(UserRole.OWNER);
+    expect(broadcast[broadcast.length - 1]).toBe('New Name');
+
+    const stored = JSON.parse(localStorage.getItem(USER_KEY)!);
+    expect(stored.name).toBe('New Name');
+    expect(stored.role).toBe('owner');
+    // garageName from prior state should survive — payload didn't carry it
+    expect(stored.garageName).toBe('AutoTech');
+  });
+
+  it('updateCurrentUser is a no-op when given null', async () => {
+    const { service, httpMock: hm } = bootstrap();
+    httpMock = hm;
+    expect(service.updateCurrentUser(null)).toBeNull();
+  });
 });

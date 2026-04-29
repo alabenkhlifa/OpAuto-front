@@ -149,6 +149,22 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 
+  /**
+   * Push a fresh user payload (e.g. the response from PUT /users/me) into the
+   * shared session so every consumer of `currentUser$` updates immediately —
+   * including the top-bar pill — and the cached copy stays in sync.
+   * Accepts either backend shape (firstName/lastName/role uppercase) or an
+   * already-mapped User; `mapUserFromBackend` is idempotent for both.
+   */
+  updateCurrentUser(payload: any): User | null {
+    if (!payload) return null;
+    const merged = { ...this.currentUserSubject.value, ...payload };
+    const fresh = this.mapUserFromBackend(merged);
+    localStorage.setItem(USER_KEY, JSON.stringify(fresh));
+    this.currentUserSubject.next(fresh);
+    return fresh;
+  }
+
   isLoggedIn(): boolean {
     return this.isAuthenticatedSubject.value;
   }
