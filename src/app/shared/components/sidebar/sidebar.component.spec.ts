@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { Router, NavigationEnd } from '@angular/router';
 import { signal } from '@angular/core';
 import { Subject, of } from 'rxjs';
@@ -171,6 +171,96 @@ describe('SidebarComponent', () => {
       expect(mockRouter.navigate).toHaveBeenCalledWith(['/modules']);
       // Since the module is locked, isExpanded must NOT have flipped.
       expect(!!maintenance.isExpanded).toBe(before);
+    });
+  });
+
+  // ---------------------------------------------------------------
+  // Badge counter for "Pending Payment" sidebar item.
+  //
+  // Bug history: the sidebar previously counted PENDING + OVERDUE,
+  // which mismatched the destination /invoices/pending page (whose
+  // "Pending" tab counts SENT/VIEWED only — OVERDUE has its own tab).
+  // The badge MUST equal exactly the number the user sees on the page.
+  // ---------------------------------------------------------------
+  describe('invoices-pending badge counter', () => {
+    function flushAllPendingHttp(httpMock: HttpTestingController) {
+      // The component fires multiple GETs (/appointments, /maintenance,
+      // /invoices, /approvals). We only care about /invoices for this
+      // assertion but must drain the others so the test exits cleanly.
+      const drain = (url: string, body: any[]) => {
+        const reqs = httpMock.match(url);
+        reqs.forEach((r) => r.flush(body));
+      };
+      drain('/appointments', []);
+      drain('/maintenance', []);
+      drain('/approvals', []);
+    }
+
+    it('counts only SENT/VIEWED invoices (not OVERDUE, not PAID)', () => {
+      const httpMock = TestBed.inject(HttpTestingController);
+      fixture.detectChanges(); // triggers ngOnInit -> loadBadgeCounts
+
+      const invoiceReq = httpMock.expectOne('/invoices');
+      expect(invoiceReq.request.method).toBe('GET');
+
+      // Mix mirroring real-world data: 3 SENT, 1 VIEWED (=4 pending),
+      // 5 OVERDUE (must be EXCLUDED), 2 PAID, 1 DRAFT, 1 CANCELLED.
+      invoiceReq.flush([
+        { id: '1', status: 'SENT' },
+        { id: '2', status: 'SENT' },
+        { id: '3', status: 'SENT' },
+        { id: '4', status: 'VIEWED' },
+        { id: '5', status: 'OVERDUE' },
+        { id: '6', status: 'OVERDUE' },
+        { id: '7', status: 'OVERDUE' },
+        { id: '8', status: 'OVERDUE' },
+        { id: '9', status: 'OVERDUE' },
+        { id: '10', status: 'PAID' },
+        { id: '11', status: 'PAID' },
+        { id: '12', status: 'DRAFT' },
+        { id: '13', status: 'CANCELLED' },
+      ]);
+
+      flushAllPendingHttp(httpMock);
+
+      // SENT(3) + VIEWED(1) = 4. NOT 9 (which would include OVERDUE).
+      expect(component.getBadge('invoices-pending')).toBe(4);
+      httpMock.verify();
+    });
+
+    it('returns null badge when there are zero SENT/VIEWED invoices, even with OVERDUE present', () => {
+      const httpMock = TestBed.inject(HttpTestingController);
+      fixture.detectChanges();
+
+      const invoiceReq = httpMock.expectOne('/invoices');
+      invoiceReq.flush([
+        { id: '1', status: 'OVERDUE' },
+        { id: '2', status: 'OVERDUE' },
+        { id: '3', status: 'PAID' },
+      ]);
+
+      flushAllPendingHttp(httpMock);
+
+      // getBadge returns null for zero counts (so the badge isn't rendered).
+      expect(component.getBadge('invoices-pending')).toBeNull();
+      httpMock.verify();
+    });
+
+    it('does not load invoice badge for non-owners', () => {
+      mockAuth.isOwner.and.returnValue(false);
+      const httpMock = TestBed.inject(HttpTestingController);
+      fixture.detectChanges();
+
+      // Owner-only endpoints must not be hit.
+      httpMock.expectNone('/invoices');
+      httpMock.expectNone('/approvals');
+
+      // Non-owner endpoints still drain.
+      httpMock.match('/appointments').forEach((r) => r.flush([]));
+      httpMock.match('/maintenance').forEach((r) => r.flush([]));
+
+      expect(component.getBadge('invoices-pending')).toBeNull();
+      httpMock.verify();
     });
   });
 });

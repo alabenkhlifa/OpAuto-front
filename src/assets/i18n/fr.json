@@ -97,7 +97,9 @@
         "one": "{{count}} rendez-vous programmé",
         "other": "{{count}} rendez-vous programmés"
       },
-      "appointments": "rendez-vous"
+      "appointments": "rendez-vous",
+      "summary": "{{total}} rendez-vous · {{remaining}} restants",
+      "openCalendar": "Ouvrir le calendrier"
     },
     "todayStatus": {
       "title": "État d'aujourd'hui",
@@ -127,7 +129,8 @@
       "quality_check": "Contrôle qualité",
       "waiting_parts": "En attente de pièces",
       "diagnosis": "Diagnostic",
-      "waiting_approval": "En attente d'approbation"
+      "waiting_approval": "En attente d'approbation",
+      "no_show": "Absent"
     },
     "glance": {
       "title": "Aperçu du jour",
@@ -197,9 +200,11 @@
         "brake_service": "Plaquettes & disques",
         "brakes": "Plaquettes & disques",
         "engine-diagnostic": "Diagnostic moteur",
+        "engine-diagnostics": "Diagnostic moteur",
         "diagnostic": "Diagnostic moteur",
         "diagnostics": "Diagnostic moteur",
         "tire-rotation": "Permutation pneus",
+        "tire-replacement": "Remplacement de pneus",
         "tires": "Permutation pneus",
         "tire_service": "Permutation pneus",
         "alignment": "Géométrie des roues",
@@ -208,6 +213,8 @@
         "ac-service": "Climatisation",
         "ac_service": "Climatisation",
         "battery": "Batterie",
+        "electrical": "Électricité",
+        "transmission": "Transmission",
         "inspection": "Contrôle technique",
         "general-service": "Entretien général",
         "general_service": "Entretien général",

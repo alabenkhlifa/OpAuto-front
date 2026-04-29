@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick, discardPeriodicTasks } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
@@ -852,6 +852,62 @@ describe('DashboardComponent', () => {
       const fr = component.formatRatingDisplay(4.9);
       expect(['4.9', '4,9']).toContain(fr);
     });
+  });
+
+  // ---------------------------------------------------------------
+  // asOfTime — live tick (Option B: refresh every 60s)
+  // ---------------------------------------------------------------
+  describe('asOfTime live tick', () => {
+    it('initializes asOfTime to the current locale time on ngOnInit', () => {
+      mockLanguage.getCurrentLanguage.and.returnValue('en');
+      component.ngOnInit();
+
+      // en-US locale, hour: numeric, minute: 2-digit (e.g. "6:08 PM").
+      // Just assert it's a non-empty string in roughly the expected shape.
+      expect(component.asOfTime).toMatch(/\d{1,2}:\d{2}/);
+    });
+
+    it('refreshes asOfTime every 60 seconds via interval()', fakeAsync(() => {
+      mockLanguage.getCurrentLanguage.and.returnValue('en');
+      // Spy on the private updateAsOfTime to count timer-driven invocations.
+      const spy = spyOn<any>(component, 'updateAsOfTime').and.callThrough();
+
+      component.ngOnInit();
+      const callsAfterInit = spy.calls.count();
+      // ngOnInit calls updateAsOfTime synchronously twice (once from
+      // translations$ subscribe, once explicitly). After the interval starts,
+      // it should NOT have fired yet at t=0.
+      expect(callsAfterInit).toBeGreaterThan(0);
+
+      tick(59_999);
+      expect(spy.calls.count()).toBe(callsAfterInit); // not yet
+
+      tick(1); // crosses the 60s boundary
+      expect(spy.calls.count()).toBe(callsAfterInit + 1);
+
+      tick(60_000);
+      expect(spy.calls.count()).toBe(callsAfterInit + 2);
+
+      discardPeriodicTasks();
+    }));
+
+    it('stops ticking after the component is destroyed (takeUntilDestroyed)', fakeAsync(() => {
+      mockLanguage.getCurrentLanguage.and.returnValue('en');
+      const spy = spyOn<any>(component, 'updateAsOfTime').and.callThrough();
+
+      component.ngOnInit();
+      const callsAfterInit = spy.calls.count();
+
+      // Trigger Angular's DestroyRef via the test fixture so
+      // takeUntilDestroyed completes the stream.
+      fixture.destroy();
+
+      tick(60_000);
+      tick(60_000);
+
+      // No further updateAsOfTime calls from the timer should have happened.
+      expect(spy.calls.count()).toBe(callsAfterInit);
+    }));
   });
 
   describe('formatTrendDisplay()', () => {

@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MaintenanceService } from '../../../core/services/maintenance.service';
@@ -491,6 +491,7 @@ import { TranslationService } from '../../../core/services/translation.service';
 export class MaintenanceDetailsComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private location = inject(Location);
   private maintenanceService = inject(MaintenanceService);
   private translationService = inject(TranslationService);
 
@@ -602,7 +603,11 @@ export class MaintenanceDetailsComponent implements OnInit {
   }
 
   goBack() {
-    this.router.navigate(['/maintenance/active']);
+    if (window.history.length > 1) {
+      this.location.back();
+    } else {
+      this.router.navigate(['/maintenance/active']);
+    }
   }
 
   // Helper methods

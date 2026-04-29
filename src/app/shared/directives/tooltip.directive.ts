@@ -99,6 +99,12 @@ export class TooltipDirective implements OnDestroy {
     this.renderer.addClass(this.tooltipElement, 'tooltip-container');
     this.renderer.addClass(this.tooltipElement, `tooltip-${this.position}`);
 
+    // Pin off-screen at append time so the unpositioned tooltip can't push
+    // body's scrollWidth and trigger a horizontal scrollbar (which would
+    // otherwise re-flow the dashboard grids).
+    this.renderer.setStyle(this.tooltipElement, 'top', '0');
+    this.renderer.setStyle(this.tooltipElement, 'left', '-9999px');
+
     // Add text content
     const textNode = this.renderer.createText(this.tooltipText!);
     this.renderer.appendChild(this.tooltipElement, textNode);

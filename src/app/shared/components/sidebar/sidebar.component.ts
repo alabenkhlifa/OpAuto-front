@@ -239,7 +239,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
     if (isOwner) {
       this.http.get<any[]>('/invoices').subscribe({
         next: (invs) => {
-          const pending = Array.isArray(invs) ? invs.filter((i: any) => i.status === 'PENDING' || i.status === 'OVERDUE').length : 0;
+          // Match the /invoices/pending page filter (InvoicingComponent.pendingInvoices),
+          // which counts statuses 'sent' and 'viewed' (frontend-cased) — i.e. backend
+          // enum SENT/VIEWED. OVERDUE is shown on a separate tab and must NOT be
+          // included here, otherwise the badge mismatches the destination page.
+          const pending = Array.isArray(invs)
+            ? invs.filter((i: any) => i.status === 'SENT' || i.status === 'VIEWED').length
+            : 0;
           this.badgeCounts.update(c => ({ ...c, 'invoices-pending': pending }));
         },
         error: () => {}

@@ -1,9 +1,10 @@
-import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, DestroyRef, inject, signal, computed } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { BaseChartDirective } from 'ng2-charts';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
-import { forkJoin, of, Subscription } from 'rxjs';
+import { forkJoin, of, Subscription, interval } from 'rxjs';
 
 import { MaintenanceAlertsCardComponent } from '../../shared/components/maintenance-alerts-card/maintenance-alerts-card.component';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
@@ -27,6 +28,7 @@ interface TodayAppointment {
   time: string;
   customerName: string;
   carModel: string;
+  year?: number;
   licensePlate: string;
   serviceType: string;
   status: string;
@@ -127,6 +129,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private partService = inject(PartService);
   private invoiceService = inject(InvoiceService);
   private maintenanceService = inject(MaintenanceService);
+  private destroyRef = inject(DestroyRef);
 
   private languageSub?: Subscription;
   private cachedInvoices: any[] = [];
@@ -227,6 +230,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.rebuildLocalizedViews();
     });
     this.updateAsOfTime();
+
+    // NOTE: This is a wall-clock tick, not a data-freshness indicator. The
+    // underlying dashboard data is loaded once in ngOnInit and is NOT
+    // re-fetched on this interval. If/when a real refresh mechanism is
+    // added, move this call inside the data-load callback instead.
+    interval(60_000)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.updateAsOfTime());
   }
 
   ngOnDestroy(): void {
@@ -514,16 +525,42 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return 'bg-success-500';
   }
 
-  getTimelineItemClass(status: string): string {
-    return `timeline-item-${status.replace('_', '-')}`;
+  formatDuration(minutes: number): string {
+    if (!minutes || minutes < 0) return '';
+    if (minutes < 60) return `${minutes}m`;
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return m > 0 ? `${h}h ${m}m` : `${h}h`;
   }
 
-  getTimelineDotClass(status: string): string {
+  getRemainingAppointmentsCount(): number {
+    const closed = new Set(['completed', 'cancelled', 'no_show', 'delayed']);
+    return this.todayAppointments.filter(a => !closed.has(a.status)).length;
+  }
+
+  getScheduleRowVariant(status: string): string {
     const map: Record<string, string> = {
-      'scheduled': 'scheduled', 'in-progress': 'in-progress', 'in_progress': 'in-progress',
-      'completed': 'completed', 'delayed': 'delayed'
+      'completed': 'is-completed',
+      'in_progress': 'is-in-progress', 'in-progress': 'is-in-progress',
+      'scheduled': 'is-scheduled', 'confirmed': 'is-scheduled', 'pending': 'is-scheduled',
+      'no_show': 'is-no-show', 'no-show': 'is-no-show',
+      'cancelled': 'is-cancelled', 'delayed': 'is-cancelled'
     };
-    return map[status] || 'scheduled';
+    return map[status] || 'is-scheduled';
+  }
+
+  getJobStatusVariant(status: string): string {
+    const map: Record<string, string> = {
+      'completed': 'is-completed', 'quality_check': 'is-completed', 'quality-check': 'is-completed',
+      'in_progress': 'is-in-progress', 'in-progress': 'is-in-progress',
+      'in_repair': 'is-in-progress', 'in-repair': 'is-in-progress',
+      'diagnosis': 'is-in-progress',
+      'waiting_parts': 'is-pending', 'waiting-parts': 'is-pending',
+      'waiting_approval': 'is-pending', 'waiting-approval': 'is-pending',
+      'scheduled': 'is-scheduled', 'confirmed': 'is-scheduled', 'pending': 'is-scheduled',
+      'cancelled': 'is-cancelled', 'delayed': 'is-cancelled'
+    };
+    return map[status] || 'is-in-progress';
   }
 
   getTooltip(key: string): string {
@@ -600,10 +637,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
             time: d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
             customerName: customer?.name || a.customerId,
             carModel: car ? `${car.make} ${car.model}` : '',
+            year: car?.year,
             licensePlate: car?.licensePlate || '',
             serviceType: a.serviceName,
             status: a.status.replace(/-/g, '_'),
-            estimatedDuration: a.estimatedDuration / 60,
+            estimatedDuration: a.estimatedDuration,
             mechanic: mechanic?.personalInfo?.fullName || ''
           };
         }).sort((a, b) => a.time.localeCompare(b.time));

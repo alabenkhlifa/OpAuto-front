@@ -97,7 +97,9 @@
         "one": "موعد واحد مجدول",
         "other": "{{count}} مواعيد مجدولة"
       },
-      "appointments": "مواعيد"
+      "appointments": "مواعيد",
+      "summary": "{{total}} مواعيد · {{remaining}} متبقي",
+      "openCalendar": "فتح التقويم"
     },
     "todayStatus": {
       "title": "حالة اليوم",
@@ -127,7 +129,8 @@
       "quality_check": "فحص الجودة",
       "waiting_parts": "في انتظار القطع",
       "diagnosis": "التشخيص",
-      "waiting_approval": "في انتظار الموافقة"
+      "waiting_approval": "في انتظار الموافقة",
+      "no_show": "لم يحضر"
     },
     "glance": {
       "title": "نظرة سريعة على اليوم",
@@ -197,9 +200,11 @@
         "brake_service": "تيل وأقراص الفرامل",
         "brakes": "تيل وأقراص الفرامل",
         "engine-diagnostic": "تشخيص المحرك",
+        "engine-diagnostics": "تشخيص المحرك",
         "diagnostic": "تشخيص المحرك",
         "diagnostics": "تشخيص المحرك",
         "tire-rotation": "تبديل الإطارات",
+        "tire-replacement": "استبدال الإطارات",
         "tires": "تبديل الإطارات",
         "tire_service": "تبديل الإطارات",
         "alignment": "ضبط الزوايا",
@@ -208,6 +213,8 @@
         "ac-service": "خدمة التكييف",
         "ac_service": "خدمة التكييف",
         "battery": "خدمة البطارية",
+        "electrical": "كهرباء",
+        "transmission": "ناقل الحركة",
         "inspection": "فحص فني",
         "general-service": "خدمة عامة",
         "general_service": "خدمة عامة",

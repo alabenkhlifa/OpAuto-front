@@ -92,12 +92,14 @@
       "reviewButton": "Review Approvals"
     },
     "todaySchedule": {
-      "title": "Today's Schedule",
+      "title": "Today's schedule",
       "appointmentsScheduled": {
         "one": "{{count}} appointment scheduled",
         "other": "{{count}} appointments scheduled"
       },
-      "appointments": "appointments"
+      "appointments": "appointments",
+      "summary": "{{total}} appointments · {{remaining}} remaining",
+      "openCalendar": "Open calendar"
     },
     "todayStatus": {
       "title": "Today's Status",
@@ -127,7 +129,8 @@
       "quality_check": "Quality Check",
       "waiting_parts": "Waiting Parts",
       "diagnosis": "Diagnosis",
-      "waiting_approval": "Waiting Approval"
+      "waiting_approval": "Waiting Approval",
+      "no_show": "No-show"
     },
     "glance": {
       "title": "Today at a glance",
@@ -197,9 +200,11 @@
         "brake_service": "Brake pads & discs",
         "brakes": "Brake pads & discs",
         "engine-diagnostic": "Engine diagnostic",
+        "engine-diagnostics": "Engine diagnostic",
         "diagnostic": "Engine diagnostic",
         "diagnostics": "Engine diagnostic",
         "tire-rotation": "Tire rotation",
+        "tire-replacement": "Tire replacement",
         "tires": "Tire rotation",
         "tire_service": "Tire rotation",
         "alignment": "Wheel alignment",
@@ -208,6 +213,8 @@
         "ac-service": "A/C service",
         "ac_service": "A/C service",
         "battery": "Battery service",
+        "electrical": "Electrical",
+        "transmission": "Transmission",
         "inspection": "Inspection",
         "general-service": "General service",
         "general_service": "General service",

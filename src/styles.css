@@ -251,12 +251,18 @@ input:focus, textarea:focus, select:focus {
 /* Tooltip Styles */
 .tooltip-container {
   position: absolute;
+  top: 0;
+  left: 0;
   z-index: 9999;
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
   line-height: 1.25rem;
   color: #ffffff;
-  white-space: nowrap;
+  /* Wrap long text within max-width instead of overflowing horizontally — */
+  /* a nowrap tooltip whose text exceeds max-width grows body.scrollWidth, */
+  /* triggers a horizontal scrollbar, and reflows dashboard grids on hover. */
+  white-space: normal;
+  overflow-wrap: break-word;
   pointer-events: none;
 
   background: #1f2937;
@@ -317,7 +323,6 @@ input:focus, textarea:focus, select:focus {
 @media (max-width: 640px) {
   .tooltip-container {
     max-width: 200px;
-    white-space: normal;
     text-align: center;
   }
 }
