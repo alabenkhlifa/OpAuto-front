@@ -1,0 +1,126 @@
+<div class="modal-overlay" *ngIf="isOpen" (click)="onBackdrop($event)">
+  <div class="modal-content" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+    <header class="modal-header">
+      <div>
+        <h2 class="modal-title">
+          {{ 'invoicing.send.title' | translate }}
+        </h2>
+        <p class="modal-subtitle" *ngIf="context">
+          {{ context.documentKindLabelKey | translate }} &middot; {{ context.documentNumber }}
+        </p>
+      </div>
+      <button
+        type="button"
+        class="modal-close-btn"
+        [disabled]="submitting"
+        (click)="onClose()"
+        [attr.aria-label]="'common.close' | translate"
+      >
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </header>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="modal-form">
+      <div class="form-group">
+        <label class="form-label">{{ 'invoicing.send.channel' | translate }}</label>
+        <div class="channel-chips" role="radiogroup" [attr.aria-label]="'invoicing.send.channel' | translate">
+          <button
+            type="button"
+            class="chip"
+            role="radio"
+            [class.active]="channel() === 'EMAIL'"
+            [attr.aria-checked]="channel() === 'EMAIL'"
+            (click)="selectChannel('EMAIL')"
+          >
+            {{ 'invoicing.send.channels.email' | translate }}
+          </button>
+          <button
+            type="button"
+            class="chip"
+            role="radio"
+            [class.active]="channel() === 'WHATSAPP'"
+            [attr.aria-checked]="channel() === 'WHATSAPP'"
+            (click)="selectChannel('WHATSAPP')"
+          >
+            {{ 'invoicing.send.channels.whatsapp' | translate }}
+          </button>
+          <button
+            type="button"
+            class="chip"
+            role="radio"
+            [class.active]="channel() === 'BOTH'"
+            [attr.aria-checked]="channel() === 'BOTH'"
+            (click)="selectChannel('BOTH')"
+          >
+            {{ 'invoicing.send.channels.both' | translate }}
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="recipient">
+          {{
+            (recipientMode() === 'phone'
+              ? 'invoicing.send.recipientPhone'
+              : 'invoicing.send.recipientEmail'
+            ) | translate
+          }}
+        </label>
+        <input
+          id="recipient"
+          type="text"
+          class="form-input"
+          formControlName="to"
+          [placeholder]="
+            (recipientMode() === 'phone'
+              ? 'invoicing.send.placeholderPhone'
+              : 'invoicing.send.placeholderEmail'
+            ) | translate
+          "
+          [attr.inputmode]="recipientMode() === 'phone' ? 'tel' : 'email'"
+        />
+        <div
+          *ngIf="form.controls.to.touched && form.controls.to.invalid"
+          class="form-error"
+        >
+          <span *ngIf="form.controls.to.errors?.['required']">
+            {{ 'invoicing.send.errors.required' | translate }}
+          </span>
+          <span *ngIf="form.controls.to.errors?.['email']">
+            {{ 'invoicing.send.errors.invalidEmail' | translate }}
+          </span>
+          <span *ngIf="form.controls.to.errors?.['minlength'] || form.controls.to.errors?.['maxlength']">
+            {{ 'invoicing.send.errors.invalidPhone' | translate }}
+          </span>
+        </div>
+      </div>
+
+      <div class="preview-pane" *ngIf="context?.previewHtml">
+        <h3 class="preview-title">{{ 'invoicing.send.preview' | translate }}</h3>
+        <div class="preview-body" [innerHTML]="context!.previewHtml"></div>
+      </div>
+    </form>
+
+    <footer class="modal-footer">
+      <button
+        type="button"
+        class="modal-btn secondary"
+        [disabled]="submitting"
+        (click)="onClose()"
+      >
+        {{ 'common.cancel' | translate }}
+      </button>
+      <button
+        type="button"
+        class="modal-btn primary"
+        [disabled]="!canSubmit()"
+        (click)="onSubmit()"
+      >
+        <span *ngIf="submitting" class="submit-spinner" aria-hidden="true"></span>
+        {{ 'invoicing.send.send' | translate }}
+      </button>
+    </footer>
+  </div>
+</div>

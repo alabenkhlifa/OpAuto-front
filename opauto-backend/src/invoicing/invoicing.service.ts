@@ -616,14 +616,22 @@ export class InvoicingService {
 
   /**
    * Idempotent SENT → VIEWED transition triggered by Phase 4 public
-   * link views. Currently a no-op since the schema enum lacks VIEWED;
-   * once added, swap the comparison to use `InvoiceStatus.VIEWED`.
+   * link views. Only flips status when currently SENT — anything more
+   * advanced (PARTIALLY_PAID, PAID, CANCELLED) is left alone, since
+   * VIEWED is a strictly weaker signal than payment progress.
+   *
+   * Uses `updateMany` with a status guard so concurrent calls cannot
+   * race past payment transitions.
    */
   async markViewed(id: string, garageId: string) {
     const invoice = await this.findOne(id, garageId);
-    // VIEWED state will be added in Phase 4 with the public link feature.
-    // Until then, this method is a documented no-op so callers can be
-    // wired up without a follow-up service signature change.
+    if (invoice.status === InvoiceStatus.SENT) {
+      await this.prisma.invoice.updateMany({
+        where: { id, garageId, status: InvoiceStatus.SENT },
+        data: { status: InvoiceStatus.VIEWED },
+      });
+      return { ...invoice, status: InvoiceStatus.VIEWED };
+    }
     return invoice;
   }
 
@@ -809,6 +817,13 @@ function canTransitionRecompute(
   const allowed: Record<InvoiceStatus, InvoiceStatus[]> = {
     DRAFT: [InvoiceStatus.SENT, InvoiceStatus.CANCELLED],
     SENT: [
+      InvoiceStatus.VIEWED,
+      InvoiceStatus.PARTIALLY_PAID,
+      InvoiceStatus.PAID,
+      InvoiceStatus.OVERDUE,
+      InvoiceStatus.CANCELLED,
+    ],
+    VIEWED: [
       InvoiceStatus.PARTIALLY_PAID,
       InvoiceStatus.PAID,
       InvoiceStatus.OVERDUE,

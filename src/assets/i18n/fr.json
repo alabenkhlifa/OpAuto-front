@@ -1909,6 +1909,29 @@
       "noInvoicesDescription": "Commencez par créer votre première facture.",
       "createFirstInvoice": "Créer la première facture"
     },
+    "send": {
+      "title": "Envoyer le document",
+      "channel": "Canal",
+      "channels": {
+        "email": "E-mail",
+        "whatsapp": "WhatsApp",
+        "both": "Les deux"
+      },
+      "recipientEmail": "E-mail du destinataire",
+      "recipientPhone": "Téléphone du destinataire",
+      "placeholderEmail": "nom@exemple.com",
+      "placeholderPhone": "+216 XX XXX XXX",
+      "preview": "Aperçu",
+      "send": "Envoyer",
+      "kindInvoice": "Facture",
+      "kindQuote": "Devis",
+      "kindCreditNote": "Avoir",
+      "errors": {
+        "required": "Le destinataire est requis",
+        "invalidEmail": "Veuillez saisir une adresse e-mail valide",
+        "invalidPhone": "Veuillez saisir un numéro de téléphone tunisien valide"
+      }
+    },
     "allInvoices": "Toutes les factures",
     "createInvoice": "Créer une facture",
     "pendingPayment": "Paiement en attente",

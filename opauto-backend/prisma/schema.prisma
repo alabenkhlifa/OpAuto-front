@@ -80,6 +80,7 @@ enum ApprovalType {
 enum InvoiceStatus {
   DRAFT
   SENT
+  VIEWED
   PAID
   PARTIALLY_PAID
   OVERDUE

@@ -1911,6 +1911,29 @@
       "noInvoicesDescription": "ابدأ بإنشاء أول فاتورة لك.",
       "createFirstInvoice": "إنشاء أول فاتورة"
     },
+    "send": {
+      "title": "إرسال المستند",
+      "channel": "القناة",
+      "channels": {
+        "email": "البريد الإلكتروني",
+        "whatsapp": "واتساب",
+        "both": "كلاهما"
+      },
+      "recipientEmail": "البريد الإلكتروني للمستلم",
+      "recipientPhone": "هاتف المستلم",
+      "placeholderEmail": "name@example.com",
+      "placeholderPhone": "+216 XX XXX XXX",
+      "preview": "معاينة",
+      "send": "إرسال",
+      "kindInvoice": "فاتورة",
+      "kindQuote": "عرض سعر",
+      "kindCreditNote": "إشعار دائن",
+      "errors": {
+        "required": "المستلم مطلوب",
+        "invalidEmail": "يرجى إدخال بريد إلكتروني صالح",
+        "invalidPhone": "يرجى إدخال رقم هاتف تونسي صالح"
+      }
+    },
     "allInvoices": "جميع الفواتير",
     "createInvoice": "إنشاء فاتورة",
     "pendingPayment": "الدفع المعلق",

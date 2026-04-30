@@ -1955,6 +1955,29 @@
       "noInvoicesDescription": "Get started by creating your first invoice.",
       "createFirstInvoice": "Create First Invoice"
     },
+    "send": {
+      "title": "Send document",
+      "channel": "Channel",
+      "channels": {
+        "email": "Email",
+        "whatsapp": "WhatsApp",
+        "both": "Both"
+      },
+      "recipientEmail": "Recipient email",
+      "recipientPhone": "Recipient phone",
+      "placeholderEmail": "name@example.com",
+      "placeholderPhone": "+216 XX XXX XXX",
+      "preview": "Preview",
+      "send": "Send",
+      "kindInvoice": "Invoice",
+      "kindQuote": "Quote",
+      "kindCreditNote": "Credit note",
+      "errors": {
+        "required": "Recipient is required",
+        "invalidEmail": "Please enter a valid email address",
+        "invalidPhone": "Please enter a valid Tunisia phone number"
+      }
+    },
     "allInvoices": "All Invoices",
     "createInvoice": "Create Invoice",
     "pendingPayment": "Pending Payment",

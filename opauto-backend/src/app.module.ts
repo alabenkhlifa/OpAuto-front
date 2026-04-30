@@ -32,6 +32,7 @@ import { InvoicingInventoryToolsModule } from './assistant/tools/invoicing-inven
 import { CommunicationsToolsModule } from './assistant/tools/communications/communications-tools.module';
 import { ReportsToolsModule } from './assistant/tools/reports/reports-tools.module';
 import { AgentsModule } from './assistant/agents/agents.module';
+import { PublicModule } from './public/public.module';
 
 // Per-throttler trackers: `short` keys on userId, `long` keys on garageId.
 // Both fall back to the request IP for any unauthenticated entry-point so the
@@ -95,6 +96,7 @@ const garageIdTracker = (req: Record<string, any>): string => {
     CommunicationsToolsModule,
     ReportsToolsModule,
     AgentsModule,
+    PublicModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: AssistantThrottlerGuard },

@@ -1,0 +1,90 @@
+/* ──────────────────────────────────────────────────────────────
+   Send Invoice Modal — uses the global modal primitives from
+   the OpAuto UI system (modal-overlay / modal-content / modal-form
+   / modal-btn). Component-local CSS only adds the channel chips
+   and the preview pane.
+   ────────────────────────────────────────────────────────────── */
+
+.modal-subtitle {
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary, #6b7280);
+}
+
+.channel-chips {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: #f3f4f6;
+  color: #111827;
+  border: 1px solid #e5e7eb;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.chip:hover:not(.active) {
+  background: #e5e7eb;
+}
+
+.chip.active {
+  background: #FF8400;
+  color: #ffffff;
+  border-color: #FF8400;
+}
+
+.chip:focus-visible {
+  outline: 2px solid #FF8400;
+  outline-offset: 2px;
+}
+
+.preview-pane {
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+}
+
+.preview-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+}
+
+.preview-body {
+  font-size: 0.875rem;
+  color: #374151;
+  line-height: 1.5;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.submit-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 0.5rem;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: send-modal-spin 600ms linear infinite;
+}
+
+@keyframes send-modal-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

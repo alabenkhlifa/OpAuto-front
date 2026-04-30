@@ -28,10 +28,17 @@ import { InvoiceStatus } from '@prisma/client';
  *
  * Keep this as a plain const map (not a Set) so it serializes cleanly
  * for tests and admin tooling.
+ *
+ * VIEWED is a soft signal added in Phase 4 — it tracks whether the
+ * customer has opened the public invoice link. It does not block any
+ * payment/cancellation flow (VIEWED has the same outbound transitions
+ * as SENT) and is reachable from SENT only (you can only view what
+ * was issued).
  */
 export const ALLOWED_TRANSITIONS: Record<InvoiceStatus, InvoiceStatus[]> = {
   DRAFT: ['SENT', 'CANCELLED'],
-  SENT: ['PARTIALLY_PAID', 'PAID', 'OVERDUE', 'CANCELLED'],
+  SENT: ['VIEWED', 'PARTIALLY_PAID', 'PAID', 'OVERDUE', 'CANCELLED'],
+  VIEWED: ['PARTIALLY_PAID', 'PAID', 'OVERDUE', 'CANCELLED'],
   PARTIALLY_PAID: ['PAID', 'OVERDUE'],
   OVERDUE: ['PARTIALLY_PAID', 'PAID', 'CANCELLED'],
   PAID: [], // terminal — only credit notes can offset

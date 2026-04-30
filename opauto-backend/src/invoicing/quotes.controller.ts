@@ -5,13 +5,18 @@ import {
   Param,
   Post,
   Put,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Response } from 'express';
 import { UserRole } from '@prisma/client';
 import { QuotesService } from './quotes.service';
 import { CreateQuoteDto } from './dto/create-quote.dto';
 import { UpdateQuoteDto } from './dto/update-quote.dto';
+import { DeliverDocumentDto } from './dto/deliver-document.dto';
+import { DeliveryService } from './delivery.service';
+import { PdfRendererService } from './pdf-renderer.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -27,7 +32,11 @@ import {
 @Roles(UserRole.OWNER, UserRole.STAFF)
 @Controller('quotes')
 export class QuotesController {
-  constructor(private service: QuotesService) {}
+  constructor(
+    private service: QuotesService,
+    private delivery: DeliveryService,
+    private pdf: PdfRendererService,
+  ) {}
 
   @Get()
   findAll(@CurrentUser('garageId') gid: string) {
@@ -71,5 +80,41 @@ export class QuotesController {
   @RequireModule('invoicing')
   reject(@Param('id') id: string, @CurrentUser('garageId') gid: string) {
     return this.service.reject(id, gid);
+  }
+
+  /**
+   * Deliver an already-SENT quote via email/WhatsApp. Distinct from
+   * `POST :id/send` which only allocates the fiscal number.
+   */
+  @Post(':id/deliver')
+  @RequireModule('invoicing')
+  deliver(
+    @Param('id') id: string,
+    @CurrentUser('garageId') gid: string,
+    @Body() dto: DeliverDocumentDto,
+  ) {
+    return this.delivery.deliverQuote(id, gid, dto);
+  }
+
+  /**
+   * Stream the rendered quote PDF for in-app preview.
+   */
+  @Get(':id/pdf')
+  @RequireModule('invoicing')
+  async getPdf(
+    @Param('id') id: string,
+    @CurrentUser('garageId') gid: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    const quote = await this.service.findOne(id, gid);
+    const buf = await this.pdf.renderQuote(id, gid);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.setHeader(
+      'Content-Disposition',
+      `inline; filename="quote-${quote.quoteNumber}.pdf"`,
+    );
+    res.setHeader('Content-Length', String(buf.length));
+    res.end(buf);
   }
 }
