@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { InvoicingService } from './invoicing.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { NumberingService } from './numbering.service';
+import { TaxCalculatorService } from './tax-calculator.service';
 
 // ── Helpers ──────────────────────────────────────────────────────
 
@@ -70,6 +72,9 @@ describe('InvoicingService – findAll', () => {
       providers: [
         InvoicingService,
         { provide: PrismaService, useValue: prisma },
+        // findAll() doesn't touch these, so a bare stub is enough.
+        { provide: NumberingService, useValue: { next: jest.fn() } },
+        TaxCalculatorService,
       ],
     }).compile();
 

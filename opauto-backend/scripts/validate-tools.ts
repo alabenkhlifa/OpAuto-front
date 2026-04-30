@@ -17,6 +17,8 @@ import { CustomersService } from '../src/customers/customers.service';
 import { CarsService } from '../src/cars/cars.service';
 import { AppointmentsService } from '../src/appointments/appointments.service';
 import { InvoicingService } from '../src/invoicing/invoicing.service';
+import { NumberingService } from '../src/invoicing/numbering.service';
+import { TaxCalculatorService } from '../src/invoicing/tax-calculator.service';
 import { ReportsService } from '../src/reports/reports.service';
 import { AiService } from '../src/ai/ai.service';
 
@@ -50,7 +52,16 @@ const configService = new ConfigService();
 const customersService = new CustomersService(prisma);
 const carsService = new CarsService(prisma);
 const appointmentsService = new AppointmentsService(prisma);
-const invoicingService = new InvoicingService(prisma);
+// InvoicingService now depends on NumberingService + TaxCalculatorService
+// (Task 1.4). The assistant tools used here only call read methods
+// (findAll/findOne) that don't touch those collaborators, so the standalone
+// validation script can pass through bare instances. If a future tool
+// invokes create/update/issue, swap these for the real services.
+const invoicingService = new InvoicingService(
+  prisma,
+  new NumberingService(prisma),
+  new TaxCalculatorService(),
+);
 const reportsService = new ReportsService(prisma);
 const aiService = new AiService(configService, prisma);
 
