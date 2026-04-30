@@ -15,7 +15,7 @@
           <h1 class="invoice-detail-header__number">{{ inv.invoiceNumber }}</h1>
           <div class="invoice-detail-header__meta">
             <span class="badge" [class]="statusBadgeClass(inv.status)">
-              {{ ('invoicing.status.' + inv.status) | translate }}
+              {{ statusLabelKey(inv.status) | translate }}
             </span>
             @if (isLocked()) {
               <span class="invoice-detail-header__lock" [attr.aria-label]="'invoicing.detail.lock.aria' | translate">

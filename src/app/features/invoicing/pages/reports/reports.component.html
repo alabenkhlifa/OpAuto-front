@@ -7,6 +7,106 @@
     <app-z-report></app-z-report>
   </section>
 
+  <section id="customer-statement" class="reports-page__section">
+    <div class="glass-card">
+      <h3 class="reports-page__title">
+        {{ 'invoicing.reports.customerStatement.title' | translate }}
+      </h3>
+      <p class="reports-page__hint">
+        {{ 'invoicing.reports.customerStatement.description' | translate }}
+      </p>
+
+      <div class="reports-page__statement-form">
+        <label class="reports-page__field">
+          <span>{{ 'invoicing.reports.customerStatement.customer' | translate }}</span>
+          <select class="form-select"
+                  [ngModel]="selectedCustomerId()"
+                  (ngModelChange)="selectedCustomerId.set($event)">
+            <option value="">{{ 'invoicing.create.selectCustomer' | translate }}</option>
+            @for (c of customers(); track c.id) {
+              <option [value]="c.id">{{ c.name }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="reports-page__field">
+          <span>{{ 'invoicing.reports.customerStatement.from' | translate }}</span>
+          <input type="date" class="form-input"
+                 [ngModel]="fromDate()"
+                 (ngModelChange)="fromDate.set($event)" />
+        </label>
+
+        <label class="reports-page__field">
+          <span>{{ 'invoicing.reports.customerStatement.to' | translate }}</span>
+          <input type="date" class="form-input"
+                 [ngModel]="toDate()"
+                 (ngModelChange)="toDate.set($event)" />
+        </label>
+
+        <button type="button"
+                class="btn-primary"
+                [disabled]="isLoadingStatement() || !selectedCustomerId()"
+                (click)="generateStatement()">
+          {{ (isLoadingStatement() ? 'common.loading' : 'invoicing.reports.customerStatement.generate') | translate }}
+        </button>
+      </div>
+
+      @if (statement(); as st) {
+        <div class="reports-page__statement-result">
+          <div class="reports-page__statement-summary">
+            <div>
+              <strong>{{ st.customer.firstName }} {{ st.customer.lastName }}</strong>
+              <span class="reports-page__statement-range">
+                {{ formatDate(st.from) }} → {{ formatDate(st.to) }}
+              </span>
+            </div>
+            <div class="reports-page__statement-balances">
+              <span>
+                {{ 'invoicing.reports.customerStatement.openingBalance' | translate }}:
+                <strong>{{ formatAmount(st.openingBalance) }}</strong>
+              </span>
+              <span>
+                {{ 'invoicing.reports.customerStatement.closingBalance' | translate }}:
+                <strong>{{ formatAmount(st.closingBalance) }}</strong>
+              </span>
+            </div>
+          </div>
+
+          @if (st.items.length === 0) {
+            <p class="reports-page__statement-empty">
+              {{ 'invoicing.reports.customerStatement.empty' | translate }}
+            </p>
+          } @else {
+            <div class="reports-page__statement-table-wrap">
+              <table class="reports-page__statement-table">
+                <thead>
+                  <tr>
+                    <th>{{ 'invoicing.reports.customerStatement.table.date' | translate }}</th>
+                    <th>{{ 'invoicing.reports.customerStatement.table.type' | translate }}</th>
+                    <th>{{ 'invoicing.reports.customerStatement.table.ref' | translate }}</th>
+                    <th>{{ 'invoicing.reports.customerStatement.table.amount' | translate }}</th>
+                    <th>{{ 'invoicing.reports.customerStatement.table.runningBalance' | translate }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (e of st.items; track trackEvent($index, e)) {
+                    <tr>
+                      <td>{{ formatDate(e.date) }}</td>
+                      <td>{{ eventLabelKey(e.type) | translate }}</td>
+                      <td>{{ e.ref }}</td>
+                      <td>{{ formatAmount(e.amount) }}</td>
+                      <td>{{ formatAmount(e.runningBalance) }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </section>
+
   <section id="accountant-export" class="reports-page__section">
     <div class="glass-card">
       <h3 class="reports-page__title">

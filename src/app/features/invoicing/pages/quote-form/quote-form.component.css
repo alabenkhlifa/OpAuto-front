@@ -5,6 +5,13 @@
   margin: 0 0 1rem;
 }
 
+.quote-form-page__subtitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-primary, #111827);
+  margin: 0;
+}
+
 .quote-form-page__grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -37,6 +44,108 @@
   border: 1px solid #e5e7eb;
   background: #ffffff;
   color: var(--color-text-primary, #111827);
+}
+
+.quote-form-page__lines {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.quote-form-page__lines-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.quote-form-page__add-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.quote-form-page__empty {
+  margin: 0.5rem 0;
+  color: var(--color-text-secondary, #4b5563);
+  font-size: 0.875rem;
+}
+
+.quote-form-page__table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.quote-form-page__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.quote-form-page__table th,
+.quote-form-page__table td {
+  padding: 0.5rem;
+  border-bottom: 1px solid #f3f4f6;
+  vertical-align: top;
+  color: var(--color-text-primary, #111827);
+}
+
+.quote-form-page__table th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--color-text-secondary, #4b5563);
+  background: #f9fafb;
+}
+
+.quote-form-page__table-desc {
+  min-width: 220px;
+}
+
+.quote-form-page__table-total {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.quote-form-page__labor-hours {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary, #4b5563);
+}
+
+.quote-form-page__labor-hours .form-input {
+  max-width: 5rem;
+}
+
+.quote-form-page__totals {
+  margin: 0.5rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-self: flex-end;
+  width: min(100%, 20rem);
+}
+
+.quote-form-page__totals-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary, #4b5563);
+}
+
+.quote-form-page__totals-row--total {
+  font-weight: 600;
+  color: var(--color-text-primary, #111827);
+  border-top: 1px solid #e5e7eb;
+  padding-top: 0.25rem;
+  margin-top: 0.25rem;
+  font-size: 1rem;
 }
 
 .quote-form-page__actions {

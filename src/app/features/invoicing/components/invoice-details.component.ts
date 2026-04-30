@@ -412,6 +412,21 @@ export class InvoiceDetailsComponent implements OnInit {
     return this.invoiceService.getStatusBadgeClass(status as any);
   }
 
+  /** Map kebab-case invoice status to camelCase translation suffix used in `invoicing.status.*`. */
+  statusLabelKey(status: string): string {
+    const map: Record<string, string> = {
+      'draft': 'invoicing.status.draft',
+      'sent': 'invoicing.status.sent',
+      'viewed': 'invoicing.status.viewed',
+      'paid': 'invoicing.status.paid',
+      'partially-paid': 'invoicing.status.partiallyPaid',
+      'overdue': 'invoicing.status.overdue',
+      'cancelled': 'invoicing.status.cancelled',
+      'refunded': 'invoicing.status.refunded',
+    };
+    return map[status] ?? `invoicing.status.${status}`;
+  }
+
   trackLine(_: number, item: { id: string }): string {
     return item.id;
   }

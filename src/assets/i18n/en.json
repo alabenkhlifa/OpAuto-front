@@ -2132,6 +2132,33 @@
         "title": "Accountant CSV export",
         "description": "Monthly journal export for the accountant — date, invoice #, customer MF, HT, TVA breakdown, TTC, payment method.",
         "download": "Download CSV"
+      },
+      "customerStatement": {
+        "title": "Customer statement",
+        "description": "Chronological ledger of invoices, payments and credit notes for a customer over a date range.",
+        "customer": "Customer",
+        "from": "From",
+        "to": "To",
+        "generate": "Generate statement",
+        "openingBalance": "Opening balance",
+        "closingBalance": "Closing balance",
+        "empty": "No activity in this date range.",
+        "eventTypes": {
+          "invoice": "Invoice",
+          "payment": "Payment",
+          "creditNote": "Credit note"
+        },
+        "table": {
+          "date": "Date",
+          "type": "Type",
+          "ref": "Reference",
+          "amount": "Amount",
+          "runningBalance": "Running balance"
+        },
+        "errors": {
+          "selectCustomer": "Please select a customer first",
+          "loadFailed": "Could not load customer statement"
+        }
       }
     },
     "subnav": {
@@ -2226,7 +2253,8 @@
         "notes": "Notes",
         "submit": "Save quote",
         "created": "Quote created",
-        "createFailed": "Could not create quote"
+        "createFailed": "Could not create quote",
+        "linesRequired": "At least one line item is required"
       },
       "detail": {
         "issueDate": "Issue date",

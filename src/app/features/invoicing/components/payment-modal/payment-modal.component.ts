@@ -73,7 +73,18 @@ export class PaymentModalComponent implements OnChanges {
   );
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['isOpen']?.currentValue && this.context) {
+    // Reset whenever the modal transitions to open — guarantees a clean
+    // state on the second (and Nth) reopen even if the parent reuses the
+    // same context reference. Also resets when the context is swapped
+    // mid-open (e.g. switching invoices).
+    const openedNow =
+      changes['isOpen'] &&
+      changes['isOpen'].currentValue === true &&
+      changes['isOpen'].previousValue !== true;
+    const contextChanged =
+      changes['context'] &&
+      changes['context'].currentValue !== changes['context'].previousValue;
+    if ((openedNow || contextChanged) && this.isOpen && this.context) {
       this.method.set('cash');
       this.form.reset({
         amount: this.context.remainingAmount,
@@ -81,6 +92,8 @@ export class PaymentModalComponent implements OnChanges {
         reference: '',
         notes: '',
       });
+      this.form.markAsPristine();
+      this.form.markAsUntouched();
     }
   }
 

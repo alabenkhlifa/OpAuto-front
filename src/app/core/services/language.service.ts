@@ -104,14 +104,13 @@ export class LanguageService {
   }
 
   private updateDocumentDirection(language: SupportedLanguage): void {
-    // Keep LTR layout for all languages (including Arabic)
-    document.documentElement.dir = 'ltr';
-    document.documentElement.setAttribute('data-direction', 'ltr');
+    const dir = language === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.dir = dir;
+    document.documentElement.setAttribute('data-direction', dir);
   }
 
   isRTL(): boolean {
-    // RTL is disabled - always return false to maintain LTR layout
-    return false;
+    return this.currentLanguage() === 'ar';
   }
 
   // Helper method to format text based on current language

@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { ToastService } from '../../../../shared/services/toast.service';
+import { TranslationService } from '../../../../core/services/translation.service';
 import { CreditNoteService } from '../../../../core/services/credit-note.service';
 import { InvoiceService } from '../../../../core/services/invoice.service';
 import {
@@ -38,6 +39,7 @@ export class CreditNoteFormPageComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private toast = inject(ToastService);
+  private translation = inject(TranslationService);
 
   invoice = signal<InvoiceWithDetails | null>(null);
   lines = signal<SelectableLine[]>([]);
@@ -71,7 +73,10 @@ export class CreditNoteFormPageComponent implements OnInit {
           })),
         );
       },
-      error: () => this.toast.error('invoicing.creditNotes.form.loadFailed'),
+      error: () =>
+        this.toast.error(
+          this.translation.instant('invoicing.creditNotes.form.loadFailed'),
+        ),
     });
   }
 
@@ -110,7 +115,9 @@ export class CreditNoteFormPageComponent implements OnInit {
       (l) => l.selected && l.selectedQty > 0,
     );
     if (selectedLines.length === 0) {
-      this.toast.warning('invoicing.creditNotes.form.selectAtLeastOne');
+      this.toast.warning(
+        this.translation.instant('invoicing.creditNotes.form.selectAtLeastOne'),
+      );
       return;
     }
 
@@ -138,12 +145,16 @@ export class CreditNoteFormPageComponent implements OnInit {
       .subscribe({
         next: () => {
           this.isSubmitting.set(false);
-          this.toast.success('invoicing.creditNotes.form.created');
+          this.toast.success(
+            this.translation.instant('invoicing.creditNotes.form.created'),
+          );
           this.router.navigate(['/invoices/credit-notes']);
         },
         error: () => {
           this.isSubmitting.set(false);
-          this.toast.error('invoicing.creditNotes.form.createFailed');
+          this.toast.error(
+            this.translation.instant('invoicing.creditNotes.form.createFailed'),
+          );
         },
       });
   }

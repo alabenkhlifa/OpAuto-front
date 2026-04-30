@@ -2174,6 +2174,33 @@
         "title": "Export comptable CSV",
         "description": "Journal mensuel pour le comptable — date, n° facture, MF client, HT, TVA détaillée, TTC, mode de paiement.",
         "download": "Télécharger CSV"
+      },
+      "customerStatement": {
+        "title": "Relevé client",
+        "description": "Grand livre chronologique des factures, paiements et avoirs d'un client sur une période.",
+        "customer": "Client",
+        "from": "Du",
+        "to": "Au",
+        "generate": "Générer le relevé",
+        "openingBalance": "Solde initial",
+        "closingBalance": "Solde final",
+        "empty": "Aucune activité sur cette période.",
+        "eventTypes": {
+          "invoice": "Facture",
+          "payment": "Paiement",
+          "creditNote": "Avoir"
+        },
+        "table": {
+          "date": "Date",
+          "type": "Type",
+          "ref": "Référence",
+          "amount": "Montant",
+          "runningBalance": "Solde courant"
+        },
+        "errors": {
+          "selectCustomer": "Veuillez d'abord sélectionner un client",
+          "loadFailed": "Impossible de charger le relevé client"
+        }
       }
     },
     "subnav": {
@@ -2268,7 +2295,8 @@
         "notes": "Notes",
         "submit": "Enregistrer le devis",
         "created": "Devis créé",
-        "createFailed": "Impossible de créer le devis"
+        "createFailed": "Impossible de créer le devis",
+        "linesRequired": "Au moins une ligne est requise"
       },
       "detail": {
         "issueDate": "Date d'émission",

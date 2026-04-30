@@ -31,28 +31,158 @@
       </label>
 
       <label class="quote-form-page__field quote-form-page__field--full">
-        <span>{{ 'invoicing.quotes.form.description' | translate }} *</span>
-        <input type="text" class="form-input"
-               formControlName="description"
-               [placeholder]="'invoicing.create.itemDescription' | translate" />
-      </label>
-
-      <label class="quote-form-page__field">
-        <span>{{ 'invoicing.quotes.form.quantity' | translate }} *</span>
-        <input type="number" min="1" class="form-input" formControlName="quantity" />
-      </label>
-
-      <label class="quote-form-page__field">
-        <span>{{ 'invoicing.quotes.form.unitPrice' | translate }} (TND) *</span>
-        <input type="number" min="0" step="0.01" class="form-input" formControlName="unitPrice" />
-      </label>
-
-      <label class="quote-form-page__field quote-form-page__field--full">
         <span>{{ 'invoicing.quotes.form.notes' | translate }}</span>
         <textarea rows="3" class="form-input"
                   formControlName="notes"
                   [placeholder]="'invoicing.create.notesPlaceholder' | translate"></textarea>
       </label>
+    </div>
+
+    <!-- Line items -->
+    <div class="quote-form-page__lines">
+      <div class="quote-form-page__lines-header">
+        <h3 class="quote-form-page__subtitle">
+          {{ 'invoicing.form.section.lines.title' | translate }}
+        </h3>
+        <div class="quote-form-page__add-row">
+          <button type="button" class="btn-tertiary btn-sm" (click)="addLine('service')">
+            + {{ 'invoicing.form.lineTypes.service' | translate }}
+          </button>
+          <button type="button" class="btn-tertiary btn-sm" (click)="addLine('part')">
+            + {{ 'invoicing.form.lineTypes.part' | translate }}
+          </button>
+          <button type="button" class="btn-tertiary btn-sm" (click)="addLine('labor')">
+            + {{ 'invoicing.form.lineTypes.labor' | translate }}
+          </button>
+          <button type="button" class="btn-tertiary btn-sm" (click)="addLine('misc')">
+            + {{ 'invoicing.form.lineTypes.misc' | translate }}
+          </button>
+        </div>
+      </div>
+
+      @if (lines().length === 0) {
+        <p class="quote-form-page__empty">
+          {{ 'invoicing.form.section.lines.empty' | translate }}
+        </p>
+      } @else {
+        <div class="quote-form-page__table-wrap">
+          <table class="quote-form-page__table">
+            <thead>
+              <tr>
+                <th>{{ 'invoicing.form.table.type' | translate }}</th>
+                <th class="quote-form-page__table-desc">{{ 'invoicing.form.table.description' | translate }}</th>
+                <th>{{ 'invoicing.form.table.qty' | translate }}</th>
+                <th>{{ 'invoicing.form.table.unitPrice' | translate }}</th>
+                <th>{{ 'invoicing.form.table.tva' | translate }}</th>
+                <th>{{ 'invoicing.form.table.discount' | translate }}</th>
+                <th>{{ 'invoicing.form.table.total' | translate }}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (line of lines(); track trackLine($index, line); let i = $index) {
+                <tr>
+                  <td>
+                    <select class="form-select form-select--sm"
+                            [value]="line.type"
+                            (change)="onLineTypeChange(i, $any($event.target).value)">
+                      @for (t of lineTypes; track t) {
+                        <option [value]="t">{{ ('invoicing.form.lineTypes.' + t) | translate }}</option>
+                      }
+                    </select>
+                  </td>
+                  <td class="quote-form-page__table-desc">
+                    @if (line.type === 'service') {
+                      <app-service-picker (serviceSelected)="onServicePicked(i, $event)"></app-service-picker>
+                    } @else if (line.type === 'part') {
+                      <app-part-picker (partSelected)="onPartPicked(i, $event)"></app-part-picker>
+                    }
+                    <input type="text"
+                           class="form-input form-input--sm"
+                           [value]="line.description"
+                           (input)="updateLine(i, 'description', $any($event.target).value)"
+                           [placeholder]="'invoicing.form.placeholder.lineDescription' | translate" />
+                    @if (line.type === 'labor') {
+                      <label class="quote-form-page__labor-hours">
+                        <span>{{ 'invoicing.form.fields.laborHours' | translate }}</span>
+                        <input type="number"
+                               min="0"
+                               step="0.25"
+                               class="form-input form-input--sm"
+                               [value]="line.laborHours ?? 0"
+                               (input)="updateLine(i, 'laborHours', +$any($event.target).value)" />
+                      </label>
+                    }
+                  </td>
+                  <td>
+                    <input type="number"
+                           min="0"
+                           step="0.01"
+                           class="form-input form-input--sm form-input--num"
+                           [value]="line.quantity"
+                           (input)="updateLine(i, 'quantity', +$any($event.target).value)"
+                           [disabled]="line.type === 'labor'" />
+                  </td>
+                  <td>
+                    <input type="number"
+                           min="0"
+                           step="0.01"
+                           class="form-input form-input--sm form-input--num"
+                           [value]="line.unitPrice"
+                           (input)="updateLine(i, 'unitPrice', +$any($event.target).value)" />
+                  </td>
+                  <td>
+                    <select class="form-select form-select--sm"
+                            [value]="line.tvaRate"
+                            (change)="updateLine(i, 'tvaRate', $any(+$any($event.target).value))">
+                      @for (rate of tvaRates; track rate) {
+                        <option [value]="rate">{{ rate }}%</option>
+                      }
+                    </select>
+                  </td>
+                  <td>
+                    <input type="number"
+                           min="0"
+                           max="100"
+                           step="0.1"
+                           class="form-input form-input--sm form-input--num"
+                           [value]="line.discountPct"
+                           (input)="updateLine(i, 'discountPct', +$any($event.target).value)" />
+                  </td>
+                  <td class="quote-form-page__table-total">{{ formatCurrency(lineTotal(i)) }}</td>
+                  <td>
+                    <button type="button"
+                            class="btn-icon btn-tertiary"
+                            (click)="removeLine(i)"
+                            [attr.aria-label]="'invoicing.form.actions.removeLine' | translate">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M3 6h18"/>
+                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <dl class="quote-form-page__totals">
+          <div class="quote-form-page__totals-row">
+            <dt>{{ 'invoicing.form.summary.subtotalHT' | translate }}</dt>
+            <dd>{{ formatCurrency(subtotalHT()) }}</dd>
+          </div>
+          <div class="quote-form-page__totals-row">
+            <dt>{{ 'invoicing.form.table.tva' | translate }}</dt>
+            <dd>{{ formatCurrency(totalTVA()) }}</dd>
+          </div>
+          <div class="quote-form-page__totals-row quote-form-page__totals-row--total">
+            <dt>{{ 'invoicing.form.summary.totalTTC' | translate }}</dt>
+            <dd>{{ formatCurrency(totalTTC()) }}</dd>
+          </div>
+        </dl>
+      }
     </div>
 
     <div class="quote-form-page__actions">
@@ -61,7 +191,7 @@
       </button>
       <button type="submit"
               class="btn-primary"
-              [disabled]="form.invalid || isSubmitting()">
+              [disabled]="form.invalid || lines().length === 0 || isSubmitting()">
         {{ (isSubmitting() ? 'common.saving' : 'invoicing.quotes.form.submit') | translate }}
       </button>
     </div>

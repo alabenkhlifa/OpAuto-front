@@ -89,4 +89,36 @@ describe('PaymentModalComponent', () => {
     component.onClose();
     expect(closed).toBeFalse();
   });
+
+  it('re-seeds the form when reopened after a previous close', () => {
+    // Open #1
+    component.context = ctx;
+    component.isOpen = true;
+    component.ngOnChanges({
+      isOpen: { currentValue: true, previousValue: false, firstChange: true, isFirstChange: () => true },
+    } as any);
+    // Simulate user changing the amount and method during open #1
+    component.selectMethod('card');
+    component.form.patchValue({ amount: 50, reference: 'old-ref' });
+    expect(component.form.controls.amount.value).toBe(50);
+
+    // Close
+    component.isOpen = false;
+    component.ngOnChanges({
+      isOpen: { currentValue: false, previousValue: true, firstChange: false, isFirstChange: () => false },
+    } as any);
+
+    // Reopen with a fresh remaining amount
+    const ctx2: PaymentModalContext = { ...ctx, remainingAmount: 175 };
+    component.context = ctx2;
+    component.isOpen = true;
+    component.ngOnChanges({
+      isOpen: { currentValue: true, previousValue: false, firstChange: false, isFirstChange: () => false },
+      context: { currentValue: ctx2, previousValue: ctx, firstChange: false, isFirstChange: () => false },
+    } as any);
+
+    expect(component.form.controls.amount.value).toBe(175);
+    expect(component.form.controls.reference.value).toBe('');
+    expect(component.method()).toBe('cash');
+  });
 });
