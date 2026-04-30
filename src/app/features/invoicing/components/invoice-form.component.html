@@ -1,317 +1,432 @@
-<!-- Invoice Form Container -->
-<div class="min-h-screen invoice-form-container p-4 lg:p-6">
-  
-  <!-- Header Section -->
-  <header class="glass-card invoice-form-header">
-    <div class="flex items-center gap-4">
-      <button (click)="onCancel()" 
-              class="btn-tertiary btn-icon">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
-      </button>
-      <div class="flex-1">
-        <h1 class="text-2xl lg:text-3xl font-bold text-white mb-1">
-          {{ isEditMode() ? ('invoicing.create.editTitle' | translate) : ('invoicing.create.title' | translate) }}
-        </h1>
-        <p class="text-gray-300">
-          {{ isEditMode() ? ('invoicing.create.editSubtitle' | translate) : ('invoicing.create.subtitle' | translate) }}
-        </p>
+<div class="invoice-form-page">
+  <!-- Sticky validation banner -->
+  @if (validationIssues().length > 0 && !isLocked()) {
+    <div class="invoice-form-banner invoice-form-banner--error" role="alert">
+      <strong>{{ 'invoicing.form.banner.fixToContinue' | translate }}</strong>
+      <ul>
+        @for (key of validationIssues(); track trackIssue($index, key)) {
+          <li>{{ key | translate }}</li>
+        }
+      </ul>
+    </div>
+  }
+
+  <!-- Locked banner -->
+  @if (isLocked()) {
+    <div class="invoice-form-banner invoice-form-banner--locked" role="status">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <rect x="5" y="11" width="14" height="10" rx="2"/>
+        <path d="M8 11V7a4 4 0 1 1 8 0v4"/>
+      </svg>
+      <div>
+        <strong>{{ 'invoicing.form.locked.title' | translate }}</strong>
+        <p>{{ 'invoicing.form.locked.description' | translate }}</p>
       </div>
     </div>
-  </header>
+  }
 
-  <form [formGroup]="invoiceForm" (ngSubmit)="onSubmit()" class="space-y-6">
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Main Form -->
-      <div class="lg:col-span-2 space-y-6">
-        <!-- Invoice Details -->
-        <div class="glass-card">
-          <h2 class="text-lg font-semibold text-white mb-4">{{ 'invoicing.create.invoiceDetails' | translate }}</h2>
-          
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">
-                {{ 'invoicing.create.customer' | translate }} *
-              </label>
-              <select formControlName="customerId" (change)="onCustomerChange()"
-                      class="form-select">
-                <option value="">{{ 'invoicing.create.selectCustomer' | translate }}</option>
-                <option *ngFor="let customer of customers()" [value]="customer.id">
-                  {{ customer.name }} - {{ customer.phone }}
-                </option>
-              </select>
-              <div *ngIf="invoiceForm.get('customerId')?.errors && invoiceForm.get('customerId')?.touched"
-                   class="text-red-500 text-xs mt-1">
-                {{ 'invoicing.create.customerRequired' | translate }}
-              </div>
-            </div>
+  <form [formGroup]="form" novalidate class="invoice-form-grid">
+    <!-- Main column -->
+    <div class="invoice-form-main">
+      <!-- Section 1 — Customer & Vehicle -->
+      <section class="glass-card invoice-form-section">
+        <header class="invoice-form-section__header">
+          <h2 class="invoice-form-section__title">
+            <span class="invoice-form-section__index">1</span>
+            {{ 'invoicing.form.section.customer.title' | translate }}
+          </h2>
+          <p class="invoice-form-section__subtitle">
+            {{ 'invoicing.form.section.customer.subtitle' | translate }}
+          </p>
+        </header>
 
-            <div *ngIf="activeAiOffer() as offer" class="md:col-span-2 rounded-lg bg-orange-50 border border-orange-200 p-3 flex flex-wrap items-center gap-3">
-              <div class="flex-1 min-w-[200px] text-sm text-orange-900">
-                <span class="font-semibold">🎯 {{ 'invoicing.create.aiOffer.title' | translate }}</span>
-                <span *ngIf="offer.discountKind === 'PERCENT'"> — {{ offer.discountValue }}%</span>
-                <span *ngIf="offer.discountKind === 'AMOUNT'"> — {{ offer.discountValue }} TND</span>
-                <span *ngIf="offer.expiresAt"> · {{ 'invoicing.create.aiOffer.validUntil' | translate }} {{ formatOfferExpiry(offer.expiresAt) }}</span>
-              </div>
-              <ng-container *ngIf="offer.discountKind === 'PERCENT' && appliedAiActionId() !== offer.id">
-                <button type="button" class="btn-primary btn-sm" (click)="applyAiOffer()">
-                  {{ 'invoicing.create.aiOffer.apply' | translate }}
-                </button>
-              </ng-container>
-              <ng-container *ngIf="appliedAiActionId() === offer.id">
-                <span class="badge badge-success">✓ {{ 'invoicing.create.aiOffer.applied' | translate }}</span>
-                <button type="button" class="btn-tertiary btn-sm" (click)="clearAiOffer()">
-                  {{ 'invoicing.create.aiOffer.remove' | translate }}
-                </button>
-              </ng-container>
-              <span *ngIf="offer.discountKind === 'AMOUNT'" class="text-xs text-orange-800 italic">
-                {{ 'invoicing.create.aiOffer.addManually' | translate }}
-              </span>
-            </div>
+        <div class="invoice-form-grid-2">
+          <label class="invoice-form-field">
+            <span class="invoice-form-field__label">{{ 'invoicing.form.fields.customer' | translate }} *</span>
+            <select class="form-select"
+                    formControlName="customerId"
+                    (change)="onCustomerChange()"
+                    [disabled]="isLocked()">
+              <option value="">{{ 'invoicing.form.placeholder.selectCustomer' | translate }}</option>
+              @for (c of customers(); track c.id) {
+                <option [value]="c.id">{{ getCustomerLabel(c) }}</option>
+              }
+            </select>
+          </label>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">
-                {{ 'invoicing.create.vehicle' | translate }} *
-              </label>
-              <select formControlName="carId"
-                      class="form-select">
-                <option value="">{{ 'invoicing.create.selectVehicle' | translate }}</option>
-                <option *ngFor="let car of getCustomerCars()" [value]="car.id">
-                  {{ car.make }} {{ car.model }} ({{ car.licensePlate }})
-                </option>
-              </select>
-              <div *ngIf="invoiceForm.get('carId')?.errors && invoiceForm.get('carId')?.touched" 
-                   class="text-red-500 text-xs mt-1">
-                {{ 'invoicing.create.vehicleRequired' | translate }}
-              </div>
-            </div>
+          <label class="invoice-form-field">
+            <span class="invoice-form-field__label">{{ 'invoicing.form.fields.vehicle' | translate }} *</span>
+            <select class="form-select"
+                    formControlName="carId"
+                    (change)="onCarChange()"
+                    [disabled]="isLocked() || !form.value.customerId">
+              <option value="">{{ 'invoicing.form.placeholder.selectVehicle' | translate }}</option>
+              @for (c of filteredCars(); track c.id) {
+                <option [value]="c.id">{{ getCarLabel(c) }}</option>
+              }
+            </select>
+          </label>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">
-                {{ 'invoicing.create.issueDate' | translate }} *
-              </label>
-              <input type="date" formControlName="issueDate"
-                     class="form-input w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white backdrop-blur-sm">
-            </div>
+          <label class="invoice-form-field invoice-form-field--full">
+            <span class="invoice-form-field__label">{{ 'invoicing.form.fields.linkJob' | translate }}</span>
+            <select class="form-select"
+                    formControlName="maintenanceJobId"
+                    (change)="onJobChange()"
+                    [disabled]="isLocked() || !form.value.carId">
+              <option value="">{{ 'invoicing.form.placeholder.selectJob' | translate }}</option>
+              @for (j of filteredJobs(); track j.id) {
+                <option [value]="j.id">{{ getJobLabel(j) }}</option>
+              }
+            </select>
+          </label>
+        </div>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">
-                {{ 'invoicing.create.dueDate' | translate }} *
-              </label>
-              <input type="date" formControlName="dueDate"
-                     class="form-input w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white backdrop-blur-sm">
-            </div>
+        @if (isEditMode() && linkedJob()) {
+          <div class="invoice-form-job-pill">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M10 13a5 5 0 0 0 7 0l4-4a5 5 0 0 0-7-7l-1 1"/>
+              <path d="M14 11a5 5 0 0 0-7 0l-4 4a5 5 0 0 0 7 7l1-1"/>
+            </svg>
+            {{ 'invoicing.form.section.customer.linkedToJob' | translate:{ ref: getJobLabel(linkedJob()!) } }}
           </div>
+        }
+      </section>
 
-          <div class="mt-4">
-            <label class="block text-sm font-medium text-white mb-2">
-              {{ 'invoicing.create.paymentTerms' | translate }}
+      <!-- Section 2 — Pull from job CTA (create mode only, when job linked but not yet pulled) -->
+      @if (!isEditMode() && linkedJob() && !jobPulled()) {
+        <section class="glass-card invoice-form-section invoice-form-section--cta">
+          <header class="invoice-form-section__header">
+            <h2 class="invoice-form-section__title">
+              <span class="invoice-form-section__index">2</span>
+              {{ 'invoicing.form.section.pullFromJob.title' | translate }}
+            </h2>
+            <p class="invoice-form-section__subtitle">
+              {{ 'invoicing.form.section.pullFromJob.subtitle' | translate }}
+            </p>
+          </header>
+          <button type="button" class="btn-primary" (click)="pullFromJob()" [disabled]="isSubmitting()">
+            {{ 'invoicing.form.section.pullFromJob.action' | translate }}
+          </button>
+        </section>
+      }
+
+      <!-- Section 3 — Line items -->
+      <section class="glass-card invoice-form-section">
+        <header class="invoice-form-section__header invoice-form-section__header--row">
+          <div>
+            <h2 class="invoice-form-section__title">
+              <span class="invoice-form-section__index">3</span>
+              {{ 'invoicing.form.section.lines.title' | translate }}
+            </h2>
+            <p class="invoice-form-section__subtitle">
+              {{ 'invoicing.form.section.lines.subtitle' | translate }}
+            </p>
+          </div>
+          @if (!isLocked()) {
+            <div class="invoice-form-add-row">
+              <button type="button" class="btn-tertiary btn-sm" (click)="addLine('service')">
+                + {{ 'invoicing.form.lineTypes.service' | translate }}
+              </button>
+              <button type="button" class="btn-tertiary btn-sm" (click)="addLine('part')">
+                + {{ 'invoicing.form.lineTypes.part' | translate }}
+              </button>
+              <button type="button" class="btn-tertiary btn-sm" (click)="addLine('labor')">
+                + {{ 'invoicing.form.lineTypes.labor' | translate }}
+              </button>
+              <button type="button" class="btn-tertiary btn-sm" (click)="addLine('misc')">
+                + {{ 'invoicing.form.lineTypes.misc' | translate }}
+              </button>
+            </div>
+          }
+        </header>
+
+        @if (lines().length === 0) {
+          <p class="invoice-form-empty">
+            {{ 'invoicing.form.section.lines.empty' | translate }}
+          </p>
+        } @else {
+          <div class="invoice-form-table-wrap">
+            <table class="invoice-form-table">
+              <thead>
+                <tr>
+                  <th>{{ 'invoicing.form.table.type' | translate }}</th>
+                  <th class="invoice-form-table__desc">{{ 'invoicing.form.table.description' | translate }}</th>
+                  <th>{{ 'invoicing.form.table.qty' | translate }}</th>
+                  <th>{{ 'invoicing.form.table.unitPrice' | translate }}</th>
+                  <th>{{ 'invoicing.form.table.tva' | translate }}</th>
+                  <th>{{ 'invoicing.form.table.discount' | translate }}</th>
+                  <th>{{ 'invoicing.form.table.total' | translate }}</th>
+                  @if (!isLocked()) { <th></th> }
+                </tr>
+              </thead>
+              <tbody>
+                @for (line of lines(); track $index; let i = $index) {
+                  <tr [class.error]="isOverdraw(i)">
+                    <td>
+                      <select class="form-select form-select--sm"
+                              [value]="line.type"
+                              (change)="onLineTypeChange(i, $any($event.target).value)"
+                              [disabled]="isLocked()">
+                        @for (t of lineTypes; track t) {
+                          <option [value]="t">{{ ('invoicing.form.lineTypes.' + t) | translate }}</option>
+                        }
+                      </select>
+                    </td>
+                    <td class="invoice-form-table__desc">
+                      @if (line.type === 'service' && !isLocked()) {
+                        <app-service-picker (serviceSelected)="onServicePicked(i, $event)"></app-service-picker>
+                      } @else if (line.type === 'part' && !isLocked()) {
+                        <app-part-picker (partSelected)="onPartPicked(i, $event)"></app-part-picker>
+                      }
+                      <input type="text"
+                             class="form-input form-input--sm"
+                             [value]="line.description"
+                             (input)="updateLine(i, 'description', $any($event.target).value)"
+                             [disabled]="isLocked()"
+                             [placeholder]="'invoicing.form.placeholder.lineDescription' | translate" />
+                      @if (line.type === 'part' && line.partStock !== undefined) {
+                        @if (isOverdraw(i)) {
+                          <span class="invoice-form-stock invoice-form-stock--bad">
+                            {{ 'invoicing.form.stock.exceeds' | translate:{ count: line.partStock } }}
+                          </span>
+                        } @else {
+                          <span class="invoice-form-stock">
+                            {{ 'invoicing.partPicker.inStock' | translate:{ count: line.partStock } }}
+                          </span>
+                        }
+                      }
+                      @if (line.type === 'labor') {
+                        <label class="invoice-form-labor-hours">
+                          <span>{{ 'invoicing.form.fields.laborHours' | translate }}</span>
+                          <input type="number"
+                                 min="0"
+                                 step="0.25"
+                                 class="form-input form-input--sm"
+                                 [value]="line.laborHours ?? 0"
+                                 (input)="updateLine(i, 'laborHours', +$any($event.target).value)"
+                                 [disabled]="isLocked()" />
+                        </label>
+                      }
+                    </td>
+                    <td>
+                      <input type="number"
+                             min="0"
+                             step="0.01"
+                             class="form-input form-input--sm form-input--num"
+                             [value]="line.quantity"
+                             (input)="updateLine(i, 'quantity', +$any($event.target).value)"
+                             [disabled]="isLocked() || line.type === 'labor'" />
+                    </td>
+                    <td>
+                      <input type="number"
+                             min="0"
+                             step="0.01"
+                             class="form-input form-input--sm form-input--num"
+                             [value]="line.unitPrice"
+                             (input)="updateLine(i, 'unitPrice', +$any($event.target).value)"
+                             [disabled]="isLocked()" />
+                    </td>
+                    <td>
+                      <select class="form-select form-select--sm"
+                              [value]="line.tvaRate"
+                              (change)="updateLine(i, 'tvaRate', $any(+$any($event.target).value))"
+                              [disabled]="isLocked()">
+                        @for (rate of tvaRates; track rate) {
+                          <option [value]="rate">{{ rate }}%</option>
+                        }
+                      </select>
+                    </td>
+                    <td>
+                      <input type="number"
+                             min="0"
+                             max="100"
+                             step="0.1"
+                             class="form-input form-input--sm form-input--num"
+                             [value]="line.discountPct"
+                             (input)="updateLine(i, 'discountPct', +$any($event.target).value)"
+                             [disabled]="isLocked()" />
+                    </td>
+                    <td class="invoice-form-table__total">{{ formatCurrency(lineTotal(i)) }}</td>
+                    @if (!isLocked()) {
+                      <td>
+                        <button type="button"
+                                class="btn-icon btn-tertiary"
+                                (click)="removeLine(i)"
+                                [attr.aria-label]="'invoicing.form.actions.removeLine' | translate">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="M3 6h18"/>
+                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                          </svg>
+                        </button>
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+
+      <!-- Section 4 — Discount + approver -->
+      <section class="glass-card invoice-form-section">
+        <header class="invoice-form-section__header">
+          <h2 class="invoice-form-section__title">
+            <span class="invoice-form-section__index">4</span>
+            {{ 'invoicing.form.section.discount.title' | translate }}
+          </h2>
+          <p class="invoice-form-section__subtitle">
+            {{ 'invoicing.form.section.discount.subtitle' | translate:{ threshold: auditThresholdPct() } }}
+          </p>
+        </header>
+
+        <div class="invoice-form-grid-2">
+          <label class="invoice-form-field">
+            <span class="invoice-form-field__label">{{ 'invoicing.form.fields.discountPct' | translate }}</span>
+            <input type="number"
+                   min="0"
+                   max="100"
+                   step="0.1"
+                   class="form-input"
+                   [value]="invoiceDiscountPct()"
+                   (input)="onDiscountChange($any($event.target).value)"
+                   [disabled]="isLocked()" />
+          </label>
+
+          @if (invoiceDiscountPct() > 0) {
+            <label class="invoice-form-field">
+              <span class="invoice-form-field__label">{{ 'invoicing.form.fields.discountReason' | translate }} *</span>
+              <input type="text"
+                     class="form-input"
+                     [value]="invoiceDiscountReason()"
+                     (input)="onDiscountReasonChange($any($event.target).value)"
+                     [disabled]="isLocked()"
+                     [placeholder]="'invoicing.form.placeholder.discountReason' | translate" />
             </label>
-            <input type="text" formControlName="paymentTerms"
-                   placeholder="{{ 'invoicing.create.paymentTermsPlaceholder' | translate }}"
-                   class="form-input w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400 backdrop-blur-sm">
-          </div>
+          }
+
+          @if (approverRequired()) {
+            <label class="invoice-form-field invoice-form-field--full">
+              <span class="invoice-form-field__label">{{ 'invoicing.form.fields.approver' | translate }} *</span>
+              <select class="form-select"
+                      [value]="approverId()"
+                      (change)="onApproverChange($any($event.target).value)"
+                      [disabled]="isLocked()">
+                <option value="">{{ 'invoicing.form.placeholder.selectApprover' | translate }}</option>
+                @for (o of owners(); track o.id) {
+                  <option [value]="o.id">{{ getOwnerLabel(o) }}</option>
+                }
+              </select>
+            </label>
+          }
         </div>
+      </section>
 
-        <!-- Line Items -->
-        <div class="glass-card">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold text-white">{{ 'invoicing.create.lineItems' | translate }}</h2>
-            <button type="button" (click)="addLineItem()"
-                    class="btn-primary btn-sm">
-              + {{ 'invoicing.create.addItem' | translate }}
-            </button>
-          </div>
-
-          <div class="space-y-4">
-            <div *ngFor="let lineItem of lineItems.controls; let i = index" 
-                 [formGroup]="$any(lineItem)"
-                 class="line-item p-4 rounded-lg">
-              
-              <div class="flex items-center justify-between mb-3">
-                <h4 class="font-medium text-white">{{ 'invoicing.create.item' | translate }} {{ i + 1 }}</h4>
-                <button type="button" (click)="removeLineItem(i)"
-                        class="remove-item-btn p-1 rounded">
-                  ✕
-                </button>
-              </div>
-
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                <div>
-                  <label class="block text-xs font-medium text-gray-300 mb-1">{{ 'invoicing.create.type' | translate }}</label>
-                  <select formControlName="type" (change)="onLineItemTypeChange(i)"
-                          class="form-select text-sm">
-                    <option *ngFor="let type of lineItemTypes" [value]="type">
-                      {{ type | titlecase }}
-                    </option>
-                  </select>
-                </div>
-
-                <div class="md:col-span-2">
-                  <label class="block text-xs font-medium text-gray-300 mb-1">{{ 'invoicing.create.description' | translate }}</label>
-                  <input type="text" formControlName="description"
-                         placeholder="{{ 'invoicing.create.itemDescription' | translate }}"
-                         class="form-input w-full px-2 py-1 text-sm rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white placeholder-gray-400 backdrop-blur-sm">
-                </div>
-
-                <!-- Part Selection (only for part type) -->
-                <div *ngIf="lineItem.get('type')?.value === 'part'" class="md:col-span-3">
-                  <label class="block text-xs font-medium text-gray-300 mb-1">{{ 'invoicing.create.selectPart' | translate }}</label>
-                  <select formControlName="partId" (change)="onPartSelect(i, $any($event.target).value)"
-                          class="form-select text-sm">
-                    <option value="">{{ 'invoicing.create.selectPartOptional' | translate }}</option>
-                    <option *ngFor="let part of parts()" [value]="part.id">
-                      {{ part.name }} - {{ part.brand }} ({{ formatCurrency(part.price) }})
-                    </option>
-                  </select>
-                </div>
-
-                <!-- Service Selection (only for service type) -->
-                <div *ngIf="lineItem.get('type')?.value === 'service'" class="md:col-span-3">
-                  <label class="block text-xs font-medium text-gray-300 mb-1">{{ 'invoicing.create.selectService' | translate }}</label>
-                  <select formControlName="serviceCode" (change)="onServiceSelect(i, $any($event.target).value)"
-                          class="form-select text-sm">
-                    <option value="">{{ 'invoicing.create.selectServiceOptional' | translate }}</option>
-                    <option *ngFor="let service of serviceRates()" [value]="service.serviceCode">
-                      {{ service.serviceName }} ({{ formatCurrency(service.basePrice) }})
-                    </option>
-                  </select>
-                </div>
-
-                <div>
-                  <label class="block text-xs font-medium text-gray-300 mb-1">{{ 'invoicing.create.quantity' | translate }}</label>
-                  <input type="number" formControlName="quantity" min="0.01" step="0.01"
-                         class="form-input w-full px-2 py-1 text-sm rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white backdrop-blur-sm">
-                </div>
-
-                <div>
-                  <label class="block text-xs font-medium text-gray-300 mb-1">{{ 'invoicing.create.unit' | translate }}</label>
-                  <input type="text" formControlName="unit"
-                         placeholder="{{ 'invoicing.create.unitPlaceholder' | translate }}"
-                         class="form-input w-full px-2 py-1 text-sm rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white placeholder-gray-400 backdrop-blur-sm">
-                </div>
-
-                <div>
-                  <label class="block text-xs font-medium text-gray-300 mb-1">{{ 'invoicing.create.unitPrice' | translate }}</label>
-                  <input type="number" formControlName="unitPrice" min="0" step="0.01"
-                         class="form-input w-full px-2 py-1 text-sm rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white backdrop-blur-sm">
-                </div>
-              </div>
-
-              <!-- Line Item Total -->
-              <div class="mt-3 text-right">
-                <span class="text-sm font-medium text-white">
-                  {{ 'invoicing.create.total' | translate }}: {{ formatCurrency(calculateLineItemTotal(i)) }}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Notes -->
-        <div class="glass-card">
-          <h2 class="text-lg font-semibold text-white mb-4">{{ 'invoicing.create.additionalNotes' | translate }}</h2>
-          <textarea formControlName="notes"
-                    placeholder="{{ 'invoicing.create.notesPlaceholder' | translate }}"
-                    rows="4"
-                    class="form-input w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400 backdrop-blur-sm resize-none">
-          </textarea>
-        </div>
-      </div>
-
-      <!-- Summary Sidebar -->
-      <div class="space-y-6">
-        <!-- Invoice Summary -->
-        <div class="glass-card sticky-summary">
-          <h3 class="text-lg font-semibold text-white mb-4">{{ 'invoicing.create.invoiceSummary' | translate }}</h3>
-          
-          <!-- Customer & Car Info -->
-          <div *ngIf="getSelectedCustomer() && getSelectedCar()" class="customer-info mb-6 p-4 rounded-lg">
-            <div class="space-y-2 text-sm">
-              <div>
-                <span class="font-medium text-white">{{ getSelectedCustomer()?.name }}</span>
-              </div>
-              <div class="text-gray-300">
-                {{ getSelectedCustomer()?.phone }}
-              </div>
-              <div class="text-gray-300">
-                {{ getSelectedCar()?.make }} {{ getSelectedCar()?.model }} ({{ getSelectedCar()?.year }})
-              </div>
-              <div class="text-gray-300">
-                {{ getSelectedCar()?.licensePlate }}
-              </div>
-            </div>
-          </div>
-
-          <!-- Pricing Breakdown -->
-          <div class="space-y-3">
-            <div class="flex justify-between text-sm">
-              <span class="text-gray-300">{{ 'invoicing.create.subtotal' | translate }}:</span>
-              <span class="font-medium text-white">{{ formatCurrency(subtotal()) }}</span>
-            </div>
-            
-            <div class="flex justify-between text-sm">
-              <span class="text-gray-300">{{ 'invoicing.create.discount' | translate }}:</span>
-              <div class="flex items-center gap-2">
-                <input type="number" formControlName="discountPercentage" 
-                       min="0" max="100" step="0.1"
-                       class="form-input w-16 px-2 py-1 text-xs rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white backdrop-blur-sm">
-                <span class="text-xs text-gray-300">%</span>
-                <span class="font-medium text-white">{{ formatCurrency(discountAmount()) }}</span>
-              </div>
-            </div>
-            
-            <div class="flex justify-between text-sm">
-              <span class="text-gray-300">{{ 'invoicing.create.tax' | translate }}:</span>
-              <div class="flex items-center gap-2">
-                <input type="number" formControlName="taxRate" 
-                       min="0" max="100" step="0.1"
-                       class="form-input w-16 px-2 py-1 text-xs rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-white backdrop-blur-sm">
-                <span class="text-xs text-gray-300">%</span>
-                <span class="font-medium text-white">{{ formatCurrency(taxAmount()) }}</span>
-              </div>
-            </div>
-            
-            <hr class="border-gray-500">
-            
-            <div class="flex justify-between">
-              <span class="font-semibold text-white">{{ 'invoicing.create.total' | translate }}:</span>
-              <span class="total-amount font-bold text-xl">{{ formatCurrency(totalAmount()) }}</span>
-            </div>
-          </div>
-
-          <!-- Actions -->
-          <div class="mt-6 space-y-3">
-            <button type="submit" 
-                    [disabled]="!invoiceForm.valid || isSubmitting()"
-                    class="btn-primary w-full px-4 py-3 font-medium flex items-center justify-center gap-2">
-              <div *ngIf="isSubmitting()" class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-              {{ isEditMode() ? ('invoicing.create.updateInvoice' | translate) : ('invoicing.create.createInvoice' | translate) }}
-            </button>
-            
-            <button type="button" (click)="onSaveAsDraft()"
-                    [disabled]="isSubmitting()"
-                    class="btn-warning w-full px-4 py-2 font-medium">
-              {{ 'invoicing.create.saveAsDraft' | translate }}
-            </button>
-            
-            <button type="button" (click)="onCancel()"
-                    class="btn-tertiary w-full px-4 py-2">
-              {{ 'common.cancel' | translate }}
-            </button>
-          </div>
-        </div>
-      </div>
+      <!-- Notes -->
+      <section class="glass-card invoice-form-section">
+        <header class="invoice-form-section__header">
+          <h2 class="invoice-form-section__title">{{ 'invoicing.form.section.notes.title' | translate }}</h2>
+        </header>
+        <textarea class="form-input"
+                  rows="3"
+                  formControlName="notes"
+                  [placeholder]="'invoicing.form.placeholder.notes' | translate"
+                  [disabled]="isLocked()"></textarea>
+      </section>
     </div>
+
+    <!-- Sticky right summary -->
+    <aside class="invoice-form-aside">
+      <section class="glass-card invoice-form-summary">
+        <h3 class="invoice-form-summary__title">
+          <span class="invoice-form-section__index">5</span>
+          {{ 'invoicing.form.section.summary.title' | translate }}
+        </h3>
+
+        <dl class="invoice-form-summary__list">
+          <div class="invoice-form-summary__row">
+            <dt>{{ 'invoicing.form.summary.subtotalHT' | translate }}</dt>
+            <dd>{{ formatCurrency(subtotalHT()) }}</dd>
+          </div>
+
+          @if (invoiceDiscountPct() > 0) {
+            <div class="invoice-form-summary__row">
+              <dt>{{ 'invoicing.form.summary.discount' | translate }} ({{ invoiceDiscountPct() }}%)</dt>
+              <dd>−{{ formatCurrency(subtotalHT() - discountedSubtotal()) }}</dd>
+            </div>
+          }
+
+          @for (row of tvaBreakdown(); track trackTvaRow($index, row)) {
+            <div class="invoice-form-summary__row">
+              <dt>{{ 'invoicing.form.summary.tvaAt' | translate:{ rate: row.rate } }}</dt>
+              <dd>{{ formatCurrency(row.tva) }}</dd>
+            </div>
+          }
+
+          @if (fiscalStamp() > 0) {
+            <div class="invoice-form-summary__row">
+              <dt>{{ 'invoicing.form.summary.fiscalStamp' | translate }}</dt>
+              <dd>{{ formatCurrency(fiscalStamp()) }}</dd>
+            </div>
+          }
+
+          <div class="invoice-form-summary__row invoice-form-summary__row--total">
+            <dt>{{ 'invoicing.form.summary.totalTTC' | translate }}</dt>
+            <dd>{{ formatCurrency(totalTTC()) }}</dd>
+          </div>
+        </dl>
+
+        <label class="invoice-form-field">
+          <span class="invoice-form-field__label">{{ 'invoicing.form.fields.dueDate' | translate }}</span>
+          <input type="date" class="form-input" formControlName="dueDate" [disabled]="isLocked()" />
+        </label>
+
+        <p class="invoice-form-summary__terms">
+          {{ getPaymentTermsLabel() }}
+        </p>
+      </section>
+    </aside>
   </form>
 
-  <!-- Loading State -->
-  <div *ngIf="isLoading()" 
-       class="loading-overlay fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
-    <div class="glass-card flex items-center gap-3">
-      <div class="animate-spin h-5 w-5 border-2 border-blue-400 border-t-transparent rounded-full"></div>
-      <span class="text-white">{{ 'invoicing.create.loadingFormData' | translate }}</span>
-    </div>
+  <!-- Sticky bottom action bar -->
+  <div class="invoice-form-actionbar">
+    @if (isLocked()) {
+      <button type="button" class="btn-tertiary" (click)="cancel()">
+        {{ 'common.cancel' | translate }}
+      </button>
+      <button type="button" class="btn-primary" (click)="goToCreditNote()">
+        {{ 'invoicing.form.actions.issueCreditNote' | translate }}
+      </button>
+    } @else {
+      <button type="button" class="btn-tertiary" (click)="cancel()">
+        {{ 'common.cancel' | translate }}
+      </button>
+      @if (isEditMode()) {
+        <button type="button" class="btn-tertiary" (click)="previewPdf()">
+          {{ 'invoicing.form.actions.previewPdf' | translate }}
+        </button>
+      }
+      <button type="button"
+              class="btn-secondary"
+              [disabled]="!canSubmit() || isSubmitting()"
+              (click)="saveDraft()">
+        {{ 'invoicing.form.actions.saveDraft' | translate }}
+      </button>
+      <button type="button"
+              class="btn-primary"
+              [disabled]="!canSubmit() || isSubmitting()"
+              (click)="issueAndSend()">
+        {{ 'invoicing.form.actions.issueAndSend' | translate }}
+      </button>
+    }
   </div>
+
+  <app-send-invoice-modal
+    [isOpen]="sendModalOpen()"
+    [submitting]="sendSubmitting()"
+    [context]="sendContext()"
+    (close)="onSendModalClose()"
+    (send)="onSendModalSubmit($event)">
+  </app-send-invoice-modal>
 </div>

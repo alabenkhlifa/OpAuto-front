@@ -1,204 +1,395 @@
-/* Invoice Form Component - Light Theme */
+/* Invoice form — sectioned glass-card layout. Uses global classes from
+ * /src/styles/ as the source of truth; this stylesheet only fills the
+ * gaps for the multi-section grid + sticky aside / action bar.
+ */
 
-.invoice-form-container {
-  min-height: 100vh;
-  background: transparent;
+.invoice-form-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  padding-bottom: 6rem; /* leave room for the sticky action bar */
 }
 
-/* Glass card styling - Light Theme */
-.glass-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 20px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  margin-bottom: 1rem;
+@media (min-width: 1024px) {
+  .invoice-form-page {
+    padding: 1.5rem 1.5rem 6rem;
+  }
 }
 
-/* Form section styling */
-.form-section {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 20px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  margin-bottom: 1rem;
-}
+/* ── Banners ────────────────────────────────────────────────────────────── */
 
-/* Form inputs - Light theme */
-.form-input {
-  background: #ffffff !important;
-  border: 1px solid #e2e8f0 !important;
-  color: #111827 !important;
-  transition: all 0.2s ease !important;
-}
-
-.form-input:focus {
-  background: #ffffff !important;
-  border-color: #FF8400 !important;
-  box-shadow: 0 0 0 3px rgba(255, 132, 0, 0.2) !important;
-}
-
-/* Line item styling - Light theme */
-.line-item {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-}
-
-
-/* Summary sidebar */
-.summary-sidebar {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-}
-
-.dark .summary-sidebar {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-}
-
-/* Sticky positioning for summary */
-.sticky-summary {
+.invoice-form-banner {
   position: sticky;
-  top: 1.5rem;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #111827;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
-/* Customer/car info highlight */
-.customer-info {
-  background: linear-gradient(135deg, rgba(255, 132, 0, 0.1), rgba(255, 160, 51, 0.05));
-  border: 1px solid rgba(255, 132, 0, 0.2);
+.invoice-form-banner--error {
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(254, 242, 242, 0.95);
+  color: #991b1b;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
-.dark .customer-info {
-  background: linear-gradient(135deg, rgba(255, 132, 0, 0.1), rgba(255, 160, 51, 0.05));
-  border: 1px solid rgba(255, 132, 0, 0.2);
+.invoice-form-banner--error ul {
+  margin: 0.25rem 0 0;
+  padding-left: 1.25rem;
+  font-size: 0.8125rem;
 }
 
-/* Total amount highlighting */
-.total-amount {
-  background: linear-gradient(135deg, #10b981, #059669);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-weight: 800;
-  text-shadow: none;
+.invoice-form-banner--locked {
+  border-color: rgba(255, 132, 0, 0.4);
+  background: rgba(255, 247, 237, 0.95);
+  color: #9a3412;
+  align-items: center;
 }
 
-/* Button styling */
-.btn-primary {
-  background: linear-gradient(135deg, #FF8400, #CC6A00);
-  box-shadow: 0 4px 14px 0 rgba(255, 132, 0, 0.3);
+.invoice-form-banner--locked p {
+  margin: 0.125rem 0 0;
+  font-size: 0.8125rem;
+  color: #7c2d12;
 }
 
-.btn-primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, #CC6A00, #B35C00);
-  box-shadow: 0 6px 20px 0 rgba(255, 132, 0, 0.4);
-  transform: translateY(-1px);
+/* ── Layout grid ────────────────────────────────────────────────────────── */
+
+.invoice-form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
 }
 
-.btn-primary:disabled {
-  background: #9ca3af;
-  box-shadow: none;
-  transform: none;
-}
-
-/* Add/remove item buttons */
-.add-item-btn {
-  background: linear-gradient(135deg, #10b981, #059669);
-  transition: all 0.2s ease;
-}
-
-.add-item-btn:hover {
-  background: linear-gradient(135deg, #059669, #047857);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-}
-
-.remove-item-btn {
-  transition: all 0.2s ease;
-}
-
-.remove-item-btn:hover {
-  background: rgba(239, 68, 68, 0.1);
-  color: #dc2626;
-  transform: scale(1.1);
-}
-
-/* Mobile responsiveness */
-@media (max-width: 768px) {
-  .sticky-summary {
-    position: static;
-  }
-  
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .line-item-grid {
-    grid-template-columns: 1fr;
+@media (min-width: 1024px) {
+  .invoice-form-grid {
+    grid-template-columns: minmax(0, 1fr) 320px;
   }
 }
 
-/* Loading states */
-.loading-overlay {
-  /* keep backdrop-filter for modal overlay */
-  backdrop-filter: blur(4px);
+.invoice-form-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
 }
 
-/* Form validation styles */
-.form-input.ng-invalid.ng-touched {
-  border-color: #ef4444;
-  background-color: rgba(254, 242, 242, 0.5);
+.invoice-form-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.dark .form-input.ng-invalid.ng-touched {
-  border-color: #ef4444;
-  background-color: rgba(254, 242, 242, 0.5);
+@media (min-width: 1024px) {
+  .invoice-form-aside {
+    position: sticky;
+    top: 5rem;
+    align-self: start;
+  }
 }
 
-.form-input.ng-valid.ng-touched {
-  border-color: #10b981;
+/* ── Section ────────────────────────────────────────────────────────────── */
+
+.invoice-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.dark .form-input.ng-valid.ng-touched {
-  border-color: #10b981;
+.invoice-form-section--cta {
+  align-items: flex-start;
 }
 
-/* Error text styling */
-.error-text {
-  color: #ef4444;
+.invoice-form-section__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.invoice-form-section__header--row {
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.invoice-form-section__title {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.invoice-form-section__index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  background: rgba(255, 132, 0, 0.12);
+  color: #b45309;
   font-size: 0.75rem;
-  margin-top: 0.25rem;
+  font-weight: 700;
 }
 
-.dark .error-text {
-  color: #ef4444;
+.invoice-form-section__subtitle {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.8125rem;
 }
 
-/* Enhanced number inputs */
-input[type="number"] {
+/* Linked-job pill */
+.invoice-form-job-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(255, 132, 0, 0.1);
+  color: #b45309;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  align-self: flex-start;
+}
+
+/* ── Form grids & fields ───────────────────────────────────────────────── */
+
+.invoice-form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .invoice-form-grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.invoice-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.invoice-form-field--full {
+  grid-column: 1 / -1;
+}
+
+.invoice-form-field__label {
+  font-size: 0.8125rem;
+  color: #374151;
+  font-weight: 500;
+}
+
+.invoice-form-empty {
+  margin: 0;
+  padding: 1rem;
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.875rem;
+  border: 1px dashed #e5e7eb;
+  border-radius: 12px;
+  background: #f9fafb;
+}
+
+/* ── Add row buttons ───────────────────────────────────────────────────── */
+
+.invoice-form-add-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* ── Line items table ──────────────────────────────────────────────────── */
+
+.invoice-form-table-wrap {
+  overflow-x: auto;
+  margin: 0 -1rem;
+  padding: 0 1rem;
+}
+
+.invoice-form-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.8125rem;
+  min-width: 720px;
+}
+
+.invoice-form-table th,
+.invoice-form-table td {
+  padding: 0.5rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.invoice-form-table th {
+  background: #f9fafb;
+  color: #6b7280;
+  font-weight: 600;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.invoice-form-table tbody tr {
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.invoice-form-table tbody tr.error {
+  background: rgba(254, 242, 242, 0.6);
+  color: #991b1b;
+}
+
+.invoice-form-table tbody tr.error .form-input,
+.invoice-form-table tbody tr.error .form-select {
+  border-color: rgba(239, 68, 68, 0.6);
+}
+
+.invoice-form-table__desc {
+  min-width: 240px;
+}
+
+.invoice-form-table__total {
+  text-align: right;
   font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: #111827;
 }
 
-/* Smooth animations */
-.line-item {
-  animation: slideIn 0.3s ease-out;
+.invoice-form-stock {
+  display: inline-block;
+  margin-top: 0.375rem;
+  font-size: 0.6875rem;
+  color: #6b7280;
 }
 
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
+.invoice-form-stock--bad {
+  color: #991b1b;
+  font-weight: 600;
+}
+
+.invoice-form-labor-hours {
+  display: flex;
+  flex-direction: column;
+  margin-top: 0.5rem;
+  gap: 0.25rem;
+  font-size: 0.6875rem;
+  color: #6b7280;
+}
+
+/* Compact form inputs used inside the table */
+.form-input--sm,
+.form-select--sm {
+  padding: 0.375rem 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.form-input--num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  width: 6.5rem;
+  max-width: 100%;
+}
+
+/* ── Right summary ─────────────────────────────────────────────────────── */
+
+.invoice-form-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.invoice-form-summary__title {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.invoice-form-summary__list {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.invoice-form-summary__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.875rem;
+  color: #374151;
+  margin: 0;
+}
+
+.invoice-form-summary__row dt {
+  color: #6b7280;
+}
+
+.invoice-form-summary__row dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  color: #111827;
+}
+
+.invoice-form-summary__row--total {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 0.5rem;
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+
+.invoice-form-summary__row--total dt {
+  color: #111827;
+}
+
+.invoice-form-summary__terms {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+/* ── Sticky bottom action bar ──────────────────────────────────────────── */
+
+.invoice-form-actionbar {
+  position: sticky;
+  bottom: 0;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.95);
+  border-top: 1px solid #e5e7eb;
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.04);
+  border-radius: 12px 12px 0 0;
+  z-index: 20;
+}
+
+@media (max-width: 640px) {
+  .invoice-form-actionbar {
+    justify-content: stretch;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  .invoice-form-actionbar > button {
+    flex: 1 1 calc(50% - 0.25rem);
   }
-}
-
-/* Focus improvements */
-.form-input:focus-visible {
-  outline: 2px solid #FF8400;
-  outline-offset: 2px;
 }

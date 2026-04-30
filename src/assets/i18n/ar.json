@@ -2344,6 +2344,167 @@
     "templates": {
       "title": "النماذج",
       "comingSoon": "قوالب الفواتير القابلة لإعادة الاستخدام قادمة قريبًا."
+    },
+    "form": {
+      "banner": {
+        "fixToContinue": "يرجى تصحيح ما يلي قبل المتابعة:"
+      },
+      "locked": {
+        "title": "هذه الفاتورة مقفلة.",
+        "description": "الفواتير الصادرة غير قابلة للتعديل وفقًا للمتطلبات الجبائية. أصدر إشعار دائن لإجراء التعديلات."
+      },
+      "section": {
+        "customer": {
+          "title": "الحريف والسيارة",
+          "subtitle": "اختر الحريف، السيارة، وأمر صيانة اختياري للربط.",
+          "linkedToJob": "مرتبطة بالأمر · {{ref}}"
+        },
+        "pullFromJob": {
+          "title": "استيراد من الأمر",
+          "subtitle": "ملء البنود من أمر الصيانة المرتبط.",
+          "action": "استيراد من الأمر"
+        },
+        "lines": {
+          "title": "البنود",
+          "subtitle": "أضف خدمات أو قطع غيار أو يد عاملة أو متفرقات.",
+          "empty": "لا توجد بنود — استخدم الأزرار أعلاه لإضافة أول بند."
+        },
+        "discount": {
+          "title": "تخفيض",
+          "subtitle": "التخفيضات التي تتجاوز {{threshold}}% تتطلب موافقة المالك."
+        },
+        "notes": {
+          "title": "ملاحظات"
+        },
+        "summary": {
+          "title": "الملخص"
+        }
+      },
+      "fields": {
+        "customer": "الحريف",
+        "vehicle": "السيارة",
+        "linkJob": "ربط بأمر صيانة",
+        "dueDate": "تاريخ الاستحقاق",
+        "discountPct": "نسبة التخفيض %",
+        "discountReason": "السبب",
+        "approver": "المُوافِق (المالك)",
+        "laborHours": "ساعات اليد العاملة"
+      },
+      "placeholder": {
+        "selectCustomer": "اختر حريفًا…",
+        "selectVehicle": "اختر سيارة…",
+        "selectJob": "اختر أمرًا (اختياري)…",
+        "selectApprover": "اختر مُوافِقًا…",
+        "lineDescription": "وصف هذا البند",
+        "discountReason": "سبب التخفيض",
+        "notes": "ملاحظات داخلية (لا تُطبع على الفاتورة)"
+      },
+      "lineTypes": {
+        "service": "خدمة",
+        "part": "قطعة غيار",
+        "labor": "يد عاملة",
+        "misc": "متفرقات"
+      },
+      "lines": {
+        "defaultLaborDescription": "يد عاملة الميكانيكي"
+      },
+      "table": {
+        "type": "النوع",
+        "description": "الوصف",
+        "qty": "الكمية",
+        "unitPrice": "ثمن الوحدة",
+        "tva": "الأداء على القيمة المضافة %",
+        "discount": "التخفيض %",
+        "total": "المجموع"
+      },
+      "stock": {
+        "exceeds": "يتجاوز المخزون المتاح ({{count}})"
+      },
+      "summary": {
+        "subtotalHT": "المجموع قبل الأداء",
+        "discount": "تخفيض",
+        "tvaAt": "أداء على القيمة المضافة {{rate}}%",
+        "fiscalStamp": "الطابع الجبائي",
+        "totalTTC": "المجموع التضميني",
+        "paymentTermsDays": "خلال {{days}} يوم",
+        "defaultPaymentTermsLabel": "خلال 30 يوم"
+      },
+      "actions": {
+        "saveDraft": "حفظ المسودة",
+        "previewPdf": "معاينة PDF",
+        "issueAndSend": "إصدار وإرسال",
+        "issueCreditNote": "إصدار إشعار دائن",
+        "removeLine": "حذف البند"
+      },
+      "errors": {
+        "customerRequired": "الحريف مطلوب",
+        "vehicleRequired": "السيارة مطلوبة",
+        "lineItemRequired": "بند واحد على الأقل مطلوب",
+        "lineDescriptionRequired": "كل بند يحتاج إلى وصف",
+        "discountReasonRequired": "السبب مطلوب عند تطبيق تخفيض",
+        "approverRequired": "المُوافِق مطلوب لتخفيض يتجاوز عتبة المراجعة",
+        "partOverdraw": "بند أو أكثر يتجاوز المخزون المتاح",
+        "loadFailed": "تعذر تحميل الفاتورة",
+        "saveFailed": "تعذر حفظ الفاتورة",
+        "issueFailed": "تعذر إصدار الفاتورة",
+        "sendFailed": "تعذر إرسال الفاتورة",
+        "pullFailed": "تعذر الاستيراد من الأمر"
+      },
+      "toast": {
+        "draftSaved": "تم حفظ المسودة",
+        "pulledFromJob": "تم تعبئة الفاتورة من الأمر",
+        "sent": "تم إرسال الفاتورة"
+      }
+    },
+    "detail": {
+      "billTo": "فوترة إلى",
+      "vehicle": "السيارة",
+      "issueDate": "تاريخ الإصدار",
+      "dueDate": "تاريخ الاستحقاق",
+      "licensePlate": "لوحة التسجيل",
+      "lineItems": "البنود",
+      "notes": "ملاحظات",
+      "paymentProgress": "تقدم الدفع",
+      "remaining": "المتبقي",
+      "activity": "النشاط",
+      "linkedCreditNotes": "إشعارات الدائن المرتبطة",
+      "notFound": "الفاتورة غير موجودة.",
+      "lock": {
+        "label": "مقفلة",
+        "aria": "هذه الفاتورة مقفلة"
+      },
+      "actions": {
+        "edit": "تعديل",
+        "issueAndSend": "إصدار وإرسال",
+        "previewPdf": "معاينة PDF",
+        "send": "إرسال",
+        "recordPayment": "تسجيل دفعة",
+        "print": "طباعة",
+        "downloadPdf": "تنزيل PDF",
+        "issueCreditNote": "إصدار إشعار دائن",
+        "delete": "حذف"
+      },
+      "timeline": {
+        "empty": "لا يوجد نشاط بعد.",
+        "byUser": "بواسطة {{user}}",
+        "created": "تم إنشاء الفاتورة",
+        "issued": "تم الإصدار والقفل",
+        "viewedByCustomer": "اطلع عليها الحريف",
+        "paymentRecorded": "تم تسجيل دفعة — {{amount}} ({{method}})",
+        "creditNoteIssued": "تم إصدار إشعار دائن — {{number}}"
+      },
+      "toast": {
+        "deleted": "تم حذف الفاتورة",
+        "sent": "تم إرسال الفاتورة",
+        "paymentRecorded": "تم تسجيل الدفعة"
+      },
+      "errors": {
+        "loadFailed": "تعذر تحميل الفاتورة",
+        "deleteFailed": "تعذر حذف الفاتورة",
+        "issueFailed": "تعذر إصدار الفاتورة",
+        "sendFailed": "تعذر إرسال الفاتورة",
+        "paymentFailed": "تعذر تسجيل الدفعة"
+      }
     }
   },
   "photo": {

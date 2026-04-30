@@ -346,6 +346,59 @@ export class InvoiceService {
     );
   }
 
+  // --- Generate invoice from a maintenance job (Phase 2.1 backend) ---
+
+  /**
+   * Calls `POST /invoices/from-job/:jobId` and maps the resulting DRAFT
+   * invoice through the standard backend mapper. Used by the invoice
+   * form's "Pull from job" CTA — the backend prefills line items from
+   * the job's parts + labor + services.
+   */
+  createInvoiceFromJob(jobId: string): Observable<InvoiceWithDetails> {
+    return this.http.post<any>(`/invoices/from-job/${jobId}`, {}).pipe(
+      map(b => this.mapFromBackend(b)),
+      tap(created => {
+        const current = this.invoicesSubject.value;
+        const idx = current.findIndex(inv => inv.id === created.id);
+        if (idx === -1) {
+          this.invoicesSubject.next([...current, created]);
+        } else {
+          const next = [...current];
+          next[idx] = created;
+          this.invoicesSubject.next(next);
+        }
+      })
+    );
+  }
+
+  /** Triggers the backend issue endpoint — locks the invoice and decrements stock. */
+  issueInvoice(invoiceId: string): Observable<InvoiceWithDetails> {
+    return this.http.post<any>(`/invoices/${invoiceId}/issue`, {}).pipe(
+      map(b => this.mapFromBackend(b)),
+      tap(updated => {
+        const current = this.invoicesSubject.value;
+        const idx = current.findIndex(inv => inv.id === invoiceId);
+        if (idx !== -1) {
+          const next = [...current];
+          next[idx] = updated;
+          this.invoicesSubject.next(next);
+        }
+      })
+    );
+  }
+
+  /** Triggers the delivery endpoint — sends the document via the chosen channel. */
+  deliverInvoice(invoiceId: string, payload: { channel: 'EMAIL' | 'WHATSAPP' | 'BOTH'; to?: string }): Observable<{ ok: boolean }> {
+    return this.http.post<any>(`/invoices/${invoiceId}/deliver`, payload).pipe(
+      map(b => ({ ok: !!b }))
+    );
+  }
+
+  /** Builds the absolute URL for the invoice PDF. */
+  pdfUrl(invoiceId: string): string {
+    return `/invoices/${invoiceId}/pdf`;
+  }
+
   // --- Generate invoice from appointment ---
 
   createInvoiceFromAppointment(appointment: Appointment, partsUsed: any[] = []): Observable<InvoiceWithDetails> {

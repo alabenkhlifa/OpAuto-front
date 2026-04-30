@@ -2342,6 +2342,167 @@
     "templates": {
       "title": "Modèles",
       "comingSoon": "Les modèles de facture réutilisables arrivent bientôt."
+    },
+    "form": {
+      "banner": {
+        "fixToContinue": "Veuillez corriger ce qui suit avant de continuer :"
+      },
+      "locked": {
+        "title": "Cette facture est verrouillée.",
+        "description": "Les factures émises sont immuables pour la conformité fiscale. Émettez un avoir pour effectuer des modifications."
+      },
+      "section": {
+        "customer": {
+          "title": "Client et véhicule",
+          "subtitle": "Sélectionnez le client, le véhicule et un éventuel ordre de réparation à lier.",
+          "linkedToJob": "Lié à l'ordre · {{ref}}"
+        },
+        "pullFromJob": {
+          "title": "Importer depuis l'ordre",
+          "subtitle": "Pré-remplir les lignes depuis l'ordre de réparation lié.",
+          "action": "Importer depuis l'ordre"
+        },
+        "lines": {
+          "title": "Lignes",
+          "subtitle": "Ajoutez des prestations, pièces, main-d'œuvre ou divers.",
+          "empty": "Aucune ligne — utilisez les boutons ci-dessus pour ajouter la première."
+        },
+        "discount": {
+          "title": "Remise",
+          "subtitle": "Les remises supérieures à {{threshold}} % nécessitent l'approbation d'un propriétaire."
+        },
+        "notes": {
+          "title": "Notes"
+        },
+        "summary": {
+          "title": "Récapitulatif"
+        }
+      },
+      "fields": {
+        "customer": "Client",
+        "vehicle": "Véhicule",
+        "linkJob": "Lier à un ordre de réparation",
+        "dueDate": "Date d'échéance",
+        "discountPct": "Remise %",
+        "discountReason": "Motif",
+        "approver": "Approbateur (propriétaire)",
+        "laborHours": "Heures de main-d'œuvre"
+      },
+      "placeholder": {
+        "selectCustomer": "Choisir un client…",
+        "selectVehicle": "Choisir un véhicule…",
+        "selectJob": "Choisir un ordre (optionnel)…",
+        "selectApprover": "Choisir un approbateur…",
+        "lineDescription": "Décrire cette ligne",
+        "discountReason": "Motif de la remise",
+        "notes": "Notes internes (non imprimées sur la facture)"
+      },
+      "lineTypes": {
+        "service": "Prestation",
+        "part": "Pièce",
+        "labor": "Main-d'œuvre",
+        "misc": "Divers"
+      },
+      "lines": {
+        "defaultLaborDescription": "Main-d'œuvre mécanicien"
+      },
+      "table": {
+        "type": "Type",
+        "description": "Description",
+        "qty": "Qté",
+        "unitPrice": "Prix unitaire",
+        "tva": "TVA %",
+        "discount": "Remise %",
+        "total": "Total"
+      },
+      "stock": {
+        "exceeds": "Dépasse le stock disponible ({{count}})"
+      },
+      "summary": {
+        "subtotalHT": "Sous-total HT",
+        "discount": "Remise",
+        "tvaAt": "TVA {{rate}}%",
+        "fiscalStamp": "Timbre fiscal",
+        "totalTTC": "Total TTC",
+        "paymentTermsDays": "Net {{days}} jours",
+        "defaultPaymentTermsLabel": "Net 30 jours"
+      },
+      "actions": {
+        "saveDraft": "Enregistrer le brouillon",
+        "previewPdf": "Aperçu PDF",
+        "issueAndSend": "Émettre et envoyer",
+        "issueCreditNote": "Émettre un avoir",
+        "removeLine": "Supprimer la ligne"
+      },
+      "errors": {
+        "customerRequired": "Client requis",
+        "vehicleRequired": "Véhicule requis",
+        "lineItemRequired": "Au moins une ligne est requise",
+        "lineDescriptionRequired": "Chaque ligne nécessite une description",
+        "discountReasonRequired": "Motif requis lorsqu'une remise est appliquée",
+        "approverRequired": "Approbateur requis pour une remise dépassant le seuil d'audit",
+        "partOverdraw": "Une ou plusieurs lignes dépassent le stock disponible",
+        "loadFailed": "Impossible de charger la facture",
+        "saveFailed": "Impossible d'enregistrer la facture",
+        "issueFailed": "Impossible d'émettre la facture",
+        "sendFailed": "Impossible d'envoyer la facture",
+        "pullFailed": "Impossible d'importer depuis l'ordre"
+      },
+      "toast": {
+        "draftSaved": "Brouillon enregistré",
+        "pulledFromJob": "Facture pré-remplie depuis l'ordre",
+        "sent": "Facture envoyée"
+      }
+    },
+    "detail": {
+      "billTo": "Facturer à",
+      "vehicle": "Véhicule",
+      "issueDate": "Date d'émission",
+      "dueDate": "Date d'échéance",
+      "licensePlate": "Plaque d'immatriculation",
+      "lineItems": "Lignes",
+      "notes": "Notes",
+      "paymentProgress": "Progression du paiement",
+      "remaining": "Restant",
+      "activity": "Activité",
+      "linkedCreditNotes": "Avoirs liés",
+      "notFound": "Facture introuvable.",
+      "lock": {
+        "label": "Verrouillée",
+        "aria": "Cette facture est verrouillée"
+      },
+      "actions": {
+        "edit": "Modifier",
+        "issueAndSend": "Émettre et envoyer",
+        "previewPdf": "Aperçu PDF",
+        "send": "Envoyer",
+        "recordPayment": "Enregistrer un paiement",
+        "print": "Imprimer",
+        "downloadPdf": "Télécharger le PDF",
+        "issueCreditNote": "Émettre un avoir",
+        "delete": "Supprimer"
+      },
+      "timeline": {
+        "empty": "Aucune activité.",
+        "byUser": "par {{user}}",
+        "created": "Facture créée",
+        "issued": "Émise et verrouillée",
+        "viewedByCustomer": "Vue par le client",
+        "paymentRecorded": "Paiement enregistré — {{amount}} ({{method}})",
+        "creditNoteIssued": "Avoir émis — {{number}}"
+      },
+      "toast": {
+        "deleted": "Facture supprimée",
+        "sent": "Facture envoyée",
+        "paymentRecorded": "Paiement enregistré"
+      },
+      "errors": {
+        "loadFailed": "Impossible de charger la facture",
+        "deleteFailed": "Impossible de supprimer la facture",
+        "issueFailed": "Impossible d'émettre la facture",
+        "sendFailed": "Impossible d'envoyer la facture",
+        "paymentFailed": "Impossible d'enregistrer le paiement"
+      }
     }
   },
   "approvals": {

@@ -2300,6 +2300,167 @@
     "templates": {
       "title": "Templates",
       "comingSoon": "Reusable invoice templates are coming soon."
+    },
+    "form": {
+      "banner": {
+        "fixToContinue": "Please fix the following before continuing:"
+      },
+      "locked": {
+        "title": "This invoice is locked.",
+        "description": "Issued invoices are immutable for fiscal compliance. Issue a credit note to make changes."
+      },
+      "section": {
+        "customer": {
+          "title": "Customer & Vehicle",
+          "subtitle": "Select the customer, the vehicle and an optional maintenance job to link.",
+          "linkedToJob": "Linked to job · {{ref}}"
+        },
+        "pullFromJob": {
+          "title": "Pull from job",
+          "subtitle": "Pre-populate line items from the linked maintenance job.",
+          "action": "Pull from job"
+        },
+        "lines": {
+          "title": "Line items",
+          "subtitle": "Add services, parts, labor or miscellaneous lines.",
+          "empty": "No line items yet — use the buttons above to add the first one."
+        },
+        "discount": {
+          "title": "Discount",
+          "subtitle": "Discounts above {{threshold}}% require an owner-level approver."
+        },
+        "notes": {
+          "title": "Notes"
+        },
+        "summary": {
+          "title": "Summary"
+        }
+      },
+      "fields": {
+        "customer": "Customer",
+        "vehicle": "Vehicle",
+        "linkJob": "Link to maintenance job",
+        "dueDate": "Due date",
+        "discountPct": "Discount %",
+        "discountReason": "Reason",
+        "approver": "Approver (owner)",
+        "laborHours": "Labor hours"
+      },
+      "placeholder": {
+        "selectCustomer": "Select customer…",
+        "selectVehicle": "Select vehicle…",
+        "selectJob": "Select a job (optional)…",
+        "selectApprover": "Select an approver…",
+        "lineDescription": "Describe this line",
+        "discountReason": "Reason for the discount",
+        "notes": "Internal notes (not printed on the invoice)"
+      },
+      "lineTypes": {
+        "service": "Service",
+        "part": "Part",
+        "labor": "Labor",
+        "misc": "Misc"
+      },
+      "lines": {
+        "defaultLaborDescription": "Mechanic labor"
+      },
+      "table": {
+        "type": "Type",
+        "description": "Description",
+        "qty": "Qty",
+        "unitPrice": "Unit price",
+        "tva": "TVA %",
+        "discount": "Discount %",
+        "total": "Total"
+      },
+      "stock": {
+        "exceeds": "Exceeds available stock ({{count}})"
+      },
+      "summary": {
+        "subtotalHT": "Subtotal HT",
+        "discount": "Discount",
+        "tvaAt": "TVA {{rate}}%",
+        "fiscalStamp": "Fiscal stamp",
+        "totalTTC": "Total TTC",
+        "paymentTermsDays": "Net {{days}} days",
+        "defaultPaymentTermsLabel": "Net 30 days"
+      },
+      "actions": {
+        "saveDraft": "Save draft",
+        "previewPdf": "Preview PDF",
+        "issueAndSend": "Issue & Send",
+        "issueCreditNote": "Issue credit note",
+        "removeLine": "Remove line"
+      },
+      "errors": {
+        "customerRequired": "Customer required",
+        "vehicleRequired": "Vehicle required",
+        "lineItemRequired": "At least one line item required",
+        "lineDescriptionRequired": "Each line needs a description",
+        "discountReasonRequired": "Reason required when discount is applied",
+        "approverRequired": "Approver required for discount above the audit threshold",
+        "partOverdraw": "One or more part rows exceed available stock",
+        "loadFailed": "Could not load invoice",
+        "saveFailed": "Could not save invoice",
+        "issueFailed": "Could not issue invoice",
+        "sendFailed": "Could not send invoice",
+        "pullFailed": "Could not pull from job"
+      },
+      "toast": {
+        "draftSaved": "Draft saved",
+        "pulledFromJob": "Invoice pre-filled from job",
+        "sent": "Invoice sent"
+      }
+    },
+    "detail": {
+      "billTo": "Bill to",
+      "vehicle": "Vehicle",
+      "issueDate": "Issue date",
+      "dueDate": "Due date",
+      "licensePlate": "License plate",
+      "lineItems": "Line items",
+      "notes": "Notes",
+      "paymentProgress": "Payment progress",
+      "remaining": "Remaining",
+      "activity": "Activity",
+      "linkedCreditNotes": "Linked credit notes",
+      "notFound": "Invoice not found.",
+      "lock": {
+        "label": "Locked",
+        "aria": "This invoice is locked"
+      },
+      "actions": {
+        "edit": "Edit",
+        "issueAndSend": "Issue & Send",
+        "previewPdf": "Preview PDF",
+        "send": "Send",
+        "recordPayment": "Record payment",
+        "print": "Print",
+        "downloadPdf": "Download PDF",
+        "issueCreditNote": "Issue credit note",
+        "delete": "Delete"
+      },
+      "timeline": {
+        "empty": "No activity yet.",
+        "byUser": "by {{user}}",
+        "created": "Invoice created",
+        "issued": "Issued & locked",
+        "viewedByCustomer": "Viewed by customer",
+        "paymentRecorded": "Payment recorded — {{amount}} ({{method}})",
+        "creditNoteIssued": "Credit note issued — {{number}}"
+      },
+      "toast": {
+        "deleted": "Invoice deleted",
+        "sent": "Invoice sent",
+        "paymentRecorded": "Payment recorded"
+      },
+      "errors": {
+        "loadFailed": "Could not load invoice",
+        "deleteFailed": "Could not delete invoice",
+        "issueFailed": "Could not issue invoice",
+        "sendFailed": "Could not send invoice",
+        "paymentFailed": "Could not record payment"
+      }
     }
   },
   "approvals": {

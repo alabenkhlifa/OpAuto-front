@@ -1,149 +1,401 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import {
+  Component,
+  HostListener,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, ActivatedRoute } from '@angular/router';
-import { InvoiceService } from '../../../core/services/invoice.service';
-import { InvoiceWithDetails, Payment, InvoiceSettings } from '../../../core/models/invoice.model';
-import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
+import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
+import { TranslationService } from '../../../core/services/translation.service';
+import { ToastService } from '../../../shared/services/toast.service';
+
+import { InvoiceService } from '../../../core/services/invoice.service';
+import { CreditNoteService } from '../../../core/services/credit-note.service';
+import { GarageSettingsService } from '../../../core/services/garage-settings.service';
+import { AuthService } from '../../../core/services/auth.service';
+
+import {
+  InvoiceWithDetails,
+  Payment,
+} from '../../../core/models/invoice.model';
+import { GarageSettings } from '../../../core/models/garage-settings.model';
+import { CreditNoteWithDetails } from '../../../core/models/credit-note.model';
+import { UserRole } from '../../../core/models/auth.model';
+
+import {
+  PaymentModalComponent,
+  PaymentModalContext,
+  PaymentModalResult,
+} from './payment-modal/payment-modal.component';
+import {
+  SendInvoiceModalComponent,
+  SendInvoiceContext,
+  SendInvoicePayload,
+} from './send-invoice-modal/send-invoice-modal.component';
+
+interface TimelineEvent {
+  key: string;
+  iconKey: 'created' | 'issued' | 'viewed' | 'payment' | 'creditNote';
+  titleKey: string;
+  titleParams?: Record<string, unknown>;
+  subtitle?: string;
+  timestamp: Date;
+}
+
+/**
+ * Invoice details rebuild — Task 5.4.
+ *
+ * Sticky header with status-aware action set, two-column body
+ * (invoice content + activity panel), payment progress ring, timeline
+ * of events (created / issued / viewed / payments / credit notes), and
+ * print-friendly stylesheet that strips the chrome on `window.print()`.
+ */
 @Component({
   selector: 'app-invoice-details',
   standalone: true,
-  imports: [CommonModule, TranslatePipe],
+  imports: [
+    CommonModule,
+    TranslatePipe,
+    RouterLink,
+    PaymentModalComponent,
+    SendInvoiceModalComponent,
+  ],
   templateUrl: './invoice-details.component.html',
-  styleUrl: './invoice-details.component.css'
+  styleUrl: './invoice-details.component.css',
 })
 export class InvoiceDetailsComponent implements OnInit {
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
-  private invoiceService = inject(InvoiceService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly invoiceService = inject(InvoiceService);
+  private readonly creditNoteService = inject(CreditNoteService);
+  private readonly garageSettings = inject(GarageSettingsService);
+  private readonly authService = inject(AuthService);
+  private readonly translation = inject(TranslationService);
+  private readonly toast = inject(ToastService);
 
-  invoice = signal<InvoiceWithDetails | null>(null);
-  payments = signal<Payment[]>([]);
-  settings = signal<InvoiceSettings | null>(null);
-  isLoading = signal(false);
-  isPrintMode = signal(false);
+  readonly invoice = signal<InvoiceWithDetails | null>(null);
+  readonly settings = signal<GarageSettings | null>(null);
+  readonly creditNotes = signal<CreditNoteWithDetails[]>([]);
+  readonly isLoading = signal(false);
+
+  // Modals
+  readonly paymentModalOpen = signal(false);
+  readonly paymentSubmitting = signal(false);
+  readonly sendModalOpen = signal(false);
+  readonly sendSubmitting = signal(false);
+
+  readonly isOwner = computed(() => this.authService.isOwner());
+
+  readonly isLocked = computed(() => {
+    const inv = this.invoice();
+    return !!inv && inv.status !== 'draft';
+  });
+
+  readonly progressPct = computed(() => {
+    const inv = this.invoice();
+    if (!inv || !inv.totalAmount) return 0;
+    return Math.min(100, Math.max(0, (inv.paidAmount / inv.totalAmount) * 100));
+  });
+
+  /** SVG circumference: 2π × r where r = 36. */
+  readonly ringCircumference = 2 * Math.PI * 36;
+  readonly ringDashOffset = computed(
+    () => this.ringCircumference * (1 - this.progressPct() / 100),
+  );
+
+  readonly tvaBreakdown = computed(() => {
+    const inv = this.invoice();
+    if (!inv) return [];
+    const map = new Map<number, { base: number; tva: number }>();
+    for (const li of inv.lineItems) {
+      const rate = (li as any).tvaRate ?? inv.taxRate ?? 0;
+      const gross = li.quantity * li.unitPrice;
+      const lineDiscount = ((li.discountPercentage || 0) * gross) / 100;
+      const base = gross - lineDiscount;
+      const cur = map.get(rate) ?? { base: 0, tva: 0 };
+      cur.base += base;
+      cur.tva += (base * rate) / 100;
+      map.set(rate, cur);
+    }
+    return Array.from(map.entries())
+      .filter(([, v]) => v.base !== 0)
+      .map(([rate, v]) => ({ rate, base: v.base, tva: v.tva }))
+      .sort((a, b) => a.rate - b.rate);
+  });
+
+  readonly fiscalStamp = computed(() =>
+    this.settings()?.fiscalSettings?.fiscalStampEnabled ? 1 : 0,
+  );
+
+  readonly timeline = computed<TimelineEvent[]>(() => {
+    const events: TimelineEvent[] = [];
+    const inv = this.invoice();
+    if (!inv) return events;
+
+    events.push({
+      key: 'created',
+      iconKey: 'created',
+      titleKey: 'invoicing.detail.timeline.created',
+      subtitle: inv.createdBy
+        ? this.translation.instant('invoicing.detail.timeline.byUser', { user: inv.createdBy })
+        : undefined,
+      timestamp: inv.createdAt,
+    });
+
+    const lockedAt = (inv as any).lockedAt as string | Date | undefined;
+    if (lockedAt) {
+      events.push({
+        key: 'issued',
+        iconKey: 'issued',
+        titleKey: 'invoicing.detail.timeline.issued',
+        subtitle: (inv as any).lockedBy
+          ? this.translation.instant('invoicing.detail.timeline.byUser', {
+              user: (inv as any).lockedBy,
+            })
+          : undefined,
+        timestamp: new Date(lockedAt),
+      });
+    } else if (inv.status !== 'draft') {
+      events.push({
+        key: 'issued',
+        iconKey: 'issued',
+        titleKey: 'invoicing.detail.timeline.issued',
+        timestamp: inv.updatedAt,
+      });
+    }
+
+    if (
+      inv.status === 'viewed' ||
+      inv.status === 'paid' ||
+      inv.status === 'partially-paid'
+    ) {
+      const viewedAt = (inv as any).viewedAt as string | Date | undefined;
+      events.push({
+        key: 'viewed',
+        iconKey: 'viewed',
+        titleKey: 'invoicing.detail.timeline.viewedByCustomer',
+        timestamp: viewedAt ? new Date(viewedAt) : inv.updatedAt,
+      });
+    }
+
+    for (const p of inv.paymentHistory ?? []) {
+      events.push({
+        key: 'payment_' + p.id,
+        iconKey: 'payment',
+        titleKey: 'invoicing.detail.timeline.paymentRecorded',
+        titleParams: {
+          amount: this.invoiceService.formatCurrency(p.amount),
+          method: this.translation.instant('invoicing.paymentMethods.' + this.methodKey(p.method)),
+        },
+        subtitle: p.reference || undefined,
+        timestamp: p.paymentDate,
+      });
+    }
+
+    for (const cn of this.creditNotes()) {
+      events.push({
+        key: 'creditNote_' + cn.id,
+        iconKey: 'creditNote',
+        titleKey: 'invoicing.detail.timeline.creditNoteIssued',
+        titleParams: { number: cn.creditNoteNumber },
+        subtitle: cn.reason || undefined,
+        timestamp: cn.createdAt,
+      });
+    }
+
+    return events.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  });
 
   ngOnInit(): void {
-    const invoiceId = this.route.snapshot.paramMap.get('id');
-    if (invoiceId) {
-      this.loadInvoice(invoiceId);
-    }
-
-    this.route.queryParams.subscribe(params => {
-      this.isPrintMode.set(params['print'] === 'true');
-      if (params['autoPrint'] === '1') {
-        this.autoPrintPending = true;
-      }
-    });
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) this.refresh(id);
   }
 
-  private autoPrintPending = false;
-
-  private loadInvoice(invoiceId: string): void {
+  /** Refresh invoice + settings + credit notes. Called from focus + after actions. */
+  refresh(invoiceId?: string): void {
+    const id = invoiceId ?? this.invoice()?.id;
+    if (!id) return;
     this.isLoading.set(true);
 
-    const applyInvoice = (invoice: InvoiceWithDetails) => {
-      this.invoice.set(invoice);
-      this.invoiceService.getPaymentsByInvoice(invoiceId).subscribe({
-        next: (payments) => this.payments.set(payments),
-        error: (error) => console.error('Failed to load payments:', error)
-      });
-      if (this.autoPrintPending) {
-        this.autoPrintPending = false;
-        setTimeout(() => this.onPrint(), 300);
-      }
-    };
-
-    const cached = this.invoiceService.getInvoiceById(invoiceId);
-    if (cached) {
-      applyInvoice(cached);
-    } else {
-      this.invoiceService.fetchInvoiceById(invoiceId).subscribe({
-        next: applyInvoice,
-        error: (error) => console.error('Failed to load invoice:', error)
-      });
-    }
-
-    // Load settings for garage info
-    this.invoiceService.getInvoiceSettings().subscribe({
-      next: (settings) => {
+    forkJoin({
+      invoice: this.invoiceService.fetchInvoiceById(id),
+      settings: this.garageSettings.getSettings().pipe(catchError(() => of(null as GarageSettings | null))),
+      creditNotes: this.creditNoteService.list().pipe(
+        catchError(() => of([] as CreditNoteWithDetails[])),
+      ),
+    }).subscribe({
+      next: ({ invoice, settings, creditNotes }) => {
+        this.invoice.set(invoice);
         this.settings.set(settings);
+        this.creditNotes.set(creditNotes.filter((cn) => cn.invoiceId === id));
         this.isLoading.set(false);
       },
-      error: (error) => {
-        console.error('Failed to load settings:', error);
+      error: () => {
+        this.toast.error(this.translation.instant('invoicing.detail.errors.loadFailed'));
         this.isLoading.set(false);
-      }
+      },
     });
   }
 
-  onBack(): void {
-    this.router.navigate(['/invoices']);
+  @HostListener('window:focus')
+  onWindowFocus(): void {
+    // Refresh quietly so payment / credit note updates from another tab show up.
+    if (this.invoice()) this.refresh();
   }
 
+  // ── Actions ───────────────────────────────────────────────────────────────
+
   onEdit(): void {
-    const invoiceId = this.invoice()?.id;
-    if (invoiceId) {
-      this.router.navigate(['/invoices/edit', invoiceId]);
-    }
+    const inv = this.invoice();
+    if (inv) this.router.navigate(['/invoices/edit', inv.id]);
+  }
+
+  onDelete(): void {
+    const inv = this.invoice();
+    if (!inv) return;
+    this.invoiceService.deleteInvoice(inv.id).subscribe({
+      next: () => {
+        this.toast.success(this.translation.instant('invoicing.detail.toast.deleted'));
+        this.router.navigate(['/invoices']);
+      },
+      error: () => this.toast.error(this.translation.instant('invoicing.detail.errors.deleteFailed')),
+    });
+  }
+
+  onIssueAndSend(): void {
+    const inv = this.invoice();
+    if (!inv) return;
+    this.invoiceService.issueInvoice(inv.id).subscribe({
+      next: (issued) => {
+        this.invoice.set(issued);
+        this.openSendModal();
+      },
+      error: () =>
+        this.toast.error(this.translation.instant('invoicing.detail.errors.issueFailed')),
+    });
+  }
+
+  openSendModal(): void {
+    this.sendModalOpen.set(true);
+  }
+
+  onSendModalClose(): void {
+    this.sendModalOpen.set(false);
+  }
+
+  onSendModalSubmit(payload: SendInvoicePayload): void {
+    const inv = this.invoice();
+    if (!inv) return;
+    this.sendSubmitting.set(true);
+    this.invoiceService.deliverInvoice(inv.id, payload).subscribe({
+      next: () => {
+        this.sendSubmitting.set(false);
+        this.sendModalOpen.set(false);
+        this.toast.success(this.translation.instant('invoicing.detail.toast.sent'));
+        this.refresh();
+      },
+      error: () => {
+        this.sendSubmitting.set(false);
+        this.toast.error(this.translation.instant('invoicing.detail.errors.sendFailed'));
+      },
+    });
+  }
+
+  openPaymentModal(): void {
+    this.paymentModalOpen.set(true);
+  }
+
+  onPaymentModalClose(): void {
+    this.paymentModalOpen.set(false);
+  }
+
+  onPaymentModalSubmit(payload: PaymentModalResult): void {
+    const inv = this.invoice();
+    if (!inv) return;
+    this.paymentSubmitting.set(true);
+    this.invoiceService
+      .addPayment({
+        invoiceId: inv.id,
+        amount: payload.amount,
+        method: payload.method,
+        paymentDate: new Date(payload.paymentDate),
+        reference: payload.reference,
+        notes: payload.notes,
+        processedBy: this.authService.getCurrentUser()?.id || 'current-user',
+      })
+      .subscribe({
+        next: () => {
+          this.paymentSubmitting.set(false);
+          this.paymentModalOpen.set(false);
+          this.toast.success(this.translation.instant('invoicing.detail.toast.paymentRecorded'));
+          this.refresh();
+        },
+        error: () => {
+          this.paymentSubmitting.set(false);
+          this.toast.error(this.translation.instant('invoicing.detail.errors.paymentFailed'));
+        },
+      });
   }
 
   onPrint(): void {
-    this.isPrintMode.set(true);
-    setTimeout(() => {
-      window.print();
-      this.isPrintMode.set(false);
-    }, 100);
+    window.print();
   }
 
-  onDownloadPDF(): void {
-    this.onPrint();
+  onIssueCreditNote(): void {
+    const inv = this.invoice();
+    if (!inv) return;
+    this.router.navigate(['/invoices/credit-notes/new'], {
+      queryParams: { invoiceId: inv.id },
+    });
   }
 
-  onSendInvoice(): void {
-    const invoice = this.invoice();
-    if (invoice) {
-      this.invoiceService.updateInvoice(invoice.id, { status: 'sent' }).subscribe({
-        next: (updatedInvoice) => {
-          this.invoice.set(updatedInvoice);
-        },
-        error: (error) => console.error('Failed to send invoice:', error)
-      });
-    }
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  pdfUrl(): string {
+    const inv = this.invoice();
+    return inv ? this.invoiceService.pdfUrl(inv.id) : '#';
   }
 
-  onMarkAsPaid(): void {
-    const invoice = this.invoice();
-    if (invoice && invoice.remainingAmount > 0) {
-      this.invoiceService.addPayment({
-        invoiceId: invoice.id,
-        amount: invoice.remainingAmount,
-        method: 'cash', // Default, should open payment modal
-        paymentDate: new Date(),
-        processedBy: 'current-user' // TODO: Get from auth service
-      }).subscribe({
-        next: () => {
-          this.loadInvoice(invoice.id); // Refresh invoice data
-        },
-        error: (error) => console.error('Failed to record payment:', error)
-      });
-    }
+  pdfDownloadName(): string {
+    const inv = this.invoice();
+    return `invoice-${inv?.invoiceNumber || 'document'}.pdf`;
   }
 
-  getStatusColor(status: string): string {
-    return this.invoiceService.getStatusColor(status as any);
+  paymentContext(): PaymentModalContext | null {
+    const inv = this.invoice();
+    if (!inv) return null;
+    return {
+      invoiceId: inv.id,
+      invoiceNumber: inv.invoiceNumber,
+      remainingAmount: inv.remainingAmount,
+      currency: inv.currency,
+    };
   }
 
-  getStatusBadgeClass(status: string): string {
-    return this.invoiceService.getStatusBadgeClass(status as any);
+  sendContext(): SendInvoiceContext | null {
+    const inv = this.invoice();
+    if (!inv) return null;
+    return {
+      documentId: inv.id,
+      documentNumber: inv.invoiceNumber,
+      documentKindLabelKey: 'invoicing.send.kindInvoice',
+      customerEmail: inv.customerEmail ?? null,
+      customerPhone: inv.customerPhone ?? null,
+    };
   }
 
-  formatCurrency(amount: number, currency: string = 'TND'): string {
-    return this.invoiceService.formatCurrency(amount, currency);
+  formatCurrency(amount: number): string {
+    return this.invoiceService.formatCurrency(amount);
   }
 
-  formatDate(date: Date): string {
-    return this.invoiceService.formatDate(date);
+  formatDate(date: Date | undefined): string {
+    return date ? this.invoiceService.formatDate(date) : '';
   }
 
   formatDateTime(date: Date): string {
@@ -152,37 +404,70 @@ export class InvoiceDetailsComponent implements OnInit {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     }).format(date);
   }
 
-  getPaymentMethodIcon(method: string): string {
-    const icons = {
-      'cash': '💵',
-      'card': '💳',
-      'bank-transfer': '🏦',
-      'check': '📝',
-      'credit': '📋'
-    };
-    return icons[method as keyof typeof icons] || '💰';
+  statusBadgeClass(status: string): string {
+    return this.invoiceService.getStatusBadgeClass(status as any);
   }
 
-  isOverdue(): boolean {
-    const invoice = this.invoice();
-    return invoice ? invoice.status !== 'paid' && new Date() > invoice.dueDate : false;
+  trackLine(_: number, item: { id: string }): string {
+    return item.id;
   }
 
-  getDaysOverdue(): number {
-    const invoice = this.invoice();
-    if (!invoice || !this.isOverdue()) return 0;
-    
-    const today = new Date();
-    const diffTime = today.getTime() - invoice.dueDate.getTime();
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  trackEvent(_: number, e: TimelineEvent): string {
+    return e.key;
   }
 
-  getPaymentProgress(): number {
-    const invoice = this.invoice();
-    return invoice && invoice.totalAmount > 0 ? (invoice.paidAmount / invoice.totalAmount) * 100 : 0;
+  trackTva(_: number, row: { rate: number }): number {
+    return row.rate;
   }
+
+  trackCn(_: number, cn: CreditNoteWithDetails): string {
+    return cn.id;
+  }
+
+  /** Map our internal payment method enum to the i18n key suffix used in `invoicing.paymentMethods.*`. */
+  private methodKey(method: string): string {
+    if (method === 'bank-transfer') return 'bankTransfer';
+    return method;
+  }
+
+  /** Visibility map for the header action buttons keyed by status. Pure function for testability. */
+  canShow(action: 'edit' | 'issueAndSend' | 'send' | 'recordPayment' | 'print' | 'downloadPdf' | 'creditNote' | 'delete' | 'previewPdf'): boolean {
+    const inv = this.invoice();
+    if (!inv) return false;
+    switch (action) {
+      case 'edit':
+        return inv.status === 'draft';
+      case 'issueAndSend':
+        return inv.status === 'draft';
+      case 'previewPdf':
+        return inv.status === 'draft';
+      case 'send':
+        return inv.status === 'sent' || inv.status === 'viewed';
+      case 'recordPayment':
+        return (
+          (inv.status === 'sent' ||
+            inv.status === 'viewed' ||
+            inv.status === 'partially-paid' ||
+            inv.status === 'overdue') &&
+          inv.remainingAmount > 0
+        );
+      case 'print':
+      case 'downloadPdf':
+        return inv.status !== 'draft';
+      case 'creditNote':
+        return inv.status === 'sent' ||
+          inv.status === 'viewed' ||
+          inv.status === 'paid' ||
+          inv.status === 'partially-paid';
+      case 'delete':
+        return inv.status === 'draft' && this.isOwner();
+    }
+  }
+
+  // Expose UserRole for template (kept private otherwise).
+  readonly UserRole = UserRole;
 }

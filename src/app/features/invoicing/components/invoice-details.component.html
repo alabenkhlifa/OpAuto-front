@@ -1,297 +1,331 @@
-<div class="min-h-screen p-4 lg:p-6" style="background: var(--color-bg-primary)" [class.print:bg-white]="isPrintMode()">
-  <!-- Header (hidden in print mode) -->
-  <div *ngIf="!isPrintMode()" class="glass-card mb-6">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-4">
-        <button (click)="onBack()" 
-                class="btn-tertiary">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+<div class="invoice-detail-page">
+  @if (invoice(); as inv) {
+    <!-- Sticky header -->
+    <header class="invoice-detail-header glass-card no-print">
+      <div class="invoice-detail-header__title">
+        <a class="btn-tertiary btn-icon"
+           routerLink="/invoices/list"
+           [attr.aria-label]="'common.back' | translate">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/>
           </svg>
-          <span>{{ 'common.back' | translate }}</span>
-        </button>
+        </a>
+
         <div>
-          <h1 class="text-xl lg:text-2xl font-bold text-white">
-            {{ invoice()?.invoiceNumber }}
-          </h1>
-          <div class="flex items-center gap-3 mt-1">
-            <span class="badge"
-                  [class]="getStatusBadgeClass(invoice()?.status || 'draft')">
-              {{ invoice()?.status | titlecase }}
+          <h1 class="invoice-detail-header__number">{{ inv.invoiceNumber }}</h1>
+          <div class="invoice-detail-header__meta">
+            <span class="badge" [class]="statusBadgeClass(inv.status)">
+              {{ ('invoicing.status.' + inv.status) | translate }}
             </span>
-            <span *ngIf="isOverdue()" class="text-red-400 text-xs font-medium">
-              {{ getDaysOverdue() }} days overdue
-            </span>
+            @if (isLocked()) {
+              <span class="invoice-detail-header__lock" [attr.aria-label]="'invoicing.detail.lock.aria' | translate">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <rect x="5" y="11" width="14" height="10" rx="2"/>
+                  <path d="M8 11V7a4 4 0 1 1 8 0v4"/>
+                </svg>
+                {{ 'invoicing.detail.lock.label' | translate }}
+              </span>
+            }
           </div>
         </div>
       </div>
-      
-      <!-- Actions -->
-      <div class="flex gap-2">
-        <button (click)="onEdit()"
-                class="btn-primary">
-          {{ 'invoicing.print.edit' | translate }}
-        </button>
-        <button *ngIf="invoice()?.status === 'draft'"
-                (click)="onSendInvoice()"
-                class="btn-success">
-          {{ 'invoicing.print.sendInvoice' | translate }}
-        </button>
-        <button *ngIf="invoice() && invoice()!.remainingAmount > 0"
-                (click)="onMarkAsPaid()"
-                class="btn-success">
-          {{ 'invoicing.print.recordPayment' | translate }}
-        </button>
-        <button (click)="onPrint()"
-                class="btn-secondary">
-          🖨️ Print
-        </button>
-        <button (click)="onDownloadPDF()"
-                class="btn-secondary">
-          📄 PDF
-        </button>
+
+      <div class="invoice-detail-header__actions">
+        @if (canShow('edit')) {
+          <button type="button" class="btn-tertiary" (click)="onEdit()">
+            {{ 'invoicing.detail.actions.edit' | translate }}
+          </button>
+        }
+        @if (canShow('issueAndSend')) {
+          <button type="button" class="btn-primary" (click)="onIssueAndSend()">
+            {{ 'invoicing.detail.actions.issueAndSend' | translate }}
+          </button>
+        }
+        @if (canShow('send')) {
+          <button type="button" class="btn-tertiary" (click)="openSendModal()">
+            {{ 'invoicing.detail.actions.send' | translate }}
+          </button>
+        }
+        @if (canShow('recordPayment')) {
+          <button type="button" class="btn-primary" (click)="openPaymentModal()">
+            {{ 'invoicing.detail.actions.recordPayment' | translate }}
+          </button>
+        }
+        @if (canShow('print')) {
+          <button type="button" class="btn-tertiary" (click)="onPrint()">
+            {{ 'invoicing.detail.actions.print' | translate }}
+          </button>
+        }
+        @if (canShow('downloadPdf')) {
+          <a class="btn-tertiary"
+             [href]="pdfUrl()"
+             [download]="pdfDownloadName()"
+             target="_blank"
+             rel="noopener">
+            {{ 'invoicing.detail.actions.downloadPdf' | translate }}
+          </a>
+        }
+        @if (canShow('previewPdf')) {
+          <a class="btn-tertiary" [href]="pdfUrl()" target="_blank" rel="noopener">
+            {{ 'invoicing.detail.actions.previewPdf' | translate }}
+          </a>
+        }
+        @if (canShow('creditNote')) {
+          <button type="button" class="btn-tertiary" (click)="onIssueCreditNote()">
+            {{ 'invoicing.detail.actions.issueCreditNote' | translate }}
+          </button>
+        }
+        @if (canShow('delete')) {
+          <button type="button" class="btn-danger" (click)="onDelete()">
+            {{ 'invoicing.detail.actions.delete' | translate }}
+          </button>
+        }
       </div>
-    </div>
-  </div>
+    </header>
 
-  <!-- Invoice Content -->
-  <div class="p-4 lg:p-8" [class.print:p-0]="isPrintMode()">
-    <div class="max-w-4xl mx-auto">
-      <div class="glass-card" [class.print:shadow-none]="isPrintMode()">
-        
-        <!-- Invoice Header -->
-        <div class="p-8 border-b border-gray-500">
-          <div class="flex justify-between items-start">
-            <!-- Garage Info -->
+    <!-- Two-column body -->
+    <div class="invoice-detail-body">
+      <!-- LEFT: invoice content -->
+      <article class="invoice-detail-content glass-card">
+        <!-- Garage block -->
+        <section class="invoice-detail-block">
+          <div class="invoice-detail-garage">
+            @if (settings()?.fiscalSettings?.logoUrl) {
+              <img class="invoice-detail-garage__logo" [src]="settings()!.fiscalSettings!.logoUrl" alt="" />
+            }
             <div>
-              <h2 class="text-2xl font-bold text-white">{{ settings()?.garageInfo?.name }}</h2>
-              <div class="mt-2 text-sm text-gray-300 space-y-1">
-                <p>{{ settings()?.garageInfo?.address }}</p>
-                <p>{{ settings()?.garageInfo?.city }}, {{ settings()?.garageInfo?.postalCode }}</p>
-                <p>{{ settings()?.garageInfo?.country }}</p>
-                <p>📞 {{ settings()?.garageInfo?.phone }}</p>
-                <p>✉️ {{ settings()?.garageInfo?.email }}</p>
-                <p *ngIf="settings()?.garageInfo?.taxId">{{ 'invoicing.print.taxId' | translate }}: {{ settings()?.garageInfo?.taxId }}</p>
-              </div>
-            </div>
-            
-            <!-- Invoice Info -->
-            <div class="text-right">
-              <h3 class="text-3xl font-bold text-blue-400">{{ 'invoicing.print.invoice' | translate }}</h3>
-              <div class="mt-2 text-sm space-y-1">
-                <p class="font-medium text-white">{{ invoice()?.invoiceNumber }}</p>
-                <p class="text-gray-300">{{ 'invoicing.print.issueDate' | translate }}: {{ formatDate(invoice()?.issueDate!) }}</p>
-                <p class="text-gray-300">{{ 'invoicing.print.dueDate' | translate }}: {{ formatDate(invoice()?.dueDate!) }}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Customer & Vehicle Info -->
-        <div class="p-8 border-b border-gray-500">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <!-- Bill To -->
-            <div>
-              <h4 class="text-lg font-semibold text-white mb-3">{{ 'invoicing.print.billTo' | translate }}:</h4>
-              <div class="text-sm text-gray-300 space-y-1">
-                <p class="font-medium text-white">{{ invoice()?.customerName }}</p>
-                <p>📞 {{ invoice()?.customerPhone }}</p>
-                <p *ngIf="invoice()?.customerEmail">✉️ {{ invoice()?.customerEmail }}</p>
-              </div>
-            </div>
-            
-            <!-- Vehicle Info -->
-            <div>
-              <h4 class="text-lg font-semibold text-white mb-3">{{ 'invoicing.print.vehicle' | translate }}:</h4>
-              <div class="text-sm text-gray-300 space-y-1">
-                <p class="font-medium text-white">
-                  {{ invoice()?.carMake }} {{ invoice()?.carModel }} ({{ invoice()?.carYear }})
+              <h2 class="invoice-detail-garage__name">{{ settings()?.garageInfo?.name }}</h2>
+              <p class="invoice-detail-garage__line">{{ settings()?.garageInfo?.address }}</p>
+              <p class="invoice-detail-garage__line">{{ settings()?.garageInfo?.phone }}</p>
+              <p class="invoice-detail-garage__line">{{ settings()?.garageInfo?.email }}</p>
+              @if (settings()?.fiscalSettings?.mfNumber) {
+                <p class="invoice-detail-garage__line">
+                  <strong>MF:</strong> {{ settings()!.fiscalSettings!.mfNumber }}
                 </p>
-                <p>{{ 'invoicing.print.licensePlate' | translate }}: {{ invoice()?.licensePlate }}</p>
-                <p *ngIf="invoice()?.serviceName">{{ 'invoicing.print.service' | translate }}: {{ invoice()?.serviceName }}</p>
-              </div>
+              }
+              @if (settings()?.fiscalSettings?.rib) {
+                <p class="invoice-detail-garage__line">
+                  <strong>RIB:</strong> {{ settings()!.fiscalSettings!.rib }}
+                </p>
+              }
             </div>
           </div>
-        </div>
+        </section>
 
-        <!-- Line Items -->
-        <div class="p-8">
-          <h4 class="text-lg font-semibold text-white mb-4">{{ 'invoicing.print.servicesParts' | translate }}</h4>
+        <!-- Customer & Vehicle -->
+        <section class="invoice-detail-block invoice-detail-grid-2">
+          <div>
+            <h3 class="invoice-detail-block__title">{{ 'invoicing.detail.billTo' | translate }}</h3>
+            <p>{{ inv.customerName }}</p>
+            <p>{{ inv.customerPhone }}</p>
+            @if (inv.customerEmail) { <p>{{ inv.customerEmail }}</p> }
+          </div>
+          <div>
+            <h3 class="invoice-detail-block__title">{{ 'invoicing.detail.vehicle' | translate }}</h3>
+            <p>{{ inv.carMake }} {{ inv.carModel }} ({{ inv.carYear }})</p>
+            <p>{{ 'invoicing.detail.licensePlate' | translate }}: {{ inv.licensePlate }}</p>
+          </div>
+          <div>
+            <h3 class="invoice-detail-block__title">{{ 'invoicing.detail.issueDate' | translate }}</h3>
+            <p>{{ formatDate(inv.issueDate) }}</p>
+          </div>
+          <div>
+            <h3 class="invoice-detail-block__title">{{ 'invoicing.detail.dueDate' | translate }}</h3>
+            <p>{{ formatDate(inv.dueDate) }}</p>
+          </div>
+        </section>
 
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm">
+        <!-- Line items -->
+        <section class="invoice-detail-block">
+          <h3 class="invoice-detail-block__title">{{ 'invoicing.detail.lineItems' | translate }}</h3>
+          <div class="invoice-detail-table-wrap">
+            <table class="invoice-detail-table">
               <thead>
-                <tr class="border-b border-gray-500">
-                  <th class="text-left py-3 text-gray-300 font-medium">{{ 'invoicing.print.description' | translate }}</th>
-                  <th class="text-center py-3 text-gray-300 font-medium">{{ 'invoicing.print.qty' | translate }}</th>
-                  <th class="text-center py-3 text-gray-300 font-medium">{{ 'invoicing.print.unit' | translate }}</th>
-                  <th class="text-right py-3 text-gray-300 font-medium">{{ 'invoicing.print.unitPrice' | translate }}</th>
-                  <th class="text-right py-3 text-gray-300 font-medium">{{ 'invoicing.print.total' | translate }}</th>
+                <tr>
+                  <th>{{ 'invoicing.form.table.type' | translate }}</th>
+                  <th>{{ 'invoicing.form.table.description' | translate }}</th>
+                  <th>{{ 'invoicing.form.table.qty' | translate }}</th>
+                  <th>{{ 'invoicing.form.table.unitPrice' | translate }}</th>
+                  <th>{{ 'invoicing.form.table.tva' | translate }}</th>
+                  <th>{{ 'invoicing.form.table.total' | translate }}</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let item of invoice()?.lineItems" 
-                    class="border-b border-gray-500">
-                  <td class="py-4">
-                    <div class="flex items-center gap-2">
-                      <span class="badge badge-pending badge-sm">
-                        {{ item.type | titlecase }}
-                      </span>
-                      <span class="text-white">{{ item.description }}</span>
-                    </div>
-                  </td>
-                  <td class="text-center py-4 text-white">{{ item.quantity }}</td>
-                  <td class="text-center py-4 text-gray-300">{{ item.unit }}</td>
-                  <td class="text-right py-4 text-white">{{ formatCurrency(item.unitPrice) }}</td>
-                  <td class="text-right py-4 font-medium text-white">{{ formatCurrency(item.totalPrice) }}</td>
-                </tr>
+                @for (li of inv.lineItems; track trackLine($index, li)) {
+                  <tr>
+                    <td><span class="badge badge-pending badge-sm">{{ ('invoicing.form.lineTypes.' + li.type) | translate }}</span></td>
+                    <td>{{ li.description }}</td>
+                    <td>{{ li.quantity }}</td>
+                    <td>{{ formatCurrency(li.unitPrice) }}</td>
+                    <td>{{ ($any(li).tvaRate ?? inv.taxRate) }}%</td>
+                    <td>{{ formatCurrency(li.totalPrice) }}</td>
+                  </tr>
+                }
               </tbody>
             </table>
           </div>
-        </div>
+        </section>
 
-        <!-- Totals Section -->
-        <div class="px-8 pb-8">
-          <div class="flex justify-end">
-            <div class="w-full max-w-sm space-y-2">
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-300">{{ 'invoicing.print.subtotal' | translate }}:</span>
-                <span class="font-medium text-white">{{ formatCurrency(invoice()?.subtotal || 0) }}</span>
+        <!-- Totals -->
+        <section class="invoice-detail-totals">
+          <dl class="invoice-detail-totals__list">
+            <div class="invoice-detail-totals__row">
+              <dt>{{ 'invoicing.form.summary.subtotalHT' | translate }}</dt>
+              <dd>{{ formatCurrency(inv.subtotal) }}</dd>
+            </div>
+            @if (inv.discountAmount > 0) {
+              <div class="invoice-detail-totals__row">
+                <dt>{{ 'invoicing.form.summary.discount' | translate }} ({{ inv.discountPercentage }}%)</dt>
+                <dd>−{{ formatCurrency(inv.discountAmount) }}</dd>
               </div>
-              
-              <div *ngIf="invoice() && invoice()!.discountAmount > 0" 
-                   class="flex justify-between text-sm">
-                <span class="text-gray-300">
-                  {{ 'invoicing.print.discount' | translate }} ({{ invoice()?.discountPercentage }}%):
-                </span>
-                <span class="font-medium text-green-400">
-                  -{{ formatCurrency(invoice()?.discountAmount || 0) }}
-                </span>
+            }
+            @for (row of tvaBreakdown(); track trackTva($index, row)) {
+              <div class="invoice-detail-totals__row">
+                <dt>{{ 'invoicing.form.summary.tvaAt' | translate:{ rate: row.rate } }}</dt>
+                <dd>{{ formatCurrency(row.tva) }}</dd>
               </div>
-              
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-300">
-                  {{ settings()?.taxSettings?.taxName }} ({{ invoice()?.taxRate }}%):
-                </span>
-                <span class="font-medium text-white">{{ formatCurrency(invoice()?.taxAmount || 0) }}</span>
+            }
+            @if (fiscalStamp() > 0) {
+              <div class="invoice-detail-totals__row">
+                <dt>{{ 'invoicing.form.summary.fiscalStamp' | translate }}</dt>
+                <dd>{{ formatCurrency(fiscalStamp()) }}</dd>
               </div>
-              
-              <hr class="border-gray-500">
-              
-              <div class="flex justify-between pt-2">
-                <span class="text-lg font-semibold text-white">{{ 'invoicing.print.total' | translate }}:</span>
-                <span class="text-xl font-bold text-white">{{ formatCurrency(invoice()?.totalAmount || 0) }}</span>
-              </div>
+            }
+            <div class="invoice-detail-totals__row invoice-detail-totals__row--total">
+              <dt>{{ 'invoicing.form.summary.totalTTC' | translate }}</dt>
+              <dd>{{ formatCurrency(inv.totalAmount) }}</dd>
+            </div>
+          </dl>
+        </section>
 
-              <!-- Payment Progress -->
-              <div *ngIf="invoice() && invoice()!.paidAmount > 0" class="pt-2">
-                <div class="flex justify-between text-sm">
-                  <span class="text-gray-300">{{ 'invoicing.print.paid' | translate }}:</span>
-                  <span class="font-medium text-green-400">{{ formatCurrency(invoice()?.paidAmount || 0) }}</span>
-                </div>
-                <div *ngIf="invoice() && invoice()!.remainingAmount > 0" class="flex justify-between text-sm">
-                  <span class="text-gray-300">{{ 'invoicing.print.remaining' | translate }}:</span>
-                  <span class="font-medium text-red-400">{{ formatCurrency(invoice()?.remainingAmount || 0) }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        @if (inv.notes) {
+          <section class="invoice-detail-block">
+            <h3 class="invoice-detail-block__title">{{ 'invoicing.detail.notes' | translate }}</h3>
+            <p>{{ inv.notes }}</p>
+          </section>
+        }
+      </article>
 
-        <!-- Payment Terms & Notes -->
-        <div class="px-8 pb-8 border-t border-gray-500 pt-6">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-              <h4 class="font-semibold text-white mb-2">{{ 'invoicing.print.paymentTerms' | translate }}</h4>
-              <p class="text-sm text-gray-300">{{ invoice()?.paymentTerms }}</p>
-              
-              <div *ngIf="settings()?.garageInfo?.bankDetails" class="mt-4">
-                <h5 class="font-medium text-white mb-2">{{ 'invoicing.print.bankDetails' | translate }}</h5>
-                <div class="text-xs text-gray-300 space-y-1">
-                  <p><strong>{{ 'invoicing.print.bank' | translate }}:</strong> {{ settings()?.garageInfo?.bankDetails?.bankName }}</p>
-                  <p><strong>{{ 'invoicing.print.account' | translate }}:</strong> {{ settings()?.garageInfo?.bankDetails?.accountNumber }}</p>
-                  <p *ngIf="settings()?.garageInfo?.bankDetails?.iban">
-                    <strong>{{ 'invoicing.print.iban' | translate }}:</strong> {{ settings()?.garageInfo?.bankDetails?.iban }}
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            <div *ngIf="invoice()?.notes">
-              <h4 class="font-semibold text-white mb-2">{{ 'invoicing.print.notes' | translate }}</h4>
-              <p class="text-sm text-gray-300">{{ invoice()?.notes }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Payment History (not printed) -->
-      <div *ngIf="!isPrintMode() && payments().length > 0" 
-           class="mt-6 glass-card backdrop-blur-sm rounded-xl border border-gray-500 p-6">
-        <h3 class="text-lg font-semibold text-white mb-4">Payment History</h3>
-        
-        <div class="space-y-3">
-          <div *ngFor="let payment of payments()" 
-               class="flex items-center justify-between p-3 line-item rounded-lg">
-            <div class="flex items-center gap-3">
-              <span class="text-lg">{{ getPaymentMethodIcon(payment.method) }}</span>
-              <div>
-                <p class="font-medium text-white">{{ formatCurrency(payment.amount) }}</p>
-                <p class="text-sm text-gray-300">
-                  {{ payment.method | titlecase }} - {{ formatDateTime(payment.paymentDate) }}
-                </p>
-              </div>
-            </div>
-            <div class="text-right">
-              <p class="text-sm text-gray-300">
-                Processed by {{ payment.processedBy }}
+      <!-- RIGHT: activity panel -->
+      <aside class="invoice-detail-aside no-print">
+        <!-- Payment progress ring -->
+        <section class="glass-card invoice-detail-ring-card">
+          <h3 class="invoice-detail-block__title">{{ 'invoicing.detail.paymentProgress' | translate }}</h3>
+          <div class="invoice-detail-ring">
+            <svg width="100" height="100" viewBox="0 0 100 100" aria-hidden="true">
+              <circle cx="50" cy="50" r="36" stroke="#e5e7eb" stroke-width="8" fill="none" />
+              <circle cx="50" cy="50" r="36"
+                      stroke="#FF8400"
+                      stroke-width="8"
+                      fill="none"
+                      stroke-linecap="round"
+                      [attr.stroke-dasharray]="ringCircumference"
+                      [attr.stroke-dashoffset]="ringDashOffset()"
+                      transform="rotate(-90 50 50)" />
+              <text x="50" y="54" text-anchor="middle" class="invoice-detail-ring__pct">
+                {{ progressPct() | number:'1.0-0' }}%
+              </text>
+            </svg>
+            <p class="invoice-detail-ring__amount">
+              {{ formatCurrency(inv.paidAmount) }} / {{ formatCurrency(inv.totalAmount) }}
+            </p>
+            @if (inv.remainingAmount > 0) {
+              <p class="invoice-detail-ring__remaining">
+                {{ 'invoicing.detail.remaining' | translate }}: {{ formatCurrency(inv.remainingAmount) }}
               </p>
-              <p *ngIf="payment.reference" class="text-xs text-gray-400">
-                Ref: {{ payment.reference }}
-              </p>
-            </div>
+            }
           </div>
-        </div>
-      </div>
+        </section>
 
-      <!-- Payment Progress (not printed) -->
-      <div *ngIf="!isPrintMode() && invoice() && invoice()!.paidAmount > 0" 
-           class="mt-6 glass-card backdrop-blur-sm rounded-xl border border-gray-500 p-6">
-        <h3 class="text-lg font-semibold text-white mb-4">Payment Progress</h3>
-        
-        <div class="space-y-3">
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-300">Progress:</span>
-            <span class="font-medium text-white">{{ getPaymentProgress().toFixed(1) }}%</span>
-          </div>
-          
-          <div class="w-full bg-gray-500 rounded-full h-3">
-            <div class="h-3 rounded-full transition-all"
-                 [class]="invoice()?.status === 'paid' ? 'bg-green-500' : invoice()?.status === 'overdue' ? 'bg-red-500' : 'bg-blue-500'"
-                 [style.width.%]="getPaymentProgress()">
-            </div>
-          </div>
-          
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-300">
-              Paid: {{ formatCurrency(invoice()?.paidAmount || 0) }}
-            </span>
-            <span *ngIf="invoice() && invoice()!.remainingAmount > 0" 
-                  class="text-red-400 font-medium">
-              Remaining: {{ formatCurrency(invoice()?.remainingAmount || 0) }}
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+        <!-- Timeline -->
+        <section class="glass-card invoice-detail-timeline-card">
+          <h3 class="invoice-detail-block__title">{{ 'invoicing.detail.activity' | translate }}</h3>
+          @if (timeline().length === 0) {
+            <p class="invoice-detail-timeline-empty">{{ 'invoicing.detail.timeline.empty' | translate }}</p>
+          } @else {
+            <ol class="invoice-detail-timeline">
+              @for (e of timeline(); track trackEvent($index, e)) {
+                <li class="invoice-detail-timeline__item invoice-detail-timeline__item--{{ e.iconKey }}">
+                  <span class="invoice-detail-timeline__icon" aria-hidden="true">
+                    @switch (e.iconKey) {
+                      @case ('created') {
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                      }
+                      @case ('issued') {
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 1 1 8 0v4"/></svg>
+                      }
+                      @case ('viewed') {
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                      }
+                      @case ('payment') {
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg>
+                      }
+                      @case ('creditNote') {
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-4 9 4v10l-9 4-9-4V7z"/><path d="M12 3v18"/></svg>
+                      }
+                    }
+                  </span>
+                  <div class="invoice-detail-timeline__body">
+                    <p class="invoice-detail-timeline__title">
+                      {{ e.titleKey | translate:e.titleParams }}
+                    </p>
+                    @if (e.subtitle) {
+                      <p class="invoice-detail-timeline__sub">{{ e.subtitle }}</p>
+                    }
+                    <time class="invoice-detail-timeline__time">{{ formatDateTime(e.timestamp) }}</time>
+                  </div>
+                </li>
+              }
+            </ol>
+          }
+        </section>
 
-  <!-- Loading State -->
-  <div *ngIf="isLoading()" 
-       class="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
-    <div class="glass-card flex items-center gap-3">
-      <div class="animate-spin h-5 w-5 border-2 border-blue-400 border-t-transparent rounded-full"></div>
-      <span class="text-white">Loading invoice...</span>
+        <!-- Linked credit notes -->
+        @if (creditNotes().length > 0) {
+          <section class="glass-card invoice-detail-cn-card">
+            <h3 class="invoice-detail-block__title">{{ 'invoicing.detail.linkedCreditNotes' | translate }}</h3>
+            <ul class="invoice-detail-cn-list">
+              @for (cn of creditNotes(); track trackCn($index, cn)) {
+                <li>
+                  <a [routerLink]="['/invoices/credit-notes']">
+                    <strong>{{ cn.creditNoteNumber }}</strong> · {{ formatCurrency(cn.total) }}
+                  </a>
+                  @if (cn.reason) {
+                    <p class="invoice-detail-cn-reason">{{ cn.reason }}</p>
+                  }
+                </li>
+              }
+            </ul>
+          </section>
+        }
+      </aside>
     </div>
-  </div>
+
+    <app-payment-modal
+      [isOpen]="paymentModalOpen()"
+      [submitting]="paymentSubmitting()"
+      [context]="paymentContext()"
+      (close)="onPaymentModalClose()"
+      (submit)="onPaymentModalSubmit($event)">
+    </app-payment-modal>
+
+    <app-send-invoice-modal
+      [isOpen]="sendModalOpen()"
+      [submitting]="sendSubmitting()"
+      [context]="sendContext()"
+      (close)="onSendModalClose()"
+      (send)="onSendModalSubmit($event)">
+    </app-send-invoice-modal>
+  } @else if (isLoading()) {
+    <div class="invoice-detail-loading glass-card">
+      <p>{{ 'invoicing.loading' | translate }}</p>
+    </div>
+  } @else {
+    <div class="invoice-detail-empty glass-card">
+      <p>{{ 'invoicing.detail.notFound' | translate }}</p>
+      <button type="button" class="btn-tertiary" routerLink="/invoices/list">
+        {{ 'common.back' | translate }}
+      </button>
+    </div>
+  }
 </div>
