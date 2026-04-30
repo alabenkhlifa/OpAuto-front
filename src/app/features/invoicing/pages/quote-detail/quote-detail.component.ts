@@ -48,7 +48,7 @@ export class QuoteDetailPageComponent implements OnInit {
       },
       error: () => {
         this.isLoading.set(false);
-        this.toast.error('invoicing.quotes.detail.loadFailed');
+        this.toast.error(this.translationService.instant('invoicing.quotes.detail.loadFailed'));
       },
     });
   }
@@ -61,11 +61,11 @@ export class QuoteDetailPageComponent implements OnInit {
       next: (updated) => {
         this.quote.set(updated);
         this.busy.set(false);
-        this.toast.success('invoicing.quotes.detail.sent');
+        this.toast.success(this.translationService.instant('invoicing.quotes.detail.sent'));
       },
       error: () => {
         this.busy.set(false);
-        this.toast.error('invoicing.quotes.detail.sendFailed');
+        this.toast.error(this.translationService.instant('invoicing.quotes.detail.sendFailed'));
       },
     });
   }
@@ -77,12 +77,12 @@ export class QuoteDetailPageComponent implements OnInit {
     this.quoteService.approve(q.id).subscribe({
       next: ({ invoiceId }) => {
         this.busy.set(false);
-        this.toast.success('invoicing.quotes.detail.approved');
+        this.toast.success(this.translationService.instant('invoicing.quotes.detail.approved'));
         this.router.navigate(['/invoices', invoiceId]);
       },
       error: () => {
         this.busy.set(false);
-        this.toast.error('invoicing.quotes.detail.approveFailed');
+        this.toast.error(this.translationService.instant('invoicing.quotes.detail.approveFailed'));
       },
     });
   }
@@ -95,11 +95,11 @@ export class QuoteDetailPageComponent implements OnInit {
       next: (updated) => {
         this.quote.set(updated);
         this.busy.set(false);
-        this.toast.success('invoicing.quotes.detail.rejected');
+        this.toast.success(this.translationService.instant('invoicing.quotes.detail.rejected'));
       },
       error: () => {
         this.busy.set(false);
-        this.toast.error('invoicing.quotes.detail.rejectFailed');
+        this.toast.error(this.translationService.instant('invoicing.quotes.detail.rejectFailed'));
       },
     });
   }

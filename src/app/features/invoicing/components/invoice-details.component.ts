@@ -409,14 +409,17 @@ export class InvoiceDetailsComponent implements OnInit {
     return date ? this.invoiceService.formatDate(date) : '';
   }
 
-  formatDateTime(date: Date): string {
+  formatDateTime(date: Date | string | null | undefined): string {
+    if (!date) return '';
+    const d = date instanceof Date ? date : new Date(date);
+    if (isNaN(d.getTime())) return '';
     return new Intl.DateTimeFormat('fr-TN', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-    }).format(date);
+    }).format(d);
   }
 
   statusBadgeClass(status: string): string {
