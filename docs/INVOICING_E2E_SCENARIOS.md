@@ -25,7 +25,7 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 | S-AUTH-002 | Staff login → can access /invoices | P0 | ⏭️ no staff seed |
 | S-AUTH-003 | Staff cannot DELETE invoice (button hidden) | P0 | ⏭️ no staff seed |
 | S-AUTH-004 | Owner can DELETE invoice | P1 | ❌ |
-| S-AUTH-005 | Unauthenticated → /invoices redirects to /auth | P0 | ❌ |
+| S-AUTH-005 | Unauthenticated → /invoices redirects to /auth | P0 | ✅ |
 | S-AUTH-006 | Staff records payment (no DELETE invoice rights) | P1 | ⏭️ no staff seed |
 | S-AUTH-007 | Cross-garage tenant isolation: GET /invoices/:id from other garage → 404 (no leak) | P0 | 🟡 backend test |
 
@@ -133,7 +133,7 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 | S-INV-016 | Delete DRAFT invoice (owner only) | P0 | ✅ (after Sweep A Group 3 — confirm modal + 423 toast) |
 | S-INV-017 | Delete issued invoice → 400 (must credit-note instead) | P0 | ✅ (button absent off-DRAFT) |
 | S-INV-018 | DELETE button hidden for STAFF role | P0 | ⏭️ no staff seed |
-| S-INV-019 | Pull from job: link maintenance job → click "Pull from job" → lines pre-fill | P0 | ❌ |
+| S-INV-019 | Pull from job: link maintenance job → click "Pull from job" → lines pre-fill | P0 | ✅ (after Sweep A Group 4 — linkJobById + ?jobId= query param) |
 | S-INV-020 | Pull from job: already-converted job → 409 | P1 | 🟡 backend test |
 | S-INV-021 | Discount % > threshold without approver → form invalid + sticky banner | P1 | ❌ |
 | S-INV-022 | Discount % > threshold with approver picker → form valid; on save, DiscountAuditLog row | P1 | 🟡 backend test |
@@ -317,7 +317,7 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 
 | ID | Scenario | Priority | Status |
 |---|---|---|---|
-| S-SET-001 | Settings page → Fiscal tab visible (owner only) | P0 | ❌ |
+| S-SET-001 | Settings page → Fiscal tab visible (owner only) | P0 | ✅ |
 | S-SET-002 | MF format validator: `1234567/A/B/000` accepted | P0 | 🟡 backend test |
 | S-SET-003 | MF invalid format (e.g. `"abc"`) → 400 with class-validator message | P0 | 🟡 backend test |
 | S-SET-004 | RIB validator: 20 digits accepted, anything else rejected | P0 | 🟡 backend test |
@@ -356,7 +356,7 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 | S-SB-001 | Invoicing group has 6 children: Dashboard / Quotes / All Invoices / Credit Notes / Pending Payment / Reports | P0 | ✅ |
 | S-SB-002 | Quotes badge: count of SENT quotes | P1 | ✅ |
 | S-SB-003 | Pending Payment badge: count of unpaid invoices (SENT + PARTIALLY_PAID + OVERDUE) | P1 | ❌ |
-| S-SB-004 | Click each child → navigates to correct route | P0 | ❌ |
+| S-SB-004 | Click each child → navigates to correct route | P0 | ✅ |
 | S-SB-005 | Active child highlighted | P1 | ❌ |
 | S-SB-006 | Sidebar collapsed mode: invoicing icon visible, hover shows children | P2 | ❌ |
 
@@ -372,7 +372,7 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 | S-MOB-004 | KPI tiles stack vertically | P1 | ✅ |
 | S-MOB-005 | Invoice form sticky right summary collapses to bottom | P1 | ❌ |
 | S-MOB-006 | Line items table: horizontal scroll OR wrapped layout | P1 | ❌ |
-| S-MOB-007 | Modals (payment, send-invoice) usable at 375px | P0 | ❌ |
+| S-MOB-007 | Modals (payment, send-invoice) usable at 375px | P0 | ✅ (after Sweep A Group 4 — send-modal CSS overlay primitives + 44px close) |
 | S-MOB-008 | Touch targets ≥ 44×44px (WCAG) | P2 | ❌ |
 | S-MOB-009 | iPad (768×1024): grid layout adapts | P2 | ❌ |
 

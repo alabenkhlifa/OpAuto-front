@@ -327,11 +327,18 @@ export class InvoiceFormComponent implements OnInit {
           })),
         );
 
-        const jobId = (inv as any).maintenanceJobId as string | undefined;
+        // The shared invoice mapper does not currently carry `maintenanceJobId`
+        // on the typed model — fall back to the `?jobId=…` query param emitted
+        // by `pullFromJob()` so the linked-job pill stays visible.
+        const jobId =
+          ((inv as any).maintenanceJobId as string | undefined) ||
+          this.route.snapshot.queryParamMap.get('jobId') ||
+          undefined;
         if (jobId) {
           const job = this.jobs().find((j) => j.id === jobId);
           this.linkedJob.set(job ?? null);
           this.jobPulled.set(true);
+          this.form.patchValue({ maintenanceJobId: jobId }, { emitEvent: false });
         }
         this.isLoading.set(false);
       },
@@ -388,9 +395,19 @@ export class InvoiceFormComponent implements OnInit {
     this.linkedJob.set(job);
     this.jobPulled.set(false);
     if (job) {
+      // BUG: maintenance backend payload nests customerId under `car.customerId`.
+      // The MaintenanceJob mapper hits `b.customerId` (undefined), so
+      // `job.customerId` arrives empty here. Derive it from the loaded cars
+      // list as a fallback, otherwise patching `customerId: undefined` would
+      // wipe the form state and cascade-clear the vehicle.
+      const carId = job.carId;
+      const customerId =
+        job.customerId ||
+        this.cars().find((c) => c.id === carId)?.customerId ||
+        '';
       this.form.patchValue({
-        customerId: job.customerId,
-        carId: job.carId,
+        customerId,
+        carId,
         maintenanceJobId: job.id,
       });
     }
@@ -406,9 +423,15 @@ export class InvoiceFormComponent implements OnInit {
       next: (inv) => {
         // Backend returns a DRAFT invoice; navigate to edit mode so the rebuilt
         // form re-loads with the prefilled lines from the server.
+        // The shared InvoiceService.mapFromBackend does not currently surface
+        // `maintenanceJobId` on the strongly-typed model, so we forward the
+        // jobId via query param to keep the linked-job pill rendered after
+        // navigation. (Fixes S-INV-019: linked-job badge missing post-pull.)
         this.toast.success(this.translation.instant('invoicing.form.toast.pulledFromJob'));
         this.isSubmitting.set(false);
-        this.router.navigate(['/invoices/edit', inv.id]);
+        this.router.navigate(['/invoices/edit', inv.id], {
+          queryParams: { jobId },
+        });
       },
       error: () => {
         this.toast.error(this.translation.instant('invoicing.form.errors.pullFailed'));

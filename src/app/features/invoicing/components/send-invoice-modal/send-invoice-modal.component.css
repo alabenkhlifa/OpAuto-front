@@ -1,9 +1,161 @@
 /* ──────────────────────────────────────────────────────────────
-   Send Invoice Modal — uses the global modal primitives from
-   the OpAuto UI system (modal-overlay / modal-content / modal-form
-   / modal-btn). Component-local CSS only adds the channel chips
-   and the preview pane.
+   Send Invoice Modal — Angular default ViewEncapsulation scopes
+   styles to this component, and there's no global modal-overlay
+   rule. We define our own primitives here. (Fixes S-MOB-007:
+   modal rendered inline / static on every viewport.)
    ────────────────────────────────────────────────────────────── */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 32rem;
+  max-height: calc(100vh - 2rem);
+  background: #ffffff;
+  border-radius: 0.75rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-header {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.25rem 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.modal-close-btn {
+  /* S-MOB-007: ≥44×44 mobile tap target. */
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary, #6b7280);
+  cursor: pointer;
+  border-radius: 0.5rem;
+}
+
+.modal-close-btn:hover:not(:disabled) {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.modal-close-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  padding: 1rem 1.25rem;
+  overflow-y: auto;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.form-input,
+.form-textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  color: #111827;
+}
+
+.form-input:focus,
+.form-textarea:focus {
+  outline: 2px solid #FF8400;
+  outline-offset: 1px;
+}
+
+.form-error {
+  font-size: 0.75rem;
+  color: #dc2626;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.modal-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.modal-btn.secondary {
+  background: #ffffff;
+  border-color: #d1d5db;
+  color: #374151;
+}
+
+.modal-btn.secondary:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+
+.modal-btn.primary {
+  background: #FF8400;
+  color: #ffffff;
+}
+
+.modal-btn.primary:hover:not(:disabled) {
+  background: #e07600;
+}
+
+.modal-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
 .modal-subtitle {
   margin-top: 0.25rem;

@@ -470,6 +470,18 @@ BUG-063, 065, 066, 067, 068, 069, 071, 073, 074 exercised end-to-end. BUG-089/09
 - BUG-096 — Service-picker / part-picker fetch the entire catalog on init and filter in-memory (`computed()` over signal). Doesn't scale past ~hundreds of rows. Both pickers should wire `query()` → debounced HTTP search if catalog grows.
 - BUG-097 — Backend `DELETE /api/invoices/:id` returns **200** (not 204 as the scenario doc / REST convention suggested). Response body is the deleted invoice. Trivial to align — pick one and document.
 
+**Sweep A — Group 4 (pull-from-job + remaining P0s) — 5 / 5 PASS, 2 fixed-in-place:**
+- [x] **S-INV-019 — Pull from job was broken** (linked-job badge missing, customer/car got cleared on job pick). Two fixes in `invoice-form.component.ts`: (a) `linkJobById()` lines 381-407 derives `customerId` from the loaded car when the maintenance mapper omits it (root cause logged as BUG-098); (b) `pullFromJob()` lines 411-432 navigates with `?jobId=…` query param so `loadInvoice()` (lines 330-343) can re-render the linked-job pill after the form-from-job round trip (workaround for BUG-099 — `InvoiceService.mapFromBackend` drops `maintenanceJobId` from the typed model).
+- [x] **S-AUTH-005 — Unauth /invoices → /auth.** Auth guard fires client-side; no flash; lands on /dashboard post-login.
+- [x] **S-MOB-007 — Mobile modals at 375×667 were broken** (send-invoice-modal had no overlay CSS at all — rendered inline at every viewport because the file's header comment claimed "global modal primitives" but no global CSS file exists). Two fixes: (a) `send-invoice-modal/send-invoice-modal.component.css:1-150` adds the missing `.modal-overlay` / `.modal-content` / `.modal-header` / `.modal-form` / `.modal-footer` rules; (b) `payment-modal/payment-modal.component.css:43-59` bumps `.payment-modal__close` to `min-width/height: 44px` for WCAG mobile target size.
+- [x] **S-SB-004 — Sidebar invoicing children all navigate** to correct routes; active pill highlights.
+- [x] **S-SET-001 — Settings → Fiscal tab visible** (owner). All fiscal fields render from `GET /api/garage-settings 200`.
+
+**More out-of-scope findings (logged as backlog):**
+- BUG-098 — `MaintenanceService.mapFromBackend` drops `customerId` (BE nests it under `b.car.customerId`, mapper reads `b.customerId`). Multiple consumers downstream regress; invoice-form patches it locally.
+- BUG-099 — `InvoiceService.mapFromBackend` drops `maintenanceJobId` and `quoteId` from the typed model. Linked-job badge cannot render after a refresh; worked around via `?jobId=` query param.
+- BUG-100 — Payment modal in landscape 667×375: Submit button requires scrolling INSIDE the dialog. Acceptable today (`max-height: 90vh` + scroll), but a sticky footer would be cleaner.
+
 **Schema decisions worth flagging:**
 - `UserRole` enum is `OWNER | STAFF` only (no MECHANIC despite the original plan suggesting it).
 - Invoice numbering MUST go through `NumberingService.next()` — `$transaction` upsert on `InvoiceCounter`. Never use `Math.random()` for fiscal numbers.

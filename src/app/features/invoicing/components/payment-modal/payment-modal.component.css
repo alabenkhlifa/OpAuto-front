@@ -42,11 +42,18 @@
 
 .payment-modal__close {
   position: absolute;
-  top: 0.5rem;
-  right: 0.625rem;
+  top: 0.25rem;
+  right: 0.25rem;
+  /* S-MOB-007: ≥44×44 mobile tap target. */
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: transparent;
   border: none;
-  font-size: 1.25rem;
+  font-size: 1.5rem;
+  line-height: 1;
   color: var(--color-text-secondary, #4b5563);
   cursor: pointer;
 }

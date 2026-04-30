@@ -404,6 +404,27 @@ _Use this template:_
 - **Suggested fix:** either (a) annotate the controller method with `@HttpCode(HttpStatus.NO_CONTENT)` and return `void` from the service path, OR (b) update `S-INV-016` in the scenario doc to expect 200 + body. Pick one and document the FE expectation. The FE side currently doesn't read the response body anyway (just navigates on success).
 - **Priority:** P3 — works today, just an inconsistency.
 
+### BUG-098 · `MaintenanceService.mapFromBackend` drops `customerId` 🔴
+- **Where:** `src/app/core/services/maintenance.service.ts:266` (search for `mapFromBackend` — likely reads `b.customerId`).
+- **Symptom:** Any consumer reading `job.customerId` gets `undefined` because the backend payload nests the customer id under `b.car.customerId`, not at the top level. Invoice-form's `linkJobById()` was assigning `customerId: undefined` into the FormGroup, which silently cleared the form's customer field when a user picked a maintenance job. Now patched locally inside invoice-form (commit pending), but other consumers (anywhere that reads `MaintenanceJob.customerId` after `mapFromBackend`) silently regress.
+- **Surfaced by:** Sweep A Group 4 e2e validator (S-INV-019 — 2026-04-30).
+- **Suggested fix:** in `mapFromBackend`, derive `customerId` from `b.car?.customerId ?? b.customerId` (defensive). Also worth checking if the backend should expose `customerId` at the top level for normalization — Maintenance jobs almost always belong to a (customer, car) pair, denormalizing the customer id onto the job DTO is cheap.
+- **Priority:** P1 — silent regression risk for any future consumer that grabs `job.customerId`.
+
+### BUG-099 · `InvoiceService.mapFromBackend` drops `maintenanceJobId` and `quoteId` 🔴
+- **Where:** `src/app/core/services/invoice.service.ts:152-200` (the `mapFromBackend` method).
+- **Symptom:** The typed `InvoiceWithDetails` model exposes `appointmentId` but not `maintenanceJobId` or `quoteId`, even though the backend persists both. After a page refresh on `/invoices/:id`, the invoice-form cannot show the linked-job badge or the linked-quote attribution because the mapper has already discarded the IDs. Worked around for the pull-from-job flow via a `?jobId=` query param, but proper fix is to expose both fields on the typed model.
+- **Surfaced by:** Sweep A Group 4 e2e validator (S-INV-019 — 2026-04-30).
+- **Suggested fix:** add `maintenanceJobId?: string` and `quoteId?: string` to the `Invoice` / `InvoiceWithDetails` interfaces in `invoice.model.ts`; populate them from `b.maintenanceJobId` / `b.quoteId` in `mapFromBackend`. Then drop the `?jobId=` query param trick in `invoice-form.pullFromJob` and read directly from `inv.maintenanceJobId` in `loadInvoice`.
+- **Priority:** P1 — blocks S-DET-014 (page focus refresh / linked-document badge persistence) and BUG-095's quote-edit flow once that lands.
+
+### BUG-100 · Payment modal in landscape 667×375 requires scroll inside dialog 🔴
+- **Where:** `src/app/features/invoicing/components/payment-modal/payment-modal.component.css` (`.payment-modal__content` `max-height: 90vh` overflows in landscape).
+- **Symptom:** On a 667×375 landscape phone, the Submit button is below the fold inside the dialog; user must scroll within the modal to reach it. Acceptable today since the dialog is scrollable, but a sticky footer pattern would be cleaner UX.
+- **Surfaced by:** Sweep A Group 4 e2e validator (2026-04-30, side note from S-MOB-007).
+- **Suggested fix:** convert the modal footer to `position: sticky; bottom: 0` with a backdrop fade, or split the body into a flex column with `flex: 1; overflow: auto` for the content and the action row pinned outside it.
+- **Priority:** P3 — works today, just suboptimal in landscape.
+
 ---
 
 ## Cross-cutting Notes
