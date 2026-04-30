@@ -9,7 +9,9 @@ import { OperationalSettingsComponent } from './components/operational-settings.
 import { BusinessSettingsComponent } from './components/business-settings.component';
 import { SystemSettingsComponent } from './components/system-settings.component';
 import { IntegrationSettingsComponent } from './components/integration-settings.component';
+import { FiscalSettingsComponent } from './components/fiscal-settings.component';
 import { ToastService } from '../../shared/services/toast.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-garage-settings',
@@ -22,7 +24,8 @@ import { ToastService } from '../../shared/services/toast.service';
     OperationalSettingsComponent,
     BusinessSettingsComponent,
     SystemSettingsComponent,
-    IntegrationSettingsComponent
+    IntegrationSettingsComponent,
+    FiscalSettingsComponent
   ],
   template: `
     <div class="min-h-screen garage-settings-container p-4 lg:p-6">
@@ -90,6 +93,18 @@ import { ToastService } from '../../shared/services/toast.service';
             </svg>
             <span class="text-sm">{{ 'settings.navigation.integrations' | translate }}</span>
           </button>
+
+          @if (isOwner()) {
+            <button
+              class="nav-button flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors duration-200 font-medium whitespace-nowrap"
+              [class]="activeTab() === 'fiscal' ? 'nav-button-active' : 'nav-button-inactive'"
+              (click)="setActiveTab('fiscal')">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21l-7-4-7 4V5a2 2 0 012-2h10a2 2 0 012 2v16z"></path>
+              </svg>
+              <span class="text-sm">{{ 'settings.navigation.fiscal' | translate }}</span>
+            </button>
+          }
         </nav>
       </div>
 
@@ -136,6 +151,14 @@ import { ToastService } from '../../shared/services/toast.service';
               (save)="onIntegrationSettingsSave($event)"
               (testIntegration)="onTestIntegration($event)">
             </app-integration-settings>
+          }
+
+          <!-- Fiscal Settings (owner-only) -->
+          @if (activeTab() === 'fiscal' && isOwner()) {
+            <app-fiscal-settings
+              [settings]="settings()!.fiscalSettings"
+              (saveFiscal)="onFiscalSettingsSave($event)">
+            </app-fiscal-settings>
           }
 
         </div>
@@ -230,11 +253,16 @@ import { ToastService } from '../../shared/services/toast.service';
 })
 export class GarageSettingsComponent implements OnInit {
   private garageSettingsService = inject(GarageSettingsService);
+  private authService = inject(AuthService);
 
   settings = signal<GarageSettings | null>(null);
   activeTab = signal<string>('garage-info');
   isSaving = signal(false);
   unsavedChanges = signal(false);
+
+  isOwner(): boolean {
+    return this.authService.isOwner();
+  }
 
 
   ngOnInit() {
@@ -337,6 +365,23 @@ export class GarageSettingsComponent implements OnInit {
         console.error('Error updating integration settings:', error);
         this.isSaving.set(false);
         this.showErrorMessage('Failed to update integration settings');
+      }
+    });
+  }
+
+  onFiscalSettingsSave(fiscalSettings: any) {
+    this.isSaving.set(true);
+    this.garageSettingsService.updateFiscalSettings(fiscalSettings).subscribe({
+      next: (updatedSettings) => {
+        this.settings.set(updatedSettings);
+        this.unsavedChanges.set(false);
+        this.isSaving.set(false);
+        this.showSuccessMessage('Fiscal settings updated successfully');
+      },
+      error: (error) => {
+        console.error('Error updating fiscal settings:', error);
+        this.isSaving.set(false);
+        this.showErrorMessage('Failed to update fiscal settings');
       }
     });
   }

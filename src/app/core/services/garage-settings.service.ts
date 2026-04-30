@@ -77,6 +77,16 @@ export class GarageSettingsService {
     return this.updateSettings(merged);
   }
 
+  updateFiscalSettings(fiscalSettings: Partial<GarageSettings['fiscalSettings']>): Observable<GarageSettings> {
+    const currentSettings = this.settingsSubject.value;
+    const merged = {
+      ...currentSettings,
+      fiscalSettings: { ...currentSettings.fiscalSettings, ...fiscalSettings },
+      updatedAt: new Date()
+    };
+    return this.updateSettings(merged);
+  }
+
   validateSettings(settings: Partial<GarageSettings>): Observable<SettingsValidationResult> {
     const errors: any[] = [];
     const warnings: any[] = [];
@@ -210,6 +220,18 @@ export class GarageSettingsService {
       },
       systemSettings: b.systemSettings || defaults.systemSettings,
       integrationSettings: b.integrationSettings || defaults.integrationSettings,
+      fiscalSettings: {
+        mfNumber: b.mfNumber ?? defaults.fiscalSettings.mfNumber,
+        rib: b.rib ?? defaults.fiscalSettings.rib,
+        bankName: b.bankName ?? defaults.fiscalSettings.bankName,
+        logoUrl: b.logoUrl ?? defaults.fiscalSettings.logoUrl,
+        numberingPrefix: b.numberingPrefix ?? defaults.fiscalSettings.numberingPrefix,
+        numberingResetPolicy: b.numberingResetPolicy ?? defaults.fiscalSettings.numberingResetPolicy,
+        numberingDigitCount: b.numberingDigitCount ?? defaults.fiscalSettings.numberingDigitCount,
+        defaultTvaRate: b.defaultTvaRate ?? defaults.fiscalSettings.defaultTvaRate,
+        fiscalStampEnabled: b.fiscalStampEnabled ?? defaults.fiscalSettings.fiscalStampEnabled,
+        defaultPaymentTermsDays: b.defaultPaymentTermsDays ?? defaults.fiscalSettings.defaultPaymentTermsDays
+      },
       createdAt: b.createdAt ? new Date(b.createdAt) : defaults.createdAt,
       updatedAt: b.updatedAt ? new Date(b.updatedAt) : defaults.updatedAt
     };
@@ -231,6 +253,23 @@ export class GarageSettingsService {
       if (settings.businessSettings.taxSettings?.defaultTaxRate !== undefined) {
         result.taxRate = settings.businessSettings.taxSettings.defaultTaxRate;
       }
+    }
+    if (settings.fiscalSettings) {
+      const f = settings.fiscalSettings;
+      // Send empty strings as undefined so optional fields remain unset
+      const writeIfDefined = (key: string, value: unknown) => {
+        if (value !== undefined && value !== null && value !== '') result[key] = value;
+      };
+      writeIfDefined('mfNumber', f.mfNumber);
+      writeIfDefined('rib', f.rib);
+      writeIfDefined('bankName', f.bankName);
+      writeIfDefined('logoUrl', f.logoUrl);
+      writeIfDefined('numberingPrefix', f.numberingPrefix);
+      writeIfDefined('numberingResetPolicy', f.numberingResetPolicy);
+      if (f.numberingDigitCount !== undefined) result.numberingDigitCount = f.numberingDigitCount;
+      if (f.defaultTvaRate !== undefined) result.defaultTvaRate = f.defaultTvaRate;
+      if (f.fiscalStampEnabled !== undefined) result.fiscalStampEnabled = f.fiscalStampEnabled;
+      if (f.defaultPaymentTermsDays !== undefined) result.defaultPaymentTermsDays = f.defaultPaymentTermsDays;
     }
     return result;
   }
@@ -300,6 +339,18 @@ export class GarageSettingsService {
         paymentGateway: { provider: 'none', isEnabled: false, configuration: {} },
         inventoryIntegration: { provider: 'manual', isEnabled: true, autoOrderThreshold: 10, preferredSuppliers: [], configuration: {} },
         accountingIntegration: { provider: 'none', isEnabled: false, syncFrequency: 'manual', configuration: {} }
+      },
+      fiscalSettings: {
+        mfNumber: '',
+        rib: '',
+        bankName: '',
+        logoUrl: '',
+        numberingPrefix: 'INV',
+        numberingResetPolicy: 'YEARLY',
+        numberingDigitCount: 4,
+        defaultTvaRate: 19,
+        fiscalStampEnabled: true,
+        defaultPaymentTermsDays: 30
       },
       createdAt: new Date(),
       updatedAt: new Date()

@@ -4,8 +4,28 @@ export interface GarageSettings {
   businessSettings: BusinessSettings;
   systemSettings: SystemSettings;
   integrationSettings: IntegrationSettings;
+  fiscalSettings: FiscalSettings;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export type NumberingResetPolicy = 'NEVER' | 'YEARLY' | 'MONTHLY';
+
+export interface FiscalSettings {
+  // Identity
+  mfNumber?: string;            // Tunisian matricule fiscal: NNNNNNN/L/L/NNN
+  rib?: string;                 // 20-digit Tunisian RIB
+  bankName?: string;
+  logoUrl?: string;
+  // Numbering
+  numberingPrefix: string;
+  numberingResetPolicy: NumberingResetPolicy;
+  numberingDigitCount: number;
+  // Tax
+  defaultTvaRate: number;
+  fiscalStampEnabled: boolean;
+  // Payment terms
+  defaultPaymentTermsDays: number;
 }
 
 export interface GarageInfo {
