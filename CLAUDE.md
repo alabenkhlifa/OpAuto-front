@@ -3,7 +3,7 @@
 Mini-ERP for multi-specialty garages. Angular 20+ (standalone components, signals, modern control-flow) + NestJS 10 backend with Prisma/PostgreSQL. Light theme (white surfaces, dark text on `--color-text-primary: #111827`), orange accent (#FF8400), i18n (en/fr/ar+RTL).
 
 ## Current Focus
-New feature development. All MVP batches complete (see `docs/MVP_PROGRESS.md`).
+New feature development. All MVP batches complete (see `docs/MVP_PROGRESS.md`). Fiscal-grade invoicing shipped Apr 2026 (14 commits across 6 phases — gapless atomic numbering, per-line TVA + fiscal stamp, immutable-after-issue state machine, PDF rendering, Resend/wa.me delivery, quotes + credit notes, full reporting, role unlock, UX restructure).
 
 ## Environment
 | Component | Local | Production |
@@ -69,6 +69,10 @@ npx prisma db push         # Push schema changes without migration (dev only)
 - **Mock fallbacks**: SubscriptionService returns hardcoded values. ModuleService is the real access gate.
 - **Calendar CSS**: FullCalendar overrides use `::ng-deep` heavily — library updates may break styling
 - **Calendar drag-drop**: `handleEventDrop` persists via `appointmentService.updateAppointment` with AI-assisted conflict detection + closed-day handling. `handleDateSelect` opens the Add Appointment modal pre-filled with the selected slot via `AppointmentModalComponent.setInitialDate`.
+- **Invoice numbering**: MUST go through `NumberingService.next(garageId, kind)` — `prisma.$transaction` upsert on `InvoiceCounter`. **Never use `Math.random()`** for fiscal numbers; gaps and collisions break Tunisian fiscal compliance.
+- **Fiscal record locking**: Invoices / quotes / credit notes are 423-locked after issue. Only `status` and `notes` are mutable post-issue; line / total mutations throw `InvoiceLockedException` (HTTP 423).
+- **Per-line TVA**: TVA lives on `InvoiceLineItem.tvaRate` / `tvaAmount` — totals are derived, not the source of truth. On any line edit, recompute via `TaxCalculatorService` rather than mutating totals directly.
+- **UserRole enum**: `OWNER | STAFF` only (no MECHANIC). Invoicing routes use STAFF as the second tier — `@Roles(OWNER, STAFF)` on most endpoints, `@Roles(OWNER)` only on `DELETE /invoices/:id` and discount-approval paths.
 
 ## Plan Mode Review
 Offer **BIG CHANGE** (interactive, max 4 issues/section) or **SMALL CHANGE** (1 question/section).

@@ -122,11 +122,19 @@ DB_USER=opauto
 DB_PASSWORD=<strong-random-password>
 DB_NAME=opauto
 JWT_SECRET=<64-char-random-string>
+# Invoicing — signs token-gated public-PDF links. Falls back to JWT_SECRET if unset.
+INVOICE_TOKEN_SECRET=<64-char-random-string>
 # Leave LLM keys blank to fall back to mock/template responses
 ANTHROPIC_API_KEY=
 OPENAI_API_KEY=
 GEMINI_API_KEY=
 GROQ_API_KEY=
+CEREBRAS_API_KEY=
+MISTRAL_API_KEY=
+# Email delivery (used by Assistant + Invoicing delivery service). Leave RESEND_API_KEY blank to fall back to mock driver.
+EMAIL_PROVIDER=resend
+RESEND_API_KEY=
+RESEND_FROM=
 CORS_ORIGIN=*
 WEBHOOK_SECRET=<github-webhook-secret>
 EOF
@@ -185,6 +193,36 @@ docker exec opauto-db pg_dump -U opauto opauto > ~/backup-$(date +%Y%m%d-%H%M).s
 
 Already handled automatically — every backend container start runs
 `prisma migrate deploy` before booting (Dockerfile CMD). Nothing to do on push.
+
+### Invoicing fiscal overhaul (2026-04-30) — three new migrations
+
+Backend image bump introduces three migrations applied automatically by
+`prisma migrate deploy`:
+
+1. `invoicing_fiscal_foundation` — extends Invoice / InvoiceLineItem / Garage /
+   Customer; adds `Quote`, `QuoteLineItem`, `CreditNote`, `CreditNoteLineItem`,
+   `InvoiceCounter`, `ServiceCatalog`, `DeliveryLog`; new enums
+   `NumberingResetPolicy`, `QuoteStatus`, `CreditNoteStatus`, `CounterKind`,
+   `DeliveryChannel`, `DeliveryStatus`.
+2. `add_garage_discount_threshold` — adds `Garage.discountAuditThresholdPct`,
+   `Customer.mfNumber`, and the `DiscountAuditLog` model.
+3. `add_invoice_status_viewed` — adds `VIEWED` to the `InvoiceStatus` enum.
+
+If a deploy is stuck on this batch:
+
+```bash
+cd /opt/opauto
+docker compose run --rm --entrypoint sh backend -c "npx prisma migrate deploy"
+```
+
+Backend `package.json` adds runtime deps `pdfkit`, `qrcode`, `lru-cache` (and
+dev dep `pdf-parse`). The Docker image rebuild via `docker compose build
+backend` runs `npm ci`, which installs them — nothing to do by hand.
+
+New env var: `INVOICE_TOKEN_SECRET` signs the JWTs used by the public PDF
+route (`/public/invoices/:id?token=...`). If absent, the service falls back to
+`JWT_SECRET`. Set it explicitly in `.env` if you want token rotation
+independent of session JWTs.
 
 ### Baseline a fresh/non-empty DB (first time only)
 

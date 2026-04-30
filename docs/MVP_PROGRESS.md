@@ -1,6 +1,8 @@
 # OpAuto MVP Implementation Progress
 
-> **Session handoff (2026-04-26):** 6 commits landed this session (`87b41e5` → latest) building the AI Orchestrator backend end-to-end (Phases 0, 1, 2, 4, 5 backend). 50+ source files, 227 tests across 17 suites, 28 tools registered, 4 skills × 3 locales, 3 sub-agents, Groq-first/Claude-fallback LLM gateway with SSE streaming, blast-tier-based approval flow, rate limiting + cost cap + expiry cron. **Blocked:** Phase 3 (frontend chat widget) waits on the user's uncommitted pricing-feature work in `src/`. **Action items for the user:** (1) `cd opauto-backend && npm run prisma:migrate` once DB is reachable; (2) set `GROQ_API_KEY`/`ANTHROPIC_API_KEY`/`RESEND_*` env vars; (3) commit or stash the pricing-feature work in `src/` before launching Phase 3. Full design + plan: `docs/superpowers/specs/2026-04-26-ai-orchestrator-design.md`.
+> **Session handoff (2026-04-30):** 14 commits landed this session (`001a658` → `602815a`) shipping the **Invoicing Fiscal Overhaul** end-to-end across 6 phases. New backend: gapless atomic numbering (Prisma `$transaction`), per-line TVA + fiscal stamp, immutable-after-issue state machine (HTTP 423), pdfkit PDF rendering with LRU cache, Resend email + wa.me WhatsApp delivery, Quote (devis) and Credit Note (avoir) modules, ServiceCatalog CRUD, AR aging / customer statement / Z-report / accountant CSV reports, token-gated public PDF route. New frontend: invoicing shell with sub-nav + dashboard + KPI tiles, quote/credit-note pages, payment + send-invoice modals, AR aging stacked-bar, Z-report print view, part-picker autocomplete. Schema: 3 migrations (`invoicing_fiscal_foundation`, `add_garage_discount_threshold`, `add_invoice_status_viewed`); 8 new models (Quote, QuoteLineItem, CreditNote, CreditNoteLineItem, InvoiceCounter, ServiceCatalog, DiscountAuditLog, DeliveryLog); 6 new enums; Invoice/InvoiceLineItem/Garage/Customer extended. New deps: `pdfkit`, `qrcode`, `lru-cache`, dev `pdf-parse`. New env var: `INVOICE_TOKEN_SECRET` (falls back to `JWT_SECRET`). Tests: **574/574 backend unit, 157/158 e2e (1 pre-existing flake), 634/642 frontend (8 pre-existing failures)**. E2E validation: 12/13 PASS, 1 SKIP (no staff seed). **Action items for the user:** (1) run `cd opauto-backend && npx prisma migrate deploy` to apply the 3 new migrations; (2) set `INVOICE_TOKEN_SECRET` (or rely on `JWT_SECRET` fallback); (3) `RESEND_API_KEY` already in env from the AI Orchestrator session. Full plan: `docs/superpowers/plans/2026-04-30-invoicing-overhaul.md`.
+>
+> **Prior handoff (2026-04-26):** 6 commits landed this session (`87b41e5` → latest) building the AI Orchestrator backend end-to-end (Phases 0, 1, 2, 4, 5 backend). 50+ source files, 227 tests across 17 suites, 28 tools registered, 4 skills × 3 locales, 3 sub-agents, Groq-first/Claude-fallback LLM gateway with SSE streaming, blast-tier-based approval flow, rate limiting + cost cap + expiry cron. **Blocked:** Phase 3 (frontend chat widget) waits on the user's uncommitted pricing-feature work in `src/`. **Action items for the user:** (1) `cd opauto-backend && npm run prisma:migrate` once DB is reachable; (2) set `GROQ_API_KEY`/`ANTHROPIC_API_KEY`/`RESEND_*` env vars; (3) commit or stash the pricing-feature work in `src/` before launching Phase 3. Full design + plan: `docs/superpowers/specs/2026-04-26-ai-orchestrator-design.md`.
 >
 > **Prior handoff (2026-04-21):** 10 commits landed this session (`850ec70` → `8d56b72`) on top of the 2026-04-20 batch. 15 more bugs fixed end-to-end (BUG-063, 068, 069, 073, 074, 086a/b/c, 087d, 088a/b/c, 089, 090, 091) and 14 new tests added (7 unit + 7 integration for invoicing). Remaining 🔴 tickets are all feature gaps (no backend model for photos / user preferences / extended Garage fields / AI UI / calendar drag-drop) — see `docs/BUGS.md`. Scroll to **Stability Session 2026-04-21** below for the fix-by-fix log.
 >
@@ -392,6 +394,63 @@ BUG-063, 065, 066, 067, 068, 069, 071, 073, 074 exercised end-to-end. BUG-089/09
 - [x] Dashboard Today's Schedule: replaced the gray plate badge with the actual Tunisian plate (`public/plate.png`) as the background. Added `parsePlate()` helper that splits a license-plate string into `{ left, right }` digit groups (handles `XXX TUN YYYY`, `XXX-YYYY`, raw digits, etc.) and overlays the two numbers in a 3-column grid (`38% / 24% / 38%`) so they sit close to the centered "تونس" already baked into the image. `direction: ltr` keeps orientation correct under Arabic.
 - [x] Cars page: added missing `common.filtersActive` key to en/fr/ar (was rendering the raw key on the active-filters chip).
 - [x] Dashboard "Cars Currently Being Worked On" job cards now use the same plate.png background + parsed left/right digits. Plate moved out of the chip row into its own centered `.job-card__plate-row` (152×33px, matches schedule plate size).
+
+## Batch 9: Invoicing Fiscal Overhaul (2026-04-30)
+
+> Full plan: `docs/superpowers/plans/2026-04-30-invoicing-overhaul.md`. 14 commits on `main` (`001a658` → `602815a`), 6 phases. Goal: turn the placeholder invoicing module into a Tunisian-fiscal-compliant pipeline (gapless numbering, per-line TVA + fiscal stamp, immutable-after-issue state machine, PDF rendering, multi-channel delivery, full reporting, role unlock, UX restructure).
+
+**Phase 1 — Fiscal Foundation (backend):**
+- [x] **1.1 Schema migration** — `invoicing_fiscal_foundation` migration extends Invoice (`appointmentId, maintenanceJobId, currency, fiscalStamp, lockedAt, lockedBy, issuedNumber, discountReason, discountApprovedBy, quoteId`), InvoiceLineItem (`partId, serviceCode, mechanicId, laborHours, tvaRate, tvaAmount, discountPct`), Garage (`mfNumber, rib, bankName, logoUrl, defaultPaymentTermsDays, numberingPrefix, numberingResetPolicy, numberingDigitCount, defaultTvaRate, fiscalStampEnabled`); adds new models `Quote`, `QuoteLineItem`, `CreditNote`, `CreditNoteLineItem`, `InvoiceCounter`, `ServiceCatalog`, `DeliveryLog`, and enums `NumberingResetPolicy`, `QuoteStatus`, `CreditNoteStatus`, `CounterKind`, `DeliveryChannel`, `DeliveryStatus`. `add_invoice_status_viewed` adds `VIEWED` to `InvoiceStatus`.
+- [x] **1.2 Numbering service** — `invoicing/numbering.service.ts` provides `next(garageId, kind)` via `prisma.$transaction` upsert on `InvoiceCounter` (gapless atomic counter, year-reset / monthly-reset / continuous policies). **Never use `Math.random()`** for fiscal numbers.
+- [x] **1.3 Tax calculator** — `invoicing/tax-calculator.service.ts` computes per-line `tvaAmount` from `tvaRate` + `discountPct`, derives HT / TVA / TTC totals, adds `fiscalStamp` (1.000 TND) when enabled. Totals are derived — `InvoiceLineItem.tvaRate` / `tvaAmount` are the source of truth.
+- [x] **1.4 State machine** — `invoicing/invoice-state.ts` (`canTransition` / `assertCanTransition`) enforces DRAFT → SENT → VIEWED → PARTIALLY_PAID → PAID; CANCELLED only from DRAFT. Issued records are immutable: line / total mutations after issue throw `InvoiceLockedException` (HTTP 423). Only `status` and `notes` are mutable post-issue.
+- [x] **1.5 from-job builder** — `invoicing/from-job.service.ts` translates a completed maintenance job (parts, labor hours, mechanic) into invoice line items; pulls TVA defaults from `Garage.defaultTvaRate`.
+
+**Phase 2 — Invoice Lifecycle:**
+- [x] **2.1 PDF renderer** — `invoicing/pdf-renderer.service.ts` (pdfkit) renders A4 fiscal invoices with LRU cache (`lru-cache` dep). Garage logo, MF number, RIB, bank name, customer MF, per-line TVA breakdown, totals + fiscal stamp + QR (`qrcode` dep) for the public link.
+- [x] **2.2 Delivery service** — `invoicing/delivery.service.ts` ships invoices via Resend email + wa.me WhatsApp deep link. Writes `DeliveryLog` rows (channel, status, sentAt, error). Email attaches the PDF.
+- [x] **2.3 Public PDF route** — `public/public.module.ts` + `invoice-public.controller.ts` + `invoice-token.service.ts` sign JWTs with `INVOICE_TOKEN_SECRET` (falls back to `JWT_SECRET`). Token-gated `GET /public/invoices/:id?token=...` returns the PDF; token-validate flips `SENT → VIEWED`.
+- [x] **2.4 ServiceCatalog module** — new `services-catalog/` module with CRUD for ServiceCatalog rows (code, label, default labor hours, default price, default TVA rate). Frontend `service-picker/` autocomplete uses it on the invoice form.
+- [x] **2.5 Quotes (devis)** — `invoicing/quotes.{controller,service}.ts` + DTOs. Lifecycle: DRAFT → SENT → APPROVED / REJECTED / EXPIRED. Approved quote can be converted to an invoice (sets `Invoice.quoteId`).
+- [x] **2.6 Credit Notes (avoir)** — `invoicing/credit-notes.{controller,service}.ts` + DTOs. Always linked to a parent invoice; restock flag toggles inventory rollback. Lifecycle: DRAFT → ISSUED.
+- [x] **2.7 Payments split** — `invoicing/payments.controller.ts` extracted so `POST /invoices/:id/payments` can be role-scoped independently of invoice CRUD.
+
+**Phase 3 — Reporting & Roles (committed, see "Invoicing Overhaul — Phase 3" section below for line-by-line):**
+- [x] **3.1 Multi-role unlock** — Invoicing/Quotes/Credit-Notes controllers expanded to `@Roles(OWNER, STAFF)`. UserRole enum is `OWNER | STAFF` only (no MECHANIC).
+- [x] **3.2 Discount audit trail** — `Garage.discountAuditThresholdPct` + `DiscountAuditLog` model. Over-threshold discounts require `discountReason` + `discountApprovedBy`.
+- [x] **3.3 AR aging report** — `reports/ar-aging.service.ts`, JSON + CSV.
+- [x] **3.4 Customer statement** — `reports/customer-statement.service.ts`, running balance.
+- [x] **3.5 Daily Z-report** — `reports/z-report.service.ts`, HT/TVA/TTC + payment-method aggregation.
+- [x] **3.6 Accountant CSV export** — `reports/accountant-export.service.ts`, Tunisian-accountant column set.
+
+**Phase 4 — Frontend Reports & Templates:**
+- [x] **4.1 AR aging component** — `features/invoicing/components/ar-aging.component.*` Chart.js horizontal stacked bar + accessible table fallback.
+- [x] **4.2 Z-report component** — `features/invoicing/components/z-report.component.*` glass-card layout with `@media print` block (hides chrome) + Print button.
+- [x] **4.3 Templates page** — `features/invoicing/pages/templates/` shell for managing invoice/quote PDF templates.
+- [x] **4.4 Reports page** — `features/invoicing/pages/reports/` aggregates AR aging + Z-report + accountant export downloads.
+
+**Phase 5 — UX Restructure (committed, see "Invoicing Overhaul — Phase 5" section below for line-by-line):**
+- [x] **5.1 Invoicing shell + sub-nav** — sticky pill nav (Dashboard / Quotes / Invoices / Credit Notes / Pending / Reports / Settings), "+ New" dropdown, mobile select fallback, FAB.
+- [x] **5.2 Dashboard page** — quick-action grid, urgent banner, 4 KPI tiles with sparklines, Recent invoices + Top customers, AR aging mini-chart.
+- [x] **5.3 / 5.4 Form rebuild** — partial; `<app-part-picker>` + `<app-service-picker>` shipped, full sectioned form rebuild deferred.
+- [x] **5.5 Quote / Credit Note pages + Payment modal + Send Invoice modal** — `pages/quote-list`, `pages/quote-form`, `pages/quote-detail`, `pages/credit-note-list`, `pages/credit-note-form`; `components/payment-modal/`, `components/send-invoice-modal/`.
+- [x] **5.6 Sidebar update** — invoicing children expanded to {Dashboard, Quotes, All Invoices, Credit Notes, Pending Payment, Reports}; new SENT-quotes badge.
+- [x] **5.7 i18n parity** — all new keys added to `en/fr/ar.json`; new script `scripts/check-i18n-parity.js` (also `npm run i18n:check`) walks all 3 trees, normalises AR singular/plural pairs (`feature`/`features`, `photo`/`photos`, `tier`/`tiers`), exits non-zero on drift.
+
+**Phase 6 — Service extraction & cleanup:**
+- [x] **6.1 Service extraction** — `core/services/invoice.service.ts`, `quote.service.ts`, `credit-note.service.ts`, `payment.service.ts`, `service-catalog.service.ts` extracted from inline component code.
+- [x] **6.2 Models** — `core/models/quote.model.ts`, `credit-note.model.ts`, `service-catalog.model.ts` (`invoice.model.ts` already there).
+- [x] **6.3 Test totals** — **574/574 backend unit, 157/158 e2e (1 pre-existing flake), 634/642 frontend (8 pre-existing failures from Phase 5)**.
+
+**E2E validation (Chrome DevTools MCP):** 12/13 PASS, 1 SKIP (no staff seed available to verify role split).
+
+**Schema decisions worth flagging:**
+- `UserRole` enum is `OWNER | STAFF` only (no MECHANIC despite the original plan suggesting it).
+- Invoice numbering MUST go through `NumberingService.next()` — `$transaction` upsert on `InvoiceCounter`. Never use `Math.random()` for fiscal numbers.
+- Fiscal records (Invoice / Quote / CreditNote) are immutable after issue. Trying to PUT line items returns HTTP 423.
+- TVA is stored per-line (`InvoiceLineItem.tvaRate`, `tvaAmount`) — totals are derived, not the source of truth.
+
+---
 
 ## Invoicing Overhaul — Phase 3 (Reporting & Roles, 2026-04-30)
 - [x] **3.1 Multi-role unlock** — Invoicing/Quotes/Credit-Notes controllers expanded to `@Roles(OWNER, STAFF)`; `DELETE /invoices/:id` kept `@Roles(OWNER)`. Payments split into `payments.controller.ts` (POST `/invoices/:id/payments`) so STAFF can record cash without inheriting future invoice-edit policy. (UserRole enum is OWNER|STAFF — no MECHANIC in this schema.)

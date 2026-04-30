@@ -43,7 +43,7 @@ Garages select multiple specializations → UI adapts job types and terminology:
 |--------|----------|
 | Calendar View | Operations |
 | Maintenance & Jobs | Operations |
-| Invoicing | Finance |
+| Invoicing (fiscal-grade — Tunisian TVA + fiscal stamp, gapless numbering, quotes, credit notes, public PDFs, AR/Z reports — shipped 2026-04-30) | Finance |
 | Inventory | Finance |
 | Employees | Team |
 | Reports & Analytics | Finance |
