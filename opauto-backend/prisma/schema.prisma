@@ -151,109 +151,165 @@ enum AssistantBlastTier {
   TYPED_CONFIRM_WRITE
 }
 
+enum NumberingResetPolicy {
+  NEVER
+  YEARLY
+  MONTHLY
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum CreditNoteStatus {
+  ISSUED
+  CANCELLED
+}
+
+enum CounterKind {
+  INVOICE
+  QUOTE
+  CREDIT_NOTE
+}
+
+enum DeliveryChannel {
+  EMAIL
+  WHATSAPP
+  BOTH
+}
+
+enum DeliveryStatus {
+  PENDING
+  SENT
+  FAILED
+  VIEWED
+}
+
 // ── Models ──────────────────────────────────────────────
 
 model Garage {
-  id               String   @id @default(uuid())
-  name             String
-  address          String?
-  phone            String?
-  email            String?
-  logo             String?
-  specializations  String[] // MECHANICAL, BODYWORK, ELECTRICAL, TIRE_ALIGNMENT
-  businessHours    Json?    // { mon: { open: "08:00", close: "18:00" }, ... }
-  currency         String   @default("TND")
-  taxRate          Float    @default(19.0)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id              String   @id @default(uuid())
+  name            String
+  address         String?
+  phone           String?
+  email           String?
+  logo            String?
+  specializations String[] // MECHANICAL, BODYWORK, ELECTRICAL, TIRE_ALIGNMENT
+  businessHours   Json? // { mon: { open: "08:00", close: "18:00" }, ... }
+  currency        String   @default("TND")
+  taxRate         Float    @default(19.0)
 
-  users            User[]
-  customers        Customer[]
-  cars             Car[]
-  appointments     Appointment[]
-  employees        Employee[]
-  maintenanceJobs  MaintenanceJob[]
-  invoices         Invoice[]
-  parts            Part[]
-  suppliers        Supplier[]
-  approvals        Approval[]
-  notifications    Notification[]
-  garageModules    GarageModule[]
-  aiActions        AiAction[]
+  // Fiscal / invoicing configuration
+  mfNumber                String? // matricule fiscal
+  rib                     String?
+  bankName                String?
+  logoUrl                 String?
+  defaultPaymentTermsDays Int                  @default(30)
+  numberingPrefix         String               @default("INV")
+  numberingResetPolicy    NumberingResetPolicy @default(YEARLY)
+  numberingDigitCount     Int                  @default(4)
+  defaultTvaRate          Float                @default(19)
+  fiscalStampEnabled      Boolean              @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users                  User[]
+  customers              Customer[]
+  cars                   Car[]
+  appointments           Appointment[]
+  employees              Employee[]
+  maintenanceJobs        MaintenanceJob[]
+  invoices               Invoice[]
+  parts                  Part[]
+  suppliers              Supplier[]
+  approvals              Approval[]
+  notifications          Notification[]
+  garageModules          GarageModule[]
+  aiActions              AiAction[]
   assistantConversations AssistantConversation[]
+  quotes                 Quote[]
+  creditNotes            CreditNote[]
+  invoiceCounters        InvoiceCounter[]
+  serviceCatalog         ServiceCatalog[]
 
   @@map("garages")
 }
 
 model User {
-  id           String   @id @default(uuid())
-  garageId     String
-  email        String?  @unique
-  username     String?  @unique
-  password     String
-  firstName    String
-  lastName     String
-  role         UserRole @default(STAFF)
-  avatar       String?
-  phone        String?
-  isActive     Boolean  @default(true)
-  lastLoginAt  DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id          String    @id @default(uuid())
+  garageId    String
+  email       String?   @unique
+  username    String?   @unique
+  password    String
+  firstName   String
+  lastName    String
+  role        UserRole  @default(STAFF)
+  avatar      String?
+  phone       String?
+  isActive    Boolean   @default(true)
+  lastLoginAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  garage       Garage          @relation(fields: [garageId], references: [id], onDelete: Cascade)
-  preferences  UserPreference?
-  approvedAiActions AiAction[]  @relation("AiActionApprover")
-  assistantConversations AssistantConversation[]
-  approvedAssistantToolCalls AssistantToolCall[] @relation("AssistantToolCallApprover")
+  garage                     Garage                  @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  preferences                UserPreference?
+  approvedAiActions          AiAction[]              @relation("AiActionApprover")
+  assistantConversations     AssistantConversation[]
+  approvedAssistantToolCalls AssistantToolCall[]     @relation("AssistantToolCallApprover")
 
   @@map("users")
 }
 
 model UserPreference {
-  id                     String   @id @default(uuid())
-  userId                 String   @unique
-  emailNotifications     Boolean  @default(true)
-  smsNotifications       Boolean  @default(false)
-  browserNotifications   Boolean  @default(true)
-  language               String?
-  theme                  String?  // 'dark' | 'light'
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  id                   String   @id @default(uuid())
+  userId               String   @unique
+  emailNotifications   Boolean  @default(true)
+  smsNotifications     Boolean  @default(false)
+  browserNotifications Boolean  @default(true)
+  language             String?
+  theme                String? // 'dark' | 'light'
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
-  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_preferences")
 }
 
 model Customer {
-  id           String         @id @default(uuid())
-  garageId     String
-  firstName    String
-  lastName     String
-  email        String?
-  phone        String
-  address      String?
-  status       CustomerStatus @default(ACTIVE)
-  loyaltyTier  String?        // bronze, silver, gold, platinum
-  totalSpent   Float          @default(0)
-  visitCount   Int            @default(0)
-  smsOptIn     Boolean        @default(true)
-  notes        String?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  id          String         @id @default(uuid())
+  garageId    String
+  firstName   String
+  lastName    String
+  email       String?
+  phone       String
+  address     String?
+  status      CustomerStatus @default(ACTIVE)
+  loyaltyTier String? // bronze, silver, gold, platinum
+  totalSpent  Float          @default(0)
+  visitCount  Int            @default(0)
+  smsOptIn    Boolean        @default(true)
+  notes       String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
-  garage       Garage         @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  garage       Garage        @relation(fields: [garageId], references: [id], onDelete: Cascade)
   cars         Car[]
   appointments Appointment[]
   invoices     Invoice[]
   aiActions    AiAction[]
+  quotes       Quote[]
 
   @@map("customers")
 }
 
 model Car {
-  id              String   @id @default(uuid())
+  id              String    @id @default(uuid())
   garageId        String
   customerId      String
   make            String
@@ -263,19 +319,20 @@ model Car {
   licensePlate    String
   color           String?
   mileage         Int?
-  engineType      String?  // petrol, diesel, electric, hybrid
-  transmission    String?  // manual, automatic
+  engineType      String? // petrol, diesel, electric, hybrid
+  transmission    String? // manual, automatic
   lastServiceDate DateTime?
   nextServiceDate DateTime?
   notes           String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  garage          Garage   @relation(fields: [garageId], references: [id], onDelete: Cascade)
-  customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  garage          Garage           @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  customer        Customer         @relation(fields: [customerId], references: [id], onDelete: Cascade)
   appointments    Appointment[]
   maintenanceJobs MaintenanceJob[]
   invoices        Invoice[]
+  quotes          Quote[]
 
   @@map("cars")
 }
@@ -291,75 +348,80 @@ model Appointment {
   status      AppointmentStatus @default(SCHEDULED)
   startTime   DateTime
   endTime     DateTime
-  type        String?           // oil-change, brake-service, inspection, etc.
-  priority    String?           // low, medium, high, urgent
+  type        String? // oil-change, brake-service, inspection, etc.
+  priority    String? // low, medium, high, urgent
   notes       String?
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 
-  garage      Garage            @relation(fields: [garageId], references: [id], onDelete: Cascade)
-  customer    Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  car         Car               @relation(fields: [carId], references: [id], onDelete: Cascade)
-  employee    Employee?         @relation(fields: [employeeId], references: [id])
+  garage   Garage    @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  customer Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  car      Car       @relation(fields: [carId], references: [id], onDelete: Cascade)
+  employee Employee? @relation(fields: [employeeId], references: [id])
+  invoices Invoice[]
 
   @@map("appointments")
 }
 
 model Employee {
-  id           String             @id @default(uuid())
-  garageId     String
-  userId       String?
-  firstName    String
-  lastName     String
-  email        String?
-  phone        String?
-  role         EmployeeRole       @default(MECHANIC)
-  department   EmployeeDepartment @default(MECHANICAL)
-  status       EmployeeStatus     @default(ACTIVE)
-  hireDate     DateTime
-  hourlyRate   Float?
-  schedule     Json?              // Weekly schedule
-  skills       String[]
-  avatar       String?
-  customerRating Float?           // 0-5 scale, customer satisfaction
-  isAvailable  Boolean            @default(true)
+  id                String             @id @default(uuid())
+  garageId          String
+  userId            String?
+  firstName         String
+  lastName          String
+  email             String?
+  phone             String?
+  role              EmployeeRole       @default(MECHANIC)
+  department        EmployeeDepartment @default(MECHANICAL)
+  status            EmployeeStatus     @default(ACTIVE)
+  hireDate          DateTime
+  hourlyRate        Float?
+  schedule          Json? // Weekly schedule
+  skills            String[]
+  avatar            String?
+  customerRating    Float? // 0-5 scale, customer satisfaction
+  isAvailable       Boolean            @default(true)
   unavailableReason String?
   unavailableUntil  DateTime?
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
 
-  garage       Garage             @relation(fields: [garageId], references: [id], onDelete: Cascade)
-  appointments Appointment[]
-  maintenanceJobs MaintenanceJob[]
+  garage              Garage               @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  appointments        Appointment[]
+  maintenanceJobs     MaintenanceJob[]
+  invoiceLineItems    InvoiceLineItem[]
+  quoteLineItems      QuoteLineItem[]
+  creditNoteLineItems CreditNoteLineItem[]
 
   @@map("employees")
 }
 
 model MaintenanceJob {
-  id           String            @id @default(uuid())
-  garageId     String
-  carId        String
-  employeeId   String?
-  title        String
-  description  String?
-  status       MaintenanceStatus @default(PENDING)
-  priority     String?           // low, medium, high, urgent
+  id             String            @id @default(uuid())
+  garageId       String
+  carId          String
+  employeeId     String?
+  title          String
+  description    String?
+  status         MaintenanceStatus @default(PENDING)
+  priority       String? // low, medium, high, urgent
   estimatedHours Float?
-  actualHours  Float?
-  estimatedCost Float?
-  actualCost   Float?
-  startDate    DateTime?
+  actualHours    Float?
+  estimatedCost  Float?
+  actualCost     Float?
+  startDate      DateTime?
   completionDate DateTime?
-  notes        String?
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
+  notes          String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
 
-  garage       Garage            @relation(fields: [garageId], references: [id], onDelete: Cascade)
-  car          Car               @relation(fields: [carId], references: [id], onDelete: Cascade)
-  employee     Employee?         @relation(fields: [employeeId], references: [id])
-  tasks        MaintenanceTask[]
-  photos       MaintenancePhoto[]
-  approvals    MaintenanceApproval[]
+  garage    Garage                @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  car       Car                   @relation(fields: [carId], references: [id], onDelete: Cascade)
+  employee  Employee?             @relation(fields: [employeeId], references: [id])
+  tasks     MaintenanceTask[]
+  photos    MaintenancePhoto[]
+  approvals MaintenanceApproval[]
+  invoices  Invoice[]
 
   @@map("maintenance_jobs")
 }
@@ -375,7 +437,7 @@ model MaintenanceTask {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  maintenanceJob   MaintenanceJob @relation(fields: [maintenanceJobId], references: [id], onDelete: Cascade)
+  maintenanceJob MaintenanceJob @relation(fields: [maintenanceJobId], references: [id], onDelete: Cascade)
 
   @@map("maintenance_tasks")
 }
@@ -384,16 +446,16 @@ model MaintenancePhoto {
   id               String   @id @default(uuid())
   maintenanceJobId String
   url              String
-  filename         String?  // stored filename on disk (UUID + ext)
-  originalName    String?  // user's original filename for download attribution
-  mimeType        String?
-  sizeBytes       Int?
-  uploadedBy      String?
-  caption         String?
-  type             String?  // before, during, after
+  filename         String? // stored filename on disk (UUID + ext)
+  originalName     String? // user's original filename for download attribution
+  mimeType         String?
+  sizeBytes        Int?
+  uploadedBy       String?
+  caption          String?
+  type             String? // before, during, after
   createdAt        DateTime @default(now())
 
-  maintenanceJob   MaintenanceJob @relation(fields: [maintenanceJobId], references: [id], onDelete: Cascade)
+  maintenanceJob MaintenanceJob @relation(fields: [maintenanceJobId], references: [id], onDelete: Cascade)
 
   @@map("maintenance_photos")
 }
@@ -408,34 +470,50 @@ model MaintenanceApproval {
   responseNote     String?
   createdAt        DateTime       @default(now())
 
-  maintenanceJob   MaintenanceJob @relation(fields: [maintenanceJobId], references: [id], onDelete: Cascade)
+  maintenanceJob MaintenanceJob @relation(fields: [maintenanceJobId], references: [id], onDelete: Cascade)
 
   @@map("maintenance_approvals")
 }
 
 model Invoice {
-  id           String        @id @default(uuid())
-  garageId     String
-  customerId   String
-  carId        String?
-  invoiceNumber String       @unique
-  status       InvoiceStatus @default(DRAFT)
-  subtotal     Float         @default(0)
-  taxAmount    Float         @default(0)
-  discount     Float         @default(0)
-  total        Float         @default(0)
-  dueDate      DateTime?
-  paidAt       DateTime?
-  notes        String?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id                 String        @id @default(uuid())
+  garageId           String
+  customerId         String
+  carId              String?
+  appointmentId      String?
+  maintenanceJobId   String?
+  quoteId            String?
+  invoiceNumber      String        @unique
+  status             InvoiceStatus @default(DRAFT)
+  currency           String        @default("TND")
+  subtotal           Float         @default(0)
+  taxAmount          Float         @default(0)
+  discount           Float         @default(0)
+  fiscalStamp        Float         @default(1.0)
+  total              Float         @default(0)
+  dueDate            DateTime?
+  paidAt             DateTime?
+  lockedAt           DateTime?
+  lockedBy           String? // user id who locked the invoice
+  issuedNumber       Int? // gapless sequence within fiscal period
+  discountReason     String?
+  discountApprovedBy String? // user id
+  notes              String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
 
-  garage       Garage        @relation(fields: [garageId], references: [id], onDelete: Cascade)
-  customer     Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  car          Car?          @relation(fields: [carId], references: [id], onDelete: SetNull)
-  lineItems    InvoiceLineItem[]
-  payments     Payment[]
-  redeemedAiActions AiAction[] @relation("AiActionRedemption")
+  garage            Garage             @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  customer          Customer           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  car               Car?               @relation(fields: [carId], references: [id], onDelete: SetNull)
+  appointment       Appointment?       @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  maintenanceJob    MaintenanceJob?    @relation(fields: [maintenanceJobId], references: [id], onDelete: SetNull)
+  quote             Quote?             @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+  lineItems         InvoiceLineItem[]
+  payments          Payment[]
+  redeemedAiActions AiAction[]         @relation("AiActionRedemption")
+  creditNotes       CreditNote[]
+  discountAuditLogs DiscountAuditLog[]
+  deliveryLogs      DeliveryLog[]
 
   @@map("invoices")
 }
@@ -448,8 +526,17 @@ model InvoiceLineItem {
   unitPrice   Float
   total       Float
   type        String? // labor, part, service
+  partId      String?
+  serviceCode String?
+  mechanicId  String?
+  laborHours  Float?
+  tvaRate     Float   @default(19)
+  tvaAmount   Float   @default(0)
+  discountPct Float?
 
-  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  invoice  Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  part     Part?     @relation(fields: [partId], references: [id], onDelete: SetNull)
+  mechanic Employee? @relation(fields: [mechanicId], references: [id], onDelete: SetNull)
 
   @@map("invoice_line_items")
 }
@@ -462,30 +549,33 @@ model Payment {
   reference String?
   paidAt    DateTime      @default(now())
 
-  invoice   Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   @@map("payments")
 }
 
 model Part {
-  id              String   @id @default(uuid())
-  garageId        String
-  supplierId      String?
-  name            String
-  partNumber      String?
-  category        String?
-  description     String?
-  quantity        Int      @default(0)
-  minQuantity     Int      @default(5)
-  unitPrice       Float    @default(0)
-  costPrice       Float    @default(0)
-  location        String?  // shelf/bin location
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id          String   @id @default(uuid())
+  garageId    String
+  supplierId  String?
+  name        String
+  partNumber  String?
+  category    String?
+  description String?
+  quantity    Int      @default(0)
+  minQuantity Int      @default(5)
+  unitPrice   Float    @default(0)
+  costPrice   Float    @default(0)
+  location    String? // shelf/bin location
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  garage          Garage   @relation(fields: [garageId], references: [id], onDelete: Cascade)
-  supplier        Supplier? @relation(fields: [supplierId], references: [id])
-  stockMovements  StockMovement[]
+  garage              Garage               @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  supplier            Supplier?            @relation(fields: [supplierId], references: [id])
+  stockMovements      StockMovement[]
+  invoiceLineItems    InvoiceLineItem[]
+  quoteLineItems      QuoteLineItem[]
+  creditNoteLineItems CreditNoteLineItem[]
 
   @@map("parts")
 }
@@ -501,8 +591,8 @@ model Supplier {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  garage    Garage   @relation(fields: [garageId], references: [id], onDelete: Cascade)
-  parts     Part[]
+  garage Garage @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  parts  Part[]
 
   @@map("suppliers")
 }
@@ -510,34 +600,34 @@ model Supplier {
 model StockMovement {
   id        String   @id @default(uuid())
   partId    String
-  type      String   // in, out, adjustment
+  type      String // in, out, adjustment
   quantity  Int
   reason    String?
   reference String?
   createdAt DateTime @default(now())
 
-  part      Part     @relation(fields: [partId], references: [id], onDelete: Cascade)
+  part Part @relation(fields: [partId], references: [id], onDelete: Cascade)
 
   @@map("stock_movements")
 }
 
 model Approval {
-  id          String         @id @default(uuid())
-  garageId    String
-  type        ApprovalType
-  status      ApprovalStatus @default(PENDING)
-  title       String
-  description String?
-  amount      Float?
-  requestedBy String
-  respondedBy String?
-  respondedAt DateTime?
+  id           String         @id @default(uuid())
+  garageId     String
+  type         ApprovalType
+  status       ApprovalStatus @default(PENDING)
+  title        String
+  description  String?
+  amount       Float?
+  requestedBy  String
+  respondedBy  String?
+  respondedAt  DateTime?
   responseNote String?
-  metadata    Json?
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  metadata     Json?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
 
-  garage      Garage         @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  garage Garage @relation(fields: [garageId], references: [id], onDelete: Cascade)
 
   @@map("approvals")
 }
@@ -553,52 +643,52 @@ model Notification {
   metadata  Json?
   createdAt DateTime         @default(now())
 
-  garage    Garage           @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  garage Garage @relation(fields: [garageId], references: [id], onDelete: Cascade)
 
   @@map("notifications")
 }
 
 model GarageModule {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   garageId    String
-  moduleId    String   // calendar, maintenance, invoicing, etc.
-  isActive    Boolean  @default(true)
-  purchasedAt DateTime @default(now())
+  moduleId    String // calendar, maintenance, invoicing, etc.
+  isActive    Boolean   @default(true)
+  purchasedAt DateTime  @default(now())
   expiresAt   DateTime?
 
-  garage      Garage   @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  garage Garage @relation(fields: [garageId], references: [id], onDelete: Cascade)
 
   @@unique([garageId, moduleId])
   @@map("garage_modules")
 }
 
 model AiAction {
-  id                  String         @id @default(uuid())
-  garageId            String
-  customerId          String
-  kind                AiActionKind
-  status              AiActionStatus @default(DRAFT)
-  messageBody         String
-  discountKind        DiscountKind?
-  discountValue       Float?
-  expiresAt           DateTime?
-  churnRiskSnapshot   Float
-  factorsSnapshot     String[]
-  providerMessageId   String?
-  errorMessage        String?
-  approvedByUserId    String?
-  redeemedInvoiceId   String?
-  createdAt           DateTime       @default(now())
-  approvedAt          DateTime?
-  sentAt              DateTime?
-  failedAt            DateTime?
-  redeemedAt          DateTime?
-  updatedAt           DateTime       @updatedAt
+  id                String         @id @default(uuid())
+  garageId          String
+  customerId        String
+  kind              AiActionKind
+  status            AiActionStatus @default(DRAFT)
+  messageBody       String
+  discountKind      DiscountKind?
+  discountValue     Float?
+  expiresAt         DateTime?
+  churnRiskSnapshot Float
+  factorsSnapshot   String[]
+  providerMessageId String?
+  errorMessage      String?
+  approvedByUserId  String?
+  redeemedInvoiceId String?
+  createdAt         DateTime       @default(now())
+  approvedAt        DateTime?
+  sentAt            DateTime?
+  failedAt          DateTime?
+  redeemedAt        DateTime?
+  updatedAt         DateTime       @updatedAt
 
-  garage              Garage         @relation(fields: [garageId], references: [id], onDelete: Cascade)
-  customer            Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  approvedBy          User?          @relation("AiActionApprover", fields: [approvedByUserId], references: [id], onDelete: SetNull)
-  redeemedInvoice     Invoice?       @relation("AiActionRedemption", fields: [redeemedInvoiceId], references: [id], onDelete: SetNull)
+  garage          Garage   @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  approvedBy      User?    @relation("AiActionApprover", fields: [approvedByUserId], references: [id], onDelete: SetNull)
+  redeemedInvoice Invoice? @relation("AiActionRedemption", fields: [redeemedInvoiceId], references: [id], onDelete: SetNull)
 
   @@index([customerId, status])
   @@index([garageId, status, createdAt])
@@ -606,67 +696,227 @@ model AiAction {
 }
 
 model AssistantConversation {
-  id          String    @id @default(uuid())
-  garageId    String
-  userId      String
-  title       String?
-  pinned      Boolean   @default(false)
-  archivedAt  DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id         String    @id @default(uuid())
+  garageId   String
+  userId     String
+  title      String?
+  pinned     Boolean   @default(false)
+  archivedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
-  garage      Garage              @relation(fields: [garageId], references: [id], onDelete: Cascade)
-  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  messages    AssistantMessage[]
-  toolCalls   AssistantToolCall[]
+  garage    Garage              @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  AssistantMessage[]
+  toolCalls AssistantToolCall[]
 
   @@index([garageId, userId, updatedAt])
   @@map("assistant_conversations")
 }
 
 model AssistantMessage {
-  id              String               @id @default(uuid())
-  conversationId  String
-  role            AssistantMessageRole
-  content         String               @db.Text
-  toolCallId      String?
-  skillUsed       String?
-  agentUsed       String?
-  tokensIn        Int?
-  tokensOut       Int?
-  llmProvider     String?
-  createdAt       DateTime             @default(now())
+  id             String               @id @default(uuid())
+  conversationId String
+  role           AssistantMessageRole
+  content        String               @db.Text
+  toolCallId     String?
+  skillUsed      String?
+  agentUsed      String?
+  tokensIn       Int?
+  tokensOut      Int?
+  llmProvider    String?
+  createdAt      DateTime             @default(now())
 
-  conversation    AssistantConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  toolCall        AssistantToolCall?    @relation("AssistantMessageToolCall", fields: [toolCallId], references: [id], onDelete: SetNull)
-  emittedToolCalls AssistantToolCall[]  @relation("AssistantToolCallEmitter")
+  conversation     AssistantConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  toolCall         AssistantToolCall?    @relation("AssistantMessageToolCall", fields: [toolCallId], references: [id], onDelete: SetNull)
+  emittedToolCalls AssistantToolCall[]   @relation("AssistantToolCallEmitter")
 
   @@index([conversationId, createdAt])
   @@map("assistant_messages")
 }
 
 model AssistantToolCall {
-  id                String                  @id @default(uuid())
-  conversationId    String
-  messageId         String?
-  toolName          String
-  argsJson          Json
-  resultJson        Json?
-  status            AssistantToolCallStatus @default(EXECUTED)
-  blastTier         AssistantBlastTier
-  approvedByUserId  String?
-  approvedAt        DateTime?
-  expiresAt         DateTime?
-  errorMessage      String?
-  durationMs        Int?
-  createdAt         DateTime                @default(now())
+  id               String                  @id @default(uuid())
+  conversationId   String
+  messageId        String?
+  toolName         String
+  argsJson         Json
+  resultJson       Json?
+  status           AssistantToolCallStatus @default(EXECUTED)
+  blastTier        AssistantBlastTier
+  approvedByUserId String?
+  approvedAt       DateTime?
+  expiresAt        DateTime?
+  errorMessage     String?
+  durationMs       Int?
+  createdAt        DateTime                @default(now())
 
-  conversation      AssistantConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  emitter           AssistantMessage?     @relation("AssistantToolCallEmitter", fields: [messageId], references: [id], onDelete: SetNull)
-  resultMessages    AssistantMessage[]    @relation("AssistantMessageToolCall")
-  approvedBy        User?                 @relation("AssistantToolCallApprover", fields: [approvedByUserId], references: [id], onDelete: SetNull)
+  conversation   AssistantConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  emitter        AssistantMessage?     @relation("AssistantToolCallEmitter", fields: [messageId], references: [id], onDelete: SetNull)
+  resultMessages AssistantMessage[]    @relation("AssistantMessageToolCall")
+  approvedBy     User?                 @relation("AssistantToolCallApprover", fields: [approvedByUserId], references: [id], onDelete: SetNull)
 
   @@index([conversationId, status])
   @@index([status, expiresAt])
   @@map("assistant_tool_calls")
+}
+
+// ── Fiscal invoicing models ──────────────────────────────
+
+model Quote {
+  id                   String      @id @default(uuid())
+  garageId             String
+  customerId           String
+  carId                String?
+  quoteNumber          String      @unique
+  status               QuoteStatus @default(DRAFT)
+  subtotal             Float       @default(0)
+  taxAmount            Float       @default(0)
+  discount             Float       @default(0)
+  total                Float       @default(0)
+  validUntil           DateTime?
+  convertedToInvoiceId String?
+  notes                String?
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  garage    Garage          @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  customer  Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  car       Car?            @relation(fields: [carId], references: [id], onDelete: SetNull)
+  lineItems QuoteLineItem[]
+  invoices  Invoice[]
+
+  @@map("quotes")
+}
+
+model QuoteLineItem {
+  id          String  @id @default(uuid())
+  quoteId     String
+  description String
+  quantity    Float   @default(1)
+  unitPrice   Float
+  total       Float
+  type        String? // labor, part, service
+  partId      String?
+  serviceCode String?
+  mechanicId  String?
+  laborHours  Float?
+  tvaRate     Float   @default(19)
+  tvaAmount   Float   @default(0)
+  discountPct Float?
+
+  quote    Quote     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  part     Part?     @relation(fields: [partId], references: [id], onDelete: SetNull)
+  mechanic Employee? @relation(fields: [mechanicId], references: [id], onDelete: SetNull)
+
+  @@map("quote_line_items")
+}
+
+model CreditNote {
+  id               String           @id @default(uuid())
+  garageId         String
+  invoiceId        String
+  creditNoteNumber String           @unique
+  reason           String
+  status           CreditNoteStatus @default(ISSUED)
+  subtotal         Float            @default(0)
+  taxAmount        Float            @default(0)
+  discount         Float            @default(0)
+  total            Float            @default(0)
+  restockParts     Boolean          @default(false)
+  lockedAt         DateTime
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  garage    Garage               @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  invoice   Invoice              @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  lineItems CreditNoteLineItem[]
+
+  @@map("credit_notes")
+}
+
+model CreditNoteLineItem {
+  id           String  @id @default(uuid())
+  creditNoteId String
+  description  String
+  quantity     Float   @default(1)
+  unitPrice    Float
+  total        Float
+  type         String? // labor, part, service
+  partId       String?
+  serviceCode  String?
+  mechanicId   String?
+  laborHours   Float?
+  tvaRate      Float   @default(19)
+  tvaAmount    Float   @default(0)
+  discountPct  Float?
+
+  creditNote CreditNote @relation(fields: [creditNoteId], references: [id], onDelete: Cascade)
+  part       Part?      @relation(fields: [partId], references: [id], onDelete: SetNull)
+  mechanic   Employee?  @relation(fields: [mechanicId], references: [id], onDelete: SetNull)
+
+  @@map("credit_note_line_items")
+}
+
+model InvoiceCounter {
+  id         String      @id @default(uuid())
+  garageId   String
+  kind       CounterKind
+  year       Int // 0 if NEVER policy; YYYY for YEARLY; YYYYMM for MONTHLY
+  lastIssued Int         @default(0)
+
+  garage Garage @relation(fields: [garageId], references: [id], onDelete: Cascade)
+
+  @@unique([garageId, kind, year])
+  @@map("invoice_counters")
+}
+
+model ServiceCatalog {
+  id                String   @id @default(uuid())
+  garageId          String
+  code              String
+  name              String
+  description       String?
+  category          String?
+  defaultPrice      Float
+  defaultLaborHours Float?
+  defaultTvaRate    Float    @default(19)
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  garage Garage @relation(fields: [garageId], references: [id], onDelete: Cascade)
+
+  @@unique([garageId, code])
+  @@map("service_catalog")
+}
+
+model DiscountAuditLog {
+  id         String   @id @default(uuid())
+  invoiceId  String
+  percentage Float
+  amount     Float
+  reason     String
+  approvedBy String
+  approvedAt DateTime @default(now())
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("discount_audit_logs")
+}
+
+model DeliveryLog {
+  id        String          @id @default(uuid())
+  invoiceId String
+  channel   DeliveryChannel
+  recipient String
+  sentAt    DateTime?
+  status    DeliveryStatus  @default(PENDING)
+  error     String?
+  viewedAt  DateTime?
+  createdAt DateTime        @default(now())
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("delivery_logs")
 }
