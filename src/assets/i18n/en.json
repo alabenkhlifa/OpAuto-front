@@ -2713,5 +2713,40 @@
       "yesterday": "yesterday",
       "weeksAgo": "{{count}} w ago"
     }
+  },
+  "serviceCatalog": {
+    "title": "Service catalog",
+    "picker": {
+      "placeholder": "Search services…",
+      "noResults": "No services match your search",
+      "loading": "Loading services…"
+    },
+    "form": {
+      "code": "Code",
+      "name": "Name",
+      "category": "Category",
+      "description": "Description",
+      "defaultPrice": "Default price",
+      "defaultLaborHours": "Default labor hours",
+      "defaultTvaRate": "Default TVA rate",
+      "isActive": "Active"
+    },
+    "actions": {
+      "create": "Add service",
+      "update": "Save changes",
+      "delete": "Deactivate",
+      "deleteHard": "Delete permanently",
+      "restore": "Restore"
+    },
+    "list": {
+      "empty": "No services in your catalog yet",
+      "showInactive": "Show inactive"
+    },
+    "messages": {
+      "created": "Service added",
+      "updated": "Service updated",
+      "deleted": "Service deactivated",
+      "duplicateCode": "A service with this code already exists"
+    }
   }
 }

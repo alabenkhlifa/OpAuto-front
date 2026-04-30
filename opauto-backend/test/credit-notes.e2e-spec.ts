@@ -116,15 +116,17 @@ describe('Credit notes (e2e)', () => {
     });
     carId = car.id;
 
-    // Part starts at 7 in stock — the spec assumes Phase 2.2 stock
-    // decrement is NOT yet wired, so we manually represent the
-    // post-issue state (10 starting - 3 sold = 7 remaining).
+    // Part starts at 100 in stock — Phase 2.2 wires real stock
+    // decrement on `issue()`, so each createPaidInvoice() call
+    // (qty=3) drops the count by 3, and credit-note restocks add it
+    // back. We use a comfortably large starting balance so multiple
+    // tests can run without exhausting stock.
     const part = await prisma.part.create({
       data: {
         garageId,
         name: 'Brake pads (set)',
         partNumber: 'BP-001',
-        quantity: 7,
+        quantity: 100,
         unitPrice: 50,
         costPrice: 30,
       },
@@ -233,8 +235,10 @@ describe('Credit notes (e2e)', () => {
     expect(res.body.status).toBe('ISSUED');
     expect(res.body.restockParts).toBe(true);
 
+    // Phase 2.2: issue() decrements 3 (parts line qty=3), credit note
+    // restocks 1 → net effect -2 against startingQty.
     const part = await prisma.part.findUnique({ where: { id: partId } });
-    expect(part!.quantity).toBe(startingQty + 1);
+    expect(part!.quantity).toBe(startingQty - 2);
 
     // Source invoice still PAID since payments (full amount) >= effective due
     expect(res.body.sourceInvoiceStatus).toBe('PAID');
@@ -269,9 +273,10 @@ describe('Credit notes (e2e)', () => {
       })
       .expect(201);
 
+    // Phase 2.2: issue() decrements 3, credit note restocks 2 → net -1.
     const after = (await prisma.part.findUnique({ where: { id: partId } }))!
       .quantity;
-    expect(after).toBe(before + 2);
+    expect(after).toBe(before - 1);
 
     // Invoice was PAID with payments==total. Credit note worth 119 (2×50
     // HT + 19% TVA = 119) is less than total 269 (3×50 + 80 HT + TVA + stamp),

@@ -2799,5 +2799,40 @@
       "yesterday": "hier",
       "weeksAgo": "il y a {{count}} sem."
     }
+  },
+  "serviceCatalog": {
+    "title": "Catalogue de services",
+    "picker": {
+      "placeholder": "Rechercher un service…",
+      "noResults": "Aucun service ne correspond à votre recherche",
+      "loading": "Chargement des services…"
+    },
+    "form": {
+      "code": "Code",
+      "name": "Nom",
+      "category": "Catégorie",
+      "description": "Description",
+      "defaultPrice": "Prix par défaut",
+      "defaultLaborHours": "Heures de main-d'œuvre par défaut",
+      "defaultTvaRate": "Taux de TVA par défaut",
+      "isActive": "Actif"
+    },
+    "actions": {
+      "create": "Ajouter un service",
+      "update": "Enregistrer",
+      "delete": "Désactiver",
+      "deleteHard": "Supprimer définitivement",
+      "restore": "Restaurer"
+    },
+    "list": {
+      "empty": "Aucun service dans votre catalogue",
+      "showInactive": "Afficher les inactifs"
+    },
+    "messages": {
+      "created": "Service ajouté",
+      "updated": "Service mis à jour",
+      "deleted": "Service désactivé",
+      "duplicateCode": "Un service avec ce code existe déjà"
+    }
   }
 }

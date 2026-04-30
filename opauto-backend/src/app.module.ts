@@ -13,6 +13,7 @@ import { AppointmentsModule } from './appointments/appointments.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
 import { InvoicingModule } from './invoicing/invoicing.module';
 import { InventoryModule } from './inventory/inventory.module';
+import { ServicesCatalogModule } from './services-catalog/services-catalog.module';
 import { EmployeesModule } from './employees/employees.module';
 import { ApprovalsModule } from './approvals/approvals.module';
 import { ReportsModule } from './reports/reports.module';
@@ -75,6 +76,7 @@ const garageIdTracker = (req: Record<string, any>): string => {
     MaintenanceModule,
     InvoicingModule,
     InventoryModule,
+    ServicesCatalogModule,
     EmployeesModule,
     ApprovalsModule,
     ReportsModule,

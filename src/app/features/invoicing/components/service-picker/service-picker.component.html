@@ -1,0 +1,36 @@
+<div class="service-picker">
+  <input
+    type="text"
+    class="service-picker__input"
+    [value]="query()"
+    (input)="onInput($any($event.target).value)"
+    (focus)="onFocus()"
+    (blur)="onBlur()"
+    [placeholder]="'serviceCatalog.picker.placeholder' | translate"
+    autocomplete="off"
+  />
+
+  @if (isOpen() && !loading()) {
+    <ul class="service-picker__dropdown" role="listbox">
+      @if (results().length === 0) {
+        <li class="service-picker__empty">
+          {{ 'serviceCatalog.picker.noResults' | translate }}
+        </li>
+      } @else {
+        @for (entry of results(); track entry.id) {
+          <li
+            class="service-picker__item"
+            role="option"
+            (mousedown)="pick(entry)"
+          >
+            <span class="service-picker__name">{{ entry.name }}</span>
+            <span class="service-picker__meta">
+              <span class="service-picker__code">{{ entry.code }}</span>
+              <span class="service-picker__price">{{ entry.defaultPrice }}</span>
+            </span>
+          </li>
+        }
+      }
+    </ul>
+  }
+</div>

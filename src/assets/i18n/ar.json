@@ -2837,5 +2837,40 @@
       "yesterday": "أمس",
       "weeksAgo": "منذ {{count}} أسبوع"
     }
+  },
+  "serviceCatalog": {
+    "title": "كتالوج الخدمات",
+    "picker": {
+      "placeholder": "ابحث عن خدمة…",
+      "noResults": "لا توجد خدمات مطابقة لبحثك",
+      "loading": "جاري تحميل الخدمات…"
+    },
+    "form": {
+      "code": "الرمز",
+      "name": "الاسم",
+      "category": "الفئة",
+      "description": "الوصف",
+      "defaultPrice": "السعر الافتراضي",
+      "defaultLaborHours": "ساعات العمل الافتراضية",
+      "defaultTvaRate": "معدل الضريبة الافتراضي",
+      "isActive": "نشط"
+    },
+    "actions": {
+      "create": "إضافة خدمة",
+      "update": "حفظ التغييرات",
+      "delete": "تعطيل",
+      "deleteHard": "حذف نهائي",
+      "restore": "استعادة"
+    },
+    "list": {
+      "empty": "لا توجد خدمات في الكتالوج بعد",
+      "showInactive": "عرض غير النشطة"
+    },
+    "messages": {
+      "created": "تمت إضافة الخدمة",
+      "updated": "تم تحديث الخدمة",
+      "deleted": "تم تعطيل الخدمة",
+      "duplicateCode": "توجد خدمة بهذا الرمز بالفعل"
+    }
   }
 }

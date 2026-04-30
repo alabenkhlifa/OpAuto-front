@@ -10,9 +10,11 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { InvoicingService } from './invoicing.service';
+import { FromJobService } from './from-job.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { UpdateInvoiceDto } from './dto/update-invoice.dto';
 import { IssueInvoiceDto } from './dto/issue-invoice.dto';
+import { CreateFromJobDto } from './dto/create-from-job.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -26,7 +28,10 @@ import { ModuleAccessGuard, RequireModule } from '../modules/module-access.guard
 @Roles(UserRole.OWNER)
 @Controller('invoices')
 export class InvoicingController {
-  constructor(private service: InvoicingService) {}
+  constructor(
+    private service: InvoicingService,
+    private fromJob: FromJobService,
+  ) {}
 
   @Get()
   findAll(@CurrentUser('garageId') gid: string) {
@@ -82,5 +87,20 @@ export class InvoicingController {
     @Body() dto: any,
   ) {
     return this.service.addPayment(id, gid, dto);
+  }
+
+  /**
+   * Convert a maintenance job to a DRAFT invoice. The route returns the
+   * freshly-created invoice; subsequent edits use the standard
+   * `PUT /invoices/:id` and `POST /invoices/:id/issue` endpoints.
+   */
+  @Post('from-job/:jobId')
+  @RequireModule('invoicing')
+  createFromJob(
+    @Param('jobId') jobId: string,
+    @CurrentUser('garageId') gid: string,
+    @Body() dto: CreateFromJobDto,
+  ) {
+    return this.fromJob.createFromJob(jobId, gid, dto ?? {});
   }
 }

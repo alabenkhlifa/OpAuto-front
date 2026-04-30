@@ -258,8 +258,16 @@ export class InvoicingService {
 
   /**
    * Issues a DRAFT invoice — assigns the gapless fiscal number, locks
-   * the record, and transitions to SENT. Stock decrement and customer
-   * email come in later phases.
+   * the record, transitions to SENT, and decrements parts inventory.
+   *
+   * Stock decrement (Phase 2.2):
+   *   - For every line with `partId`, sum the quantity to decrement and
+   *     verify each part has enough stock BEFORE allocating a fiscal
+   *     number. If any part is short, throw 400 with the shortage list
+   *     and leave the invoice DRAFT — no number is burned.
+   *   - Inside the transaction: create one StockMovement(type='out',
+   *     reason='invoice:<number>') per line and decrement Part.quantity
+   *     atomically. The whole flow rolls back if any step fails.
    */
   async issue(id: string, garageId: string, userId: string) {
     const invoice = await this.findOne(id, garageId);
@@ -287,8 +295,71 @@ export class InvoicingService {
 
     assertCanTransition(invoice.status, InvoiceStatus.SENT);
 
-    // Allocate the fiscal number and lock the row in the SAME transaction
-    // so a counter increment cannot leak when the update fails.
+    // ── Pre-check stock BEFORE allocating a fiscal number ──────
+    const partsLines = invoice.lineItems.filter(
+      (li) => li.partId !== null && li.partId !== undefined,
+    );
+
+    if (partsLines.length > 0) {
+      // Aggregate requested qty per partId — multiple lines for the
+      // same part collapse into a single demand check.
+      const demandByPart = new Map<string, number>();
+      for (const li of partsLines) {
+        const qty = Math.round(li.quantity);
+        if (qty <= 0) continue;
+        demandByPart.set(li.partId!, (demandByPart.get(li.partId!) ?? 0) + qty);
+      }
+
+      const partIds = [...demandByPart.keys()];
+      const parts = await this.prisma.part.findMany({
+        where: { id: { in: partIds }, garageId },
+        select: { id: true, name: true, quantity: true },
+      });
+      const byId = new Map(parts.map((p) => [p.id, p]));
+
+      const shortages: Array<{
+        partId: string;
+        partName: string;
+        requested: number;
+        available: number;
+      }> = [];
+      for (const [partId, requested] of demandByPart.entries()) {
+        const part = byId.get(partId);
+        if (!part) {
+          // Part vanished or belongs to another garage — treat as 0
+          // available so the issue still fails cleanly.
+          shortages.push({
+            partId,
+            partName: 'unknown',
+            requested,
+            available: 0,
+          });
+          continue;
+        }
+        if (part.quantity < requested) {
+          shortages.push({
+            partId,
+            partName: part.name,
+            requested,
+            available: part.quantity,
+          });
+        }
+      }
+
+      if (shortages.length > 0) {
+        // BadRequestException supports a structured cause via the
+        // second-arg `description`. We embed the shortage list in the
+        // response body so the front-end can render an actionable list.
+        throw new BadRequestException({
+          message: 'Insufficient stock to issue invoice',
+          shortages,
+        });
+      }
+    }
+
+    // Allocate the fiscal number outside the transaction — Numbering
+    // uses its own internal transaction and we accept the same small
+    // "burn-on-rollback" risk that credit notes do (gapless design).
     const fiscalNumber = await this.numbering.next(garageId, 'INVOICE');
 
     // Parse the trailing sequence digits from the formatted number to
@@ -296,16 +367,44 @@ export class InvoicingService {
     const seqMatch = fiscalNumber.match(/(\d+)$/);
     const issuedNumber = seqMatch ? parseInt(seqMatch[1], 10) : null;
 
-    return this.prisma.invoice.update({
-      where: { id },
-      data: {
-        status: InvoiceStatus.SENT,
-        invoiceNumber: fiscalNumber,
-        issuedNumber,
-        lockedAt: new Date(),
-        lockedBy: userId,
-      },
-      include: { lineItems: true, customer: true, car: true, payments: true },
+    // ── Lock invoice + decrement stock atomically ──────────────
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.invoice.update({
+        where: { id },
+        data: {
+          status: InvoiceStatus.SENT,
+          invoiceNumber: fiscalNumber,
+          issuedNumber,
+          lockedAt: new Date(),
+          lockedBy: userId,
+        },
+        include: {
+          lineItems: true,
+          customer: true,
+          car: true,
+          payments: true,
+        },
+      });
+
+      for (const li of partsLines) {
+        const qty = Math.round(li.quantity);
+        if (qty <= 0) continue;
+        await tx.stockMovement.create({
+          data: {
+            partId: li.partId!,
+            type: 'out',
+            quantity: qty,
+            reason: `invoice:${fiscalNumber}`,
+            reference: updated.id,
+          },
+        });
+        await tx.part.update({
+          where: { id: li.partId! },
+          data: { quantity: { decrement: qty } },
+        });
+      }
+
+      return updated;
     });
   }
 
