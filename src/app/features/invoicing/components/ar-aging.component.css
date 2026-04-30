@@ -1,0 +1,5 @@
+/* AR Aging — visual styling lives in /src/styles via the global
+   `glass-card`, `btn-*`, `text-*` utilities. This file is intentionally
+   minimal — the chart canvas takes a fixed height (set inline so the
+   ng2-charts wrapper can compute responsive width without the CSS-grid
+   parent reserving zero height). */

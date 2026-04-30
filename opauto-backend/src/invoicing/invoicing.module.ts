@@ -8,9 +8,15 @@ import { CreditNotesController } from './credit-notes.controller';
 import { FromJobService } from './from-job.service';
 import { QuotesService } from './quotes.service';
 import { QuotesController } from './quotes.controller';
+import { PaymentsController } from './payments.controller';
 
 @Module({
-  controllers: [InvoicingController, CreditNotesController, QuotesController],
+  controllers: [
+    InvoicingController,
+    CreditNotesController,
+    QuotesController,
+    PaymentsController,
+  ],
   providers: [
     InvoicingService,
     NumberingService,

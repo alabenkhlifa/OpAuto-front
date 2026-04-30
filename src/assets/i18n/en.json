@@ -2054,6 +2054,56 @@
       "edit": "Edit",
       "sendInvoice": "Send Invoice",
       "recordPayment": "Record Payment"
+    },
+    "reports": {
+      "arAging": {
+        "title": "Accounts Receivable Aging",
+        "subtitle": "Outstanding invoices grouped by how long they have been past due",
+        "asOf": "As of",
+        "loading": "Loading aging report...",
+        "empty": "No outstanding invoices.",
+        "exportCsv": "Export CSV",
+        "buckets": {
+          "current": "Not yet due",
+          "b1_30": "1 to 30 days",
+          "b31_60": "31 to 60 days",
+          "b61_90": "61 to 90 days",
+          "b90_plus": "90+ days"
+        },
+        "table": {
+          "customer": "Customer",
+          "current": "Current",
+          "b1_30": "1-30",
+          "b31_60": "31-60",
+          "b61_90": "61-90",
+          "b90_plus": "90+",
+          "total": "Total",
+          "totals": "Totals"
+        }
+      },
+      "zReport": {
+        "title": "Daily Z-Report",
+        "subtitle": "Cash close summary for the selected day",
+        "date": "Date",
+        "loading": "Loading Z-report...",
+        "print": "Print",
+        "summary": "Summary",
+        "invoicesIssued": "Invoices issued",
+        "creditNotesIssued": "Credit notes issued",
+        "totalHT": "Total HT",
+        "totalTVA": "Total TVA",
+        "totalTTC": "Total TTC",
+        "creditNotesTotal": "Credit notes total",
+        "netCash": "Net cash",
+        "paymentsByMethod": "Payments by method",
+        "method": {
+          "CASH": "Cash",
+          "CARD": "Card",
+          "BANK_TRANSFER": "Bank transfer",
+          "CHECK": "Check",
+          "MOBILE_PAYMENT": "Mobile payment"
+        }
+      }
     }
   },
   "approvals": {

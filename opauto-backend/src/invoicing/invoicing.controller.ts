@@ -22,10 +22,18 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { UserRole } from '@prisma/client';
 import { ModuleAccessGuard, RequireModule } from '../modules/module-access.guard';
 
+/**
+ * Phase 3.1 — multi-role unlock:
+ *   STAFF can read, create, edit, issue, and create-from-job.
+ *   OWNER-only: DELETE /invoices/:id (issued invoices reject delete
+ *   regardless of role; the OWNER guard is for the DRAFT/CANCELLED case).
+ *   Payments live in PaymentsController so STAFF can record cash without
+ *   inheriting the (in future) tighter invoice-edit policies.
+ */
 @ApiTags('invoicing')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard, ModuleAccessGuard)
-@Roles(UserRole.OWNER)
+@Roles(UserRole.OWNER, UserRole.STAFF)
 @Controller('invoices')
 export class InvoicingController {
   constructor(
@@ -47,9 +55,11 @@ export class InvoicingController {
   @RequireModule('invoicing')
   create(
     @CurrentUser('garageId') gid: string,
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') role: UserRole,
     @Body() dto: CreateInvoiceDto,
   ) {
-    return this.service.create(gid, dto);
+    return this.service.create(gid, dto, { userId, role });
   }
 
   @Put(':id')
@@ -57,9 +67,11 @@ export class InvoicingController {
   update(
     @Param('id') id: string,
     @CurrentUser('garageId') gid: string,
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') role: UserRole,
     @Body() dto: UpdateInvoiceDto,
   ) {
-    return this.service.update(id, gid, dto);
+    return this.service.update(id, gid, dto, { userId, role });
   }
 
   @Post(':id/issue')
@@ -74,19 +86,10 @@ export class InvoicingController {
   }
 
   @Delete(':id')
+  @Roles(UserRole.OWNER)
   @RequireModule('invoicing')
   remove(@Param('id') id: string, @CurrentUser('garageId') gid: string) {
     return this.service.remove(id, gid);
-  }
-
-  @Post(':id/payments')
-  @RequireModule('invoicing')
-  addPayment(
-    @Param('id') id: string,
-    @CurrentUser('garageId') gid: string,
-    @Body() dto: any,
-  ) {
-    return this.service.addPayment(id, gid, dto);
   }
 
   /**

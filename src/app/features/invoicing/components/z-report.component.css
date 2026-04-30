@@ -1,0 +1,22 @@
+/* Z-Report — print mode hides interactive controls and uses a tighter
+   monochrome layout so a regular A4 printer produces a tidy daily-close
+   slip. The `.print-only` block (header line) is hidden on screen and
+   shown only when printing. Conversely `.no-print` is screen-only. */
+
+.print-only {
+  display: none;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block;
+  }
+  .glass-card {
+    box-shadow: none !important;
+    background: #ffffff !important;
+    border: 1px solid #000 !important;
+  }
+}

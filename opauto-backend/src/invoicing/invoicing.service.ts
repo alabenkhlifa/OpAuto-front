@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { InvoiceStatus, Prisma } from '@prisma/client';
+import { InvoiceStatus, Prisma, UserRole } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { UpdateInvoiceDto } from './dto/update-invoice.dto';
@@ -16,6 +16,17 @@ import {
 } from './tax-calculator.service';
 import { assertCanTransition, isLocked } from './invoice-state';
 import { InvoiceLockedException } from './exceptions/invoice-locked.exception';
+
+/**
+ * Caller context — passed by the controller so the service can enforce
+ * Phase 3 policies (multi-role + discount audit) without re-reading the
+ * JWT or coupling to HTTP types. Optional to preserve compatibility with
+ * legacy unit tests that exercise the service in isolation.
+ */
+export interface CallerContext {
+  userId: string;
+  role: UserRole;
+}
 
 /**
  * InvoicingService — orchestrates invoice CRUD with state-machine
@@ -78,13 +89,18 @@ export class InvoicingService {
     return invoice;
   }
 
-  async create(garageId: string, dto: CreateInvoiceDto) {
+  async create(
+    garageId: string,
+    dto: CreateInvoiceDto,
+    caller?: CallerContext,
+  ) {
     const garage = await this.prisma.garage.findUnique({
       where: { id: garageId },
       select: {
         defaultTvaRate: true,
         fiscalStampEnabled: true,
         currency: true,
+        discountAuditThresholdPct: true,
       },
     });
     if (!garage) throw new NotFoundException('Garage not found');
@@ -101,6 +117,29 @@ export class InvoicingService {
       fiscalStampEnabled: garage.fiscalStampEnabled,
     });
 
+    // Phase 3.2 — discount audit: figure out which discounts cross the
+    // threshold, then validate the approver/reason are present and the
+    // approver is an OWNER of THIS garage. We stage the audit rows in
+    // memory and write them inside the transaction below so a failed
+    // invoice insert doesn't leave dangling audit logs.
+    const threshold = garage.discountAuditThresholdPct ?? 5;
+    const auditRows = await this.collectDiscountAuditRows({
+      garageId,
+      threshold,
+      invoiceDiscountAmount: calc.invoiceDiscount,
+      invoiceSubtotal: calc.subtotalHT,
+      lineItems: dto.lineItems,
+      lineComputed: dto.lineItems.map((item) =>
+        this.taxCalculator.computeLineTotals({
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          tvaRate,
+        }),
+      ),
+      discountReason: dto.discountReason,
+      discountApprovedBy: dto.discountApprovedBy,
+    });
+
     const lineItemRows = dto.lineItems.map((item) => {
       const totals = this.taxCalculator.computeLineTotals({
         quantity: item.quantity,
@@ -115,35 +154,59 @@ export class InvoicingService {
         tvaRate,
         tvaAmount: totals.tvaAmount,
         total: totals.lineTotal,
+        discountPct: item.discountPct ?? null,
       };
     });
 
-    return this.prisma.invoice.create({
-      data: {
-        garageId,
-        customerId: dto.customerId,
-        carId: dto.carId,
-        // Placeholder identifier for the DRAFT — `invoiceNumber` is
-        // NOT NULL UNIQUE, but we don't want to burn a fiscal sequence
-        // number on a draft that may never be issued. Replaced by
-        // NumberingService.next() inside `issue()`.
-        invoiceNumber: `DRAFT-${randomUUID().slice(0, 8)}`,
-        currency: garage.currency ?? 'TND',
-        subtotal: calc.subtotalHT,
-        taxAmount: calc.totalTVA,
-        discount: calc.invoiceDiscount,
-        fiscalStamp: calc.fiscalStamp,
-        total: calc.totalTTC,
-        dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
-        notes: dto.notes,
-        status: InvoiceStatus.DRAFT,
-        lineItems: { create: lineItemRows },
-      },
-      include: { lineItems: true, customer: true, car: true },
+    return this.prisma.$transaction(async (tx) => {
+      const invoice = await tx.invoice.create({
+        data: {
+          garageId,
+          customerId: dto.customerId,
+          carId: dto.carId,
+          // Placeholder identifier for the DRAFT — `invoiceNumber` is
+          // NOT NULL UNIQUE, but we don't want to burn a fiscal sequence
+          // number on a draft that may never be issued. Replaced by
+          // NumberingService.next() inside `issue()`.
+          invoiceNumber: `DRAFT-${randomUUID().slice(0, 8)}`,
+          currency: garage.currency ?? 'TND',
+          subtotal: calc.subtotalHT,
+          taxAmount: calc.totalTVA,
+          discount: calc.invoiceDiscount,
+          fiscalStamp: calc.fiscalStamp,
+          total: calc.totalTTC,
+          dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
+          notes: dto.notes,
+          discountReason: dto.discountReason,
+          discountApprovedBy: dto.discountApprovedBy,
+          status: InvoiceStatus.DRAFT,
+          lineItems: { create: lineItemRows },
+        },
+        include: { lineItems: true, customer: true, car: true },
+      });
+
+      if (auditRows.length > 0) {
+        await tx.discountAuditLog.createMany({
+          data: auditRows.map((r) => ({
+            invoiceId: invoice.id,
+            percentage: r.percentage,
+            amount: r.amount,
+            reason: r.reason,
+            approvedBy: r.approvedBy,
+          })),
+        });
+      }
+
+      return invoice;
     });
   }
 
-  async update(id: string, garageId: string, dto: UpdateInvoiceDto) {
+  async update(
+    id: string,
+    garageId: string,
+    dto: UpdateInvoiceDto,
+    caller?: CallerContext,
+  ) {
     const invoice = await this.findOne(id, garageId);
 
     if (isLocked(invoice.status)) {
@@ -174,6 +237,7 @@ export class InvoicingService {
       select: {
         defaultTvaRate: true,
         fiscalStampEnabled: true,
+        discountAuditThresholdPct: true,
       },
     });
     const tvaRate = garage?.defaultTvaRate ?? 19;
@@ -197,6 +261,8 @@ export class InvoicingService {
       data.status = dto.status;
     }
 
+    let auditRows: AuditRow[] = [];
+
     if (dto.lineItems !== undefined || dto.discount !== undefined) {
       // We need the canonical line list to recompute totals. If the
       // caller only changed `discount`, fall back to the existing rows.
@@ -207,6 +273,7 @@ export class InvoicingService {
           quantity: li.quantity,
           unitPrice: li.unitPrice,
           type: li.type ?? undefined,
+          discountPct: li.discountPct ?? undefined,
         }));
 
       const lines: LineItemInput[] = sourceLines.map((item) => ({
@@ -225,6 +292,30 @@ export class InvoicingService {
       data.fiscalStamp = calc.fiscalStamp;
       data.total = calc.totalTTC;
 
+      // Phase 3.2 — re-validate against discount-audit threshold whenever
+      // discount or lines change. Existing audit rows are not deleted on
+      // edit; new rows are appended for any newly-introduced over-threshold
+      // discounts. Stale rows from previous edits remain — invoices are
+      // mutable in DRAFT, but the audit trail is append-only by design.
+      const threshold = garage?.discountAuditThresholdPct ?? 5;
+      auditRows = await this.collectDiscountAuditRows({
+        garageId,
+        threshold,
+        invoiceDiscountAmount: calc.invoiceDiscount,
+        invoiceSubtotal: calc.subtotalHT,
+        lineItems: sourceLines,
+        lineComputed: sourceLines.map((item) =>
+          this.taxCalculator.computeLineTotals({
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            tvaRate,
+          }),
+        ),
+        discountReason: dto.discountReason ?? invoice.discountReason ?? undefined,
+        discountApprovedBy:
+          dto.discountApprovedBy ?? invoice.discountApprovedBy ?? undefined,
+      });
+
       if (dto.lineItems !== undefined) {
         const lineItemRows = sourceLines.map((item) => {
           const totals = this.taxCalculator.computeLineTotals({
@@ -240,6 +331,7 @@ export class InvoicingService {
             tvaRate,
             tvaAmount: totals.tvaAmount,
             total: totals.lineTotal,
+            discountPct: item.discountPct ?? null,
           };
         });
         data.lineItems = {
@@ -249,11 +341,125 @@ export class InvoicingService {
       }
     }
 
-    return this.prisma.invoice.update({
-      where: { id },
-      data,
-      include: { lineItems: true, customer: true, car: true },
+    if (dto.discountReason !== undefined) data.discountReason = dto.discountReason;
+    if (dto.discountApprovedBy !== undefined) {
+      data.discountApprovedBy = dto.discountApprovedBy;
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.invoice.update({
+        where: { id },
+        data,
+        include: { lineItems: true, customer: true, car: true },
+      });
+
+      if (auditRows.length > 0) {
+        await tx.discountAuditLog.createMany({
+          data: auditRows.map((r) => ({
+            invoiceId: id,
+            percentage: r.percentage,
+            amount: r.amount,
+            reason: r.reason,
+            approvedBy: r.approvedBy,
+          })),
+        });
+      }
+
+      return updated;
     });
+  }
+
+  // ── Phase 3.2 helpers ─────────────────────────────────────────
+
+  /**
+   * Builds the list of discount-audit rows that need to be persisted
+   * for the given invoice payload, throwing 400 with a descriptive
+   * message if any over-threshold discount is missing reason/approver,
+   * or the approver is not a valid OWNER of this garage.
+   *
+   * Idempotent — the caller decides whether to insert. Returns `[]`
+   * when no discounts cross the threshold.
+   */
+  private async collectDiscountAuditRows(opts: {
+    garageId: string;
+    threshold: number;
+    invoiceDiscountAmount: number;
+    invoiceSubtotal: number;
+    lineItems: Array<{
+      quantity: number;
+      unitPrice: number;
+      discountPct?: number | null;
+    }>;
+    lineComputed: Array<{ lineTotal: number }>;
+    discountReason?: string | null;
+    discountApprovedBy?: string | null;
+  }): Promise<AuditRow[]> {
+    const rows: AuditRow[] = [];
+
+    // Invoice-level discount → percentage of subtotal-HT.
+    const invoicePct =
+      opts.invoiceSubtotal > 0
+        ? (opts.invoiceDiscountAmount / opts.invoiceSubtotal) * 100
+        : 0;
+    const invoiceOverThreshold = invoicePct > opts.threshold;
+
+    // Line-level discounts.
+    const lineOverages: Array<{ pct: number; amount: number }> = [];
+    for (let i = 0; i < opts.lineItems.length; i++) {
+      const li = opts.lineItems[i];
+      const pct = li.discountPct ?? 0;
+      if (pct > opts.threshold) {
+        // Line discount amount = (qty × unitPrice) × (pct / 100)
+        const gross = li.quantity * li.unitPrice;
+        lineOverages.push({ pct, amount: gross * (pct / 100) });
+      }
+    }
+
+    if (!invoiceOverThreshold && lineOverages.length === 0) {
+      return rows;
+    }
+
+    // Threshold crossed — both reason + approver are required.
+    if (!opts.discountReason || !opts.discountApprovedBy) {
+      throw new BadRequestException(
+        `Discount above ${opts.threshold}% requires both 'discountReason' and 'discountApprovedBy' (owner userId).`,
+      );
+    }
+
+    // Approver must be an OWNER of this garage.
+    const approver = await this.prisma.user.findFirst({
+      where: { id: opts.discountApprovedBy, garageId: opts.garageId },
+      select: { id: true, role: true },
+    });
+    if (!approver) {
+      throw new BadRequestException(
+        `Discount approver ${opts.discountApprovedBy} not found in this garage.`,
+      );
+    }
+    if (approver.role !== UserRole.OWNER) {
+      throw new BadRequestException(
+        `Discount approver must have role OWNER (got ${approver.role}).`,
+      );
+    }
+
+    if (invoiceOverThreshold) {
+      rows.push({
+        percentage: round3(invoicePct),
+        amount: round3(opts.invoiceDiscountAmount),
+        reason: opts.discountReason,
+        approvedBy: opts.discountApprovedBy,
+      });
+    }
+    for (const li of lineOverages) {
+      rows.push({
+        percentage: round3(li.pct),
+        amount: round3(li.amount),
+        reason: opts.discountReason,
+        approvedBy: opts.discountApprovedBy,
+      });
+    }
+
+    return rows;
   }
 
   /**
@@ -622,4 +828,11 @@ function canTransitionRecompute(
 
 function round3(x: number): number {
   return Math.round(x * 1000) / 1000;
+}
+
+interface AuditRow {
+  percentage: number;
+  amount: number;
+  reason: string;
+  approvedBy: string;
 }

@@ -214,6 +214,12 @@ model Garage {
   numberingDigitCount     Int                  @default(4)
   defaultTvaRate          Float                @default(19)
   fiscalStampEnabled      Boolean              @default(true)
+  // Phase 3.2 — discount audit trail. When an invoice-level or line-level
+  // discount exceeds this percentage, the request must include a
+  // `discountReason` and an OWNER `discountApprovedBy` userId, and a
+  // DiscountAuditLog row is written. Default 5% matches the pre-decided
+  // policy in the overhaul plan.
+  discountAuditThresholdPct Float              @default(5)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -289,6 +295,9 @@ model Customer {
   email       String?
   phone       String
   address     String?
+  // Tunisian matricule fiscal — required on accountant exports for
+  // B2B customers. Optional because many private customers have none.
+  mfNumber    String?
   status      CustomerStatus @default(ACTIVE)
   loyaltyTier String? // bronze, silver, gold, platinum
   totalSpent  Float          @default(0)

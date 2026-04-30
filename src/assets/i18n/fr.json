@@ -2096,6 +2096,56 @@
       "edit": "Modifier",
       "sendInvoice": "Envoyer la facture",
       "recordPayment": "Enregistrer un paiement"
+    },
+    "reports": {
+      "arAging": {
+        "title": "Balance âgée des créances",
+        "subtitle": "Factures impayées regroupées par retard",
+        "asOf": "Au",
+        "loading": "Chargement de la balance âgée...",
+        "empty": "Aucune facture en attente.",
+        "exportCsv": "Exporter CSV",
+        "buckets": {
+          "current": "Non échu",
+          "b1_30": "1 à 30 jours",
+          "b31_60": "31 à 60 jours",
+          "b61_90": "61 à 90 jours",
+          "b90_plus": "90+ jours"
+        },
+        "table": {
+          "customer": "Client",
+          "current": "Non échu",
+          "b1_30": "1-30",
+          "b31_60": "31-60",
+          "b61_90": "61-90",
+          "b90_plus": "90+",
+          "total": "Total",
+          "totals": "Totaux"
+        }
+      },
+      "zReport": {
+        "title": "Rapport Z journalier",
+        "subtitle": "Clôture de caisse pour la journée sélectionnée",
+        "date": "Date",
+        "loading": "Chargement du rapport Z...",
+        "print": "Imprimer",
+        "summary": "Synthèse",
+        "invoicesIssued": "Factures émises",
+        "creditNotesIssued": "Avoirs émis",
+        "totalHT": "Total HT",
+        "totalTVA": "Total TVA",
+        "totalTTC": "Total TTC",
+        "creditNotesTotal": "Total des avoirs",
+        "netCash": "Caisse nette",
+        "paymentsByMethod": "Paiements par mode",
+        "method": {
+          "CASH": "Espèces",
+          "CARD": "Carte",
+          "BANK_TRANSFER": "Virement",
+          "CHECK": "Chèque",
+          "MOBILE_PAYMENT": "Paiement mobile"
+        }
+      }
     }
   },
   "approvals": {

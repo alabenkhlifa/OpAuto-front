@@ -15,7 +15,7 @@ import {
 @ApiTags('credit-notes')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard, ModuleAccessGuard)
-@Roles(UserRole.OWNER)
+@Roles(UserRole.OWNER, UserRole.STAFF)
 @Controller('credit-notes')
 export class CreditNotesController {
   constructor(private service: CreditNotesService) {}

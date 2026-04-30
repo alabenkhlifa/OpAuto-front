@@ -24,7 +24,7 @@ import {
 @ApiTags('quotes')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard, ModuleAccessGuard)
-@Roles(UserRole.OWNER)
+@Roles(UserRole.OWNER, UserRole.STAFF)
 @Controller('quotes')
 export class QuotesController {
   constructor(private service: QuotesService) {}

@@ -1,0 +1,107 @@
+<div class="glass-card p-6 space-y-6">
+  <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+    <div>
+      <h2 class="text-xl font-semibold text-gray-900">
+        {{ 'invoicing.reports.arAging.title' | translate }}
+      </h2>
+      <p class="text-sm text-gray-500">
+        {{ 'invoicing.reports.arAging.subtitle' | translate }}
+      </p>
+      @if (report()) {
+        <p class="text-xs text-gray-400 mt-1">
+          {{ 'invoicing.reports.arAging.asOf' | translate }} {{ report()!.asOf }}
+        </p>
+      }
+    </div>
+    <button
+      type="button"
+      class="btn-tertiary btn-sm"
+      [disabled]="loading() || !report()"
+      (click)="exportCsv()"
+    >
+      {{ 'invoicing.reports.arAging.exportCsv' | translate }}
+    </button>
+  </header>
+
+  @if (loading()) {
+    <p class="text-sm text-gray-500">
+      {{ 'invoicing.reports.arAging.loading' | translate }}
+    </p>
+  } @else if (error()) {
+    <p class="text-sm text-red-600">{{ error() }}</p>
+  } @else if (report()) {
+    @let rep = report()!;
+    @if (rep.rows.length === 0) {
+      <p class="text-sm text-gray-500">
+        {{ 'invoicing.reports.arAging.empty' | translate }}
+      </p>
+    } @else {
+      <!-- Horizontal stacked bar chart -->
+      <div class="w-full" style="height: 320px;">
+        <canvas
+          baseChart
+          [type]="'bar'"
+          [data]="chartData()"
+          [options]="chartOptions"
+        ></canvas>
+      </div>
+
+      <!-- Table fallback (accessible + RTL friendly) -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-left text-gray-700 border-b border-gray-200">
+              <th class="py-2 pr-3">
+                {{ 'invoicing.reports.arAging.table.customer' | translate }}
+              </th>
+              <th class="py-2 pr-3 text-right">
+                {{ 'invoicing.reports.arAging.table.current' | translate }}
+              </th>
+              <th class="py-2 pr-3 text-right">
+                {{ 'invoicing.reports.arAging.table.b1_30' | translate }}
+              </th>
+              <th class="py-2 pr-3 text-right">
+                {{ 'invoicing.reports.arAging.table.b31_60' | translate }}
+              </th>
+              <th class="py-2 pr-3 text-right">
+                {{ 'invoicing.reports.arAging.table.b61_90' | translate }}
+              </th>
+              <th class="py-2 pr-3 text-right">
+                {{ 'invoicing.reports.arAging.table.b90_plus' | translate }}
+              </th>
+              <th class="py-2 pr-3 text-right font-semibold">
+                {{ 'invoicing.reports.arAging.table.total' | translate }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rep.rows; track row.customerId) {
+              <tr class="border-b border-gray-100">
+                <td class="py-2 pr-3">{{ row.customerName }}</td>
+                <td class="py-2 pr-3 text-right">{{ row.current | number: '1.3-3' }}</td>
+                <td class="py-2 pr-3 text-right">{{ row.b1_30 | number: '1.3-3' }}</td>
+                <td class="py-2 pr-3 text-right">{{ row.b31_60 | number: '1.3-3' }}</td>
+                <td class="py-2 pr-3 text-right">{{ row.b61_90 | number: '1.3-3' }}</td>
+                <td class="py-2 pr-3 text-right">{{ row.b90_plus | number: '1.3-3' }}</td>
+                <td class="py-2 pr-3 text-right font-semibold">
+                  {{ row.total | number: '1.3-3' }}
+                </td>
+              </tr>
+            }
+            <tr class="border-t-2 border-gray-300 font-semibold">
+              <td class="py-2 pr-3">
+                {{ 'invoicing.reports.arAging.table.totals' | translate }}
+              </td>
+              <td class="py-2 pr-3 text-right">{{ rep.totals.current | number: '1.3-3' }}</td>
+              <td class="py-2 pr-3 text-right">{{ rep.totals.b1_30 | number: '1.3-3' }}</td>
+              <td class="py-2 pr-3 text-right">{{ rep.totals.b31_60 | number: '1.3-3' }}</td>
+              <td class="py-2 pr-3 text-right">{{ rep.totals.b61_90 | number: '1.3-3' }}</td>
+              <td class="py-2 pr-3 text-right">{{ rep.totals.b90_plus | number: '1.3-3' }}</td>
+              <td class="py-2 pr-3 text-right">{{ rep.totals.total | number: '1.3-3' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</div>
