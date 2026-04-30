@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
@@ -32,6 +33,8 @@ import { InvoiceLockedException } from './exceptions/invoice-locked.exception';
  */
 @Injectable()
 export class InvoicingService {
+  private readonly logger = new Logger(InvoicingService.name);
+
   constructor(
     private prisma: PrismaService,
     private numbering: NumberingService,
@@ -184,7 +187,9 @@ export class InvoicingService {
       data.customer = { connect: { id: dto.customerId } };
     }
     if (dto.carId !== undefined) {
-      data.car = dto.carId ? { connect: { id: dto.carId } } : { disconnect: true };
+      data.car = dto.carId
+        ? { connect: { id: dto.carId } }
+        : { disconnect: true };
     }
 
     if (dto.status !== undefined && dto.status !== invoice.status) {
@@ -265,7 +270,9 @@ export class InvoicingService {
       );
     }
     if (!invoice.customerId) {
-      throw new BadRequestException('Invoice must have a customer before issuing');
+      throw new BadRequestException(
+        'Invoice must have a customer before issuing',
+      );
     }
     if (!invoice.lineItems || invoice.lineItems.length === 0) {
       throw new BadRequestException(
@@ -273,7 +280,9 @@ export class InvoicingService {
       );
     }
     if (!invoice.dueDate) {
-      throw new BadRequestException('Invoice must have a dueDate before issuing');
+      throw new BadRequestException(
+        'Invoice must have a dueDate before issuing',
+      );
     }
 
     assertCanTransition(invoice.status, InvoiceStatus.SENT);
@@ -342,9 +351,7 @@ export class InvoicingService {
     const invoice = await this.findOne(invoiceId, garageId);
 
     if (invoice.status === InvoiceStatus.DRAFT) {
-      throw new BadRequestException(
-        'Issue invoice before recording payment',
-      );
+      throw new BadRequestException('Issue invoice before recording payment');
     }
 
     const payment = await this.prisma.payment.create({
@@ -380,4 +387,140 @@ export class InvoicingService {
 
     return payment;
   }
+
+  /**
+   * Recomputes an invoice's status given the current set of credit notes
+   * and payments. Called by `CreditNotesService.create()` after a new
+   * credit note is persisted.
+   *
+   * Rules:
+   *   - effectiveDue = invoice.total - sum(creditNotes)
+   *   - paid         = sum(payments)
+   *   - if paid >= effectiveDue AND effectiveDue > 0 → PAID
+   *   - if paid > 0  AND paid < effectiveDue         → PARTIALLY_PAID
+   *   - if paid == 0 AND effectiveDue == 0           → keep current
+   *
+   * Footgun guard: if the invoice was PAID and the new credit-note total
+   * exceeds payments (i.e. the customer is "over-credited" — a refund is
+   * owed out-of-band), we do NOT flip the status backwards to
+   * PARTIALLY_PAID. The status stays PAID and the caller is told via the
+   * returned `overCredited` flag. Refund flow is future work.
+   *
+   * Public — bypasses guards because it is invoked from CreditNotesService
+   * inside a transaction. Does NOT throw on illegal transitions; it logs
+   * a warning and skips, since this method is reactive, not user-driven.
+   */
+  async recomputeStatus(invoiceId: string): Promise<{
+    oldStatus: InvoiceStatus;
+    newStatus: InvoiceStatus;
+    overCredited: boolean;
+  }> {
+    const invoice = await this.prisma.invoice.findUnique({
+      where: { id: invoiceId },
+    });
+    if (!invoice) {
+      throw new NotFoundException(`Invoice ${invoiceId} not found`);
+    }
+
+    const [creditAgg, paymentAgg] = await Promise.all([
+      this.prisma.creditNote.aggregate({
+        where: { invoiceId, status: 'ISSUED' },
+        _sum: { total: true },
+      }),
+      this.prisma.payment.aggregate({
+        where: { invoiceId },
+        _sum: { amount: true },
+      }),
+    ]);
+    const creditTotal = creditAgg._sum.total ?? 0;
+    const paid = paymentAgg._sum.amount ?? 0;
+    const effectiveDue = round3(invoice.total - creditTotal);
+
+    const oldStatus = invoice.status;
+    let nextStatus: InvoiceStatus = oldStatus;
+
+    // overCredited semantics: the customer has paid more than what is now
+    // owed after the credit note(s). A refund is owed out-of-band. This
+    // is the strictly-greater-than case — exact-match (paid == effectiveDue)
+    // is just normal "fully paid", not over-credited.
+    const overCredited = paid > effectiveDue && effectiveDue >= 0;
+
+    if (effectiveDue <= 0) {
+      // Fully credited (or over-credited): there is nothing left to pay.
+      // We don't have a CANCELLED-by-credit state in v1, so we leave the
+      // status as-is. Over-credit is surfaced via the returned flag.
+    } else if (paid >= effectiveDue) {
+      nextStatus = InvoiceStatus.PAID;
+    } else if (paid > 0) {
+      nextStatus = InvoiceStatus.PARTIALLY_PAID;
+    }
+    // else: paid == 0 AND effectiveDue > 0 → keep current status
+
+    // Footgun guard — never demote a PAID invoice to PARTIALLY_PAID via
+    // a credit-note recompute. PAID is the customer-facing fiscal state;
+    // the over-credit (refund-owed) signal flows via `overCredited`.
+    if (oldStatus === InvoiceStatus.PAID && nextStatus !== InvoiceStatus.PAID) {
+      this.logger.warn(
+        `recomputeStatus: refusing to demote PAID invoice ${invoiceId} to ${nextStatus}; refund owed (overCredited=${overCredited})`,
+      );
+      nextStatus = InvoiceStatus.PAID;
+    }
+
+    if (nextStatus !== oldStatus) {
+      if (!canTransitionRecompute(oldStatus, nextStatus)) {
+        this.logger.warn(
+          `recomputeStatus: skipping illegal transition ${oldStatus} → ${nextStatus} on invoice ${invoiceId}`,
+        );
+        nextStatus = oldStatus;
+      } else {
+        await this.prisma.invoice.update({
+          where: { id: invoiceId },
+          data: {
+            status: nextStatus,
+            paidAt:
+              nextStatus === InvoiceStatus.PAID
+                ? (invoice.paidAt ?? new Date())
+                : invoice.paidAt,
+          },
+        });
+      }
+    }
+
+    return { oldStatus, newStatus: nextStatus, overCredited };
+  }
+}
+
+/**
+ * Local helper — same allowed-transition table as `invoice-state.ts`,
+ * but returns a boolean instead of throwing. We keep it inline so the
+ * recompute path never crashes a credit-note transaction over a stale
+ * status edge case.
+ */
+function canTransitionRecompute(
+  from: InvoiceStatus,
+  to: InvoiceStatus,
+): boolean {
+  if (from === to) return true;
+  const allowed: Record<InvoiceStatus, InvoiceStatus[]> = {
+    DRAFT: [InvoiceStatus.SENT, InvoiceStatus.CANCELLED],
+    SENT: [
+      InvoiceStatus.PARTIALLY_PAID,
+      InvoiceStatus.PAID,
+      InvoiceStatus.OVERDUE,
+      InvoiceStatus.CANCELLED,
+    ],
+    PARTIALLY_PAID: [InvoiceStatus.PAID, InvoiceStatus.OVERDUE],
+    OVERDUE: [
+      InvoiceStatus.PARTIALLY_PAID,
+      InvoiceStatus.PAID,
+      InvoiceStatus.CANCELLED,
+    ],
+    PAID: [],
+    CANCELLED: [],
+  };
+  return allowed[from]?.includes(to) ?? false;
+}
+
+function round3(x: number): number {
+  return Math.round(x * 1000) / 1000;
 }
