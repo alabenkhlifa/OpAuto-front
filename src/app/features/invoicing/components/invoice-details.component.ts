@@ -7,6 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -266,12 +267,27 @@ export class InvoiceDetailsComponent implements OnInit {
   onDelete(): void {
     const inv = this.invoice();
     if (!inv) return;
+    // Confirm before deleting. The backend permits DELETE only on DRAFT
+    // invoices (returns HTTP 400 once issued); the button is hidden on
+    // non-DRAFT, but we still guard with a confirm prompt to avoid
+    // accidental loss of in-progress drafts.
+    const confirmMsg = this.translation.instant('invoicing.detail.confirmDelete');
+    if (!window.confirm(confirmMsg)) return;
     this.invoiceService.deleteInvoice(inv.id).subscribe({
       next: () => {
         this.toast.success(this.translation.instant('invoicing.detail.toast.deleted'));
         this.router.navigate(['/invoices']);
       },
-      error: () => this.toast.error(this.translation.instant('invoicing.detail.errors.deleteFailed')),
+      error: (err: HttpErrorResponse) => {
+        // 423 (locked) and 400 (cancel/delete-after-issue) both indicate
+        // the fiscal lock guardrail — surface the specific guidance
+        // instead of the generic "Could not delete invoice" error.
+        const key =
+          err?.status === 423 || err?.status === 400
+            ? 'invoicing.detail.errors.deleteLocked'
+            : 'invoicing.detail.errors.deleteFailed';
+        this.toast.error(this.translation.instant(key));
+      },
     });
   }
 
@@ -368,14 +384,42 @@ export class InvoiceDetailsComponent implements OnInit {
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
-  pdfUrl(): string {
-    const inv = this.invoice();
-    return inv ? this.invoiceService.pdfUrl(inv.id) : '#';
-  }
-
   pdfDownloadName(): string {
     const inv = this.invoice();
     return `invoice-${inv?.invoiceNumber || 'document'}.pdf`;
+  }
+
+  /**
+   * Fetches the PDF as a blob (carries JWT via the interceptor) and either
+   * downloads it or opens it in a new tab via `URL.createObjectURL`. This
+   * replaces the previous `<a [href]="pdfUrl()" target="_blank">` pattern,
+   * which built an SPA-relative URL and 401'd in a fresh tab.
+   */
+  onPreviewPdf(): void {
+    this.fetchPdfBlob((blob) => window.open(URL.createObjectURL(blob), '_blank'));
+  }
+
+  onDownloadPdf(): void {
+    this.fetchPdfBlob((blob) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = this.pdfDownloadName();
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+  }
+
+  private fetchPdfBlob(handler: (blob: Blob) => void): void {
+    const inv = this.invoice();
+    if (!inv) return;
+    this.invoiceService.getInvoicePdfBlob(inv.id).subscribe({
+      next: handler,
+      error: () =>
+        this.toast.error(this.translation.instant('invoicing.detail.errors.pdfFailed')),
+    });
   }
 
   paymentContext(): PaymentModalContext | null {

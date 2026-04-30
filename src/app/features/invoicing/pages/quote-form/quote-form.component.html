@@ -136,7 +136,7 @@
                             [value]="line.tvaRate"
                             (change)="updateLine(i, 'tvaRate', $any(+$any($event.target).value))">
                       @for (rate of tvaRates; track rate) {
-                        <option [value]="rate">{{ rate }}%</option>
+                        <option [value]="rate" [selected]="rate === line.tvaRate">{{ rate }}%</option>
                       }
                     </select>
                   </td>

@@ -1,10 +1,12 @@
 import {
   Component,
   OnInit,
+  Signal,
   computed,
   inject,
   signal,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import {
   FormArray,
@@ -202,10 +204,18 @@ export class InvoiceFormComponent implements OnInit {
     () => (this.invoiceDiscountPct() || 0) > this.auditThresholdPct(),
   );
 
+  /**
+   * Reactive mirror of the form's value. `this.form.value` is a plain
+   * property read and does NOT track in `computed()` — without this
+   * signal, `filteredCars()` / `filteredJobs()` / `validationIssues()`
+   * memoize their first read forever (the dropdown-stuck-empty bug).
+   */
+  private readonly formValue!: Signal<any>;
+
   /** Issues the form has — surfaced in the sticky validation banner. */
   readonly validationIssues = computed<string[]>(() => {
     const issues: string[] = [];
-    const f = this.form.value;
+    const f = this.formValue();
     if (!f.customerId) issues.push('invoicing.form.errors.customerRequired');
     if (!f.carId) issues.push('invoicing.form.errors.vehicleRequired');
     if (this.lines().length === 0)
@@ -243,6 +253,9 @@ export class InvoiceFormComponent implements OnInit {
       issueDate: [this.todayIso(), Validators.required],
       dueDate: [this.todayPlusDaysIso(30), Validators.required],
       notes: [''],
+    });
+    (this as any).formValue = toSignal(this.form.valueChanges, {
+      initialValue: this.form.getRawValue(),
     });
   }
 
@@ -298,13 +311,15 @@ export class InvoiceFormComponent implements OnInit {
         this.invoiceDiscountPct.set(inv.discountPercentage || 0);
         this.lines.set(
           inv.lineItems.map<LineState>((li) => ({
-            type: li.type as LineItemType,
+            type: this.coerceLineType(li.type),
             description: li.description,
             quantity: li.quantity,
             unitPrice: li.unitPrice,
-            tvaRate: this.normalizeTvaRate(
-              (li as any).tvaRate ?? inv.taxRate ?? this.defaultTva(),
-            ),
+            // BUG-094: Per-line TVA is the source of truth (fiscal overhaul).
+            // Pull `li.tvaRate` directly — never fall back to the legacy
+            // invoice-level `inv.taxRate`. Only fall back to garage default
+            // when the line genuinely has no rate (legacy / pre-fiscal rows).
+            tvaRate: this.coerceTvaRate(li.tvaRate),
             discountPct: li.discountPercentage || 0,
             laborHours: li.laborHours,
             partId: li.partId,
@@ -330,12 +345,12 @@ export class InvoiceFormComponent implements OnInit {
   // ── Section 1 helpers ─────────────────────────────────────────────────────
 
   filteredCars = computed(() => {
-    const customerId = this.form.value.customerId;
+    const customerId = this.formValue().customerId;
     return customerId ? this.cars().filter((c) => c.customerId === customerId) : [];
   });
 
   filteredJobs = computed(() => {
-    const carId = this.form.value.carId;
+    const carId = this.formValue().carId;
     if (!carId) return [];
     return this.jobs().filter((j) => j.carId === carId).slice(0, 10);
   });
@@ -624,7 +639,11 @@ export class InvoiceFormComponent implements OnInit {
   previewPdf(): void {
     const inv = this.currentInvoice();
     if (!inv) return;
-    window.open(this.invoiceService.pdfUrl(inv.id), '_blank');
+    this.invoiceService.getInvoicePdfBlob(inv.id).subscribe({
+      next: (blob) => window.open(URL.createObjectURL(blob), '_blank'),
+      error: () =>
+        this.toast.error(this.translation.instant('invoicing.form.errors.pdfFailed')),
+    });
   }
 
   cancel(): void {
@@ -698,6 +717,37 @@ export class InvoiceFormComponent implements OnInit {
 
   private normalizeTvaRate(rate: number): TvaRate {
     return (TVA_RATES as readonly number[]).includes(rate) ? (rate as TvaRate) : 19;
+  }
+
+  /**
+   * BUG-094: Coerce a backend-supplied line `type` (stored as a free-form
+   * `String?` column) into the strict `LineItemType` union. Falls back to
+   * `'service'` ONLY when the value is missing or invalid — never blindly
+   * casts. A blind cast was silently corrupting drafts because the dropdown
+   * fell back to its first option (`service`) when the value did not match.
+   */
+  private coerceLineType(raw: unknown): LineItemType {
+    if (typeof raw !== 'string') return 'service';
+    const v = raw.toLowerCase().trim();
+    return (this.lineTypes as readonly string[]).includes(v)
+      ? (v as LineItemType)
+      : 'service';
+  }
+
+  /**
+   * BUG-094: Coerce a backend-supplied per-line TVA rate. Backend stores
+   * `Float @default(19)`, but values may arrive as numeric strings via JSON.
+   * Falls back to the garage default only when truly absent (null/undefined).
+   * Never falls back to the legacy invoice-level rate — that field is no
+   * longer the source of truth in the fiscal-overhaul model.
+   */
+  private coerceTvaRate(raw: unknown): TvaRate {
+    if (raw === null || raw === undefined) {
+      return this.normalizeTvaRate(this.defaultTva());
+    }
+    const n = typeof raw === 'number' ? raw : Number(raw);
+    if (!Number.isFinite(n)) return this.normalizeTvaRate(this.defaultTva());
+    return this.normalizeTvaRate(n);
   }
 
   formatCurrency(amount: number): string {

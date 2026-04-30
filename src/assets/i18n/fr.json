@@ -2477,7 +2477,8 @@
         "saveFailed": "Impossible d'enregistrer la facture",
         "issueFailed": "Impossible d'émettre la facture",
         "sendFailed": "Impossible d'envoyer la facture",
-        "pullFailed": "Impossible d'importer depuis l'ordre"
+        "pullFailed": "Impossible d'importer depuis l'ordre",
+        "pdfFailed": "Impossible de charger le PDF de la facture"
       },
       "toast": {
         "draftSaved": "Brouillon enregistré",
@@ -2502,6 +2503,7 @@
         "label": "Verrouillée",
         "aria": "Cette facture est verrouillée"
       },
+      "confirmDelete": "Supprimer ce brouillon de facture ? Cette action est irréversible.",
       "actions": {
         "edit": "Modifier",
         "issueAndSend": "Émettre et envoyer",
@@ -2530,9 +2532,11 @@
       "errors": {
         "loadFailed": "Impossible de charger la facture",
         "deleteFailed": "Impossible de supprimer la facture",
+        "deleteLocked": "Les factures émises ne peuvent pas être supprimées — émettez un avoir à la place.",
         "issueFailed": "Impossible d'émettre la facture",
         "sendFailed": "Impossible d'envoyer la facture",
-        "paymentFailed": "Impossible d'enregistrer le paiement"
+        "paymentFailed": "Impossible d'enregistrer le paiement",
+        "pdfFailed": "Impossible de charger le PDF de la facture"
       }
     }
   },

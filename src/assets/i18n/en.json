@@ -2435,7 +2435,8 @@
         "saveFailed": "Could not save invoice",
         "issueFailed": "Could not issue invoice",
         "sendFailed": "Could not send invoice",
-        "pullFailed": "Could not pull from job"
+        "pullFailed": "Could not pull from job",
+        "pdfFailed": "Could not load invoice PDF"
       },
       "toast": {
         "draftSaved": "Draft saved",
@@ -2460,6 +2461,7 @@
         "label": "Locked",
         "aria": "This invoice is locked"
       },
+      "confirmDelete": "Delete this draft invoice? This action cannot be undone.",
       "actions": {
         "edit": "Edit",
         "issueAndSend": "Issue & Send",
@@ -2488,9 +2490,11 @@
       "errors": {
         "loadFailed": "Could not load invoice",
         "deleteFailed": "Could not delete invoice",
+        "deleteLocked": "Issued invoices cannot be deleted — issue a credit note instead.",
         "issueFailed": "Could not issue invoice",
         "sendFailed": "Could not send invoice",
-        "paymentFailed": "Could not record payment"
+        "paymentFailed": "Could not record payment",
+        "pdfFailed": "Could not load invoice PDF"
       }
     }
   },

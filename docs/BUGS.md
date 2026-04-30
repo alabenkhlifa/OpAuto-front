@@ -376,6 +376,34 @@ _Use this template:_
 - **Notes:** <any extra context>
 ```
 
+### BUG-094 · Invoice edit-form hydrates line items with wrong `type` and `tvaRate` 🟢
+- **Where:** `src/app/features/invoicing/components/invoice-form.component.ts:299-313` (`loadInvoice` → `lines.set(...)`).
+- **Symptom:** After saving a DRAFT invoice and reopening `/invoices/edit/:id`, line items displayed `type` = "Service" and TVA = "0%" regardless of persisted values. Silent data-corruption risk on re-save.
+- **Root cause:** (a) `type: li.type as LineItemType` cast a backend `String?` column blindly — the `<select [value]>` template binding fell back to the first `<option>` when the cast value didn't match the union; (b) `(li as any).tvaRate ?? inv.taxRate ?? this.defaultTva()` cascaded through the legacy invoice-level `inv.taxRate` (often 0 or undefined post-fiscal-overhaul), and `normalizeTvaRate()` zeroed non-bucket values.
+- **Fix (2026-04-30):** added `coerceLineType(raw): LineItemType` and `coerceTvaRate(raw): TvaRate` helpers; `loadInvoice` now calls those and never falls through to `inv.taxRate`. Three new specs in `invoice-form.component.spec.ts` cover persisted lines, missing/unknown type, and numeric-string tvaRate. `docs/INVOICING_E2E_SCENARIOS.md → S-INV-031` flipped to ✅.
+
+### BUG-095 · Quote-detail page is missing an Edit affordance for DRAFT quotes 🔴
+- **Where:** `src/app/features/invoicing/pages/quote-detail/` (HTML template — search for the action bar near `recordPayment`/`approve`/`send`/`reject`).
+- **Symptom:** S-QUO-018 (Edit-quote-after-send → blocked) passes incidentally because the Edit button is absent for **all** statuses, not just SENT/APPROVED. That same absence breaks **S-QUO-010** (Edit DRAFT quote — totals recompute on line change): users can't reopen a DRAFT quote to edit lines, and the only path to fix a typo is to delete + recreate.
+- **Surfaced by:** Sweep A Group 3 e2e validator pass (2026-04-30).
+- **Reproduce:** create a DRAFT quote → open detail page → confirm there is no "Edit" button. Compare with `invoice-details.component.html` which renders an Edit button when `canShow('edit')` returns true (DRAFT path).
+- **Suggested fix:** add an Edit button gated by `quote.status === 'draft'` that routes to `/invoices/quotes/edit/:id`, and ensure the quote-form supports `:id` paramMap loading (`loadQuote()` similar to `invoice-form.loadInvoice()`). i18n key `invoicing.quotes.detail.actions.edit` may need adding to en/fr/ar.
+- **Priority:** P1.
+
+### BUG-096 · Service-picker and part-picker fetch the entire catalog and filter in-memory 🔴
+- **Where:** `src/app/features/invoicing/components/service-picker/service-picker.component.ts` (`ngOnInit` → one-shot `GET /api/service-catalog`); same pattern in `part-picker/part-picker.component.ts` against `GET /api/inventory`.
+- **Symptom:** Both pickers are O(n) on the entire catalog every keystroke (signal `computed()` over the full client-cached array). Acceptable for the seeded handful of rows; will not scale past low hundreds.
+- **Surfaced by:** Sweep A Group 2 e2e validator (S-QUO-003 / S-QUO-004) — the validator noted that no `?search=` query param is sent, divergent from the worded scenario expectation but not a regression today.
+- **Suggested fix:** add a `query` signal driven by the user's typed text, debounce ~250ms with `toObservable()` → `switchMap` to `this.http.get(?search=...)`, render results as they arrive. Backend service-catalog and inventory routes already accept search/limit query params (verify). Keep the in-memory path as a fallback for offline / cold cache.
+- **Priority:** P3 — perf gap, ship-blocking only when the catalog grows.
+
+### BUG-097 · Backend `DELETE /api/invoices/:id` returns 200 instead of 204 🔴
+- **Where:** `opauto-backend/src/invoicing/invoicing.controller.ts:95-100` (`@Delete(':id')` → `service.remove(...)` returns the deleted invoice; controller returns it directly).
+- **Symptom:** Successful DELETE responds with status 200 and the deleted invoice as body. Standard REST convention (and our `S-INV-016` scenario doc) expects 204 No Content for DELETE.
+- **Surfaced by:** Sweep A Group 3 e2e validator (2026-04-30).
+- **Suggested fix:** either (a) annotate the controller method with `@HttpCode(HttpStatus.NO_CONTENT)` and return `void` from the service path, OR (b) update `S-INV-016` in the scenario doc to expect 200 + body. Pick one and document the FE expectation. The FE side currently doesn't read the response body anyway (just navigates on success).
+- **Priority:** P3 — works today, just an inconsistency.
+
 ---
 
 ## Cross-cutting Notes

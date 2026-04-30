@@ -77,12 +77,12 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 |---|---|---|---|
 | S-QUO-001 | Create quote with 1 line item, Save Draft | P0 | ✅ |
 | S-QUO-002 | Create quote with 2+ line items (Add line button works) | P0 | ✅ |
-| S-QUO-003 | Add line — type=Service via service-picker autocomplete | P0 | ❌ |
-| S-QUO-004 | Add line — type=Part via part-picker; stock badge displays | P0 | ❌ |
+| S-QUO-003 | Add line — type=Service via service-picker autocomplete | P0 | ✅ |
+| S-QUO-004 | Add line — type=Part via part-picker; stock badge displays | P0 | ✅ |
 | S-QUO-005 | Add line — type=Labor with hours × rate auto-compute | P1 | ❌ |
 | S-QUO-006 | Add line — type=Misc free-text | P1 | ❌ |
 | S-QUO-007 | Remove line via × button | P1 | ❌ |
-| S-QUO-008 | Per-line TVA select (7 / 13 / 19 / exempt 0) | P0 | ❌ |
+| S-QUO-008 | Per-line TVA select (7 / 13 / 19 / exempt 0) | P0 | ✅ (after Sweep A Group 2 fix — TVA_RATES reorder + explicit `[selected]`) |
 | S-QUO-009 | Quote DRAFT has no quote number (`DRAFT-{uuid8}` placeholder) | P0 | ✅ |
 | S-QUO-010 | Edit DRAFT quote — totals recompute on line change | P1 | ❌ |
 | S-QUO-011 | Send DRAFT quote → SENT, number formatted `DEV-YYYY-NNNN` | P0 | ✅ |
@@ -92,7 +92,7 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 | S-QUO-015 | Re-send REJECTED quote → 400 (terminal state) | P2 | ❌ |
 | S-QUO-016 | Approve DRAFT quote (no number) → 400 (must SEND first) | P1 | ❌ |
 | S-QUO-017 | Quote with `validUntil = yesterday` → `expireOldQuotes()` marks EXPIRED | P1 | 🟡 backend test |
-| S-QUO-018 | Edit quote AFTER send → 423 / blocked by UI | P0 | ❌ |
+| S-QUO-018 | Edit quote AFTER send → 423 / blocked by UI | P0 | ✅ (Edit button absent on quote-detail; see BUG-095 — also blocks DRAFT edit) |
 | S-QUO-019 | Quote list filters by status (DRAFT / SENT / APPROVED / REJECTED / EXPIRED) | P1 | ❌ |
 | S-QUO-020 | Approved quote → source quote shows `convertedToInvoiceId` link | P1 | ❌ |
 | S-QUO-021 | Quote line item DTO contract: only spec'd fields accepted (no `unit`/`totalPrice`) | P0 | ✅ (after fix d28a940) |
@@ -118,7 +118,7 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 | S-INV-001 | Create DRAFT invoice with 1 line item | P0 | ❌ |
 | S-INV-002 | Create DRAFT invoice with mixed line types (service+part+labor+misc) | P0 | ❌ |
 | S-INV-003 | DRAFT invoice number is placeholder `DRAFT-{uuid8}` (no fiscal seq burn) | P0 | ✅ |
-| S-INV-004 | Edit DRAFT invoice — totals recompute on line change | P0 | ❌ |
+| S-INV-004 | Edit DRAFT invoice — totals recompute on line change (`PUT /api/invoices/:id`) | P0 | ❌ |
 | S-INV-005 | Edit DRAFT invoice — change customer / car | P1 | ❌ |
 | S-INV-006 | Issue DRAFT invoice — gets `INV-YYYY-NNNN` (or `INV-YYYYMM-NNNN`), `lockedAt`, `lockedBy` | P0 | ✅ |
 | S-INV-007 | Issue triggers stock decrement for each `partId` line | P0 | 🟡 backend test |
@@ -129,9 +129,9 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 | S-INV-012 | Edit issued invoice notes → 200 (only notes mutable) | P0 | 🟡 backend test |
 | S-INV-013 | Issued invoice form renders read-only with "locked" banner | P0 | ✅ |
 | S-INV-014 | Cancel DRAFT invoice → CANCELLED | P1 | ❌ |
-| S-INV-015 | Cancel issued invoice → 400 (must use credit note) | P0 | ❌ |
-| S-INV-016 | Delete DRAFT invoice (owner only) | P0 | ❌ |
-| S-INV-017 | Delete issued invoice → 400 (must credit-note instead) | P0 | ❌ |
+| S-INV-015 | Cancel issued invoice → 400 (must use credit note) | P0 | ✅ (button absent off-DRAFT) |
+| S-INV-016 | Delete DRAFT invoice (owner only) | P0 | ✅ (after Sweep A Group 3 — confirm modal + 423 toast) |
+| S-INV-017 | Delete issued invoice → 400 (must credit-note instead) | P0 | ✅ (button absent off-DRAFT) |
 | S-INV-018 | DELETE button hidden for STAFF role | P0 | ⏭️ no staff seed |
 | S-INV-019 | Pull from job: link maintenance job → click "Pull from job" → lines pre-fill | P0 | ❌ |
 | S-INV-020 | Pull from job: already-converted job → 409 | P1 | 🟡 backend test |
@@ -145,6 +145,7 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 | S-INV-028 | List view: filter by status, search by invoice number / customer | P1 | ❌ |
 | S-INV-029 | List view: pagination (or all-in-one if dataset small) | P2 | ❌ none yet |
 | S-INV-030 | Invoice DTO contract: line items only carry spec'd fields | P0 | ✅ (after d28a940) |
+| S-INV-031 | Re-entering /invoices/edit/:id correctly hydrates each line's `type` and `tvaRate` (no fallback to "Service" / 0%) | P1 | ✅ (after BUG-094 fix) |
 
 **Detail — S-INV-006 (Issue):**
 - **Steps:** Open DRAFT → fill required fields → click "Issue & Send".

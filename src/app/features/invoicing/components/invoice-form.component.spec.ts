@@ -181,6 +181,92 @@ describe('InvoiceFormComponent', () => {
     expect(cmp.canSubmit()).toBeFalse();
   });
 
+  // BUG-094: When reopening a saved DRAFT, the form must restore the
+  // persisted line `type` and `tvaRate` verbatim — not snap to the dropdown's
+  // first option (Service / 0 %). Saving from a desynced state would silently
+  // overwrite the database with the wrong values.
+  it('BUG-094: loadInvoice preserves persisted line type and per-line tvaRate', async () => {
+    configure({
+      route: { snapshot: { paramMap: { get: () => 'i1' }, queryParamMap: { get: () => null } } },
+      invoice: {
+        status: 'draft',
+        taxRate: 0, // legacy invoice-level rate is intentionally bogus
+        lineItems: [
+          {
+            id: 'l1', type: 'misc', description: 'Hose', quantity: 1, unit: 'piece',
+            unitPrice: 100, totalPrice: 119, tvaRate: 19, discountPercentage: 0, taxable: true,
+          } as any,
+          {
+            id: 'l2', type: 'part', description: 'Filter', quantity: 2, unit: 'piece',
+            unitPrice: 50, totalPrice: 113, tvaRate: 13, discountPercentage: 0, taxable: true,
+          } as any,
+          {
+            id: 'l3', type: 'labor', description: 'Diag', quantity: 1, unit: 'hour',
+            unitPrice: 30, totalPrice: 32.1, tvaRate: 7, discountPercentage: 0, taxable: true,
+          } as any,
+        ],
+      },
+    });
+    const fixture = TestBed.createComponent(InvoiceFormComponent);
+    const cmp = fixture.componentInstance;
+    cmp.ngOnInit();
+    await fixture.whenStable();
+
+    const lines = cmp.lines();
+    expect(lines.length).toBe(3);
+    expect(lines[0].type).toBe('misc');
+    expect(lines[0].tvaRate).toBe(19);
+    expect(lines[1].type).toBe('part');
+    expect(lines[1].tvaRate).toBe(13);
+    expect(lines[2].type).toBe('labor');
+    expect(lines[2].tvaRate).toBe(7);
+  });
+
+  // BUG-094 (defensive): If backend returns an unknown / null line type,
+  // fall back to 'service' (UI default) rather than crashing the dropdown.
+  it('BUG-094: loadInvoice falls back to service when type is missing/unknown', async () => {
+    configure({
+      route: { snapshot: { paramMap: { get: () => 'i1' }, queryParamMap: { get: () => null } } },
+      invoice: {
+        status: 'draft',
+        lineItems: [
+          { id: 'l1', type: null as any, description: 'X', quantity: 1, unit: 'service',
+            unitPrice: 10, totalPrice: 11.9, tvaRate: 19, discountPercentage: 0, taxable: true } as any,
+          { id: 'l2', type: 'gibberish' as any, description: 'Y', quantity: 1, unit: 'service',
+            unitPrice: 20, totalPrice: 23.8, tvaRate: 19, discountPercentage: 0, taxable: true } as any,
+        ],
+      },
+    });
+    const fixture = TestBed.createComponent(InvoiceFormComponent);
+    const cmp = fixture.componentInstance;
+    cmp.ngOnInit();
+    await fixture.whenStable();
+
+    expect(cmp.lines()[0].type).toBe('service');
+    expect(cmp.lines()[1].type).toBe('service');
+  });
+
+  // BUG-094 (defensive): a numeric-string tvaRate from a JSON edge case
+  // must coerce to the matching TVA bucket, not zero.
+  it('BUG-094: loadInvoice coerces numeric-string tvaRate to the right bucket', async () => {
+    configure({
+      route: { snapshot: { paramMap: { get: () => 'i1' }, queryParamMap: { get: () => null } } },
+      invoice: {
+        status: 'draft',
+        lineItems: [
+          { id: 'l1', type: 'misc', description: 'X', quantity: 1, unit: 'service',
+            unitPrice: 10, totalPrice: 11.9, tvaRate: '13' as any, discountPercentage: 0, taxable: true } as any,
+        ],
+      },
+    });
+    const fixture = TestBed.createComponent(InvoiceFormComponent);
+    const cmp = fixture.componentInstance;
+    cmp.ngOnInit();
+    await fixture.whenStable();
+
+    expect(cmp.lines()[0].tvaRate).toBe(13);
+  });
+
   it('saveDraft persists a create payload via InvoiceService.createInvoice', async () => {
     const { invoiceServiceStub } = configure();
     const fixture = TestBed.createComponent(InvoiceFormComponent);

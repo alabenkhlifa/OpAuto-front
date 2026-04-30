@@ -18,6 +18,24 @@ export class CreateLineItemDto {
   @ApiProperty({ required: false }) @IsString() @IsOptional() type?: string;
 
   /**
+   * Per-line TVA rate (Tunisia: 7 / 13 / 19 / 0 for exempt). When omitted
+   * the service falls back to `garage.defaultTvaRate`. Source of truth for
+   * fiscal totals — the calculator groups by rate to produce the per-rate
+   * TVA breakdown printed on the invoice.
+   */
+  @ApiProperty({ required: false, minimum: 0, maximum: 100 })
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  @IsOptional()
+  tvaRate?: number;
+
+  @ApiProperty({ required: false }) @IsString() @IsOptional() partId?: string;
+  @ApiProperty({ required: false }) @IsString() @IsOptional() serviceCode?: string;
+  @ApiProperty({ required: false }) @IsString() @IsOptional() mechanicId?: string;
+  @ApiProperty({ required: false }) @IsNumber() @IsOptional() laborHours?: number;
+
+  /**
    * Phase 3.2 — line-level discount percentage. Crossing the
    * garage threshold triggers the audit-trail requirement on the
    * parent invoice (one DiscountAuditLog per discounted line).

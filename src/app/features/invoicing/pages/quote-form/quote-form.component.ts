@@ -15,7 +15,11 @@ import { LineItemType } from '../../../../core/models/invoice.model';
 import { ServiceCatalogEntry } from '../../../../core/models/service-catalog.model';
 import { PartWithStock } from '../../../../core/models/part.model';
 
-const TVA_RATES = [0, 7, 13, 19] as const;
+// Order matters for the per-line TVA <select>: the default new-line rate
+// (19) should be the first non-exempt option so that, if a browser
+// briefly falls back to option[0] before Angular syncs [value], the user
+// still sees a sensible rate. Sweep A Group 2 spec: 7, 13, 19, 0 (exempt).
+const TVA_RATES = [7, 13, 19, 0] as const;
 type TvaRate = (typeof TVA_RATES)[number];
 
 interface LineState {

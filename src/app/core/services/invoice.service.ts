@@ -176,13 +176,16 @@ export class InvoiceService {
         quantity: li.quantity || 1,
         unit: li.unit || 'service',
         unitPrice: li.unitPrice || 0,
-        totalPrice: li.totalPrice || (li.quantity * li.unitPrice) || 0,
+        // Backend persists fiscal line total as `total` (HT × qty + TVA);
+        // accept the legacy `totalPrice` shape for any older callers.
+        totalPrice: li.total ?? li.totalPrice ?? (li.quantity * li.unitPrice) ?? 0,
         partId: li.partId,
         serviceCode: li.serviceCode,
         mechanicId: li.mechanicId,
         laborHours: li.laborHours,
-        discountPercentage: li.discountPercentage,
-        taxable: li.taxable ?? true
+        tvaRate: li.tvaRate,
+        discountPercentage: li.discountPct ?? li.discountPercentage,
+        taxable: (li.tvaRate ?? 19) > 0
       })),
       notes: b.notes,
       paymentTerms: b.paymentTerms || this.invoiceSettings.paymentTerms.defaultTerms,
@@ -203,37 +206,56 @@ export class InvoiceService {
     };
   }
 
-  private mapToBackend(f: Partial<CreateInvoiceRequest | UpdateInvoiceRequest>): any {
+  /**
+   * Maps the FE form/model to the backend DTO contract. The backend uses
+   * `whitelist + forbidNonWhitelisted` validation, so any field not declared
+   * in `CreateInvoiceDto`/`UpdateInvoiceDto` triggers 400. Server-computed
+   * fiscal fields (subtotal, tax, fiscalStamp, total, status defaults,
+   * issueDate, currency, paymentTerms, createdBy) are intentionally NOT
+   * sent — the BE derives them. State transitions (issue, deliver,
+   * payments) go through dedicated endpoints, not PUT.
+   */
+  private mapToBackend(
+    f: Partial<CreateInvoiceRequest | UpdateInvoiceRequest>,
+    opts: { forUpdate?: boolean } = {}
+  ): any {
     const payload: any = {};
 
     if (f.customerId !== undefined) payload.customerId = f.customerId;
     if (f.carId !== undefined) payload.carId = f.carId;
-    if ((f as any).appointmentId !== undefined) payload.appointmentId = (f as any).appointmentId;
-    if (f.status !== undefined) payload.status = toBackendEnum(f.status);
-    if (f.lineItems !== undefined) {
-      payload.lineItems = f.lineItems.map(li => ({
-        type: li.type,
-        description: li.description,
-        quantity: li.quantity,
-        unit: li.unit,
-        unitPrice: li.unitPrice,
-        totalPrice: li.totalPrice,
-        partId: li.partId,
-        serviceCode: li.serviceCode,
-        mechanicId: li.mechanicId,
-        laborHours: li.laborHours,
-        discountPercentage: li.discountPercentage,
-        taxable: li.taxable
-      }));
+    if (f.dueDate !== undefined) {
+      payload.dueDate = f.dueDate instanceof Date ? f.dueDate.toISOString() : f.dueDate;
     }
     if (f.notes !== undefined) payload.notes = f.notes;
-    if (f.discountPercentage !== undefined) payload.discountPercentage = f.discountPercentage;
-    if (f.taxRate !== undefined) payload.taxRate = f.taxRate;
-    if (f.dueDate !== undefined) payload.dueDate = f.dueDate instanceof Date ? f.dueDate.toISOString() : f.dueDate;
-    if (f.issueDate !== undefined) payload.issueDate = f.issueDate instanceof Date ? f.issueDate.toISOString() : f.issueDate;
-    if (f.currency !== undefined) payload.currency = f.currency;
-    if (f.paymentTerms !== undefined) payload.paymentTerms = f.paymentTerms;
-    if (f.paymentMethod !== undefined) payload.paymentMethod = toBackendEnum(f.paymentMethod);
+    if ((f as any).discount !== undefined) payload.discount = (f as any).discount;
+    if ((f as any).discountReason !== undefined) {
+      payload.discountReason = (f as any).discountReason;
+    }
+    if ((f as any).discountApprovedBy !== undefined) {
+      payload.discountApprovedBy = (f as any).discountApprovedBy;
+    }
+    // Status mutations are only valid on PUT (DRAFT → CANCELLED, etc.).
+    // The Issue transition has its own endpoint and never flows here.
+    if (opts.forUpdate && f.status !== undefined) {
+      payload.status = toBackendEnum(f.status);
+    }
+    if (f.lineItems !== undefined) {
+      payload.lineItems = f.lineItems.map(li => {
+        const line: any = {
+          description: li.description,
+          quantity: li.quantity,
+          unitPrice: li.unitPrice,
+        };
+        if (li.type !== undefined) line.type = li.type;
+        if (li.tvaRate !== undefined) line.tvaRate = li.tvaRate;
+        if (li.partId !== undefined) line.partId = li.partId;
+        if (li.serviceCode !== undefined) line.serviceCode = li.serviceCode;
+        if (li.mechanicId !== undefined) line.mechanicId = li.mechanicId;
+        if (li.laborHours !== undefined) line.laborHours = li.laborHours;
+        if (li.discountPercentage !== undefined) line.discountPct = li.discountPercentage;
+        return line;
+      });
+    }
 
     return payload;
   }
@@ -269,7 +291,7 @@ export class InvoiceService {
   }
 
   updateInvoice(invoiceId: string, updates: UpdateInvoiceRequest): Observable<InvoiceWithDetails> {
-    const body = this.mapToBackend(updates);
+    const body = this.mapToBackend(updates, { forUpdate: true });
     return this.http.put<any>(`/invoices/${invoiceId}`, body).pipe(
       map(b => this.mapFromBackend(b)),
       tap(updated => {
@@ -394,9 +416,16 @@ export class InvoiceService {
     );
   }
 
-  /** Builds the absolute URL for the invoice PDF. */
-  pdfUrl(invoiceId: string): string {
-    return `/invoices/${invoiceId}/pdf`;
+  /**
+   * Fetches the rendered invoice PDF as a Blob via the authenticated
+   * `GET /api/invoices/:id/pdf` route. Returning a Blob lets the caller
+   * either preview (createObjectURL → window.open) or download (anchor
+   * with `download` attribute) without bypassing the JWT guard — a plain
+   * `<a target="_blank">` to the API URL would 401 since cross-tab
+   * requests don't carry the bearer header from the interceptor.
+   */
+  getInvoicePdfBlob(invoiceId: string): Observable<Blob> {
+    return this.http.get(`/invoices/${invoiceId}/pdf`, { responseType: 'blob' });
   }
 
   // --- Generate invoice from appointment ---

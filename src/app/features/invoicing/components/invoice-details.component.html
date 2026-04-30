@@ -57,18 +57,14 @@
           </button>
         }
         @if (canShow('downloadPdf')) {
-          <a class="btn-tertiary"
-             [href]="pdfUrl()"
-             [download]="pdfDownloadName()"
-             target="_blank"
-             rel="noopener">
+          <button type="button" class="btn-tertiary" (click)="onDownloadPdf()">
             {{ 'invoicing.detail.actions.downloadPdf' | translate }}
-          </a>
+          </button>
         }
         @if (canShow('previewPdf')) {
-          <a class="btn-tertiary" [href]="pdfUrl()" target="_blank" rel="noopener">
+          <button type="button" class="btn-tertiary" (click)="onPreviewPdf()">
             {{ 'invoicing.detail.actions.previewPdf' | translate }}
-          </a>
+          </button>
         }
         @if (canShow('creditNote')) {
           <button type="button" class="btn-tertiary" (click)="onIssueCreditNote()">

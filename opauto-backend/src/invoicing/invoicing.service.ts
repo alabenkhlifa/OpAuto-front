@@ -105,11 +105,12 @@ export class InvoicingService {
     });
     if (!garage) throw new NotFoundException('Garage not found');
 
-    const tvaRate = garage.defaultTvaRate ?? 19;
+    const defaultTvaRate = garage.defaultTvaRate ?? 19;
+    const rateFor = (item: { tvaRate?: number }) => item.tvaRate ?? defaultTvaRate;
     const lines: LineItemInput[] = dto.lineItems.map((item) => ({
       quantity: item.quantity,
       unitPrice: item.unitPrice,
-      tvaRate,
+      tvaRate: rateFor(item),
     }));
 
     const calc = this.taxCalculator.calculate(lines, {
@@ -133,7 +134,7 @@ export class InvoicingService {
         this.taxCalculator.computeLineTotals({
           quantity: item.quantity,
           unitPrice: item.unitPrice,
-          tvaRate,
+          tvaRate: rateFor(item),
         }),
       ),
       discountReason: dto.discountReason,
@@ -141,20 +142,25 @@ export class InvoicingService {
     });
 
     const lineItemRows = dto.lineItems.map((item) => {
+      const lineRate = rateFor(item);
       const totals = this.taxCalculator.computeLineTotals({
         quantity: item.quantity,
         unitPrice: item.unitPrice,
-        tvaRate,
+        tvaRate: lineRate,
       });
       return {
         description: item.description,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
         type: item.type,
-        tvaRate,
+        tvaRate: lineRate,
         tvaAmount: totals.tvaAmount,
         total: totals.lineTotal,
         discountPct: item.discountPct ?? null,
+        partId: item.partId ?? null,
+        serviceCode: item.serviceCode ?? null,
+        mechanicId: item.mechanicId ?? null,
+        laborHours: item.laborHours ?? null,
       };
     });
 
@@ -240,7 +246,9 @@ export class InvoicingService {
         discountAuditThresholdPct: true,
       },
     });
-    const tvaRate = garage?.defaultTvaRate ?? 19;
+    const defaultTvaRate = garage?.defaultTvaRate ?? 19;
+    const rateFor = (item: { tvaRate?: number | null }) =>
+      item.tvaRate ?? defaultTvaRate;
 
     const data: Prisma.InvoiceUpdateInput = {};
     if (dto.notes !== undefined) data.notes = dto.notes;
@@ -265,7 +273,8 @@ export class InvoicingService {
 
     if (dto.lineItems !== undefined || dto.discount !== undefined) {
       // We need the canonical line list to recompute totals. If the
-      // caller only changed `discount`, fall back to the existing rows.
+      // caller only changed `discount`, fall back to the existing rows
+      // (carrying their persisted per-line tvaRate forward).
       const sourceLines =
         dto.lineItems ??
         invoice.lineItems.map((li) => ({
@@ -273,13 +282,18 @@ export class InvoicingService {
           quantity: li.quantity,
           unitPrice: li.unitPrice,
           type: li.type ?? undefined,
+          tvaRate: li.tvaRate,
+          partId: li.partId ?? undefined,
+          serviceCode: li.serviceCode ?? undefined,
+          mechanicId: li.mechanicId ?? undefined,
+          laborHours: li.laborHours ?? undefined,
           discountPct: li.discountPct ?? undefined,
         }));
 
       const lines: LineItemInput[] = sourceLines.map((item) => ({
         quantity: item.quantity,
         unitPrice: item.unitPrice,
-        tvaRate,
+        tvaRate: rateFor(item),
       }));
       const calc = this.taxCalculator.calculate(lines, {
         invoiceDiscount: dto.discount ?? invoice.discount,
@@ -308,7 +322,7 @@ export class InvoicingService {
           this.taxCalculator.computeLineTotals({
             quantity: item.quantity,
             unitPrice: item.unitPrice,
-            tvaRate,
+            tvaRate: rateFor(item),
           }),
         ),
         discountReason: dto.discountReason ?? invoice.discountReason ?? undefined,
@@ -318,20 +332,25 @@ export class InvoicingService {
 
       if (dto.lineItems !== undefined) {
         const lineItemRows = sourceLines.map((item) => {
+          const lineRate = rateFor(item);
           const totals = this.taxCalculator.computeLineTotals({
             quantity: item.quantity,
             unitPrice: item.unitPrice,
-            tvaRate,
+            tvaRate: lineRate,
           });
           return {
             description: item.description,
             quantity: item.quantity,
             unitPrice: item.unitPrice,
             type: item.type,
-            tvaRate,
+            tvaRate: lineRate,
             tvaAmount: totals.tvaAmount,
             total: totals.lineTotal,
             discountPct: item.discountPct ?? null,
+            partId: item.partId ?? null,
+            serviceCode: item.serviceCode ?? null,
+            mechanicId: item.mechanicId ?? null,
+            laborHours: item.laborHours ?? null,
           };
         });
         data.lineItems = {

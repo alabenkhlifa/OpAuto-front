@@ -50,6 +50,7 @@ export interface InvoiceLineItem {
   serviceCode?: string;
   mechanicId?: string;
   laborHours?: number;
+  tvaRate?: number;
   discountPercentage?: number;
   taxable: boolean;
 }
