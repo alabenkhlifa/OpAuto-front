@@ -178,4 +178,43 @@ describe('InvoiceDetailsComponent', () => {
     await fixture.whenStable();
     expect(cmp.progressPct()).toBe(0);
   });
+
+  it('Payment modal reopens cleanly on PARTIALLY_PAID — open → close → open bumps openKey', async () => {
+    configure(
+      makeInvoice({
+        status: 'partially-paid',
+        paidAmount: 50,
+        remainingAmount: 69,
+      }),
+    );
+    const fixture = TestBed.createComponent(InvoiceDetailsComponent);
+    const cmp = fixture.componentInstance;
+    cmp.ngOnInit();
+    await fixture.whenStable();
+
+    // Initial state — modal closed, key at 0.
+    expect(cmp.paymentModalOpen()).toBeFalse();
+    expect(cmp.paymentModalOpenKey()).toBe(0);
+
+    // First open.
+    cmp.openPaymentModal();
+    expect(cmp.paymentModalOpen()).toBeTrue();
+    expect(cmp.paymentModalOpenKey()).toBe(1);
+
+    // Close (cancel from modal).
+    cmp.onPaymentModalClose();
+    expect(cmp.paymentModalOpen()).toBeFalse();
+    expect(cmp.paymentModalOpenKey()).toBe(1);
+
+    // Second open — must bump openKey so the modal re-seeds even if its
+    // OnPush ngOnChanges already settled from the previous open.
+    cmp.openPaymentModal();
+    expect(cmp.paymentModalOpen()).toBeTrue();
+    expect(cmp.paymentModalOpenKey()).toBe(2);
+
+    // Third open after another close — keep climbing.
+    cmp.onPaymentModalClose();
+    cmp.openPaymentModal();
+    expect(cmp.paymentModalOpenKey()).toBe(3);
+  });
 });

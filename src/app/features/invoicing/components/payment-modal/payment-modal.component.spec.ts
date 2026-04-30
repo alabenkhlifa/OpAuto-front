@@ -121,4 +121,32 @@ describe('PaymentModalComponent', () => {
     expect(component.form.controls.reference.value).toBe('');
     expect(component.method()).toBe('cash');
   });
+
+  it('re-seeds the form when openKey is bumped (PARTIALLY_PAID reopen path)', () => {
+    // Simulates a partially-paid invoice reopen where the OnPush parent
+    // bumps openKey alongside flipping isOpen. The modal must reset even
+    // if `isOpen` previousValue/currentValue look stale.
+    component.context = ctx;
+    component.isOpen = true;
+    component.openKey = 1;
+    component.ngOnChanges({
+      isOpen: { currentValue: true, previousValue: false, firstChange: true, isFirstChange: () => true },
+      openKey: { currentValue: 1, previousValue: null, firstChange: true, isFirstChange: () => true },
+    } as any);
+    component.form.patchValue({ amount: 99, reference: 'stale-ref' });
+
+    // Parent reopens after a partial payment — only openKey changes ref;
+    // isOpen looks unchanged from the modal's perspective if a CD tick
+    // coalesced the toggle.
+    const ctx2: PaymentModalContext = { ...ctx, remainingAmount: 42 };
+    component.context = ctx2;
+    component.openKey = 2;
+    component.ngOnChanges({
+      openKey: { currentValue: 2, previousValue: 1, firstChange: false, isFirstChange: () => false },
+      context: { currentValue: ctx2, previousValue: ctx, firstChange: false, isFirstChange: () => false },
+    } as any);
+
+    expect(component.form.controls.amount.value).toBe(42);
+    expect(component.form.controls.reference.value).toBe('');
+  });
 });

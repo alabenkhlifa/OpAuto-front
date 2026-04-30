@@ -127,20 +127,32 @@ export class CreditNoteFormPageComponent implements OnInit {
         invoiceId: inv.id,
         reason: this.form.value.reason ?? '',
         restockParts: !!this.form.value.restockParts,
-        lineItems: selectedLines.map((l) => ({
-          type: l.type,
-          description: l.description,
-          quantity: l.selectedQty,
-          unit: l.unit,
-          unitPrice: l.unitPrice,
-          totalPrice: l.unitPrice * l.selectedQty,
-          partId: l.partId,
-          serviceCode: l.serviceCode,
-          mechanicId: l.mechanicId,
-          laborHours: l.laborHours,
-          discountPercentage: l.discountPercentage,
-          taxable: l.taxable,
-        })),
+        lineItems: selectedLines.map((l) => {
+          const lAny = l as any;
+          // Carry through the source invoice's per-line tvaRate so the
+          // credit note recomputes against the same VAT slice.
+          const tvaRate =
+            typeof lAny.tvaRate === 'number'
+              ? lAny.tvaRate
+              : l.taxable === false
+              ? 0
+              : (inv as any).taxRate ?? 19;
+          return {
+            type: l.type,
+            description: l.description,
+            quantity: l.selectedQty,
+            unit: l.unit,
+            unitPrice: l.unitPrice,
+            totalPrice: l.unitPrice * l.selectedQty,
+            partId: l.partId,
+            serviceCode: l.serviceCode,
+            mechanicId: l.mechanicId,
+            laborHours: l.laborHours,
+            discountPercentage: l.discountPercentage,
+            taxable: l.taxable,
+            tvaRate,
+          };
+        }),
       })
       .subscribe({
         next: () => {

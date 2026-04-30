@@ -30,6 +30,10 @@ export interface CreateCreditNoteRequest {
   invoiceId: string;
   reason: string;
   restockParts: boolean;
-  /** Subset of source invoice line items (caller picks which to credit). */
-  lineItems: Array<Omit<InvoiceLineItem, 'id'>>;
+  /**
+   * Subset of source invoice line items (caller picks which to credit).
+   * `tvaRate` is optional here — when omitted the service maps from the
+   * legacy `taxable` flag, falling back to the garage default (19).
+   */
+  lineItems: Array<Omit<InvoiceLineItem, 'id'> & { tvaRate?: number }>;
 }

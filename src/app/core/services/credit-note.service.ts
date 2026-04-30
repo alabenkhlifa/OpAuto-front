@@ -9,6 +9,12 @@ import {
 import { InvoiceLineItem, LineItemType } from '../models/invoice.model';
 
 /**
+ * Default Tunisian TVA rate when a credit note line doesn't carry an
+ * explicit rate. Backend DTO requires `tvaRate` on every credit-note line.
+ */
+const DEFAULT_TVA_RATE = 19;
+
+/**
  * CreditNoteService — thin HTTP wrapper around `/credit-notes`.
  * Backend already implements POST/GET endpoints (Phase 1.6).
  */
@@ -36,8 +42,47 @@ export class CreditNoteService {
 
   create(payload: CreateCreditNoteRequest): Observable<CreditNoteWithDetails> {
     return this.http
-      .post<unknown>(this.baseUrl, payload)
+      .post<unknown>(this.baseUrl, this.mapToBackend(payload))
       .pipe(map((b) => this.mapFromBackend(b)));
+  }
+
+  /**
+   * Strip legacy frontend fields (`unit`, `totalPrice`, `taxable`) and add the
+   * backend-required `tvaRate`. Backend whitelists CreateCreditNoteDto +
+   * CreditNoteLineItemDto; anything else trips a 400.
+   *
+   * @see opauto-backend/src/invoicing/dto/create-credit-note.dto.ts
+   * @see opauto-backend/src/invoicing/dto/credit-note-line-item.dto.ts
+   */
+  private mapToBackend(f: CreateCreditNoteRequest): any {
+    return {
+      invoiceId: f.invoiceId,
+      reason: f.reason,
+      restockParts: f.restockParts,
+      lineItems: f.lineItems.map((li) => {
+        const liAny = li as any;
+        const tvaRate =
+          typeof liAny.tvaRate === 'number'
+            ? liAny.tvaRate
+            : liAny.taxable === false
+            ? 0
+            : DEFAULT_TVA_RATE;
+        const out: any = {
+          description: li.description,
+          quantity: li.quantity,
+          unitPrice: li.unitPrice,
+          tvaRate,
+        };
+        if (li.type !== undefined) out.type = li.type;
+        if (li.partId !== undefined) out.partId = li.partId;
+        if (li.serviceCode !== undefined) out.serviceCode = li.serviceCode;
+        if (li.mechanicId !== undefined) out.mechanicId = li.mechanicId;
+        if (li.laborHours !== undefined) out.laborHours = li.laborHours;
+        if (li.discountPercentage !== undefined)
+          out.discountPct = li.discountPercentage;
+        return out;
+      }),
+    };
   }
 
   pdfUrl(id: string): string {

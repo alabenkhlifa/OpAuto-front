@@ -52,6 +52,14 @@ export class PaymentModalComponent implements OnChanges {
   @Input() isOpen = false;
   @Input() context: PaymentModalContext | null = null;
   @Input() submitting = false;
+  /**
+   * Optional monotonically-increasing key. When the parent increments this
+   * each time it intends to re-open the modal, the modal treats it as a
+   * fresh "intent" and re-seeds the form even if `isOpen` didn't transition
+   * cleanly (e.g. parent flipped it false→true within a single CD tick, or
+   * the OnPush change detector coalesced the toggles).
+   */
+  @Input() openKey: number | null = null;
 
   @Output() close = new EventEmitter<void>();
   @Output() submit = new EventEmitter<PaymentModalResult>();
@@ -76,15 +84,25 @@ export class PaymentModalComponent implements OnChanges {
     // Reset whenever the modal transitions to open — guarantees a clean
     // state on the second (and Nth) reopen even if the parent reuses the
     // same context reference. Also resets when the context is swapped
-    // mid-open (e.g. switching invoices).
+    // mid-open (e.g. switching invoices) or when the parent bumps
+    // `openKey` to signal a fresh open intent (the partially-paid reopen
+    // path uses the latter so it doesn't depend on coalesced OnPush ticks).
     const openedNow =
       changes['isOpen'] &&
       changes['isOpen'].currentValue === true &&
       changes['isOpen'].previousValue !== true;
+    const openKeyBumped =
+      changes['openKey'] &&
+      changes['openKey'].currentValue != null &&
+      changes['openKey'].currentValue !== changes['openKey'].previousValue;
     const contextChanged =
       changes['context'] &&
       changes['context'].currentValue !== changes['context'].previousValue;
-    if ((openedNow || contextChanged) && this.isOpen && this.context) {
+    if (
+      (openedNow || openKeyBumped || contextChanged) &&
+      this.isOpen &&
+      this.context
+    ) {
       this.method.set('cash');
       this.form.reset({
         amount: this.context.remainingAmount,

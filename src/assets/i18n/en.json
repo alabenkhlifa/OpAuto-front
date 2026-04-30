@@ -2177,7 +2177,10 @@
         "newInvoice": "New invoice",
         "newQuote": "New quote",
         "newCreditNote": "New credit note"
-      }
+      },
+      "selectCustomer": "Select a customer",
+      "selectVehicle": "Select a vehicle",
+      "notesPlaceholder": "Optional notes for the customer..."
     },
     "dashboardPage": {
       "quick": {

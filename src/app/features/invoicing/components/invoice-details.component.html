@@ -305,6 +305,7 @@
       [isOpen]="paymentModalOpen()"
       [submitting]="paymentSubmitting()"
       [context]="paymentContext()"
+      [openKey]="paymentModalOpenKey()"
       (close)="onPaymentModalClose()"
       (submit)="onPaymentModalSubmit($event)">
     </app-payment-modal>

@@ -87,6 +87,13 @@ export class InvoiceDetailsComponent implements OnInit {
   // Modals
   readonly paymentModalOpen = signal(false);
   readonly paymentSubmitting = signal(false);
+  /**
+   * Monotonic key bumped on every `openPaymentModal()` call. Passed to the
+   * payment modal so that each open is treated as a fresh intent — fixes
+   * the PARTIALLY_PAID reopen case where re-binding `isOpen` alone wasn't
+   * enough to retrigger ngOnChanges-driven form reset under OnPush.
+   */
+  readonly paymentModalOpenKey = signal(0);
   readonly sendModalOpen = signal(false);
   readonly sendSubmitting = signal(false);
 
@@ -308,6 +315,10 @@ export class InvoiceDetailsComponent implements OnInit {
   }
 
   openPaymentModal(): void {
+    // Bump the key BEFORE flipping `isOpen` so the modal sees both changes
+    // in the same CD tick when reopening (fixes the partially-paid reopen
+    // path where the previous close had already settled state).
+    this.paymentModalOpenKey.update((k) => k + 1);
     this.paymentModalOpen.set(true);
   }
 

@@ -265,6 +265,7 @@ export class QuoteFormPageComponent implements OnInit {
       laborHours: l.laborHours,
       discountPercentage: l.discountPct || undefined,
       taxable: l.tvaRate > 0,
+      tvaRate: l.tvaRate,
     }));
     this.isSubmitting.set(true);
     this.quoteService

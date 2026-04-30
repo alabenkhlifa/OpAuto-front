@@ -12,6 +12,12 @@ import {
 import { InvoiceLineItem, LineItemType } from '../models/invoice.model';
 
 /**
+ * Default Tunisian TVA rate when the form / line doesn't specify one.
+ * Backend resolves the same default from `garage.defaultTvaRate`.
+ */
+const DEFAULT_TVA_RATE = 19;
+
+/**
  * QuoteService — thin HTTP wrapper around `/quotes`. Mirrors the shape
  * of InvoiceService but for the devis (quote) resource.
  */
@@ -140,38 +146,52 @@ export class QuoteService {
     };
   }
 
+  /**
+   * Map a frontend CreateQuoteRequest / UpdateQuoteRequest to the strict
+   * backend CreateQuoteDto / UpdateQuoteDto shape. The backend whitelists
+   * its DTO via class-validator, so we MUST drop legacy fields like
+   * `status`, `issueDate`, `currency`, `discountPercentage`, `unit`,
+   * `totalPrice`, `taxable` — anything not in the DTO triggers a 400.
+   *
+   * @see opauto-backend/src/invoicing/dto/create-quote.dto.ts
+   * @see opauto-backend/src/invoicing/dto/quote-line-item.dto.ts
+   */
   private mapToBackend(f: Partial<CreateQuoteRequest | UpdateQuoteRequest>): any {
     const payload: any = {};
     if (f.customerId !== undefined) payload.customerId = f.customerId;
     if (f.carId !== undefined) payload.carId = f.carId;
-    if (f.status !== undefined) payload.status = f.status;
     if (f.validUntil !== undefined) {
       payload.validUntil =
         f.validUntil instanceof Date ? f.validUntil.toISOString() : f.validUntil;
     }
-    if (f.issueDate !== undefined) {
-      payload.issueDate =
-        f.issueDate instanceof Date ? f.issueDate.toISOString() : f.issueDate;
-    }
-    if (f.currency !== undefined) payload.currency = f.currency;
-    if (f.discountPercentage !== undefined)
-      payload.discountPercentage = f.discountPercentage;
     if (f.notes !== undefined) payload.notes = f.notes;
     if (f.lineItems !== undefined) {
-      payload.lineItems = f.lineItems.map((li) => ({
-        type: li.type,
-        description: li.description,
-        quantity: li.quantity,
-        unit: li.unit,
-        unitPrice: li.unitPrice,
-        totalPrice: li.totalPrice,
-        partId: li.partId,
-        serviceCode: li.serviceCode,
-        mechanicId: li.mechanicId,
-        laborHours: li.laborHours,
-        discountPercentage: li.discountPercentage,
-        taxable: li.taxable,
-      }));
+      payload.lineItems = f.lineItems.map((li) => {
+        const liAny = li as any;
+        // tvaRate may live on the line itself (new contract) or be inferred
+        // from the legacy `taxable` flag (old shape) — fall back to the
+        // garage default of 19 when neither is set.
+        const tvaRate =
+          typeof liAny.tvaRate === 'number'
+            ? liAny.tvaRate
+            : liAny.taxable === false
+            ? 0
+            : DEFAULT_TVA_RATE;
+        const out: any = {
+          description: li.description,
+          quantity: li.quantity,
+          unitPrice: li.unitPrice,
+          tvaRate,
+        };
+        if (li.type !== undefined) out.type = li.type;
+        if (li.partId !== undefined) out.partId = li.partId;
+        if (li.serviceCode !== undefined) out.serviceCode = li.serviceCode;
+        if (li.mechanicId !== undefined) out.mechanicId = li.mechanicId;
+        if (li.laborHours !== undefined) out.laborHours = li.laborHours;
+        if (li.discountPercentage !== undefined)
+          out.discountPct = li.discountPercentage;
+        return out;
+      });
     }
     return payload;
   }

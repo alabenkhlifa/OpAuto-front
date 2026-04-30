@@ -45,6 +45,12 @@ export interface QuoteWithDetails extends Quote {
   licensePlate: string;
 }
 
+/**
+ * Quote line items on the wire carry an optional per-line `tvaRate` so
+ * the backend can recompute totals against the right VAT slice. The base
+ * `InvoiceLineItem` type is shared with invoices and doesn't include it,
+ * so we widen the request line shape here.
+ */
 export type CreateQuoteRequest = Omit<
   Quote,
   | 'id'
@@ -56,8 +62,13 @@ export type CreateQuoteRequest = Omit<
   | 'discountAmount'
   | 'totalAmount'
   | 'convertedToInvoiceId'
->;
+  | 'lineItems'
+> & {
+  lineItems: Array<InvoiceLineItem & { tvaRate?: number }>;
+};
 
 export type UpdateQuoteRequest = Partial<
-  Omit<Quote, 'id' | 'quoteNumber' | 'createdAt' | 'updatedAt'>
->;
+  Omit<Quote, 'id' | 'quoteNumber' | 'createdAt' | 'updatedAt' | 'lineItems'>
+> & {
+  lineItems?: Array<InvoiceLineItem & { tvaRate?: number }>;
+};

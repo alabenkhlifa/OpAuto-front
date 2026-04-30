@@ -2221,7 +2221,10 @@
         "newInvoice": "فاتورة جديدة",
         "newQuote": "عرض سعر جديد",
         "newCreditNote": "إشعار دائن جديد"
-      }
+      },
+      "selectCustomer": "اختر عميلاً",
+      "selectVehicle": "اختر مركبة",
+      "notesPlaceholder": "ملاحظات اختيارية للعميل..."
     },
     "dashboardPage": {
       "quick": {

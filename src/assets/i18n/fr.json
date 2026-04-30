@@ -2219,7 +2219,10 @@
         "newInvoice": "Nouvelle facture",
         "newQuote": "Nouveau devis",
         "newCreditNote": "Nouvel avoir"
-      }
+      },
+      "selectCustomer": "Sélectionner un client",
+      "selectVehicle": "Sélectionner un véhicule",
+      "notesPlaceholder": "Notes facultatives pour le client..."
     },
     "dashboardPage": {
       "quick": {
