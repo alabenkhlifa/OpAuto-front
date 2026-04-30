@@ -1,0 +1,47 @@
+.quote-form-page__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-text-primary, #111827);
+  margin: 0 0 1rem;
+}
+
+.quote-form-page__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .quote-form-page__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.quote-form-page__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary, #4b5563);
+}
+
+.quote-form-page__field--full {
+  grid-column: 1 / -1;
+}
+
+.quote-form-page__field .form-input,
+.quote-form-page__field .form-select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: var(--color-text-primary, #111827);
+}
+
+.quote-form-page__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}

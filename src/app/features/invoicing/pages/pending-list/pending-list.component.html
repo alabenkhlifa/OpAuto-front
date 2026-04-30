@@ -1,0 +1,49 @@
+<div class="pending-list-page">
+  <div class="glass-card">
+    <div class="pending-list-page__header">
+      <h2 class="pending-list-page__title">
+        {{ 'invoicing.pending.title' | translate }}
+      </h2>
+      <span class="badge badge-pending">
+        {{ 'invoicing.pending.invoices' | translate:{ count: pendingInvoices().length } }}
+      </span>
+    </div>
+
+    @if (pendingInvoices().length === 0 && !isLoading()) {
+      <div class="pending-list-page__empty">
+        <h3>{{ 'invoicing.pending.allCaughtUp' | translate }}</h3>
+        <p>{{ 'invoicing.pending.noPendingPayments' | translate }}</p>
+      </div>
+    }
+
+    <ul class="pending-list-page__rows">
+      @for (invoice of pendingInvoices(); track invoice.id) {
+        <li class="pending-row">
+          <div class="pending-row__main">
+            <h4 class="pending-row__number">{{ invoice.invoiceNumber }}</h4>
+            <p class="pending-row__sub">
+              {{ invoice.customerName }} — {{ invoice.licensePlate }}
+            </p>
+          </div>
+          <div class="pending-row__amount">
+            <p class="pending-row__total">{{ formatCurrency(invoice.remainingAmount) }}</p>
+            <p class="pending-row__due"
+               [class.pending-row__due--overdue]="isOverdue(invoice)">
+              {{ 'invoicing.pending.due' | translate }} {{ formatDate(invoice.dueDate) }}
+              @if (isOverdue(invoice)) {
+                <span>({{ getDaysOverdue(invoice.dueDate) }} {{ 'invoicing.list.daysOverdue' | translate }})</span>
+              }
+            </p>
+          </div>
+          <div class="pending-row__actions">
+            <button type="button"
+                    class="btn-tertiary btn-sm"
+                    (click)="navigateToDetail(invoice)">
+              {{ 'invoicing.pending.viewDetails' | translate }}
+            </button>
+          </div>
+        </li>
+      }
+    </ul>
+  </div>
+</div>

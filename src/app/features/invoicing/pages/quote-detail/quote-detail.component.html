@@ -1,0 +1,86 @@
+<div class="quote-detail-page">
+  @if (quote(); as q) {
+    <div class="glass-card">
+      <div class="quote-detail-page__header">
+        <div>
+          <h1 class="quote-detail-page__number">{{ q.quoteNumber }}</h1>
+          <p class="quote-detail-page__sub">
+            {{ q.customerName }} — {{ q.licensePlate }}
+          </p>
+        </div>
+        <div class="quote-detail-page__badges">
+          <span class="badge" [class]="getStatusBadgeClass(q.status)">
+            {{ getStatusLabel(q.status) }}
+          </span>
+          @if (isExpired() && q.status === 'SENT') {
+            <span class="badge badge-priority-urgent">
+              {{ 'invoicing.quotes.detail.expired' | translate }}
+            </span>
+          }
+        </div>
+      </div>
+
+      <div class="quote-detail-page__meta">
+        <div>
+          <p class="quote-detail-page__meta-label">
+            {{ 'invoicing.quotes.detail.issueDate' | translate }}
+          </p>
+          <p class="quote-detail-page__meta-value">{{ formatDate(q.issueDate) }}</p>
+        </div>
+        <div>
+          <p class="quote-detail-page__meta-label">
+            {{ 'invoicing.quotes.detail.validUntil' | translate }}
+          </p>
+          <p class="quote-detail-page__meta-value">{{ formatDate(q.validUntil) }}</p>
+        </div>
+        <div>
+          <p class="quote-detail-page__meta-label">
+            {{ 'invoicing.quotes.detail.total' | translate }}
+          </p>
+          <p class="quote-detail-page__meta-value quote-detail-page__meta-value--strong">
+            {{ formatCurrency(q.totalAmount) }}
+          </p>
+        </div>
+      </div>
+
+      <div class="quote-detail-page__actions">
+        @if (q.status === 'DRAFT') {
+          <button type="button" class="btn-primary" (click)="send()" [disabled]="busy()">
+            {{ 'invoicing.quotes.detail.send' | translate }}
+          </button>
+        }
+        @if (q.status === 'SENT') {
+          <button type="button" class="btn-success" (click)="approve()" [disabled]="busy()">
+            {{ 'invoicing.quotes.detail.approve' | translate }}
+          </button>
+          <button type="button" class="btn-danger" (click)="reject()" [disabled]="busy()">
+            {{ 'invoicing.quotes.detail.reject' | translate }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="glass-card">
+      <h3 class="quote-detail-page__section-title">
+        {{ 'invoicing.quotes.detail.lineItems' | translate }}
+      </h3>
+      <ul class="line-items-list">
+        @for (li of q.lineItems; track li.id) {
+          <li class="line-item">
+            <div class="line-item__main">
+              <p class="line-item__description">{{ li.description }}</p>
+              <p class="line-item__meta">
+                {{ li.quantity }} × {{ formatCurrency(li.unitPrice) }}
+              </p>
+            </div>
+            <p class="line-item__total">{{ formatCurrency(li.totalPrice) }}</p>
+          </li>
+        }
+      </ul>
+    </div>
+  } @else if (!isLoading()) {
+    <div class="glass-card">
+      <p>{{ 'invoicing.quotes.detail.notFound' | translate }}</p>
+    </div>
+  }
+</div>

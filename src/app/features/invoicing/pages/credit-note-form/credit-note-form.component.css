@@ -1,0 +1,102 @@
+.credit-note-form-page__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-text-primary, #111827);
+  margin: 0 0 0.5rem;
+}
+
+.credit-note-form-page__sub {
+  margin: 0 0 1rem;
+  color: var(--color-text-secondary, #4b5563);
+}
+
+.credit-note-form-page__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary, #4b5563);
+}
+
+.credit-note-form-page__field .form-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: var(--color-text-primary, #111827);
+}
+
+.credit-note-form-page__checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.credit-note-form-page__section {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-primary, #111827);
+  margin: 0.5rem 0;
+}
+
+.credit-note-lines {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.credit-note-line {
+  display: grid;
+  grid-template-columns: auto 1fr 100px 100px;
+  gap: 0.625rem;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.credit-note-line__description {
+  font-weight: 500;
+  margin: 0;
+  color: var(--color-text-primary, #111827);
+}
+
+.credit-note-line__meta {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary, #4b5563);
+}
+
+.credit-note-line__qty {
+  width: 100%;
+}
+
+.credit-note-line__total {
+  font-weight: 600;
+  margin: 0;
+  text-align: right;
+  color: var(--color-text-primary, #111827);
+}
+
+.credit-note-form-page__total {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.625rem 0.75rem;
+  background: rgba(255, 132, 0, 0.08);
+  border-radius: 8px;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+.credit-note-form-page__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}

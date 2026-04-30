@@ -1,0 +1,26 @@
+<div class="reports-page">
+  <section id="ar-aging" class="reports-page__section">
+    <app-ar-aging></app-ar-aging>
+  </section>
+
+  <section id="z-report" class="reports-page__section">
+    <app-z-report></app-z-report>
+  </section>
+
+  <section id="accountant-export" class="reports-page__section">
+    <div class="glass-card">
+      <h3 class="reports-page__title">
+        {{ 'invoicing.reports.accountantExport.title' | translate }}
+      </h3>
+      <p class="reports-page__hint">
+        {{ 'invoicing.reports.accountantExport.description' | translate }}
+      </p>
+      <a class="btn-primary"
+         [href]="exportUrl()"
+         target="_blank"
+         rel="noopener">
+        {{ 'invoicing.reports.accountantExport.download' | translate }} ({{ currentMonth }})
+      </a>
+    </div>
+  </section>
+</div>

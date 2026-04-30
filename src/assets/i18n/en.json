@@ -11,6 +11,7 @@
     "filters": "Filters",
     "clear": "Clear",
     "submit": "Submit",
+    "saving": "Saving…",
     "confirm": "Confirm",
     "back": "Back",
     "close": "Close",
@@ -2126,7 +2127,179 @@
           "CHECK": "Check",
           "MOBILE_PAYMENT": "Mobile payment"
         }
+      },
+      "accountantExport": {
+        "title": "Accountant CSV export",
+        "description": "Monthly journal export for the accountant — date, invoice #, customer MF, HT, TVA breakdown, TTC, payment method.",
+        "download": "Download CSV"
       }
+    },
+    "subnav": {
+      "ariaLabel": "Invoicing sections",
+      "dashboard": "Dashboard",
+      "quotes": "Quotes",
+      "invoices": "Invoices",
+      "creditNotes": "Credit notes",
+      "pending": "Pending",
+      "reports": "Reports",
+      "settings": "Settings"
+    },
+    "create": {
+      "menu": {
+        "button": "+ New",
+        "newInvoice": "New invoice",
+        "newQuote": "New quote",
+        "newCreditNote": "New credit note"
+      }
+    },
+    "dashboardPage": {
+      "quick": {
+        "newInvoice": {
+          "title": "New invoice",
+          "description": "Create a new invoice for a customer."
+        },
+        "newQuote": {
+          "title": "New quote",
+          "description": "Draft a quote (devis) before invoicing."
+        },
+        "recordPayment": {
+          "title": "Record payment",
+          "description": "Log a cash, card, check, or transfer payment."
+        },
+        "arAging": {
+          "title": "AR aging",
+          "description": "View outstanding receivables by age bucket."
+        }
+      },
+      "urgent": {
+        "title": "{{count}} overdue · {{amount}} outstanding",
+        "description": "Some invoices are past their due date — review them now.",
+        "review": "Review"
+      },
+      "kpi": {
+        "revenueThisMonth": "Revenue this month",
+        "outstandingAr": "Outstanding AR",
+        "quotesPending": "Quotes pending",
+        "creditNotesThisMonth": "Credit notes this month"
+      },
+      "recent": {
+        "title": "Recent invoices",
+        "viewAll": "View all",
+        "empty": "No invoices yet."
+      },
+      "topCustomers": {
+        "title": "Top customers",
+        "subtitle": "Last 30 days",
+        "empty": "No revenue in the last 30 days."
+      },
+      "agingChart": {
+        "title": "AR aging",
+        "total": "Total",
+        "empty": "No outstanding receivables."
+      },
+      "aging": {
+        "current": "Current",
+        "b1": "1–30 days",
+        "b2": "31–60 days",
+        "b3": "61–90 days",
+        "b4": "90+ days"
+      }
+    },
+    "quotes": {
+      "list": {
+        "title": "Quotes",
+        "newQuote": "New quote",
+        "allStatuses": "All statuses",
+        "validUntil": "Valid until",
+        "expiredBadge": "Expired",
+        "empty": "No quotes yet",
+        "emptyDescription": "Create your first quote to send a price proposal before invoicing."
+      },
+      "form": {
+        "title": "New quote",
+        "customer": "Customer",
+        "vehicle": "Vehicle",
+        "validUntil": "Valid until",
+        "description": "Description",
+        "quantity": "Quantity",
+        "unitPrice": "Unit price",
+        "notes": "Notes",
+        "submit": "Save quote",
+        "created": "Quote created",
+        "createFailed": "Could not create quote"
+      },
+      "detail": {
+        "issueDate": "Issue date",
+        "validUntil": "Valid until",
+        "total": "Total",
+        "expired": "Expired",
+        "send": "Send quote",
+        "approve": "Approve & convert",
+        "reject": "Reject",
+        "lineItems": "Line items",
+        "notFound": "Quote not found.",
+        "loadFailed": "Could not load quote",
+        "sent": "Quote sent",
+        "sendFailed": "Could not send quote",
+        "approved": "Quote approved — invoice created",
+        "approveFailed": "Could not approve quote",
+        "rejected": "Quote rejected",
+        "rejectFailed": "Could not reject quote"
+      },
+      "status": {
+        "draft": "Draft",
+        "sent": "Sent",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "expired": "Expired"
+      }
+    },
+    "creditNotes": {
+      "list": {
+        "title": "Credit notes",
+        "newCreditNote": "New credit note",
+        "sourceInvoice": "Invoice",
+        "restocked": "Restocked",
+        "empty": "No credit notes yet",
+        "emptyDescription": "Issue a credit note from an invoice's detail page when you need to refund or restock parts."
+      },
+      "form": {
+        "title": "New credit note",
+        "sourceInvoice": "Source invoice",
+        "reason": "Reason",
+        "reasonPlaceholder": "Customer return, billing error, …",
+        "restockParts": "Return parts to inventory",
+        "linesToCredit": "Lines to credit",
+        "original": "Original",
+        "totalCredit": "Total credit",
+        "submit": "Issue credit note",
+        "loading": "Loading source invoice…",
+        "loadFailed": "Could not load source invoice",
+        "selectAtLeastOne": "Select at least one line to credit",
+        "created": "Credit note issued",
+        "createFailed": "Could not issue credit note"
+      }
+    },
+    "partPicker": {
+      "placeholder": "Search parts…",
+      "noResults": "No parts found",
+      "inStock": "{{count}} in stock",
+      "outOfStock": "Out of stock"
+    },
+    "paymentModal": {
+      "title": "Record payment",
+      "remaining": "Remaining",
+      "method": "Method",
+      "amount": "Amount",
+      "date": "Date",
+      "reference": "Reference",
+      "referencePlaceholder": "Check #, transaction id…",
+      "notes": "Notes",
+      "submit": "Record payment"
+    },
+    "templates": {
+      "title": "Templates",
+      "comingSoon": "Reusable invoice templates are coming soon."
     }
   },
   "approvals": {

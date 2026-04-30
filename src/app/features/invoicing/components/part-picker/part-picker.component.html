@@ -1,0 +1,49 @@
+<div class="part-picker">
+  <input type="text"
+         class="part-picker__input"
+         [value]="query()"
+         (input)="onInput($any($event.target).value)"
+         (focus)="onFocus()"
+         (blur)="onBlur()"
+         [placeholder]="'invoicing.partPicker.placeholder' | translate"
+         autocomplete="off" />
+
+  @if (isOpen() && !loading()) {
+    <ul class="part-picker__dropdown" role="listbox">
+      @if (results().length === 0) {
+        <li class="part-picker__empty">
+          {{ 'invoicing.partPicker.noResults' | translate }}
+        </li>
+      } @else {
+        @for (entry of results(); track entry.id) {
+          <li class="part-picker__item"
+              role="option"
+              (mousedown)="pick(entry)">
+            <div class="part-picker__main">
+              <span class="part-picker__name">{{ entry.name }}</span>
+              <span class="part-picker__sub">
+                {{ entry.partNumber }}{{ entry.brand ? ' · ' + entry.brand : '' }}
+              </span>
+            </div>
+            <div class="part-picker__meta">
+              <span class="part-picker__price">{{ entry.price | number:'1.2-2' }} TND</span>
+              @if (isOutOfStock(entry)) {
+                <span class="badge badge-out-of-stock">
+                  {{ 'invoicing.partPicker.outOfStock' | translate }}
+                </span>
+              } @else if (isLowStock(entry)) {
+                <span class="badge badge-low-stock">
+                  {{ 'invoicing.partPicker.inStock' | translate:{ count: entry.stockLevel } }}
+                </span>
+              } @else {
+                <span class="badge badge-in-stock">
+                  {{ 'invoicing.partPicker.inStock' | translate:{ count: entry.stockLevel } }}
+                </span>
+              }
+            </div>
+          </li>
+        }
+      }
+    </ul>
+  }
+</div>

@@ -50,27 +50,67 @@ const routes: Routes = [
   {
     path: 'invoices',
     loadComponent: () => import('./features/invoicing/invoicing.component').then(m => m.InvoicingComponent),
-    canActivate: [authGuard, ownerGuard, moduleGuard('invoicing')]
-  },
-  {
-    path: 'invoices/create',
-    loadComponent: () => import('./features/invoicing/components/invoice-form.component').then(m => m.InvoiceFormComponent),
-    canActivate: [authGuard, ownerGuard, moduleGuard('invoicing')]
-  },
-  {
-    path: 'invoices/edit/:id',
-    loadComponent: () => import('./features/invoicing/components/invoice-form.component').then(m => m.InvoiceFormComponent),
-    canActivate: [authGuard, ownerGuard, moduleGuard('invoicing')]
-  },
-  {
-    path: 'invoices/pending',
-    loadComponent: () => import('./features/invoicing/invoicing.component').then(m => m.InvoicingComponent),
-    canActivate: [authGuard, ownerGuard, moduleGuard('invoicing')]
-  },
-  {
-    path: 'invoices/:id',
-    loadComponent: () => import('./features/invoicing/components/invoice-details.component').then(m => m.InvoiceDetailsComponent),
-    canActivate: [authGuard, ownerGuard, moduleGuard('invoicing')]
+    canActivate: [authGuard, ownerGuard, moduleGuard('invoicing')],
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        loadComponent: () => import('./features/invoicing/pages/dashboard/dashboard.component').then(m => m.InvoicingDashboardComponent)
+      },
+      {
+        path: 'list',
+        loadComponent: () => import('./features/invoicing/pages/invoice-list/invoice-list.component').then(m => m.InvoiceListPageComponent)
+      },
+      {
+        path: 'pending',
+        loadComponent: () => import('./features/invoicing/pages/pending-list/pending-list.component').then(m => m.PendingListPageComponent)
+      },
+      {
+        path: 'quotes',
+        loadComponent: () => import('./features/invoicing/pages/quote-list/quote-list.component').then(m => m.QuoteListPageComponent)
+      },
+      {
+        path: 'quotes/new',
+        loadComponent: () => import('./features/invoicing/pages/quote-form/quote-form.component').then(m => m.QuoteFormPageComponent)
+      },
+      {
+        path: 'quotes/:id',
+        loadComponent: () => import('./features/invoicing/pages/quote-detail/quote-detail.component').then(m => m.QuoteDetailPageComponent)
+      },
+      {
+        path: 'credit-notes',
+        loadComponent: () => import('./features/invoicing/pages/credit-note-list/credit-note-list.component').then(m => m.CreditNoteListPageComponent)
+      },
+      {
+        path: 'credit-notes/new',
+        loadComponent: () => import('./features/invoicing/pages/credit-note-form/credit-note-form.component').then(m => m.CreditNoteFormPageComponent)
+      },
+      {
+        path: 'reports',
+        loadComponent: () => import('./features/invoicing/pages/reports/reports.component').then(m => m.InvoicingReportsPageComponent)
+      },
+      {
+        path: 'templates',
+        loadComponent: () => import('./features/invoicing/pages/templates/templates.component').then(m => m.InvoicingTemplatesPageComponent)
+      },
+      {
+        path: 'settings',
+        redirectTo: '/settings',
+        pathMatch: 'full'
+      },
+      {
+        path: 'create',
+        loadComponent: () => import('./features/invoicing/components/invoice-form.component').then(m => m.InvoiceFormComponent)
+      },
+      {
+        path: 'edit/:id',
+        loadComponent: () => import('./features/invoicing/components/invoice-form.component').then(m => m.InvoiceFormComponent)
+      },
+      {
+        path: ':id',
+        loadComponent: () => import('./features/invoicing/components/invoice-details.component').then(m => m.InvoiceDetailsComponent)
+      }
+    ]
   },
   {
     path: 'customers',

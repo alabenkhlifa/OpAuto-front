@@ -102,9 +102,12 @@ export class SidebarComponent implements OnInit, OnDestroy {
       ownerOnly: true,
       requiresModule: 'invoicing',
       children: [
-        { id: 'invoices-list', label: 'All Invoices', translationKey: 'invoicing.navigation.allInvoices', icon: 'list', route: '/invoices' },
-        { id: 'invoices-create', label: 'Create Invoice', translationKey: 'invoicing.navigation.createInvoice', icon: 'plus', route: '/invoices/create' },
-        { id: 'invoices-pending', label: 'Pending Payment', translationKey: 'invoicing.navigation.pendingPayment', icon: 'clock', route: '/invoices/pending' }
+        { id: 'invoices-dashboard', label: 'Dashboard', translationKey: 'invoicing.subnav.dashboard', icon: 'dashboard', route: '/invoices' },
+        { id: 'invoices-quotes', label: 'Quotes', translationKey: 'invoicing.subnav.quotes', icon: 'list', route: '/invoices/quotes' },
+        { id: 'invoices-list', label: 'All Invoices', translationKey: 'invoicing.subnav.invoices', icon: 'list', route: '/invoices/list' },
+        { id: 'invoices-credit-notes', label: 'Credit Notes', translationKey: 'invoicing.subnav.creditNotes', icon: 'list', route: '/invoices/credit-notes' },
+        { id: 'invoices-pending', label: 'Pending Payment', translationKey: 'invoicing.subnav.pending', icon: 'clock', route: '/invoices/pending' },
+        { id: 'invoices-reports', label: 'Reports', translationKey: 'invoicing.subnav.reports', icon: 'chart', route: '/invoices/reports' }
       ]
     },
     {
@@ -247,6 +250,16 @@ export class SidebarComponent implements OnInit, OnDestroy {
             ? invs.filter((i: any) => i.status === 'SENT' || i.status === 'VIEWED').length
             : 0;
           this.badgeCounts.update(c => ({ ...c, 'invoices-pending': pending }));
+        },
+        error: () => {}
+      });
+      // Quotes badge: number of SENT (awaiting customer reply) quotes.
+      this.http.get<any[]>('/quotes').subscribe({
+        next: (quotes) => {
+          const pending = Array.isArray(quotes)
+            ? quotes.filter((q: any) => q.status === 'SENT').length
+            : 0;
+          this.badgeCounts.update(c => ({ ...c, 'invoices-quotes': pending }));
         },
         error: () => {}
       });

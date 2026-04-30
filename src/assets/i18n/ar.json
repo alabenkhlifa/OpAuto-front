@@ -11,6 +11,7 @@
     "filters": "مرشحات",
     "clear": "مسح",
     "submit": "إرسال",
+    "saving": "جاري الحفظ…",
     "confirm": "تأكيد",
     "back": "رجوع",
     "close": "إغلاق",
@@ -2170,7 +2171,179 @@
           "CHECK": "شيك",
           "MOBILE_PAYMENT": "دفع عبر الجوال"
         }
+      },
+      "accountantExport": {
+        "title": "تصدير CSV للمحاسب",
+        "description": "تصدير شهري للمحاسب — التاريخ، رقم الفاتورة، رقم MF للعميل، الإجمالي قبل الضريبة، تفصيل ضريبة القيمة المضافة، الإجمالي شامل الضريبة، طريقة الدفع.",
+        "download": "تنزيل CSV"
       }
+    },
+    "subnav": {
+      "ariaLabel": "أقسام الفوترة",
+      "dashboard": "لوحة التحكم",
+      "quotes": "عروض الأسعار",
+      "invoices": "الفواتير",
+      "creditNotes": "إشعارات الدائن",
+      "pending": "قيد الانتظار",
+      "reports": "التقارير",
+      "settings": "الإعدادات"
+    },
+    "create": {
+      "menu": {
+        "button": "+ جديد",
+        "newInvoice": "فاتورة جديدة",
+        "newQuote": "عرض سعر جديد",
+        "newCreditNote": "إشعار دائن جديد"
+      }
+    },
+    "dashboardPage": {
+      "quick": {
+        "newInvoice": {
+          "title": "فاتورة جديدة",
+          "description": "إنشاء فاتورة جديدة لعميل."
+        },
+        "newQuote": {
+          "title": "عرض سعر جديد",
+          "description": "إعداد عرض سعر قبل الفوترة."
+        },
+        "recordPayment": {
+          "title": "تسجيل دفعة",
+          "description": "تسجيل دفعة نقدية أو ببطاقة أو شيك أو تحويل."
+        },
+        "arAging": {
+          "title": "تقرير أعمار الذمم",
+          "description": "عرض الذمم المعلقة حسب الفئة العمرية."
+        }
+      },
+      "urgent": {
+        "title": "{{count}} متأخرة · {{amount}} مستحقة",
+        "description": "بعض الفواتير تجاوزت تاريخ الاستحقاق — يرجى المراجعة الآن.",
+        "review": "مراجعة"
+      },
+      "kpi": {
+        "revenueThisMonth": "إيرادات هذا الشهر",
+        "outstandingAr": "ذمم معلقة",
+        "quotesPending": "عروض أسعار قيد الانتظار",
+        "creditNotesThisMonth": "إشعارات دائنة هذا الشهر"
+      },
+      "recent": {
+        "title": "آخر الفواتير",
+        "viewAll": "عرض الكل",
+        "empty": "لا توجد فواتير بعد."
+      },
+      "topCustomers": {
+        "title": "أفضل العملاء",
+        "subtitle": "آخر 30 يومًا",
+        "empty": "لا إيرادات في آخر 30 يومًا."
+      },
+      "agingChart": {
+        "title": "أعمار الذمم",
+        "total": "الإجمالي",
+        "empty": "لا توجد ذمم معلقة."
+      },
+      "aging": {
+        "current": "غير مستحق",
+        "b1": "1–30 يومًا",
+        "b2": "31–60 يومًا",
+        "b3": "61–90 يومًا",
+        "b4": "أكثر من 90 يومًا"
+      }
+    },
+    "quotes": {
+      "list": {
+        "title": "عروض الأسعار",
+        "newQuote": "عرض سعر جديد",
+        "allStatuses": "جميع الحالات",
+        "validUntil": "صالح حتى",
+        "expiredBadge": "منتهي",
+        "empty": "لا توجد عروض أسعار",
+        "emptyDescription": "أنشئ أول عرض سعر لعرض السعر قبل الفوترة."
+      },
+      "form": {
+        "title": "عرض سعر جديد",
+        "customer": "العميل",
+        "vehicle": "المركبة",
+        "validUntil": "صالح حتى",
+        "description": "الوصف",
+        "quantity": "الكمية",
+        "unitPrice": "سعر الوحدة",
+        "notes": "ملاحظات",
+        "submit": "حفظ عرض السعر",
+        "created": "تم إنشاء عرض السعر",
+        "createFailed": "تعذر إنشاء عرض السعر"
+      },
+      "detail": {
+        "issueDate": "تاريخ الإصدار",
+        "validUntil": "صالح حتى",
+        "total": "الإجمالي",
+        "expired": "منتهي",
+        "send": "إرسال عرض السعر",
+        "approve": "اعتماد وتحويل",
+        "reject": "رفض",
+        "lineItems": "البنود",
+        "notFound": "عرض السعر غير موجود.",
+        "loadFailed": "تعذر تحميل عرض السعر",
+        "sent": "تم إرسال عرض السعر",
+        "sendFailed": "تعذر إرسال عرض السعر",
+        "approved": "تم اعتماد عرض السعر — وأنشئت الفاتورة",
+        "approveFailed": "تعذر اعتماد عرض السعر",
+        "rejected": "تم رفض عرض السعر",
+        "rejectFailed": "تعذر رفض عرض السعر"
+      },
+      "status": {
+        "draft": "مسودة",
+        "sent": "تم الإرسال",
+        "approved": "معتمد",
+        "rejected": "مرفوض",
+        "expired": "منتهي"
+      }
+    },
+    "creditNotes": {
+      "list": {
+        "title": "إشعارات الدائن",
+        "newCreditNote": "إشعار دائن جديد",
+        "sourceInvoice": "الفاتورة",
+        "restocked": "أُعيد إلى المخزون",
+        "empty": "لا توجد إشعارات دائنة",
+        "emptyDescription": "أصدر إشعار دائن من صفحة تفاصيل الفاتورة عند الحاجة لاسترداد المبلغ أو إعادة قطع الغيار."
+      },
+      "form": {
+        "title": "إشعار دائن جديد",
+        "sourceInvoice": "الفاتورة الأصلية",
+        "reason": "السبب",
+        "reasonPlaceholder": "إرجاع عميل، خطأ في الفوترة…",
+        "restockParts": "إعادة القطع إلى المخزون",
+        "linesToCredit": "البنود المراد تقييدها",
+        "original": "الأصلي",
+        "totalCredit": "إجمالي الدائن",
+        "submit": "إصدار إشعار الدائن",
+        "loading": "جاري تحميل الفاتورة الأصلية…",
+        "loadFailed": "تعذر تحميل الفاتورة الأصلية",
+        "selectAtLeastOne": "اختر بندًا واحدًا على الأقل",
+        "created": "تم إصدار إشعار الدائن",
+        "createFailed": "تعذر إصدار إشعار الدائن"
+      }
+    },
+    "partPicker": {
+      "placeholder": "ابحث عن قطعة…",
+      "noResults": "لم يتم العثور على قطع",
+      "inStock": "{{count}} متوفر",
+      "outOfStock": "غير متوفر"
+    },
+    "paymentModal": {
+      "title": "تسجيل دفعة",
+      "remaining": "المتبقي",
+      "method": "الطريقة",
+      "amount": "المبلغ",
+      "date": "التاريخ",
+      "reference": "المرجع",
+      "referencePlaceholder": "رقم شيك، رقم العملية…",
+      "notes": "ملاحظات",
+      "submit": "تسجيل الدفعة"
+    },
+    "templates": {
+      "title": "النماذج",
+      "comingSoon": "قوالب الفواتير القابلة لإعادة الاستخدام قادمة قريبًا."
     }
   },
   "photo": {

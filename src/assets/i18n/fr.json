@@ -11,6 +11,7 @@
     "filters": "Filtres",
     "clear": "Effacer",
     "submit": "Soumettre",
+    "saving": "Enregistrement…",
     "confirm": "Confirmer",
     "back": "Retour",
     "close": "Fermer",
@@ -2168,7 +2169,179 @@
           "CHECK": "Chèque",
           "MOBILE_PAYMENT": "Paiement mobile"
         }
+      },
+      "accountantExport": {
+        "title": "Export comptable CSV",
+        "description": "Journal mensuel pour le comptable — date, n° facture, MF client, HT, TVA détaillée, TTC, mode de paiement.",
+        "download": "Télécharger CSV"
       }
+    },
+    "subnav": {
+      "ariaLabel": "Sections de facturation",
+      "dashboard": "Tableau de bord",
+      "quotes": "Devis",
+      "invoices": "Factures",
+      "creditNotes": "Avoirs",
+      "pending": "En attente",
+      "reports": "Rapports",
+      "settings": "Paramètres"
+    },
+    "create": {
+      "menu": {
+        "button": "+ Nouveau",
+        "newInvoice": "Nouvelle facture",
+        "newQuote": "Nouveau devis",
+        "newCreditNote": "Nouvel avoir"
+      }
+    },
+    "dashboardPage": {
+      "quick": {
+        "newInvoice": {
+          "title": "Nouvelle facture",
+          "description": "Créer une nouvelle facture pour un client."
+        },
+        "newQuote": {
+          "title": "Nouveau devis",
+          "description": "Préparer un devis avant facturation."
+        },
+        "recordPayment": {
+          "title": "Enregistrer un paiement",
+          "description": "Saisir un paiement (espèces, carte, chèque, virement)."
+        },
+        "arAging": {
+          "title": "Balance âgée",
+          "description": "Voir les créances en attente par tranche d'âge."
+        }
+      },
+      "urgent": {
+        "title": "{{count}} en retard · {{amount}} dus",
+        "description": "Certaines factures sont en retard de paiement — à examiner.",
+        "review": "Examiner"
+      },
+      "kpi": {
+        "revenueThisMonth": "Chiffre d'affaires ce mois",
+        "outstandingAr": "Créances en cours",
+        "quotesPending": "Devis en attente",
+        "creditNotesThisMonth": "Avoirs ce mois"
+      },
+      "recent": {
+        "title": "Factures récentes",
+        "viewAll": "Voir tout",
+        "empty": "Aucune facture pour l'instant."
+      },
+      "topCustomers": {
+        "title": "Meilleurs clients",
+        "subtitle": "30 derniers jours",
+        "empty": "Pas de revenus sur les 30 derniers jours."
+      },
+      "agingChart": {
+        "title": "Balance âgée",
+        "total": "Total",
+        "empty": "Aucune créance en cours."
+      },
+      "aging": {
+        "current": "À échoir",
+        "b1": "1–30 jours",
+        "b2": "31–60 jours",
+        "b3": "61–90 jours",
+        "b4": "90+ jours"
+      }
+    },
+    "quotes": {
+      "list": {
+        "title": "Devis",
+        "newQuote": "Nouveau devis",
+        "allStatuses": "Tous les statuts",
+        "validUntil": "Valable jusqu'au",
+        "expiredBadge": "Expiré",
+        "empty": "Aucun devis pour l'instant",
+        "emptyDescription": "Créez votre premier devis pour proposer un prix avant facturation."
+      },
+      "form": {
+        "title": "Nouveau devis",
+        "customer": "Client",
+        "vehicle": "Véhicule",
+        "validUntil": "Valable jusqu'au",
+        "description": "Description",
+        "quantity": "Quantité",
+        "unitPrice": "Prix unitaire",
+        "notes": "Notes",
+        "submit": "Enregistrer le devis",
+        "created": "Devis créé",
+        "createFailed": "Impossible de créer le devis"
+      },
+      "detail": {
+        "issueDate": "Date d'émission",
+        "validUntil": "Valable jusqu'au",
+        "total": "Total",
+        "expired": "Expiré",
+        "send": "Envoyer le devis",
+        "approve": "Approuver et convertir",
+        "reject": "Refuser",
+        "lineItems": "Lignes",
+        "notFound": "Devis introuvable.",
+        "loadFailed": "Impossible de charger le devis",
+        "sent": "Devis envoyé",
+        "sendFailed": "Échec de l'envoi du devis",
+        "approved": "Devis approuvé — facture créée",
+        "approveFailed": "Échec de l'approbation",
+        "rejected": "Devis refusé",
+        "rejectFailed": "Échec du refus"
+      },
+      "status": {
+        "draft": "Brouillon",
+        "sent": "Envoyé",
+        "approved": "Approuvé",
+        "rejected": "Refusé",
+        "expired": "Expiré"
+      }
+    },
+    "creditNotes": {
+      "list": {
+        "title": "Avoirs",
+        "newCreditNote": "Nouvel avoir",
+        "sourceInvoice": "Facture",
+        "restocked": "Réintégré",
+        "empty": "Aucun avoir pour l'instant",
+        "emptyDescription": "Émettez un avoir depuis le détail d'une facture pour rembourser ou réintégrer des pièces."
+      },
+      "form": {
+        "title": "Nouvel avoir",
+        "sourceInvoice": "Facture d'origine",
+        "reason": "Motif",
+        "reasonPlaceholder": "Retour client, erreur de facturation, …",
+        "restockParts": "Réintégrer les pièces au stock",
+        "linesToCredit": "Lignes à créditer",
+        "original": "Original",
+        "totalCredit": "Total à créditer",
+        "submit": "Émettre l'avoir",
+        "loading": "Chargement de la facture d'origine…",
+        "loadFailed": "Impossible de charger la facture d'origine",
+        "selectAtLeastOne": "Sélectionnez au moins une ligne à créditer",
+        "created": "Avoir émis",
+        "createFailed": "Impossible d'émettre l'avoir"
+      }
+    },
+    "partPicker": {
+      "placeholder": "Rechercher des pièces…",
+      "noResults": "Aucune pièce trouvée",
+      "inStock": "{{count}} en stock",
+      "outOfStock": "Rupture de stock"
+    },
+    "paymentModal": {
+      "title": "Enregistrer un paiement",
+      "remaining": "Reste à payer",
+      "method": "Mode",
+      "amount": "Montant",
+      "date": "Date",
+      "reference": "Référence",
+      "referencePlaceholder": "N° chèque, transaction…",
+      "notes": "Notes",
+      "submit": "Enregistrer le paiement"
+    },
+    "templates": {
+      "title": "Modèles",
+      "comingSoon": "Les modèles de facture réutilisables arrivent bientôt."
     }
   },
   "approvals": {

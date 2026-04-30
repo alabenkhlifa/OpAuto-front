@@ -1,0 +1,45 @@
+<div class="credit-note-list-page">
+  <div class="glass-card credit-note-list-page__header">
+    <h2 class="credit-note-list-page__title">
+      {{ 'invoicing.creditNotes.list.title' | translate }}
+    </h2>
+    <button type="button" class="btn-primary" (click)="navigateNew()">
+      + {{ 'invoicing.creditNotes.list.newCreditNote' | translate }}
+    </button>
+  </div>
+
+  @if (creditNotes().length === 0 && !isLoading()) {
+    <div class="glass-card credit-note-list-page__empty">
+      <h3>{{ 'invoicing.creditNotes.list.empty' | translate }}</h3>
+      <p>{{ 'invoicing.creditNotes.list.emptyDescription' | translate }}</p>
+    </div>
+  }
+
+  <ul class="credit-note-list-page__rows">
+    @for (cn of creditNotes(); track cn.id) {
+      <li class="glass-card credit-note-row">
+        <div class="credit-note-row__main">
+          <h3 class="credit-note-row__number">{{ cn.creditNoteNumber }}</h3>
+          <p class="credit-note-row__sub">
+            {{ cn.customerName || '—' }} — {{ cn.licensePlate || '—' }}
+          </p>
+          <p class="credit-note-row__reason">{{ cn.reason }}</p>
+        </div>
+        <div class="credit-note-row__meta">
+          <button type="button"
+                  class="btn-tertiary btn-sm"
+                  (click)="navigateInvoice(cn.invoiceId)">
+            {{ 'invoicing.creditNotes.list.sourceInvoice' | translate }}: {{ cn.invoiceNumber }}
+          </button>
+          <p class="credit-note-row__total">{{ formatCurrency(cn.total) }}</p>
+          @if (cn.restockParts) {
+            <span class="badge badge-completed">
+              {{ 'invoicing.creditNotes.list.restocked' | translate }}
+            </span>
+          }
+          <p class="credit-note-row__date">{{ formatDate(cn.createdAt) }}</p>
+        </div>
+      </li>
+    }
+  </ul>
+</div>

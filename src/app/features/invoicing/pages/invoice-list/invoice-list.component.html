@@ -1,0 +1,123 @@
+<div class="invoice-list-page">
+  <!-- Search and filters -->
+  <div class="glass-card">
+    <button type="button"
+            class="btn-filter-toggle invoice-list-page__mobile-toggle"
+            [class.active]="showMobileFilters()"
+            (click)="toggleMobileFilters()">
+      {{ (showMobileFilters() ? 'invoicing.list.hideFilters' : 'invoicing.list.showFilters') | translate }}
+    </button>
+
+    <div class="invoice-list-page__search">
+      <input type="text"
+             class="form-input"
+             [placeholder]="'invoicing.list.searchPlaceholder' | translate"
+             [value]="searchQuery()"
+             (input)="onSearchChange($event)" />
+    </div>
+
+    <div class="invoice-list-page__filters"
+         [class.invoice-list-page__filters--hidden]="!showMobileFilters() && isMobile()">
+      <select class="filter-select"
+              [value]="selectedStatus()"
+              (change)="onStatusChange($event)">
+        <option value="all">{{ 'invoicing.list.allStatus' | translate }}</option>
+        @for (s of getAvailableStatuses(); track s) {
+          <option [value]="s">{{ getStatusLabel(s) }}</option>
+        }
+      </select>
+
+      <select class="filter-select"
+              [value]="selectedPaymentMethod()"
+              (change)="onPaymentMethodChange($event)">
+        <option value="all">{{ 'invoicing.list.allPaymentMethods' | translate }}</option>
+        @for (m of getAvailablePaymentMethods(); track m) {
+          <option [value]="m">{{ getPaymentMethodLabel(m) }}</option>
+        }
+      </select>
+
+      <button type="button" class="btn-tertiary" (click)="clearFilters()">
+        {{ 'invoicing.list.clearFilters' | translate }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Cards grid -->
+  <div class="invoice-cards-grid">
+    @for (invoice of filteredInvoices(); track invoice.id) {
+      <div class="glass-card invoice-card" (click)="onInvoiceSelect(invoice)">
+        <div class="invoice-card__header">
+          <div>
+            <h3 class="invoice-card__number">{{ invoice.invoiceNumber }}</h3>
+            <p class="invoice-card__date">{{ formatDate(invoice.issueDate) }}</p>
+          </div>
+          <span class="badge" [class]="getStatusBadgeClass(invoice.status)">
+            {{ getStatusLabel(invoice.status) }}
+          </span>
+        </div>
+
+        <div class="invoice-card__rows">
+          <div class="invoice-card__row">
+            <span class="invoice-card__row-label">{{ 'invoicing.list.customer' | translate }}</span>
+            <span class="invoice-card__row-value">{{ invoice.customerName }}</span>
+          </div>
+          <div class="invoice-card__row">
+            <span class="invoice-card__row-label">{{ 'invoicing.list.vehicle' | translate }}</span>
+            <span class="invoice-card__row-value">{{ invoice.carMake }} {{ invoice.carModel }}</span>
+          </div>
+          <div class="invoice-card__row">
+            <span class="invoice-card__row-label">{{ 'invoicing.list.license' | translate }}</span>
+            <span class="invoice-card__row-value">{{ invoice.licensePlate }}</span>
+          </div>
+          <div class="invoice-card__row">
+            <span class="invoice-card__row-label">{{ 'invoicing.list.total' | translate }}</span>
+            <span class="invoice-card__row-value invoice-card__row-value--strong">
+              {{ formatCurrency(invoice.totalAmount) }}
+            </span>
+          </div>
+          @if (invoice.remainingAmount > 0) {
+            <div class="invoice-card__row">
+              <span class="invoice-card__row-label">{{ 'invoicing.list.remaining' | translate }}</span>
+              <span class="invoice-card__row-value invoice-card__row-value--warning">
+                {{ formatCurrency(invoice.remainingAmount) }}
+              </span>
+            </div>
+          }
+        </div>
+
+        <div class="invoice-card__progress">
+          <div class="invoice-card__progress-meta">
+            <span>{{ 'invoicing.list.paymentProgress' | translate }}</span>
+            <span>{{ getPaymentProgress(invoice).toFixed(0) }}%</span>
+          </div>
+          <div class="invoice-card__progress-bar">
+            <div class="invoice-card__progress-fill"
+                 [class.invoice-card__progress-fill--paid]="invoice.status === 'paid'"
+                 [class.invoice-card__progress-fill--overdue]="invoice.status === 'overdue'"
+                 [style.width.%]="getPaymentProgress(invoice)"></div>
+          </div>
+        </div>
+
+        @if (invoice.status !== 'paid') {
+          <p class="invoice-card__due"
+             [class.invoice-card__due--overdue]="isOverdue(invoice)">
+            {{ 'invoicing.list.dueDate' | translate }}: {{ formatDate(invoice.dueDate) }}
+            @if (isOverdue(invoice)) {
+              <span>({{ getDaysOverdue(invoice.dueDate) }} {{ 'invoicing.list.daysOverdue' | translate }})</span>
+            }
+          </p>
+        }
+      </div>
+    }
+  </div>
+
+  @if (filteredInvoices().length === 0 && !isLoading()) {
+    <div class="glass-card empty-state">
+      <h3 class="empty-state__title">{{ 'invoicing.list.noInvoicesFound' | translate }}</h3>
+      <p class="empty-state__description">{{ 'invoicing.list.noInvoicesDescription' | translate }}</p>
+      <button type="button" class="btn-primary" (click)="navigateToCreate()">
+        {{ 'invoicing.list.createFirstInvoice' | translate }}
+      </button>
+    </div>
+  }
+</div>

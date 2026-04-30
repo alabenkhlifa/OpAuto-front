@@ -1,0 +1,96 @@
+.pending-list-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.pending-list-page__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-text-primary, #111827);
+  margin: 0;
+}
+
+.pending-list-page__empty {
+  text-align: center;
+  padding: 2rem 0;
+  color: var(--color-text-secondary, #4b5563);
+}
+
+.pending-list-page__empty h3 {
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: var(--color-text-primary, #111827);
+}
+
+.pending-list-page__rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.pending-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+  padding: 0.875rem 1rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+@media (min-width: 768px) {
+  .pending-row {
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+  }
+}
+
+.pending-row__main {
+  min-width: 0;
+}
+
+.pending-row__number {
+  font-weight: 600;
+  color: var(--color-text-primary, #111827);
+  margin: 0;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.9375rem;
+}
+
+.pending-row__sub {
+  color: var(--color-text-secondary, #4b5563);
+  margin: 0;
+  font-size: 0.8125rem;
+}
+
+.pending-row__amount {
+  text-align: right;
+}
+
+.pending-row__total {
+  font-weight: 700;
+  color: var(--color-text-primary, #111827);
+  margin: 0;
+}
+
+.pending-row__due {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary, #4b5563);
+  margin: 0;
+}
+
+.pending-row__due--overdue {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.pending-row__actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}

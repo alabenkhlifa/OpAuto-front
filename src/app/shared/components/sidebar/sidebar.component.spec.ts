@@ -185,14 +185,15 @@ describe('SidebarComponent', () => {
   describe('invoices-pending badge counter', () => {
     function flushAllPendingHttp(httpMock: HttpTestingController) {
       // The component fires multiple GETs (/appointments, /maintenance,
-      // /invoices, /approvals). We only care about /invoices for this
-      // assertion but must drain the others so the test exits cleanly.
+      // /invoices, /quotes, /approvals). We only care about /invoices for
+      // this assertion but must drain the others so the test exits cleanly.
       const drain = (url: string, body: any[]) => {
         const reqs = httpMock.match(url);
         reqs.forEach((r) => r.flush(body));
       };
       drain('/appointments', []);
       drain('/maintenance', []);
+      drain('/quotes', []);
       drain('/approvals', []);
     }
 

@@ -1,27 +1,191 @@
-/* Invoicing Component - Light Theme */
+/* Invoicing Shell — sticky sub-nav + router outlet container. */
 
-.invoicing-container {
+.invoicing-shell {
   min-height: 100vh;
+  padding: 1rem;
   background: transparent;
+  position: relative;
 }
 
-/* Glass card styling - Light Theme */
-.glass-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 20px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+@media (min-width: 1024px) {
+  .invoicing-shell {
+    padding: 1.5rem;
+  }
+}
+
+.invoicing-shell__header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: var(--color-bg-secondary, #f9fafb);
+  padding-bottom: 0.75rem;
+}
+
+.invoicing-shell__title-row {
   margin-bottom: 1rem;
 }
 
-/* Header styling */
-.invoicing-header {
-  /* Uses glass-card styles */
+.invoicing-shell__title {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #111827);
 }
 
-/* Navigation button styles - consistent with other screens */
+@media (min-width: 1024px) {
+  .invoicing-shell__title {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+  }
+}
+
+.invoicing-shell__subtitle {
+  margin-top: 0.25rem;
+  color: var(--color-text-secondary, #4b5563);
+  font-size: 0.875rem;
+}
+
+/* Desktop pill nav */
+.invoicing-subnav {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+@media (min-width: 1024px) {
+  .invoicing-subnav {
+    display: flex;
+  }
+}
+
+.invoicing-subnav__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.invoicing-subnav__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  border-width: 1px;
+  border-style: solid;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+
+.invoicing-subnav__pill:hover {
+  transform: translateY(-1px);
+}
+
+.invoicing-subnav__new {
+  position: relative;
+}
+
+.invoicing-subnav__new-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.invoicing-subnav__menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.5rem);
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 0.375rem;
+  min-width: 220px;
+  z-index: 40;
+  list-style: none;
+  margin: 0;
+}
+
+.invoicing-subnav__menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--color-text-primary, #111827);
+  text-align: left;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.invoicing-subnav__menu-item:hover {
+  background-color: rgba(255, 132, 0, 0.08);
+  color: #FF8400;
+}
+
+/* Mobile select fallback */
+.invoicing-subnav__mobile {
+  display: block;
+}
+
+@media (min-width: 1024px) {
+  .invoicing-subnav__mobile {
+    display: none;
+  }
+}
+
+.invoicing-subnav__mobile-select {
+  width: 100%;
+}
+
+.invoicing-shell__content {
+  padding-top: 1rem;
+}
+
+/* Mobile floating "+" FAB */
+.invoicing-shell__fab {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 9999px;
+  background: #FF8400;
+  color: #ffffff;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 18px rgba(255, 132, 0, 0.35);
+  cursor: pointer;
+  transition: transform 200ms ease, box-shadow 200ms ease;
+  z-index: 40;
+}
+
+.invoicing-shell__fab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 22px rgba(255, 132, 0, 0.4);
+}
+
+@media (min-width: 1024px) {
+  .invoicing-shell__fab {
+    display: none;
+  }
+}
+
+/* Reuse the global active/inactive nav button colors */
 .nav-button-active {
   background: rgba(255, 132, 0, 0.1) !important;
   border-color: rgba(255, 132, 0, 0.3) !important;
@@ -30,135 +194,11 @@
 
 .nav-button-inactive {
   background-color: #ffffff !important;
-  border-color: var(--color-border) !important;
-  color: var(--color-text-secondary) !important;
+  border-color: var(--color-border, #e5e7eb) !important;
+  color: var(--color-text-secondary, #4b5563) !important;
 }
 
 .nav-button-inactive:hover {
-  background-color: var(--color-bg-tertiary) !important;
-  color: var(--color-text-primary) !important;
-}
-
-/* Payment progress bars */
-.payment-progress {
-  transition: width 0.3s ease;
-}
-
-/* Status-specific styling */
-.status-paid {
-  background: linear-gradient(135deg, #10b981, #059669);
-}
-
-.status-overdue {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-}
-
-.status-pending {
-  background: linear-gradient(135deg, #7B8CC4, #6778B0);
-}
-
-
-/* Revenue highlight effects */
-.revenue-highlight {
-  background: linear-gradient(135deg, #10b981, #059669);
-  background-size: 200% 200%;
-  animation: gradient 3s ease infinite;
-}
-
-@keyframes gradient {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-/* Overdue warning animations */
-.overdue-warning {
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.7; }
-  100% { opacity: 1; }
-}
-
-/* Mobile responsive grid adjustments */
-@media (max-width: 767px) {
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .invoices-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .invoice-actions {
-    flex-direction: column;
-  }
-}
-
-/* Payment method icons styling */
-.payment-method-icon {
-  font-size: 1.25rem;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
-}
-
-/* Quick action buttons */
-.quick-action-btn {
-  transition: all 0.2s ease;
-}
-
-.quick-action-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-/* Status badges with enhanced styling */
-.status-badge {
-  font-weight: 600;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  border-width: 1px;
-  border-style: solid;
-}
-
-/* Invoice number styling */
-.invoice-number {
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  letter-spacing: 0.5px;
-}
-
-/* Amount highlighting */
-.amount-highlight {
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.025em;
-}
-
-/* Smooth transitions for all interactive elements */
-button, .filter-input {
-  transition: all 0.2s ease;
-}
-
-/* Focus states for accessibility */
-button:focus-visible,
-input:focus-visible,
-select:focus-visible {
-  outline: 2px solid #FF8400;
-  outline-offset: 2px;
-}
-
-/* Loading states */
-.loading-shimmer {
-  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-.dark .loading-shimmer {
-  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
-  background-size: 200% 100%;
+  background-color: var(--color-bg-tertiary, #f3f4f6) !important;
+  color: var(--color-text-primary, #111827) !important;
 }

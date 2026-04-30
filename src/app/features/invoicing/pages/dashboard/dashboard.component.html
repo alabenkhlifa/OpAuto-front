@@ -1,0 +1,208 @@
+<div class="invoice-dashboard">
+  <!-- Section 1: Quick Actions -->
+  <section class="section-container">
+    <div class="quick-actions-grid">
+      <button type="button" class="quick-action-tile" (click)="navigateNewInvoice()">
+        <div class="quick-action-icon quick-action-icon--orange">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+          </svg>
+        </div>
+        <div class="quick-action-body">
+          <span class="quick-action-title">{{ 'invoicing.dashboardPage.quick.newInvoice.title' | translate }}</span>
+          <p class="quick-action-description">{{ 'invoicing.dashboardPage.quick.newInvoice.description' | translate }}</p>
+        </div>
+      </button>
+
+      <button type="button" class="quick-action-tile" (click)="navigateNewQuote()">
+        <div class="quick-action-icon quick-action-icon--indigo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </div>
+        <div class="quick-action-body">
+          <span class="quick-action-title">{{ 'invoicing.dashboardPage.quick.newQuote.title' | translate }}</span>
+          <p class="quick-action-description">{{ 'invoicing.dashboardPage.quick.newQuote.description' | translate }}</p>
+        </div>
+      </button>
+
+      <button type="button" class="quick-action-tile" (click)="navigateRecordPayment()">
+        <div class="quick-action-icon quick-action-icon--emerald">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8v8m0 0v2m0-10V6" />
+            <circle cx="12" cy="12" r="9" />
+          </svg>
+        </div>
+        <div class="quick-action-body">
+          <span class="quick-action-title">{{ 'invoicing.dashboardPage.quick.recordPayment.title' | translate }}</span>
+          <p class="quick-action-description">{{ 'invoicing.dashboardPage.quick.recordPayment.description' | translate }}</p>
+        </div>
+      </button>
+
+      <button type="button" class="quick-action-tile" (click)="navigateAgingReport()">
+        <div class="quick-action-icon quick-action-icon--slate">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        </div>
+        <div class="quick-action-body">
+          <span class="quick-action-title">{{ 'invoicing.dashboardPage.quick.arAging.title' | translate }}</span>
+          <p class="quick-action-description">{{ 'invoicing.dashboardPage.quick.arAging.description' | translate }}</p>
+        </div>
+      </button>
+    </div>
+  </section>
+
+  <!-- Section 2: Urgent banner — only when there are overdue invoices -->
+  @if (overdueCount() > 0) {
+    <section class="section-container">
+      <div class="glass-card urgent-card">
+        <div class="urgent-content">
+          <div class="urgent-icon">
+            <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div class="urgent-text">
+            <h3 class="urgent-title">
+              {{ 'invoicing.dashboardPage.urgent.title' | translate:{ count: overdueCount(), amount: fmtCurrency(overdueAmount()) } }}
+            </h3>
+            <p class="urgent-description">
+              {{ 'invoicing.dashboardPage.urgent.description' | translate }}
+            </p>
+          </div>
+          <div class="urgent-actions">
+            <button type="button" class="btn-danger" (click)="navigateOverdueList()">
+              {{ 'invoicing.dashboardPage.urgent.review' | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  }
+
+  <!-- Section 3: KPI row -->
+  <section class="section-container">
+    <div class="kpi-grid">
+      @for (tile of kpiTiles(); track tile.labelKey) {
+        <div class="glass-card kpi-card kpi-card--{{ tile.accent }}">
+          <div class="kpi-card__body">
+            <p class="kpi-card__label">{{ tile.labelKey | translate }}</p>
+            <p class="kpi-card__value">{{ tile.value }}</p>
+          </div>
+          <div class="kpi-card__spark">
+            <svg viewBox="0 0 100 36" preserveAspectRatio="none" aria-hidden="true">
+              <path class="kpi-card__spark-area" [attr.d]="buildSparklinePath(tile.sparkline).area"></path>
+              <path class="kpi-card__spark-line" [attr.d]="buildSparklinePath(tile.sparkline).line"></path>
+            </svg>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- Section 4: Recent invoices + Top customers -->
+  <section class="section-container">
+    <div class="two-col-grid">
+      <div class="glass-card">
+        <div class="card-header">
+          <h3 class="card-title">{{ 'invoicing.dashboardPage.recent.title' | translate }}</h3>
+          <a class="btn-tertiary btn-sm" routerLink="/invoices/list">
+            {{ 'invoicing.dashboardPage.recent.viewAll' | translate }}
+          </a>
+        </div>
+
+        @if (recentInvoices().length === 0) {
+          <p class="empty-line">{{ 'invoicing.dashboardPage.recent.empty' | translate }}</p>
+        }
+        <ul class="row-list">
+          @for (inv of recentInvoices(); track inv.id) {
+            <li class="row-item" (click)="navigateInvoice(inv.id)">
+              <div class="row-item__main">
+                <p class="row-item__title">{{ inv.invoiceNumber }}</p>
+                <p class="row-item__sub">{{ inv.customerName || '—' }}</p>
+              </div>
+              <div class="row-item__side">
+                <p class="row-item__amount">{{ fmtCurrency(inv.totalAmount) }}</p>
+                <span class="badge" [class]="getStatusBadgeClass(inv.status)">
+                  {{ getStatusLabelKey(inv.status) | translate }}
+                </span>
+              </div>
+            </li>
+          }
+        </ul>
+      </div>
+
+      <div class="glass-card">
+        <div class="card-header">
+          <h3 class="card-title">{{ 'invoicing.dashboardPage.topCustomers.title' | translate }}</h3>
+          <span class="card-subtitle">{{ 'invoicing.dashboardPage.topCustomers.subtitle' | translate }}</span>
+        </div>
+
+        @if (topCustomers().length === 0) {
+          <p class="empty-line">{{ 'invoicing.dashboardPage.topCustomers.empty' | translate }}</p>
+        }
+        <ul class="row-list">
+          @for (c of topCustomers(); track c.customerId) {
+            <li class="row-item">
+              <div class="row-item__main">
+                <p class="row-item__title">{{ c.customerName }}</p>
+              </div>
+              <div class="row-item__side">
+                <p class="row-item__amount">{{ fmtCurrency(c.total) }}</p>
+              </div>
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 5: Aging mini-chart -->
+  <section class="section-container">
+    <div class="glass-card">
+      <div class="card-header">
+        <h3 class="card-title">{{ 'invoicing.dashboardPage.agingChart.title' | translate }}</h3>
+        <span class="card-subtitle">
+          {{ 'invoicing.dashboardPage.agingChart.total' | translate }}: {{ fmtCurrency(totalAging()) }}
+        </span>
+      </div>
+
+      @if (totalAging() === 0) {
+        <p class="empty-line">{{ 'invoicing.dashboardPage.agingChart.empty' | translate }}</p>
+      } @else {
+        <div class="aging-bar" role="img"
+             [attr.aria-label]="'invoicing.dashboardPage.agingChart.title' | translate">
+          @for (b of agingBuckets(); track b.key) {
+            <div class="aging-bar__seg"
+                 [style.width.%]="getAgingPct(b)"
+                 [style.background-color]="b.color"
+                 [attr.title]="(b.labelKey | translate) + ' — ' + fmtCurrency(b.amount)"></div>
+          }
+        </div>
+        <ul class="aging-legend">
+          @for (b of agingBuckets(); track b.key) {
+            <li class="aging-legend__item">
+              <span class="aging-legend__dot" [style.background-color]="b.color"></span>
+              <span class="aging-legend__label">{{ b.labelKey | translate }}</span>
+              <span class="aging-legend__amount">{{ fmtCurrency(b.amount) }}</span>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  </section>
+
+  @if (isLoading()) {
+    <div class="loading-overlay" role="status" aria-live="polite">
+      <div class="loading-spinner" aria-hidden="true"></div>
+      <span>{{ 'invoicing.loading' | translate }}</span>
+    </div>
+  }
+</div>

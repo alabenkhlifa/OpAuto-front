@@ -1,0 +1,67 @@
+@if (isOpen && context) {
+  <div class="payment-modal__backdrop" (click)="onBackdrop($event)">
+    <div class="payment-modal" role="dialog" aria-modal="true">
+      <header class="payment-modal__header">
+        <h2 class="payment-modal__title">
+          {{ 'invoicing.paymentModal.title' | translate }}
+        </h2>
+        <p class="payment-modal__sub">
+          {{ context.invoiceNumber }} —
+          {{ 'invoicing.paymentModal.remaining' | translate }}: {{ context.remainingAmount | number:'1.2-2' }} {{ context.currency }}
+        </p>
+        <button type="button"
+                class="payment-modal__close"
+                (click)="onClose()"
+                [attr.aria-label]="'common.close' | translate">×</button>
+      </header>
+
+      <form class="payment-modal__body" [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="payment-modal__methods">
+          <span class="payment-modal__label">{{ 'invoicing.paymentModal.method' | translate }}</span>
+          <div class="payment-modal__chip-row">
+            @for (m of methods; track m) {
+              <button type="button"
+                      class="btn-filter-chip"
+                      [class.active]="method() === m"
+                      (click)="selectMethod(m)">
+                {{ methodLabelKey(m) | translate }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <label class="payment-modal__field">
+          <span>{{ 'invoicing.paymentModal.amount' | translate }} *</span>
+          <input type="number" min="0" step="0.01" class="form-input" formControlName="amount" />
+        </label>
+
+        <label class="payment-modal__field">
+          <span>{{ 'invoicing.paymentModal.date' | translate }} *</span>
+          <input type="date" class="form-input" formControlName="paymentDate" />
+        </label>
+
+        <label class="payment-modal__field">
+          <span>{{ 'invoicing.paymentModal.reference' | translate }}</span>
+          <input type="text" class="form-input" formControlName="reference"
+                 [placeholder]="'invoicing.paymentModal.referencePlaceholder' | translate" />
+        </label>
+
+        <label class="payment-modal__field">
+          <span>{{ 'invoicing.paymentModal.notes' | translate }}</span>
+          <textarea rows="2" class="form-input" formControlName="notes"></textarea>
+        </label>
+
+        <footer class="payment-modal__footer">
+          <button type="button" class="btn-secondary" (click)="onClose()">
+            {{ 'common.cancel' | translate }}
+          </button>
+          <button type="submit"
+                  class="btn-primary"
+                  [disabled]="!canSubmit()">
+            {{ (submitting ? 'common.saving' : 'invoicing.paymentModal.submit') | translate }}
+          </button>
+        </footer>
+      </form>
+    </div>
+  </div>
+}

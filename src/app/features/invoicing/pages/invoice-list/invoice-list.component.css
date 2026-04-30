@@ -1,0 +1,195 @@
+.invoice-list-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.invoice-list-page__mobile-toggle {
+  display: none;
+  width: 100%;
+  margin-bottom: 0.75rem;
+}
+
+@media (max-width: 1023px) {
+  .invoice-list-page__mobile-toggle {
+    display: inline-flex;
+  }
+}
+
+.invoice-list-page__search {
+  margin-bottom: 0.75rem;
+}
+
+.invoice-list-page__search .form-input {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  font-size: 0.9375rem;
+}
+
+.invoice-list-page__filters {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .invoice-list-page__filters {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .invoice-list-page__filters {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.invoice-list-page__filters--hidden {
+  display: none;
+}
+
+.invoice-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .invoice-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .invoice-cards-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.invoice-card {
+  cursor: pointer;
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+}
+
+.invoice-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+  border-color: rgba(255, 132, 0, 0.4);
+}
+
+.invoice-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.invoice-card__number {
+  font-weight: 700;
+  color: var(--color-text-primary, #111827);
+  margin: 0;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  letter-spacing: 0.5px;
+}
+
+.invoice-card__date {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary, #4b5563);
+  margin: 0;
+}
+
+.invoice-card__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin-bottom: 0.75rem;
+}
+
+.invoice-card__row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+}
+
+.invoice-card__row-label {
+  color: var(--color-text-secondary, #4b5563);
+}
+
+.invoice-card__row-value {
+  font-weight: 500;
+  color: var(--color-text-primary, #111827);
+}
+
+.invoice-card__row-value--strong {
+  font-weight: 700;
+}
+
+.invoice-card__row-value--warning {
+  color: #b45309;
+  font-weight: 600;
+}
+
+.invoice-card__progress {
+  margin-bottom: 0.5rem;
+}
+
+.invoice-card__progress-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary, #4b5563);
+  margin-bottom: 0.25rem;
+}
+
+.invoice-card__progress-bar {
+  height: 6px;
+  background: #f3f4f6;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.invoice-card__progress-fill {
+  height: 100%;
+  background: #3b82f6;
+  transition: width 300ms ease;
+}
+
+.invoice-card__progress-fill--paid {
+  background: #10b981;
+}
+
+.invoice-card__progress-fill--overdue {
+  background: #ef4444;
+}
+
+.invoice-card__due {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary, #4b5563);
+  margin: 0;
+}
+
+.invoice-card__due--overdue {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem !important;
+}
+
+.empty-state__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-text-primary, #111827);
+  margin: 0 0 0.5rem;
+}
+
+.empty-state__description {
+  color: var(--color-text-secondary, #4b5563);
+  margin: 0 0 1rem;
+}

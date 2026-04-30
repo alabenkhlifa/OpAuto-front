@@ -1,0 +1,54 @@
+<div class="quote-list-page">
+  <div class="glass-card quote-list-page__filters">
+    <h2 class="quote-list-page__title">{{ 'invoicing.quotes.list.title' | translate }}</h2>
+    <div class="quote-list-page__controls">
+      <select class="filter-select"
+              [value]="selectedStatus()"
+              (change)="onStatusChange($event)">
+        <option value="all">{{ 'invoicing.quotes.list.allStatuses' | translate }}</option>
+        @for (s of getAvailableStatuses(); track s) {
+          <option [value]="s">{{ getStatusLabel(s) }}</option>
+        }
+      </select>
+      <button type="button" class="btn-primary" (click)="navigateNew()">
+        + {{ 'invoicing.quotes.list.newQuote' | translate }}
+      </button>
+    </div>
+  </div>
+
+  @if (filteredQuotes().length === 0 && !isLoading()) {
+    <div class="glass-card quote-list-page__empty">
+      <h3>{{ 'invoicing.quotes.list.empty' | translate }}</h3>
+      <p>{{ 'invoicing.quotes.list.emptyDescription' | translate }}</p>
+    </div>
+  }
+
+  <ul class="quote-list-page__rows">
+    @for (q of filteredQuotes(); track q.id) {
+      <li class="glass-card quote-row" (click)="navigateDetail(q.id)">
+        <div class="quote-row__main">
+          <h3 class="quote-row__number">{{ q.quoteNumber }}</h3>
+          <p class="quote-row__sub">
+            {{ q.customerName }} — {{ q.licensePlate }}
+          </p>
+        </div>
+        <div class="quote-row__meta">
+          <p class="quote-row__date">
+            {{ 'invoicing.quotes.list.validUntil' | translate }}: {{ formatDate(q.validUntil) }}
+          </p>
+          <p class="quote-row__total">{{ formatCurrency(q.totalAmount) }}</p>
+        </div>
+        <div class="quote-row__badges">
+          <span class="badge" [class]="getStatusBadgeClass(q.status)">
+            {{ getStatusLabel(q.status) }}
+          </span>
+          @if (isExpired(q) && q.status === 'SENT') {
+            <span class="badge badge-priority-urgent">
+              {{ 'invoicing.quotes.list.expiredBadge' | translate }}
+            </span>
+          }
+        </div>
+      </li>
+    }
+  </ul>
+</div>

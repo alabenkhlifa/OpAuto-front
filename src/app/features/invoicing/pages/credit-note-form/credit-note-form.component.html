@@ -1,0 +1,75 @@
+<div class="credit-note-form-page">
+  @if (invoice(); as inv) {
+    <form class="glass-card" [formGroup]="form" (ngSubmit)="onSubmit()">
+      <h2 class="credit-note-form-page__title">
+        {{ 'invoicing.creditNotes.form.title' | translate }}
+      </h2>
+      <p class="credit-note-form-page__sub">
+        {{ 'invoicing.creditNotes.form.sourceInvoice' | translate }}: <strong>{{ inv.invoiceNumber }}</strong>
+      </p>
+
+      <label class="credit-note-form-page__field">
+        <span>{{ 'invoicing.creditNotes.form.reason' | translate }} *</span>
+        <textarea rows="2" class="form-input" formControlName="reason"
+                  [placeholder]="'invoicing.creditNotes.form.reasonPlaceholder' | translate"></textarea>
+      </label>
+
+      <label class="credit-note-form-page__checkbox">
+        <input type="checkbox" formControlName="restockParts" />
+        <span>{{ 'invoicing.creditNotes.form.restockParts' | translate }}</span>
+      </label>
+
+      <h3 class="credit-note-form-page__section">
+        {{ 'invoicing.creditNotes.form.linesToCredit' | translate }}
+      </h3>
+      <ul class="credit-note-lines">
+        @for (line of lines(); let i = $index; track line.id) {
+          <li class="credit-note-line">
+            <label class="credit-note-line__select">
+              <input type="checkbox"
+                     [checked]="line.selected"
+                     (change)="toggle(i, $any($event.target).checked)" />
+            </label>
+            <div class="credit-note-line__main">
+              <p class="credit-note-line__description">{{ line.description }}</p>
+              <p class="credit-note-line__meta">
+                {{ 'invoicing.creditNotes.form.original' | translate }}:
+                {{ line.quantity }} × {{ formatCurrency(line.unitPrice) }}
+              </p>
+            </div>
+            <input type="number"
+                   class="form-input credit-note-line__qty"
+                   min="0"
+                   [max]="line.quantity"
+                   [value]="line.selectedQty"
+                   [disabled]="!line.selected"
+                   (input)="setQty(i, +$any($event.target).value)" />
+            <p class="credit-note-line__total">
+              {{ formatCurrency(line.unitPrice * line.selectedQty) }}
+            </p>
+          </li>
+        }
+      </ul>
+
+      <div class="credit-note-form-page__total">
+        <span>{{ 'invoicing.creditNotes.form.totalCredit' | translate }}</span>
+        <strong>{{ formatCurrency(selectedTotal()) }}</strong>
+      </div>
+
+      <div class="credit-note-form-page__actions">
+        <button type="button" class="btn-secondary" (click)="cancel()">
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button type="submit"
+                class="btn-primary"
+                [disabled]="form.invalid || isSubmitting()">
+          {{ (isSubmitting() ? 'common.saving' : 'invoicing.creditNotes.form.submit') | translate }}
+        </button>
+      </div>
+    </form>
+  } @else {
+    <div class="glass-card">
+      <p>{{ 'invoicing.creditNotes.form.loading' | translate }}</p>
+    </div>
+  }
+</div>
