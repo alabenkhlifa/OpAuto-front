@@ -44,7 +44,7 @@
 
   <!-- Cards grid -->
   <div class="invoice-cards-grid">
-    @for (invoice of filteredInvoices(); track invoice.id) {
+    @for (invoice of pagedInvoices(); track invoice.id) {
       <div class="glass-card invoice-card" (click)="onInvoiceSelect(invoice)">
         <div class="invoice-card__header">
           <div>
@@ -110,6 +110,35 @@
       </div>
     }
   </div>
+
+  @if (filteredInvoices().length > 0 && totalPages() > 1) {
+    <nav class="invoice-list-page__pagination" [attr.aria-label]="'invoicing.list.pagination.label' | translate">
+      <span class="invoice-list-page__pagination-status">
+        {{ 'invoicing.list.pagination.showing' | translate }}
+        {{ pageStart() }}–{{ pageEnd() }}
+        {{ 'invoicing.list.pagination.of' | translate }}
+        {{ filteredInvoices().length }}
+      </span>
+      <div class="invoice-list-page__pagination-controls">
+        <button type="button"
+                class="btn-tertiary"
+                [disabled]="effectivePage() === 1"
+                (click)="goToPreviousPage()">
+          {{ 'invoicing.list.pagination.previous' | translate }}
+        </button>
+        <span class="invoice-list-page__pagination-page"
+              [attr.aria-current]="'page'">
+          {{ 'invoicing.list.pagination.page' | translate }} {{ effectivePage() }} / {{ totalPages() }}
+        </span>
+        <button type="button"
+                class="btn-tertiary"
+                [disabled]="effectivePage() === totalPages()"
+                (click)="goToNextPage()">
+          {{ 'invoicing.list.pagination.next' | translate }}
+        </button>
+      </div>
+    </nav>
+  }
 
   @if (filteredInvoices().length === 0 && !isLoading()) {
     <div class="glass-card empty-state">

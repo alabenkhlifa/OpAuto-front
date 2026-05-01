@@ -1954,7 +1954,15 @@
       "print": "Print",
       "noInvoicesFound": "No invoices found",
       "noInvoicesDescription": "Get started by creating your first invoice.",
-      "createFirstInvoice": "Create First Invoice"
+      "createFirstInvoice": "Create First Invoice",
+      "pagination": {
+        "label": "Invoice list pagination",
+        "showing": "Showing",
+        "of": "of",
+        "page": "Page",
+        "previous": "Previous",
+        "next": "Next"
+      }
     },
     "send": {
       "title": "Send document",

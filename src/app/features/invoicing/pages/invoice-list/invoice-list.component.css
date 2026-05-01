@@ -177,6 +177,47 @@
   font-weight: 600;
 }
 
+.invoice-list-page__pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.invoice-list-page__pagination-status {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary, #4b5563);
+}
+
+.invoice-list-page__pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.invoice-list-page__pagination-page {
+  font-size: 0.875rem;
+  color: var(--color-text-primary, #111827);
+  font-weight: 600;
+  min-width: 6rem;
+  text-align: center;
+}
+
+@media (max-width: 639px) {
+  .invoice-list-page__pagination {
+    justify-content: center;
+  }
+  .invoice-list-page__pagination-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
 .empty-state {
   text-align: center;
   padding: 2rem !important;

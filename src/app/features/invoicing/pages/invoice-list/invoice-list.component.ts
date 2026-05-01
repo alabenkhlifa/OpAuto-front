@@ -14,6 +14,18 @@ import {
  * InvoiceListPage — searchable, filterable list of all invoices.
  * Extracted from the legacy invoicing.component.html "list" view so
  * the parent shell can host it under `/invoices/list`.
+ *
+ * Sweep B-4 (S-INV-029): adds minimal client-side pagination.
+ *  - PAGE_SIZE rows per page (25), prev/next + 1-indexed counter.
+ *  - Filter handlers (`onSearchChange` / `onStatusChange` /
+ *    `onPaymentMethodChange` / `clearFilters`) reset `currentPage` to 1.
+ *  - The `effectivePage` computed clamps to `[1, totalPages]` so the slice
+ *    is always in-bounds even if the dataset shrinks asynchronously.
+ *  - Server-side pagination is tracked under S-PERF-001 (P3) — not needed
+ *    until the dataset grows past a few thousand rows; the BE list endpoint
+ *    is currently `GET /api/invoices` (returns all rows) and would need
+ *    `?page=` / `?limit=` / `?status=` / `?search=` query params before
+ *    the FE can switch to pagination on the wire.
  */
 @Component({
   selector: 'app-invoice-list-page',
@@ -28,6 +40,9 @@ export class InvoiceListPageComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
+  /** Pagination — page size is intentionally fixed (no UI knob) at 25. */
+  static readonly PAGE_SIZE = 25;
+
   invoices = signal<InvoiceWithDetails[]>([]);
   isLoading = signal(false);
 
@@ -35,6 +50,7 @@ export class InvoiceListPageComponent implements OnInit {
   selectedStatus = signal<string>('all');
   selectedPaymentMethod = signal<string>('all');
   showMobileFilters = signal(false);
+  currentPage = signal(1);
 
   filteredInvoices = computed(() => {
     let filtered = [...this.invoices()];
@@ -59,10 +75,49 @@ export class InvoiceListPageComponent implements OnInit {
     return filtered.sort((a, b) => b.issueDate.getTime() - a.issueDate.getTime());
   });
 
+  totalPages = computed(() => {
+    const total = this.filteredInvoices().length;
+    return Math.max(1, Math.ceil(total / InvoiceListPageComponent.PAGE_SIZE));
+  });
+
+  /**
+   * Effective page number — always clamped to the available range so the
+   * computeds below never produce an out-of-bounds slice. The signal can
+   * legitimately hold a "stale" value mid-flight (e.g. if the dataset
+   * shrinks between render frames); this computed is the source of truth
+   * for everything that renders.
+   */
+  effectivePage = computed(() => {
+    const total = this.totalPages();
+    return Math.min(Math.max(1, this.currentPage()), total);
+  });
+
+  pageStart = computed(() => {
+    const total = this.filteredInvoices().length;
+    if (total === 0) return 0;
+    return (this.effectivePage() - 1) * InvoiceListPageComponent.PAGE_SIZE + 1;
+  });
+
+  pageEnd = computed(() => {
+    const total = this.filteredInvoices().length;
+    return Math.min(total, this.effectivePage() * InvoiceListPageComponent.PAGE_SIZE);
+  });
+
+  pagedInvoices = computed(() => {
+    const all = this.filteredInvoices();
+    const size = InvoiceListPageComponent.PAGE_SIZE;
+    const start = (this.effectivePage() - 1) * size;
+    return all.slice(start, start + size);
+  });
+
+
   ngOnInit(): void {
     this.route.queryParamMap.subscribe((params) => {
       const status = params.get('status');
-      if (status) this.selectedStatus.set(status);
+      if (status) {
+        this.selectedStatus.set(status);
+        this.currentPage.set(1);
+      }
     });
     this.loadInvoices();
   }
@@ -80,12 +135,15 @@ export class InvoiceListPageComponent implements OnInit {
 
   onSearchChange(event: Event): void {
     this.searchQuery.set((event.target as HTMLInputElement).value);
+    this.currentPage.set(1);
   }
   onStatusChange(event: Event): void {
     this.selectedStatus.set((event.target as HTMLSelectElement).value);
+    this.currentPage.set(1);
   }
   onPaymentMethodChange(event: Event): void {
     this.selectedPaymentMethod.set((event.target as HTMLSelectElement).value);
+    this.currentPage.set(1);
   }
   toggleMobileFilters(): void {
     this.showMobileFilters.update((v) => !v);
@@ -94,6 +152,21 @@ export class InvoiceListPageComponent implements OnInit {
     this.searchQuery.set('');
     this.selectedStatus.set('all');
     this.selectedPaymentMethod.set('all');
+    this.currentPage.set(1);
+  }
+
+  /** Pagination handlers — guarded so they never overshoot. */
+  goToNextPage(): void {
+    const next = this.effectivePage() + 1;
+    if (next <= this.totalPages()) {
+      this.currentPage.set(next);
+    }
+  }
+  goToPreviousPage(): void {
+    const prev = this.effectivePage() - 1;
+    if (prev >= 1) {
+      this.currentPage.set(prev);
+    }
   }
 
   onInvoiceSelect(invoice: InvoiceWithDetails): void {

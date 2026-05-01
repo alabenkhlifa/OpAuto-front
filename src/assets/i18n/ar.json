@@ -1910,7 +1910,15 @@
       "print": "طباعة",
       "noInvoicesFound": "لا توجد فواتير",
       "noInvoicesDescription": "ابدأ بإنشاء أول فاتورة لك.",
-      "createFirstInvoice": "إنشاء أول فاتورة"
+      "createFirstInvoice": "إنشاء أول فاتورة",
+      "pagination": {
+        "label": "ترقيم صفحات قائمة الفواتير",
+        "showing": "عرض",
+        "of": "من",
+        "page": "صفحة",
+        "previous": "السابق",
+        "next": "التالي"
+      }
     },
     "send": {
       "title": "إرسال المستند",
@@ -2029,7 +2037,15 @@
       "print": "طباعة",
       "noInvoicesFound": "لم يتم العثور على فواتير",
       "noInvoicesDescription": "حاول تعديل البحث أو المرشحات",
-      "createFirstInvoice": "إنشاء أول فاتورة لك"
+      "createFirstInvoice": "إنشاء أول فاتورة لك",
+      "pagination": {
+        "label": "ترقيم صفحات قائمة الفواتير",
+        "showing": "عرض",
+        "of": "من",
+        "page": "صفحة",
+        "previous": "السابق",
+        "next": "التالي"
+      }
     },
     "pending": {
       "title": "المدفوعات المعلقة",

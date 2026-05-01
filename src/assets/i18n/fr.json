@@ -1908,7 +1908,15 @@
       "print": "Imprimer",
       "noInvoicesFound": "Aucune facture trouvée",
       "noInvoicesDescription": "Commencez par créer votre première facture.",
-      "createFirstInvoice": "Créer la première facture"
+      "createFirstInvoice": "Créer la première facture",
+      "pagination": {
+        "label": "Pagination de la liste des factures",
+        "showing": "Affichage",
+        "of": "sur",
+        "page": "Page",
+        "previous": "Précédent",
+        "next": "Suivant"
+      }
     },
     "send": {
       "title": "Envoyer le document",
@@ -2027,7 +2035,15 @@
       "print": "Imprimer",
       "noInvoicesFound": "Aucune facture trouvée",
       "noInvoicesDescription": "Essayez d'ajuster votre recherche ou vos filtres",
-      "createFirstInvoice": "Créer votre première facture"
+      "createFirstInvoice": "Créer votre première facture",
+      "pagination": {
+        "label": "Pagination de la liste des factures",
+        "showing": "Affichage",
+        "of": "sur",
+        "page": "Page",
+        "previous": "Précédent",
+        "next": "Suivant"
+      }
     },
     "pending": {
       "title": "Paiements en attente",
