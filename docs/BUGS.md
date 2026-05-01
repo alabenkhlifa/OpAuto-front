@@ -425,6 +425,13 @@ _Use this template:_
 - **Suggested fix:** convert the modal footer to `position: sticky; bottom: 0` with a backdrop fade, or split the body into a flex column with `flex: 1; overflow: auto` for the content and the action row pinned outside it.
 - **Priority:** P3 — works today, just suboptimal in landscape.
 
+### BUG-101 · Invoice form spams Angular `disabled`-attribute warnings under reactive forms 🔴
+- **Where:** `src/app/features/invoicing/components/invoice-form.component.html` — every `[disabled]="isLocked() || ..."` binding on a control declared via `formControlName` (`customerId`, `carId`, `maintenanceJobId`, `dueDate`, `notes`) trips Angular's `Reactive form …disabled attribute` warning.
+- **Symptom:** Console accumulates 7 `[warn]` messages on every invoice-form render. Functional behaviour is correct (the inputs do disable when the invoice is locked), but the noise drowns out real warnings during e2e debugging.
+- **Surfaced by:** Sweep B-1 Chrome DevTools MCP run (2026-05-01) on `S-INV-021` / `S-INV-024`.
+- **Suggested fix:** disable the controls from the component class (`this.form.get('customerId')?.disable()`) inside an `effect()` that watches `isLocked()`, OR drop `formControlName` on the locked-aware fields and read/write through `[value]` + `(input)` like the line-item rows already do.
+- **Priority:** P3 — pure log-noise, no user-visible impact. Logged for the next form-cleanup sweep.
+
 ---
 
 ## Cross-cutting Notes

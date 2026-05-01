@@ -6,6 +6,8 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 
 **Sweep C status (2026-05-01):** Backlog cleanup — closed **BUG-095 / BUG-098 / BUG-099** (all P1 from Sweep A). Quote-detail Edit affordance + quote-form edit mode shipped, mapper drops fixed at the source, workarounds removed from invoice-form. **S-QUO-010 flipped ✅** (verified live via Chrome DevTools MCP). +12 new specs (all green). Remaining open: BUG-096 (perf), BUG-097 (REST 200 vs 204), BUG-100 (modal landscape) — all P3.
 
+**Sweep B-1 status (2026-05-01):** Verified the 4 unverified P1 invoice-form scenarios end-to-end via Chrome DevTools MCP — **S-INV-021 / 023 / 024 / 025 flipped ✅**. All four were already wired correctly in the Sweep A sectioned rebuild; this sweep pinned the behaviour with **+9 new specs** (3 for the discount-audit guard, 2 for the per-line discount math, 1 for the summary signal chain, 3 for the validation-banner branch matrix). Logged BUG-101 (P3, log-noise only — `[disabled]` on `formControlName` controls).
+
 **How to use this doc**
 - Run scenarios manually (browser) or wire each into the e2e-validator agent (`/e2e {scenario-id}`).
 - Priority: **P0** = ship-blocker, **P1** = important, **P2** = polish/edge.
@@ -139,11 +141,11 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 | S-INV-018 | DELETE button hidden for STAFF role | P0 | ⏭️ no staff seed |
 | S-INV-019 | Pull from job: link maintenance job → click "Pull from job" → lines pre-fill | P0 | ✅ (after Sweep A Group 4 — linkJobById + ?jobId= query param) |
 | S-INV-020 | Pull from job: already-converted job → 409 | P1 | 🟡 backend test |
-| S-INV-021 | Discount % > threshold without approver → form invalid + sticky banner | P1 | ❌ |
+| S-INV-021 | Discount % > threshold without approver → form invalid + sticky banner | P1 | ✅ (Sweep B-1) |
 | S-INV-022 | Discount % > threshold with approver picker → form valid; on save, DiscountAuditLog row | P1 | 🟡 backend test |
-| S-INV-023 | Per-line discount % auto-recomputes line total + invoice TVA | P1 | ❌ |
-| S-INV-024 | Sticky right summary panel updates reactively on every change | P1 | ❌ |
-| S-INV-025 | Validation banner lists missing required fields (no customer / no lines / etc.) | P1 | ❌ |
+| S-INV-023 | Per-line discount % auto-recomputes line total + invoice TVA | P1 | ✅ (Sweep B-1) |
+| S-INV-024 | Sticky right summary panel updates reactively on every change | P1 | ✅ (Sweep B-1) |
+| S-INV-025 | Validation banner lists missing required fields (no customer / no lines / etc.) | P1 | ✅ (Sweep B-1) |
 | S-INV-026 | Save Draft preserves form on network failure (toast error, no data loss) | P2 | ❌ |
 | S-INV-027 | Preview PDF button: opens new tab with `/api/invoices/:id/pdf` (DRAFT also works) | P1 | ❌ |
 | S-INV-028 | List view: filter by status, search by invoice number / customer | P1 | ❌ |
@@ -159,6 +161,26 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 **Detail — S-INV-013 (Locked read-only):**
 - **Steps:** Navigate `/invoices/edit/{issued-id}`.
 - **Expected:** Banner "This invoice is locked. Issued invoices are immutable for fiscal compliance." All inputs disabled. Footer shows only "Issue Credit Note" CTA → navigates to `/invoices/credit-notes/new?invoiceId=:id`.
+
+**Detail — S-INV-021 (Discount audit guard, Sweep B-1):**
+- **Steps:** /invoices/create → pick customer + vehicle → add a misc line (qty=2, price=100, TVA=19%) → set Section-4 invoice discount = 7 (above the default 5% threshold).
+- **Expected:** Sticky banner lists `Reason required when discount is applied` + `Approver required for discount above the audit threshold` (translated, never raw keys); Reason input + Approver `<select>` materialise with `*` markers; Save Draft + Issue & Send disabled. Filling the reason ("Loyal customer") AND picking an OWNER from the approver dropdown clears both entries → submit re-enabled.
+- **Pinned by:** `invoice-form.component.spec.ts` describe `S-INV-021 — discount-audit guard` (3 cases: 5.5% over default threshold, exactly-at-threshold no-op, garage-level override).
+
+**Detail — S-INV-023 (Per-line discount math, Sweep B-1):**
+- **Steps:** Add a line (qty=2, unitPrice=100, TVA=19%, discount=10%).
+- **Expected:** Line net = 200 − 10% = 180 ; Subtotal HT = 180 ; TVA 19% row = 34.20 ; Total TTC = 180 + 34.20 + 1 (fiscal stamp) = 215.20.
+- **Pinned by:** `invoice-form.component.spec.ts` describe `S-INV-023 — per-line discount recomputes line + invoice TVA` (2 cases: single-rate math + mixed-rate roll-up).
+
+**Detail — S-INV-024 (Sticky summary reactivity, Sweep B-1):**
+- **Steps:** Empty form → add line A (100 HT, 19%) → add line B (50 HT, 7%) → apply 4% invoice-level discount → remove line B.
+- **Expected:** subtotalHT, discountedSubtotal, per-rate TVA rows, totalTVA and totalTTC recompute on every step without explicit refresh. Verified via signal reads (no template render needed).
+- **Pinned by:** `invoice-form.component.spec.ts` describe `S-INV-024 — sticky summary reactivity` (1 multi-step case).
+
+**Detail — S-INV-025 (Validation banner branch matrix, Sweep B-1):**
+- **Steps:** Open empty form → banner lists Customer/Vehicle/Line entries → pick customer → vehicle entry remains → pick vehicle → line entry remains → click + Misc → "Each line needs a description" appears → fill description+qty+price → banner clears entirely.
+- **Expected:** Each missing-field key renders translated (en: "Customer required" / "Vehicle required" / "At least one line item required" / "Each line needs a description" / "Reason required when discount is applied" / "Approver required for discount above the audit threshold"). Entries clear individually as the user fixes them — no false positives, no leftover translation keys.
+- **Pinned by:** `invoice-form.component.spec.ts` describe `S-INV-025 — validation banner branch matrix` (3 cases: independent clearance, discount-without-reason, namespace audit).
 
 ---
 
@@ -462,7 +484,7 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 | Sub-navigation | 10 | 8 | 0 | 0 | 0 | 2 |
 | Dashboard | 11 | 6 | 0 | 0 | 0 | 5 |
 | Quotes | 23 | 11 | 2 | 0 | 0 | 10 |
-| Invoices | 31 | 14 | 6 | 0 | 1 | 10 |
+| Invoices | 31 | 18 | 6 | 0 | 1 | 6 |
 | Detail | 15 | 11 | 0 | 0 | 0 | 4 |
 | Payments | 15 | 8 | 1 | 0 | 0 | 6 |
 | Credit Notes | 16 | 6 | 9 | 0 | 0 | 1 |
@@ -479,9 +501,9 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 | Security | 8 | 0 | 6 | 0 | 0 | 1 (+1 n/a) |
 | Performance | 5 | 0 | 0 | 0 | 0 | 5 |
 | Stubs | 14 | — | — | — | — | — |
-| **TOTAL** | **248 + 14 stubs** | **91** | **72** | **1** | **4** | **79** (+1 n/a) |
+| **TOTAL** | **248 + 14 stubs** | **95** | **72** | **1** | **4** | **75** (+1 n/a) |
 
-**Verified happy paths:** **65 %** (✅ 91 + 🟡 72 + ⚠️ 1 of 248 — Sweep C bumped Quotes ✅ count from 10 → 11 by flipping S-QUO-010). Sweep A added 17 P0 ✅ and removed 9 distinct bugs; Sweep C closed 3 P1 backlog items (BUG-095/098/099). The remaining ❌ are mostly P1/P2 button-level scenarios — Sweep B target.
+**Verified happy paths:** **66 %** (✅ 95 + 🟡 72 + ⚠️ 1 of 248). Sweep A added 17 P0 ✅; Sweep C bumped Quotes ✅ count from 10 → 11 (S-QUO-010) and closed 3 P1 backlog items (BUG-095/098/099); Sweep B-1 closed 4 P1 invoice-form scenarios (S-INV-021 / 023 / 024 / 025). The remaining ❌ are mostly P1/P2 button-level scenarios — covered by future Sweep B passes.
 
 ---
 

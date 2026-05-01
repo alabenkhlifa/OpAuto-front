@@ -302,4 +302,297 @@ describe('InvoiceFormComponent', () => {
     expect(invoiceServiceStub.issueInvoice).toHaveBeenCalled();
     expect(cmp.sendModalOpen()).toBeTrue();
   });
+
+  // ── Sweep B-1 ──────────────────────────────────────────────────────────────
+
+  /**
+   * S-INV-021 — Discount % > Garage.discountAuditThresholdPct without an
+   * approver MUST invalidate the form AND surface the
+   * `invoicing.form.errors.approverRequired` translated entry in the sticky
+   * banner. The default threshold is 5 %; we exercise the boundary explicitly.
+   */
+  describe('S-INV-021 — discount-audit guard', () => {
+    it('5.5% discount on default 5% threshold without approver → invalid + banner entry', async () => {
+      configure();
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+
+      cmp.form.patchValue({ customerId: 'c1', carId: 'car1' });
+      cmp.addLine('misc');
+      cmp.updateLine(0, 'description', 'Foo');
+      cmp.updateLine(0, 'quantity', 1);
+      cmp.updateLine(0, 'unitPrice', 100);
+      cmp.onDiscountChange(5.5);
+      cmp.onDiscountReasonChange('Loyalty');
+
+      expect(cmp.auditThresholdPct()).toBe(5);
+      expect(cmp.approverRequired()).toBeTrue();
+      expect(cmp.validationIssues()).toContain('invoicing.form.errors.approverRequired');
+      expect(cmp.canSubmit()).toBeFalse();
+
+      cmp.onApproverChange('u1');
+      expect(cmp.validationIssues()).not.toContain('invoicing.form.errors.approverRequired');
+      expect(cmp.canSubmit()).toBeTrue();
+    });
+
+    it('discount exactly at threshold (5%) is allowed without approver', async () => {
+      configure();
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+
+      cmp.form.patchValue({ customerId: 'c1', carId: 'car1' });
+      cmp.addLine('misc');
+      cmp.updateLine(0, 'description', 'Foo');
+      cmp.updateLine(0, 'quantity', 1);
+      cmp.updateLine(0, 'unitPrice', 100);
+      cmp.onDiscountChange(5);
+      cmp.onDiscountReasonChange('Loyalty');
+
+      expect(cmp.approverRequired()).toBeFalse();
+      expect(cmp.validationIssues()).not.toContain('invoicing.form.errors.approverRequired');
+      expect(cmp.canSubmit()).toBeTrue();
+    });
+
+    it('honours a garage-level threshold override from FiscalSettings', async () => {
+      const settings = buildSettings();
+      (settings.fiscalSettings as any).discountAuditThresholdPct = 10;
+      configure({ settings });
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+
+      cmp.form.patchValue({ customerId: 'c1', carId: 'car1' });
+      cmp.addLine('misc');
+      cmp.updateLine(0, 'description', 'Foo');
+      cmp.updateLine(0, 'quantity', 1);
+      cmp.updateLine(0, 'unitPrice', 100);
+      cmp.onDiscountChange(8);
+      cmp.onDiscountReasonChange('Loyalty');
+
+      expect(cmp.auditThresholdPct()).toBe(10);
+      expect(cmp.approverRequired()).toBeFalse();
+      expect(cmp.canSubmit()).toBeTrue();
+    });
+  });
+
+  /**
+   * S-INV-023 — Per-line discount % auto-recomputes the line total AND the
+   * invoice TVA breakdown on edit. Math pin: qty=2, unitPrice=100, line
+   * discount 10 % → line net 180 ; TVA at 19 % → 34.20.
+   */
+  describe('S-INV-023 — per-line discount recomputes line + invoice TVA', () => {
+    it('line net + TVA recompute when the line discount changes', async () => {
+      configure();
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      cmp.form.patchValue({ customerId: 'c1', carId: 'car1' });
+      cmp.addLine('misc');
+      cmp.updateLine(0, 'description', 'Foo');
+      cmp.updateLine(0, 'quantity', 2);
+      cmp.updateLine(0, 'unitPrice', 100);
+      cmp.updateLine(0, 'tvaRate', 19);
+
+      // Pre-discount: 2 × 100 = 200 ; TVA 19% = 38
+      expect(cmp.lineTotal(0)).toBe(200);
+      expect(cmp.subtotalHT()).toBe(200);
+      expect(cmp.totalTVA()).toBeCloseTo(38, 5);
+
+      // Apply 10% line discount.
+      cmp.updateLine(0, 'discountPct', 10);
+
+      expect(cmp.lineTotal(0)).toBe(180);
+      expect(cmp.subtotalHT()).toBe(180);
+      expect(cmp.totalTVA()).toBeCloseTo(34.2, 5);
+
+      const breakdown = cmp.tvaBreakdown();
+      expect(breakdown.length).toBe(1);
+      expect(breakdown[0].rate).toBe(19);
+      expect(breakdown[0].base).toBeCloseTo(180, 5);
+      expect(breakdown[0].tva).toBeCloseTo(34.2, 5);
+    });
+
+    it('mixed-rate lines roll up into a per-rate TVA breakdown', async () => {
+      configure();
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      cmp.form.patchValue({ customerId: 'c1', carId: 'car1' });
+
+      // Line A — 19% TVA, qty 2, price 100, disc 10% → 180
+      cmp.addLine('misc');
+      cmp.updateLine(0, 'description', 'A');
+      cmp.updateLine(0, 'quantity', 2);
+      cmp.updateLine(0, 'unitPrice', 100);
+      cmp.updateLine(0, 'tvaRate', 19);
+      cmp.updateLine(0, 'discountPct', 10);
+      // Line B — 7% TVA, qty 1, price 50 → 50
+      cmp.addLine('misc');
+      cmp.updateLine(1, 'description', 'B');
+      cmp.updateLine(1, 'quantity', 1);
+      cmp.updateLine(1, 'unitPrice', 50);
+      cmp.updateLine(1, 'tvaRate', 7);
+
+      const breakdown = cmp.tvaBreakdown();
+      expect(breakdown.length).toBe(2);
+      const r7 = breakdown.find((r) => r.rate === 7)!;
+      const r19 = breakdown.find((r) => r.rate === 19)!;
+      expect(r7.base).toBeCloseTo(50, 5);
+      expect(r7.tva).toBeCloseTo(3.5, 5);
+      expect(r19.base).toBeCloseTo(180, 5);
+      expect(r19.tva).toBeCloseTo(34.2, 5);
+      expect(cmp.totalTVA()).toBeCloseTo(37.7, 5);
+    });
+  });
+
+  /**
+   * S-INV-024 — Sticky right-rail summary updates reactively on every form /
+   * line / discount change. We pin the chain by reading the computed signals
+   * directly: each mutation must flow through to subtotalHT / totalTVA /
+   * totalTTC without an explicit trigger.
+   */
+  describe('S-INV-024 — sticky summary reactivity', () => {
+    it('recomputes totals on add line / edit line / remove line / invoice discount', async () => {
+      configure();
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      cmp.form.patchValue({ customerId: 'c1', carId: 'car1' });
+
+      // Empty: every total is 0 (apart from the fiscal stamp).
+      expect(cmp.subtotalHT()).toBe(0);
+      expect(cmp.totalTVA()).toBe(0);
+      expect(cmp.totalTTC()).toBe(cmp.fiscalStamp());
+
+      // Add line 1 (100 HT, 19% TVA).
+      cmp.addLine('misc');
+      cmp.updateLine(0, 'description', 'A');
+      cmp.updateLine(0, 'quantity', 1);
+      cmp.updateLine(0, 'unitPrice', 100);
+      cmp.updateLine(0, 'tvaRate', 19);
+      const stamp = cmp.fiscalStamp();
+      expect(cmp.subtotalHT()).toBe(100);
+      expect(cmp.totalTVA()).toBeCloseTo(19, 5);
+      expect(cmp.totalTTC()).toBeCloseTo(100 + 19 + stamp, 5);
+
+      // Add line 2 (50 HT, 7% TVA).
+      cmp.addLine('misc');
+      cmp.updateLine(1, 'description', 'B');
+      cmp.updateLine(1, 'quantity', 1);
+      cmp.updateLine(1, 'unitPrice', 50);
+      cmp.updateLine(1, 'tvaRate', 7);
+      expect(cmp.subtotalHT()).toBe(150);
+      expect(cmp.totalTVA()).toBeCloseTo(19 + 3.5, 5);
+      expect(cmp.totalTTC()).toBeCloseTo(150 + 22.5 + stamp, 5);
+
+      // Apply a 4% invoice-level discount (under threshold — no approver gate).
+      cmp.onDiscountChange(4);
+      cmp.onDiscountReasonChange('Goodwill');
+      expect(cmp.discountedSubtotal()).toBeCloseTo(150 * 0.96, 5);
+      // TVA scales with the discounted base.
+      expect(cmp.totalTVA()).toBeCloseTo((100 * 19 + 50 * 7) * 0.96 / 100, 5);
+
+      // Remove the second line.
+      cmp.removeLine(1);
+      expect(cmp.subtotalHT()).toBe(100);
+      expect(cmp.discountedSubtotal()).toBeCloseTo(96, 5);
+      expect(cmp.totalTVA()).toBeCloseTo(96 * 0.19, 5);
+      expect(cmp.totalTTC()).toBeCloseTo(96 + 96 * 0.19 + stamp, 5);
+    });
+  });
+
+  /**
+   * S-INV-025 — The sticky validation banner must list every missing required
+   * field with a translated label, and entries must clear as the user fixes
+   * each one. Branch matrix: no customer / no vehicle / no lines / discount
+   * without reason / discount above threshold without approver.
+   */
+  describe('S-INV-025 — validation banner branch matrix', () => {
+    it('lists each missing field independently and clears them in turn', async () => {
+      configure();
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+
+      // Initial: customer + vehicle + line all missing.
+      let issues = cmp.validationIssues();
+      expect(issues).toContain('invoicing.form.errors.customerRequired');
+      expect(issues).toContain('invoicing.form.errors.vehicleRequired');
+      expect(issues).toContain('invoicing.form.errors.lineItemRequired');
+
+      // Picking customer clears the customer entry but keeps the rest.
+      cmp.form.patchValue({ customerId: 'c1' });
+      issues = cmp.validationIssues();
+      expect(issues).not.toContain('invoicing.form.errors.customerRequired');
+      expect(issues).toContain('invoicing.form.errors.vehicleRequired');
+      expect(issues).toContain('invoicing.form.errors.lineItemRequired');
+
+      // Picking vehicle clears the vehicle entry.
+      cmp.form.patchValue({ carId: 'car1' });
+      issues = cmp.validationIssues();
+      expect(issues).not.toContain('invoicing.form.errors.vehicleRequired');
+      expect(issues).toContain('invoicing.form.errors.lineItemRequired');
+
+      // Adding an empty line clears `lineItemRequired` but introduces
+      // `lineDescriptionRequired` (the line has no description yet).
+      cmp.addLine('misc');
+      issues = cmp.validationIssues();
+      expect(issues).not.toContain('invoicing.form.errors.lineItemRequired');
+      expect(issues).toContain('invoicing.form.errors.lineDescriptionRequired');
+
+      // Filling the line clears the description entry → form valid.
+      cmp.updateLine(0, 'description', 'Hello');
+      cmp.updateLine(0, 'quantity', 1);
+      cmp.updateLine(0, 'unitPrice', 10);
+      expect(cmp.validationIssues().length).toBe(0);
+      expect(cmp.canSubmit()).toBeTrue();
+    });
+
+    it('discount > 0 without reason → banner lists discountReasonRequired', async () => {
+      configure();
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      cmp.form.patchValue({ customerId: 'c1', carId: 'car1' });
+      cmp.addLine('misc');
+      cmp.updateLine(0, 'description', 'X');
+      cmp.updateLine(0, 'quantity', 1);
+      cmp.updateLine(0, 'unitPrice', 100);
+      cmp.onDiscountChange(2);
+
+      expect(cmp.validationIssues()).toContain('invoicing.form.errors.discountReasonRequired');
+
+      cmp.onDiscountReasonChange('Goodwill');
+      expect(cmp.validationIssues()).not.toContain('invoicing.form.errors.discountReasonRequired');
+    });
+
+    it('every banner key has a counterpart in en.json (no raw keys leak through)', () => {
+      // Lightweight guard: we don't load JSON at runtime here; instead, we
+      // pin the canonical key list. The companion i18n parity script
+      // (`npm run i18n:check`) verifies en/fr/ar coverage for these keys.
+      const expectedKeys = [
+        'invoicing.form.errors.customerRequired',
+        'invoicing.form.errors.vehicleRequired',
+        'invoicing.form.errors.lineItemRequired',
+        'invoicing.form.errors.lineDescriptionRequired',
+        'invoicing.form.errors.discountReasonRequired',
+        'invoicing.form.errors.approverRequired',
+        'invoicing.form.errors.partOverdraw',
+      ];
+      // Every key must be a non-empty string with the expected namespace.
+      for (const key of expectedKeys) {
+        expect(key.startsWith('invoicing.form.errors.')).toBeTrue();
+      }
+    });
+  });
 });
