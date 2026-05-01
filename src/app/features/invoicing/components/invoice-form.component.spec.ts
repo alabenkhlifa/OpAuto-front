@@ -2,8 +2,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute } from '@angular/router';
-import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { provideRouter, Router } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
+
+import { ToastService } from '../../../shared/services/toast.service';
 
 import { InvoiceFormComponent } from './invoice-form.component';
 import { InvoiceService } from '../../../core/services/invoice.service';
@@ -779,6 +782,217 @@ describe('InvoiceFormComponent', () => {
       expect(payload.carId).toBe('carC');
       // Job-link is cleared on customer change.
       expect(payload.maintenanceJobId).toBeUndefined();
+    });
+  });
+
+  // ── Sweep B-3 ──────────────────────────────────────────────────────────────
+
+  /**
+   * S-INV-026 — Save Draft must preserve every form value when the underlying
+   * `createInvoice` / `updateInvoice` HTTP call errors out (5xx, network drop,
+   * etc.). Contract: form values stay exactly as typed, a translated toast
+   * fires (`invoicing.form.errors.saveFailed`), `isSubmitting()` flips back to
+   * false so the buttons re-enable, and there is no SPA navigation.
+   */
+  describe('S-INV-026 — Save Draft preserves form on network failure', () => {
+    function fillValidFormFor(cmp: InvoiceFormComponent) {
+      cmp.form.patchValue({ customerId: 'c1', carId: 'car1', notes: 'Keep me alive' });
+      cmp.addLine('misc');
+      cmp.updateLine(0, 'description', 'Network failure test line');
+      cmp.updateLine(0, 'quantity', 2);
+      cmp.updateLine(0, 'unitPrice', 50);
+    }
+
+    it('createInvoice 500: form values + lines + isSubmitting all preserved; saveFailed toast fired; no navigation', async () => {
+      const { invoiceServiceStub } = configure();
+      const errorResponse = new HttpErrorResponse({
+        status: 500,
+        statusText: 'Internal Server Error',
+        url: 'http://localhost:3000/api/invoices',
+      });
+      invoiceServiceStub.createInvoice.and.returnValue(throwError(() => errorResponse));
+
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      const toastSvc = TestBed.inject(ToastService);
+      const toastSpy = spyOn(toastSvc, 'error');
+      const router = TestBed.inject(Router);
+      const navSpy = spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
+
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      fillValidFormFor(cmp);
+      expect(cmp.canSubmit()).toBeTrue();
+
+      cmp.saveDraft();
+
+      // The submit observable errored synchronously (throwError is sync).
+      expect(invoiceServiceStub.createInvoice).toHaveBeenCalledTimes(1);
+      // Form values are intact.
+      expect(cmp.form.value.customerId).toBe('c1');
+      expect(cmp.form.value.carId).toBe('car1');
+      expect(cmp.form.value.notes).toBe('Keep me alive');
+      // Lines preserved verbatim.
+      expect(cmp.lines().length).toBe(1);
+      expect(cmp.lines()[0].description).toBe('Network failure test line');
+      expect(cmp.lines()[0].quantity).toBe(2);
+      expect(cmp.lines()[0].unitPrice).toBe(50);
+      // Submit-flag flipped back so the buttons re-enable.
+      expect(cmp.isSubmitting()).toBeFalse();
+      expect(cmp.canSubmit()).toBeTrue();
+      // Translated toast fired with the saveFailed key.
+      expect(toastSpy).toHaveBeenCalledWith('invoicing.form.errors.saveFailed');
+      // No SPA navigation — we must NOT redirect to /invoices on failure.
+      expect(navSpy).not.toHaveBeenCalled();
+    });
+
+    it('updateInvoice 500 in edit mode: form + lines preserved; saveFailed toast; no navigation', async () => {
+      const { invoiceServiceStub } = configure({
+        route: { snapshot: { paramMap: { get: () => 'i1' }, queryParamMap: { get: () => null } } },
+        invoice: {
+          status: 'draft',
+          customerId: 'c1', carId: 'car1', notes: 'Original note',
+          lineItems: [
+            { id: 'l1', type: 'misc', description: 'Existing line', quantity: 1, unit: 'piece',
+              unitPrice: 100, totalPrice: 119, tvaRate: 19, discountPercentage: 0, taxable: true } as any,
+          ],
+        },
+      });
+      const errorResponse = new HttpErrorResponse({ status: 0, statusText: 'Network error' });
+      invoiceServiceStub.updateInvoice.and.returnValue(throwError(() => errorResponse));
+
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      const toastSvc = TestBed.inject(ToastService);
+      const toastSpy = spyOn(toastSvc, 'error');
+      const router = TestBed.inject(Router);
+      const navSpy = spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
+
+      cmp.ngOnInit();
+      await fixture.whenStable();
+
+      // Edit a value — the user's in-flight change must survive the failure.
+      cmp.form.patchValue({ notes: 'Edited note must survive' });
+      cmp.updateLine(0, 'description', 'Edited line description');
+
+      cmp.saveDraft();
+
+      expect(invoiceServiceStub.updateInvoice).toHaveBeenCalledTimes(1);
+      // The user's edits are still in the form/lines.
+      expect(cmp.form.value.notes).toBe('Edited note must survive');
+      expect(cmp.lines()[0].description).toBe('Edited line description');
+      // Submit re-enabled, no navigation, translated toast fired.
+      expect(cmp.isSubmitting()).toBeFalse();
+      expect(toastSpy).toHaveBeenCalledWith('invoicing.form.errors.saveFailed');
+      expect(navSpy).not.toHaveBeenCalled();
+    });
+
+    it('successful save after a prior failure: createInvoice retried and navigation fires only on success', async () => {
+      const { invoiceServiceStub } = configure();
+      const errorResponse = new HttpErrorResponse({ status: 500, statusText: 'Internal Server Error' });
+      // First call errors, second call succeeds.
+      invoiceServiceStub.createInvoice.and.returnValues(
+        throwError(() => errorResponse),
+        of({ id: 'new-1', invoiceNumber: 'DRAFT-deadbeef' } as any),
+      );
+
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      const router = TestBed.inject(Router);
+      const navSpy = spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
+
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      fillValidFormFor(cmp);
+
+      cmp.saveDraft();
+      // First call failed — no navigation, form intact.
+      expect(navSpy).not.toHaveBeenCalled();
+      expect(cmp.lines()[0].description).toBe('Network failure test line');
+      expect(cmp.isSubmitting()).toBeFalse();
+
+      // Retry — same form, second call succeeds → navigation fires.
+      cmp.saveDraft();
+      expect(invoiceServiceStub.createInvoice).toHaveBeenCalledTimes(2);
+      expect(navSpy).toHaveBeenCalledWith(['/invoices', 'new-1']);
+    });
+  });
+
+  /**
+   * S-INV-027 — Preview PDF on the form fetches the PDF as an authenticated
+   * Blob (`InvoiceService.getInvoicePdfBlob`) and opens it in a new tab via
+   * `URL.createObjectURL` + `window.open`. It must NOT navigate the SPA away
+   * from `/invoices/edit/:id` (the Sweep A `/dashboard` SPA-route trap).
+   * Works on DRAFT invoices because the BE renders DRAFTs with the
+   * `DRAFT-{uuid8}` placeholder number.
+   */
+  describe('S-INV-027 — Preview PDF on invoice form', () => {
+    it('previewPdf calls getInvoicePdfBlob, creates an object URL, and window.opens it', async () => {
+      const { invoiceServiceStub } = configure({
+        route: { snapshot: { paramMap: { get: () => 'i1' }, queryParamMap: { get: () => null } } },
+        invoice: { status: 'draft', invoiceNumber: 'DRAFT-d8a441d2' },
+      });
+      const pdfBlob = new Blob([new Uint8Array([0x25, 0x50, 0x44, 0x46])], { type: 'application/pdf' });
+      (invoiceServiceStub as any).getInvoicePdfBlob = jasmine.createSpy('getInvoicePdfBlob')
+        .and.returnValue(of(pdfBlob));
+      const objectUrlSpy = spyOn(URL, 'createObjectURL').and.returnValue('blob:http://localhost/fake-pdf-id');
+      const openSpy = spyOn(window, 'open').and.returnValue(null);
+      const router = TestBed.inject(Router);
+      const navSpy = spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
+
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+
+      cmp.previewPdf();
+
+      expect((invoiceServiceStub as any).getInvoicePdfBlob).toHaveBeenCalledOnceWith('i1');
+      expect(objectUrlSpy).toHaveBeenCalledOnceWith(pdfBlob);
+      expect(openSpy).toHaveBeenCalledOnceWith('blob:http://localhost/fake-pdf-id', '_blank');
+      // SPA must stay put — no router.navigate side-effect.
+      expect(navSpy).not.toHaveBeenCalled();
+    });
+
+    it('previewPdf is a no-op when no invoice is loaded (button is gated by isEditMode in the template)', async () => {
+      const { invoiceServiceStub } = configure();
+      (invoiceServiceStub as any).getInvoicePdfBlob = jasmine.createSpy('getInvoicePdfBlob')
+        .and.returnValue(of(new Blob()));
+      const openSpy = spyOn(window, 'open').and.returnValue(null);
+
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+
+      // Create-mode: currentInvoice() is null → no fetch, no window.open.
+      expect(cmp.isEditMode()).toBeFalse();
+      cmp.previewPdf();
+      expect((invoiceServiceStub as any).getInvoicePdfBlob).not.toHaveBeenCalled();
+      expect(openSpy).not.toHaveBeenCalled();
+    });
+
+    it('previewPdf surfaces a translated pdfFailed toast when the blob fetch errors', async () => {
+      const { invoiceServiceStub } = configure({
+        route: { snapshot: { paramMap: { get: () => 'i1' }, queryParamMap: { get: () => null } } },
+        invoice: { status: 'draft', invoiceNumber: 'DRAFT-deadbeef' },
+      });
+      (invoiceServiceStub as any).getInvoicePdfBlob = jasmine.createSpy('getInvoicePdfBlob')
+        .and.returnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+      const openSpy = spyOn(window, 'open').and.returnValue(null);
+
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      const toastSvc = TestBed.inject(ToastService);
+      const toastSpy = spyOn(toastSvc, 'error');
+
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      cmp.previewPdf();
+
+      expect(toastSpy).toHaveBeenCalledWith('invoicing.form.errors.pdfFailed');
+      // No tab opened on error.
+      expect(openSpy).not.toHaveBeenCalled();
     });
   });
 });

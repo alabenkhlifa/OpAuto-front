@@ -10,6 +10,8 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 
 **Sweep B-2 status (2026-05-01):** Closed the 2 unverified P1 invoice DRAFT-lifecycle scenarios — **S-INV-005 / S-INV-014 flipped ✅** and verified end-to-end via Chrome DevTools MCP. **S-INV-005** (edit DRAFT → change customer / car) was already wired correctly via the Sweep A sectioned rebuild (`onCustomerChange` + `onCarChange` + `formValue` signal mirror); this sweep pinned the cascade behaviour and the PUT round-trip with **+5 new specs**. **S-INV-014** (cancel DRAFT → CANCELLED) required a small new affordance: added `canShow('cancel')` to the detail action-bar + `onCancel()` handler that calls `InvoiceService.updateInvoice(id, { status: 'cancelled' })` (which forwards `status: 'CANCELLED'` to the BE state machine via `toBackendEnum`). Pattern mirrors `onDelete()` — `window.confirm()` + i18n keys + 423/400 distinction (locked vs failed). New i18n keys: `invoicing.detail.actions.cancel`, `confirmCancel`, `toast.cancelled`, `errors.cancelFailed`, `errors.cancelLocked` synced en/fr/ar. **+6 new specs** in `invoice-details.component.spec.ts` (visibility on DRAFT-only, hidden on SENT/PAID/OVERDUE/PARTIALLY_PAID/CANCELLED, confirm-dismiss no-op, confirm-accept happy path, 400 → cancelLocked toast, 500 → cancelFailed toast).
 
+**Sweep B-3 status (2026-05-01):** Closed the 2 unverified invoice-form resilience scenarios end-to-end via Chrome DevTools MCP — **S-INV-026 / S-INV-027 flipped ✅**. Both were already wired correctly in the Sweep A sectioned rebuild (`previewPdf()` reuses the `getInvoicePdfBlob` blob path with `URL.createObjectURL` + `window.open`; `saveDraft()` error branch exits with toast + `isSubmitting=false` and no `router.navigate`). This sweep pinned the contracts with **+6 new specs** (3 for the network-failure resilience matrix, 3 for the form Preview PDF flow). Live walk-through: clicked Preview PDF on edit page for DRAFT-d8a441d2 → new tab opened with `blob:` URL + `application/pdf` content-type → SPA stayed on `/invoices/edit/:id` → smoke-tested the same button on the detail page (still works). For S-INV-026: monkey-patched `XMLHttpRequest` to fail any POST/PUT to `/api/invoices`, filled customer + vehicle + line + notes, clicked Save Draft → "Could not save invoice" toast emitted → form values fully preserved → buttons re-enabled → restored network → second click succeeded with new DRAFT-ce5685cd carrying the original input. No new bugs surfaced; existing i18n keys (`invoicing.form.errors.saveFailed`, `invoicing.form.errors.pdfFailed`) already wired in en/fr/ar.
+
 **How to use this doc**
 - Run scenarios manually (browser) or wire each into the e2e-validator agent (`/e2e {scenario-id}`).
 - Priority: **P0** = ship-blocker, **P1** = important, **P2** = polish/edge.
@@ -148,8 +150,8 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 | S-INV-023 | Per-line discount % auto-recomputes line total + invoice TVA | P1 | ✅ (Sweep B-1) |
 | S-INV-024 | Sticky right summary panel updates reactively on every change | P1 | ✅ (Sweep B-1) |
 | S-INV-025 | Validation banner lists missing required fields (no customer / no lines / etc.) | P1 | ✅ (Sweep B-1) |
-| S-INV-026 | Save Draft preserves form on network failure (toast error, no data loss) | P2 | ❌ |
-| S-INV-027 | Preview PDF button: opens new tab with `/api/invoices/:id/pdf` (DRAFT also works) | P1 | ❌ |
+| S-INV-026 | Save Draft preserves form on network failure (toast error, no data loss) | P2 | ✅ (Sweep B-3 — XHR-monkey-patch failure pinned; form + lines + notes preserved; saveFailed toast; submit re-enabled; no navigation) |
+| S-INV-027 | Preview PDF button: opens new tab with `/api/invoices/:id/pdf` (DRAFT also works) | P1 | ✅ (Sweep B-3 — form `previewPdf()` reuses `getInvoicePdfBlob` blob path; new tab `application/pdf`; SPA stays on `/invoices/edit/:id`) |
 | S-INV-028 | List view: filter by status, search by invoice number / customer | P1 | ❌ |
 | S-INV-029 | List view: pagination (or all-in-one if dataset small) | P2 | ❌ none yet |
 | S-INV-030 | Invoice DTO contract: line items only carry spec'd fields | P0 | ✅ (after d28a940) |
@@ -195,6 +197,18 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 - **Steps:** Open empty form → banner lists Customer/Vehicle/Line entries → pick customer → vehicle entry remains → pick vehicle → line entry remains → click + Misc → "Each line needs a description" appears → fill description+qty+price → banner clears entirely.
 - **Expected:** Each missing-field key renders translated (en: "Customer required" / "Vehicle required" / "At least one line item required" / "Each line needs a description" / "Reason required when discount is applied" / "Approver required for discount above the audit threshold"). Entries clear individually as the user fixes them — no false positives, no leftover translation keys.
 - **Pinned by:** `invoice-form.component.spec.ts` describe `S-INV-025 — validation banner branch matrix` (3 cases: independent clearance, discount-without-reason, namespace audit).
+
+**Detail — S-INV-026 (Save Draft preserves form on network failure, Sweep B-3):**
+- **Steps:** Open `/invoices/create` → pick customer + vehicle → click `+ Misc` → fill description + qty + unit price + notes → monkey-patch `XMLHttpRequest` so any POST/PUT to `/api/invoices` errors → click `Save draft` → assert form values intact + `Could not save invoice` toast + buttons re-enabled + URL still `/invoices/create` → restore the network → click `Save draft` again → second call succeeds with `DRAFT-{uuid8}` and SPA navigates to detail page carrying the same input.
+- **Expected:** `saveDraft()` `error:` branch fires `this.toast.error('invoicing.form.errors.saveFailed')` + flips `isSubmitting()` back to `false`; `router.navigate` is **not** called on failure; `this.form.value` and `this.lines()` retain the user's input verbatim (Angular Reactive Forms keep their value by default — the contract is that nothing in the error branch resets them).
+- **Live proof:** Filled `Hela Mahmoud` / `Toyota Corolla 1414 TUN 203` / Misc line `Network failure test line` qty 1 unit price 45 + notes `Network resilience smoke test notes — must NOT be lost on save failure.`. XHR patch forced 500 → toast `Could not save invoice` shown → form values retained verbatim → URL still `/invoices/create` → buttons re-enabled. Restored XHR → second click succeeded with `DRAFT-ce5685cd` carrying the same data.
+- **Pinned by:** `invoice-form.component.spec.ts` describe `S-INV-026 — Save Draft preserves form on network failure` (3 cases: createInvoice 500 in create-mode, updateInvoice 0 (network drop) in edit-mode, retry-after-failure happy path).
+
+**Detail — S-INV-027 (Preview PDF on the form, Sweep B-3):**
+- **Steps:** Open `/invoices/edit/{draft-id}` → click `Preview PDF` in the sticky bottom action bar → assert a new browser tab opens with a `blob:` URL whose contentType is `application/pdf` → close the tab → assert SPA still on `/invoices/edit/:id` (not `/dashboard`). Smoke-test the same button on `/invoices/{draft-id}` (detail page — already shipped in Sweep A; this sweep just confirms it didn't regress).
+- **Expected:** `InvoiceFormComponent.previewPdf()` calls `InvoiceService.getInvoicePdfBlob(inv.id)` (authenticated `GET /api/invoices/:id/pdf` returning `responseType: 'blob'`), then `URL.createObjectURL(blob)` + `window.open(url, '_blank')`. Button is gated by `isEditMode()` — invisible while creating a new invoice. Works for DRAFT invoices because the BE renders DRAFTs with the placeholder `DRAFT-{uuid8}` number.
+- **Live proof:** Edit page for DRAFT-d8a441d2 → click Preview PDF → new tab `blob:http://localhost:4200/3d11f751-…` opened with `document.contentType === 'application/pdf'` → main tab still on `/invoices/edit/36fa07ed-…`. Detail-page Preview PDF button confirmed working too (uid 180_53 → blob:58af5887-…). No console errors.
+- **Pinned by:** `invoice-form.component.spec.ts` describe `S-INV-027 — Preview PDF on invoice form` (3 cases: happy path opens blob URL via window.open and does NOT navigate, no-op when no invoice loaded, error branch surfaces `pdfFailed` toast).
 
 ---
 
@@ -498,7 +512,7 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 | Sub-navigation | 10 | 8 | 0 | 0 | 0 | 2 |
 | Dashboard | 11 | 6 | 0 | 0 | 0 | 5 |
 | Quotes | 23 | 11 | 2 | 0 | 0 | 10 |
-| Invoices | 31 | 20 | 6 | 0 | 1 | 4 |
+| Invoices | 31 | 22 | 6 | 0 | 1 | 2 |
 | Detail | 15 | 11 | 0 | 0 | 0 | 4 |
 | Payments | 15 | 8 | 1 | 0 | 0 | 6 |
 | Credit Notes | 16 | 6 | 9 | 0 | 0 | 1 |
@@ -515,9 +529,9 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 | Security | 8 | 0 | 6 | 0 | 0 | 1 (+1 n/a) |
 | Performance | 5 | 0 | 0 | 0 | 0 | 5 |
 | Stubs | 14 | — | — | — | — | — |
-| **TOTAL** | **248 + 14 stubs** | **97** | **72** | **1** | **4** | **73** (+1 n/a) |
+| **TOTAL** | **248 + 14 stubs** | **99** | **72** | **1** | **4** | **71** (+1 n/a) |
 
-**Verified happy paths:** **67 %** (✅ 97 + 🟡 72 + ⚠️ 1 of 248). Sweep A added 17 P0 ✅; Sweep C bumped Quotes ✅ count from 10 → 11 (S-QUO-010) and closed 3 P1 backlog items (BUG-095/098/099); Sweep B-1 closed 4 P1 invoice-form scenarios (S-INV-021 / 023 / 024 / 025); Sweep B-2 closed 2 P1 invoice DRAFT-lifecycle scenarios (S-INV-005 / 014). The remaining ❌ are mostly P1/P2 button-level scenarios — covered by future Sweep B passes.
+**Verified happy paths:** **68 %** (✅ 99 + 🟡 72 + ⚠️ 1 of 248). Sweep A added 17 P0 ✅; Sweep C bumped Quotes ✅ count from 10 → 11 (S-QUO-010) and closed 3 P1 backlog items (BUG-095/098/099); Sweep B-1 closed 4 P1 invoice-form scenarios (S-INV-021 / 023 / 024 / 025); Sweep B-2 closed 2 P1 invoice DRAFT-lifecycle scenarios (S-INV-005 / 014); Sweep B-3 closed 2 invoice-form resilience scenarios (S-INV-026 / 027). The remaining ❌ are mostly P1/P2 button-level scenarios — covered by future Sweep B passes.
 
 ---
 
@@ -550,4 +564,4 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 
 ---
 
-**Last updated:** 2026-05-01 after Sweep B-2 — DRAFT-lifecycle (S-INV-005 ✅ / S-INV-014 ✅ via new Cancel CTA + cascading customer/car edit).
+**Last updated:** 2026-05-01 after Sweep B-3 — invoice-form resilience (S-INV-026 ✅ via XHR-failure smoke test; S-INV-027 ✅ via blob-PDF preview on the form, no SPA-route trap).
