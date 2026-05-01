@@ -425,6 +425,13 @@ _Use this template:_
 - **Suggested fix:** convert the modal footer to `position: sticky; bottom: 0` with a backdrop fade, or split the body into a flex column with `flex: 1; overflow: auto` for the content and the action row pinned outside it.
 - **Priority:** P3 — works today, just suboptimal in landscape.
 
+### BUG-102 · S-DET-010 print-emulation walk-through blocked by local Postgres outage 🔴
+- **Where:** Local dev environment — `localhost:5432` was unreachable during Sweep C-1, so `POST /api/auth/login` returned 500 and the Chrome DevTools MCP browser pass for **S-DET-010** (`@media print` chrome hiding) couldn't run.
+- **Symptom:** Login fails with "Invalid username/email or password" toast; backend `/private/tmp/opauto-backend.log` shows `PrismaClientKnownRequestError: Can't reach database server at localhost:5432`. Frontend e2e flows that need authenticated routes (any `/invoices/*` page) are blocked. Affects S-DET-010 specifically because the print-emulation contract can only be verified visually, not via Karma — the spec coverage is solid (DOM-class regression + `onPrint()` invocation) but a full snapshot in print-mode is the gold standard.
+- **Surfaced by:** Sweep C-1 Chrome DevTools MCP run (2026-05-01).
+- **Suggested fix:** restart the local DB (Docker Compose / Postgres-app / however the dev environment is wired). Repro the print-emulation walk-through once the DB is back: navigate to a SENT invoice → `mcp__chrome-devtools__emulate` with `colorScheme: 'light'` (or `media: 'print'` if the tool exposes it) → `take_snapshot` → confirm only the invoice content is visible (no sidebar, no top bar, no action bar, no aside, no FAB). Flip S-DET-010 from ⚠️ to ✅ in `docs/INVOICING_E2E_SCENARIOS.md` once verified.
+- **Priority:** P3 — **NOT a product bug**, just a local-env blocker that prevented one of the four Sweep C-1 visual checks. The spec coverage is sufficient to lock the contract; this is logged for sweep-completeness audit only.
+
 ### BUG-101 · Invoice form spams Angular `disabled`-attribute warnings under reactive forms 🔴
 - **Where:** `src/app/features/invoicing/components/invoice-form.component.html` — every `[disabled]="isLocked() || ..."` binding on a control declared via `formControlName` (`customerId`, `carId`, `maintenanceJobId`, `dueDate`, `notes`) trips Angular's `Reactive form …disabled attribute` warning.
 - **Symptom:** Console accumulates 7 `[warn]` messages on every invoice-form render. Functional behaviour is correct (the inputs do disable when the invoice is locked), but the noise drowns out real warnings during e2e debugging.

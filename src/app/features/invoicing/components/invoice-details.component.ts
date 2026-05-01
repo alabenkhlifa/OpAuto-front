@@ -570,10 +570,15 @@ export class InvoiceDetailsComponent implements OnInit {
       case 'downloadPdf':
         return inv.status !== 'draft';
       case 'creditNote':
+        // S-DET-006: OVERDUE is just a SENT invoice past dueDate — the
+        // user must still be able to issue a credit note (e.g. to write
+        // off an uncollectable receivable). Same affordance set as
+        // PARTIALLY_PAID; the visual cue lives on the badge.
         return inv.status === 'sent' ||
           inv.status === 'viewed' ||
           inv.status === 'paid' ||
-          inv.status === 'partially-paid';
+          inv.status === 'partially-paid' ||
+          inv.status === 'overdue';
       case 'delete':
         return inv.status === 'draft' && this.isOwner();
       case 'cancel':

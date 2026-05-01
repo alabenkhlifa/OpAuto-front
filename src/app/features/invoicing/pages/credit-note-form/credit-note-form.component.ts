@@ -160,7 +160,16 @@ export class CreditNoteFormPageComponent implements OnInit {
           this.toast.success(
             this.translation.instant('invoicing.creditNotes.form.created'),
           );
-          this.router.navigate(['/invoices/credit-notes']);
+          // S-DET-014: route back to the source invoice detail so the user
+          // lands on a freshly-refetched invoice page (Linked credit notes
+          // panel + paymentHistory + balance all re-render via ngOnInit's
+          // forkJoin). Falls back to the credit-notes list if for any
+          // reason the invoice id was lost mid-flight.
+          if (inv.id) {
+            this.router.navigate(['/invoices', inv.id]);
+          } else {
+            this.router.navigate(['/invoices/credit-notes']);
+          }
         },
         error: () => {
           this.isSubmitting.set(false);
