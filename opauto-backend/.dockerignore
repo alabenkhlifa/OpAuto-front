@@ -1,0 +1,41 @@
+# IMPORTANT: without this file, `COPY . .` in the Dockerfile silently
+# overlays the VPS host's node_modules/ on top of the fresh `npm ci`
+# install, producing a Frankenstein dependency tree at runtime. We
+# discovered this on 2026-05-01 when a stale lru-cache@5.1.1 left over
+# on the box from April clobbered the locked v11.3.5 and crash-looped
+# the backend with `lru_cache_1.LRUCache is not a constructor`.
+# Keep this list pruned — anything that lives in the working tree but
+# isn't part of the source-of-truth deployable should be excluded here.
+
+# Build artifacts (regenerated inside the image)
+node_modules
+dist
+build
+
+# Local environment / secrets — must never end up in the image
+.env
+.env.*
+!.env.example
+
+# Editor / OS noise
+.vscode
+.idea
+.DS_Store
+*.log
+*.swp
+
+# Test / coverage output
+coverage
+.nyc_output
+junit*.xml
+
+# Git metadata
+.git
+.gitignore
+
+# Docker meta (no need to ship into the image)
+Dockerfile
+.dockerignore
+
+# Misc dev tooling
+*.tsbuildinfo
