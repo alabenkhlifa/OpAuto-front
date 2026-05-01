@@ -1,6 +1,8 @@
 # Invoicing — E2E Scenario Test Catalog
 
-Comprehensive, button-by-button scenario coverage for the fiscal invoicing system shipped Apr 2026 (commits `001a658` → `7ef7d9f`). Every scenario is reproducible against `http://localhost:4200` with a fresh dev DB.
+Comprehensive, button-by-button scenario coverage for the fiscal invoicing system shipped Apr 2026 (commits `001a658` → `7ef7d9f`) + Sweep A hardening pass May 2026 (commits `32b98b9` → `cd0dd63`). Every scenario is reproducible against `http://localhost:4200` with a fresh dev DB.
+
+**Sweep A status (2026-05-01):** Groups 1-4 complete — 17 P0 scenarios verified end-to-end via Chrome DevTools MCP, 9 distinct bugs fixed (DTO desync, vehicle-dropdown reactivity, PDF SPA-route, edit-form line hydration BUG-094, TVA-select default, delete-DRAFT confirm, pull-from-job linkage, mobile send-modal CSS, prod `.dockerignore`). Backlog opened: BUG-094 (✅ fixed), BUG-095/096/097/098/099/100 (open). Full play-by-play in `docs/MVP_PROGRESS.md → Batch 9 → Post-validation Sweep A`.
 
 **How to use this doc**
 - Run scenarios manually (browser) or wire each into the e2e-validator agent (`/e2e {scenario-id}`).
@@ -84,7 +86,7 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 | S-QUO-007 | Remove line via × button | P1 | ❌ |
 | S-QUO-008 | Per-line TVA select (7 / 13 / 19 / exempt 0) | P0 | ✅ (after Sweep A Group 2 fix — TVA_RATES reorder + explicit `[selected]`) |
 | S-QUO-009 | Quote DRAFT has no quote number (`DRAFT-{uuid8}` placeholder) | P0 | ✅ |
-| S-QUO-010 | Edit DRAFT quote — totals recompute on line change | P1 | ❌ |
+| S-QUO-010 | Edit DRAFT quote — totals recompute on line change | P1 | ❌ BUG-095 (no Edit affordance on quote-detail for any status) |
 | S-QUO-011 | Send DRAFT quote → SENT, number formatted `DEV-YYYY-NNNN` | P0 | ✅ |
 | S-QUO-012 | Approve SENT quote → DRAFT invoice created with copied lines | P0 | ✅ |
 | S-QUO-013 | Approve auto-navigates to new draft invoice (currently fails — UX glitch) | P2 | ❌ known glitch |
@@ -115,10 +117,10 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 
 | ID | Scenario | Priority | Status |
 |---|---|---|---|
-| S-INV-001 | Create DRAFT invoice with 1 line item | P0 | ❌ |
-| S-INV-002 | Create DRAFT invoice with mixed line types (service+part+labor+misc) | P0 | ❌ |
+| S-INV-001 | Create DRAFT invoice with 1 line item | P0 | ✅ (after Sweep A Group 1 — DTO desync fix `32b98b9`) |
+| S-INV-002 | Create DRAFT invoice with mixed line types (service+part+labor+misc) | P0 | ✅ (after Sweep A Group 1) |
 | S-INV-003 | DRAFT invoice number is placeholder `DRAFT-{uuid8}` (no fiscal seq burn) | P0 | ✅ |
-| S-INV-004 | Edit DRAFT invoice — totals recompute on line change (`PUT /api/invoices/:id`) | P0 | ❌ |
+| S-INV-004 | Edit DRAFT invoice — totals recompute on line change (`PUT /api/invoices/:id`) | P0 | ✅ (after Sweep A Group 1) |
 | S-INV-005 | Edit DRAFT invoice — change customer / car | P1 | ❌ |
 | S-INV-006 | Issue DRAFT invoice — gets `INV-YYYY-NNNN` (or `INV-YYYYMM-NNNN`), `lockedAt`, `lockedBy` | P0 | ✅ |
 | S-INV-007 | Issue triggers stock decrement for each `partId` line | P0 | 🟡 backend test |
@@ -162,7 +164,7 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 
 | ID | Scenario | Priority | Status |
 |---|---|---|---|
-| S-DET-001 | DRAFT detail: actions = Edit / Issue&Send / Preview PDF / Delete | P0 | ❌ |
+| S-DET-001 | DRAFT detail: actions = Edit / Issue&Send / Preview PDF / Delete | P0 | ✅ (after Sweep A Group 1) |
 | S-DET-002 | SENT detail: actions = Send / Record Payment / Print / Download PDF / Issue Credit Note | P0 | ✅ |
 | S-DET-003 | PARTIALLY_PAID detail: same as SENT minus Send (already delivered) | P1 | ✅ |
 | S-DET-004 | PAID detail: actions = Print / Download PDF / Issue Credit Note (no payment) | P1 | ✅ |
@@ -172,7 +174,7 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 | S-DET-008 | Payment progress ring: SVG renders correct percentage | P1 | ✅ |
 | S-DET-009 | Linked credit notes summary in right column | P1 | ✅ |
 | S-DET-010 | Print: `@media print` hides chrome, shows only invoice content | P1 | ❌ visual |
-| S-DET-011 | Download PDF: returns valid PDF with correct filename | P0 | ❌ browser |
+| S-DET-011 | Download PDF: returns valid PDF with correct filename | P0 | ✅ (after Sweep A Group 1 — `getInvoicePdfBlob` blob fetch + `<a download>` trigger) |
 | S-DET-012 | Issue Credit Note button → `/invoices/credit-notes/new?invoiceId=:id` | P0 | ✅ |
 | S-DET-013 | Header lock icon appears when status !== DRAFT | P1 | ✅ |
 | S-DET-014 | Page focus refresh: returning from credit note → detail re-fetches | P1 | ❌ |
@@ -308,7 +310,7 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 | S-INV-W-002 | Insufficient stock → 422 with `shortages: [{partId, partName, requested, available}]` | P0 | 🟡 backend test |
 | S-INV-W-003 | Credit note with restockParts=true → StockMovement(type='in') + Part.quantity incremented | P0 | 🟡 backend test |
 | S-INV-W-004 | Stock movement reference includes `invoice:{number}` for traceability | P1 | 🟡 backend test |
-| S-INV-W-005 | Part-picker shows live stock badge "{qty} in stock" next to selected part | P0 | ❌ |
+| S-INV-W-005 | Part-picker shows live stock badge "{qty} in stock" next to selected part | P0 | ⚠️ code-wired (Sweep A Group 2 — `isOverdraw()` + `partOverdraw` validation issue confirmed in source); browser-visual verify deferred |
 | S-INV-W-006 | Part-picker row turns red (`.error`) when row qty > available | P1 | ❌ |
 
 ---
@@ -454,39 +456,40 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 
 | Section | Total | ✅ | 🟡 | ⚠️ | ⏭️ | ❌ |
 |---|---:|---:|---:|---:|---:|---:|
-| Auth & Roles | 7 | 1 | 1 | 0 | 3 | 2 |
-| Sub-navigation | 10 | 6 | 0 | 0 | 0 | 4 |
+| Auth & Roles | 7 | 2 | 1 | 0 | 3 | 1 |
+| Sub-navigation | 10 | 8 | 0 | 0 | 0 | 2 |
 | Dashboard | 11 | 6 | 0 | 0 | 0 | 5 |
-| Quotes | 23 | 4 | 2 | 0 | 0 | 17 |
-| Invoices | 30 | 4 | 5 | 0 | 1 | 20 |
-| Detail | 15 | 9 | 0 | 0 | 0 | 6 |
-| Payments | 15 | 6 | 1 | 0 | 0 | 8 |
-| Credit Notes | 16 | 5 | 8 | 0 | 0 | 3 |
-| PDF | 12 | 0 | 8 | 0 | 0 | 4 |
-| Delivery | 12 | 1 | 6 | 0 | 0 | 5 |
-| Reports | 14 | 4 | 8 | 0 | 0 | 2 |
+| Quotes | 23 | 10 | 2 | 0 | 0 | 11 |
+| Invoices | 31 | 14 | 6 | 0 | 1 | 10 |
+| Detail | 15 | 11 | 0 | 0 | 0 | 4 |
+| Payments | 15 | 8 | 1 | 0 | 0 | 6 |
+| Credit Notes | 16 | 6 | 9 | 0 | 0 | 1 |
+| PDF | 12 | 0 | 9 | 0 | 0 | 3 |
+| Delivery | 12 | 1 | 7 | 0 | 0 | 4 |
+| Reports | 14 | 5 | 8 | 0 | 0 | 1 |
 | Service Catalog | 9 | 0 | 6 | 0 | 0 | 3 |
-| Inventory | 6 | 0 | 4 | 0 | 0 | 2 |
-| Garage Settings | 10 | 0 | 7 | 0 | 0 | 3 |
-| i18n & RTL | 12 | 8 | 0 | 0 | 0 | 4 |
-| Sidebar | 6 | 2 | 0 | 0 | 0 | 4 |
-| Mobile | 9 | 4 | 0 | 0 | 0 | 5 |
+| Inventory | 6 | 0 | 4 | 1 | 0 | 1 |
+| Garage Settings | 10 | 1 | 6 | 0 | 0 | 3 |
+| i18n & RTL | 12 | 10 | 0 | 0 | 0 | 2 |
+| Sidebar | 6 | 3 | 0 | 0 | 0 | 3 |
+| Mobile | 9 | 5 | 0 | 0 | 0 | 4 |
 | Edge cases | 17 | 0 | 7 | 0 | 0 | 10 |
-| Security | 8 | 0 | 6 | 0 | 0 | 2 |
+| Security | 8 | 0 | 6 | 0 | 0 | 1 (+1 n/a) |
 | Performance | 5 | 0 | 0 | 0 | 0 | 5 |
 | Stubs | 14 | — | — | — | — | — |
-| **TOTAL** | **261 + 14 stubs** | **60** | **69** | **0** | **4** | **114** |
+| **TOTAL** | **248 + 14 stubs** | **90** | **72** | **1** | **4** | **80** (+1 n/a) |
 
-**Verified happy paths:** ~50% (✅ 60 + 🟡 69 of 261). Backend e2e and unit suites cover most fiscal logic; frontend e2e validation covered the critical user journey (12/13 scenarios from Phase 6.2). The 114 ❌ are mostly button-level scenarios that exist in code but were never explicitly clicked in a browser e2e pass.
+**Verified happy paths:** **65 %** (✅ 90 + 🟡 72 + ⚠️ 1 of 248 — up from ~50 % at 2026-04-30). Sweep A added 17 P0 ✅ and removed 9 distinct bugs across 4 groups (CRUD, pickers, lock guardrails, pull-from-job + mobile). The remaining 80 ❌ are mostly P1/P2 button-level scenarios — Sweep B target.
 
 ---
 
 ## Recommended Next Sweeps
 
-1. **Sweep A — Browser-verify all P0 ❌ scenarios** (~25 scenarios): cancel-draft, delete-draft, edit-draft, every line-type add/remove, mobile modals, settings save flow.
-2. **Sweep B — Browser-verify all P1 ❌ scenarios** (~50 scenarios).
-3. **Sweep C — Close documented stubs**: templates, logo upload, Service Catalog admin, MECHANIC role, pagination + server-side filter.
-4. **Sweep D — Performance baseline**: pagination implementation + load test invoicing list / PDF render p95.
+1. **Sweep A — Browser-verify all P0 ❌ scenarios** — ✅ **DONE 2026-05-01** (Groups 1-4: invoice CRUD, line-item pickers, lock guardrails, pull-from-job + mobile modals). 17 P0 verified, 9 bugs fixed. Commits `32b98b9`, `ab677ca`. Outstanding P0 ❌ remaining: ~10 — see status flags above (mostly cancel-DRAFT-invoice, dashboard quick-actions, line-type-specific add scenarios).
+2. **Sweep B — Browser-verify all P1 ❌ scenarios** (~50 scenarios). Best starting points: Section 5 (P1 line-type pickers, discount audit), Section 6 (printing, page focus refresh), Section 11 (Z-report print), Section 17 (mobile invoice form).
+3. **Sweep C — Close backlog bugs** (`docs/BUGS.md`): BUG-095 (quote-detail Edit affordance), BUG-098 (Maintenance.customerId mapper), BUG-099 (Invoice.maintenanceJobId mapper). All P1.
+4. **Sweep D — Close documented stubs**: templates, logo upload, Service Catalog admin, MECHANIC role, pagination + server-side filter.
+5. **Sweep E — Performance baseline**: pagination implementation + load test invoicing list / PDF render p95.
 
 ---
 
@@ -509,4 +512,4 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 
 ---
 
-**Last updated:** 2026-04-30 after commit `7ef7d9f` (docs update for invoicing fiscal overhaul).
+**Last updated:** 2026-05-01 after commits `32b98b9` / `ab677ca` (Sweep A — Groups 1-4 complete) and `cd0dd63` (prod deploy hardening — `.dockerignore`).
