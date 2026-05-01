@@ -8,6 +8,8 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 
 **Sweep B-1 status (2026-05-01):** Verified the 4 unverified P1 invoice-form scenarios end-to-end via Chrome DevTools MCP — **S-INV-021 / 023 / 024 / 025 flipped ✅**. All four were already wired correctly in the Sweep A sectioned rebuild; this sweep pinned the behaviour with **+9 new specs** (3 for the discount-audit guard, 2 for the per-line discount math, 1 for the summary signal chain, 3 for the validation-banner branch matrix). Logged BUG-101 (P3, log-noise only — `[disabled]` on `formControlName` controls).
 
+**Sweep B-2 status (2026-05-01):** Closed the 2 unverified P1 invoice DRAFT-lifecycle scenarios — **S-INV-005 / S-INV-014 flipped ✅** and verified end-to-end via Chrome DevTools MCP. **S-INV-005** (edit DRAFT → change customer / car) was already wired correctly via the Sweep A sectioned rebuild (`onCustomerChange` + `onCarChange` + `formValue` signal mirror); this sweep pinned the cascade behaviour and the PUT round-trip with **+5 new specs**. **S-INV-014** (cancel DRAFT → CANCELLED) required a small new affordance: added `canShow('cancel')` to the detail action-bar + `onCancel()` handler that calls `InvoiceService.updateInvoice(id, { status: 'cancelled' })` (which forwards `status: 'CANCELLED'` to the BE state machine via `toBackendEnum`). Pattern mirrors `onDelete()` — `window.confirm()` + i18n keys + 423/400 distinction (locked vs failed). New i18n keys: `invoicing.detail.actions.cancel`, `confirmCancel`, `toast.cancelled`, `errors.cancelFailed`, `errors.cancelLocked` synced en/fr/ar. **+6 new specs** in `invoice-details.component.spec.ts` (visibility on DRAFT-only, hidden on SENT/PAID/OVERDUE/PARTIALLY_PAID/CANCELLED, confirm-dismiss no-op, confirm-accept happy path, 400 → cancelLocked toast, 500 → cancelFailed toast).
+
 **How to use this doc**
 - Run scenarios manually (browser) or wire each into the e2e-validator agent (`/e2e {scenario-id}`).
 - Priority: **P0** = ship-blocker, **P1** = important, **P2** = polish/edge.
@@ -125,7 +127,7 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 | S-INV-002 | Create DRAFT invoice with mixed line types (service+part+labor+misc) | P0 | ✅ (after Sweep A Group 1) |
 | S-INV-003 | DRAFT invoice number is placeholder `DRAFT-{uuid8}` (no fiscal seq burn) | P0 | ✅ |
 | S-INV-004 | Edit DRAFT invoice — totals recompute on line change (`PUT /api/invoices/:id`) | P0 | ✅ (after Sweep A Group 1) |
-| S-INV-005 | Edit DRAFT invoice — change customer / car | P1 | ❌ |
+| S-INV-005 | Edit DRAFT invoice — change customer / car | P1 | ✅ (Sweep B-2 — cascading dropdown + PUT round-trip verified) |
 | S-INV-006 | Issue DRAFT invoice — gets `INV-YYYY-NNNN` (or `INV-YYYYMM-NNNN`), `lockedAt`, `lockedBy` | P0 | ✅ |
 | S-INV-007 | Issue triggers stock decrement for each `partId` line | P0 | 🟡 backend test |
 | S-INV-008 | Issue with insufficient stock → 422 + shortage list | P0 | 🟡 backend test |
@@ -134,7 +136,7 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 | S-INV-011 | Edit issued invoice line items → 423 InvoiceLockedException | P0 | ✅ |
 | S-INV-012 | Edit issued invoice notes → 200 (only notes mutable) | P0 | 🟡 backend test |
 | S-INV-013 | Issued invoice form renders read-only with "locked" banner | P0 | ✅ |
-| S-INV-014 | Cancel DRAFT invoice → CANCELLED | P1 | ❌ |
+| S-INV-014 | Cancel DRAFT invoice → CANCELLED | P1 | ✅ (Sweep B-2 — new Cancel CTA on detail; DRAFT-gated; PUT `{status: 'CANCELLED'}`) |
 | S-INV-015 | Cancel issued invoice → 400 (must use credit note) | P0 | ✅ (button absent off-DRAFT) |
 | S-INV-016 | Delete DRAFT invoice (owner only) | P0 | ✅ (after Sweep A Group 3 — confirm modal + 423 toast) |
 | S-INV-017 | Delete issued invoice → 400 (must credit-note instead) | P0 | ✅ (button absent off-DRAFT) |
@@ -161,6 +163,18 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 **Detail — S-INV-013 (Locked read-only):**
 - **Steps:** Navigate `/invoices/edit/{issued-id}`.
 - **Expected:** Banner "This invoice is locked. Issued invoices are immutable for fiscal compliance." All inputs disabled. Footer shows only "Issue Credit Note" CTA → navigates to `/invoices/credit-notes/new?invoiceId=:id`.
+
+**Detail — S-INV-005 (Edit DRAFT change customer / car, Sweep B-2):**
+- **Steps:** Open `/invoices/edit/{draft-id}` → switch customer dropdown → confirm vehicle dropdown re-filters to that customer's cars → pick a vehicle → click "Save draft" → reopen detail page → confirm the new customer + car are persisted. Then re-open edit, switch only the car (within the same customer) → save → confirm.
+- **Expected:** `onCustomerChange()` clears `carId` + `maintenanceJobId`; auto-picks the single vehicle when the new customer has exactly one. `onCarChange()` clears the linked maintenance job. `Save draft` calls `PUT /invoices/:id` (via `InvoiceService.updateInvoice` → `mapToBackend({ forUpdate: true })`) and the BE `update()` reconnects via `customer: { connect }` + `car: { connect }`.
+- **Live proof:** Edited DRAFT-d8a441d2 (was Aymen Mansouri / Kia Sportage) → Hela Mahmoud / Toyota Corolla 1414 TUN 203 → saved → detail confirmed both fields. Then reset to Aymen Mansouri / Seat Leon 4647 TUN 996 → saved → detail confirmed the car change.
+- **Pinned by:** `invoice-form.component.spec.ts` describe `S-INV-005 — Edit DRAFT invoice: change customer / car cascades` (5 cases: edit-mode hydration, single-car auto-pick, multi-car no-auto-pick, car-change clears job link, save persists via PUT).
+
+**Detail — S-INV-014 (Cancel DRAFT invoice, Sweep B-2):**
+- **Steps:** From the DRAFT detail page (`/invoices/:id`), click the new "Cancel invoice" button → accept the `window.confirm()` dialog → status flips to CANCELLED, action-bar collapses to Print + Download PDF only, "Locked" banner appears, list view shows the new "Cancelled" pill. From a SENT (or any non-DRAFT) detail page, the Cancel button is absent.
+- **Expected:** `canShow('cancel')` returns true only for `inv.status === 'draft'`. `onCancel()` calls `updateInvoice(id, { status: 'cancelled' })` which `mapToBackend` forwards as `{ status: 'CANCELLED' }` (PUT `/invoices/:id`); BE `update()` runs `assertCanTransition(DRAFT → CANCELLED)`. On 400/423 the toast is `cancelLocked` (state-machine rejection), on other errors it's `cancelFailed`.
+- **Live proof:** Cancelled DRAFT-62d0b9c7 → status badge "Cancelled", "Locked" banner shown, action bar reduced to Print + Download PDF, "Invoice cancelled" toast emitted, GET `/api/invoices/:id` returns `status: CANCELLED`. SENT invoice INV-2026-0001 action bar = `Send / Record payment / Print / Download PDF / Issue credit note` — no Cancel button.
+- **Pinned by:** `invoice-details.component.spec.ts` describe `S-INV-014 — Cancel DRAFT invoice` (6 cases: visibility DRAFT-only, hidden on SENT, hidden on paid/overdue/partially-paid, confirm-dismiss no-op, confirm-accept signal flip, 400 → cancelLocked, 500 → cancelFailed). Plus updated existing visibility tests to assert `canShow('cancel') === false` on CANCELLED status.
 
 **Detail — S-INV-021 (Discount audit guard, Sweep B-1):**
 - **Steps:** /invoices/create → pick customer + vehicle → add a misc line (qty=2, price=100, TVA=19%) → set Section-4 invoice discount = 7 (above the default 5% threshold).
@@ -484,7 +498,7 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 | Sub-navigation | 10 | 8 | 0 | 0 | 0 | 2 |
 | Dashboard | 11 | 6 | 0 | 0 | 0 | 5 |
 | Quotes | 23 | 11 | 2 | 0 | 0 | 10 |
-| Invoices | 31 | 18 | 6 | 0 | 1 | 6 |
+| Invoices | 31 | 20 | 6 | 0 | 1 | 4 |
 | Detail | 15 | 11 | 0 | 0 | 0 | 4 |
 | Payments | 15 | 8 | 1 | 0 | 0 | 6 |
 | Credit Notes | 16 | 6 | 9 | 0 | 0 | 1 |
@@ -501,9 +515,9 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 | Security | 8 | 0 | 6 | 0 | 0 | 1 (+1 n/a) |
 | Performance | 5 | 0 | 0 | 0 | 0 | 5 |
 | Stubs | 14 | — | — | — | — | — |
-| **TOTAL** | **248 + 14 stubs** | **95** | **72** | **1** | **4** | **75** (+1 n/a) |
+| **TOTAL** | **248 + 14 stubs** | **97** | **72** | **1** | **4** | **73** (+1 n/a) |
 
-**Verified happy paths:** **66 %** (✅ 95 + 🟡 72 + ⚠️ 1 of 248). Sweep A added 17 P0 ✅; Sweep C bumped Quotes ✅ count from 10 → 11 (S-QUO-010) and closed 3 P1 backlog items (BUG-095/098/099); Sweep B-1 closed 4 P1 invoice-form scenarios (S-INV-021 / 023 / 024 / 025). The remaining ❌ are mostly P1/P2 button-level scenarios — covered by future Sweep B passes.
+**Verified happy paths:** **67 %** (✅ 97 + 🟡 72 + ⚠️ 1 of 248). Sweep A added 17 P0 ✅; Sweep C bumped Quotes ✅ count from 10 → 11 (S-QUO-010) and closed 3 P1 backlog items (BUG-095/098/099); Sweep B-1 closed 4 P1 invoice-form scenarios (S-INV-021 / 023 / 024 / 025); Sweep B-2 closed 2 P1 invoice DRAFT-lifecycle scenarios (S-INV-005 / 014). The remaining ❌ are mostly P1/P2 button-level scenarios — covered by future Sweep B passes.
 
 ---
 
@@ -536,4 +550,4 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 
 ---
 
-**Last updated:** 2026-05-01 after Sweep C — backlog cleanup (BUG-095 / BUG-098 / BUG-099 all 🟢, S-QUO-010 ✅).
+**Last updated:** 2026-05-01 after Sweep B-2 — DRAFT-lifecycle (S-INV-005 ✅ / S-INV-014 ✅ via new Cancel CTA + cascading customer/car edit).

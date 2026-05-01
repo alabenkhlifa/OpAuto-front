@@ -45,6 +45,7 @@ describe('InvoiceDetailsComponent', () => {
       deliverInvoice: jasmine.createSpy('deliverInvoice').and.returnValue(of({ ok: true })),
       addPayment: jasmine.createSpy('addPayment').and.returnValue(of({ id: 'p1' })),
       deleteInvoice: jasmine.createSpy('deleteInvoice').and.returnValue(of(true)),
+      updateInvoice: jasmine.createSpy('updateInvoice').and.returnValue(of({ ...invoice, status: 'cancelled' })),
       formatCurrency: (n: number) => `${n.toFixed(2)} TND`,
       formatDate: (d: Date) => d.toISOString().split('T')[0],
       pdfUrl: (id: string) => `/invoices/${id}/pdf`,
@@ -80,7 +81,7 @@ describe('InvoiceDetailsComponent', () => {
     return invoiceServiceStub;
   }
 
-  it('Draft invoice exposes Edit / Issue & Send / Delete actions', async () => {
+  it('Draft invoice exposes Edit / Issue & Send / Cancel / Delete actions', async () => {
     configure(makeInvoice({ status: 'draft' }), { isOwner: true });
     const fixture: ComponentFixture<InvoiceDetailsComponent> = TestBed.createComponent(InvoiceDetailsComponent);
     const cmp = fixture.componentInstance;
@@ -88,6 +89,7 @@ describe('InvoiceDetailsComponent', () => {
     await fixture.whenStable();
     expect(cmp.canShow('edit')).toBeTrue();
     expect(cmp.canShow('issueAndSend')).toBeTrue();
+    expect(cmp.canShow('cancel')).toBeTrue();
     expect(cmp.canShow('delete')).toBeTrue();
     expect(cmp.canShow('send')).toBeFalse();
     expect(cmp.canShow('recordPayment')).toBeFalse();
@@ -134,6 +136,10 @@ describe('InvoiceDetailsComponent', () => {
     expect(cmp.canShow('send')).toBeFalse();
     expect(cmp.canShow('recordPayment')).toBeFalse();
     expect(cmp.canShow('edit')).toBeFalse();
+    // S-INV-014: Cancel is gated to DRAFT only — already-cancelled
+    // invoices must not expose the Cancel CTA again.
+    expect(cmp.canShow('cancel')).toBeFalse();
+    expect(cmp.canShow('delete')).toBeFalse();
   });
 
   it('Locked invoices report isLocked === true (status !== draft)', async () => {
@@ -216,5 +222,99 @@ describe('InvoiceDetailsComponent', () => {
     cmp.onPaymentModalClose();
     cmp.openPaymentModal();
     expect(cmp.paymentModalOpenKey()).toBe(3);
+  });
+
+  describe('S-INV-014 — Cancel DRAFT invoice', () => {
+    /**
+     * Stand up the component with a DRAFT invoice + provide a sentinel
+     * `window.confirm` so we can drive the dialog from the test.
+     */
+    function setupDraft(opts?: { isOwner?: boolean; updateImpl?: any }) {
+      const stub = configure(makeInvoice({ status: 'draft' }), { isOwner: opts?.isOwner ?? true });
+      if (opts?.updateImpl) stub.updateInvoice.and.callFake(opts.updateImpl);
+      const fixture = TestBed.createComponent(InvoiceDetailsComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      return { fixture, cmp, stub };
+    }
+
+    it('Cancel button visibility is DRAFT-only', async () => {
+      const { cmp, fixture } = setupDraft();
+      await fixture.whenStable();
+      expect(cmp.canShow('cancel')).toBeTrue();
+    });
+
+    it('Sent invoice does NOT expose Cancel — credit-note path only', async () => {
+      configure(makeInvoice({ status: 'sent' }));
+      const fixture = TestBed.createComponent(InvoiceDetailsComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      expect(cmp.canShow('cancel')).toBeFalse();
+    });
+
+    it('Paid / overdue / partially-paid all hide Cancel', async () => {
+      for (const status of ['paid', 'overdue', 'partially-paid'] as const) {
+        configure(makeInvoice({ status, paidAmount: 50, remainingAmount: 69 }));
+        const fixture = TestBed.createComponent(InvoiceDetailsComponent);
+        const cmp = fixture.componentInstance;
+        cmp.ngOnInit();
+        await fixture.whenStable();
+        expect(cmp.canShow('cancel')).withContext(`status=${status}`).toBeFalse();
+        TestBed.resetTestingModule();
+      }
+    });
+
+    it('onCancel: confirm-dismiss is a no-op (no PUT)', async () => {
+      const { cmp, stub, fixture } = setupDraft();
+      await fixture.whenStable();
+      spyOn(window, 'confirm').and.returnValue(false);
+      cmp.onCancel();
+      expect(stub.updateInvoice).not.toHaveBeenCalled();
+    });
+
+    it('onCancel: confirm-accept calls updateInvoice with status=cancelled and updates signal', async () => {
+      const { cmp, stub, fixture } = setupDraft();
+      await fixture.whenStable();
+      spyOn(window, 'confirm').and.returnValue(true);
+      cmp.onCancel();
+      expect(stub.updateInvoice).toHaveBeenCalledWith('i1', { status: 'cancelled' });
+      // After PUT returns, the signal must reflect the new status so the
+      // action bar re-renders without the Edit / Cancel CTAs.
+      expect(cmp.invoice()?.status).toBe('cancelled');
+      expect(cmp.canShow('cancel')).toBeFalse();
+      expect(cmp.canShow('edit')).toBeFalse();
+      expect(cmp.canShow('issueAndSend')).toBeFalse();
+      expect(cmp.canShow('print')).toBeTrue();
+      expect(cmp.canShow('downloadPdf')).toBeTrue();
+    });
+
+    it('onCancel: 400 from BE shows the cancel-locked toast (not the generic failure)', async () => {
+      const { cmp, fixture } = setupDraft({
+        updateImpl: () => ({
+          subscribe: ({ error }: any) => error({ status: 400 }),
+        }),
+      });
+      await fixture.whenStable();
+      spyOn(window, 'confirm').and.returnValue(true);
+      const toast = (cmp as any)['toast'];
+      const toastSpy = spyOn(toast, 'error');
+      cmp.onCancel();
+      expect(toastSpy).toHaveBeenCalledWith('invoicing.detail.errors.cancelLocked');
+    });
+
+    it('onCancel: 500 from BE shows the generic cancelFailed toast', async () => {
+      const { cmp, fixture } = setupDraft({
+        updateImpl: () => ({
+          subscribe: ({ error }: any) => error({ status: 500 }),
+        }),
+      });
+      await fixture.whenStable();
+      spyOn(window, 'confirm').and.returnValue(true);
+      const toast = (cmp as any)['toast'];
+      const toastSpy = spyOn(toast, 'error');
+      cmp.onCancel();
+      expect(toastSpy).toHaveBeenCalledWith('invoicing.detail.errors.cancelFailed');
+    });
   });
 });

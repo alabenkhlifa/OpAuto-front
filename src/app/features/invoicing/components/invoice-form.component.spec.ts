@@ -595,4 +595,190 @@ describe('InvoiceFormComponent', () => {
       }
     });
   });
+
+  describe('S-INV-005 — Edit DRAFT invoice: change customer / car cascades', () => {
+    /**
+     * The cascading-dropdown behaviour is what S-INV-005 actually tests:
+     * picking a new customer must (a) refilter the vehicle list to that
+     * customer's cars and (b) clear the previously-selected `carId` so
+     * we never persist a (customerA, carB) combo. Picking a new car must
+     * clear any maintenance-job link. Save Draft in edit mode must
+     * persist the new customer + car via PUT /invoices/:id (the mapper
+     * forwards `customerId` + `carId` per `mapToBackend`).
+     */
+    function multiCustomerConfig() {
+      const settings: GarageSettings = {
+        garageInfo: { name: 'OpAuto' } as any,
+        operationalSettings: {} as any,
+        businessSettings: { currency: 'TND', taxSettings: {}, paymentSettings: {}, invoiceSettings: {}, pricingRules: { laborRatePerHour: 30 } } as any,
+        systemSettings: {} as any,
+        integrationSettings: {} as any,
+        fiscalSettings: {
+          mfNumber: '', rib: '', bankName: '', logoUrl: '',
+          numberingPrefix: 'INV', numberingResetPolicy: 'YEARLY', numberingDigitCount: 4,
+          defaultTvaRate: 19, fiscalStampEnabled: true, defaultPaymentTermsDays: 30,
+        } as any,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      const customers = [
+        { id: 'c1', name: 'Foo', phone: '+216-1' } as any,
+        { id: 'c2', name: 'Bar', phone: '+216-2' } as any,
+      ];
+      const cars = [
+        { id: 'carA', customerId: 'c1', make: 'Toy', model: 'Corolla', year: 2020, licensePlate: '111TUN1' } as any,
+        { id: 'carB', customerId: 'c1', make: 'Peu', model: '208', year: 2018, licensePlate: '222TUN2' } as any,
+        { id: 'carC', customerId: 'c2', make: 'Ren', model: 'Clio', year: 2022, licensePlate: '333TUN3' } as any,
+      ];
+      const jobs = [
+        { id: 'j1', customerId: 'c1', carId: 'carA', repairOrderNumber: 'RO-1' } as any,
+      ];
+      const invoiceServiceStub = {
+        fetchInvoiceById: jasmine.createSpy('fetchInvoiceById').and.returnValue(
+          of({
+            id: 'i1', invoiceNumber: 'INV-001',
+            customerId: 'c1', carId: 'carA',
+            issueDate: new Date(), dueDate: new Date(), status: 'draft',
+            paymentMethod: undefined, currency: 'TND',
+            subtotal: 100, taxRate: 19, taxAmount: 19,
+            discountPercentage: 0, discountAmount: 0,
+            totalAmount: 119, paidAmount: 0, remainingAmount: 119,
+            lineItems: [
+              { id: 'l1', type: 'misc', description: 'X', quantity: 1, unit: 'piece',
+                unitPrice: 100, totalPrice: 119, tvaRate: 19, discountPercentage: 0, taxable: true } as any,
+            ],
+            notes: '', paymentTerms: '', createdBy: '',
+            createdAt: new Date(), updatedAt: new Date(),
+            customerName: 'Foo', customerPhone: '+216-1',
+            carMake: 'Toy', carModel: 'Corolla', carYear: 2020,
+            licensePlate: '111TUN1', paymentHistory: [],
+            maintenanceJobId: 'j1',
+          } as InvoiceWithDetails),
+        ),
+        createInvoice: jasmine.createSpy('createInvoice').and.returnValue(of({ id: 'new' } as any)),
+        updateInvoice: jasmine.createSpy('updateInvoice').and.returnValue(of({ id: 'i1' } as any)),
+        issueInvoice: jasmine.createSpy('issueInvoice').and.returnValue(of({ id: 'i1' } as any)),
+        createInvoiceFromJob: jasmine.createSpy('createInvoiceFromJob').and.returnValue(of({ id: 'i1' } as any)),
+        formatCurrency: (n: number) => `${n.toFixed(2)} TND`,
+        pdfUrl: (id: string) => `/invoices/${id}/pdf`,
+      };
+
+      TestBed.configureTestingModule({
+        imports: [InvoiceFormComponent],
+        providers: [
+          provideRouter([]),
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          { provide: ActivatedRoute, useValue: {
+            snapshot: { paramMap: { get: () => 'i1' }, queryParamMap: { get: () => null } },
+          } },
+          { provide: InvoiceService, useValue: invoiceServiceStub },
+          { provide: CustomerService, useValue: { getCustomers: () => of(customers) } },
+          { provide: AppointmentService, useValue: { getCars: () => of(cars) } },
+          { provide: MaintenanceService, useValue: { getMaintenanceJobs: () => of(jobs) } },
+          { provide: GarageSettingsService, useValue: { getSettings: () => of(settings) } },
+          { provide: UserService, useValue: { getUsers: () => of([{ id: 'u1', role: 'owner', firstName: 'O', lastName: 'W', email: 'o@w' } as any]) } },
+          { provide: TranslationService, useValue: { instant: (k: string) => k, getCurrentLanguage: () => 'en', translations$: of({}) } },
+        ],
+      });
+
+      return invoiceServiceStub;
+    }
+
+    it('hydrates the form from the existing invoice in edit mode (customer / car / line)', async () => {
+      multiCustomerConfig();
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      expect(cmp.isEditMode()).toBeTrue();
+      expect(cmp.form.value.customerId).toBe('c1');
+      expect(cmp.form.value.carId).toBe('carA');
+      expect(cmp.lines().length).toBe(1);
+      // filteredCars must reflect the loaded customer (carA + carB).
+      expect(cmp.filteredCars().map((c) => c.id).sort()).toEqual(['carA', 'carB']);
+    });
+
+    it('changing customer rebuilds filteredCars and clears carId / job link', async () => {
+      multiCustomerConfig();
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+
+      // Switch customer c1 → c2.
+      cmp.form.patchValue({ customerId: 'c2' });
+      cmp.onCustomerChange();
+
+      // Only c2's cars remain in the dropdown.
+      expect(cmp.filteredCars().map((c) => c.id)).toEqual(['carC']);
+      // carId was cleared (was carA from c1) since c2 has != 1 (well, 1
+      // here — single-match auto-pick keeps the form usable, see next).
+      // For this seed c2 has exactly one car, so handler auto-picks it.
+      expect(cmp.form.value.carId).toBe('carC');
+      // Job link is cleared regardless.
+      expect(cmp.form.value.maintenanceJobId).toBe('');
+      expect(cmp.linkedJob()).toBeNull();
+    });
+
+    it('switching to a customer with multiple cars clears carId (no auto-pick)', async () => {
+      multiCustomerConfig();
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+
+      // Patch customer to a "fresh" assignment and also flip away+back to
+      // exercise the cars.length !== 1 branch. c1 has carA + carB.
+      cmp.form.patchValue({ customerId: 'c2' });
+      cmp.onCustomerChange();
+      expect(cmp.form.value.carId).toBe('carC');
+
+      cmp.form.patchValue({ customerId: 'c1' });
+      cmp.onCustomerChange();
+      // c1 has 2 cars → carId must be cleared, NOT auto-picked.
+      expect(cmp.filteredCars().map((c) => c.id).sort()).toEqual(['carA', 'carB']);
+      expect(cmp.form.value.carId).toBe('');
+    });
+
+    it('changing car clears maintenanceJobId + linkedJob signal', async () => {
+      multiCustomerConfig();
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      // After load, the linked job (j1, carA) is materialised.
+      expect(cmp.linkedJob()?.id).toBe('j1');
+
+      cmp.form.patchValue({ carId: 'carB' });
+      cmp.onCarChange();
+
+      expect(cmp.form.value.maintenanceJobId).toBe('');
+      expect(cmp.linkedJob()).toBeNull();
+    });
+
+    it('Save Draft in edit mode persists the new customer/car via PUT', async () => {
+      const stub = multiCustomerConfig();
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+
+      // Change customer + car.
+      cmp.form.patchValue({ customerId: 'c2' });
+      cmp.onCustomerChange();
+      // c2 has a single car so the handler already auto-picked carC.
+      expect(cmp.form.value.carId).toBe('carC');
+
+      cmp.saveDraft();
+
+      expect(stub.updateInvoice).toHaveBeenCalled();
+      const [id, payload] = stub.updateInvoice.calls.mostRecent().args;
+      expect(id).toBe('i1');
+      expect(payload.customerId).toBe('c2');
+      expect(payload.carId).toBe('carC');
+      // Job-link is cleared on customer change.
+      expect(payload.maintenanceJobId).toBeUndefined();
+    });
+  });
 });

@@ -71,6 +71,11 @@
             {{ 'invoicing.detail.actions.issueCreditNote' | translate }}
           </button>
         }
+        @if (canShow('cancel')) {
+          <button type="button" class="btn-tertiary" (click)="onCancel()">
+            {{ 'invoicing.detail.actions.cancel' | translate }}
+          </button>
+        }
         @if (canShow('delete')) {
           <button type="button" class="btn-danger" (click)="onDelete()">
             {{ 'invoicing.detail.actions.delete' | translate }}

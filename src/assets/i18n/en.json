@@ -2468,6 +2468,7 @@
         "aria": "This invoice is locked"
       },
       "confirmDelete": "Delete this draft invoice? This action cannot be undone.",
+      "confirmCancel": "Cancel this draft invoice? It will be marked CANCELLED and cannot be edited or issued afterwards.",
       "actions": {
         "edit": "Edit",
         "issueAndSend": "Issue & Send",
@@ -2477,6 +2478,7 @@
         "print": "Print",
         "downloadPdf": "Download PDF",
         "issueCreditNote": "Issue credit note",
+        "cancel": "Cancel invoice",
         "delete": "Delete"
       },
       "timeline": {
@@ -2490,6 +2492,7 @@
       },
       "toast": {
         "deleted": "Invoice deleted",
+        "cancelled": "Invoice cancelled",
         "sent": "Invoice sent",
         "paymentRecorded": "Payment recorded"
       },
@@ -2497,6 +2500,8 @@
         "loadFailed": "Could not load invoice",
         "deleteFailed": "Could not delete invoice",
         "deleteLocked": "Issued invoices cannot be deleted — issue a credit note instead.",
+        "cancelFailed": "Could not cancel invoice",
+        "cancelLocked": "Issued invoices cannot be cancelled — issue a credit note instead.",
         "issueFailed": "Could not issue invoice",
         "sendFailed": "Could not send invoice",
         "paymentFailed": "Could not record payment",

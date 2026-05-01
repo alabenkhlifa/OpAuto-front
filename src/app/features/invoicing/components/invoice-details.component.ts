@@ -291,6 +291,44 @@ export class InvoiceDetailsComponent implements OnInit {
     });
   }
 
+  /**
+   * Cancel a DRAFT invoice → CANCELLED (terminal state).
+   * Mirrors the delete-confirm pattern: window.confirm() guard + i18n
+   * keys + status-specific error mapping. The BE rejects cancel on
+   * non-DRAFT with HTTP 400 (must use a credit note instead); the UI
+   * additionally hides the button via canShow('cancel') so 400 should
+   * only be reachable via concurrent state changes.
+   */
+  onCancel(): void {
+    const inv = this.invoice();
+    if (!inv) return;
+    const confirmMsg = this.translation.instant('invoicing.detail.confirmCancel');
+    if (!window.confirm(confirmMsg)) return;
+    this.invoiceService
+      .updateInvoice(inv.id, { status: 'cancelled' })
+      .subscribe({
+        next: (updated) => {
+          // PUT returns the full updated invoice via mapFromBackend;
+          // setting the signal directly is enough to flip the action
+          // bar (Edit / Issue & Send / Cancel disappear, Print /
+          // Download remain). We do NOT call refresh() here because the
+          // PUT already returned the canonical post-cancel state.
+          this.invoice.set(updated);
+          this.toast.success(this.translation.instant('invoicing.detail.toast.cancelled'));
+        },
+        error: (err: HttpErrorResponse) => {
+          // 400 — BE state-machine rejection (e.g. raced with payment /
+          // issue). 423 — locked guardrail. Both mean "you can't cancel
+          // from the current status; issue a credit note instead".
+          const key =
+            err?.status === 423 || err?.status === 400
+              ? 'invoicing.detail.errors.cancelLocked'
+              : 'invoicing.detail.errors.cancelFailed';
+          this.toast.error(this.translation.instant(key));
+        },
+      });
+  }
+
   onIssueAndSend(): void {
     const inv = this.invoice();
     if (!inv) return;
@@ -508,7 +546,7 @@ export class InvoiceDetailsComponent implements OnInit {
   }
 
   /** Visibility map for the header action buttons keyed by status. Pure function for testability. */
-  canShow(action: 'edit' | 'issueAndSend' | 'send' | 'recordPayment' | 'print' | 'downloadPdf' | 'creditNote' | 'delete' | 'previewPdf'): boolean {
+  canShow(action: 'edit' | 'issueAndSend' | 'send' | 'recordPayment' | 'print' | 'downloadPdf' | 'creditNote' | 'delete' | 'previewPdf' | 'cancel'): boolean {
     const inv = this.invoice();
     if (!inv) return false;
     switch (action) {
@@ -538,6 +576,10 @@ export class InvoiceDetailsComponent implements OnInit {
           inv.status === 'partially-paid';
       case 'delete':
         return inv.status === 'draft' && this.isOwner();
+      case 'cancel':
+        // Cancel is only meaningful on DRAFT — issued invoices need a
+        // credit note (BE returns 400 on non-DRAFT cancel attempts).
+        return inv.status === 'draft';
     }
   }
 
