@@ -488,6 +488,12 @@ BUG-063, 065, 066, 067, 068, 069, 071, 073, 074 exercised end-to-end. BUG-089/09
 - Fiscal records (Invoice / Quote / CreditNote) are immutable after issue. Trying to PUT line items returns HTTP 423.
 - TVA is stored per-line (`InvoiceLineItem.tvaRate`, `tvaAmount`) — totals are derived, not the source of truth.
 
+**Sweep C — Backlog bug closures (2026-05-01):** Closed BUG-095 / BUG-098 / BUG-099 from the Sweep A backlog. All three were P1 silent-data-loss / missing-affordance bugs surfaced during Sweep A.
+- [x] **BUG-098 — `MaintenanceService.mapFromBackend` drops `customerId`.** BE nests it under `b.car.customerId`; mapper now reads `customerId: b.car?.customerId ?? b.customerId`. Local workaround in `invoice-form.linkJobById()` removed — the mapper is the single source of truth. New spec file `core/services/maintenance.service.spec.ts` (3 cases).
+- [x] **BUG-099 — `InvoiceService.mapFromBackend` drops `maintenanceJobId` / `quoteId`.** Added both to the `Invoice` interface, populated in the mapper. Dropped the `?jobId=` query-param workaround from `invoice-form.pullFromJob()` + `loadInvoice()` — the form now reads `inv.maintenanceJobId` directly. 2 new specs in `invoice.service.spec.ts`.
+- [x] **BUG-095 — Quote-detail Edit affordance.** Added `edit()` handler gated by `q.status === 'DRAFT'`, new `quotes/edit/:id` route (ahead of `:id` per the route-ordering rule), rebuilt `quote-form.component.ts` to support edit mode (paramMap → `loadQuote()` → form.patch + lines.set, redirects to detail when status ≠ DRAFT, calls `quoteService.update()` on submit, cancel returns to detail). New i18n keys `invoicing.quotes.detail.edit`, `quotes.form.editTitle/submitEdit/updated/updateFailed/loadFailed` synced en/fr/ar. 5 new specs each in `quote-form.component.spec.ts` + `quote-detail.component.spec.ts`. **S-QUO-010 verified end-to-end via Chrome DevTools MCP** — DRAFT quote unit-price 100→175 TND, total recomputes to 208.25 (with 19% TVA), toast "Quote updated", detail page reflects new total.
+- [x] **Tests:** **+12 new specs (all green)**. Frontend total: 660/668 passing — 8 pre-existing failures unchanged (7 `ServicePickerComponent` TranslatePipe DI + 1 `SendInvoiceModalComponent`, both flagged before Sweep C). i18n parity script still clean for the new `quotes.*` keys (only the inherited drift in `auth.demo.*`, `cars.*`, `features.*`, `photos.*` remains).
+
 ---
 
 ## Invoicing Overhaul — Phase 3 (Reporting & Roles, 2026-04-30)

@@ -1,6 +1,8 @@
 <div class="quote-form-page">
   <form class="glass-card" [formGroup]="form" (ngSubmit)="onSubmit()">
-    <h2 class="quote-form-page__title">{{ 'invoicing.quotes.form.title' | translate }}</h2>
+    <h2 class="quote-form-page__title">
+      {{ (isEditMode() ? 'invoicing.quotes.form.editTitle' : 'invoicing.quotes.form.title') | translate }}
+    </h2>
 
     <div class="quote-form-page__grid">
       <label class="quote-form-page__field">
@@ -192,7 +194,10 @@
       <button type="submit"
               class="btn-primary"
               [disabled]="form.invalid || lines().length === 0 || isSubmitting()">
-        {{ (isSubmitting() ? 'common.saving' : 'invoicing.quotes.form.submit') | translate }}
+        {{ (isSubmitting()
+            ? 'common.saving'
+            : (isEditMode() ? 'invoicing.quotes.form.submitEdit' : 'invoicing.quotes.form.submit')
+          ) | translate }}
       </button>
     </div>
   </form>

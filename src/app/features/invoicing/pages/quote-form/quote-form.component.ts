@@ -1,7 +1,8 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { TranslationService } from '../../../../core/services/translation.service';
 import { ToastService } from '../../../../shared/services/toast.service';
@@ -57,6 +58,7 @@ export class QuoteFormPageComponent implements OnInit {
   private quoteService = inject(QuoteService);
   private customerService = inject(CustomerService);
   private appointmentService = inject(AppointmentService);
+  private route = inject(ActivatedRoute);
   private router = inject(Router);
   private toast = inject(ToastService);
   private translation = inject(TranslationService);
@@ -65,6 +67,9 @@ export class QuoteFormPageComponent implements OnInit {
   allCars = signal<Car[]>([]);
   cars = signal<Car[]>([]);
   isSubmitting = signal(false);
+
+  quoteId = signal<string | null>(null);
+  isEditMode = computed(() => this.quoteId() !== null);
 
   lines = signal<LineState[]>([]);
 
@@ -95,19 +100,69 @@ export class QuoteFormPageComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.customerService.getCustomers().subscribe({
-      next: (rows: any[]) =>
+    // Load customers + cars in parallel; once both arrive, optionally hydrate
+    // edit mode (route param `:id`). The hydration order matters — `cars()`
+    // must be populated before we patch `carId`, otherwise the vehicle
+    // <select> options are empty and the value silently drops to "".
+    forkJoin({
+      customers: this.customerService.getCustomers(),
+      cars: this.appointmentService.getCars(),
+    }).subscribe({
+      next: ({ customers, cars }) => {
         this.customers.set(
-          rows.map((c) => ({
+          (customers as any[]).map((c) => ({
             id: c.id,
             name: c.name,
             phone: c.phone,
             email: c.email,
           })) as Customer[],
-        ),
+        );
+        this.allCars.set(cars);
+
+        const id = this.route.snapshot.paramMap.get('id');
+        if (id) this.loadQuote(id);
+      },
     });
-    this.appointmentService.getCars().subscribe({
-      next: (rows) => this.allCars.set(rows),
+  }
+
+  private loadQuote(id: string): void {
+    this.quoteService.get(id).subscribe({
+      next: (q) => {
+        // DRAFT is the only editable state. Backend returns 423 on PUT for
+        // any other status; redirect to detail rather than rendering a
+        // half-broken form. (Mirrors invoice-form's locked-banner UX.)
+        if (q.status !== 'DRAFT') {
+          this.router.navigate(['/invoices/quotes', id]);
+          return;
+        }
+        this.quoteId.set(q.id);
+        this.cars.set(this.allCars().filter((c) => c.customerId === q.customerId));
+        this.form.patchValue({
+          customerId: q.customerId,
+          carId: q.carId,
+          validUntil: q.validUntil.toISOString().split('T')[0],
+          notes: q.notes ?? '',
+        });
+        this.lines.set(
+          q.lineItems.map((li) => ({
+            type: (li.type ?? 'misc') as LineItemType,
+            description: li.description,
+            quantity: li.quantity,
+            unitPrice: li.unitPrice,
+            tvaRate: this.normalizeTvaRate((li as any).tvaRate ?? 19),
+            discountPct: li.discountPercentage ?? 0,
+            laborHours: li.laborHours,
+            partId: li.partId,
+            serviceCode: li.serviceCode,
+          })),
+        );
+      },
+      error: () => {
+        this.toast.error(
+          this.translation.instant('invoicing.quotes.form.loadFailed'),
+        );
+        this.router.navigate(['/invoices/quotes']);
+      },
     });
   }
 
@@ -272,6 +327,35 @@ export class QuoteFormPageComponent implements OnInit {
       tvaRate: l.tvaRate,
     }));
     this.isSubmitting.set(true);
+
+    const editingId = this.quoteId();
+    if (editingId) {
+      this.quoteService
+        .update(editingId, {
+          customerId: v.customerId ?? '',
+          carId: v.carId ?? '',
+          validUntil: new Date(v.validUntil ?? new Date()),
+          notes: v.notes ?? '',
+          lineItems: lineItems as any,
+        })
+        .subscribe({
+          next: (quote) => {
+            this.isSubmitting.set(false);
+            this.toast.success(
+              this.translation.instant('invoicing.quotes.form.updated'),
+            );
+            this.router.navigate(['/invoices/quotes', quote.id]);
+          },
+          error: () => {
+            this.isSubmitting.set(false);
+            this.toast.error(
+              this.translation.instant('invoicing.quotes.form.updateFailed'),
+            );
+          },
+        });
+      return;
+    }
+
     this.quoteService
       .create({
         customerId: v.customerId ?? '',
@@ -303,6 +387,11 @@ export class QuoteFormPageComponent implements OnInit {
   }
 
   cancel(): void {
-    this.router.navigate(['/invoices/quotes']);
+    const editingId = this.quoteId();
+    if (editingId) {
+      this.router.navigate(['/invoices/quotes', editingId]);
+    } else {
+      this.router.navigate(['/invoices/quotes']);
+    }
   }
 }

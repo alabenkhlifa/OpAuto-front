@@ -4,6 +4,8 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 
 **Sweep A status (2026-05-01):** Groups 1-4 complete — 17 P0 scenarios verified end-to-end via Chrome DevTools MCP, 9 distinct bugs fixed (DTO desync, vehicle-dropdown reactivity, PDF SPA-route, edit-form line hydration BUG-094, TVA-select default, delete-DRAFT confirm, pull-from-job linkage, mobile send-modal CSS, prod `.dockerignore`). Backlog opened: BUG-094 (✅ fixed), BUG-095/096/097/098/099/100 (open). Full play-by-play in `docs/MVP_PROGRESS.md → Batch 9 → Post-validation Sweep A`.
 
+**Sweep C status (2026-05-01):** Backlog cleanup — closed **BUG-095 / BUG-098 / BUG-099** (all P1 from Sweep A). Quote-detail Edit affordance + quote-form edit mode shipped, mapper drops fixed at the source, workarounds removed from invoice-form. **S-QUO-010 flipped ✅** (verified live via Chrome DevTools MCP). +12 new specs (all green). Remaining open: BUG-096 (perf), BUG-097 (REST 200 vs 204), BUG-100 (modal landscape) — all P3.
+
 **How to use this doc**
 - Run scenarios manually (browser) or wire each into the e2e-validator agent (`/e2e {scenario-id}`).
 - Priority: **P0** = ship-blocker, **P1** = important, **P2** = polish/edge.
@@ -86,7 +88,7 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 | S-QUO-007 | Remove line via × button | P1 | ❌ |
 | S-QUO-008 | Per-line TVA select (7 / 13 / 19 / exempt 0) | P0 | ✅ (after Sweep A Group 2 fix — TVA_RATES reorder + explicit `[selected]`) |
 | S-QUO-009 | Quote DRAFT has no quote number (`DRAFT-{uuid8}` placeholder) | P0 | ✅ |
-| S-QUO-010 | Edit DRAFT quote — totals recompute on line change | P1 | ❌ BUG-095 (no Edit affordance on quote-detail for any status) |
+| S-QUO-010 | Edit DRAFT quote — totals recompute on line change | P1 | ✅ (Sweep C — BUG-095 fix; quote-detail Edit + quote-form edit-mode shipped 2026-05-01) |
 | S-QUO-011 | Send DRAFT quote → SENT, number formatted `DEV-YYYY-NNNN` | P0 | ✅ |
 | S-QUO-012 | Approve SENT quote → DRAFT invoice created with copied lines | P0 | ✅ |
 | S-QUO-013 | Approve auto-navigates to new draft invoice (currently fails — UX glitch) | P2 | ❌ known glitch |
@@ -94,7 +96,7 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 | S-QUO-015 | Re-send REJECTED quote → 400 (terminal state) | P2 | ❌ |
 | S-QUO-016 | Approve DRAFT quote (no number) → 400 (must SEND first) | P1 | ❌ |
 | S-QUO-017 | Quote with `validUntil = yesterday` → `expireOldQuotes()` marks EXPIRED | P1 | 🟡 backend test |
-| S-QUO-018 | Edit quote AFTER send → 423 / blocked by UI | P0 | ✅ (Edit button absent on quote-detail; see BUG-095 — also blocks DRAFT edit) |
+| S-QUO-018 | Edit quote AFTER send → 423 / blocked by UI | P0 | ✅ (Sweep C — Edit button only renders for DRAFT, quote-form redirects to detail if status ≠ DRAFT on edit-route load) |
 | S-QUO-019 | Quote list filters by status (DRAFT / SENT / APPROVED / REJECTED / EXPIRED) | P1 | ❌ |
 | S-QUO-020 | Approved quote → source quote shows `convertedToInvoiceId` link | P1 | ❌ |
 | S-QUO-021 | Quote line item DTO contract: only spec'd fields accepted (no `unit`/`totalPrice`) | P0 | ✅ (after fix d28a940) |
@@ -459,7 +461,7 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 | Auth & Roles | 7 | 2 | 1 | 0 | 3 | 1 |
 | Sub-navigation | 10 | 8 | 0 | 0 | 0 | 2 |
 | Dashboard | 11 | 6 | 0 | 0 | 0 | 5 |
-| Quotes | 23 | 10 | 2 | 0 | 0 | 11 |
+| Quotes | 23 | 11 | 2 | 0 | 0 | 10 |
 | Invoices | 31 | 14 | 6 | 0 | 1 | 10 |
 | Detail | 15 | 11 | 0 | 0 | 0 | 4 |
 | Payments | 15 | 8 | 1 | 0 | 0 | 6 |
@@ -477,9 +479,9 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 | Security | 8 | 0 | 6 | 0 | 0 | 1 (+1 n/a) |
 | Performance | 5 | 0 | 0 | 0 | 0 | 5 |
 | Stubs | 14 | — | — | — | — | — |
-| **TOTAL** | **248 + 14 stubs** | **90** | **72** | **1** | **4** | **80** (+1 n/a) |
+| **TOTAL** | **248 + 14 stubs** | **91** | **72** | **1** | **4** | **79** (+1 n/a) |
 
-**Verified happy paths:** **65 %** (✅ 90 + 🟡 72 + ⚠️ 1 of 248 — up from ~50 % at 2026-04-30). Sweep A added 17 P0 ✅ and removed 9 distinct bugs across 4 groups (CRUD, pickers, lock guardrails, pull-from-job + mobile). The remaining 80 ❌ are mostly P1/P2 button-level scenarios — Sweep B target.
+**Verified happy paths:** **65 %** (✅ 91 + 🟡 72 + ⚠️ 1 of 248 — Sweep C bumped Quotes ✅ count from 10 → 11 by flipping S-QUO-010). Sweep A added 17 P0 ✅ and removed 9 distinct bugs; Sweep C closed 3 P1 backlog items (BUG-095/098/099). The remaining ❌ are mostly P1/P2 button-level scenarios — Sweep B target.
 
 ---
 
@@ -487,7 +489,7 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 
 1. **Sweep A — Browser-verify all P0 ❌ scenarios** — ✅ **DONE 2026-05-01** (Groups 1-4: invoice CRUD, line-item pickers, lock guardrails, pull-from-job + mobile modals). 17 P0 verified, 9 bugs fixed. Commits `32b98b9`, `ab677ca`. Outstanding P0 ❌ remaining: ~10 — see status flags above (mostly cancel-DRAFT-invoice, dashboard quick-actions, line-type-specific add scenarios).
 2. **Sweep B — Browser-verify all P1 ❌ scenarios** (~50 scenarios). Best starting points: Section 5 (P1 line-type pickers, discount audit), Section 6 (printing, page focus refresh), Section 11 (Z-report print), Section 17 (mobile invoice form).
-3. **Sweep C — Close backlog bugs** (`docs/BUGS.md`): BUG-095 (quote-detail Edit affordance), BUG-098 (Maintenance.customerId mapper), BUG-099 (Invoice.maintenanceJobId mapper). All P1.
+3. **Sweep C — Close backlog bugs** — ✅ **DONE 2026-05-01**. BUG-095 (quote-detail Edit + quote-form edit mode), BUG-098 (`MaintenanceService.mapFromBackend` customerId), BUG-099 (`InvoiceService.mapFromBackend` maintenanceJobId/quoteId) all 🟢. +12 new specs. S-QUO-010 verified ✅ live. Remaining backlog: BUG-096/097/100 (all P3).
 4. **Sweep D — Close documented stubs**: templates, logo upload, Service Catalog admin, MECHANIC role, pagination + server-side filter.
 5. **Sweep E — Performance baseline**: pagination implementation + load test invoicing list / PDF render p95.
 
@@ -512,4 +514,4 @@ Comprehensive, button-by-button scenario coverage for the fiscal invoicing syste
 
 ---
 
-**Last updated:** 2026-05-01 after commits `32b98b9` / `ab677ca` (Sweep A — Groups 1-4 complete) and `cd0dd63` (prod deploy hardening — `.dockerignore`).
+**Last updated:** 2026-05-01 after Sweep C — backlog cleanup (BUG-095 / BUG-098 / BUG-099 all 🟢, S-QUO-010 ✅).

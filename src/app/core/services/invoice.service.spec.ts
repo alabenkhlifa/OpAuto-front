@@ -348,6 +348,33 @@ describe('InvoiceService', () => {
       expect(li.taxable).toBeTrue();
     });
 
+    it('exposes maintenanceJobId and quoteId from the backend payload (BUG-099)', () => {
+      let received: any;
+      service.fetchInvoiceById('inv-1').subscribe((inv) => (received = inv));
+
+      const req = httpMock.expectOne('/invoices/inv-1');
+      req.flush(
+        makeBackendInvoiceShape({
+          maintenanceJobId: 'job-123',
+          quoteId: 'quote-456',
+        }),
+      );
+
+      expect(received.maintenanceJobId).toBe('job-123');
+      expect(received.quoteId).toBe('quote-456');
+    });
+
+    it('leaves maintenanceJobId / quoteId undefined when the backend omits them', () => {
+      let received: any;
+      service.fetchInvoiceById('inv-1').subscribe((inv) => (received = inv));
+
+      const req = httpMock.expectOne('/invoices/inv-1');
+      req.flush(makeBackendInvoiceShape());
+
+      expect(received.maintenanceJobId).toBeUndefined();
+      expect(received.quoteId).toBeUndefined();
+    });
+
     it('falls back to legacy totalPrice when backend response uses the old field name', () => {
       let received: any;
       service.fetchInvoiceById('inv-1').subscribe((inv) => (received = inv));

@@ -263,7 +263,12 @@ export class MaintenanceService {
     return {
       id: b.id,
       carId: b.carId,
-      customerId: b.customerId,
+      // BUG-098: backend nests customerId under `b.car.customerId` for jobs
+      // (Maintenance always belongs to a (customer, car) pair via the car).
+      // Reading `b.customerId` alone returned undefined and cascaded into
+      // the invoice-form's "Pull from job" flow (silently clearing the
+      // customer field). Prefer the nested path when present.
+      customerId: b.car?.customerId ?? b.customerId,
       mechanicId: b.employeeId || b.mechanicId,
       licensePlate: b.car?.licensePlate || b.licensePlate || '',
       customerName: (() => {

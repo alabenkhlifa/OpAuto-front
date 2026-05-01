@@ -382,12 +382,12 @@ _Use this template:_
 - **Root cause:** (a) `type: li.type as LineItemType` cast a backend `String?` column blindly — the `<select [value]>` template binding fell back to the first `<option>` when the cast value didn't match the union; (b) `(li as any).tvaRate ?? inv.taxRate ?? this.defaultTva()` cascaded through the legacy invoice-level `inv.taxRate` (often 0 or undefined post-fiscal-overhaul), and `normalizeTvaRate()` zeroed non-bucket values.
 - **Fix (2026-04-30):** added `coerceLineType(raw): LineItemType` and `coerceTvaRate(raw): TvaRate` helpers; `loadInvoice` now calls those and never falls through to `inv.taxRate`. Three new specs in `invoice-form.component.spec.ts` cover persisted lines, missing/unknown type, and numeric-string tvaRate. `docs/INVOICING_E2E_SCENARIOS.md → S-INV-031` flipped to ✅.
 
-### BUG-095 · Quote-detail page is missing an Edit affordance for DRAFT quotes 🔴
+### BUG-095 · Quote-detail page is missing an Edit affordance for DRAFT quotes 🟢
 - **Where:** `src/app/features/invoicing/pages/quote-detail/` (HTML template — search for the action bar near `recordPayment`/`approve`/`send`/`reject`).
 - **Symptom:** S-QUO-018 (Edit-quote-after-send → blocked) passes incidentally because the Edit button is absent for **all** statuses, not just SENT/APPROVED. That same absence breaks **S-QUO-010** (Edit DRAFT quote — totals recompute on line change): users can't reopen a DRAFT quote to edit lines, and the only path to fix a typo is to delete + recreate.
 - **Surfaced by:** Sweep A Group 3 e2e validator pass (2026-04-30).
 - **Reproduce:** create a DRAFT quote → open detail page → confirm there is no "Edit" button. Compare with `invoice-details.component.html` which renders an Edit button when `canShow('edit')` returns true (DRAFT path).
-- **Suggested fix:** add an Edit button gated by `quote.status === 'draft'` that routes to `/invoices/quotes/edit/:id`, and ensure the quote-form supports `:id` paramMap loading (`loadQuote()` similar to `invoice-form.loadInvoice()`). i18n key `invoicing.quotes.detail.actions.edit` may need adding to en/fr/ar.
+- **Fix (Sweep C — 2026-05-01):** added `edit()` handler in `quote-detail.component.ts` (gated by `q.status === 'DRAFT'`, navigates to `/invoices/quotes/edit/:id`); added `quotes/edit/:id` route ahead of `quotes/:id`; rebuilt `quote-form.component.ts` to support edit mode via paramMap (`loadQuote()` → form.patch + lines.set, redirects to detail when status ≠ DRAFT, calls `quoteService.update()` on submit, cancel returns to detail); new i18n keys `invoicing.quotes.detail.edit`, `quotes.form.editTitle`, `submitEdit`, `updated`, `updateFailed`, `loadFailed` (en/fr/ar). 5 new specs in `quote-form.component.spec.ts` cover hydration, lock redirect, update path, and cancel routing; 5 new specs in `quote-detail.component.spec.ts` cover the Edit button visibility + navigation guard. S-QUO-010 verified end-to-end via Chrome DevTools MCP (DRAFT quote 100 → 175 TND, total recomputes to 208.25 with TVA).
 - **Priority:** P1.
 
 ### BUG-096 · Service-picker and part-picker fetch the entire catalog and filter in-memory 🔴
@@ -404,18 +404,18 @@ _Use this template:_
 - **Suggested fix:** either (a) annotate the controller method with `@HttpCode(HttpStatus.NO_CONTENT)` and return `void` from the service path, OR (b) update `S-INV-016` in the scenario doc to expect 200 + body. Pick one and document the FE expectation. The FE side currently doesn't read the response body anyway (just navigates on success).
 - **Priority:** P3 — works today, just an inconsistency.
 
-### BUG-098 · `MaintenanceService.mapFromBackend` drops `customerId` 🔴
+### BUG-098 · `MaintenanceService.mapFromBackend` drops `customerId` 🟢
 - **Where:** `src/app/core/services/maintenance.service.ts:266` (search for `mapFromBackend` — likely reads `b.customerId`).
 - **Symptom:** Any consumer reading `job.customerId` gets `undefined` because the backend payload nests the customer id under `b.car.customerId`, not at the top level. Invoice-form's `linkJobById()` was assigning `customerId: undefined` into the FormGroup, which silently cleared the form's customer field when a user picked a maintenance job. Now patched locally inside invoice-form (commit pending), but other consumers (anywhere that reads `MaintenanceJob.customerId` after `mapFromBackend`) silently regress.
 - **Surfaced by:** Sweep A Group 4 e2e validator (S-INV-019 — 2026-04-30).
-- **Suggested fix:** in `mapFromBackend`, derive `customerId` from `b.car?.customerId ?? b.customerId` (defensive). Also worth checking if the backend should expose `customerId` at the top level for normalization — Maintenance jobs almost always belong to a (customer, car) pair, denormalizing the customer id onto the job DTO is cheap.
+- **Fix (Sweep C — 2026-05-01):** `mapFromBackend` now reads `customerId: b.car?.customerId ?? b.customerId`. Also dropped the local workaround in `invoice-form.linkJobById()` that derived the customerId from the cars list — the mapper is now the single source of truth. 3 new specs in `maintenance.service.spec.ts` cover nested-customer, top-level fallback, and the prefer-nested-over-top precedence.
 - **Priority:** P1 — silent regression risk for any future consumer that grabs `job.customerId`.
 
-### BUG-099 · `InvoiceService.mapFromBackend` drops `maintenanceJobId` and `quoteId` 🔴
+### BUG-099 · `InvoiceService.mapFromBackend` drops `maintenanceJobId` and `quoteId` 🟢
 - **Where:** `src/app/core/services/invoice.service.ts:152-200` (the `mapFromBackend` method).
 - **Symptom:** The typed `InvoiceWithDetails` model exposes `appointmentId` but not `maintenanceJobId` or `quoteId`, even though the backend persists both. After a page refresh on `/invoices/:id`, the invoice-form cannot show the linked-job badge or the linked-quote attribution because the mapper has already discarded the IDs. Worked around for the pull-from-job flow via a `?jobId=` query param, but proper fix is to expose both fields on the typed model.
 - **Surfaced by:** Sweep A Group 4 e2e validator (S-INV-019 — 2026-04-30).
-- **Suggested fix:** add `maintenanceJobId?: string` and `quoteId?: string` to the `Invoice` / `InvoiceWithDetails` interfaces in `invoice.model.ts`; populate them from `b.maintenanceJobId` / `b.quoteId` in `mapFromBackend`. Then drop the `?jobId=` query param trick in `invoice-form.pullFromJob` and read directly from `inv.maintenanceJobId` in `loadInvoice`.
+- **Fix (Sweep C — 2026-05-01):** added `maintenanceJobId?: string` and `quoteId?: string` to the `Invoice` interface (inherited by `InvoiceWithDetails`), populated both in `InvoiceService.mapFromBackend`. Removed the `?jobId=` query-param workaround from `invoice-form.pullFromJob()` and `loadInvoice()` — the form now reads directly from `inv.maintenanceJobId`. 2 new specs in `invoice.service.spec.ts` cover the round-trip + the undefined-when-omitted contract.
 - **Priority:** P1 — blocks S-DET-014 (page focus refresh / linked-document badge persistence) and BUG-095's quote-edit flow once that lands.
 
 ### BUG-100 · Payment modal in landscape 667×375 requires scroll inside dialog 🔴

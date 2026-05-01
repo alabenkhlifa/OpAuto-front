@@ -53,6 +53,12 @@ export class QuoteDetailPageComponent implements OnInit {
     });
   }
 
+  edit(): void {
+    const q = this.quote();
+    if (!q || q.status !== 'DRAFT') return;
+    this.router.navigate(['/invoices/quotes/edit', q.id]);
+  }
+
   send(): void {
     const q = this.quote();
     if (!q || this.busy()) return;

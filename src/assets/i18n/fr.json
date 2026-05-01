@@ -2289,6 +2289,7 @@
       },
       "form": {
         "title": "Nouveau devis",
+        "editTitle": "Modifier le devis",
         "customer": "Client",
         "vehicle": "Véhicule",
         "validUntil": "Valable jusqu'au",
@@ -2297,8 +2298,12 @@
         "unitPrice": "Prix unitaire",
         "notes": "Notes",
         "submit": "Enregistrer le devis",
+        "submitEdit": "Enregistrer les modifications",
         "created": "Devis créé",
         "createFailed": "Impossible de créer le devis",
+        "updated": "Devis mis à jour",
+        "updateFailed": "Impossible de mettre à jour le devis",
+        "loadFailed": "Impossible de charger le devis",
         "linesRequired": "Au moins une ligne est requise"
       },
       "detail": {
@@ -2306,6 +2311,7 @@
         "validUntil": "Valable jusqu'au",
         "total": "Total",
         "expired": "Expiré",
+        "edit": "Modifier le devis",
         "send": "Envoyer le devis",
         "approve": "Approuver et convertir",
         "reject": "Refuser",

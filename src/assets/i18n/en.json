@@ -2247,6 +2247,7 @@
       },
       "form": {
         "title": "New quote",
+        "editTitle": "Edit quote",
         "customer": "Customer",
         "vehicle": "Vehicle",
         "validUntil": "Valid until",
@@ -2255,8 +2256,12 @@
         "unitPrice": "Unit price",
         "notes": "Notes",
         "submit": "Save quote",
+        "submitEdit": "Save changes",
         "created": "Quote created",
         "createFailed": "Could not create quote",
+        "updated": "Quote updated",
+        "updateFailed": "Could not update quote",
+        "loadFailed": "Could not load quote",
         "linesRequired": "At least one line item is required"
       },
       "detail": {
@@ -2264,6 +2269,7 @@
         "validUntil": "Valid until",
         "total": "Total",
         "expired": "Expired",
+        "edit": "Edit quote",
         "send": "Send quote",
         "approve": "Approve & convert",
         "reject": "Reject",

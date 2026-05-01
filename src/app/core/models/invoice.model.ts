@@ -4,6 +4,8 @@ export interface Invoice {
   customerId: string;
   carId: string;
   appointmentId?: string;
+  maintenanceJobId?: string;
+  quoteId?: string;
   issueDate: Date;
   dueDate: Date;
   status: InvoiceStatus;

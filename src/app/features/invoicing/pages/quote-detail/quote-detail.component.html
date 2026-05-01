@@ -45,6 +45,9 @@
 
       <div class="quote-detail-page__actions">
         @if (q.status === 'DRAFT') {
+          <button type="button" class="btn-secondary" (click)="edit()" [disabled]="busy()">
+            {{ 'invoicing.quotes.detail.edit' | translate }}
+          </button>
           <button type="button" class="btn-primary" (click)="send()" [disabled]="busy()">
             {{ 'invoicing.quotes.detail.send' | translate }}
           </button>

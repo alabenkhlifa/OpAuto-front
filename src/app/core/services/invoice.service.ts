@@ -155,6 +155,8 @@ export class InvoiceService {
       customerId: b.customerId,
       carId: b.carId,
       appointmentId: b.appointmentId,
+      maintenanceJobId: b.maintenanceJobId,
+      quoteId: b.quoteId,
       issueDate: new Date(b.createdAt || b.issueDate),
       dueDate: new Date(b.dueDate || b.createdAt),
       status: fromBackendEnum(b.status) as InvoiceStatus,

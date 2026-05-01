@@ -74,6 +74,10 @@ const routes: Routes = [
         loadComponent: () => import('./features/invoicing/pages/quote-form/quote-form.component').then(m => m.QuoteFormPageComponent)
       },
       {
+        path: 'quotes/edit/:id',
+        loadComponent: () => import('./features/invoicing/pages/quote-form/quote-form.component').then(m => m.QuoteFormPageComponent)
+      },
+      {
         path: 'quotes/:id',
         loadComponent: () => import('./features/invoicing/pages/quote-detail/quote-detail.component').then(m => m.QuoteDetailPageComponent)
       },
