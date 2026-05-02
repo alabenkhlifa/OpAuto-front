@@ -328,10 +328,23 @@ export class InvoiceService {
   // --- Payment operations ---
 
   addPayment(payment: Omit<Payment, 'id' | 'createdAt'>): Observable<Payment> {
+    // S-EDGE-017 — guard against Invalid Date instances. `new Date('')`
+    // and `new Date(undefined)` produce a Date object that satisfies
+    // `instanceof Date` but throws RangeError on `.toISOString()`. Fall
+    // back to the current timestamp so the BE always receives a valid
+    // ISO string. The RangeError previously surfaced as a transient
+    // glitch on submit re-render even though the payment still posted.
+    const isDate = payment.paymentDate instanceof Date;
+    const validDate = isDate && !isNaN((payment.paymentDate as Date).getTime());
+    const isoDate = validDate
+      ? (payment.paymentDate as Date).toISOString()
+      : isDate
+        ? new Date().toISOString()
+        : (payment.paymentDate as any);
     const body = {
       amount: payment.amount,
       method: toBackendEnum(payment.method),
-      paymentDate: payment.paymentDate instanceof Date ? payment.paymentDate.toISOString() : payment.paymentDate,
+      paymentDate: isoDate,
       reference: payment.reference,
       notes: payment.notes,
       processedBy: payment.processedBy

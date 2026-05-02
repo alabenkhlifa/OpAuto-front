@@ -2,9 +2,9 @@ import {
   Controller,
   Get,
   Logger,
+  NotFoundException,
   Param,
   Res,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
@@ -51,7 +51,11 @@ export class InvoicePublicController {
       where: { id: payload.id },
       select: { id: true, garageId: true, status: true, invoiceNumber: true },
     });
-    if (!invoice) throw new UnauthorizedException('Token target missing');
+    // S-EDGE-015 — token verifies but resource is gone (e.g. DRAFT was
+    // deleted). Surface 404 (not 401) so the public link tells the
+    // recipient "this document no longer exists" rather than implying
+    // the token is invalid.
+    if (!invoice) throw new NotFoundException('Invoice not found');
 
     const buf = await this.pdf.renderInvoice(invoice.id, invoice.garageId, {
       publicToken: token,
@@ -87,7 +91,8 @@ export class InvoicePublicController {
       where: { id: payload.id },
       select: { id: true, garageId: true, quoteNumber: true },
     });
-    if (!quote) throw new UnauthorizedException('Token target missing');
+    // S-EDGE-015 parity for quotes — see invoice handler above.
+    if (!quote) throw new NotFoundException('Quote not found');
 
     const buf = await this.pdf.renderQuote(quote.id, quote.garageId, {
       publicToken: token,
@@ -105,7 +110,8 @@ export class InvoicePublicController {
       where: { id: payload.id },
       select: { id: true, garageId: true, creditNoteNumber: true },
     });
-    if (!cn) throw new UnauthorizedException('Token target missing');
+    // S-EDGE-015 parity for credit notes — see invoice handler above.
+    if (!cn) throw new NotFoundException('Credit note not found');
 
     const buf = await this.pdf.renderCreditNote(cn.id, cn.garageId, {
       publicToken: token,

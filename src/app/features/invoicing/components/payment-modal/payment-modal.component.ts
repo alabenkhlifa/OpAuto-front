@@ -137,10 +137,17 @@ export class PaymentModalComponent implements OnChanges {
       return;
     }
     const v = this.form.value;
+    // S-EDGE-017 — paymentDate must be a non-empty YYYY-MM-DD string.
+    // The previous guard `v.paymentDate ?? <today>` only caught
+    // null/undefined; the date input can also surface an empty string
+    // (e.g. user cleared the field), which then propagated downstream
+    // to `new Date('')` → Invalid Date → RangeError on toISOString().
+    const todayIso = new Date().toISOString().split('T')[0];
+    const paymentDate = v.paymentDate && v.paymentDate.trim() ? v.paymentDate : todayIso;
     this.submit.emit({
       amount: v.amount ?? 0,
       method: this.method(),
-      paymentDate: v.paymentDate ?? new Date().toISOString().split('T')[0],
+      paymentDate,
       reference: v.reference || undefined,
       notes: v.notes || undefined,
     });

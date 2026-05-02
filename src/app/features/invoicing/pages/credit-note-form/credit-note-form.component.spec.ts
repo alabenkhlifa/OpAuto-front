@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -66,7 +66,13 @@ describe('CreditNoteFormPageComponent', () => {
     } as InvoiceWithDetails;
   }
 
-  function configure(opts?: { invoiceId?: string | null; createOk?: boolean }) {
+  function configure(opts?: {
+    invoiceId?: string | null;
+    createOk?: boolean;
+    /** When set, `creditNoteService.create()` throws an HttpErrorResponse
+     *  with this status (used by S-EDGE-016 — 423 lock specs). */
+    createErrorStatus?: number;
+  }) {
     const navigateSpy = jasmine.createSpy('navigate').and.returnValue(Promise.resolve(true));
     const invoiceServiceStub = {
       fetchInvoiceById: jasmine
@@ -75,11 +81,16 @@ describe('CreditNoteFormPageComponent', () => {
       formatCurrency: (n: number) => `${n.toFixed(2)} TND`,
     };
     const creditNoteServiceStub = {
-      create: jasmine.createSpy('create').and.callFake(() =>
-        opts?.createOk === false
-          ? throwError(() => new Error('boom'))
-          : of({ id: 'cn-1', creditNoteNumber: 'AVO-001' } as any),
-      ),
+      create: jasmine.createSpy('create').and.callFake(() => {
+        if (typeof opts?.createErrorStatus === 'number') {
+          return throwError(
+            () => new HttpErrorResponse({ status: opts.createErrorStatus! }),
+          );
+        }
+        return opts?.createOk === false
+          ? throwError(() => new HttpErrorResponse({ status: 0 }))
+          : of({ id: 'cn-1', creditNoteNumber: 'AVO-001' } as any);
+      }),
     };
     const toastStub = {
       success: jasmine.createSpy('success'),
@@ -280,6 +291,89 @@ describe('CreditNoteFormPageComponent', () => {
         expect(li.querySelector('.credit-note-line__qty')).withContext('qty input').not.toBeNull();
         expect(li.querySelector('.credit-note-line__total')).withContext('total cell').not.toBeNull();
       });
+    });
+  });
+
+  /**
+   * Sweep C-13 — Section 18 closure for the credit-note form.
+   *
+   *   S-EDGE-003 — network failure: form data preserved, isSubmitting
+   *                flips back, toast surfaces translated key, NO navigate.
+   *   S-EDGE-004 — empty selection: onSubmit short-circuits before BE.
+   *   S-EDGE-016 — 423 from BE → translated `lockedFailed` key (not the
+   *                generic createFailed).
+   */
+  describe('S-EDGE-003 / S-EDGE-004 / S-EDGE-016 — credit-note-form resilience', () => {
+    it('S-EDGE-003 — preserves reason / line selection on network failure', async () => {
+      const { creditNoteServiceStub, navigateSpy, toastStub } = configure({
+        invoiceId: 'inv-123',
+        createOk: false,
+      });
+      const fixture = TestBed.createComponent(CreditNoteFormPageComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+
+      cmp.toggle(0, true);
+      cmp.form.patchValue({ reason: 'Customer return', restockParts: false });
+      cmp.onSubmit();
+      await fixture.whenStable();
+
+      expect(creditNoteServiceStub.create).toHaveBeenCalledTimes(1);
+      expect(cmp.isSubmitting()).toBeFalse();
+      // Form intact.
+      expect(cmp.form.value.reason).toBe('Customer return');
+      expect(cmp.form.value.restockParts).toBeFalse();
+      // Selection intact.
+      expect(cmp.lines()[0].selected).toBeTrue();
+      // Generic-failure toast key, NOT the lock key.
+      expect(toastStub.error).toHaveBeenCalledWith(
+        'invoicing.creditNotes.form.createFailed',
+      );
+      expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('S-EDGE-004 — onSubmit short-circuits when no lines are selected', async () => {
+      const { creditNoteServiceStub, toastStub } = configure({ invoiceId: 'inv-123' });
+      const fixture = TestBed.createComponent(CreditNoteFormPageComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+
+      cmp.form.patchValue({ reason: 'Customer return', restockParts: true });
+      // No toggle() call — every line is unselected.
+
+      cmp.onSubmit();
+      await fixture.whenStable();
+
+      expect(creditNoteServiceStub.create).not.toHaveBeenCalled();
+      expect(toastStub.warning).toHaveBeenCalledWith(
+        'invoicing.creditNotes.form.selectAtLeastOne',
+      );
+    });
+
+    it('S-EDGE-016 — 423 on create emits the locked-specific toast key', async () => {
+      const { toastStub } = configure({
+        invoiceId: 'inv-123',
+        createErrorStatus: 423,
+      });
+      const fixture = TestBed.createComponent(CreditNoteFormPageComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+
+      cmp.toggle(0, true);
+      cmp.form.patchValue({ reason: 'Customer return', restockParts: true });
+      cmp.onSubmit();
+      await fixture.whenStable();
+
+      expect(toastStub.error).toHaveBeenCalledWith(
+        'invoicing.creditNotes.form.lockedFailed',
+      );
+      expect(toastStub.error).not.toHaveBeenCalledWith(
+        'invoicing.creditNotes.form.createFailed',
+      );
+      expect(cmp.isSubmitting()).toBeFalse();
     });
   });
 });

@@ -95,6 +95,16 @@
             {{ 'invoicing.send.errors.invalidPhone' | translate }}
           </span>
         </div>
+        <!--
+          S-EDGE-010 — When the customer has no phone on file and the user
+          picks WHATSAPP (or no email + EMAIL/BOTH), surface a translated
+          hint inviting the user to update the customer profile or type a
+          number directly. The Tunisian-phone / email validators still
+          gate the submit; this hint is purely informational.
+        -->
+        <p *ngIf="missingContactKey()" class="form-hint form-hint--missing-contact">
+          {{ missingContactKey()! | translate }}
+        </p>
       </div>
 
       <div class="preview-pane" *ngIf="context">

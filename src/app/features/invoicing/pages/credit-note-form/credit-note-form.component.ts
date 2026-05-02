@@ -2,6 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { ToastService } from '../../../../shared/services/toast.service';
 import { TranslationService } from '../../../../core/services/translation.service';
@@ -171,11 +172,17 @@ export class CreditNoteFormPageComponent implements OnInit {
             this.router.navigate(['/invoices/credit-notes']);
           }
         },
-        error: () => {
+        error: (err: HttpErrorResponse) => {
           this.isSubmitting.set(false);
-          this.toast.error(
-            this.translation.instant('invoicing.creditNotes.form.createFailed'),
-          );
+          // S-EDGE-016 — 423 should never reach here in practice (credit
+          // notes immediately lock; we never PUT them), but guard the
+          // toast anyway so a future state-machine change doesn't leak
+          // raw errors.
+          const key =
+            err?.status === 423
+              ? 'invoicing.creditNotes.form.lockedFailed'
+              : 'invoicing.creditNotes.form.createFailed';
+          this.toast.error(this.translation.instant(key));
         },
       });
   }

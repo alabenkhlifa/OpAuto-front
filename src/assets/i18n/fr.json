@@ -1942,6 +1942,10 @@
         "required": "Le destinataire est requis",
         "invalidEmail": "Veuillez saisir une adresse e-mail valide",
         "invalidPhone": "Veuillez saisir un numéro de téléphone tunisien valide"
+      },
+      "missingContact": {
+        "phone": "Aucun numéro de téléphone enregistré pour ce client. Mettez à jour son profil ou saisissez un numéro ci-dessus avant d'envoyer.",
+        "email": "Aucune adresse e-mail enregistrée pour ce client. Mettez à jour son profil ou saisissez une adresse ci-dessus avant d'envoyer."
       }
     },
     "sendModal": {
@@ -2338,6 +2342,7 @@
         "createFailed": "Impossible de créer le devis",
         "updated": "Devis mis à jour",
         "updateFailed": "Impossible de mettre à jour le devis",
+        "lockedFailed": "Ce devis a été envoyé ou approuvé dans un autre onglet et est désormais verrouillé. Rechargez la page pour continuer.",
         "loadFailed": "Impossible de charger le devis",
         "linesRequired": "Au moins une ligne est requise",
         "discount": {
@@ -2412,7 +2417,8 @@
         "loadFailed": "Impossible de charger la facture d'origine",
         "selectAtLeastOne": "Sélectionnez au moins une ligne à créditer",
         "created": "Avoir émis",
-        "createFailed": "Impossible d'émettre l'avoir"
+        "createFailed": "Impossible d'émettre l'avoir",
+        "lockedFailed": "Cet avoir a déjà été verrouillé par une autre action. Rechargez la page pour continuer."
       }
     },
     "partPicker": {
@@ -2541,6 +2547,7 @@
         "partOverdraw": "Une ou plusieurs lignes dépassent le stock disponible",
         "loadFailed": "Impossible de charger la facture",
         "saveFailed": "Impossible d'enregistrer la facture",
+        "saveLocked": "Cette facture a été émise dans un autre onglet et est désormais verrouillée. Rechargez la page pour continuer.",
         "issueFailed": "Impossible d'émettre la facture",
         "sendFailed": "Impossible d'envoyer la facture",
         "pullFailed": "Impossible d'importer depuis l'ordre",

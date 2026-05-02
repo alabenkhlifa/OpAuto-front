@@ -54,6 +54,8 @@ function makeInvoice(over: Partial<InvoiceWithDetails> = {}): InvoiceWithDetails
 interface SetupOpts {
   invoices?: InvoiceWithDetails[];
   invoiceError?: boolean;
+  quoteError?: boolean;
+  creditNoteError?: boolean;
   openPaymentParam?: string | null;
   addPayment$?: any;
 }
@@ -98,13 +100,19 @@ describe('InvoicingDashboardComponent', () => {
         {
           provide: QuoteService,
           useValue: {
-            list: () => of([] as QuoteWithDetails[]),
+            list: () =>
+              opts.quoteError
+                ? throwError(() => new Error('q'))
+                : of([] as QuoteWithDetails[]),
           },
         },
         {
           provide: CreditNoteService,
           useValue: {
-            list: () => of([] as CreditNoteWithDetails[]),
+            list: () =>
+              opts.creditNoteError
+                ? throwError(() => new Error('cn'))
+                : of([] as CreditNoteWithDetails[]),
           },
         },
         {
@@ -233,6 +241,52 @@ describe('InvoicingDashboardComponent', () => {
       // All numeric tiles fall back to "0" / "0.00 TND" rather than "—" or
       // a thrown error — page still paints.
       expect(tiles[0].value).toBeTruthy();
+    });
+  });
+
+  /**
+   * S-EDGE-002 — Backend down: dashboard tiles still render; per-stream
+   * `catchError(() => of([]))` keeps each KPI showing "0" / "0.00 TND"
+   * when its own fetch fails. This complements S-DASH-011 by covering
+   * each of the 3 streams (invoices / quotes / credit notes) individually
+   * AND together (full backend outage).
+   */
+  describe('S-EDGE-002 — Backend down: tiles still render', () => {
+    it('renders 4 tiles when ONLY the quote stream fails', () => {
+      const fixture = setup({ quoteError: true });
+      const tiles = fixture.componentInstance.kpiTiles();
+      expect(tiles.length).toBe(4);
+      // The "Quotes / month" tile (index 2) falls back to "0" rather
+      // than throwing or hiding the tile.
+      expect(tiles[2].value).toBe('0');
+    });
+
+    it('renders 4 tiles when ONLY the credit-note stream fails', () => {
+      const fixture = setup({ creditNoteError: true });
+      const tiles = fixture.componentInstance.kpiTiles();
+      expect(tiles.length).toBe(4);
+      // The "Credit notes / month" tile (index 3) falls back to "0".
+      expect(tiles[3].value).toBe('0');
+    });
+
+    it('renders 4 tiles AND empty signals when ALL three streams fail', () => {
+      const fixture = setup({
+        invoiceError: true,
+        quoteError: true,
+        creditNoteError: true,
+      });
+      const c = fixture.componentInstance;
+      const tiles = c.kpiTiles();
+      expect(tiles.length).toBe(4);
+      // The page is still usable: invoices/quotes/credit-notes signals
+      // are empty arrays (recent-invoices empty state, top-customers
+      // empty state, AR aging "no outstanding receivables", etc.).
+      expect(c.invoices().length).toBe(0);
+      expect(c.quotes().length).toBe(0);
+      expect(c.creditNotes().length).toBe(0);
+      // isLoading flips off (next branch fired even with empty arrays)
+      // so the page paints rather than hanging on a spinner forever.
+      expect(c.isLoading()).toBeFalse();
     });
   });
 

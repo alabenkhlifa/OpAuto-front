@@ -3,7 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { authGuard, guestGuard } from './core/guards/auth.guard';
 import { ownerGuard, moduleGuard } from './core/guards/role.guard';
 
-const routes: Routes = [
+export const routes: Routes = [
   // Production: redirect to auth, Development: redirect to dashboard
   {
     path: '',

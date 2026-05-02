@@ -1209,4 +1209,171 @@ describe('InvoiceFormComponent', () => {
       expect(desc?.getAttribute('data-label')).toBe('invoicing.form.table.description');
     });
   });
+
+  /**
+   * Sweep C-13 — Section 18 (Edge cases) closure for the invoice form.
+   *
+   *   S-EDGE-005 — qty / unitPrice / discount inputs carry `min="0"` (HTML
+   *                level) so the native UI clamps spinner-based negatives;
+   *                discount additionally caps at 100. The lineNetHT()
+   *                computation also clamps discountPct to [0, 100] so any
+   *                stray negative is treated as 0 rather than inflating
+   *                the total.
+   *   S-EDGE-006 — unitPrice = 0 (free service) is allowed: the line saves
+   *                with a 0 total; canSubmit stays true; payload reflects
+   *                unitPrice 0 + totalPrice 0.
+   *   S-EDGE-016 — saveDraft / issueAndSend map HTTP 423 to the
+   *                translated `saveLocked` key (NOT the generic saveFailed)
+   *                so the user sees the lock guidance instead of a raw
+   *                error message.
+   */
+  describe('S-EDGE-005 — line inputs guard against negatives', () => {
+    it('every line input renders min="0" (HTML-level clamp)', async () => {
+      configure();
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      cmp.form.patchValue({ customerId: 'c1', carId: 'car1' });
+      cmp.addLine('misc');
+      fixture.detectChanges();
+
+      const root = fixture.nativeElement as HTMLElement;
+      // qty + unitPrice + discount + (laborHours when a labor line) — all
+      // must carry min="0"; discount additionally pins max="100".
+      const qtyInput = root.querySelector(
+        'td[data-label="invoicing.form.table.qty"] input[type="number"]',
+      ) as HTMLInputElement | null;
+      const priceInput = root.querySelector(
+        'td[data-label="invoicing.form.table.unitPrice"] input[type="number"]',
+      ) as HTMLInputElement | null;
+      const discountInput = root.querySelector(
+        'td[data-label="invoicing.form.table.discount"] input[type="number"]',
+      ) as HTMLInputElement | null;
+
+      expect(qtyInput).withContext('qty input rendered').not.toBeNull();
+      expect(priceInput).withContext('unitPrice input rendered').not.toBeNull();
+      expect(discountInput).withContext('discount input rendered').not.toBeNull();
+      expect(qtyInput!.getAttribute('min')).toBe('0');
+      expect(priceInput!.getAttribute('min')).toBe('0');
+      expect(discountInput!.getAttribute('min')).toBe('0');
+      expect(discountInput!.getAttribute('max')).toBe('100');
+    });
+
+    it('lineNetHT clamps a stray negative discount to 0 (no total inflation)', async () => {
+      configure();
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      cmp.addLine('misc');
+      cmp.updateLine(0, 'unitPrice', 100);
+      cmp.updateLine(0, 'quantity', 2);
+      // A negative discount, if it ever got through (e.g. paste), must
+      // not inflate the total to 100*2*(1+0.5) = 300. The Math.max(0, …)
+      // guard in lineNetHT clamps it at 0.
+      cmp.updateLine(0, 'discountPct', -50 as any);
+
+      expect(cmp.lineTotal(0)).toBe(200);
+    });
+  });
+
+  describe('S-EDGE-006 — zero unit price is a valid free-service line', () => {
+    it('saves a unitPrice = 0 line with totalPrice 0 and canSubmit stays true', async () => {
+      const { invoiceServiceStub } = configure();
+      invoiceServiceStub.createInvoice.and.returnValue(
+        of({ id: 'free-1', invoiceNumber: 'DRAFT-free' } as any),
+      );
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      cmp.form.patchValue({ customerId: 'c1', carId: 'car1' });
+      cmp.addLine('service');
+      cmp.updateLine(0, 'description', 'Free courtesy check');
+      cmp.updateLine(0, 'quantity', 1);
+      cmp.updateLine(0, 'unitPrice', 0);
+
+      expect(cmp.canSubmit()).toBeTrue();
+      expect(cmp.lineTotal(0)).toBe(0);
+
+      cmp.saveDraft();
+      expect(invoiceServiceStub.createInvoice).toHaveBeenCalledTimes(1);
+      const payload: any = invoiceServiceStub.createInvoice.calls.mostRecent().args[0];
+      expect(payload.lineItems.length).toBe(1);
+      expect(payload.lineItems[0].unitPrice).toBe(0);
+      expect(payload.lineItems[0].totalPrice).toBe(0);
+    });
+  });
+
+  describe('S-EDGE-016 — 423 lock surfaces a specific translated toast', () => {
+    function fillValid(cmp: InvoiceFormComponent) {
+      cmp.form.patchValue({ customerId: 'c1', carId: 'car1' });
+      cmp.addLine('misc');
+      cmp.updateLine(0, 'description', 'Lock test');
+      cmp.updateLine(0, 'quantity', 1);
+      cmp.updateLine(0, 'unitPrice', 50);
+    }
+
+    it('saveDraft 423 → invoicing.form.errors.saveLocked (NOT saveFailed)', async () => {
+      const { invoiceServiceStub } = configure();
+      invoiceServiceStub.createInvoice.and.returnValue(
+        throwError(() => new HttpErrorResponse({ status: 423 })) as any,
+      );
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      const toastSvc = TestBed.inject(ToastService);
+      const toastSpy = spyOn(toastSvc, 'error');
+
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      fillValid(cmp);
+
+      cmp.saveDraft();
+
+      expect(toastSpy).toHaveBeenCalledWith('invoicing.form.errors.saveLocked');
+      expect(toastSpy).not.toHaveBeenCalledWith('invoicing.form.errors.saveFailed');
+      expect(cmp.isSubmitting()).toBeFalse();
+    });
+
+    it('issueAndSend persist 423 → saveLocked (race against another tab issuing)', async () => {
+      const { invoiceServiceStub } = configure();
+      invoiceServiceStub.createInvoice.and.returnValue(
+        throwError(() => new HttpErrorResponse({ status: 423 })) as any,
+      );
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      const toastSvc = TestBed.inject(ToastService);
+      const toastSpy = spyOn(toastSvc, 'error');
+
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      fillValid(cmp);
+
+      cmp.issueAndSend();
+
+      expect(toastSpy).toHaveBeenCalledWith('invoicing.form.errors.saveLocked');
+      expect(cmp.isSubmitting()).toBeFalse();
+    });
+
+    it('saveDraft non-423 (500) still emits the generic saveFailed key', async () => {
+      const { invoiceServiceStub } = configure();
+      invoiceServiceStub.createInvoice.and.returnValue(
+        throwError(() => new HttpErrorResponse({ status: 500 })) as any,
+      );
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      const toastSvc = TestBed.inject(ToastService);
+      const toastSpy = spyOn(toastSvc, 'error');
+
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      fillValid(cmp);
+
+      cmp.saveDraft();
+
+      expect(toastSpy).toHaveBeenCalledWith('invoicing.form.errors.saveFailed');
+      expect(toastSpy).not.toHaveBeenCalledWith('invoicing.form.errors.saveLocked');
+    });
+  });
 });

@@ -426,4 +426,80 @@ describe('InvoiceService', () => {
       expect(received.lineItems[0].totalPrice).toBe(95.2);
     });
   });
+
+  /**
+   * S-EDGE-017 — addPayment must NOT throw a RangeError when the caller
+   * passes an Invalid Date (e.g. `new Date('')` from a blank input).
+   * Pre-fix the body construction did
+   *
+   *   payment.paymentDate instanceof Date ? payment.paymentDate.toISOString() : ...
+   *
+   * which failed because `new Date('')` IS a Date instance — but its
+   * `.toISOString()` throws. The fix `isNaN(.getTime())` falls back to
+   * the current timestamp so the request still posts.
+   */
+  describe('S-EDGE-017 — addPayment defensive date handling', () => {
+    it('falls back to "now" when paymentDate is an Invalid Date instance', () => {
+      let posted: any;
+      service
+        .addPayment({
+          invoiceId: 'inv-1',
+          amount: 50,
+          method: 'cash',
+          // new Date('') is a Date object whose getTime() is NaN.
+          paymentDate: new Date('') as any,
+          processedBy: 'u1',
+        })
+        .subscribe();
+
+      const req = httpMock.expectOne('/invoices/inv-1/payments');
+      posted = req.request.body;
+      // No RangeError was thrown above — assertion implicit. Body
+      // contains a valid ISO string (8601 ends with `Z`).
+      expect(typeof posted.paymentDate).toBe('string');
+      expect(posted.paymentDate).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+      // Must not be the empty string (i.e. fallback fired).
+      expect(posted.paymentDate.length).toBeGreaterThan(10);
+
+      req.flush({
+        id: 'pay-1',
+        invoiceId: 'inv-1',
+        amount: 50,
+        method: 'CASH',
+        paymentDate: posted.paymentDate,
+        createdAt: '2026-05-02T10:00:00Z',
+      });
+      // The success branch fires `refreshInvoice` which GETs the invoice;
+      // flush a stub so the request doesn't leak into afterEach verify().
+      const refresh = httpMock.expectOne('/invoices/inv-1');
+      refresh.flush(makeBackendInvoiceShape());
+    });
+
+    it('passes a valid Date through as ISO string (happy path)', () => {
+      const dt = new Date('2026-04-15T12:30:00Z');
+      service
+        .addPayment({
+          invoiceId: 'inv-1',
+          amount: 80,
+          method: 'card',
+          paymentDate: dt,
+          processedBy: 'u1',
+        })
+        .subscribe();
+
+      const req = httpMock.expectOne('/invoices/inv-1/payments');
+      expect(req.request.body.paymentDate).toBe(dt.toISOString());
+      req.flush({
+        id: 'pay-2',
+        invoiceId: 'inv-1',
+        amount: 80,
+        method: 'CARD',
+        paymentDate: dt.toISOString(),
+        createdAt: '2026-05-02T10:00:00Z',
+      });
+      // Flush the refresh GET that addPayment triggers via tap().
+      const refresh = httpMock.expectOne('/invoices/inv-1');
+      refresh.flush(makeBackendInvoiceShape());
+    });
+  });
 });

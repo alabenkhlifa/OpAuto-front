@@ -16,6 +16,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
@@ -560,8 +561,15 @@ export class InvoiceFormComponent implements OnInit {
         this.isSubmitting.set(false);
         this.router.navigate(['/invoices', inv.id]);
       },
-      error: () => {
-        this.toast.error(this.translation.instant('invoicing.form.errors.saveFailed'));
+      error: (err: HttpErrorResponse) => {
+        // S-EDGE-016 — 423 = fiscal lock guardrail (someone else issued
+        // this invoice while the user was editing). Surface a specific
+        // translated message, never the raw "Locked" error.
+        const key =
+          err?.status === 423
+            ? 'invoicing.form.errors.saveLocked'
+            : 'invoicing.form.errors.saveFailed';
+        this.toast.error(this.translation.instant(key));
         this.isSubmitting.set(false);
       },
     });
@@ -587,14 +595,24 @@ export class InvoiceFormComponent implements OnInit {
             this.openSendModal(issued);
             this.isSubmitting.set(false);
           },
-          error: () => {
-            this.toast.error(this.translation.instant('invoicing.form.errors.issueFailed'));
+          error: (err: HttpErrorResponse) => {
+            // S-EDGE-016 — 423 on issue means "someone else already issued"
+            const key =
+              err?.status === 423
+                ? 'invoicing.form.errors.saveLocked'
+                : 'invoicing.form.errors.issueFailed';
+            this.toast.error(this.translation.instant(key));
             this.isSubmitting.set(false);
           },
         });
       },
-      error: () => {
-        this.toast.error(this.translation.instant('invoicing.form.errors.saveFailed'));
+      error: (err: HttpErrorResponse) => {
+        // S-EDGE-016 — 423 on persist (rare; user lost the race)
+        const key =
+          err?.status === 423
+            ? 'invoicing.form.errors.saveLocked'
+            : 'invoicing.form.errors.saveFailed';
+        this.toast.error(this.translation.instant(key));
         this.isSubmitting.set(false);
       },
     });

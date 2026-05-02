@@ -1988,6 +1988,10 @@
         "required": "Recipient is required",
         "invalidEmail": "Please enter a valid email address",
         "invalidPhone": "Please enter a valid Tunisia phone number"
+      },
+      "missingContact": {
+        "phone": "No phone number on file for this customer. Update their profile or type a number above before sending.",
+        "email": "No email address on file for this customer. Update their profile or type an address above before sending."
       }
     },
     "sendModal": {
@@ -2288,6 +2292,7 @@
         "createFailed": "Could not create quote",
         "updated": "Quote updated",
         "updateFailed": "Could not update quote",
+        "lockedFailed": "This quote was sent or approved in another tab and is now locked. Reload the page to continue.",
         "loadFailed": "Could not load quote",
         "linesRequired": "At least one line item is required",
         "discount": {
@@ -2362,7 +2367,8 @@
         "loadFailed": "Could not load source invoice",
         "selectAtLeastOne": "Select at least one line to credit",
         "created": "Credit note issued",
-        "createFailed": "Could not issue credit note"
+        "createFailed": "Could not issue credit note",
+        "lockedFailed": "This credit note was already locked by another action. Reload the page to continue."
       }
     },
     "partPicker": {
@@ -2491,6 +2497,7 @@
         "partOverdraw": "One or more part rows exceed available stock",
         "loadFailed": "Could not load invoice",
         "saveFailed": "Could not save invoice",
+        "saveLocked": "This invoice was issued in another tab and is now locked. Reload the page to continue.",
         "issueFailed": "Could not issue invoice",
         "sendFailed": "Could not send invoice",
         "pullFailed": "Could not pull from job",

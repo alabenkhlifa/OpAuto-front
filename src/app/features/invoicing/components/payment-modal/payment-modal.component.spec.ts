@@ -318,4 +318,55 @@ describe('PaymentModalComponent', () => {
       expect(component.form.valid).toBeTrue();
     });
   });
+
+  /**
+   * S-EDGE-017 — Transient RangeError on payment submit re-render.
+   *
+   * Pre-fix the modal emitted `paymentDate: v.paymentDate ?? <today>` —
+   * `??` only catches null/undefined so an empty string `''` (e.g. user
+   * cleared the date input) propagated downstream to `new Date('')` and
+   * then `Invalid Date.toISOString()` → RangeError. The fix coerces any
+   * blank value to today's ISO date before emitting.
+   *
+   * Note: an empty paymentDate ALSO fails Validators.required so the
+   * Submit button is normally disabled. The guard is belt-and-braces in
+   * case any future code-path bypasses canSubmit().
+   */
+  describe('S-EDGE-017 — payment date coerces blanks to today', () => {
+    it('empty-string paymentDate is replaced with today before emit', () => {
+      openWith(ctx);
+      // Bypass the validator gate — directly invoke onSubmit with the
+      // form pre-set to an empty paymentDate. We mark the field invalid
+      // first then force-submit to mimic an edge case (e.g. a future
+      // bypass via `markAsValid` from another control).
+      component.form.controls.paymentDate.clearValidators();
+      component.form.controls.paymentDate.setValue('');
+      component.form.controls.paymentDate.updateValueAndValidity();
+      component.form.patchValue({ amount: 50 });
+
+      let payload: any;
+      component.submit.subscribe((p) => (payload = p));
+      component.onSubmit();
+
+      expect(payload).toBeDefined();
+      // YYYY-MM-DD format — non-empty, length 10.
+      expect(typeof payload.paymentDate).toBe('string');
+      expect(payload.paymentDate.length).toBe(10);
+      expect(payload.paymentDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    });
+
+    it('whitespace-only paymentDate is replaced with today before emit', () => {
+      openWith(ctx);
+      component.form.controls.paymentDate.clearValidators();
+      component.form.controls.paymentDate.setValue('   ');
+      component.form.controls.paymentDate.updateValueAndValidity();
+      component.form.patchValue({ amount: 50 });
+
+      let payload: any;
+      component.submit.subscribe((p) => (payload = p));
+      component.onSubmit();
+
+      expect(payload.paymentDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    });
+  });
 });

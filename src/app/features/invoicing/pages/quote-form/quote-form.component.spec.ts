@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { QuoteFormPageComponent } from './quote-form.component';
 import { QuoteService } from '../../../../core/services/quote.service';
@@ -768,6 +768,112 @@ describe('QuoteFormPageComponent — edit mode (BUG-095)', () => {
       );
       expect(desc).toBeTruthy();
       expect(desc?.getAttribute('data-label')).toBe('invoicing.form.table.description');
+    });
+  });
+
+  /**
+   * Sweep C-13 — Section 18 (Edge cases) closure for the quote form.
+   *
+   *   S-EDGE-003 — Network failure on update / create: form data is
+   *                preserved, isSubmitting flips back, toast surfaces the
+   *                translated message, NO router.navigate runs. Mirrors
+   *                the invoice-form contract pinned in Sweep B-3.
+   *   S-EDGE-004 — Empty line items: onSubmit short-circuits BEFORE any
+   *                quoteService.create / update call.
+   *   S-EDGE-016 — 423 from BE on update is mapped to a *specific*
+   *                translated key (`lockedFailed`), not the generic
+   *                `updateFailed`, so the user sees the lock guidance.
+   */
+  describe('S-EDGE-003 / S-EDGE-004 / S-EDGE-016 — quote-form resilience', () => {
+    it('S-EDGE-003 — preserves form data and surfaces toast on update network failure', async () => {
+      await setupWithRouteId('q-1');
+      quoteServiceSpy.get.and.returnValue(of(makeQuote()));
+      // 0 = "no response" — the rxjs HttpClient maps a network drop to
+      // an error event with status: 0. Mirror that shape here.
+      quoteServiceSpy.update.and.returnValue(
+        throwError(() => new HttpErrorResponse({ status: 0 })) as any,
+      );
+
+      fixture.detectChanges();
+
+      const toast = TestBed.inject(ToastService) as any;
+      component.onSubmit();
+
+      expect(component.isSubmitting()).toBeFalse();
+      // Form is intact post-failure (still on the same edit screen).
+      expect(component.form.value.customerId).toBe('c-1');
+      expect(component.form.value.carId).toBe('car-1');
+      expect(component.form.value.notes).toBe('pre-existing notes');
+      expect(component.lines().length).toBeGreaterThan(0);
+      // Generic-failure path → updateFailed key, NOT the lock key.
+      expect(toast.error).toHaveBeenCalledWith(
+        'invoicing.quotes.form.updateFailed',
+      );
+      // No navigation on failure.
+      expect(routerSpy.navigate).not.toHaveBeenCalled();
+    });
+
+    it('S-EDGE-003 — preserves form data and surfaces toast on create network failure', async () => {
+      await setupWithRouteId(null);
+      fixture.detectChanges();
+
+      component.form.patchValue({ customerId: 'c-1', carId: 'car-1' });
+      component.addLine('misc');
+      component.updateLine(0, 'description', 'Test line');
+      component.updateLine(0, 'unitPrice', 50);
+
+      quoteServiceSpy.create.and.returnValue(
+        throwError(() => new HttpErrorResponse({ status: 0 })) as any,
+      );
+
+      const toast = TestBed.inject(ToastService) as any;
+      component.onSubmit();
+
+      expect(component.isSubmitting()).toBeFalse();
+      expect(component.form.value.customerId).toBe('c-1');
+      expect(component.lines().length).toBe(1);
+      expect(component.lines()[0].description).toBe('Test line');
+      expect(toast.error).toHaveBeenCalledWith(
+        'invoicing.quotes.form.createFailed',
+      );
+      expect(routerSpy.navigate).not.toHaveBeenCalled();
+    });
+
+    it('S-EDGE-004 — onSubmit short-circuits with no lines, never calls quoteService.create', async () => {
+      await setupWithRouteId(null);
+      fixture.detectChanges();
+
+      component.form.patchValue({ customerId: 'c-1', carId: 'car-1' });
+      // No addLine() — lines() stays empty.
+
+      const toast = TestBed.inject(ToastService) as any;
+      component.onSubmit();
+
+      expect(quoteServiceSpy.create).not.toHaveBeenCalled();
+      expect(toast.warning).toHaveBeenCalledWith(
+        'invoicing.quotes.form.linesRequired',
+      );
+    });
+
+    it('S-EDGE-016 — 423 on update emits the locked-specific toast key', async () => {
+      await setupWithRouteId('q-1');
+      quoteServiceSpy.get.and.returnValue(of(makeQuote()));
+      quoteServiceSpy.update.and.returnValue(
+        throwError(() => new HttpErrorResponse({ status: 423 })) as any,
+      );
+
+      fixture.detectChanges();
+
+      const toast = TestBed.inject(ToastService) as any;
+      component.onSubmit();
+
+      expect(toast.error).toHaveBeenCalledWith(
+        'invoicing.quotes.form.lockedFailed',
+      );
+      expect(toast.error).not.toHaveBeenCalledWith(
+        'invoicing.quotes.form.updateFailed',
+      );
+      expect(component.isSubmitting()).toBeFalse();
     });
   });
 });

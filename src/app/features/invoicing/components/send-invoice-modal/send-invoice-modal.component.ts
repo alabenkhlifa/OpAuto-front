@@ -122,6 +122,29 @@ export class SendInvoiceModalComponent implements OnChanges {
     this.channel() === 'WHATSAPP' ? 'phone' : 'email',
   );
 
+  /**
+   * S-EDGE-010 — i18n key for a translated hint when the customer has no
+   * stored contact for the picked channel:
+   *   - WHATSAPP, no `customerPhone` → `invoicing.send.missingContact.phone`
+   *   - EMAIL / BOTH, no `customerEmail` → `invoicing.send.missingContact.email`
+   *   - otherwise → `null` (no hint).
+   *
+   * Returns the *raw* translation key so the template binds it via
+   * `| translate` and language switches stay reactive.
+   */
+  missingContactKey = computed<string | null>(() => {
+    const ctx = this.contextSignal();
+    if (!ctx) return null;
+    const c = this.channel();
+    if (c === 'WHATSAPP') {
+      const phone = ctx.customerPhone?.trim();
+      return phone ? null : 'invoicing.send.missingContact.phone';
+    }
+    // EMAIL or BOTH — both legs need the email
+    const email = ctx.customerEmail?.trim();
+    return email ? null : 'invoicing.send.missingContact.email';
+  });
+
   /** True when the form is valid AND we're not already submitting. */
   canSubmit = computed(() => this.formValidSignal() && !this.submitting);
 

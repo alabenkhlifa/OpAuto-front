@@ -1,6 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { JwtService, TokenExpiredError } from '@nestjs/jwt';
-import { UnauthorizedException } from '@nestjs/common';
+import { NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InvoicePublicController } from './invoice-public.controller';
 import { InvoiceTokenService } from './invoice-token.service';
 
@@ -162,12 +162,19 @@ describe('InvoicePublicController', () => {
       expect(res.bodyBuffer?.slice(0, 4).toString()).toBe('%PDF');
     });
 
-    it('throws when invoice missing', async () => {
+    /**
+     * S-EDGE-015 — Public token after invoice deletion → 404 (not 401).
+     * The token verifies cleanly; the resource is gone (e.g. DRAFT was
+     * deleted before the link was opened). Surface NotFoundException so
+     * the recipient sees "Invoice not found" rather than implying their
+     * token is invalid.
+     */
+    it('S-EDGE-015 — throws NotFoundException (not Unauthorized) when invoice is missing', async () => {
       tokens.verify.mockReturnValueOnce({ id: 'gone', type: 'invoice' });
       prisma.invoice.findUnique.mockResolvedValueOnce(null);
       await expect(
         controller.getInvoicePdf('signed.token', res),
-      ).rejects.toThrow(UnauthorizedException);
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('rethrows token verification errors', async () => {
@@ -194,6 +201,15 @@ describe('InvoicePublicController', () => {
         publicToken: 't',
       });
     });
+
+    // S-EDGE-015 parity for quotes — token verifies, quote gone → 404.
+    it('S-EDGE-015 — NotFoundException when quote is missing', async () => {
+      tokens.verify.mockReturnValueOnce({ id: 'gone', type: 'quote' });
+      prisma.quote.findUnique.mockResolvedValueOnce(null);
+      await expect(controller.getQuotePdf('t', res)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
   });
 
   describe('getCreditNotePdf', () => {
@@ -208,6 +224,15 @@ describe('InvoicePublicController', () => {
       expect(pdf.renderCreditNote).toHaveBeenCalledWith('cn-1', 'g-1', {
         publicToken: 't',
       });
+    });
+
+    // S-EDGE-015 parity for credit notes — token verifies, CN gone → 404.
+    it('S-EDGE-015 — NotFoundException when credit note is missing', async () => {
+      tokens.verify.mockReturnValueOnce({ id: 'gone', type: 'creditNote' });
+      prisma.creditNote.findUnique.mockResolvedValueOnce(null);
+      await expect(controller.getCreditNotePdf('t', res)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

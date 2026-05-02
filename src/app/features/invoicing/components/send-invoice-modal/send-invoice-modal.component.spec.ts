@@ -403,4 +403,136 @@ describe('SendInvoiceModalComponent', () => {
       emitted.forEach((p) => expect(p).toEqual({ channel: 'EMAIL', to: 'ala@opauto.tn' }));
     });
   });
+
+  // ─────────────────────────────────────────────────────────────
+  // S-EDGE-010 — Customer with no phone + WHATSAPP channel.
+  //
+  //   The FE pre-flags the missing contact: `missingContactKey()`
+  //   returns the translated hint key so the template surfaces a
+  //   "no phone on file" message under the recipient input. The
+  //   `Validators.required` on the recipient still gates submit
+  //   (so the user can't ship an empty payload), and they always
+  //   have the option to type a number directly into the input.
+  //
+  //   Same hint applies in mirror to a no-email customer + EMAIL.
+  // ─────────────────────────────────────────────────────────────
+  describe('S-EDGE-010 — missing-contact hint', () => {
+    function reopenWithCtx(ctx: any) {
+      component.context = ctx;
+      component.isOpen = false;
+      component.ngOnChanges({
+        isOpen: {
+          previousValue: true,
+          currentValue: false,
+          firstChange: false,
+          isFirstChange: () => false,
+        },
+      });
+      component.isOpen = true;
+      component.ngOnChanges({
+        context: {
+          previousValue: null,
+          currentValue: ctx,
+          firstChange: false,
+          isFirstChange: () => false,
+        },
+        isOpen: {
+          previousValue: false,
+          currentValue: true,
+          firstChange: false,
+          isFirstChange: () => false,
+        },
+      });
+    }
+
+    it('returns the phone hint key when WHATSAPP + no customerPhone', () => {
+      reopenWithCtx({
+        documentId: 'inv-1',
+        documentNumber: 'INV-2026-0001',
+        documentKindLabelKey: 'invoicing.send.kindInvoice',
+        customerEmail: 'aly@example.tn',
+        customerPhone: null,
+      });
+      component.selectChannel('WHATSAPP');
+      expect(component.missingContactKey()).toBe(
+        'invoicing.send.missingContact.phone',
+      );
+    });
+
+    it('returns the email hint key when EMAIL + no customerEmail', () => {
+      reopenWithCtx({
+        documentId: 'inv-1',
+        documentNumber: 'INV-2026-0001',
+        documentKindLabelKey: 'invoicing.send.kindInvoice',
+        customerEmail: null,
+        customerPhone: '+216 23 456 789',
+      });
+      // Default channel is EMAIL.
+      expect(component.missingContactKey()).toBe(
+        'invoicing.send.missingContact.email',
+      );
+    });
+
+    it('returns the email hint key when BOTH + no customerEmail (BOTH still needs the email leg)', () => {
+      reopenWithCtx({
+        documentId: 'inv-1',
+        documentNumber: 'INV-2026-0001',
+        documentKindLabelKey: 'invoicing.send.kindInvoice',
+        customerEmail: null,
+        customerPhone: '+216 23 456 789',
+      });
+      component.selectChannel('BOTH');
+      expect(component.missingContactKey()).toBe(
+        'invoicing.send.missingContact.email',
+      );
+    });
+
+    it('returns null (no hint) when contact is on file for the picked channel', () => {
+      reopenWithCtx({
+        documentId: 'inv-1',
+        documentNumber: 'INV-2026-0001',
+        documentKindLabelKey: 'invoicing.send.kindInvoice',
+        customerEmail: 'aly@example.tn',
+        customerPhone: '+216 23 456 789',
+      });
+      // EMAIL → has email, no hint.
+      expect(component.missingContactKey()).toBeNull();
+      component.selectChannel('WHATSAPP');
+      // WHATSAPP → has phone, no hint.
+      expect(component.missingContactKey()).toBeNull();
+    });
+
+    it('blank-string customerPhone (whitespace only) is treated as missing for WHATSAPP', () => {
+      reopenWithCtx({
+        documentId: 'inv-1',
+        documentNumber: 'INV-2026-0001',
+        documentKindLabelKey: 'invoicing.send.kindInvoice',
+        customerEmail: 'aly@example.tn',
+        customerPhone: '   ',
+      });
+      component.selectChannel('WHATSAPP');
+      expect(component.missingContactKey()).toBe(
+        'invoicing.send.missingContact.phone',
+      );
+    });
+
+    it('Validators.required still blocks submit when the user does not type a phone', () => {
+      reopenWithCtx({
+        documentId: 'inv-1',
+        documentNumber: 'INV-2026-0001',
+        documentKindLabelKey: 'invoicing.send.kindInvoice',
+        customerEmail: 'aly@example.tn',
+        customerPhone: null,
+      });
+      component.selectChannel('WHATSAPP');
+      // Recipient was seeded empty by applyChannel → required fails.
+      expect(component.form.controls.to.value).toBe('');
+      expect(component.canSubmit()).toBeFalse();
+
+      const emitted: SendInvoicePayload[] = [];
+      component.send.subscribe((p) => emitted.push(p));
+      component.onSubmit();
+      expect(emitted.length).toBe(0);
+    });
+  });
 });

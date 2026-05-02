@@ -2,6 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
@@ -425,11 +426,16 @@ export class QuoteFormPageComponent implements OnInit {
             );
             this.router.navigate(['/invoices/quotes', quote.id]);
           },
-          error: () => {
+          error: (err: HttpErrorResponse) => {
             this.isSubmitting.set(false);
-            this.toast.error(
-              this.translation.instant('invoicing.quotes.form.updateFailed'),
-            );
+            // S-EDGE-016 — 423 = quote was sent / approved while user
+            // was editing. Show a specific translated message rather
+            // than the raw "Locked" error.
+            const key =
+              err?.status === 423
+                ? 'invoicing.quotes.form.lockedFailed'
+                : 'invoicing.quotes.form.updateFailed';
+            this.toast.error(this.translation.instant(key));
           },
         });
       return;

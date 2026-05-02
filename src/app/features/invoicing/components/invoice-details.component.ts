@@ -384,12 +384,18 @@ export class InvoiceDetailsComponent implements OnInit {
     const inv = this.invoice();
     if (!inv) return;
     this.paymentSubmitting.set(true);
+    // S-EDGE-017 — defensive: a blank / malformed `payload.paymentDate`
+    // produces an Invalid Date instance which throws RangeError downstream
+    // on `.toISOString()`. Default to "now" rather than letting a bad
+    // value propagate. Mirrors the same guard in `addPayment` itself.
+    let dt = new Date(payload.paymentDate);
+    if (isNaN(dt.getTime())) dt = new Date();
     this.invoiceService
       .addPayment({
         invoiceId: inv.id,
         amount: payload.amount,
         method: payload.method,
-        paymentDate: new Date(payload.paymentDate),
+        paymentDate: dt,
         reference: payload.reference,
         notes: payload.notes,
         processedBy: this.authService.getCurrentUser()?.id || 'current-user',
