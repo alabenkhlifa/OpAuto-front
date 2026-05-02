@@ -214,7 +214,14 @@ export class LlmGatewayService {
     this.ovhUrl = ovhBase
       ? `${ovhBase.replace(/\/+$/, '')}/chat/completions`
       : OVH_DEFAULT_URL;
-    this.ovhModel = this.config.get<string>('OVH_MODEL') ?? OVH_DEFAULT_MODEL;
+    // Truthy check (NOT `??`): docker-compose maps `OVH_MODEL: ${OVH_MODEL:-}`,
+    // which forwards an EMPTY string when the host .env doesn't set it. `??`
+    // only falls back on null/undefined, so an empty string from compose was
+    // reaching the OVH API and 404-ing with "The model `` does not exist."
+    // The same applies to OVH_BASE_URL above (already handled correctly).
+    const cfgOvhModel = this.config.get<string>('OVH_MODEL');
+    this.ovhModel =
+      cfgOvhModel && cfgOvhModel.length > 0 ? cfgOvhModel : OVH_DEFAULT_MODEL;
     this.cerebrasKey = this.config.get<string>('CEREBRAS_API_KEY');
     this.mistralKey = this.config.get<string>('MISTRAL_API_KEY');
     this.anthropicKey = this.config.get<string>('ANTHROPIC_API_KEY');

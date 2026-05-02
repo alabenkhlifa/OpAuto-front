@@ -135,6 +135,31 @@ describe('LlmGatewayService', () => {
     expect(body.model).toBe('Mistral-Small-3_2-24B-Instruct-2506');
   });
 
+  // Regression: docker-compose maps `OVH_MODEL: ${OVH_MODEL:-}`, which forwards
+  // an EMPTY STRING (not undefined) when the host .env has no OVH_MODEL line.
+  // Earlier code used `??` which only falls back on null/undefined, so the
+  // empty string reached OVH and 404'd: "The model `` does not exist."
+  it('falls back to default OVH model when OVH_MODEL is an empty string', async () => {
+    const fetchMock: FetchMock = jest.fn().mockResolvedValueOnce(
+      okJson({
+        choices: [{ message: { role: 'assistant', content: 'ok' } }],
+      }),
+    );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    const service = await makeService({
+      OVH_API_KEY: 'o',
+      OVH_MODEL: '',
+      OVH_BASE_URL: '',
+    });
+
+    await service.complete(baseRequest);
+
+    const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
+    expect(body.model).toBe('Meta-Llama-3_3-70B-Instruct');
+    const [url] = fetchMock.mock.calls[0];
+    expect(String(url)).toMatch(/kepler\.ai\.cloud\.ovh\.net/);
+  });
+
   it('skips Groq entirely (only key configured returns mock)', async () => {
     const fetchMock: FetchMock = jest.fn();
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
