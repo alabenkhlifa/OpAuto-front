@@ -2354,7 +2354,10 @@
         "rejected": "Devis refusé",
         "rejectFailed": "Échec du refus",
         "convertedTo": "Converti en facture",
-        "viewInvoice": "Voir la facture"
+        "viewInvoice": "Voir la facture",
+        "previewPdf": "Aperçu PDF",
+        "downloadPdf": "Télécharger le PDF",
+        "pdfFailed": "Impossible de charger le PDF du devis"
       },
       "status": {
         "draft": "Brouillon",
@@ -2371,7 +2374,10 @@
         "sourceInvoice": "Facture",
         "restocked": "Réintégré",
         "empty": "Aucun avoir pour l'instant",
-        "emptyDescription": "Émettez un avoir depuis le détail d'une facture pour rembourser ou réintégrer des pièces."
+        "emptyDescription": "Émettez un avoir depuis le détail d'une facture pour rembourser ou réintégrer des pièces.",
+        "previewPdf": "Aperçu PDF",
+        "downloadPdf": "Télécharger le PDF",
+        "pdfFailed": "Impossible de charger le PDF de l'avoir"
       },
       "form": {
         "title": "Nouvel avoir",

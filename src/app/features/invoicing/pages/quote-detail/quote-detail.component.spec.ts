@@ -314,8 +314,13 @@ describe('QuoteDetailPageComponent — lifecycle (Sweep C-4)', () => {
       '.quote-detail-page__actions button',
     );
     const labels = Array.from(buttons).map((b) => b.textContent?.trim() ?? '');
+    // Send/Edit/Approve/Reject lifecycle buttons are all hidden on REJECTED.
+    // PDF affordances (previewPdf/downloadPdf, S-PDF-004) remain — they're
+    // status-agnostic since the document is locked but still readable.
     expect(labels.some((l) => l.includes('invoicing.quotes.detail.send'))).toBeFalse();
-    expect(labels.length).toBe(0);
+    expect(labels.some((l) => l.includes('invoicing.quotes.detail.edit'))).toBeFalse();
+    expect(labels.some((l) => l.includes('invoicing.quotes.detail.approve'))).toBeFalse();
+    expect(labels.some((l) => l.includes('invoicing.quotes.detail.reject'))).toBeFalse();
   });
 
   // ── S-QUO-016 — DRAFT cannot be approved: Approve button absent ─────────
@@ -390,5 +395,158 @@ describe('QuoteDetailPageComponent — lifecycle (Sweep C-4)', () => {
       '.quote-detail-page__converted-link',
     );
     expect(link).not.toBeNull();
+  });
+});
+
+/**
+ * S-PDF-004 — Quote PDF preview + download. The component must wire both
+ * affordances to `QuoteService.getQuotePdfBlob` (Blob path so the JWT
+ * rides the HTTP interceptor) and surface a translated toast on failure.
+ */
+describe('QuoteDetailPageComponent — PDF preview/download (S-PDF-004)', () => {
+  let fixture: ComponentFixture<QuoteDetailPageComponent>;
+  let component: QuoteDetailPageComponent;
+  let quoteServiceSpy: jasmine.SpyObj<QuoteService>;
+  let toastSpy: { error: jasmine.Spy; success: jasmine.Spy };
+
+  function makeQuote(overrides: Partial<QuoteWithDetails> = {}): QuoteWithDetails {
+    return {
+      id: 'q-1',
+      quoteNumber: 'DEV-2026-0001',
+      customerId: 'c-1',
+      carId: 'car-1',
+      status: 'APPROVED',
+      issueDate: new Date('2026-04-30'),
+      validUntil: new Date('2026-05-14'),
+      currency: 'TND',
+      subtotal: 100,
+      taxAmount: 19,
+      discountPercentage: 0,
+      discountAmount: 0,
+      totalAmount: 119,
+      lineItems: [],
+      createdBy: 'user-1',
+      createdAt: new Date('2026-04-30'),
+      updatedAt: new Date('2026-04-30'),
+      customerName: 'Karoui',
+      customerPhone: '+216 12 345 678',
+      carMake: 'Toyota',
+      carModel: 'Yaris',
+      carYear: 2020,
+      licensePlate: 'AB-123',
+      ...overrides,
+    };
+  }
+
+  async function build(quote: QuoteWithDetails) {
+    quoteServiceSpy = jasmine.createSpyObj<QuoteService>(
+      'QuoteService',
+      ['get', 'send', 'approve', 'reject', 'getQuotePdfBlob', 'getStatusBadgeClass', 'isExpired'],
+    );
+    quoteServiceSpy.getStatusBadgeClass.and.returnValue('badge');
+    quoteServiceSpy.isExpired.and.returnValue(false);
+    quoteServiceSpy.get.and.returnValue(of(quote));
+
+    toastSpy = {
+      error: jasmine.createSpy('error'),
+      success: jasmine.createSpy('success'),
+    };
+
+    await TestBed.configureTestingModule({
+      imports: [QuoteDetailPageComponent],
+      providers: [
+        { provide: QuoteService, useValue: quoteServiceSpy },
+        {
+          provide: InvoiceService,
+          useValue: {
+            formatCurrency: (n: number) => `${n} TND`,
+            formatDate: (d: Date) => d.toISOString(),
+            fetchInvoiceById: jasmine.createSpy().and.returnValue(of({} as any)),
+          },
+        },
+        {
+          provide: TranslationService,
+          useValue: {
+            instant: (k: string) => k,
+            getCurrentLanguage: () => 'en',
+            translations$: of({}),
+          },
+        },
+        { provide: ToastService, useValue: toastSpy },
+        { provide: Router, useValue: { navigate: jasmine.createSpy(), createUrlTree: () => ({} as any), serializeUrl: () => '', events: of() } },
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: convertToParamMap({ id: 'q-1' }) } },
+        },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(QuoteDetailPageComponent);
+    component = fixture.componentInstance;
+  }
+
+  it('previewPdf() opens the PDF blob in a new tab via URL.createObjectURL', async () => {
+    await build(makeQuote());
+    const blob = new Blob(['%PDF-fake'], { type: 'application/pdf' });
+    quoteServiceSpy.getQuotePdfBlob.and.returnValue(of(blob));
+    spyOn(URL, 'createObjectURL').and.returnValue('blob:http://x/abc');
+    const winSpy = spyOn(window, 'open').and.returnValue(null);
+    fixture.detectChanges();
+
+    component.previewPdf();
+
+    expect(quoteServiceSpy.getQuotePdfBlob).toHaveBeenCalledWith('q-1');
+    expect(URL.createObjectURL).toHaveBeenCalledWith(blob);
+    expect(winSpy).toHaveBeenCalledWith('blob:http://x/abc', '_blank');
+  });
+
+  it('downloadPdf() triggers an <a download> click with `quote-DEV-...pdf` filename', async () => {
+    await build(makeQuote({ quoteNumber: 'DEV-2026-0042' }));
+    const blob = new Blob(['%PDF-fake'], { type: 'application/pdf' });
+    quoteServiceSpy.getQuotePdfBlob.and.returnValue(of(blob));
+    spyOn(URL, 'createObjectURL').and.returnValue('blob:http://x/dl');
+    const revokeSpy = spyOn(URL, 'revokeObjectURL');
+    const clickSpy = jasmine.createSpy('click');
+    const fakeAnchor: any = { href: '', download: '', click: clickSpy };
+    // Capture the real createElement BEFORE spying so the fake delegate can
+    // reach it without triggering recursion.
+    const realCreate = document.createElement.bind(document);
+    spyOn(document, 'createElement').and.callFake((tag: string) =>
+      tag === 'a' ? fakeAnchor : realCreate(tag),
+    );
+    spyOn(document.body, 'appendChild').and.returnValue(null as any);
+    spyOn(document.body, 'removeChild').and.returnValue(null as any);
+    fixture.detectChanges();
+
+    component.downloadPdf();
+
+    expect(quoteServiceSpy.getQuotePdfBlob).toHaveBeenCalledWith('q-1');
+    expect(fakeAnchor.download).toBe('quote-DEV-2026-0042.pdf');
+    expect(clickSpy).toHaveBeenCalled();
+    expect(revokeSpy).toHaveBeenCalledWith('blob:http://x/dl');
+  });
+
+  it('surfaces a translated toast and DOES NOT open a tab when the BE blob fetch fails', async () => {
+    await build(makeQuote());
+    quoteServiceSpy.getQuotePdfBlob.and.returnValue(throwError(() => new Error('500')));
+    const winSpy = spyOn(window, 'open');
+    fixture.detectChanges();
+
+    component.previewPdf();
+
+    expect(toastSpy.error).toHaveBeenCalledWith('invoicing.quotes.detail.pdfFailed');
+    expect(winSpy).not.toHaveBeenCalled();
+  });
+
+  it('renders Preview PDF + Download PDF buttons regardless of status', async () => {
+    await build(makeQuote({ status: 'REJECTED' }));
+    fixture.detectChanges();
+
+    const buttons = (fixture.nativeElement as HTMLElement).querySelectorAll(
+      '.quote-detail-page__actions button',
+    );
+    const labels = Array.from(buttons).map((b) => b.textContent?.trim() ?? '');
+    expect(labels.some((l) => l.includes('invoicing.quotes.detail.previewPdf'))).toBeTrue();
+    expect(labels.some((l) => l.includes('invoicing.quotes.detail.downloadPdf'))).toBeTrue();
   });
 });

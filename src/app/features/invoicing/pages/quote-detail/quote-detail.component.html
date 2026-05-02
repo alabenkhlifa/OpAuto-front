@@ -60,6 +60,13 @@
             {{ 'invoicing.quotes.detail.reject' | translate }}
           </button>
         }
+        <!-- S-PDF-004: PDF preview + download available for every quote regardless of status. -->
+        <button type="button" class="btn-secondary" (click)="previewPdf()" [disabled]="busy()">
+          {{ 'invoicing.quotes.detail.previewPdf' | translate }}
+        </button>
+        <button type="button" class="btn-secondary" (click)="downloadPdf()" [disabled]="busy()">
+          {{ 'invoicing.quotes.detail.downloadPdf' | translate }}
+        </button>
       </div>
 
       <!-- S-QUO-020: APPROVED → show the link to the converted invoice. -->

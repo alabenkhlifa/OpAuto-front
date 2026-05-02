@@ -38,6 +38,19 @@
             </span>
           }
           <p class="credit-note-row__date">{{ formatDate(cn.createdAt) }}</p>
+          <!-- S-PDF-005: PDF preview + download per credit note. -->
+          <div class="credit-note-row__pdf-actions">
+            <button type="button"
+                    class="btn-tertiary btn-sm"
+                    (click)="previewPdf(cn)">
+              {{ 'invoicing.creditNotes.list.previewPdf' | translate }}
+            </button>
+            <button type="button"
+                    class="btn-tertiary btn-sm"
+                    (click)="downloadPdf(cn)">
+              {{ 'invoicing.creditNotes.list.downloadPdf' | translate }}
+            </button>
+          </div>
         </div>
       </li>
     }

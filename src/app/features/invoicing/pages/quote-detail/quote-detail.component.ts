@@ -140,6 +140,45 @@ export class QuoteDetailPageComponent implements OnInit {
     });
   }
 
+  /**
+   * S-PDF-004 — open the quote PDF in a new tab. Mirrors the invoice-detail
+   * `onPreviewPdf` pattern: the blob path carries JWT via the interceptor.
+   * A raw `<a href>` to the SPA-relative URL would 401 in a fresh tab.
+   */
+  previewPdf(): void {
+    const q = this.quote();
+    if (!q) return;
+    this.fetchPdfBlob(q.id, (blob) => {
+      window.open(URL.createObjectURL(blob), '_blank');
+    });
+  }
+
+  /** S-PDF-004 — download the quote PDF with the fiscal number as filename. */
+  downloadPdf(): void {
+    const q = this.quote();
+    if (!q) return;
+    this.fetchPdfBlob(q.id, (blob) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `quote-${q.quoteNumber || 'document'}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+  }
+
+  private fetchPdfBlob(id: string, handler: (blob: Blob) => void): void {
+    this.quoteService.getQuotePdfBlob(id).subscribe({
+      next: handler,
+      error: () =>
+        this.toast.error(
+          this.translationService.instant('invoicing.quotes.detail.pdfFailed'),
+        ),
+    });
+  }
+
   formatCurrency(amount: number): string {
     return this.invoiceService.formatCurrency(amount);
   }

@@ -169,4 +169,87 @@ describe('CreditNoteFormPageComponent', () => {
       expect(navigateSpy).toHaveBeenCalledWith(['/invoices/credit-notes']);
     });
   });
+
+  /**
+   * S-CN-016 — Reason field is required (Validators.required + minLength 3).
+   *
+   * The form must be invalid until the user types a meaningful reason; the
+   * Issue button stays disabled, and clicking submit is a no-op (no
+   * `creditNoteService.create()` call). We pin the validator config + the
+   * submit short-circuit + the disabled-button binding directly off the
+   * reactive form — template-agnostic so the suite survives DOM tweaks.
+   */
+  describe('S-CN-016 — reason field required', () => {
+    it('marks the reason FormControl as invalid when empty', async () => {
+      configure({ invoiceId: 'inv-123' });
+      const fixture = TestBed.createComponent(CreditNoteFormPageComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+
+      const reasonCtl = cmp.form.get('reason')!;
+      expect(reasonCtl.value).toBe('');
+      expect(reasonCtl.valid).toBeFalse();
+      expect(reasonCtl.errors?.['required']).toBeTrue();
+      // Whole form is invalid → submit button [disabled] in the template.
+      expect(cmp.form.invalid).toBeTrue();
+    });
+
+    it('flags reasons shorter than the minLength as invalid', async () => {
+      configure({ invoiceId: 'inv-123' });
+      const fixture = TestBed.createComponent(CreditNoteFormPageComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+
+      cmp.form.patchValue({ reason: 'ab' });
+      const reasonCtl = cmp.form.get('reason')!;
+      expect(reasonCtl.valid).toBeFalse();
+      expect(reasonCtl.errors?.['minlength']).toBeTruthy();
+    });
+
+    it('clears the reason error once the user types a valid value', async () => {
+      configure({ invoiceId: 'inv-123' });
+      const fixture = TestBed.createComponent(CreditNoteFormPageComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+
+      cmp.form.patchValue({ reason: 'Customer return — wrong item' });
+      const reasonCtl = cmp.form.get('reason')!;
+      expect(reasonCtl.valid).toBeTrue();
+      expect(reasonCtl.errors).toBeNull();
+    });
+
+    it('onSubmit short-circuits when the form is invalid (no BE call)', async () => {
+      const { creditNoteServiceStub } = configure({ invoiceId: 'inv-123' });
+      const fixture = TestBed.createComponent(CreditNoteFormPageComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+
+      // Pick a line but leave reason blank — submit must NOT call create.
+      cmp.toggle(0, true);
+      cmp.onSubmit();
+      await fixture.whenStable();
+
+      expect(creditNoteServiceStub.create).not.toHaveBeenCalled();
+      // The form is now markAllAsTouched — the reason control surfaces as touched.
+      expect(cmp.form.get('reason')!.touched).toBeTrue();
+    });
+
+    it('renders the disabled state on the submit button when the form is invalid', async () => {
+      configure({ invoiceId: 'inv-123' });
+      const fixture = TestBed.createComponent(CreditNoteFormPageComponent);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const submitBtn: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+        'button[type="submit"]',
+      );
+      expect(submitBtn).withContext('submit button rendered').not.toBeNull();
+      expect(submitBtn!.disabled).withContext('submit disabled while form invalid').toBeTrue();
+    });
+  });
 });

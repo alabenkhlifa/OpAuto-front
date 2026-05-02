@@ -127,4 +127,16 @@ describe('QuoteService — approve mapping (BUG-105, Sweep C-4)', () => {
     const req = http.expectOne((r) => r.url === '/quotes' && !r.params.has('status'));
     req.flush([]);
   });
+
+  it('getQuotePdfBlob() GETs /quotes/:id/pdf with responseType=blob (S-PDF-004)', (done) => {
+    service.getQuotePdfBlob('q-42').subscribe((blob) => {
+      expect(blob).toEqual(jasmine.any(Blob));
+      expect(blob.type).toBe('application/pdf');
+      done();
+    });
+    const req = http.expectOne('/quotes/q-42/pdf');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.responseType).toBe('blob');
+    req.flush(new Blob(['%PDF-fake'], { type: 'application/pdf' }));
+  });
 });

@@ -89,6 +89,16 @@ export class CreditNoteService {
     return `/credit-notes/${id}/pdf`;
   }
 
+  /**
+   * Fetches the rendered credit-note PDF as a Blob. Mirrors
+   * `InvoiceService.getInvoicePdfBlob` so the caller can open it in a new
+   * tab via `URL.createObjectURL` (the JWT rides on the interceptor — a
+   * raw `<a href>` to the SPA-relative path would 401 in a fresh tab).
+   */
+  getCreditNotePdfBlob(id: string): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/${id}/pdf`, { responseType: 'blob' });
+  }
+
   private mapFromBackend(b: any): CreditNoteWithDetails {
     return {
       id: b.id,

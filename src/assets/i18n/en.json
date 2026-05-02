@@ -2304,7 +2304,10 @@
         "rejected": "Quote rejected",
         "rejectFailed": "Could not reject quote",
         "convertedTo": "Converted to invoice",
-        "viewInvoice": "View invoice"
+        "viewInvoice": "View invoice",
+        "previewPdf": "Preview PDF",
+        "downloadPdf": "Download PDF",
+        "pdfFailed": "Could not load quote PDF"
       },
       "status": {
         "draft": "Draft",
@@ -2321,7 +2324,10 @@
         "sourceInvoice": "Invoice",
         "restocked": "Restocked",
         "empty": "No credit notes yet",
-        "emptyDescription": "Issue a credit note from an invoice's detail page when you need to refund or restock parts."
+        "emptyDescription": "Issue a credit note from an invoice's detail page when you need to refund or restock parts.",
+        "previewPdf": "Preview PDF",
+        "downloadPdf": "Download PDF",
+        "pdfFailed": "Could not load credit-note PDF"
       },
       "form": {
         "title": "New credit note",

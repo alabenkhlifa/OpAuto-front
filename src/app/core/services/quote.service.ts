@@ -104,6 +104,17 @@ export class QuoteService {
       .pipe(map((b) => this.mapFromBackend(b)));
   }
 
+  /**
+   * Fetches the rendered quote PDF as a Blob. Mirrors
+   * `InvoiceService.getInvoicePdfBlob` so the caller can `URL.createObjectURL`
+   * the result and either open it in a new tab or trigger a download. The
+   * blob carries the JWT via the HTTP interceptor — using a raw `<a href>`
+   * to the SPA-relative `/api/quotes/:id/pdf` path 401s in a fresh tab.
+   */
+  getQuotePdfBlob(id: string): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/${id}/pdf`, { responseType: 'blob' });
+  }
+
   // --- Mapping helpers ---
 
   private mapFromBackend(b: any): QuoteWithDetails {
