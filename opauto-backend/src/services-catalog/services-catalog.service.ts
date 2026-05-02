@@ -79,6 +79,63 @@ export class ServicesCatalogService {
     return Math.floor(limit);
   }
 
+  private clampPage(page?: number): number {
+    if (page === undefined || page === null || Number.isNaN(page)) return 1;
+    const floored = Math.floor(page);
+    return floored >= 1 ? floored : 1;
+  }
+
+  /**
+   * Sweep C-21 (S-CAT-009) — paginated catalog list for the new admin
+   * UI. Returns the BE envelope `{ items, total, page, limit }` so the
+   * admin page can drive its pagination footer off a stable
+   * BE-authoritative count. `findMany` + `count` run inside a single
+   * `prisma.$transaction([])` so the slice and total stay consistent
+   * under concurrent inserts (mirrors the C-20 invoicing pattern).
+   *
+   * Search semantics match `findAll` — case-insensitive substring
+   * match across `name` / `code` / `category`. `includeInactive=true`
+   * widens the where-clause to expose soft-deleted rows so the admin
+   * can restore them. `limit` is clamped `[1, 100]` (default 25);
+   * `page` is clamped to `[1, ∞)` (default 1).
+   */
+  async findAllPaginated(
+    garageId: string,
+    opts: {
+      includeInactive?: boolean;
+      search?: string;
+      limit?: number;
+      page?: number;
+    } = {},
+  ) {
+    const trimmed = (opts.search ?? '').trim();
+    const cap = this.clampLimit(opts.limit);
+    const page = this.clampPage(opts.page);
+    const baseWhere: any = opts.includeInactive
+      ? { garageId }
+      : { garageId, isActive: true };
+    const where = trimmed
+      ? {
+          ...baseWhere,
+          OR: [
+            { name: { contains: trimmed, mode: 'insensitive' } },
+            { code: { contains: trimmed, mode: 'insensitive' } },
+            { category: { contains: trimmed, mode: 'insensitive' } },
+          ],
+        }
+      : baseWhere;
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.serviceCatalog.findMany({
+        where,
+        orderBy: [{ category: 'asc' }, { name: 'asc' }, { id: 'asc' }],
+        skip: (page - 1) * cap,
+        take: cap,
+      }),
+      this.prisma.serviceCatalog.count({ where }),
+    ]);
+    return { items, total, page, limit: cap };
+  }
+
   async findOne(id: string, garageId: string) {
     const row = await this.prisma.serviceCatalog.findFirst({
       where: { id, garageId },

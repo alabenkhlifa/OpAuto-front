@@ -21,7 +21,9 @@ describe('ServicesCatalogService (unit)', () => {
         create: jest.fn(),
         update: jest.fn(),
         delete: jest.fn(),
+        count: jest.fn(),
       },
+      $transaction: jest.fn((ops: Promise<any>[]) => Promise.all(ops)),
     };
     const moduleRef: TestingModule = await Test.createTestingModule({
       providers: [
@@ -213,6 +215,115 @@ describe('ServicesCatalogService (unit)', () => {
     await service.remove('s1', GARAGE_ID, true);
     expect(prisma.serviceCatalog.delete).toHaveBeenCalledWith({
       where: { id: 's1' },
+    });
+  });
+
+  // ── S-CAT-009 (Sweep C-21) — paginated envelope ─────────────
+  describe('S-CAT-009 (Sweep C-21) — findAllPaginated', () => {
+    it('returns the envelope shape `{ items, total, page, limit }`', async () => {
+      prisma.serviceCatalog.findMany.mockResolvedValue([{ id: 's1' }]);
+      prisma.serviceCatalog.count.mockResolvedValue(42);
+      const result = await service.findAllPaginated(GARAGE_ID, { page: 1 });
+      expect(result).toEqual({
+        items: [{ id: 's1' }],
+        total: 42,
+        page: 1,
+        limit: 25,
+      });
+    });
+
+    it('runs findMany + count inside a $transaction', async () => {
+      prisma.serviceCatalog.findMany.mockResolvedValue([]);
+      prisma.serviceCatalog.count.mockResolvedValue(0);
+      await service.findAllPaginated(GARAGE_ID, { page: 1 });
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    });
+
+    it('defaults to page=1 / limit=25 when not provided', async () => {
+      prisma.serviceCatalog.findMany.mockResolvedValue([]);
+      prisma.serviceCatalog.count.mockResolvedValue(0);
+      await service.findAllPaginated(GARAGE_ID);
+      const call = prisma.serviceCatalog.findMany.mock.calls[0][0];
+      expect(call.skip).toBe(0);
+      expect(call.take).toBe(25);
+    });
+
+    it('applies skip/take math for page=3 / limit=10', async () => {
+      prisma.serviceCatalog.findMany.mockResolvedValue([]);
+      prisma.serviceCatalog.count.mockResolvedValue(0);
+      await service.findAllPaginated(GARAGE_ID, { page: 3, limit: 10 });
+      const call = prisma.serviceCatalog.findMany.mock.calls[0][0];
+      expect(call.skip).toBe(20);
+      expect(call.take).toBe(10);
+    });
+
+    it('clamps limit > 100 to 100 (DoS guard)', async () => {
+      prisma.serviceCatalog.findMany.mockResolvedValue([]);
+      prisma.serviceCatalog.count.mockResolvedValue(0);
+      const result = await service.findAllPaginated(GARAGE_ID, {
+        page: 1,
+        limit: 9999,
+      });
+      expect(result.limit).toBe(100);
+      expect(prisma.serviceCatalog.findMany.mock.calls[0][0].take).toBe(100);
+    });
+
+    it('clamps page < 1 to 1', async () => {
+      prisma.serviceCatalog.findMany.mockResolvedValue([]);
+      prisma.serviceCatalog.count.mockResolvedValue(0);
+      const result = await service.findAllPaginated(GARAGE_ID, { page: 0 });
+      expect(result.page).toBe(1);
+      expect(prisma.serviceCatalog.findMany.mock.calls[0][0].skip).toBe(0);
+    });
+
+    it('NaN page falls back to 1', async () => {
+      prisma.serviceCatalog.findMany.mockResolvedValue([]);
+      prisma.serviceCatalog.count.mockResolvedValue(0);
+      const result = await service.findAllPaginated(GARAGE_ID, {
+        page: NaN as any,
+      });
+      expect(result.page).toBe(1);
+    });
+
+    it('honours search across name / code / category', async () => {
+      prisma.serviceCatalog.findMany.mockResolvedValue([]);
+      prisma.serviceCatalog.count.mockResolvedValue(0);
+      await service.findAllPaginated(GARAGE_ID, { page: 1, search: 'oil' });
+      const where = prisma.serviceCatalog.findMany.mock.calls[0][0].where;
+      expect(where.OR).toEqual([
+        { name: { contains: 'oil', mode: 'insensitive' } },
+        { code: { contains: 'oil', mode: 'insensitive' } },
+        { category: { contains: 'oil', mode: 'insensitive' } },
+      ]);
+    });
+
+    it('default where excludes inactive; includeInactive=true widens it', async () => {
+      prisma.serviceCatalog.findMany.mockResolvedValue([]);
+      prisma.serviceCatalog.count.mockResolvedValue(0);
+      await service.findAllPaginated(GARAGE_ID, { page: 1 });
+      expect(prisma.serviceCatalog.findMany.mock.calls[0][0].where).toEqual({
+        garageId: GARAGE_ID,
+        isActive: true,
+      });
+
+      prisma.serviceCatalog.findMany.mockClear();
+      prisma.serviceCatalog.count.mockClear();
+      await service.findAllPaginated(GARAGE_ID, {
+        page: 1,
+        includeInactive: true,
+      });
+      expect(prisma.serviceCatalog.findMany.mock.calls[0][0].where).toEqual({
+        garageId: GARAGE_ID,
+      });
+    });
+
+    it('count uses the same where clause as findMany (search-aware total)', async () => {
+      prisma.serviceCatalog.findMany.mockResolvedValue([]);
+      prisma.serviceCatalog.count.mockResolvedValue(0);
+      await service.findAllPaginated(GARAGE_ID, { page: 1, search: 'brake' });
+      const findManyWhere = prisma.serviceCatalog.findMany.mock.calls[0][0].where;
+      const countWhere = prisma.serviceCatalog.count.mock.calls[0][0].where;
+      expect(countWhere).toEqual(findManyWhere);
     });
   });
 });

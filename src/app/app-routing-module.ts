@@ -213,6 +213,17 @@ export const routes: Routes = [
     canActivate: [authGuard, ownerGuard, moduleGuard('settings')]
   },
   {
+    // S-CAT-009 (Sweep C-21) — Service Catalog admin CRUD page.
+    // OWNER-only; the moduleGuard is `invoicing` because the catalog is
+    // strictly a sub-feature of the fiscal-grade invoicing module.
+    path: 'settings/service-catalog',
+    loadComponent: () =>
+      import(
+        './features/garage-settings/components/service-catalog-admin/service-catalog-admin.component'
+      ).then((m) => m.ServiceCatalogAdminComponent),
+    canActivate: [authGuard, ownerGuard, moduleGuard('invoicing')],
+  },
+  {
     path: 'approvals',
     loadComponent: () => import('./features/approvals/approvals.component').then(m => m.ApprovalsComponent),
     canActivate: [authGuard, ownerGuard, moduleGuard('approvals')]

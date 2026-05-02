@@ -54,6 +54,37 @@ export class ServiceCatalogService {
     return this.http.get<ServiceCatalogEntry[]>(this.baseUrl, { params });
   }
 
+  /**
+   * S-CAT-009 (Sweep C-21) — paginated catalog list for the admin UI.
+   * Returns the BE envelope `{ items, total, page, limit }` so the
+   * admin page can drive its pagination footer off a stable
+   * BE-authoritative count. Mirrors `InvoiceService.getInvoicesPaginated()`.
+   */
+  getCatalogPaginated(opts: {
+    search?: string;
+    page?: number;
+    limit?: number;
+    includeInactive?: boolean;
+  } = {}): Observable<{
+    items: ServiceCatalogEntry[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    let params = new HttpParams();
+    const trimmed = (opts.search ?? '').trim();
+    if (trimmed) params = params.set('search', trimmed);
+    params = params.set('page', String(opts.page ?? 1));
+    params = params.set('limit', String(opts.limit ?? 25));
+    if (opts.includeInactive) params = params.set('includeInactive', 'true');
+    return this.http.get<{
+      items: ServiceCatalogEntry[];
+      total: number;
+      page: number;
+      limit: number;
+    }>(this.baseUrl, { params });
+  }
+
   getOne(id: string): Observable<ServiceCatalogEntry> {
     return this.http.get<ServiceCatalogEntry>(`${this.baseUrl}/${id}`);
   }

@@ -1302,7 +1302,8 @@
       "business": "Commercial",
       "system": "Système",
       "integrations": "Intégrations",
-      "fiscal": "Fiscal"
+      "fiscal": "Fiscal",
+      "serviceCatalog": "Catalogue de services"
     },
     "fiscal": {
       "title": "Informations Fiscales",
@@ -3357,6 +3358,48 @@
       "updated": "Service mis à jour",
       "deleted": "Service désactivé",
       "duplicateCode": "Un service avec ce code existe déjà"
+    },
+    "admin": {
+      "title": "Catalogue de services",
+      "subtitle": "Gérez les services proposés dans les factures et devis.",
+      "searchPlaceholder": "Rechercher par nom, code ou catégorie…",
+      "actions": "Actions",
+      "codePlaceholder": "Généré automatiquement si vide",
+      "status": {
+        "active": "Actif",
+        "inactive": "Inactif"
+      },
+      "empty": {
+        "title": "Aucun service dans votre catalogue",
+        "description": "Ajoutez un premier service pour qu'il apparaisse dans le sélecteur de lignes de facture."
+      },
+      "dialog": {
+        "createTitle": "Ajouter un service",
+        "editTitle": "Modifier le service"
+      },
+      "deleteConfirm": {
+        "title": "Désactiver ce service ?",
+        "body": "\"{{name}}\" sera masqué du sélecteur. Les factures existantes conservent leur référence."
+      },
+      "messages": {
+        "restored": "Service restauré"
+      },
+      "errors": {
+        "loadFailed": "Impossible de charger le catalogue de services",
+        "saveFailed": "Impossible d'enregistrer le service",
+        "deleteFailed": "Impossible de désactiver le service",
+        "restoreFailed": "Impossible de restaurer le service",
+        "nameRequired": "Le nom est requis"
+      },
+      "pagination": {
+        "label": "Pagination du catalogue",
+        "showing": "Affichage",
+        "of": "sur",
+        "page": "Page",
+        "previous": "Précédent",
+        "next": "Suivant",
+        "loading": "Chargement…"
+      }
     }
   }
 }

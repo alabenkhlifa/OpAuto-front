@@ -1,0 +1,371 @@
+<div class="service-catalog-admin">
+  <!-- Header -->
+  <div class="glass-card service-catalog-admin__header">
+    <div class="service-catalog-admin__header-row">
+      <div>
+        <h2 class="service-catalog-admin__title">
+          {{ 'serviceCatalog.admin.title' | translate }}
+        </h2>
+        <p class="service-catalog-admin__subtitle">
+          {{ 'serviceCatalog.admin.subtitle' | translate }}
+        </p>
+      </div>
+      <button
+        type="button"
+        class="btn-primary service-catalog-admin__create-btn"
+        (click)="openCreate()"
+      >
+        <span aria-hidden="true">+</span>
+        <span>{{ 'serviceCatalog.actions.create' | translate }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="glass-card service-catalog-admin__filters">
+    <input
+      type="text"
+      class="form-input service-catalog-admin__search"
+      [placeholder]="'serviceCatalog.admin.searchPlaceholder' | translate"
+      [value]="searchQuery()"
+      (input)="onSearchChange($event)"
+    />
+    <label class="service-catalog-admin__toggle">
+      <input
+        type="checkbox"
+        class="form-checkbox"
+        [checked]="showInactive()"
+        (change)="toggleShowInactive()"
+      />
+      <span>{{ 'serviceCatalog.list.showInactive' | translate }}</span>
+    </label>
+  </div>
+
+  <!-- Table -->
+  <div class="glass-card service-catalog-admin__table-wrap">
+    @if (entries().length === 0 && !isLoading()) {
+      <div class="empty-state">
+        <h3 class="empty-state__title">
+          {{ 'serviceCatalog.admin.empty.title' | translate }}
+        </h3>
+        <p class="empty-state__description">
+          {{ 'serviceCatalog.admin.empty.description' | translate }}
+        </p>
+        <button type="button" class="btn-primary" (click)="openCreate()">
+          {{ 'serviceCatalog.actions.create' | translate }}
+        </button>
+      </div>
+    } @else {
+      <table
+        class="service-catalog-admin__table"
+        [attr.aria-busy]="isLoading() ? 'true' : 'false'"
+      >
+        <thead>
+          <tr>
+            <th>{{ 'serviceCatalog.form.name' | translate }}</th>
+            <th>{{ 'serviceCatalog.form.code' | translate }}</th>
+            <th>{{ 'serviceCatalog.form.category' | translate }}</th>
+            <th class="text-right">
+              {{ 'serviceCatalog.form.defaultPrice' | translate }}
+            </th>
+            <th class="text-right">
+              {{ 'serviceCatalog.form.defaultTvaRate' | translate }}
+            </th>
+            <th>{{ 'serviceCatalog.form.isActive' | translate }}</th>
+            <th class="text-right">
+              {{ 'serviceCatalog.admin.actions' | translate }}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (entry of entries(); track entry.id) {
+            <tr [class.service-catalog-admin__row--inactive]="!entry.isActive">
+              <td>
+                <div class="service-catalog-admin__name">{{ entry.name }}</div>
+                @if (entry.description) {
+                  <div class="service-catalog-admin__desc">
+                    {{ entry.description }}
+                  </div>
+                }
+              </td>
+              <td><code>{{ entry.code }}</code></td>
+              <td>{{ entry.category || '—' }}</td>
+              <td class="text-right">{{ formatPrice(entry.defaultPrice) }}</td>
+              <td class="text-right">{{ entry.defaultTvaRate }}%</td>
+              <td>
+                @if (entry.isActive) {
+                  <span class="badge badge-success">
+                    {{ 'serviceCatalog.admin.status.active' | translate }}
+                  </span>
+                } @else {
+                  <span class="badge badge-muted">
+                    {{ 'serviceCatalog.admin.status.inactive' | translate }}
+                  </span>
+                }
+              </td>
+              <td class="text-right service-catalog-admin__actions">
+                @if (entry.isActive) {
+                  <button
+                    type="button"
+                    class="btn-tertiary btn-sm"
+                    (click)="openEdit(entry)"
+                  >
+                    {{ 'common.edit' | translate }}
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-danger btn-sm"
+                    (click)="askDelete(entry)"
+                  >
+                    {{ 'serviceCatalog.actions.delete' | translate }}
+                  </button>
+                } @else {
+                  <button
+                    type="button"
+                    class="btn-tertiary btn-sm"
+                    (click)="restore(entry)"
+                  >
+                    {{ 'serviceCatalog.actions.restore' | translate }}
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+
+  <!-- Pagination -->
+  @if (totalCount() > 0 && totalPages() > 1) {
+    <nav
+      class="service-catalog-admin__pagination"
+      [attr.aria-label]="'serviceCatalog.admin.pagination.label' | translate"
+    >
+      <span class="service-catalog-admin__pagination-status">
+        {{ 'serviceCatalog.admin.pagination.showing' | translate }}
+        {{ pageStart() }}–{{ pageEnd() }}
+        {{ 'serviceCatalog.admin.pagination.of' | translate }}
+        {{ totalCount() }}
+        @if (isLoading()) {
+          <span class="service-catalog-admin__pagination-loading"
+                [attr.aria-live]="'polite'">
+            · {{ 'serviceCatalog.admin.pagination.loading' | translate }}
+          </span>
+        }
+      </span>
+      <div class="service-catalog-admin__pagination-controls">
+        <button
+          type="button"
+          class="btn-tertiary"
+          [disabled]="effectivePage() === 1"
+          (click)="goToPreviousPage()"
+        >
+          {{ 'serviceCatalog.admin.pagination.previous' | translate }}
+        </button>
+        <span class="service-catalog-admin__pagination-page">
+          {{ 'serviceCatalog.admin.pagination.page' | translate }}
+          {{ effectivePage() }} / {{ totalPages() }}
+        </span>
+        <button
+          type="button"
+          class="btn-tertiary"
+          [disabled]="effectivePage() === totalPages()"
+          (click)="goToNextPage()"
+        >
+          {{ 'serviceCatalog.admin.pagination.next' | translate }}
+        </button>
+      </div>
+    </nav>
+  }
+
+  <!-- Create / edit modal -->
+  @if (isModalOpen()) {
+    <div
+      class="service-catalog-admin__backdrop"
+      (click)="onModalBackdrop($event)"
+    >
+      <div
+        class="service-catalog-admin__modal"
+        role="dialog"
+        aria-modal="true"
+      >
+        <header class="service-catalog-admin__modal-header">
+          <h3>
+            @if (editingId()) {
+              {{ 'serviceCatalog.admin.dialog.editTitle' | translate }}
+            } @else {
+              {{ 'serviceCatalog.admin.dialog.createTitle' | translate }}
+            }
+          </h3>
+          <button
+            type="button"
+            class="service-catalog-admin__close"
+            [attr.aria-label]="'common.close' | translate"
+            (click)="closeModal()"
+          >
+            ×
+          </button>
+        </header>
+
+        <form
+          class="service-catalog-admin__form"
+          [formGroup]="form"
+          (ngSubmit)="submitForm()"
+        >
+          <div class="service-catalog-admin__form-grid">
+            <label class="service-catalog-admin__field">
+              <span>{{ 'serviceCatalog.form.name' | translate }} *</span>
+              <input
+                type="text"
+                class="form-input"
+                formControlName="name"
+                [class.border-red-500]="isInvalid('name')"
+              />
+              @if (isInvalid('name')) {
+                <small class="form-error">
+                  {{ 'serviceCatalog.admin.errors.nameRequired' | translate }}
+                </small>
+              }
+            </label>
+
+            <label class="service-catalog-admin__field">
+              <span>{{ 'serviceCatalog.form.code' | translate }}</span>
+              <input
+                type="text"
+                class="form-input"
+                formControlName="code"
+                [placeholder]="'serviceCatalog.admin.codePlaceholder' | translate"
+              />
+            </label>
+
+            <label class="service-catalog-admin__field">
+              <span>{{ 'serviceCatalog.form.category' | translate }}</span>
+              <input
+                type="text"
+                class="form-input"
+                formControlName="category"
+              />
+            </label>
+
+            <label class="service-catalog-admin__field">
+              <span>{{ 'serviceCatalog.form.defaultPrice' | translate }} *</span>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                class="form-input"
+                formControlName="defaultPrice"
+                [class.border-red-500]="isInvalid('defaultPrice')"
+              />
+            </label>
+
+            <label class="service-catalog-admin__field">
+              <span>{{ 'serviceCatalog.form.defaultTvaRate' | translate }} *</span>
+              <select class="form-select" formControlName="defaultTvaRate">
+                @for (rate of tvaRates; track rate) {
+                  <option [value]="rate">{{ rate }}%</option>
+                }
+              </select>
+            </label>
+
+            <label class="service-catalog-admin__field">
+              <span>{{ 'serviceCatalog.form.defaultLaborHours' | translate }}</span>
+              <input
+                type="number"
+                min="0"
+                step="0.25"
+                class="form-input"
+                formControlName="defaultLaborHours"
+              />
+            </label>
+
+            <label class="service-catalog-admin__field service-catalog-admin__field--full">
+              <span>{{ 'serviceCatalog.form.description' | translate }}</span>
+              <textarea
+                rows="2"
+                class="form-input"
+                formControlName="description"
+              ></textarea>
+            </label>
+
+            <label class="service-catalog-admin__field service-catalog-admin__toggle-row">
+              <input
+                type="checkbox"
+                class="form-checkbox"
+                formControlName="isActive"
+              />
+              <span>{{ 'serviceCatalog.form.isActive' | translate }}</span>
+            </label>
+          </div>
+
+          <footer class="service-catalog-admin__form-footer">
+            <button
+              type="button"
+              class="btn-secondary"
+              (click)="closeModal()"
+            >
+              {{ 'common.cancel' | translate }}
+            </button>
+            <button
+              type="submit"
+              class="btn-primary"
+              [disabled]="form.invalid || isSubmitting()"
+            >
+              @if (isSubmitting()) {
+                {{ 'common.saving' | translate }}
+              } @else if (editingId()) {
+                {{ 'serviceCatalog.actions.update' | translate }}
+              } @else {
+                {{ 'serviceCatalog.actions.create' | translate }}
+              }
+            </button>
+          </footer>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Delete confirm modal -->
+  @if (pendingDelete(); as pending) {
+    <div
+      class="service-catalog-admin__backdrop"
+      (click)="cancelDelete()"
+    >
+      <div
+        class="service-catalog-admin__confirm"
+        role="dialog"
+        aria-modal="true"
+        (click)="$event.stopPropagation()"
+      >
+        <h3>
+          {{ 'serviceCatalog.admin.deleteConfirm.title' | translate }}
+        </h3>
+        <p>
+          {{ 'serviceCatalog.admin.deleteConfirm.body' | translate:{ name: pending.name } }}
+        </p>
+        <footer class="service-catalog-admin__confirm-footer">
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="cancelDelete()"
+          >
+            {{ 'common.cancel' | translate }}
+          </button>
+          <button
+            type="button"
+            class="btn-danger"
+            [disabled]="isDeleting()"
+            (click)="confirmDelete()"
+          >
+            @if (isDeleting()) {
+              {{ 'common.saving' | translate }}
+            } @else {
+              {{ 'serviceCatalog.actions.delete' | translate }}
+            }
+          </button>
+        </footer>
+      </div>
+    </div>
+  }
+</div>

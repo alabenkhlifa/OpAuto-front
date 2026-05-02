@@ -1298,7 +1298,8 @@
       "business": "Business",
       "system": "System",
       "integrations": "Integrations",
-      "fiscal": "Fiscal"
+      "fiscal": "Fiscal",
+      "serviceCatalog": "Service Catalog"
     },
     "fiscal": {
       "title": "Fiscal Information",
@@ -3262,6 +3263,48 @@
       "updated": "Service updated",
       "deleted": "Service deactivated",
       "duplicateCode": "A service with this code already exists"
+    },
+    "admin": {
+      "title": "Service Catalog",
+      "subtitle": "Manage the services owners can add to invoices and quotes.",
+      "searchPlaceholder": "Search by name, code or category…",
+      "actions": "Actions",
+      "codePlaceholder": "Auto-generated if blank",
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "empty": {
+        "title": "No services in your catalog yet",
+        "description": "Add your first service so it appears in the invoice line-item picker."
+      },
+      "dialog": {
+        "createTitle": "Add a service",
+        "editTitle": "Edit service"
+      },
+      "deleteConfirm": {
+        "title": "Deactivate this service?",
+        "body": "\"{{name}}\" will be hidden from the picker. Existing invoices keep their references."
+      },
+      "messages": {
+        "restored": "Service restored"
+      },
+      "errors": {
+        "loadFailed": "Could not load the service catalog",
+        "saveFailed": "Could not save the service",
+        "deleteFailed": "Could not deactivate the service",
+        "restoreFailed": "Could not restore the service",
+        "nameRequired": "Name is required"
+      },
+      "pagination": {
+        "label": "Catalog pagination",
+        "showing": "Showing",
+        "of": "of",
+        "page": "Page",
+        "previous": "Previous",
+        "next": "Next",
+        "loading": "Loading…"
+      }
     }
   }
 }

@@ -27,15 +27,30 @@ export class ServicesCatalogController {
   constructor(private service: ServicesCatalogService) {}
 
   // List + detail are readable by anyone authenticated in the garage.
+  //
+  // Sweep C-21 (S-CAT-009) — added optional `?page=` param. When `page` is
+  // present the response is a paginated envelope `{ items, total, page,
+  // limit }`; without `page` the legacy flat array is returned (so the
+  // service-picker autocomplete keeps working unchanged). The envelope
+  // path is what the new admin UI consumes.
   @Get()
   findAll(
     @CurrentUser('garageId') gid: string,
     @Query('includeInactive') includeInactive?: string,
     @Query('search') search?: string,
     @Query('limit') limit?: string,
+    @Query('page') page?: string,
   ) {
     const parsedLimit =
       limit !== undefined && limit !== '' ? Number(limit) : undefined;
+    if (page !== undefined && page !== '') {
+      return this.service.findAllPaginated(gid, {
+        includeInactive: includeInactive === 'true',
+        search,
+        limit: parsedLimit,
+        page: Number(page),
+      });
+    }
     return this.service.findAll(
       gid,
       includeInactive === 'true',
