@@ -803,12 +803,18 @@ export class OrchestratorService {
       out.push('send_sms');
     }
     // Whenever a customer-facing action tool (send_sms / send_email to a third
-    // party) is added, also pull in `find_customer` so the LLM can resolve the
-    // recipient's phone / id from a name in the message instead of asking the
-    // user for it. The cost is one extra schema (~200 tokens) — the LLM simply
-    // skips it when no name is present.
+    // party) is added, also pull in BOTH customer lookup tools:
+    //   - `find_customer` for name/phone/email search
+    //   - `get_customer` for UUID lookup (page context provides selectedEntity
+    //     ids; chained reads like list_overdue_invoices return customerId)
+    // Without `get_customer`, the LLM forced to call `find_customer({query: <uuid>})`
+    // gets zero hits because findAll only LIKE-matches name/phone/email columns,
+    // and reports back "customer not found" instead of resolving the recipient.
+    // Cost is two extra schemas (~400 tokens); the LLM picks the right one based
+    // on whether it has a UUID or a partial name.
     if (out.length > 0) {
       out.push('find_customer');
+      out.push('get_customer');
     }
     return out;
   }
@@ -887,10 +893,17 @@ export class OrchestratorService {
         kws: ['plate', 'license plate', 'find car', 'find vehicle'],
         tools: ['find_car'],
       },
-      // customer lookup
+      // customer lookup (find_ for name/phone/email, get_ for UUID)
       {
-        kws: ['find customer', 'search customer', 'look up customer'],
-        tools: ['find_customer'],
+        kws: [
+          'find customer',
+          'search customer',
+          'look up customer',
+          'customer details',
+          'this customer',
+          'this client',
+        ],
+        tools: ['find_customer', 'get_customer'],
       },
     ];
     for (const g of groups) {

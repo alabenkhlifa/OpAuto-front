@@ -726,6 +726,53 @@ describe('OrchestratorService', () => {
       );
     });
 
+    it('also pairs get_customer with send_sms so the LLM can resolve a recipient by UUID (page context)', async () => {
+      // Repro of the "customer ID did not return a match" bug: when the user
+      // is on a customer detail page and asks "send SMS to this client", the
+      // page context puts a UUID in the system prompt. Without get_customer
+      // augmented, the LLM falls back to find_customer({query: <uuid>}) which
+      // searches name/phone/email columns and returns 0 hits.
+      const tools = makeTools(['send_sms', 'find_customer', 'get_customer']);
+      const llm = makeLlm([{ provider: 'groq', content: 'ok', toolCalls: [] }]);
+      const classifier = makeClassifier([]);
+      const orchestrator = await makeOrchestrator({ tools, llm, classifier });
+
+      await collectEvents(
+        orchestrator.run(
+          ctx,
+          'conv-1',
+          'send an SMS to this client with their unpaid invoices',
+          undefined,
+        ),
+      );
+
+      const names = toolNamesFromFirstCall(llm);
+      expect(names).toEqual(
+        expect.arrayContaining(['send_sms', 'find_customer', 'get_customer']),
+      );
+    });
+
+    it('also pairs get_customer with send_email so the LLM can resolve a recipient by UUID', async () => {
+      const tools = makeTools(['send_email', 'find_customer', 'get_customer']);
+      const llm = makeLlm([{ provider: 'groq', content: 'ok', toolCalls: [] }]);
+      const classifier = makeClassifier([]);
+      const orchestrator = await makeOrchestrator({ tools, llm, classifier });
+
+      await collectEvents(
+        orchestrator.run(
+          ctx,
+          'conv-1',
+          'email this customer their invoice summary',
+          undefined,
+        ),
+      );
+
+      const names = toolNamesFromFirstCall(llm);
+      expect(names).toEqual(
+        expect.arrayContaining(['send_email', 'find_customer', 'get_customer']),
+      );
+    });
+
     it('pairs find_customer with send_email for "email <name> a reminder" requests', async () => {
       const tools = makeTools(['send_email', 'find_customer']);
       const llm = makeLlm([{ provider: 'groq', content: 'ok', toolCalls: [] }]);
