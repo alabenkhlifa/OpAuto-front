@@ -298,6 +298,7 @@ describe('Invoicing + Inventory Tools', () => {
             id: 'inv-1',
             garageId: 'garage-1',
             total: 200,
+            status: 'SENT',
           }),
         },
         payment: {
@@ -329,6 +330,34 @@ describe('Invoicing + Inventory Tools', () => {
         'garage-1',
         expect.objectContaining({ amount: 150, method: 'CASH', processedBy: 'user-1' }),
       );
+    });
+
+    it('refuses to record a second payment against an already-PAID invoice (assistant double-charge guard)', async () => {
+      const prisma = makePrismaMock({
+        invoice: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'inv-paid',
+            garageId: 'garage-1',
+            total: 200,
+            status: 'PAID',
+          }),
+        },
+      });
+      const invoicing = { addPayment: jest.fn() };
+      const tool = buildRecordPaymentTool(prisma as never, invoicing as never);
+
+      await expect(
+        tool.handler(
+          {
+            invoiceId: 'inv-paid',
+            amount: 50,
+            method: 'CASH',
+            _expectedConfirmation: 'INV-PAID',
+          },
+          ownerCtx,
+        ),
+      ).rejects.toThrow(/already PAID/);
+      expect(invoicing.addPayment).not.toHaveBeenCalled();
     });
 
     it('marks the tool as TYPED_CONFIRM_WRITE and requires _expectedConfirmation in args', () => {

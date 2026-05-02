@@ -1,5 +1,13 @@
-import { AssistantBlastTier, PaymentMethod } from '@prisma/client';
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  AssistantBlastTier,
+  InvoiceStatus,
+  PaymentMethod,
+} from '@prisma/client';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { InvoicingService } from '../../../invoicing/invoicing.service';
 import { AssistantUserContext, ToolDefinition } from '../../types';
@@ -98,13 +106,22 @@ export function buildRecordPaymentTool(
       // payment against a foreign-garage invoice id it learned out-of-band.
       const invoice = await prisma.invoice.findUnique({
         where: { id: args.invoiceId },
-        select: { id: true, garageId: true, total: true },
+        select: { id: true, garageId: true, total: true, status: true },
       });
       if (!invoice) {
         throw new NotFoundException('Invoice not found');
       }
       if (invoice.garageId !== ctx.garageId) {
         throw new ForbiddenException('Invoice does not belong to this garage');
+      }
+      // Guard against double-charge via the assistant. The general InvoicingService
+      // permits over-payment for direct-API users (refunds, tips, manual edge
+      // cases), but the assistant must NOT silently record a second payment when
+      // a typed-confirm flow is retried after a transient network/UI error.
+      if (invoice.status === InvoiceStatus.PAID) {
+        throw new BadRequestException(
+          'Invoice is already PAID; refusing to record an additional payment via the assistant.',
+        );
       }
 
       const payment = await invoicing.addPayment(args.invoiceId, ctx.garageId, {
