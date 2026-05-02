@@ -270,6 +270,59 @@ describe('InvoiceDetailsComponent', () => {
     });
   });
 
+  describe('S-AUTH-003 / S-INV-018 — STAFF role cannot DELETE invoice', () => {
+    /**
+     * Sweep C-15: pin the staff-perspective role gate. Same observable
+     * behaviour as S-AUTH-004 (Delete needs OWNER) but expressed from the
+     * STAFF lens so both scenario IDs trace cleanly to a regression spec.
+     * BE side: `DELETE /invoices/:id` is `@Roles(OWNER)` only — even if the
+     * FE somehow rendered the button, the BE would 403. The FE mirrors via
+     * `canShow('delete')` returning `inv.status === 'draft' && isOwner()`.
+     */
+    const draftStatuses = ['draft'] as const;
+    draftStatuses.forEach((status) => {
+      it(`STAFF user → Delete hidden on a ${status} invoice (S-AUTH-003)`, async () => {
+        configure(makeInvoice({ status }), { isOwner: false });
+        const fixture = TestBed.createComponent(InvoiceDetailsComponent);
+        const cmp = fixture.componentInstance;
+        cmp.ngOnInit();
+        await fixture.whenStable();
+        expect(cmp.canShow('delete')).toBeFalse();
+      });
+    });
+
+    it('STAFF user → Delete hidden across the full status matrix (S-INV-018)', async () => {
+      const allStatuses = [
+        'draft',
+        'sent',
+        'viewed',
+        'paid',
+        'partially-paid',
+        'overdue',
+        'cancelled',
+        'refunded',
+      ] as const;
+      for (const status of allStatuses) {
+        TestBed.resetTestingModule();
+        configure(makeInvoice({ status }), { isOwner: false });
+        const fixture = TestBed.createComponent(InvoiceDetailsComponent);
+        const cmp = fixture.componentInstance;
+        cmp.ngOnInit();
+        await fixture.whenStable();
+        expect(cmp.canShow('delete')).withContext(`delete on ${status} for STAFF`).toBeFalse();
+      }
+    });
+
+    it('OWNER user → Delete renders on DRAFT (regression — must not regress)', async () => {
+      configure(makeInvoice({ status: 'draft' }), { isOwner: true });
+      const fixture = TestBed.createComponent(InvoiceDetailsComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      expect(cmp.canShow('delete')).toBeTrue();
+    });
+  });
+
   describe('S-DET-005 — CANCELLED detail action matrix', () => {
     /**
      * Sweep C-1: pin the full visibility matrix for CANCELLED invoices —

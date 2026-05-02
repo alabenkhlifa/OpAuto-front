@@ -279,20 +279,29 @@ describe('SidebarComponent', () => {
       httpMock.verify();
     });
 
-    it('does not load invoice badge for non-owners', () => {
+    it('STAFF still loads invoice + quote badges; only /approvals is owner-gated', () => {
+      // Sweep C-15 — invoicing is OWNER + STAFF (BE @Roles(OWNER, STAFF)).
+      // STAFF must see the Pending Payment + Quotes badges. /approvals
+      // stays owner-only (discount-approval is OWNER per BE).
       mockAuth.isOwner.and.returnValue(false);
       const httpMock = TestBed.inject(HttpTestingController);
       fixture.detectChanges();
 
-      // Owner-only endpoints must not be hit.
-      httpMock.expectNone('/invoices');
+      // /approvals is the only owner-gated endpoint left.
       httpMock.expectNone('/approvals');
 
-      // Non-owner endpoints still drain.
+      // /invoices + /quotes are now drained for STAFF too.
       httpMock.match('/appointments').forEach((r) => r.flush([]));
       httpMock.match('/maintenance').forEach((r) => r.flush([]));
+      httpMock
+        .match('/invoices')
+        .forEach((r) => r.flush([{ status: 'SENT' }, { status: 'OVERDUE' }]));
+      httpMock
+        .match('/quotes')
+        .forEach((r) => r.flush([{ status: 'SENT' }]));
 
-      expect(component.getBadge('invoices-pending')).toBeNull();
+      expect(component.getBadge('invoices-pending')).toBe(2);
+      expect(component.getBadge('invoices-quotes')).toBe(1);
       httpMock.verify();
     });
   });

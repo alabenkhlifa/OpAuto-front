@@ -5,12 +5,16 @@ import { routes } from './app-routing-module';
 
 /**
  * Sweep C-13 — S-SEC-007 (Module access guard).
+ * Sweep C-15 — re-spec to drop ownerGuard from `/invoices` (S-AUTH-002/003/006).
  *
  * Pure config-shape regression: assert that `/invoices` is gated by
- * `authGuard`, `ownerGuard`, AND `moduleGuard('invoicing')`. A future
+ * `authGuard` AND `moduleGuard('invoicing')`. The ownerGuard was
+ * previously included but the BE policy is `@Roles(OWNER, STAFF)` on
+ * the invoicing surface — owner-only destructive actions (delete,
+ * discount approval) are gated at the component layer. A future
  * regression that drops the moduleGuard would silently ship paid
  * functionality to garages that haven't activated the module — this
- * spec is the line of defense.
+ * spec is the line of defense for the module gate.
  */
 describe('app-routing — S-SEC-007 invoicing module gate', () => {
   function findRoute(rs: Routes | undefined, path: string): any | undefined {
@@ -26,21 +30,17 @@ describe('app-routing — S-SEC-007 invoicing module gate', () => {
     expect(r).withContext('routes table contains /invoices').toBeTruthy();
   });
 
-  it('/invoices route is gated by authGuard + ownerGuard + moduleGuard("invoicing")', () => {
+  it('/invoices route is gated by authGuard + moduleGuard("invoicing"); NO ownerGuard', () => {
     const r = findRoute(routes, 'invoices');
     expect(r.canActivate).toBeTruthy();
     const guards = r.canActivate as any[];
-    // The guard array order is load-bearing: authGuard runs first, then
-    // ownerGuard, then the module gate. moduleGuard('invoicing') is
-    // produced by a factory so we assert its presence by function shape
-    // — it's a CanActivateFn closure carrying the moduleId binding.
-    expect(guards.length).toBeGreaterThanOrEqual(3);
+    // Sweep C-15 — guard chain is `[authGuard, moduleGuard('invoicing')]`.
+    // STAFF must be allowed to access /invoices per BE @Roles(OWNER, STAFF).
+    expect(guards.length).toBe(2);
     expect(guards).toContain(authGuard);
-    expect(guards).toContain(ownerGuard);
-    // The 3rd guard is the moduleGuard — we can't reference-compare the
-    // factory result directly (each call returns a fresh function), but
-    // we CAN assert there's a callable function in the canActivate array
-    // that is NOT one of the static guards.
+    expect(guards).not.toContain(ownerGuard);
+    // The 2nd guard is the moduleGuard factory — fresh function per call,
+    // so we assert by shape (callable, not one of the static guards).
     const dynamic = guards.filter(
       (g) => g !== authGuard && g !== ownerGuard,
     );

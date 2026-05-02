@@ -366,6 +366,16 @@ async function seedAccounts(): Promise<Ctx> {
     },
   });
 
+  // E2E catalog STAFF user (Sweep C-15) — closes S-AUTH-002/003/006 + S-INV-018.
+  // Email-based login (parallels owner@autotech.tn) at password123, distinct from
+  // the username-based mechanic/electrician accounts seeded below at staff123.
+  const staffEmail = await prisma.user.create({
+    data: {
+      garageId: garage.id, email: 'staff@autotech.tn', password: hashedOwner,
+      firstName: 'Sami', lastName: 'Bouaziz', role: UserRole.STAFF, phone: '+216 99 000 111',
+    },
+  });
+
   const staffSpecs = [
     { username: 'mohamed', firstName: 'Mohamed', lastName: 'Trabelsi', phone: '+216 97 111 222', role: EmployeeRole.MECHANIC,           dept: EmployeeDepartment.MECHANICAL,   skills: ['engine_repair','oil_change','diagnostics'], rating: 4.9 },
     { username: 'khalil',  firstName: 'Khalil',  lastName: 'Bouazizi', phone: '+216 97 333 444', role: EmployeeRole.MECHANIC,           dept: EmployeeDepartment.MECHANICAL,   skills: ['brakes','suspension','transmission'], rating: 4.7 },
@@ -392,7 +402,7 @@ async function seedAccounts(): Promise<Ctx> {
     employees.push(e);
   }
 
-  console.log(`  ✓ accounts: 1 garage, ${1 + staff.length} users, ${employees.length} employees`);
+  console.log(`  ✓ accounts: 1 garage, ${2 + staff.length} users, ${employees.length} employees`);
   return { garage, owner, staff, employees };
 }
 

@@ -50,7 +50,13 @@ export const routes: Routes = [
   {
     path: 'invoices',
     loadComponent: () => import('./features/invoicing/invoicing.component').then(m => m.InvoicingComponent),
-    canActivate: [authGuard, ownerGuard, moduleGuard('invoicing')],
+    // Sweep C-15 — drop ownerGuard from /invoices: STAFF is the second tier
+    // per the BE policy (`@Roles(OWNER, STAFF)` on most invoicing endpoints,
+    // `@Roles(OWNER)` only on `DELETE /invoices/:id` and discount approvals).
+    // Owner-only destructive actions are gated at the component level via
+    // `canShow('delete')` + `isOwner()`, not at the route level. See
+    // S-AUTH-002 / 003 / 006 / S-INV-018 in `docs/INVOICING_E2E_SCENARIOS.md`.
+    canActivate: [authGuard, moduleGuard('invoicing')],
     children: [
       {
         path: '',

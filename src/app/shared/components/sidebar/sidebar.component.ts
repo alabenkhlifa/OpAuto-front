@@ -99,7 +99,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
       translationKey: 'navigation.invoicing',
       icon: 'receipt',
       isExpanded: false,
-      ownerOnly: true,
+      // Sweep C-15 — invoicing surface is OWNER + STAFF (BE: @Roles(OWNER, STAFF));
+      // owner-only destructive actions live in the component layer (canShow('delete')).
       requiresModule: 'invoicing',
       children: [
         { id: 'invoices-dashboard', label: 'Dashboard', translationKey: 'invoicing.subnav.dashboard', icon: 'dashboard', route: '/invoices' },
@@ -239,38 +240,41 @@ export class SidebarComponent implements OnInit, OnDestroy {
       },
       error: () => {}
     });
+    // Sweep C-15 — invoicing badges are visible to OWNER + STAFF (BE policy
+    // is `@Roles(OWNER, STAFF)` on the list endpoints). Approvals badge
+    // stays owner-gated (discount-approval is owner-only per BE).
+    this.http.get<any[]>('/invoices').subscribe({
+      next: (invs) => {
+        // Pending Payment badge (S-SB-003): all unpaid issued invoices.
+        // Per the Section-16 spec the count is SENT + PARTIALLY_PAID +
+        // OVERDUE. We also include VIEWED — it's just SENT after the
+        // customer opened the delivery email, still unpaid; treating it
+        // separately would split the same logical bucket. The destination
+        // /invoices/pending page filters to the same set so the badge
+        // equals the row count the user sees.
+        const pending = Array.isArray(invs)
+          ? invs.filter((i: any) =>
+              i.status === 'SENT' ||
+              i.status === 'VIEWED' ||
+              i.status === 'PARTIALLY_PAID' ||
+              i.status === 'OVERDUE',
+            ).length
+          : 0;
+        this.badgeCounts.update(c => ({ ...c, 'invoices-pending': pending }));
+      },
+      error: () => {}
+    });
+    // Quotes badge: number of SENT (awaiting customer reply) quotes.
+    this.http.get<any[]>('/quotes').subscribe({
+      next: (quotes) => {
+        const pending = Array.isArray(quotes)
+          ? quotes.filter((q: any) => q.status === 'SENT').length
+          : 0;
+        this.badgeCounts.update(c => ({ ...c, 'invoices-quotes': pending }));
+      },
+      error: () => {}
+    });
     if (isOwner) {
-      this.http.get<any[]>('/invoices').subscribe({
-        next: (invs) => {
-          // Pending Payment badge (S-SB-003): all unpaid issued invoices.
-          // Per the Section-16 spec the count is SENT + PARTIALLY_PAID +
-          // OVERDUE. We also include VIEWED — it's just SENT after the
-          // customer opened the delivery email, still unpaid; treating it
-          // separately would split the same logical bucket. The destination
-          // /invoices/pending page filters to the same set so the badge
-          // equals the row count the user sees.
-          const pending = Array.isArray(invs)
-            ? invs.filter((i: any) =>
-                i.status === 'SENT' ||
-                i.status === 'VIEWED' ||
-                i.status === 'PARTIALLY_PAID' ||
-                i.status === 'OVERDUE',
-              ).length
-            : 0;
-          this.badgeCounts.update(c => ({ ...c, 'invoices-pending': pending }));
-        },
-        error: () => {}
-      });
-      // Quotes badge: number of SENT (awaiting customer reply) quotes.
-      this.http.get<any[]>('/quotes').subscribe({
-        next: (quotes) => {
-          const pending = Array.isArray(quotes)
-            ? quotes.filter((q: any) => q.status === 'SENT').length
-            : 0;
-          this.badgeCounts.update(c => ({ ...c, 'invoices-quotes': pending }));
-        },
-        error: () => {}
-      });
       this.http.get<any[]>('/approvals').subscribe({
         next: (aprs) => {
           const pending = Array.isArray(aprs) ? aprs.filter((a: any) => a.status === 'PENDING').length : 0;
