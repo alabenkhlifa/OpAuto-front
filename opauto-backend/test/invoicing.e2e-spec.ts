@@ -102,8 +102,12 @@ describe('InvoicingService (integration – findAll with payments)', () => {
     await app.close();
   });
 
-  it('returns the invoice with a populated payments array', async () => {
-    const invoices = await service.findAll(garageId);
+  it('returns the invoice with a populated payments array (inside envelope.items)', async () => {
+    // Sweep C-20 (S-PERF-001): findAll now returns the paginated envelope
+    // `{ items, total, page, limit }`. Tests unwrap `.items` to keep the
+    // existing assertions readable.
+    const result = await service.findAll(garageId);
+    const invoices = result.items;
 
     expect(invoices).toHaveLength(1);
     const inv = invoices[0] as any;
@@ -114,8 +118,8 @@ describe('InvoicingService (integration – findAll with payments)', () => {
   });
 
   it('payments[0].amount matches the created payment', async () => {
-    const invoices = await service.findAll(garageId);
-    const inv = invoices[0] as any;
+    const result = await service.findAll(garageId);
+    const inv = result.items[0] as any;
 
     expect(inv.payments[0].amount).toBe(238);
     expect(inv.payments[0].method).toBe('CASH');
@@ -125,8 +129,8 @@ describe('InvoicingService (integration – findAll with payments)', () => {
   });
 
   it('payments select excludes fields not in the select list (e.g. invoiceId)', async () => {
-    const invoices = await service.findAll(garageId);
-    const inv = invoices[0] as any;
+    const result = await service.findAll(garageId);
+    const inv = result.items[0] as any;
 
     // The select only returns id, amount, method, paidAt, reference.
     // invoiceId and the invoice relation must NOT be part of the returned payment shape.
@@ -161,8 +165,8 @@ describe('InvoicingService (integration – findAll with payments)', () => {
     });
 
     try {
-      const invoices = await service.findAll(garageId);
-      const ids = invoices.map((i: any) => i.id);
+      const result = await service.findAll(garageId);
+      const ids = result.items.map((i: any) => i.id);
       expect(ids).toContain(invoiceId);
       expect(ids).not.toContain(otherInvoice.id);
     } finally {
