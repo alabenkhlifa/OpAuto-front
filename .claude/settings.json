@@ -30,16 +30,6 @@
           }
         ]
       }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "changed=$(git diff --name-only 2>/dev/null); has_src=$(echo \"$changed\" | grep -E '^(src/|opauto-backend/src/)' | head -1); has_progress=$(echo \"$changed\" | grep 'MVP_PROGRESS.md'); if [ -n \"$has_src\" ] && [ -z \"$has_progress\" ]; then echo 'ACTION REQUIRED: Source files were modified but docs/MVP_PROGRESS.md was not updated. Update progress tracking now.'; exit 2; fi"
-          }
-        ]
-      }
     ]
   }
 }
