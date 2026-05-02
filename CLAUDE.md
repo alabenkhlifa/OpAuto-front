@@ -87,7 +87,19 @@ When the user asks to do something, pick the right command:
 - **Verify / test UI** → run `/e2e {description}`
 - **Translation / i18n / add key / sync languages** → run `/translate {description}`
 - **Finished / ship it** → run `/done`
+- **SSH / prod / VPS / deploy logs / prod DB / "is prod running my code?"** → dispatch the **prod-ops** agent (`.claude/agents/prod-ops.md`). Do NOT run raw `ssh almalinux@152.228.229.150` from the main thread — the agent encodes the gotchas (DB user is `opauto` not `postgres`, deploy log lies, verify by grep on `/app/dist/...`).
 Do NOT ask the user which command to use. Decide based on the request.
+
+## Prod ops (OVH VPS)
+The OpAuto production VPS is at `152.228.229.150` (`almalinux` user, `/opt/opauto`, `docker compose` for `opauto-db` / `opauto-backend` / `opauto-nginx`). Auto-deploy fires on push to `main` via webhook on `:9000/hooks/deploy`. **Use the `prod-ops` agent for any operation against this box** — it owns the SSH patterns, DB credentials, log paths, smoke tests, and the verify-by-grep protocol.
+
+Critical traps the agent already knows (do NOT re-discover the hard way):
+- DB role is `opauto`, NOT `postgres` — `psql -U postgres` fails with `role "postgres" does not exist`.
+- `=== Deploy completed ===` in `/var/log/opauto-deploy.log` is necessary but NOT sufficient. `set -e` is defeated by `tee` in `deploy.sh`, and parallel webhook fires can race so `git HEAD` advances while the running image stays stale. Always verify by grepping the compiled JS inside the container: `docker exec opauto-backend grep -c '<new-marker>' /app/dist/src/<path>.js`.
+- Recovery for a stale image: `cd /opt/opauto && sudo docker compose build backend && sudo docker compose up -d --force-recreate backend`. `up -d --force-recreate` ALONE reuses the old image — you must `build` first.
+- The seeded `owner@autotech.tn / password123` smoke-test login currently returns 401. Known divergence from `docs/DEPLOYMENT.md`, NOT a deploy regression — don't chase it unless asked.
+
+The agent is **read + manual deploy trigger** scope: it freely tails logs, queries the DB (SELECT only), greps containers, runs smoke tests, and on explicit user request runs `./deploy/deploy.sh` or the rebuild + force-recreate sequence. It refuses DB writes, prisma migrate/reset, container destroy, and `.env` edits — those need explicit user confirmation through the main thread.
 
 ## Response Style
 - English only, concise — no fluff, no trailing summaries
