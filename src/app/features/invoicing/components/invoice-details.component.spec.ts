@@ -56,7 +56,7 @@ describe('InvoiceDetailsComponent', () => {
       getSettings: () => of({
         garageInfo: { name: 'OpAuto', address: '', city: '', postalCode: '', country: '', phone: '', email: '', taxId: '', registrationNumber: '' },
         operationalSettings: {}, businessSettings: {}, systemSettings: {}, integrationSettings: {},
-        fiscalSettings: { mfNumber: '', rib: '', bankName: '', logoUrl: '', numberingPrefix: 'INV', numberingResetPolicy: 'YEARLY', numberingDigitCount: 4, defaultTvaRate: 19, fiscalStampEnabled: true, defaultPaymentTermsDays: 30 },
+        fiscalSettings: { mfNumber: '', rib: '', bankName: '', logoUrl: '', numberingPrefix: 'INV', numberingResetPolicy: 'YEARLY', numberingDigitCount: 4, defaultTvaRate: 19, fiscalStampEnabled: true, defaultPaymentTermsDays: 30, discountAuditThresholdPct: 5 },
         createdAt: new Date(), updatedAt: new Date(),
       } as any),
     };

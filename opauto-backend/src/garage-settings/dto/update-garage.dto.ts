@@ -98,4 +98,18 @@ export class UpdateGarageDto {
   @IsOptional()
   @IsBoolean()
   fiscalStampEnabled?: boolean;
+
+  @ApiProperty({
+    required: false,
+    minimum: 0,
+    maximum: 100,
+    default: 5,
+    description:
+      'Line-item discount % above which an OWNER approver is required on invoices and quotes.',
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  discountAuditThresholdPct?: number;
 }

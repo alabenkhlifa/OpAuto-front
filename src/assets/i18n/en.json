@@ -1324,6 +1324,9 @@
       "tax": "Tax",
       "defaultTvaRate": "Default TVA Rate (%)",
       "fiscalStampEnabled": "Apply 1 TND fiscal stamp on cash invoices",
+      "discountAuditThresholdPct": "Discount Audit Threshold (%)",
+      "discountAuditThresholdPctHint": "Line discounts above this percentage require an OWNER approver on invoices and quotes.",
+      "discountAuditThresholdPctInvalid": "Must be between 0 and 100",
       "paymentTerms": "Payment Terms",
       "defaultPaymentTermsDays": "Default Payment Terms (days)"
     },

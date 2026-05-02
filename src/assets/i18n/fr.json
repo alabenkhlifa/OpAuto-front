@@ -1328,6 +1328,9 @@
       "tax": "Taxe",
       "defaultTvaRate": "Taux TVA par Défaut (%)",
       "fiscalStampEnabled": "Appliquer le timbre fiscal de 1 TND sur les factures en espèces",
+      "discountAuditThresholdPct": "Seuil d'Audit des Remises (%)",
+      "discountAuditThresholdPctHint": "Les remises de ligne supérieures à ce pourcentage exigent l'approbation d'un PROPRIÉTAIRE sur les factures et devis.",
+      "discountAuditThresholdPctInvalid": "Doit être compris entre 0 et 100",
       "paymentTerms": "Conditions de Paiement",
       "defaultPaymentTermsDays": "Délai de Paiement par Défaut (jours)"
     },

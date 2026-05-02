@@ -19,6 +19,7 @@ describe('FiscalSettingsComponent', () => {
     defaultTvaRate: 19,
     fiscalStampEnabled: true,
     defaultPaymentTermsDays: 30,
+    discountAuditThresholdPct: 5,
   };
 
   beforeEach(async () => {
@@ -108,6 +109,21 @@ describe('FiscalSettingsComponent', () => {
       ctrl.setValue(13);
       expect(ctrl.valid).toBeTrue();
     });
+
+    // S-SET-009: discount-audit-threshold control range 0..100.
+    it('marks discountAuditThresholdPct invalid below 0 or above 100', () => {
+      const ctrl = component.form.get('discountAuditThresholdPct')!;
+      ctrl.setValue(-1);
+      expect(ctrl.valid).toBeFalse();
+      ctrl.setValue(150);
+      expect(ctrl.valid).toBeFalse();
+      ctrl.setValue(10);
+      expect(ctrl.valid).toBeTrue();
+      ctrl.setValue(0);
+      expect(ctrl.valid).toBeTrue();
+      ctrl.setValue(100);
+      expect(ctrl.valid).toBeTrue();
+    });
   });
 
   describe('save()', () => {
@@ -131,6 +147,7 @@ describe('FiscalSettingsComponent', () => {
         defaultTvaRate: 13,
         fiscalStampEnabled: false,
         defaultPaymentTermsDays: 45,
+        discountAuditThresholdPct: 10,
       });
 
       component.save();
@@ -147,6 +164,27 @@ describe('FiscalSettingsComponent', () => {
       expect(payload.defaultTvaRate).toBe(13);
       expect(payload.fiscalStampEnabled).toBe(false);
       expect(payload.defaultPaymentTermsDays).toBe(45);
+      expect(payload.discountAuditThresholdPct).toBe(10);
+    });
+
+    // S-SET-007: defaultTvaRate is editable and round-trips on save.
+    it('emits the new defaultTvaRate on save (S-SET-007)', () => {
+      const spy = spyOn(component.saveFiscal, 'emit');
+      component.form.patchValue({ defaultTvaRate: 13 });
+      component.save();
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(spy.calls.mostRecent().args[0]!.defaultTvaRate).toBe(13);
+    });
+
+    // S-SET-010: Logo URL persists through the save payload (URL-based, no upload pipeline yet).
+    it('emits the logoUrl on save (S-SET-010)', () => {
+      const spy = spyOn(component.saveFiscal, 'emit');
+      component.form.patchValue({ logoUrl: 'https://cdn.opauto.tn/logo.png' });
+      component.save();
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(spy.calls.mostRecent().args[0]!.logoUrl).toBe(
+        'https://cdn.opauto.tn/logo.png',
+      );
     });
   });
 
@@ -169,6 +207,27 @@ describe('FiscalSettingsComponent', () => {
       expect(newComponent.form.get('numberingPrefix')!.value).toBe('AGR');
       expect(newComponent.form.get('numberingResetPolicy')!.value).toBe('NEVER');
       expect(newComponent.form.get('numberingDigitCount')!.value).toBe(6);
+    });
+
+    // S-SET-009: discountAuditThresholdPct hydrates from the BE payload.
+    it('hydrates discountAuditThresholdPct from settings', () => {
+      const settings: FiscalSettings = { ...baseSettings, discountAuditThresholdPct: 12 };
+      const newFixture = TestBed.createComponent(FiscalSettingsComponent);
+      const newComponent = newFixture.componentInstance;
+      newComponent.settings = settings;
+      newComponent.ngOnInit();
+      expect(newComponent.form.get('discountAuditThresholdPct')!.value).toBe(12);
+    });
+
+    // S-SET-009: missing field defaults to 5 % (the BE default).
+    it('falls back to 5 % when discountAuditThresholdPct is missing', () => {
+      const settings = { ...baseSettings } as Partial<FiscalSettings> as FiscalSettings;
+      delete (settings as any).discountAuditThresholdPct;
+      const newFixture = TestBed.createComponent(FiscalSettingsComponent);
+      const newComponent = newFixture.componentInstance;
+      newComponent.settings = settings;
+      newComponent.ngOnInit();
+      expect(newComponent.form.get('discountAuditThresholdPct')!.value).toBe(5);
     });
   });
 });

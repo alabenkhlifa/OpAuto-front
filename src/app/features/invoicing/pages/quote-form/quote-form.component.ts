@@ -108,8 +108,7 @@ export class QuoteFormPageComponent implements OnInit {
 
   /** Garage's discount-audit threshold (default 5 %). */
   readonly auditThresholdPct = computed(
-    () =>
-      (this.settings() as any)?.fiscalSettings?.discountAuditThresholdPct ?? 5,
+    () => this.settings()?.fiscalSettings?.discountAuditThresholdPct ?? 5,
   );
 
   /** Highest per-line discount % across the current line items. */

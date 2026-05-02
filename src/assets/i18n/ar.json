@@ -1328,6 +1328,9 @@
       "tax": "الضريبة",
       "defaultTvaRate": "نسبة الأداء على القيمة المضافة الافتراضية (٪)",
       "fiscalStampEnabled": "تطبيق طابع جبائي بقيمة 1 د.ت على الفواتير النقدية",
+      "discountAuditThresholdPct": "حد تدقيق الخصم (٪)",
+      "discountAuditThresholdPctHint": "تتطلب خصومات السطر التي تتجاوز هذه النسبة موافقة المالك على الفواتير وعروض الأسعار.",
+      "discountAuditThresholdPctInvalid": "يجب أن تكون بين 0 و 100",
       "paymentTerms": "شروط الدفع",
       "defaultPaymentTermsDays": "مهلة السداد الافتراضية (أيام)"
     },

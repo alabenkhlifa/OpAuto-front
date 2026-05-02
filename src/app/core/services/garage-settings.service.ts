@@ -230,7 +230,8 @@ export class GarageSettingsService {
         numberingDigitCount: b.numberingDigitCount ?? defaults.fiscalSettings.numberingDigitCount,
         defaultTvaRate: b.defaultTvaRate ?? defaults.fiscalSettings.defaultTvaRate,
         fiscalStampEnabled: b.fiscalStampEnabled ?? defaults.fiscalSettings.fiscalStampEnabled,
-        defaultPaymentTermsDays: b.defaultPaymentTermsDays ?? defaults.fiscalSettings.defaultPaymentTermsDays
+        defaultPaymentTermsDays: b.defaultPaymentTermsDays ?? defaults.fiscalSettings.defaultPaymentTermsDays,
+        discountAuditThresholdPct: b.discountAuditThresholdPct ?? defaults.fiscalSettings.discountAuditThresholdPct
       },
       createdAt: b.createdAt ? new Date(b.createdAt) : defaults.createdAt,
       updatedAt: b.updatedAt ? new Date(b.updatedAt) : defaults.updatedAt
@@ -270,6 +271,7 @@ export class GarageSettingsService {
       if (f.defaultTvaRate !== undefined) result.defaultTvaRate = f.defaultTvaRate;
       if (f.fiscalStampEnabled !== undefined) result.fiscalStampEnabled = f.fiscalStampEnabled;
       if (f.defaultPaymentTermsDays !== undefined) result.defaultPaymentTermsDays = f.defaultPaymentTermsDays;
+      if (f.discountAuditThresholdPct !== undefined) result.discountAuditThresholdPct = f.discountAuditThresholdPct;
     }
     return result;
   }
@@ -350,7 +352,8 @@ export class GarageSettingsService {
         numberingDigitCount: 4,
         defaultTvaRate: 19,
         fiscalStampEnabled: true,
-        defaultPaymentTermsDays: 30
+        defaultPaymentTermsDays: 30,
+        discountAuditThresholdPct: 5
       },
       createdAt: new Date(),
       updatedAt: new Date()

@@ -72,6 +72,7 @@ describe('GarageSettingsComponent', () => {
         defaultTvaRate: 19,
         fiscalStampEnabled: true,
         defaultPaymentTermsDays: 30,
+        discountAuditThresholdPct: 5,
       },
       createdAt: new Date(),
       updatedAt: new Date(),

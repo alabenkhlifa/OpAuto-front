@@ -41,6 +41,7 @@ describe('InvoiceFormComponent', () => {
       mfNumber: '', rib: '', bankName: '', logoUrl: '',
       numberingPrefix: 'INV', numberingResetPolicy: 'YEARLY', numberingDigitCount: 4,
       defaultTvaRate: 19, fiscalStampEnabled: true, defaultPaymentTermsDays: 30,
+      discountAuditThresholdPct: 5,
       ...overrides,
     } as any,
     createdAt: new Date(),
@@ -151,6 +152,47 @@ describe('InvoiceFormComponent', () => {
     expect(cmp.isOverdraw(0)).toBeTrue();
     expect(cmp.validationIssues()).toContain('invoicing.form.errors.partOverdraw');
     expect(cmp.canSubmit()).toBeFalse();
+  });
+
+  /**
+   * S-INV-W-006 — Part-picker row turns red (`.error`) when the entered
+   * quantity exceeds the live stock for the selected part. Visual cue is
+   * a `.error` class on the `<tr>`; the warning span (`invoice-form-stock--bad`)
+   * also surfaces the live stock count.
+   */
+  it('S-INV-W-006: row gains .error class + bad-stock warning when qty > stock', async () => {
+    configure();
+    const fixture = TestBed.createComponent(InvoiceFormComponent);
+    const cmp = fixture.componentInstance;
+    cmp.ngOnInit();
+    await fixture.whenStable();
+    cmp.form.patchValue({ customerId: 'c1', carId: 'car1' });
+    cmp.addLine('part');
+    cmp.onPartPicked(0, { id: 'p', name: 'Filter', brand: 'Bosch', price: 25, stockLevel: 3 } as any);
+    cmp.updateLine(0, 'quantity', 1); // within stock
+    fixture.detectChanges();
+    let row = (fixture.nativeElement as HTMLElement).querySelector(
+      '.invoice-form-table tbody tr',
+    );
+    expect(row?.classList.contains('error')).toBeFalse();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '.invoice-form-stock--bad',
+      ),
+    ).toBeNull();
+
+    // Bump qty over stock — row should flip red, bad-stock span should mount.
+    cmp.updateLine(0, 'quantity', 10);
+    fixture.detectChanges();
+    row = (fixture.nativeElement as HTMLElement).querySelector(
+      '.invoice-form-table tbody tr',
+    );
+    expect(row?.classList.contains('error')).toBeTrue();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '.invoice-form-stock--bad',
+      ),
+    ).toBeTruthy();
   });
 
   it('requires approver when invoice discount exceeds the audit threshold', async () => {
@@ -380,6 +422,96 @@ describe('InvoiceFormComponent', () => {
       expect(cmp.auditThresholdPct()).toBe(10);
       expect(cmp.approverRequired()).toBeFalse();
       expect(cmp.canSubmit()).toBeTrue();
+    });
+
+    // S-SET-009: 7 % discount fires the gate at the default 5 % threshold.
+    it('S-SET-009: 7% discount triggers approver gate at default 5% threshold', async () => {
+      configure({ settings: buildSettings() });
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      cmp.form.patchValue({ customerId: 'c1', carId: 'car1' });
+      cmp.addLine('misc');
+      cmp.updateLine(0, 'description', 'Foo');
+      cmp.updateLine(0, 'quantity', 1);
+      cmp.updateLine(0, 'unitPrice', 100);
+      cmp.onDiscountChange(7);
+      cmp.onDiscountReasonChange('Loyalty');
+      expect(cmp.auditThresholdPct()).toBe(5);
+      expect(cmp.approverRequired()).toBeTrue();
+    });
+
+    // S-SET-009: with threshold raised to 10 %, the same 7 % discount no
+    // longer trips the approver gate.
+    it('S-SET-009: 7% discount stays open when threshold raised to 10%', async () => {
+      const settings = buildSettings();
+      (settings.fiscalSettings as any).discountAuditThresholdPct = 10;
+      configure({ settings });
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      cmp.form.patchValue({ customerId: 'c1', carId: 'car1' });
+      cmp.addLine('misc');
+      cmp.updateLine(0, 'description', 'Foo');
+      cmp.updateLine(0, 'quantity', 1);
+      cmp.updateLine(0, 'unitPrice', 100);
+      cmp.onDiscountChange(7);
+      cmp.onDiscountReasonChange('Loyalty');
+      expect(cmp.auditThresholdPct()).toBe(10);
+      expect(cmp.approverRequired()).toBeFalse();
+    });
+  });
+
+  /**
+   * S-SET-007 — Garage's `defaultTvaRate` flows into newly-added lines via
+   * `addLine()`. Switching the garage default from 19 → 13 means the next
+   * `+ Service`, `+ Part`, `+ Labor`, `+ Misc` row pre-selects 13 %.
+   */
+  describe('S-SET-007: defaultTvaRate from garage settings', () => {
+    it('seeds new lines with the garage default TVA rate', async () => {
+      const settings = buildSettings({ defaultTvaRate: 13 });
+      configure({ settings });
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+
+      cmp.addLine('service');
+      cmp.addLine('part');
+      cmp.addLine('labor');
+      cmp.addLine('misc');
+
+      expect(cmp.lines()[0].tvaRate).toBe(13);
+      expect(cmp.lines()[1].tvaRate).toBe(13);
+      expect(cmp.lines()[2].tvaRate).toBe(13);
+      expect(cmp.lines()[3].tvaRate).toBe(13);
+    });
+
+    it('falls back to 19 % when defaultTvaRate is missing', async () => {
+      const settings = buildSettings();
+      delete (settings.fiscalSettings as any).defaultTvaRate;
+      configure({ settings });
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      cmp.addLine('misc');
+      expect(cmp.lines()[0].tvaRate).toBe(19);
+    });
+
+    // Defensive: an unknown TVA rate from settings should normalize to 19,
+    // not silently corrupt the line.
+    it('normalizes a non-canonical defaultTvaRate to 19 %', async () => {
+      const settings = buildSettings({ defaultTvaRate: 42 } as any);
+      configure({ settings });
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      cmp.addLine('misc');
+      expect(cmp.lines()[0].tvaRate).toBe(19);
     });
   });
 
@@ -620,6 +752,7 @@ describe('InvoiceFormComponent', () => {
           mfNumber: '', rib: '', bankName: '', logoUrl: '',
           numberingPrefix: 'INV', numberingResetPolicy: 'YEARLY', numberingDigitCount: 4,
           defaultTvaRate: 19, fiscalStampEnabled: true, defaultPaymentTermsDays: 30,
+          discountAuditThresholdPct: 5,
         } as any,
         createdAt: new Date(),
         updatedAt: new Date(),

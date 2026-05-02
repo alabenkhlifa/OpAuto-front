@@ -26,6 +26,9 @@ export interface FiscalSettings {
   fiscalStampEnabled: boolean;
   // Payment terms
   defaultPaymentTermsDays: number;
+  // Audit / approver gate — line discount % above this requires an OWNER approver.
+  // Mirrors `Garage.discountAuditThresholdPct` on the BE schema.
+  discountAuditThresholdPct: number;
 }
 
 export interface GarageInfo {

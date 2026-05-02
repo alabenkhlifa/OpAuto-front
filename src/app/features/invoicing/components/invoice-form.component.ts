@@ -197,7 +197,7 @@ export class InvoiceFormComponent implements OnInit {
   );
 
   readonly auditThresholdPct = computed(
-    () => (this.settings() as any)?.fiscalSettings?.discountAuditThresholdPct ?? 5,
+    () => this.settings()?.fiscalSettings?.discountAuditThresholdPct ?? 5,
   );
 
   readonly approverRequired = computed(

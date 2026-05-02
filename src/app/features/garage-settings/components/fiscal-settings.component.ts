@@ -147,6 +147,22 @@ export const RIB_PATTERN = /^\d{20}$/;
               <span class="text-sm font-medium text-gray-300">{{ 'settings.fiscal.fiscalStampEnabled' | translate }}</span>
             </label>
           </div>
+
+          <div>
+            <label class="form-label">{{ 'settings.fiscal.discountAuditThresholdPct' | translate }}</label>
+            <input
+              type="number"
+              class="form-input"
+              formControlName="discountAuditThresholdPct"
+              min="0"
+              max="100"
+              step="0.5"
+              [class.border-red-500]="isInvalid('discountAuditThresholdPct')">
+            <p class="mt-1 text-xs text-gray-400">{{ 'settings.fiscal.discountAuditThresholdPctHint' | translate }}</p>
+            @if (isInvalid('discountAuditThresholdPct')) {
+              <p class="mt-1 text-sm text-red-400">{{ 'settings.fiscal.discountAuditThresholdPctInvalid' | translate }}</p>
+            }
+          </div>
         </form>
       </div>
 
@@ -197,6 +213,11 @@ export class FiscalSettingsComponent implements OnInit, OnChanges {
       defaultTvaRate: [19, [Validators.required, Validators.min(0), Validators.max(50)]],
       fiscalStampEnabled: [true],
       defaultPaymentTermsDays: [30, [Validators.required, Validators.min(0), Validators.max(365)]],
+      // S-SET-009: line-discount % above this threshold requires an OWNER approver.
+      discountAuditThresholdPct: [
+        5,
+        [Validators.required, Validators.min(0), Validators.max(100)],
+      ],
     });
     this.populate();
   }
@@ -220,6 +241,7 @@ export class FiscalSettingsComponent implements OnInit, OnChanges {
       defaultTvaRate: this.settings.defaultTvaRate ?? 19,
       fiscalStampEnabled: this.settings.fiscalStampEnabled ?? true,
       defaultPaymentTermsDays: this.settings.defaultPaymentTermsDays ?? 30,
+      discountAuditThresholdPct: this.settings.discountAuditThresholdPct ?? 5,
     });
   }
 
