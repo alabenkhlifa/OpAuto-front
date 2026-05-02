@@ -393,3 +393,227 @@ describe('InvoicingController — S-PERF-005 PDF cache stats route', () => {
     expect(svc.findOne).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * Sweep C-24 — `GET /api/invoices` accepts `?status=`, `?paymentMethod=`,
+ * `?sort=`, `?dir=` and forwards parsed values to the service. Unknown
+ * enum / sort / dir values reject with 400 — never silently default —
+ * so a buggy FE filter surfaces loudly. Fixes the C-20 contract gap
+ * where status filtering was client-side only and the pagination
+ * footer lied about the filtered total.
+ */
+describe('InvoicingController — Sweep C-24 status / paymentMethod / sort wiring', () => {
+  let app: INestApplication;
+  let svc: Record<string, jest.Mock>;
+
+  beforeEach(async () => {
+    svc = {
+      findAll: jest.fn().mockResolvedValue({
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 25,
+      }),
+      findOne: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      issue: jest.fn(),
+      remove: jest.fn(),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [InvoicingController],
+      providers: [
+        { provide: InvoicingService, useValue: svc },
+        { provide: FromJobService, useValue: { createFromJob: jest.fn() } },
+        { provide: DeliveryService, useValue: { deliverInvoice: jest.fn() } },
+        { provide: PdfRendererService, useValue: { renderInvoice: jest.fn() } },
+      ],
+    })
+      .overrideGuard(JwtAuthGuard)
+      .useValue(makeAuthGuard('OWNER'))
+      .overrideGuard(ModuleAccessGuard)
+      .useValue(PassThroughGuard)
+      .compile();
+
+    app = module.createNestApplication();
+    await app.init();
+  });
+
+  afterEach(async () => {
+    if (app) await app.close();
+  });
+
+  // ── Status filter ───────────────────────────────────────────
+
+  it('forwards ?status=OVERDUE verbatim to the service', async () => {
+    await request(app.getHttpServer())
+      .get('/invoices')
+      .query({ status: 'OVERDUE' })
+      .expect(200);
+    expect(svc.findAll).toHaveBeenCalledWith(
+      MOCK_GARAGE_ID,
+      expect.objectContaining({ status: 'OVERDUE' }),
+    );
+  });
+
+  it('accepts case-insensitive ?status=overdue and uppercases it', async () => {
+    await request(app.getHttpServer())
+      .get('/invoices')
+      .query({ status: 'overdue' })
+      .expect(200);
+    expect(svc.findAll).toHaveBeenCalledWith(
+      MOCK_GARAGE_ID,
+      expect.objectContaining({ status: 'OVERDUE' }),
+    );
+  });
+
+  it('rejects unknown ?status=BOGUS with 400 (does NOT silently default)', async () => {
+    await request(app.getHttpServer())
+      .get('/invoices')
+      .query({ status: 'BOGUS' })
+      .expect(400);
+    expect(svc.findAll).not.toHaveBeenCalled();
+  });
+
+  it('omits status from service call when ?status is missing', async () => {
+    await request(app.getHttpServer()).get('/invoices').expect(200);
+    const opts = svc.findAll.mock.calls[0][1];
+    expect(opts.status).toBeUndefined();
+  });
+
+  it('treats ?status= (empty string) as omitted, not invalid', async () => {
+    await request(app.getHttpServer())
+      .get('/invoices')
+      .query({ status: '' })
+      .expect(200);
+    const opts = svc.findAll.mock.calls[0][1];
+    expect(opts.status).toBeUndefined();
+  });
+
+  // ── PaymentMethod filter ────────────────────────────────────
+
+  it('forwards ?paymentMethod=CASH verbatim to the service', async () => {
+    await request(app.getHttpServer())
+      .get('/invoices')
+      .query({ paymentMethod: 'CASH' })
+      .expect(200);
+    expect(svc.findAll).toHaveBeenCalledWith(
+      MOCK_GARAGE_ID,
+      expect.objectContaining({ paymentMethod: 'CASH' }),
+    );
+  });
+
+  it('accepts case-insensitive ?paymentMethod=bank_transfer and uppercases it', async () => {
+    await request(app.getHttpServer())
+      .get('/invoices')
+      .query({ paymentMethod: 'bank_transfer' })
+      .expect(200);
+    expect(svc.findAll).toHaveBeenCalledWith(
+      MOCK_GARAGE_ID,
+      expect.objectContaining({ paymentMethod: 'BANK_TRANSFER' }),
+    );
+  });
+
+  it('rejects unknown ?paymentMethod=BITCOIN with 400', async () => {
+    await request(app.getHttpServer())
+      .get('/invoices')
+      .query({ paymentMethod: 'BITCOIN' })
+      .expect(400);
+    expect(svc.findAll).not.toHaveBeenCalled();
+  });
+
+  // ── Sort + dir ──────────────────────────────────────────────
+
+  it('forwards ?sort=dueDate&dir=asc verbatim to the service', async () => {
+    await request(app.getHttpServer())
+      .get('/invoices')
+      .query({ sort: 'dueDate', dir: 'asc' })
+      .expect(200);
+    expect(svc.findAll).toHaveBeenCalledWith(
+      MOCK_GARAGE_ID,
+      expect.objectContaining({ sort: 'dueDate', dir: 'asc' }),
+    );
+  });
+
+  it('rejects unknown ?sort=foo with 400', async () => {
+    await request(app.getHttpServer())
+      .get('/invoices')
+      .query({ sort: 'foo' })
+      .expect(400);
+    expect(svc.findAll).not.toHaveBeenCalled();
+  });
+
+  it('rejects unknown ?dir=sideways with 400', async () => {
+    await request(app.getHttpServer())
+      .get('/invoices')
+      .query({ dir: 'sideways' })
+      .expect(400);
+    expect(svc.findAll).not.toHaveBeenCalled();
+  });
+
+  it('case-insensitive ?dir=ASC normalised to lowercase', async () => {
+    await request(app.getHttpServer())
+      .get('/invoices')
+      .query({ sort: 'total', dir: 'ASC' })
+      .expect(200);
+    expect(svc.findAll).toHaveBeenCalledWith(
+      MOCK_GARAGE_ID,
+      expect.objectContaining({ sort: 'total', dir: 'asc' }),
+    );
+  });
+
+  it('omits sort + dir from service call when missing', async () => {
+    await request(app.getHttpServer()).get('/invoices').expect(200);
+    const opts = svc.findAll.mock.calls[0][1];
+    expect(opts.sort).toBeUndefined();
+    expect(opts.dir).toBeUndefined();
+  });
+
+  // ── Combinations ────────────────────────────────────────────
+
+  it('combines ?status + ?paymentMethod + ?search + ?page + ?limit + ?sort + ?dir', async () => {
+    await request(app.getHttpServer())
+      .get('/invoices')
+      .query({
+        status: 'SENT',
+        paymentMethod: 'CASH',
+        search: 'Karoui',
+        page: 2,
+        limit: 10,
+        sort: 'total',
+        dir: 'desc',
+      })
+      .expect(200);
+    expect(svc.findAll).toHaveBeenCalledWith(MOCK_GARAGE_ID, {
+      search: 'Karoui',
+      page: 2,
+      limit: 10,
+      status: 'SENT',
+      paymentMethod: 'CASH',
+      sort: 'total',
+      dir: 'desc',
+    });
+  });
+
+  it('returns the paginated envelope with filter applied (mock contract)', async () => {
+    svc.findAll.mockResolvedValueOnce({
+      items: [{ id: 'inv-overdue-1' }],
+      total: 8,
+      page: 1,
+      limit: 25,
+    });
+    const res = await request(app.getHttpServer())
+      .get('/invoices')
+      .query({ status: 'OVERDUE' })
+      .expect(200);
+    // Pre-C-24 the FE saw `total=240` here (server unaware of the
+    // status filter); now total reflects the filtered subset.
+    expect(res.body).toEqual({
+      items: [{ id: 'inv-overdue-1' }],
+      total: 8,
+      page: 1,
+      limit: 25,
+    });
+  });
+});

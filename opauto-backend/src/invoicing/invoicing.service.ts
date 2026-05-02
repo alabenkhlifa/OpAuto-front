@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { InvoiceStatus, Prisma, UserRole } from '@prisma/client';
+import { InvoiceStatus, PaymentMethod, Prisma, UserRole } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { UpdateInvoiceDto } from './dto/update-invoice.dto';
@@ -65,13 +65,34 @@ export class InvoicingService {
    * are issued inside a single `prisma.$transaction([])` so the page
    * slice and total stay consistent under concurrent inserts.
    *
+   * Sweep C-24 — adds `status?` / `paymentMethod?` filters and
+   * `sort?` / `dir?` ordering to the same envelope. All filter clauses
+   * are AND'd into the `where` so the count reflects the filtered
+   * result (fixing the C-20-era bug where "Overdue" would still show
+   * "Showing 1-25 of 240" because the BE didn't know about the
+   * status). `paymentMethod` is derived via `payments: { some: { method } }`
+   * because the Invoice model has no direct paymentMethod column — it
+   * matches any invoice that has at least one recorded payment with
+   * that method. Sort defaults stay `createdAt desc`; the `id: 'desc'`
+   * tiebreaker is preserved (load-bearing — see C-20 note below).
+   *
    * The legacy two-arg shape `findAll(garageId, search?)` is kept for
    * back-compat — passing a string second arg routes to default
    * `page=1, limit=25`. New callers should pass the object form.
    */
   async findAll(
     garageId: string,
-    opts?: string | { search?: string; page?: number; limit?: number },
+    opts?:
+      | string
+      | {
+          search?: string;
+          page?: number;
+          limit?: number;
+          status?: InvoiceStatus;
+          paymentMethod?: PaymentMethod;
+          sort?: 'createdAt' | 'dueDate' | 'total' | 'invoiceNumber';
+          dir?: 'asc' | 'desc';
+        },
   ) {
     const normalized = typeof opts === 'string' || opts === undefined
       ? { search: typeof opts === 'string' ? opts : undefined, page: 1, limit: 25 }
@@ -81,31 +102,56 @@ export class InvoicingService {
     const page = Math.max(1, Math.floor(normalized.page ?? 1));
     const limit = Math.min(100, Math.max(1, Math.floor(normalized.limit ?? 25)));
 
-    const where: any = trimmed
-      ? {
-          garageId,
-          OR: [
-            { invoiceNumber: { contains: trimmed, mode: 'insensitive' } },
-            {
-              customer: {
-                is: {
-                  OR: [
-                    { firstName: { contains: trimmed, mode: 'insensitive' } },
-                    { lastName: { contains: trimmed, mode: 'insensitive' } },
-                  ],
-                },
-              },
+    // Build the WHERE clause incrementally so each filter contributes
+    // a peer-level AND'd predicate (the OR substring search lives
+    // alongside `status` / payments-relation filters, not nested
+    // beneath them — Prisma handles that fan-out cleanly).
+    const where: any = { garageId };
+
+    if (trimmed) {
+      where.OR = [
+        { invoiceNumber: { contains: trimmed, mode: 'insensitive' } },
+        {
+          customer: {
+            is: {
+              OR: [
+                { firstName: { contains: trimmed, mode: 'insensitive' } },
+                { lastName: { contains: trimmed, mode: 'insensitive' } },
+              ],
             },
-            {
-              car: {
-                is: {
-                  licensePlate: { contains: trimmed, mode: 'insensitive' },
-                },
-              },
+          },
+        },
+        {
+          car: {
+            is: {
+              licensePlate: { contains: trimmed, mode: 'insensitive' },
             },
-          ],
-        }
-      : { garageId };
+          },
+        },
+      ];
+    }
+
+    if (normalized.status) {
+      where.status = normalized.status;
+    }
+
+    if (normalized.paymentMethod) {
+      // Invoice has no direct paymentMethod column — derive via the
+      // Payments relation. `some` matches any invoice with at least
+      // one recorded payment of the requested method.
+      where.payments = { some: { method: normalized.paymentMethod } };
+    }
+
+    // Sort: default `createdAt desc` matches the legacy contract.
+    // The `id: 'desc'` tiebreaker is **load-bearing** — without it
+    // postgres may return overlapping or missed rows across pages
+    // when multiple invoices share a `createdAt` (or any tied sort
+    // key). C-20 caught this on the seed dataset
+    // (INV-202604-0014 appeared on both page 1 and page 2). Keep it
+    // even when the user picks a different sort field.
+    const sortField = normalized.sort ?? 'createdAt';
+    const sortDir = normalized.dir ?? 'desc';
+    const orderBy = [{ [sortField]: sortDir }, { id: 'desc' as const }];
 
     const [items, total] = await this.prisma.$transaction([
       this.prisma.invoice.findMany({
@@ -131,13 +177,7 @@ export class InvoicingService {
           },
           _count: { select: { lineItems: true, payments: true } },
         },
-        // S-PERF-001 (Sweep C-20): secondary sort by `id` is the stable
-        // tiebreaker — without it postgres may return overlapping or
-        // missed rows across pages when multiple invoices share a
-        // `createdAt` timestamp. The seed dataset hit this exact case
-        // (INV-202604-0014 appeared on both page 1 and page 2 of a 25-row
-        // pagination).
-        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        orderBy,
         skip: (page - 1) * limit,
         take: limit,
       }),

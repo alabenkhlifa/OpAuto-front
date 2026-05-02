@@ -502,4 +502,106 @@ describe('InvoiceService', () => {
       refresh.flush(makeBackendInvoiceShape());
     });
   });
+
+  // ── Sweep C-24 — getInvoicesPaginated query string serialisation ──
+
+  describe('Sweep C-24 — getInvoicesPaginated filter + sort params', () => {
+    function flushEnvelope(req: ReturnType<HttpTestingController['expectOne']>) {
+      req.flush({ items: [], total: 0, page: 1, limit: 25 });
+    }
+
+    it('omits status / paymentMethod / sort / dir when not supplied', () => {
+      service.getInvoicesPaginated({ page: 1, limit: 25 }).subscribe();
+      const req = httpMock.expectOne(
+        (r) => r.url === '/invoices' && r.params.get('page') === '1',
+      );
+      expect(req.request.params.has('status')).toBe(false);
+      expect(req.request.params.has('paymentMethod')).toBe(false);
+      expect(req.request.params.has('sort')).toBe(false);
+      expect(req.request.params.has('dir')).toBe(false);
+      flushEnvelope(req);
+    });
+
+    it('uppercases FE status "overdue" to BE "OVERDUE" in the query string', () => {
+      service.getInvoicesPaginated({ status: 'overdue' }).subscribe();
+      const req = httpMock.expectOne(
+        (r) => r.url === '/invoices' && r.params.get('status') === 'OVERDUE',
+      );
+      expect(req.request.params.get('status')).toBe('OVERDUE');
+      flushEnvelope(req);
+    });
+
+    it('converts kebab-case "partially-paid" to snake_case "PARTIALLY_PAID"', () => {
+      service.getInvoicesPaginated({ status: 'partially-paid' }).subscribe();
+      const req = httpMock.expectOne(
+        (r) => r.url === '/invoices' && r.params.get('status') === 'PARTIALLY_PAID',
+      );
+      expect(req.request.params.get('status')).toBe('PARTIALLY_PAID');
+      flushEnvelope(req);
+    });
+
+    it('converts kebab-case "bank-transfer" to snake_case "BANK_TRANSFER"', () => {
+      service
+        .getInvoicesPaginated({ paymentMethod: 'bank-transfer' })
+        .subscribe();
+      const req = httpMock.expectOne(
+        (r) =>
+          r.url === '/invoices' &&
+          r.params.get('paymentMethod') === 'BANK_TRANSFER',
+      );
+      expect(req.request.params.get('paymentMethod')).toBe('BANK_TRANSFER');
+      flushEnvelope(req);
+    });
+
+    it('forwards sort + dir verbatim (FE values match BE allow-list)', () => {
+      service
+        .getInvoicesPaginated({ sort: 'dueDate', dir: 'asc' })
+        .subscribe();
+      const req = httpMock.expectOne(
+        (r) =>
+          r.url === '/invoices' &&
+          r.params.get('sort') === 'dueDate' &&
+          r.params.get('dir') === 'asc',
+      );
+      flushEnvelope(req);
+    });
+
+    it('serialises every param when all combine: search + status + paymentMethod + sort + dir + page + limit', () => {
+      service
+        .getInvoicesPaginated({
+          search: 'Karoui',
+          page: 2,
+          limit: 10,
+          status: 'sent',
+          paymentMethod: 'cash',
+          sort: 'total',
+          dir: 'desc',
+        })
+        .subscribe();
+      const req = httpMock.expectOne(
+        (r) =>
+          r.url === '/invoices' &&
+          r.params.get('status') === 'SENT' &&
+          r.params.get('paymentMethod') === 'CASH',
+      );
+      expect(req.request.params.get('search')).toBe('Karoui');
+      expect(req.request.params.get('page')).toBe('2');
+      expect(req.request.params.get('limit')).toBe('10');
+      expect(req.request.params.get('status')).toBe('SENT');
+      expect(req.request.params.get('paymentMethod')).toBe('CASH');
+      expect(req.request.params.get('sort')).toBe('total');
+      expect(req.request.params.get('dir')).toBe('desc');
+      flushEnvelope(req);
+    });
+
+    it('falsy status / paymentMethod (undefined / "") drops the param', () => {
+      service
+        .getInvoicesPaginated({ status: undefined, paymentMethod: '' })
+        .subscribe();
+      const req = httpMock.expectOne((r) => r.url === '/invoices');
+      expect(req.request.params.has('status')).toBe(false);
+      expect(req.request.params.has('paymentMethod')).toBe(false);
+      flushEnvelope(req);
+    });
+  });
 });

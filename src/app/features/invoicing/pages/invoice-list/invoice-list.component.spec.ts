@@ -22,10 +22,16 @@ import {
  * rewritten to assert:
  *   - the BE call carries the right `{ search, page, limit }` opts,
  *   - `totalCount` is server-authoritative,
- *   - status / paymentMethod filters narrow the rendered page (BE
- *     doesn't yet support `?status=` / `?paymentMethod=`),
  *   - rapid Next clicks switchMap-collapse to the latest page,
  *   - search resets `currentPage` to 1.
+ *
+ * Sweep C-24 — status / paymentMethod filtering moved to the server
+ * via `?status=` / `?paymentMethod=`. Specs rewritten to assert:
+ *   - filter selection triggers a fresh BE fetch with the param,
+ *   - "All" sentinel omits the param from the call,
+ *   - `totalCount` reflects the filtered total (no more "1-25 of 240"
+ *     while showing 0 OVERDUE rows),
+ *   - changing a filter resets `currentPage` to 1.
  *
  * Karma `.html` loader hits subfolder specs in this repo (project
  * memory: pre-existing). Tests stay template-agnostic — they read
@@ -149,26 +155,23 @@ describe('InvoiceListPageComponent', () => {
       ]);
     });
 
-    it('status filter narrows the rendered server page (client-side filter on the slice)', () => {
-      // Sweep C-20: BE returns the page; status filter then narrows in-memory.
-      const draft = makeInvoice({ id: 'd1', invoiceNumber: 'DRAFT-aaaa', status: 'draft' });
-      const sent = makeInvoice({ id: 's1', invoiceNumber: 'INV-2026-0001', status: 'sent' });
-      const paid = makeInvoice({ id: 'p1', invoiceNumber: 'INV-2026-0002', status: 'paid' });
-      configure([draft, sent, paid], 3);
+    it('filteredInvoices is a pass-through to invoices() (Sweep C-24 moved status filter to BE)', () => {
+      // Sweep C-24: BE returns the page already filtered; the FE no
+      // longer narrows in-memory. The pass-through keeps the existing
+      // template binding stable.
+      const a = makeInvoice({ id: 'a1', status: 'draft' });
+      const b = makeInvoice({ id: 'b1', status: 'sent' });
+      const c = makeInvoice({ id: 'c1', status: 'paid' });
+      configure([a, b, c], 3);
       const fixture = TestBed.createComponent(InvoiceListPageComponent);
       const cmp = fixture.componentInstance;
       cmp.ngOnInit();
       expect(cmp.filteredInvoices().length).toBe(3);
 
+      // Setting selectedStatus alone (without calling onStatusChange)
+      // does NOT narrow the rendered list — that's the whole point of
+      // the BE-driven contract.
       cmp.selectedStatus.set('draft');
-      expect(cmp.filteredInvoices().length).toBe(1);
-      expect(cmp.filteredInvoices()[0].id).toBe('d1');
-
-      cmp.selectedStatus.set('paid');
-      expect(cmp.filteredInvoices().length).toBe(1);
-      expect(cmp.filteredInvoices()[0].id).toBe('p1');
-
-      cmp.selectedStatus.set('all');
       expect(cmp.filteredInvoices().length).toBe(3);
     });
 
@@ -196,7 +199,7 @@ describe('InvoiceListPageComponent', () => {
       expect(InvoiceListPageComponent.PAGE_SIZE).toBe(25);
     });
 
-    it('initial fetch calls getInvoicesPaginated with page=1, limit=25, search=""', () => {
+    it('initial fetch calls getInvoicesPaginated with page=1, limit=25, search="" and "all" filters omitted', () => {
       const stub = configure([makeInvoice()], 1);
       const fixture = TestBed.createComponent(InvoiceListPageComponent);
       const cmp = fixture.componentInstance;
@@ -204,7 +207,15 @@ describe('InvoiceListPageComponent', () => {
 
       expect(stub.getInvoicesPaginated).toHaveBeenCalled();
       const lastCall = stub.getInvoicesPaginated.calls.mostRecent().args[0];
-      expect(lastCall).toEqual({ search: '', page: 1, limit: 25 });
+      // Sweep C-24: 'all' sentinel collapses to undefined for both
+      // filter params so the BE never sees a literal `?status=all`.
+      expect(lastCall).toEqual({
+        search: '',
+        page: 1,
+        limit: 25,
+        status: undefined,
+        paymentMethod: undefined,
+      });
     });
 
     it('totalPages computes from server-authoritative totalCount', () => {
@@ -232,7 +243,13 @@ describe('InvoiceListPageComponent', () => {
       expect(cmp.currentPage()).toBe(2);
       expect(stub.getInvoicesPaginated).toHaveBeenCalledTimes(2);
       const secondCall = stub.getInvoicesPaginated.calls.mostRecent().args[0];
-      expect(secondCall).toEqual({ search: '', page: 2, limit: 25 });
+      expect(secondCall).toEqual({
+        search: '',
+        page: 2,
+        limit: 25,
+        status: undefined,
+        paymentMethod: undefined,
+      });
     });
 
     it('Previous page emits a fetch with page-1 and is guarded at page 1', () => {
@@ -332,7 +349,13 @@ describe('InvoiceListPageComponent', () => {
       expect(cmp.selectedStatus()).toBe('all');
       expect(cmp.selectedPaymentMethod()).toBe('all');
       const lastCall = stub.getInvoicesPaginated.calls.mostRecent().args[0];
-      expect(lastCall).toEqual({ search: '', page: 1, limit: 25 });
+      expect(lastCall).toEqual({
+        search: '',
+        page: 1,
+        limit: 25,
+        status: undefined,
+        paymentMethod: undefined,
+      });
     });
 
     it('debounced search waits 300ms then emits a single BE call with the latest term', fakeAsync(() => {
@@ -356,6 +379,8 @@ describe('InvoiceListPageComponent', () => {
         search: 'Karoui',
         page: 1,
         limit: 25,
+        status: undefined,
+        paymentMethod: undefined,
       });
     }));
 
@@ -476,5 +501,184 @@ describe('InvoiceListPageComponent', () => {
       tick();
       expect(cmp.isLoading()).toBe(false);
     }));
+  });
+
+  // ── Sweep C-24 — server-side status / paymentMethod filter ──
+
+  describe('Sweep C-24 — server-side status / paymentMethod filter', () => {
+    it('onStatusChange("overdue") fires fetch with status="overdue" + page=1', () => {
+      const stub = configure([makeInvoice()], 240);
+      const fixture = TestBed.createComponent(InvoiceListPageComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      stub.getInvoicesPaginated.calls.reset();
+
+      cmp.onStatusChange({
+        target: { value: 'overdue' },
+      } as unknown as Event);
+
+      expect(stub.getInvoicesPaginated).toHaveBeenCalledTimes(1);
+      const call = stub.getInvoicesPaginated.calls.mostRecent().args[0];
+      expect(call).toEqual({
+        search: '',
+        page: 1,
+        limit: 25,
+        status: 'overdue',
+        paymentMethod: undefined,
+      });
+    });
+
+    it('onStatusChange resets currentPage to 1 (page=3 → 1) when filter narrows', () => {
+      const stub = configure([makeInvoice()], 240);
+      const fixture = TestBed.createComponent(InvoiceListPageComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+
+      cmp.goToNextPage();
+      cmp.goToNextPage();
+      expect(cmp.currentPage()).toBe(3);
+      stub.getInvoicesPaginated.calls.reset();
+
+      cmp.onStatusChange({
+        target: { value: 'overdue' },
+      } as unknown as Event);
+
+      expect(cmp.currentPage()).toBe(1);
+      const call = stub.getInvoicesPaginated.calls.mostRecent().args[0];
+      expect(call.page).toBe(1);
+    });
+
+    it('"All Statuses" → status: undefined (param omitted)', () => {
+      const stub = configure([makeInvoice()], 240);
+      const fixture = TestBed.createComponent(InvoiceListPageComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+
+      // Set to overdue first then back to "all"
+      cmp.onStatusChange({
+        target: { value: 'overdue' },
+      } as unknown as Event);
+      stub.getInvoicesPaginated.calls.reset();
+
+      cmp.onStatusChange({ target: { value: 'all' } } as unknown as Event);
+
+      const call = stub.getInvoicesPaginated.calls.mostRecent().args[0];
+      expect(call.status).toBeUndefined();
+    });
+
+    it('onPaymentMethodChange("cash") fires fetch with paymentMethod="cash" + page=1', () => {
+      const stub = configure([makeInvoice()], 240);
+      const fixture = TestBed.createComponent(InvoiceListPageComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      stub.getInvoicesPaginated.calls.reset();
+
+      cmp.onPaymentMethodChange({
+        target: { value: 'cash' },
+      } as unknown as Event);
+
+      const call = stub.getInvoicesPaginated.calls.mostRecent().args[0];
+      expect(call).toEqual({
+        search: '',
+        page: 1,
+        limit: 25,
+        status: undefined,
+        paymentMethod: 'cash',
+      });
+    });
+
+    it('totalCount reflects the filtered total returned by the BE (not the unfiltered global)', () => {
+      // Reproduces the exact bug C-24 fixes: pre-fix, the BE returned
+      // `total: 240` (unfiltered) and the FE showed "Showing 1-25 of 240"
+      // even when the OVERDUE list was empty. Now the BE narrows count
+      // and the FE mirrors it.
+      const stub = configure([makeInvoice({ status: 'overdue' })], 8);
+      const fixture = TestBed.createComponent(InvoiceListPageComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+
+      cmp.onStatusChange({
+        target: { value: 'overdue' },
+      } as unknown as Event);
+
+      // Stub is wired to ALWAYS return the same envelope, so the
+      // filtered fetch settles with total=8.
+      expect(cmp.totalCount()).toBe(8);
+      expect(cmp.totalPages()).toBe(1);
+      // Footer hidden (single page) — the contract from C-20 stays.
+      expect(cmp.pageStart()).toBe(1);
+    });
+
+    it('combines status + paymentMethod + search in the BE call', () => {
+      const stub = configure([makeInvoice()], 3);
+      const fixture = TestBed.createComponent(InvoiceListPageComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+
+      // Type a search term, then pick a status, then a payment method.
+      cmp.searchQuery.set('Karoui');
+      cmp.onStatusChange({ target: { value: 'sent' } } as unknown as Event);
+      stub.getInvoicesPaginated.calls.reset();
+
+      cmp.onPaymentMethodChange({
+        target: { value: 'cash' },
+      } as unknown as Event);
+
+      const call = stub.getInvoicesPaginated.calls.mostRecent().args[0];
+      expect(call).toEqual({
+        search: 'Karoui',
+        page: 1,
+        limit: 25,
+        status: 'sent',
+        paymentMethod: 'cash',
+      });
+    });
+
+    it('clearFilters() omits status + paymentMethod from the BE call', () => {
+      const stub = configure([makeInvoice()], 240);
+      const fixture = TestBed.createComponent(InvoiceListPageComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+
+      cmp.onStatusChange({
+        target: { value: 'overdue' },
+      } as unknown as Event);
+      cmp.onPaymentMethodChange({
+        target: { value: 'cash' },
+      } as unknown as Event);
+      stub.getInvoicesPaginated.calls.reset();
+
+      cmp.clearFilters();
+
+      const call = stub.getInvoicesPaginated.calls.mostRecent().args[0];
+      expect(call.status).toBeUndefined();
+      expect(call.paymentMethod).toBeUndefined();
+      expect(call.search).toBe('');
+    });
+
+    it('Next page preserves status + paymentMethod filters across navigation', () => {
+      const stub = configure(
+        Array.from({ length: 25 }, (_, i) => makeInvoice({ id: `i${i}` })),
+        50,
+      );
+      const fixture = TestBed.createComponent(InvoiceListPageComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+
+      cmp.onStatusChange({
+        target: { value: 'overdue' },
+      } as unknown as Event);
+      cmp.onPaymentMethodChange({
+        target: { value: 'cash' },
+      } as unknown as Event);
+      stub.getInvoicesPaginated.calls.reset();
+
+      cmp.goToNextPage();
+
+      const call = stub.getInvoicesPaginated.calls.mostRecent().args[0];
+      expect(call.page).toBe(2);
+      expect(call.status).toBe('overdue');
+      expect(call.paymentMethod).toBe('cash');
+    });
   });
 });

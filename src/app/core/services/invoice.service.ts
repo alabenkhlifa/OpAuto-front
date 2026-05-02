@@ -302,9 +302,27 @@ export class InvoiceService {
    *
    * Empty / whitespace `search` is omitted from the query string so
    * the BE's `where` short-circuit kicks in.
+   *
+   * Sweep C-24 — extended with `?status=` / `?paymentMethod=` /
+   * `?sort=` / `?dir=` so the FE no longer has to client-side filter
+   * a server-paged slice. The "All Statuses" / "All Payment Methods"
+   * UI options correspond to omitting the param entirely (only
+   * specific values trigger filtering). `status` and `paymentMethod`
+   * are forwarded **uppercase** because the BE Prisma enums are
+   * uppercase (`OVERDUE`, `BANK_TRANSFER`); the FE invoice model uses
+   * lowercase / kebab-case (`overdue`, `bank-transfer`) so the caller
+   * can pass either shape and we normalise here.
    */
   getInvoicesPaginated(
-    opts: { search?: string; page?: number; limit?: number } = {},
+    opts: {
+      search?: string;
+      page?: number;
+      limit?: number;
+      status?: string;
+      paymentMethod?: string;
+      sort?: 'createdAt' | 'dueDate' | 'total' | 'invoiceNumber';
+      dir?: 'asc' | 'desc';
+    } = {},
   ): Observable<{
     items: InvoiceWithDetails[];
     total: number;
@@ -316,6 +334,12 @@ export class InvoiceService {
     if (trimmed) params = params.set('search', trimmed);
     if (opts.page !== undefined) params = params.set('page', String(opts.page));
     if (opts.limit !== undefined) params = params.set('limit', String(opts.limit));
+    if (opts.status) params = params.set('status', toBackendEnum(opts.status));
+    if (opts.paymentMethod) {
+      params = params.set('paymentMethod', toBackendEnum(opts.paymentMethod));
+    }
+    if (opts.sort) params = params.set('sort', opts.sort);
+    if (opts.dir) params = params.set('dir', opts.dir);
     return this.http
       .get<{ items: any[]; total: number; page: number; limit: number }>(
         '/invoices',

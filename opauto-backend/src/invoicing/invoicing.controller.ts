@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -28,7 +29,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { UserRole } from '@prisma/client';
+import { InvoiceStatus, PaymentMethod, UserRole } from '@prisma/client';
 import { ModuleAccessGuard, RequireModule } from '../modules/module-access.guard';
 
 /**
@@ -67,6 +68,16 @@ export class InvoicingController {
    * `{ items, total, page, limit }` — with `total` reflecting the
    * post-search row count (i.e. search filters are applied BEFORE
    * pagination). NaN / invalid values fall back to defaults.
+   *
+   * Sweep C-24 — server-side `?status=` / `?paymentMethod=` filters +
+   * `?sort=` / `?dir=` ordering. All four params are optional and
+   * combine with `?search=` via AND in the WHERE clause so the count
+   * (and therefore the FE pagination footer) reflects the filtered
+   * total. Unknown enum / sort / dir values throw 400 — never silently
+   * default — so a typo'd UI state surfaces loudly instead of lying
+   * about the result count. `paymentMethod` filters by *any* recorded
+   * payment matching that method (the Invoice model has no direct
+   * paymentMethod column; it's derived from the Payments relation).
    */
   @Get()
   findAll(
@@ -74,11 +85,19 @@ export class InvoicingController {
     @Query('search') search?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('status') status?: string,
+    @Query('paymentMethod') paymentMethod?: string,
+    @Query('sort') sort?: string,
+    @Query('dir') dir?: string,
   ) {
     return this.service.findAll(gid, {
       search,
       page: parsePage(page),
       limit: parseLimit(limit),
+      status: parseStatus(status),
+      paymentMethod: parsePaymentMethod(paymentMethod),
+      sort: parseSort(sort),
+      dir: parseDir(dir),
     });
   }
 
@@ -246,4 +265,63 @@ function parseLimit(raw?: string): number {
   if (floored < 1) return LIMIT_DEFAULT;
   if (floored > LIMIT_MAX) return LIMIT_MAX;
   return floored;
+}
+
+/**
+ * Sweep C-24 — strict-validation parsers for the new filter / sort
+ * params. Empty / undefined returns `undefined` (no filter); a
+ * non-empty value that doesn't match the allow-list throws 400. Status
+ * + paymentMethod parsing is case-insensitive so `?status=overdue` and
+ * `?status=OVERDUE` both work — the FE invoice-list ships uppercase,
+ * but allowing lower case keeps curl / external integrations friendly.
+ */
+const SORT_FIELDS = ['createdAt', 'dueDate', 'total', 'invoiceNumber'] as const;
+type SortField = typeof SORT_FIELDS[number];
+
+const DIR_VALUES = ['asc', 'desc'] as const;
+type SortDir = typeof DIR_VALUES[number];
+
+function parseStatus(raw?: string): InvoiceStatus | undefined {
+  if (raw === undefined || raw === null || raw === '') return undefined;
+  const upper = String(raw).toUpperCase();
+  const allowed = Object.values(InvoiceStatus) as string[];
+  if (!allowed.includes(upper)) {
+    throw new BadRequestException(
+      `Invalid status '${raw}'. Allowed: ${allowed.join(', ')}`,
+    );
+  }
+  return upper as InvoiceStatus;
+}
+
+function parsePaymentMethod(raw?: string): PaymentMethod | undefined {
+  if (raw === undefined || raw === null || raw === '') return undefined;
+  const upper = String(raw).toUpperCase();
+  const allowed = Object.values(PaymentMethod) as string[];
+  if (!allowed.includes(upper)) {
+    throw new BadRequestException(
+      `Invalid paymentMethod '${raw}'. Allowed: ${allowed.join(', ')}`,
+    );
+  }
+  return upper as PaymentMethod;
+}
+
+function parseSort(raw?: string): SortField | undefined {
+  if (raw === undefined || raw === null || raw === '') return undefined;
+  if (!SORT_FIELDS.includes(raw as SortField)) {
+    throw new BadRequestException(
+      `Invalid sort '${raw}'. Allowed: ${SORT_FIELDS.join(', ')}`,
+    );
+  }
+  return raw as SortField;
+}
+
+function parseDir(raw?: string): SortDir | undefined {
+  if (raw === undefined || raw === null || raw === '') return undefined;
+  const lower = String(raw).toLowerCase();
+  if (!DIR_VALUES.includes(lower as SortDir)) {
+    throw new BadRequestException(
+      `Invalid dir '${raw}'. Allowed: ${DIR_VALUES.join(', ')}`,
+    );
+  }
+  return lower as SortDir;
 }

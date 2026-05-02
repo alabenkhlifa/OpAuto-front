@@ -29,12 +29,22 @@ import {
  *  - The page returned by the BE is already sliced — the in-memory
  *    `pagedInvoices` slice reduces to a no-op pass-through so we keep
  *    one render path for both shapes.
- *  - Status / paymentMethod filters stay CLIENT-SIDE on the rendered
- *    page (BE doesn't yet support status/method query params — that's
- *    a future sweep). With PAGE_SIZE=25 and reasonable garage-level
- *    cardinality this is acceptable; users searching for a specific
- *    status across hundreds of invoices already use the dedicated
- *    Pending / Overdue surfaces.
+ *
+ * Sweep C-24: status / paymentMethod filters are now SERVER-SIDE.
+ *  - The `fetch$` payload carries `status` / `paymentMethod` so the
+ *    BE's `where` clause filters and the count reflects the filter.
+ *    Pre-C-24 the FE did `.filter()` over the rendered 25 rows and
+ *    showed "Showing 1-25 of 240" with an empty list when filtering
+ *    "Overdue" — that lie is now fixed.
+ *  - "All Statuses" / "All Payment Methods" map to the sentinel
+ *    string `'all'` and OMIT the param from the query string. Only
+ *    specific values trigger filtering.
+ *  - Changing a filter resets `currentPage` to 1 (matches the search
+ *    contract — page state is meaningless when the filtered total
+ *    changes shape).
+ *  - The client-side `.filter()` over the rendered page is REMOVED;
+ *    `filteredInvoices` becomes a pass-through to satisfy the existing
+ *    template binding.
  */
 @Component({
   selector: 'app-invoice-list-page',
@@ -61,8 +71,18 @@ export class InvoiceListPageComponent implements OnInit {
    * `currentPage`) emit through their respective Subjects on user
    * interaction; the consolidated pipeline below routes them to one
    * BE call.
+   *
+   * Sweep C-24 — payload extended with `status` / `paymentMethod` so
+   * filter changes flow through the same switchMap pipeline. The
+   * sentinel `'all'` is dropped before forwarding to the service so
+   * the BE never sees a literal `?status=all`.
    */
-  private readonly fetch$ = new Subject<{ search: string; page: number }>();
+  private readonly fetch$ = new Subject<{
+    search: string;
+    page: number;
+    status: string;
+    paymentMethod: string;
+  }>();
 
   /** Pagination — page size is intentionally fixed (no UI knob) at 25. */
   static readonly PAGE_SIZE = 25;
@@ -78,24 +98,13 @@ export class InvoiceListPageComponent implements OnInit {
   currentPage = signal(1);
 
   /**
-   * Sweep C-20: status / paymentMethod filters apply to the SERVER-PAGED
-   * rows only (the slice the BE returned for `currentPage`). The BE
-   * doesn't yet support `?status=` / `?paymentMethod=` query params
-   * (deferred to a follow-up sweep). Search is BE-side; the in-memory
-   * substring match is removed since the BE result is already filtered.
+   * Sweep C-24: status / paymentMethod filtering moved to the server,
+   * so `filteredInvoices` is now a pass-through to keep the template
+   * binding stable. The page that arrives from the BE is already
+   * filtered + paginated; client-side narrowing would only make the
+   * footer's "Showing X-Y of Z" math lie again.
    */
-  filteredInvoices = computed(() => {
-    let filtered = [...this.invoices()];
-    const status = this.selectedStatus();
-    if (status !== 'all') {
-      filtered = filtered.filter((inv) => inv.status === status);
-    }
-    const method = this.selectedPaymentMethod();
-    if (method !== 'all') {
-      filtered = filtered.filter((inv) => inv.paymentMethod === method);
-    }
-    return filtered;
-  });
+  filteredInvoices = computed(() => this.invoices());
 
   /**
    * Server-authoritative — `totalCount` is the post-search total from
@@ -149,18 +158,25 @@ export class InvoiceListPageComponent implements OnInit {
       }
     });
 
-    // S-PERF-001 / S-PERF-002 — single fetch pipeline. Both search and
-    // page-change emit through `fetch$`; switchMap cancels any in-flight
-    // request when a newer one arrives, so rapid Next clicks or rapid
-    // typing collapse to the latest settled response.
+    // S-PERF-001 / S-PERF-002 / Sweep C-24 — single fetch pipeline.
+    // Search + page-change + status / paymentMethod filter changes
+    // all emit through `fetch$`; switchMap cancels any in-flight
+    // request when a newer one arrives, so rapid Next clicks or
+    // rapid typing collapse to the latest settled response.
     this.fetch$
       .pipe(
-        switchMap(({ search, page }) => {
+        switchMap(({ search, page, status, paymentMethod }) => {
           this.isLoading.set(true);
           return this.invoiceService.getInvoicesPaginated({
             search,
             page,
             limit: InvoiceListPageComponent.PAGE_SIZE,
+            // 'all' sentinel → omit from query string. The
+            // service's BE serialiser only sets the param when the
+            // value is truthy AND non-empty.
+            status: status === 'all' ? undefined : status,
+            paymentMethod:
+              paymentMethod === 'all' ? undefined : paymentMethod,
           });
         }),
         takeUntilDestroyed(this.destroyRef),
@@ -181,7 +197,12 @@ export class InvoiceListPageComponent implements OnInit {
       .subscribe((term) => {
         this.searchQuery.set(term);
         this.currentPage.set(1);
-        this.fetch$.next({ search: term, page: 1 });
+        this.fetch$.next({
+          search: term,
+          page: 1,
+          status: this.selectedStatus(),
+          paymentMethod: this.selectedPaymentMethod(),
+        });
       });
 
     this.loadInvoices();
@@ -195,6 +216,8 @@ export class InvoiceListPageComponent implements OnInit {
     this.fetch$.next({
       search: this.searchQuery().trim(),
       page: this.currentPage(),
+      status: this.selectedStatus(),
+      paymentMethod: this.selectedPaymentMethod(),
     });
   }
 
@@ -207,12 +230,29 @@ export class InvoiceListPageComponent implements OnInit {
     this.searchDebounce$.next(value);
   }
   onStatusChange(event: Event): void {
-    this.selectedStatus.set((event.target as HTMLSelectElement).value);
+    const value = (event.target as HTMLSelectElement).value;
+    this.selectedStatus.set(value);
+    // Sweep C-24: changing the status filter resets pagination to
+    // page 1 (the filtered total has a different shape) AND fires a
+    // fresh fetch so the BE narrows the result set.
     this.currentPage.set(1);
+    this.fetch$.next({
+      search: this.searchQuery().trim(),
+      page: 1,
+      status: value,
+      paymentMethod: this.selectedPaymentMethod(),
+    });
   }
   onPaymentMethodChange(event: Event): void {
-    this.selectedPaymentMethod.set((event.target as HTMLSelectElement).value);
+    const value = (event.target as HTMLSelectElement).value;
+    this.selectedPaymentMethod.set(value);
     this.currentPage.set(1);
+    this.fetch$.next({
+      search: this.searchQuery().trim(),
+      page: 1,
+      status: this.selectedStatus(),
+      paymentMethod: value,
+    });
   }
   toggleMobileFilters(): void {
     this.showMobileFilters.update((v) => !v);
@@ -223,7 +263,12 @@ export class InvoiceListPageComponent implements OnInit {
     this.selectedPaymentMethod.set('all');
     this.currentPage.set(1);
     // Re-hydrate page 1 of the unfiltered set.
-    this.fetch$.next({ search: '', page: 1 });
+    this.fetch$.next({
+      search: '',
+      page: 1,
+      status: 'all',
+      paymentMethod: 'all',
+    });
   }
 
   /** Pagination handlers — server-driven; emit a fetch for the new page. */
@@ -234,6 +279,8 @@ export class InvoiceListPageComponent implements OnInit {
       this.fetch$.next({
         search: this.searchQuery().trim(),
         page: next,
+        status: this.selectedStatus(),
+        paymentMethod: this.selectedPaymentMethod(),
       });
     }
   }
@@ -244,6 +291,8 @@ export class InvoiceListPageComponent implements OnInit {
       this.fetch$.next({
         search: this.searchQuery().trim(),
         page: prev,
+        status: this.selectedStatus(),
+        paymentMethod: this.selectedPaymentMethod(),
       });
     }
   }

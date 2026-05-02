@@ -338,6 +338,149 @@ describe('InvoicingService – findAll', () => {
       expect(countCall.where).toEqual(findManyCall.where);
     });
   });
+
+  // ── 10. Sweep C-24 — server-side status / paymentMethod / sort ──
+
+  describe('Sweep C-24 — status / paymentMethod filters + sort', () => {
+    it('adds `where.status` to BOTH findMany and count when ?status= is set', async () => {
+      await service.findAll(GARAGE_ID, { status: 'OVERDUE' as any });
+
+      const findManyCall = prisma.invoice.findMany.mock.calls[0][0];
+      const countCall = prisma.invoice.count.mock.calls[0][0];
+
+      expect(findManyCall.where.status).toBe('OVERDUE');
+      expect(countCall.where.status).toBe('OVERDUE');
+      // Count and findMany must use the SAME where so the FE's
+      // pagination total reflects the filtered subset.
+      expect(countCall.where).toEqual(findManyCall.where);
+    });
+
+    it('omits `where.status` when status is undefined', async () => {
+      await service.findAll(GARAGE_ID);
+      const findManyCall = prisma.invoice.findMany.mock.calls[0][0];
+      expect(findManyCall.where.status).toBeUndefined();
+    });
+
+    it('adds `where.payments.some.method` for ?paymentMethod=CASH', async () => {
+      await service.findAll(GARAGE_ID, { paymentMethod: 'CASH' as any });
+
+      const findManyCall = prisma.invoice.findMany.mock.calls[0][0];
+      const countCall = prisma.invoice.count.mock.calls[0][0];
+
+      // Invoice has no direct paymentMethod column — must derive
+      // via the Payments relation. `some` matches any invoice with
+      // at least one payment of the requested method.
+      expect(findManyCall.where.payments).toEqual({
+        some: { method: 'CASH' },
+      });
+      expect(countCall.where.payments).toEqual({
+        some: { method: 'CASH' },
+      });
+    });
+
+    it('omits `where.payments` when paymentMethod is undefined', async () => {
+      await service.findAll(GARAGE_ID);
+      const findManyCall = prisma.invoice.findMany.mock.calls[0][0];
+      expect(findManyCall.where.payments).toBeUndefined();
+    });
+
+    it('AND-combines status + paymentMethod + search inside the same where', async () => {
+      await service.findAll(GARAGE_ID, {
+        search: 'Karoui',
+        status: 'SENT' as any,
+        paymentMethod: 'CASH' as any,
+      });
+
+      const findManyCall = prisma.invoice.findMany.mock.calls[0][0];
+      expect(findManyCall.where.garageId).toBe(GARAGE_ID);
+      expect(findManyCall.where.status).toBe('SENT');
+      expect(findManyCall.where.payments).toEqual({
+        some: { method: 'CASH' },
+      });
+      expect(findManyCall.where.OR).toBeDefined(); // search OR clause
+      // Count clause must match exactly so the FE pagination footer is
+      // server-authoritative.
+      const countCall = prisma.invoice.count.mock.calls[0][0];
+      expect(countCall.where).toEqual(findManyCall.where);
+    });
+
+    it('default orderBy stays [{ createdAt: desc }, { id: desc }] (legacy contract)', async () => {
+      await service.findAll(GARAGE_ID);
+      const findManyCall = prisma.invoice.findMany.mock.calls[0][0];
+      expect(findManyCall.orderBy).toEqual([
+        { createdAt: 'desc' },
+        { id: 'desc' },
+      ]);
+    });
+
+    it('?sort=dueDate&dir=asc emits orderBy=[{dueDate:asc},{id:desc}]', async () => {
+      await service.findAll(GARAGE_ID, { sort: 'dueDate', dir: 'asc' });
+      const findManyCall = prisma.invoice.findMany.mock.calls[0][0];
+      expect(findManyCall.orderBy).toEqual([
+        { dueDate: 'asc' },
+        { id: 'desc' },
+      ]);
+    });
+
+    it('?sort=total&dir=desc emits orderBy=[{total:desc},{id:desc}]', async () => {
+      await service.findAll(GARAGE_ID, { sort: 'total', dir: 'desc' });
+      const findManyCall = prisma.invoice.findMany.mock.calls[0][0];
+      expect(findManyCall.orderBy).toEqual([
+        { total: 'desc' },
+        { id: 'desc' },
+      ]);
+    });
+
+    it('?sort=invoiceNumber default dir=desc applied', async () => {
+      await service.findAll(GARAGE_ID, { sort: 'invoiceNumber' });
+      const findManyCall = prisma.invoice.findMany.mock.calls[0][0];
+      expect(findManyCall.orderBy).toEqual([
+        { invoiceNumber: 'desc' },
+        { id: 'desc' },
+      ]);
+    });
+
+    it('?dir alone (no sort) applies dir to default `createdAt` field', async () => {
+      await service.findAll(GARAGE_ID, { dir: 'asc' });
+      const findManyCall = prisma.invoice.findMany.mock.calls[0][0];
+      expect(findManyCall.orderBy).toEqual([
+        { createdAt: 'asc' },
+        { id: 'desc' },
+      ]);
+    });
+
+    it('REGRESSION (C-20): `id: desc` tiebreaker is ALWAYS the second orderBy entry', async () => {
+      // Iterate every legal sort+dir combo and assert the tiebreaker
+      // is preserved — without it postgres reshuffles tied rows
+      // across pages, breaking pagination correctness.
+      const sorts = ['createdAt', 'dueDate', 'total', 'invoiceNumber'] as const;
+      const dirs = ['asc', 'desc'] as const;
+      for (const sort of sorts) {
+        for (const dir of dirs) {
+          prisma.invoice.findMany.mockClear();
+          await service.findAll(GARAGE_ID, { sort, dir });
+          const call = prisma.invoice.findMany.mock.calls[0][0];
+          expect(call.orderBy).toEqual([{ [sort]: dir }, { id: 'desc' }]);
+        }
+      }
+    });
+
+    it('count + findMany use the SAME where with status filter (footer total reflects filter)', async () => {
+      // Reproduces the exact bug C-24 fixes: status filter on, footer
+      // total used to read the unfiltered count of 240, leaving
+      // "Showing 1-25 of 240" with an empty OVERDUE list.
+      prisma.invoice.findMany.mockResolvedValueOnce([]);
+      prisma.invoice.count.mockResolvedValueOnce(8);
+
+      const result = await service.findAll(GARAGE_ID, {
+        status: 'OVERDUE' as any,
+      });
+
+      expect(result.total).toBe(8); // filtered count, NOT 240
+      const countCall = prisma.invoice.count.mock.calls[0][0];
+      expect(countCall.where.status).toBe('OVERDUE');
+    });
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────
