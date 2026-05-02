@@ -37,6 +37,11 @@ services:
       GROQ_API_KEY: ${GROQ_API_KEY:-}
       CEREBRAS_API_KEY: ${CEREBRAS_API_KEY:-}
       MISTRAL_API_KEY: ${MISTRAL_API_KEY:-}
+      # OVHcloud AI Endpoints. OVH_BASE_URL and OVH_MODEL fall back to
+      # kepler.ai endpoint + Meta-Llama-3.3-70B in code when unset.
+      OVH_API_KEY: ${OVH_API_KEY:-}
+      OVH_BASE_URL: ${OVH_BASE_URL:-}
+      OVH_MODEL: ${OVH_MODEL:-}
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
       NODE_ENV: production
       PORT: 3000
