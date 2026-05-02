@@ -636,4 +636,64 @@ describe('QuoteFormPageComponent — edit mode (BUG-095)', () => {
       expect(section).not.toBeNull();
     });
   });
+
+  /**
+   * S-CAT-002 — picking a service catalog entry on a quote form line
+   * pre-fills description / unitPrice / tvaRate / serviceCode and forces
+   * the line type to 'service'. Mirrors the InvoiceFormComponent contract
+   * (Sweep C-9).
+   */
+  describe('S-CAT-002: service-picker prefills the line on quote form', () => {
+    it('patches description / unitPrice / tvaRate from the picked entry', async () => {
+      await setupWithRouteId(null);
+      fixture.detectChanges();
+
+      component.addLine('misc');
+      component.onServicePicked(0, {
+        id: 's-1',
+        garageId: 'g-1',
+        code: 'OIL_CHG',
+        name: 'Oil change',
+        category: 'Maintenance',
+        defaultPrice: 80,
+        defaultTvaRate: 13,
+        defaultLaborHours: 0.5,
+        isActive: true,
+        createdAt: '',
+        updatedAt: '',
+      });
+
+      const line = component.lines()[0];
+      expect(line.type).toBe('service');
+      expect(line.description).toBe('Oil change');
+      expect(line.unitPrice).toBe(80);
+      expect(line.tvaRate).toBe(13);
+      expect(line.serviceCode).toBe('OIL_CHG');
+      expect(line.laborHours).toBe(0.5);
+    });
+
+    it('keeps existing laborHours when entry does not specify it', async () => {
+      await setupWithRouteId(null);
+      fixture.detectChanges();
+
+      component.addLine('labor');
+      component.updateLine(0, 'laborHours', 2);
+      const before = component.lines()[0].laborHours;
+
+      component.onServicePicked(0, {
+        id: 's-2',
+        garageId: 'g-1',
+        code: 'BRK',
+        name: 'Brake inspection',
+        defaultPrice: 30,
+        defaultTvaRate: 19,
+        isActive: true,
+        createdAt: '',
+        updatedAt: '',
+      });
+
+      const after = component.lines()[0].laborHours;
+      expect(after).toBe(before); // 2 — preserved when entry has no defaultLaborHours
+    });
+  });
 });

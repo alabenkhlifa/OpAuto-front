@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { ServicePickerComponent } from './service-picker.component';
 import { ServiceCatalogService } from '../../../../core/services/service-catalog.service';
 import { ServiceCatalogEntry } from '../../../../core/models/service-catalog.model';
@@ -70,8 +70,10 @@ describe('ServicePickerComponent', () => {
           provide: TranslationService,
           useValue: {
             translate: (k: string) => k,
+            instant: (k: string) => k,
             currentLanguage: () => 'en',
             currentLanguage$: of('en'),
+            translations$: new BehaviorSubject<Record<string, string>>({}).asObservable(),
           },
         },
       ],
@@ -126,5 +128,64 @@ describe('ServicePickerComponent', () => {
     expect(spy).toHaveBeenCalledWith(sampleCatalog[0]);
     expect(component.query()).toBe('Oil change');
     expect(component.isOpen()).toBeFalse();
+  });
+
+  // ---- S-CAT-001 — autocomplete narrows as the user types --------------
+  describe('S-CAT-001: autocomplete narrows as the user types', () => {
+    it('shows all active entries when query is empty', () => {
+      component.onInput('');
+      // Active-only — inactive id "3" is hidden.
+      expect(component.results().map((r) => r.id).sort()).toEqual(['1', '2']);
+      expect(component.isOpen()).toBeTrue();
+    });
+
+    it('typing "oi" narrows to a single match by name', () => {
+      component.onInput('oi');
+      expect(component.results().length).toBe(1);
+      expect(component.results()[0].code).toBe('OIL_CHG');
+    });
+
+    it('typing "oil" keeps the same single match (2-char minimum is not enforced)', () => {
+      component.onInput('oil');
+      expect(component.results().map((r) => r.code)).toEqual(['OIL_CHG']);
+    });
+
+    it('clearing the query restores the full active list', () => {
+      component.onInput('oil');
+      expect(component.results().length).toBe(1);
+      component.onInput('');
+      expect(component.results().length).toBe(2);
+    });
+
+    it('typing a non-matching query yields zero results', () => {
+      component.onInput('zzznomatch');
+      expect(component.results().length).toBe(0);
+    });
+  });
+
+  // ---- S-CAT-002 — picking an entry hands the catalog row to parents ---
+  describe('S-CAT-002: selection emits the full catalog entry for parent prefill', () => {
+    it('emits the entry verbatim (parent forms read name / defaultPrice / defaultTvaRate)', () => {
+      const captured: ServiceCatalogEntry[] = [];
+      component.serviceSelected.subscribe((e) => captured.push(e));
+
+      component.pick(sampleCatalog[0]);
+
+      expect(captured.length).toBe(1);
+      expect(captured[0]).toBe(sampleCatalog[0]);
+      // The fields the parent forms patch onto the line:
+      expect(captured[0].name).toBe('Oil change');
+      expect(captured[0].defaultPrice).toBe(80);
+      expect(captured[0].defaultTvaRate).toBe(19);
+      expect(captured[0].code).toBe('OIL_CHG');
+    });
+
+    it('mirrors the picked name into the input and closes the dropdown', () => {
+      component.onInput('br');
+      expect(component.isOpen()).toBeTrue();
+      component.pick(sampleCatalog[1]);
+      expect(component.query()).toBe('Brake inspection');
+      expect(component.isOpen()).toBeFalse();
+    });
   });
 });
