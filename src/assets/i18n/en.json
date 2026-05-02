@@ -2192,11 +2192,19 @@
         "button": "+ New",
         "newInvoice": "New invoice",
         "newQuote": "New quote",
-        "newCreditNote": "New credit note"
+        "newCreditNote": "New credit note",
+        "newPayment": "Record payment"
       },
       "selectCustomer": "Select a customer",
       "selectVehicle": "Select a vehicle",
       "notesPlaceholder": "Optional notes for the customer..."
+    },
+    "invoicePicker": {
+      "title": "Pick an invoice",
+      "subtitle": "Choose the invoice you want to record a payment against.",
+      "searchPlaceholder": "Search by invoice # or customer…",
+      "empty": "No invoices with an outstanding balance.",
+      "remaining": "Remaining"
     },
     "dashboardPage": {
       "quick": {

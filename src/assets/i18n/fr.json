@@ -2242,11 +2242,19 @@
         "button": "+ Nouveau",
         "newInvoice": "Nouvelle facture",
         "newQuote": "Nouveau devis",
-        "newCreditNote": "Nouvel avoir"
+        "newCreditNote": "Nouvel avoir",
+        "newPayment": "Enregistrer un paiement"
       },
       "selectCustomer": "Sélectionner un client",
       "selectVehicle": "Sélectionner un véhicule",
       "notesPlaceholder": "Notes facultatives pour le client..."
+    },
+    "invoicePicker": {
+      "title": "Choisir une facture",
+      "subtitle": "Sélectionnez la facture pour laquelle enregistrer un paiement.",
+      "searchPlaceholder": "Rechercher par n° facture ou client…",
+      "empty": "Aucune facture avec un solde restant.",
+      "remaining": "Restant"
     },
     "dashboardPage": {
       "quick": {

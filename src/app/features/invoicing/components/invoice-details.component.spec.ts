@@ -224,6 +224,52 @@ describe('InvoiceDetailsComponent', () => {
     expect(cmp.paymentModalOpenKey()).toBe(3);
   });
 
+  describe('S-AUTH-004 — Owner role required for DELETE button', () => {
+    /**
+     * Sweep C-7: pin the role-gate on the Delete CTA.
+     * `canShow('delete')` must require BOTH `status === 'draft'` AND
+     * `isOwner() === true`. STAFF users are not allowed to delete invoices
+     * (see CLAUDE.md → "UserRole enum" — DELETE /invoices/:id is `@Roles(OWNER)`).
+     */
+    it('renders Delete on a DRAFT invoice for owner-role users', async () => {
+      configure(makeInvoice({ status: 'draft' }), { isOwner: true });
+      const fixture = TestBed.createComponent(InvoiceDetailsComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      expect(cmp.canShow('delete')).toBeTrue();
+    });
+
+    it('hides Delete on a DRAFT invoice when the user is NOT an owner', async () => {
+      configure(makeInvoice({ status: 'draft' }), { isOwner: false });
+      const fixture = TestBed.createComponent(InvoiceDetailsComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      expect(cmp.canShow('delete')).toBeFalse();
+    });
+
+    const nonDraftStatuses = [
+      'sent',
+      'viewed',
+      'paid',
+      'partially-paid',
+      'overdue',
+      'cancelled',
+      'refunded',
+    ] as const;
+    nonDraftStatuses.forEach((status) => {
+      it(`hides Delete on ${status} even for owner-role users`, async () => {
+        configure(makeInvoice({ status }), { isOwner: true });
+        const fixture = TestBed.createComponent(InvoiceDetailsComponent);
+        const cmp = fixture.componentInstance;
+        cmp.ngOnInit();
+        await fixture.whenStable();
+        expect(cmp.canShow('delete')).toBeFalse();
+      });
+    });
+  });
+
   describe('S-DET-005 — CANCELLED detail action matrix', () => {
     /**
      * Sweep C-1: pin the full visibility matrix for CANCELLED invoices —

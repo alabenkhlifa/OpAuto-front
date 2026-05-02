@@ -1,0 +1,56 @@
+@if (isOpen) {
+  <div class="invoice-picker-modal__backdrop" (click)="onBackdrop($event)">
+    <div class="invoice-picker-modal" role="dialog" aria-modal="true">
+      <header class="invoice-picker-modal__header">
+        <h2 class="invoice-picker-modal__title">
+          {{ 'invoicing.invoicePicker.title' | translate }}
+        </h2>
+        <p class="invoice-picker-modal__sub">
+          {{ 'invoicing.invoicePicker.subtitle' | translate }}
+        </p>
+        <button type="button"
+                class="invoice-picker-modal__close"
+                (click)="onClose()"
+                [attr.aria-label]="'common.close' | translate">×</button>
+      </header>
+
+      <div class="invoice-picker-modal__body">
+        <input type="search"
+               class="form-input invoice-picker-modal__search"
+               [placeholder]="'invoicing.invoicePicker.searchPlaceholder' | translate"
+               [ngModel]="query()"
+               (ngModelChange)="query.set($event)" />
+
+        @if (filtered().length === 0) {
+          <p class="invoice-picker-modal__empty">
+            {{ 'invoicing.invoicePicker.empty' | translate }}
+          </p>
+        } @else {
+          <ul class="invoice-picker-modal__list" role="listbox">
+            @for (inv of filtered(); track inv.id) {
+              <li class="invoice-picker-modal__row"
+                  role="option"
+                  [attr.aria-label]="inv.invoiceNumber + ' — ' + (inv.customerName || '')"
+                  (click)="onPick(inv)">
+                <div class="invoice-picker-modal__row-main">
+                  <p class="invoice-picker-modal__row-title">{{ inv.invoiceNumber }}</p>
+                  <p class="invoice-picker-modal__row-sub">{{ inv.customerName || '—' }}</p>
+                </div>
+                <div class="invoice-picker-modal__row-side">
+                  <p class="invoice-picker-modal__row-amount">{{ fmtCurrency(inv.remainingAmount) }}</p>
+                  <span class="invoice-picker-modal__row-hint">{{ 'invoicing.invoicePicker.remaining' | translate }}</span>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+
+      <footer class="invoice-picker-modal__footer">
+        <button type="button" class="btn-secondary" (click)="onClose()">
+          {{ 'common.cancel' | translate }}
+        </button>
+      </footer>
+    </div>
+  </div>
+}

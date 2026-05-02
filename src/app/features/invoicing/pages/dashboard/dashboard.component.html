@@ -205,4 +205,21 @@
       <span>{{ 'invoicing.loading' | translate }}</span>
     </div>
   }
+
+  <!-- S-DASH-003 / S-NAV-007 — invoice picker → payment modal -->
+  <app-invoice-picker-modal
+    [isOpen]="pickerOpen()"
+    [invoices]="invoices()"
+    (close)="closeInvoicePicker()"
+    (pick)="onInvoicePicked($event)">
+  </app-invoice-picker-modal>
+
+  <app-payment-modal
+    [isOpen]="paymentModalOpen()"
+    [openKey]="paymentModalOpenKey()"
+    [context]="paymentContext()"
+    [submitting]="paymentSubmitting()"
+    (close)="onPaymentModalClose()"
+    (submit)="onPaymentModalSubmit($event)">
+  </app-payment-modal>
 </div>

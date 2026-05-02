@@ -1,6 +1,6 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { GarageSettingsService } from '../../core/services/garage-settings.service';
 import { GarageSettings } from '../../core/models/garage-settings.model';
@@ -254,6 +254,17 @@ import { AuthService } from '../../core/services/auth.service';
 export class GarageSettingsComponent implements OnInit {
   private garageSettingsService = inject(GarageSettingsService);
   private authService = inject(AuthService);
+  private route = inject(ActivatedRoute);
+
+  /** S-NAV-010 — supported deep-link fragments → tab id. */
+  private static readonly FRAGMENT_TO_TAB: Record<string, string> = {
+    'garage-info': 'garage-info',
+    'operational': 'operational',
+    'business': 'business',
+    'system': 'system',
+    'integrations': 'integrations',
+    'fiscal': 'fiscal',
+  };
 
   settings = signal<GarageSettings | null>(null);
   activeTab = signal<string>('garage-info');
@@ -267,6 +278,16 @@ export class GarageSettingsComponent implements OnInit {
 
   ngOnInit() {
     this.loadSettings();
+    // S-NAV-010 — honor URL fragment as a tab deep-link.
+    // Falls back to the default tab if the fragment is unknown OR if the
+    // user lacks permission to see it (only `fiscal` is owner-gated today).
+    this.route.fragment.subscribe((frag) => {
+      if (!frag) return;
+      const tab = GarageSettingsComponent.FRAGMENT_TO_TAB[frag];
+      if (!tab) return;
+      if (tab === 'fiscal' && !this.isOwner()) return;
+      this.activeTab.set(tab);
+    });
   }
 
   private loadSettings() {

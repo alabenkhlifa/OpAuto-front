@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 
 import { GarageSettingsComponent } from './garage-settings.component';
@@ -15,6 +16,7 @@ describe('GarageSettingsComponent', () => {
   let mockSettingsService: jasmine.SpyObj<GarageSettingsService>;
   let mockAuth: jasmine.SpyObj<AuthService>;
   let mockToast: jasmine.SpyObj<ToastService>;
+  let fragment$: BehaviorSubject<string | null>;
 
   function buildSettings(): GarageSettings {
     return {
@@ -96,6 +98,8 @@ describe('GarageSettingsComponent', () => {
     });
     mockTranslation.instant.and.callFake((key: string) => key);
 
+    fragment$ = new BehaviorSubject<string | null>(null);
+
     await TestBed.configureTestingModule({
       imports: [GarageSettingsComponent, HttpClientTestingModule],
       providers: [
@@ -103,6 +107,10 @@ describe('GarageSettingsComponent', () => {
         { provide: AuthService, useValue: mockAuth },
         { provide: ToastService, useValue: mockToast },
         { provide: TranslationService, useValue: mockTranslation },
+        {
+          provide: ActivatedRoute,
+          useValue: { fragment: fragment$.asObservable() },
+        },
       ],
     }).compileComponents();
 
@@ -170,6 +178,39 @@ describe('GarageSettingsComponent', () => {
       component.onFiscalSettingsSave({});
 
       expect(mockToast.error).toHaveBeenCalled();
+    });
+  });
+
+  describe('S-NAV-010 — fragment-driven tab activation', () => {
+    it('selects the fiscal tab when the URL fragment is "fiscal"', () => {
+      mockAuth.isOwner.and.returnValue(true);
+      component.ngOnInit();
+      fragment$.next('fiscal');
+      expect(component.activeTab()).toBe('fiscal');
+    });
+
+    it('IGNORES the fiscal fragment when the user is not an owner', () => {
+      mockAuth.isOwner.and.returnValue(false);
+      component.ngOnInit();
+      fragment$.next('fiscal');
+      expect(component.activeTab()).toBe('garage-info');
+    });
+
+    it('keeps the default tab when the fragment is unknown', () => {
+      component.ngOnInit();
+      fragment$.next('unknown-anchor');
+      expect(component.activeTab()).toBe('garage-info');
+    });
+
+    it('selects the operational tab via fragment', () => {
+      component.ngOnInit();
+      fragment$.next('operational');
+      expect(component.activeTab()).toBe('operational');
+    });
+
+    it('keeps the default tab when no fragment is present', () => {
+      component.ngOnInit();
+      expect(component.activeTab()).toBe('garage-info');
     });
   });
 });

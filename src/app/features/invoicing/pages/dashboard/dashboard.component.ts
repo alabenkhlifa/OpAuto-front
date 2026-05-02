@@ -1,6 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin, of, catchError } from 'rxjs';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { InvoiceService } from '../../../../core/services/invoice.service';
@@ -12,6 +12,15 @@ import {
 } from '../../../../core/models/invoice.model';
 import { QuoteWithDetails } from '../../../../core/models/quote.model';
 import { CreditNoteWithDetails } from '../../../../core/models/credit-note.model';
+import { InvoicePickerModalComponent } from '../../components/invoice-picker-modal/invoice-picker-modal.component';
+import {
+  PaymentModalComponent,
+  PaymentModalContext,
+  PaymentModalResult,
+} from '../../components/payment-modal/payment-modal.component';
+import { AuthService } from '../../../../core/services/auth.service';
+import { ToastService } from '../../../../shared/services/toast.service';
+import { TranslationService } from '../../../../core/services/translation.service';
 
 interface AgingBucket {
   key: 'current' | '1-30' | '31-60' | '61-90' | '90+';
@@ -50,7 +59,13 @@ interface TopCustomer {
 @Component({
   selector: 'app-invoicing-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, TranslatePipe],
+  imports: [
+    CommonModule,
+    RouterModule,
+    TranslatePipe,
+    InvoicePickerModalComponent,
+    PaymentModalComponent,
+  ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',
 })
@@ -59,11 +74,35 @@ export class InvoicingDashboardComponent implements OnInit {
   private quoteService = inject(QuoteService);
   private creditNoteService = inject(CreditNoteService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private authService = inject(AuthService);
+  private toast = inject(ToastService);
+  private translation = inject(TranslationService);
 
   isLoading = signal(true);
   invoices = signal<InvoiceWithDetails[]>([]);
   quotes = signal<QuoteWithDetails[]>([]);
   creditNotes = signal<CreditNoteWithDetails[]>([]);
+
+  // S-DASH-003 / S-NAV-007 — Record Payment from a quick-action / "+ New →
+  // Payment". The dashboard owns the invoice list already so it's a natural
+  // place to host the picker → payment-modal pair.
+  readonly pickerOpen = signal(false);
+  readonly paymentModalOpen = signal(false);
+  readonly paymentModalOpenKey = signal(0);
+  readonly paymentSubmitting = signal(false);
+  readonly pickedInvoice = signal<InvoiceWithDetails | null>(null);
+
+  readonly paymentContext = computed<PaymentModalContext | null>(() => {
+    const inv = this.pickedInvoice();
+    if (!inv) return null;
+    return {
+      invoiceId: inv.id,
+      invoiceNumber: inv.invoiceNumber,
+      remainingAmount: inv.remainingAmount,
+      currency: inv.currency,
+    };
+  });
 
   /** Number of overdue invoices used for the urgent banner. */
   overdueCount = computed(
@@ -218,8 +257,37 @@ export class InvoicingDashboardComponent implements OnInit {
         this.quotes.set(quotes);
         this.creditNotes.set(creditNotes);
         this.isLoading.set(false);
+        // S-NAV-007 — initial query-param check (covers direct deep-link
+        // visits like /invoices?openPayment=1 in a fresh tab).
+        this.maybeAutoOpenPicker(
+          this.route.snapshot.queryParamMap.get('openPayment'),
+        );
       },
       error: () => this.isLoading.set(false),
+    });
+    // S-NAV-007 — also react to live query-param changes. The shell-level
+    // "+ New → Payment" dropdown navigates from `/invoices` back to
+    // `/invoices?openPayment=1` and Angular reuses the dashboard component
+    // (no fresh ngOnInit), so the snapshot read above wouldn't fire.
+    this.route.queryParamMap.subscribe((map) => {
+      if (this.isLoading()) return; // wait until invoices are hydrated
+      this.maybeAutoOpenPicker(map.get('openPayment'));
+    });
+  }
+
+  /**
+   * S-NAV-007 helper — opens the invoice picker when `?openPayment=1` is
+   * present, then strips the query param so reloads / back-nav don't
+   * keep re-opening it.
+   */
+  private maybeAutoOpenPicker(value: string | null | undefined): void {
+    if (value !== '1') return;
+    this.openInvoicePicker();
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { openPayment: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
     });
   }
 
@@ -234,9 +302,73 @@ export class InvoicingDashboardComponent implements OnInit {
   }
 
   navigateRecordPayment(): void {
-    // No standalone record-payment page yet — open the pending-payments list
-    // so the user can pick the invoice they want to record against.
-    this.router.navigate(['/invoices/pending']);
+    // S-DASH-003 — open the invoice picker so the user can choose which
+    // invoice to record a payment against; once picked, we open the
+    // existing payment-modal pre-seeded with that invoice's remaining
+    // balance. Falls back to nothing-payable empty-state inside the modal.
+    this.openInvoicePicker();
+  }
+
+  // ── Invoice picker → payment-modal ────────────────────────────────────
+
+  /** S-DASH-003 / S-NAV-007 entry point. */
+  openInvoicePicker(): void {
+    this.pickerOpen.set(true);
+  }
+
+  closeInvoicePicker(): void {
+    this.pickerOpen.set(false);
+  }
+
+  onInvoicePicked(inv: InvoiceWithDetails): void {
+    this.pickedInvoice.set(inv);
+    this.pickerOpen.set(false);
+    this.paymentModalOpenKey.update((k) => k + 1);
+    this.paymentModalOpen.set(true);
+  }
+
+  onPaymentModalClose(): void {
+    this.paymentModalOpen.set(false);
+  }
+
+  onPaymentModalSubmit(payload: PaymentModalResult): void {
+    const inv = this.pickedInvoice();
+    if (!inv) return;
+    this.paymentSubmitting.set(true);
+    this.invoiceService
+      .addPayment({
+        invoiceId: inv.id,
+        amount: payload.amount,
+        method: payload.method,
+        paymentDate: new Date(payload.paymentDate),
+        reference: payload.reference,
+        notes: payload.notes,
+        processedBy: this.authService.getCurrentUser()?.id || 'current-user',
+      })
+      .subscribe({
+        next: () => {
+          this.paymentSubmitting.set(false);
+          this.paymentModalOpen.set(false);
+          this.toast.success(
+            this.translation.instant('invoicing.detail.toast.paymentRecorded'),
+          );
+          this.refreshInvoices();
+        },
+        error: () => {
+          this.paymentSubmitting.set(false);
+          this.toast.error(
+            this.translation.instant('invoicing.detail.errors.paymentFailed'),
+          );
+        },
+      });
+  }
+
+  /** Re-pull invoices after a payment so the dashboard tiles + recent list re-flow. */
+  private refreshInvoices(): void {
+    this.invoiceService
+      .getInvoices()
+      .pipe(catchError(() => of([] as InvoiceWithDetails[])))
+      .subscribe((invs) => this.invoices.set(invs));
   }
 
   navigateAgingReport(): void {

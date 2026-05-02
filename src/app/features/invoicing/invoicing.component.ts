@@ -11,12 +11,24 @@ interface NavTab {
   labelKey: string;
   route: string;
   exact?: boolean;
+  /**
+   * Optional URL fragment (anchor). The Settings pill uses this to deep-link
+   * into the fiscal section of the garage-settings page (S-NAV-010).
+   */
+  fragment?: string;
 }
 
 interface CreateOption {
   labelKey: string;
   route: string;
   iconPath: string;
+  /**
+   * Optional query params attached on navigation. Used by the
+   * "+ New → Payment" entry which deep-links to the dashboard with
+   * `?openPayment=1` so the dashboard auto-opens its invoice-picker
+   * → payment-modal pair (S-NAV-007).
+   */
+  queryParams?: Record<string, string>;
 }
 
 /**
@@ -51,7 +63,12 @@ export class InvoicingComponent implements OnInit, OnDestroy {
     { id: 'creditNotes', labelKey: 'invoicing.subnav.creditNotes', route: '/invoices/credit-notes' },
     { id: 'pending', labelKey: 'invoicing.subnav.pending', route: '/invoices/pending' },
     { id: 'reports', labelKey: 'invoicing.subnav.reports', route: '/invoices/reports' },
-    { id: 'settings', labelKey: 'invoicing.subnav.settings', route: '/invoices/settings' },
+    // S-NAV-010 — deep-link straight into the garage-settings fiscal tab.
+    // We bypass the `/invoices/settings → /settings` redirect because Angular
+    // strips the fragment on a route-level redirect; routing directly to
+    // `/settings#fiscal` preserves it so the GarageSettingsComponent can
+    // pick up the anchor and select the fiscal tab on init.
+    { id: 'settings', labelKey: 'invoicing.subnav.settings', route: '/settings', fragment: 'fiscal' },
   ];
 
   /** "+ New" dropdown items (right side). */
@@ -70,6 +87,15 @@ export class InvoicingComponent implements OnInit, OnDestroy {
       labelKey: 'invoicing.create.menu.newCreditNote',
       route: '/invoices/credit-notes/new',
       iconPath: 'M19 14l-7 7m0 0l-7-7m7 7V3',
+    },
+    // S-NAV-007 — Payment entry deep-links to the dashboard with
+    // `?openPayment=1` so the dashboard auto-opens its invoice-picker
+    // → payment-modal pair. Mirrors the dashboard quick-action path.
+    {
+      labelKey: 'invoicing.create.menu.newPayment',
+      route: '/invoices',
+      iconPath: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8v8m0 0v2m0-10V6',
+      queryParams: { openPayment: '1' },
     },
   ];
 
@@ -109,14 +135,15 @@ export class InvoicingComponent implements OnInit, OnDestroy {
 
   goToCreateOption(opt: CreateOption): void {
     this.closeNewDropdown();
-    this.router.navigate([opt.route]);
+    this.router.navigate([opt.route], opt.queryParams ? { queryParams: opt.queryParams } : undefined);
   }
 
   /** Mobile select-based nav. */
   onMobileNavChange(event: Event): void {
     const target = event.target as HTMLSelectElement;
     if (!target.value) return;
-    this.router.navigate([target.value]);
+    const tab = this.tabs.find((t) => t.route === target.value);
+    this.router.navigate([target.value], tab?.fragment ? { fragment: tab.fragment } : undefined);
   }
 
   /** Floating "+" FAB on mobile opens the new-invoice form directly. */

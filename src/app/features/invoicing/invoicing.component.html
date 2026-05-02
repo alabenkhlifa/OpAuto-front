@@ -17,7 +17,8 @@
             class="nav-button invoicing-subnav__pill"
             [class.nav-button-active]="isActive(tab)"
             [class.nav-button-inactive]="!isActive(tab)"
-            [routerLink]="tab.route">
+            [routerLink]="tab.route"
+            [fragment]="tab.fragment ?? undefined">
             <span>{{ tab.labelKey | translate }}</span>
           </a>
         }

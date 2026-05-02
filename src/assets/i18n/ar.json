@@ -2244,11 +2244,19 @@
         "button": "+ جديد",
         "newInvoice": "فاتورة جديدة",
         "newQuote": "عرض سعر جديد",
-        "newCreditNote": "إشعار دائن جديد"
+        "newCreditNote": "إشعار دائن جديد",
+        "newPayment": "تسجيل دفعة"
       },
       "selectCustomer": "اختر عميلاً",
       "selectVehicle": "اختر مركبة",
       "notesPlaceholder": "ملاحظات اختيارية للعميل..."
+    },
+    "invoicePicker": {
+      "title": "اختر فاتورة",
+      "subtitle": "اختر الفاتورة التي تريد تسجيل دفعة لها.",
+      "searchPlaceholder": "ابحث برقم الفاتورة أو اسم العميل…",
+      "empty": "لا توجد فواتير برصيد متبقٍّ.",
+      "remaining": "المتبقي"
     },
     "dashboardPage": {
       "quick": {

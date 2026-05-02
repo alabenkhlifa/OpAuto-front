@@ -87,4 +87,63 @@ describe('InvoicingComponent (shell)', () => {
     component.toggleNewDropdown();
     expect(component.newDropdownOpen()).toBeFalse();
   });
+
+  describe('S-NAV-007 — "+ New → Payment" entry', () => {
+    it('exposes 4 create options (Quote / Invoice / Credit Note / Payment)', () => {
+      expect(component.createOptions.length).toBe(4);
+      const labels = component.createOptions.map((o) => o.labelKey);
+      expect(labels).toContain('invoicing.create.menu.newQuote');
+      expect(labels).toContain('invoicing.create.menu.newInvoice');
+      expect(labels).toContain('invoicing.create.menu.newCreditNote');
+      expect(labels).toContain('invoicing.create.menu.newPayment');
+    });
+
+    it('Payment option deep-links to /invoices?openPayment=1', () => {
+      const opt = component.createOptions.find(
+        (o) => o.labelKey === 'invoicing.create.menu.newPayment',
+      )!;
+      expect(opt.route).toBe('/invoices');
+      expect(opt.queryParams).toEqual({ openPayment: '1' });
+    });
+
+    it('goToCreateOption forwards queryParams when present', () => {
+      const router = TestBed.inject(Router);
+      const spy = spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
+      const opt = component.createOptions.find(
+        (o) => o.labelKey === 'invoicing.create.menu.newPayment',
+      )!;
+      component.goToCreateOption(opt);
+      expect(spy).toHaveBeenCalledWith(['/invoices'], {
+        queryParams: { openPayment: '1' },
+      });
+    });
+
+    it('goToCreateOption omits the second arg when no queryParams', () => {
+      const router = TestBed.inject(Router);
+      const spy = spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
+      const opt = component.createOptions.find(
+        (o) => o.labelKey === 'invoicing.create.menu.newQuote',
+      )!;
+      component.goToCreateOption(opt);
+      expect(spy).toHaveBeenCalledWith(['/invoices/quotes/new'], undefined);
+    });
+  });
+
+  describe('S-NAV-010 — Settings pill deep-links to fiscal anchor', () => {
+    it('settings tab targets /settings with fragment "fiscal"', () => {
+      const tab = component.tabs.find((t) => t.id === 'settings')!;
+      expect(tab.route).toBe('/settings');
+      expect(tab.fragment).toBe('fiscal');
+    });
+
+    it('mobile select navigation forwards the fragment', () => {
+      const router = TestBed.inject(Router);
+      const spy = spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
+      const event = {
+        target: { value: '/settings' } as unknown as HTMLSelectElement,
+      } as unknown as Event;
+      component.onMobileNavChange(event);
+      expect(spy).toHaveBeenCalledWith(['/settings'], { fragment: 'fiscal' });
+    });
+  });
 });
