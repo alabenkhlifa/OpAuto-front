@@ -1,14 +1,17 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   EventEmitter,
   OnInit,
   Output,
-  computed,
   inject,
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Subject } from 'rxjs';
+import { debounceTime, switchMap } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ServiceCatalogService } from '../../../../core/services/service-catalog.service';
 import { ServiceCatalogEntry } from '../../../../core/models/service-catalog.model';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
@@ -19,13 +22,15 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
  * parent quote/invoice form can pre-fill description, unitPrice,
  * tvaRate, and laborHours.
  *
- * Standalone, signals-based. No external UI library — a focused input
- * with a filtered <ul> dropdown. Caller is expected to provide its own
- * label/wrapper styling via a `<app-service-picker>` host inside an
- * existing form row.
+ * BUG-096 (Sweep C-18): switched from "fetch full catalog + client
+ * filter" to **debounced server-side search**. Each input change feeds
+ * a Subject that debounces 300ms then `switchMap`s to
+ * `catalog.searchCatalog(term, 25)` — `switchMap` cancels any in-flight
+ * request when the user keeps typing. Initial focus issues an empty
+ * search so the dropdown has rows on first open.
  *
- * Phase 5 wires this into the live forms; for Phase 2 it ships as a
- * reusable building block plus its own unit spec.
+ * Standalone, signals-based. No external UI library — a focused input
+ * with a result <ul> dropdown.
  */
 @Component({
   selector: 'app-service-picker',
@@ -37,6 +42,7 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 })
 export class ServicePickerComponent implements OnInit {
   private readonly catalog = inject(ServiceCatalogService);
+  private readonly destroyRef = inject(DestroyRef);
 
   /** Emits the chosen catalog row; parent forms pre-fill from this. */
   @Output() serviceSelected = new EventEmitter<ServiceCatalogEntry>();
@@ -44,52 +50,56 @@ export class ServicePickerComponent implements OnInit {
   // Local UI state — signals-based per project convention.
   readonly query = signal<string>('');
   readonly isOpen = signal<boolean>(false);
-  readonly entries = signal<ServiceCatalogEntry[]>([]);
+  readonly results = signal<ServiceCatalogEntry[]>([]);
   readonly loading = signal<boolean>(false);
 
-  /** Filtered, active-only result list. */
-  readonly results = computed(() => {
-    const q = this.query().trim().toLowerCase();
-    const all = this.entries().filter((e) => e.isActive);
-    if (!q) return all.slice(0, 25); // arbitrary cap to keep the dropdown short
-    return all
-      .filter(
-        (e) =>
-          e.name.toLowerCase().includes(q) ||
-          e.code.toLowerCase().includes(q) ||
-          (e.category ?? '').toLowerCase().includes(q),
-      )
-      .slice(0, 25);
-  });
+  /**
+   * Debounce gate for keystrokes. Each `next()` cancels any in-flight
+   * HTTP via `switchMap`. 300ms matches the BUG-096 suggestion and is
+   * snappy enough to feel live.
+   */
+  private readonly searchTerm$ = new Subject<string>();
 
   ngOnInit(): void {
-    // If the cache is already populated, mirror it; otherwise fetch.
-    const cached = this.catalog.catalog;
-    if (cached.length > 0) {
-      this.entries.set(cached);
-      return;
-    }
-    this.loading.set(true);
-    this.catalog.loadCatalog().subscribe({
-      next: (rows) => {
-        this.entries.set(rows);
-        this.loading.set(false);
-      },
-      error: () => {
-        // Surface emptiness without crashing the parent form.
-        this.entries.set([]);
-        this.loading.set(false);
-      },
-    });
+    this.searchTerm$
+      .pipe(
+        debounceTime(300),
+        switchMap((term) => {
+          this.loading.set(true);
+          return this.catalog.searchCatalog(term, 25);
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (rows) => {
+          // Filter inactive on the client too — defence in depth, since
+          // the BE default already excludes inactive but a future
+          // include-inactive call shouldn't bleed into the picker UI.
+          this.results.set(rows.filter((r) => r.isActive));
+          this.loading.set(false);
+        },
+        error: () => {
+          this.results.set([]);
+          this.loading.set(false);
+        },
+      });
+
+    // Prime the dropdown with the first 25 active entries so cold focus
+    // shows something immediately.
+    this.searchTerm$.next('');
   }
 
   onInput(value: string): void {
     this.query.set(value);
     this.isOpen.set(true);
+    this.searchTerm$.next(value);
   }
 
   onFocus(): void {
     this.isOpen.set(true);
+    // Re-issue the current query so the dropdown reflects the latest
+    // catalog (handy if the user just edited a service in another tab).
+    this.searchTerm$.next(this.query());
   }
 
   onBlur(): void {

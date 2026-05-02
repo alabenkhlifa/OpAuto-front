@@ -188,6 +188,48 @@ describe('InvoicingService – findAll', () => {
     const paymentSelectKeys = Object.keys(call.include.payments.select).sort();
     expect(paymentSelectKeys).toEqual(['amount', 'id', 'method', 'paidAt', 'reference']);
   });
+
+  // ── 8. S-PERF-002 (Sweep C-18) — server-side ?search= ──────
+
+  describe('S-PERF-002 — server-side ?search=', () => {
+    it('omits OR clause when search is undefined or whitespace', async () => {
+      await service.findAll(GARAGE_ID, '   ');
+      const call = prisma.invoice.findMany.mock.calls[0][0];
+      expect(call.where).toEqual({ garageId: GARAGE_ID });
+    });
+
+    it('builds case-insensitive OR across invoiceNumber / customer name / license plate', async () => {
+      await service.findAll(GARAGE_ID, 'Karoui');
+      const call = prisma.invoice.findMany.mock.calls[0][0];
+      expect(call.where.garageId).toBe(GARAGE_ID);
+      expect(call.where.OR).toEqual([
+        { invoiceNumber: { contains: 'Karoui', mode: 'insensitive' } },
+        {
+          customer: {
+            is: {
+              OR: [
+                { firstName: { contains: 'Karoui', mode: 'insensitive' } },
+                { lastName: { contains: 'Karoui', mode: 'insensitive' } },
+              ],
+            },
+          },
+        },
+        {
+          car: {
+            is: { licensePlate: { contains: 'Karoui', mode: 'insensitive' } },
+          },
+        },
+      ]);
+    });
+
+    it('trims surrounding whitespace before applying the filter', async () => {
+      await service.findAll(GARAGE_ID, '  INV-001  ');
+      const call = prisma.invoice.findMany.mock.calls[0][0];
+      expect(call.where.OR[0]).toEqual({
+        invoiceNumber: { contains: 'INV-001', mode: 'insensitive' },
+      });
+    });
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────

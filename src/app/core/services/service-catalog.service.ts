@@ -38,6 +38,22 @@ export class ServiceCatalogService {
       .pipe(tap((rows) => this.catalogSubject.next(rows)));
   }
 
+  /**
+   * BUG-096 (Sweep C-18) — debounced server-side search for the
+   * service-picker. Hits `GET /service-catalog?search=&limit=` so we no
+   * longer dump the full catalog into memory on form open. Caller is
+   * expected to debounce + switchMap to cancel stale requests.
+   *
+   * Empty / whitespace `term` returns the first `limit` rows so the
+   * picker still has something to show on focus.
+   */
+  searchCatalog(term: string, limit = 25): Observable<ServiceCatalogEntry[]> {
+    let params = new HttpParams().set('limit', String(limit));
+    const trimmed = (term ?? '').trim();
+    if (trimmed) params = params.set('search', trimmed);
+    return this.http.get<ServiceCatalogEntry[]>(this.baseUrl, { params });
+  }
+
   getOne(id: string): Observable<ServiceCatalogEntry> {
     return this.http.get<ServiceCatalogEntry>(`${this.baseUrl}/${id}`);
   }

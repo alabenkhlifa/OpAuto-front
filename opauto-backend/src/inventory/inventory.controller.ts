@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { InventoryService } from './inventory.service';
 import { CreatePartDto } from './dto/create-part.dto';
@@ -17,7 +17,14 @@ import { ModuleAccessGuard, RequireModule } from '../modules/module-access.guard
 @Controller('inventory')
 export class InventoryController {
   constructor(private service: InventoryService) {}
-  @Get() findAll(@CurrentUser('garageId') gid: string) { return this.service.findAll(gid); }
+  @Get() findAll(
+    @CurrentUser('garageId') gid: string,
+    @Query('search') search?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const parsedLimit = limit !== undefined && limit !== '' ? Number(limit) : undefined;
+    return this.service.findAll(gid, search, parsedLimit);
+  }
   @Get('suppliers') listSuppliers(@CurrentUser('garageId') gid: string) { return this.service.findSuppliers(gid); }
   @Get(':id') findOne(@Param('id') id: string, @CurrentUser('garageId') gid: string) { return this.service.findOne(id, gid); }
   @Post() @RequireModule('inventory') create(@CurrentUser('garageId') gid: string, @Body() dto: CreatePartDto) { return this.service.create(gid, dto); }

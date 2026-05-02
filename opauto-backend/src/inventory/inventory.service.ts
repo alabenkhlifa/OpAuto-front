@@ -3,12 +3,50 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreatePartDto } from './dto/create-part.dto';
 import { UpdatePartDto } from './dto/update-part.dto';
 
+/** Default page size for the inventory list endpoint (matches the picker dropdown). */
+export const INVENTORY_DEFAULT_LIMIT = 25;
+/** Hard cap on `?limit=` to prevent forced full-table scans. */
+export const INVENTORY_MAX_LIMIT = 100;
+
 @Injectable()
 export class InventoryService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(garageId: string) {
-    return this.prisma.part.findMany({ where: { garageId }, include: { supplier: { select: { name: true } } }, orderBy: { name: 'asc' } });
+  /**
+   * BUG-096 (Sweep C-18) — server-side search + limit on the inventory
+   * list. `search` is a case-insensitive substring match across `name`
+   * and `partNumber` (the two fields the part-picker also matches on).
+   * Empty / whitespace `search` returns the first `limit` rows so the
+   * picker dropdown still has something to show on cold open. `limit`
+   * defaults to 25 and is clamped to [1, 100].
+   */
+  async findAll(garageId: string, search?: string, limit?: number) {
+    const trimmed = (search ?? '').trim();
+    const cap = this.clampLimit(limit);
+    const where: any = trimmed
+      ? {
+          garageId,
+          OR: [
+            { name: { contains: trimmed, mode: 'insensitive' } },
+            { partNumber: { contains: trimmed, mode: 'insensitive' } },
+          ],
+        }
+      : { garageId };
+    return this.prisma.part.findMany({
+      where,
+      include: { supplier: { select: { name: true } } },
+      orderBy: { name: 'asc' },
+      take: cap,
+    });
+  }
+
+  private clampLimit(limit?: number): number {
+    if (limit === undefined || limit === null || Number.isNaN(limit)) {
+      return INVENTORY_DEFAULT_LIMIT;
+    }
+    if (limit < 1) return 1;
+    if (limit > INVENTORY_MAX_LIMIT) return INVENTORY_MAX_LIMIT;
+    return Math.floor(limit);
   }
 
   async findSuppliers(garageId: string) {

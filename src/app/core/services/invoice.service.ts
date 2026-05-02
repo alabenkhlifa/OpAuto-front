@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of, BehaviorSubject } from 'rxjs';
 import { map, tap, catchError } from 'rxjs/operators';
 import {
@@ -268,8 +268,20 @@ export class InvoiceService {
 
   // --- Invoice CRUD operations ---
 
-  getInvoices(): Observable<InvoiceWithDetails[]> {
-    return this.http.get<any[]>('/invoices').pipe(
+  /**
+   * S-PERF-002 (Sweep C-18) — optional `search` parameter is forwarded
+   * to the BE as `?search=` so the invoice-list page can filter
+   * server-side instead of dumping the entire catalog into memory.
+   * Empty / whitespace `search` keeps the existing all-rows behaviour
+   * so other callers (cache hydration, dashboards) stay compatible.
+   */
+  getInvoices(search?: string): Observable<InvoiceWithDetails[]> {
+    let params: HttpParams | undefined;
+    const trimmed = (search ?? '').trim();
+    if (trimmed) {
+      params = new HttpParams().set('search', trimmed);
+    }
+    return this.http.get<any[]>('/invoices', { params }).pipe(
       map(items => items.map(b => this.mapFromBackend(b))),
       tap(invoices => this.invoicesSubject.next(invoices))
     );

@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of, BehaviorSubject } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import {
@@ -93,6 +93,28 @@ export class PartService {
     return this.http.get<any[]>('/inventory').pipe(
       map(items => items.map(b => this.mapFromBackend(b))),
       tap(parts => this.partsSubject.next(parts))
+    );
+  }
+
+  /**
+   * BUG-096 (Sweep C-18) — debounced server-side search for the
+   * part-picker. Hits `GET /inventory?search=&limit=` so the picker no
+   * longer dumps the full inventory into memory. Caller is expected to
+   * debounce + switchMap to cancel stale requests.
+   *
+   * Empty / whitespace `term` returns the first `limit` rows so the
+   * dropdown still has something to render on focus.
+   *
+   * NOTE: Distinct from the legacy in-memory `searchParts(query)` below
+   * which filters the cached `partsSubject`. New picker code should use
+   * this method.
+   */
+  searchPartsServer(term: string, limit = 25): Observable<PartWithStock[]> {
+    let params = new HttpParams().set('limit', String(limit));
+    const trimmed = (term ?? '').trim();
+    if (trimmed) params = params.set('search', trimmed);
+    return this.http.get<any[]>('/inventory', { params }).pipe(
+      map((items) => items.map((b) => this.mapFromBackend(b))),
     );
   }
 

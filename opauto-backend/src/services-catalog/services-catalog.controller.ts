@@ -31,8 +31,17 @@ export class ServicesCatalogController {
   findAll(
     @CurrentUser('garageId') gid: string,
     @Query('includeInactive') includeInactive?: string,
+    @Query('search') search?: string,
+    @Query('limit') limit?: string,
   ) {
-    return this.service.findAll(gid, includeInactive === 'true');
+    const parsedLimit =
+      limit !== undefined && limit !== '' ? Number(limit) : undefined;
+    return this.service.findAll(
+      gid,
+      includeInactive === 'true',
+      search,
+      parsedLimit,
+    );
   }
 
   @Get(':id')

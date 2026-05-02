@@ -52,9 +52,41 @@ export class InvoicingService {
     private taxCalculator: TaxCalculatorService,
   ) {}
 
-  async findAll(garageId: string) {
+  /**
+   * S-PERF-002 (Sweep C-18) — when `search` is provided, filter the
+   * `where` clause server-side across `invoiceNumber` + customer name +
+   * license plate (case-insensitive substring). Empty / whitespace
+   * `search` returns the full set as before.
+   */
+  async findAll(garageId: string, search?: string) {
+    const trimmed = (search ?? '').trim();
+    const where: any = trimmed
+      ? {
+          garageId,
+          OR: [
+            { invoiceNumber: { contains: trimmed, mode: 'insensitive' } },
+            {
+              customer: {
+                is: {
+                  OR: [
+                    { firstName: { contains: trimmed, mode: 'insensitive' } },
+                    { lastName: { contains: trimmed, mode: 'insensitive' } },
+                  ],
+                },
+              },
+            },
+            {
+              car: {
+                is: {
+                  licensePlate: { contains: trimmed, mode: 'insensitive' },
+                },
+              },
+            },
+          ],
+        }
+      : { garageId };
     return this.prisma.invoice.findMany({
-      where: { garageId },
+      where,
       include: {
         customer: { select: { firstName: true, lastName: true } },
         car: {

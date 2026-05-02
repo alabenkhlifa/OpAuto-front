@@ -2427,7 +2427,8 @@
       "placeholder": "ابحث عن قطعة…",
       "noResults": "لم يتم العثور على قطع",
       "inStock": "{{count}} متوفر",
-      "outOfStock": "غير متوفر"
+      "outOfStock": "غير متوفر",
+      "searching": "جاري البحث…"
     },
     "paymentModal": {
       "title": "تسجيل دفعة",
@@ -3363,7 +3364,8 @@
     "picker": {
       "placeholder": "ابحث عن خدمة…",
       "noResults": "لا توجد خدمات مطابقة لبحثك",
-      "loading": "جاري تحميل الخدمات…"
+      "loading": "جاري تحميل الخدمات…",
+      "searching": "جاري البحث…"
     },
     "form": {
       "code": "الرمز",

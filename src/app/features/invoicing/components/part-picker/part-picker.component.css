@@ -76,8 +76,13 @@
   color: var(--color-text-secondary, #4b5563);
 }
 
-.part-picker__empty {
+.part-picker__empty,
+.part-picker__loading {
   padding: 0.5rem 0.75rem;
   color: var(--color-text-secondary, #6b7280);
   font-size: 0.85rem;
+}
+
+.part-picker__loading {
+  font-style: italic;
 }

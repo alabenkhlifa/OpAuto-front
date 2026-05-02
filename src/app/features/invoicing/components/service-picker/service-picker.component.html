@@ -10,9 +10,13 @@
     autocomplete="off"
   />
 
-  @if (isOpen() && !loading()) {
+  @if (isOpen()) {
     <ul class="service-picker__dropdown" role="listbox">
-      @if (results().length === 0) {
+      @if (loading()) {
+        <li class="service-picker__loading">
+          {{ 'serviceCatalog.picker.searching' | translate }}
+        </li>
+      } @else if (results().length === 0) {
         <li class="service-picker__empty">
           {{ 'serviceCatalog.picker.noResults' | translate }}
         </li>

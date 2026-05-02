@@ -18,15 +18,65 @@ import { UpdateServiceCatalogDto } from './dto/update-service-catalog.dto';
  * are preserved. A `?hard=true` flag triggers an actual row delete for
  * owners who need to clean up genuine mistakes.
  */
+/**
+ * Default page size for catalog list endpoints. Picker dropdowns render
+ * 25 rows; we mirror that here so a blank `?search=` returns exactly the
+ * slice the picker needs without dumping the entire catalog.
+ */
+export const SERVICES_CATALOG_DEFAULT_LIMIT = 25;
+/**
+ * Hard cap on `?limit=` to prevent malicious clients from forcing a
+ * full-table scan. 100 is generous for autocomplete and admin views.
+ */
+export const SERVICES_CATALOG_MAX_LIMIT = 100;
+
 @Injectable()
 export class ServicesCatalogService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(garageId: string, includeInactive = false) {
+  /**
+   * BUG-096 (Sweep C-18) — server-side search + limit.
+   *
+   * `search` is a case-insensitive substring match across `name`, `code`,
+   * and `category`. Empty / whitespace-only `search` returns the first
+   * `limit` rows so the picker dropdown still works on cold open.
+   * `limit` defaults to 25 and is clamped to [1, 100].
+   */
+  async findAll(
+    garageId: string,
+    includeInactive = false,
+    search?: string,
+    limit?: number,
+  ) {
+    const trimmed = (search ?? '').trim();
+    const cap = this.clampLimit(limit);
+    const baseWhere: any = includeInactive
+      ? { garageId }
+      : { garageId, isActive: true };
+    const where = trimmed
+      ? {
+          ...baseWhere,
+          OR: [
+            { name: { contains: trimmed, mode: 'insensitive' } },
+            { code: { contains: trimmed, mode: 'insensitive' } },
+            { category: { contains: trimmed, mode: 'insensitive' } },
+          ],
+        }
+      : baseWhere;
     return this.prisma.serviceCatalog.findMany({
-      where: includeInactive ? { garageId } : { garageId, isActive: true },
+      where,
       orderBy: [{ category: 'asc' }, { name: 'asc' }],
+      take: cap,
     });
+  }
+
+  private clampLimit(limit?: number): number {
+    if (limit === undefined || limit === null || Number.isNaN(limit)) {
+      return SERVICES_CATALOG_DEFAULT_LIMIT;
+    }
+    if (limit < 1) return 1;
+    if (limit > SERVICES_CATALOG_MAX_LIMIT) return SERVICES_CATALOG_MAX_LIMIT;
+    return Math.floor(limit);
   }
 
   async findOne(id: string, garageId: string) {

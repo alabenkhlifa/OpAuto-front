@@ -2375,7 +2375,8 @@
       "placeholder": "Search parts…",
       "noResults": "No parts found",
       "inStock": "{{count}} in stock",
-      "outOfStock": "Out of stock"
+      "outOfStock": "Out of stock",
+      "searching": "Searching…"
     },
     "paymentModal": {
       "title": "Record payment",
@@ -3231,7 +3232,8 @@
     "picker": {
       "placeholder": "Search services…",
       "noResults": "No services match your search",
-      "loading": "Loading services…"
+      "loading": "Loading services…",
+      "searching": "Searching…"
     },
     "form": {
       "code": "Code",

@@ -1,6 +1,9 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
+import { Subject } from 'rxjs';
+import { debounceTime, switchMap } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { InvoiceService } from '../../../../core/services/invoice.service';
 import { TranslationService } from '../../../../core/services/translation.service';
@@ -39,6 +42,17 @@ export class InvoiceListPageComponent implements OnInit {
   private translationService = inject(TranslationService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private destroyRef = inject(DestroyRef);
+
+  /**
+   * S-PERF-002 (Sweep C-18) — debounce gate for the search input.
+   * `next()` cancels any in-flight `GET /invoices?search=` via switchMap,
+   * so rapid keystrokes only result in one settled request. The client
+   * `filteredInvoices` computed still applies status / paymentMethod
+   * filters + a redundant substring match (defence in depth + zero-flicker
+   * during the 300ms debounce window).
+   */
+  private readonly searchTerm$ = new Subject<string>();
 
   /** Pagination — page size is intentionally fixed (no UI knob) at 25. */
   static readonly PAGE_SIZE = 25;
@@ -119,6 +133,25 @@ export class InvoiceListPageComponent implements OnInit {
         this.currentPage.set(1);
       }
     });
+
+    // S-PERF-002 — wire debounced server-side search.
+    this.searchTerm$
+      .pipe(
+        debounceTime(300),
+        switchMap((term) => {
+          this.isLoading.set(true);
+          return this.invoiceService.getInvoices(term);
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (rows) => {
+          this.invoices.set(rows);
+          this.isLoading.set(false);
+        },
+        error: () => this.isLoading.set(false),
+      });
+
     this.loadInvoices();
   }
 
@@ -134,8 +167,11 @@ export class InvoiceListPageComponent implements OnInit {
   }
 
   onSearchChange(event: Event): void {
-    this.searchQuery.set((event.target as HTMLInputElement).value);
+    const value = (event.target as HTMLInputElement).value;
+    this.searchQuery.set(value);
     this.currentPage.set(1);
+    // S-PERF-002 — fire the debounced server-side search.
+    this.searchTerm$.next(value);
   }
   onStatusChange(event: Event): void {
     this.selectedStatus.set((event.target as HTMLSelectElement).value);
@@ -153,6 +189,8 @@ export class InvoiceListPageComponent implements OnInit {
     this.selectedStatus.set('all');
     this.selectedPaymentMethod.set('all');
     this.currentPage.set(1);
+    // S-PERF-002 — re-hydrate the full list from the BE.
+    this.searchTerm$.next('');
   }
 
   /** Pagination handlers — guarded so they never overshoot. */

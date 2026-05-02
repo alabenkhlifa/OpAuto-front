@@ -39,6 +39,7 @@ describe('ServicesCatalogService (unit)', () => {
     expect(prisma.serviceCatalog.findMany).toHaveBeenCalledWith({
       where: { garageId: GARAGE_ID, isActive: true },
       orderBy: [{ category: 'asc' }, { name: 'asc' }],
+      take: 25,
     });
   });
 
@@ -48,6 +49,65 @@ describe('ServicesCatalogService (unit)', () => {
     expect(prisma.serviceCatalog.findMany).toHaveBeenCalledWith({
       where: { garageId: GARAGE_ID },
       orderBy: [{ category: 'asc' }, { name: 'asc' }],
+      take: 25,
+    });
+  });
+
+  // ── BUG-096 (Sweep C-18) — server-side search + limit ──────
+  describe('BUG-096 (Sweep C-18) — search + limit', () => {
+    it('findAll with empty search omits OR clause and applies default limit 25', async () => {
+      prisma.serviceCatalog.findMany.mockResolvedValue([]);
+      await service.findAll(GARAGE_ID, false, '   ');
+      const call = prisma.serviceCatalog.findMany.mock.calls[0][0];
+      expect(call.where).toEqual({ garageId: GARAGE_ID, isActive: true });
+      expect(call.where.OR).toBeUndefined();
+      expect(call.take).toBe(25);
+    });
+
+    it('findAll with search="oil" builds case-insensitive OR across name / code / category', async () => {
+      prisma.serviceCatalog.findMany.mockResolvedValue([]);
+      await service.findAll(GARAGE_ID, false, 'oil');
+      const call = prisma.serviceCatalog.findMany.mock.calls[0][0];
+      expect(call.where.OR).toEqual([
+        { name: { contains: 'oil', mode: 'insensitive' } },
+        { code: { contains: 'oil', mode: 'insensitive' } },
+        { category: { contains: 'oil', mode: 'insensitive' } },
+      ]);
+      expect(call.where.garageId).toBe(GARAGE_ID);
+      expect(call.where.isActive).toBe(true);
+    });
+
+    it('findAll trims whitespace on search before matching', async () => {
+      prisma.serviceCatalog.findMany.mockResolvedValue([]);
+      await service.findAll(GARAGE_ID, false, '  oil  ');
+      const call = prisma.serviceCatalog.findMany.mock.calls[0][0];
+      expect(call.where.OR[0]).toEqual({
+        name: { contains: 'oil', mode: 'insensitive' },
+      });
+    });
+
+    it('findAll honours an explicit limit of 5', async () => {
+      prisma.serviceCatalog.findMany.mockResolvedValue([]);
+      await service.findAll(GARAGE_ID, false, undefined, 5);
+      expect(prisma.serviceCatalog.findMany.mock.calls[0][0].take).toBe(5);
+    });
+
+    it('findAll clamps a limit > 100 to 100 (DoS guard)', async () => {
+      prisma.serviceCatalog.findMany.mockResolvedValue([]);
+      await service.findAll(GARAGE_ID, false, undefined, 9999);
+      expect(prisma.serviceCatalog.findMany.mock.calls[0][0].take).toBe(100);
+    });
+
+    it('findAll clamps a limit < 1 up to 1', async () => {
+      prisma.serviceCatalog.findMany.mockResolvedValue([]);
+      await service.findAll(GARAGE_ID, false, undefined, 0);
+      expect(prisma.serviceCatalog.findMany.mock.calls[0][0].take).toBe(1);
+    });
+
+    it('findAll falls back to default 25 when limit is NaN', async () => {
+      prisma.serviceCatalog.findMany.mockResolvedValue([]);
+      await service.findAll(GARAGE_ID, false, undefined, NaN);
+      expect(prisma.serviceCatalog.findMany.mock.calls[0][0].take).toBe(25);
     });
   });
 

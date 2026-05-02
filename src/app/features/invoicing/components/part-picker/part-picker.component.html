@@ -8,9 +8,13 @@
          [placeholder]="'invoicing.partPicker.placeholder' | translate"
          autocomplete="off" />
 
-  @if (isOpen() && !loading()) {
+  @if (isOpen()) {
     <ul class="part-picker__dropdown" role="listbox">
-      @if (results().length === 0) {
+      @if (loading()) {
+        <li class="part-picker__loading">
+          {{ 'invoicing.partPicker.searching' | translate }}
+        </li>
+      } @else if (results().length === 0) {
         <li class="part-picker__empty">
           {{ 'invoicing.partPicker.noResults' | translate }}
         </li>

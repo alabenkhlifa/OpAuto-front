@@ -2425,7 +2425,8 @@
       "placeholder": "Rechercher des pièces…",
       "noResults": "Aucune pièce trouvée",
       "inStock": "{{count}} en stock",
-      "outOfStock": "Rupture de stock"
+      "outOfStock": "Rupture de stock",
+      "searching": "Recherche…"
     },
     "paymentModal": {
       "title": "Enregistrer un paiement",
@@ -3325,7 +3326,8 @@
     "picker": {
       "placeholder": "Rechercher un service…",
       "noResults": "Aucun service ne correspond à votre recherche",
-      "loading": "Chargement des services…"
+      "loading": "Chargement des services…",
+      "searching": "Recherche…"
     },
     "form": {
       "code": "Code",

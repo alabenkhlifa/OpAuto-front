@@ -8,6 +8,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
   Res,
   UseGuards,
 } from '@nestjs/common';
@@ -50,9 +51,20 @@ export class InvoicingController {
     private pdf: PdfRendererService,
   ) {}
 
+  /**
+   * S-PERF-002 (Sweep C-18) — server-side `?search=` filter so the
+   * invoice list scales beyond the FE's pre-fetched cache. `search` is
+   * a case-insensitive substring match across `invoiceNumber`,
+   * customer first/last name, and license plate; empty / whitespace
+   * `search` returns the full set as before so existing callers stay
+   * compatible.
+   */
   @Get()
-  findAll(@CurrentUser('garageId') gid: string) {
-    return this.service.findAll(gid);
+  findAll(
+    @CurrentUser('garageId') gid: string,
+    @Query('search') search?: string,
+  ) {
+    return this.service.findAll(gid, search);
   }
 
   @Get(':id')
