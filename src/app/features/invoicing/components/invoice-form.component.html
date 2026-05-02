@@ -162,7 +162,7 @@
               <tbody>
                 @for (line of lines(); track $index; let i = $index) {
                   <tr [class.error]="isOverdraw(i)">
-                    <td>
+                    <td [attr.data-label]="'invoicing.form.table.type' | translate">
                       <select class="form-select form-select--sm"
                               [value]="line.type"
                               (change)="onLineTypeChange(i, $any($event.target).value)"
@@ -172,7 +172,8 @@
                         }
                       </select>
                     </td>
-                    <td class="invoice-form-table__desc">
+                    <td class="invoice-form-table__desc"
+                        [attr.data-label]="'invoicing.form.table.description' | translate">
                       @if (line.type === 'service' && !isLocked()) {
                         <app-service-picker (serviceSelected)="onServicePicked(i, $event)"></app-service-picker>
                       } @else if (line.type === 'part' && !isLocked()) {
@@ -208,7 +209,7 @@
                         </label>
                       }
                     </td>
-                    <td>
+                    <td [attr.data-label]="'invoicing.form.table.qty' | translate">
                       <input type="number"
                              min="0"
                              step="0.01"
@@ -217,7 +218,7 @@
                              (input)="updateLine(i, 'quantity', +$any($event.target).value)"
                              [disabled]="isLocked() || line.type === 'labor'" />
                     </td>
-                    <td>
+                    <td [attr.data-label]="'invoicing.form.table.unitPrice' | translate">
                       <input type="number"
                              min="0"
                              step="0.01"
@@ -226,7 +227,7 @@
                              (input)="updateLine(i, 'unitPrice', +$any($event.target).value)"
                              [disabled]="isLocked()" />
                     </td>
-                    <td>
+                    <td [attr.data-label]="'invoicing.form.table.tva' | translate">
                       <select class="form-select form-select--sm"
                               [value]="line.tvaRate"
                               (change)="updateLine(i, 'tvaRate', $any(+$any($event.target).value))"
@@ -236,7 +237,7 @@
                         }
                       </select>
                     </td>
-                    <td>
+                    <td [attr.data-label]="'invoicing.form.table.discount' | translate">
                       <input type="number"
                              min="0"
                              max="100"
@@ -246,9 +247,10 @@
                              (input)="updateLine(i, 'discountPct', +$any($event.target).value)"
                              [disabled]="isLocked()" />
                     </td>
-                    <td class="invoice-form-table__total">{{ formatCurrency(lineTotal(i)) }}</td>
+                    <td class="invoice-form-table__total"
+                        [attr.data-label]="'invoicing.form.table.total' | translate">{{ formatCurrency(lineTotal(i)) }}</td>
                     @if (!isLocked()) {
-                      <td>
+                      <td class="invoice-form-table__actions">
                         <button type="button"
                                 class="btn-icon btn-tertiary"
                                 (click)="removeLine(i)"

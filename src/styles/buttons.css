@@ -302,6 +302,45 @@
 }
 
 /* =========================================================================
+   S-MOB-008 — Touch targets ≥ 44×44 px (WCAG 2.5.5).
+   Below 768 px the primary / secondary / tertiary / danger / success /
+   warning / filter buttons must hit the 44 px minimum tap area on every
+   axis. We keep the existing desktop padding intact and only widen the
+   minimum height (and minimum width for icon-only variants).
+   ========================================================================= */
+@media (max-width: 768px) {
+  .btn-primary,
+  .btn-secondary,
+  .btn-tertiary,
+  .btn-danger,
+  .btn-success,
+  .btn-warning,
+  .btn-filter-toggle,
+  .btn-filter-chip,
+  .btn-clear-filters,
+  .btn-ai {
+    min-height: 44px;
+  }
+
+  .btn-icon {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* `.btn-sm` is the compact variant used in .invoice-form-add-row and
+     similar dense contexts. Keep the smaller font / padding on desktop,
+     but ensure the tap area still clears 44 px on touch viewports. */
+  .btn-sm {
+    min-height: 44px;
+  }
+
+  .btn-icon.btn-sm {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* =========================================================================
    AI buttons — shared style for every AI-triggering action (Refresh
    predictions, AI Suggest, Generate Insights, etc.). Purple palette so
    users recognize "this runs AI" at a glance. Use .btn-ai--block to fill

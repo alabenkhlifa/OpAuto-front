@@ -110,6 +110,111 @@
   white-space: nowrap;
 }
 
+/* S-MOB-006 — mobile stacked-card line items.
+ * Below 768 px the table flips into stacked cards: the <thead> is hidden,
+ * each <tr> becomes a 2-column grid (label + value), and the data-label
+ * attribute on each <td> drives the per-field label. The desktop table
+ * is unchanged. Reuses every existing form-input / form-select primitive
+ * — no new components, no new layout containers. */
+@media (max-width: 767px) {
+  .quote-form-page__table-wrap {
+    overflow-x: visible;
+    border: none;
+    background: transparent;
+    border-radius: 0;
+  }
+
+  .quote-form-page__table {
+    border-collapse: separate;
+    border-spacing: 0 0.625rem;
+  }
+
+  .quote-form-page__table thead {
+    /* WCAG-friendly hide: keeps headers in the a11y tree while removing
+       them from the visual layout. */
+    border: 0;
+    clip: rect(0 0 0 0);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    width: 1px;
+    white-space: nowrap;
+  }
+
+  /* Each row is a vertical stack of label/value pairs (one per <td>).
+     A single-column flex column avoids the grid `max-content` quirk where
+     a wide first track can collapse the second to 0 px and hide inputs. */
+  .quote-form-page__table tbody tr {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #ffffff;
+  }
+
+  .quote-form-page__table tbody td {
+    border-bottom: none;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  .quote-form-page__table tbody td::before {
+    content: attr(data-label);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text-secondary, #4b5563);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    flex: 0 0 6rem;
+  }
+
+  /* Description hosts the picker + input (and labor-hours sub-field) —
+     the inline label would crowd it, so the label sits above the controls. */
+  .quote-form-page__table tbody td.quote-form-page__table-desc {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.25rem;
+  }
+
+  .quote-form-page__table tbody td.quote-form-page__table-desc::before {
+    flex: none;
+    margin-bottom: 0.125rem;
+  }
+
+  .quote-form-page__table tbody td > .form-input,
+  .quote-form-page__table tbody td > .form-select {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .quote-form-page__table tbody td.quote-form-page__table-total {
+    justify-content: space-between;
+  }
+
+  /* Trash button row — full-width, right-aligned, no leading label. */
+  .quote-form-page__table tbody td.quote-form-page__table-actions {
+    justify-content: flex-end;
+  }
+
+  .quote-form-page__table tbody td.quote-form-page__table-actions::before {
+    content: none;
+  }
+
+  /* Numeric inputs lose their tight 6.5 rem cap so they can fill the
+     stacked-card column. */
+  .quote-form-page__table tbody td .form-input--num {
+    width: 100%;
+  }
+}
+
 .quote-form-page__labor-hours {
   display: flex;
   align-items: center;

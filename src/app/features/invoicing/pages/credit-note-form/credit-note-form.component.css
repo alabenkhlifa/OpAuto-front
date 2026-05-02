@@ -62,6 +62,40 @@
   border-radius: 8px;
 }
 
+/* S-MOB-006 — mobile stacked layout for credit-note line picker.
+ * Below 768 px the 4-column grid (auto / 1fr / 100px qty / 100px total)
+ * collapses to a 2-column "checkbox + content" layout where the qty
+ * input + total stack under the description on their own row, each
+ * with its own translated label so the user can edit qty without
+ * horizontally scrolling. */
+@media (max-width: 767px) {
+  .credit-note-line {
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 0.5rem;
+    row-gap: 0.5rem;
+    align-items: start;
+  }
+
+  .credit-note-line__select {
+    grid-row: 1;
+  }
+
+  .credit-note-line__main {
+    grid-row: 1;
+  }
+
+  .credit-note-line__qty {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .credit-note-line__total {
+    grid-column: 1 / -1;
+    text-align: right;
+    align-self: end;
+  }
+}
+
 .credit-note-line__description {
   font-weight: 500;
   margin: 0;

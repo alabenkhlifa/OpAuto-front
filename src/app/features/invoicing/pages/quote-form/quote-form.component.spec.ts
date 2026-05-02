@@ -696,4 +696,78 @@ describe('QuoteFormPageComponent — edit mode (BUG-095)', () => {
       expect(after).toBe(before); // 2 — preserved when entry has no defaultLaborHours
     });
   });
+
+  /**
+   * S-MOB-006 — mobile stacked-card line items.
+   *
+   * The CSS @media (max-width: 767px) block actually flips the layout,
+   * but the load-bearing markup contract is the per-cell `data-label`
+   * attribute that drives the `::before` pseudo-element labels. Without
+   * data-label the stacked-card view would render unlabelled values.
+   * These specs pin the markup so a future template edit can't silently
+   * break the mobile view.
+   */
+  describe('S-MOB-006 — mobile stacked line-items markup contract', () => {
+    beforeEach(async () => {
+      await setupWithRouteId(null); // create mode
+      fixture = TestBed.createComponent(QuoteFormPageComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+    });
+
+    it('emits data-label on every line-items cell', () => {
+      component.form.patchValue({
+        customerId: 'c-1',
+        carId: 'car-1',
+        validUntil: '2026-12-31',
+      });
+      component.addLine('misc');
+      component.updateLine(0, 'description', 'Misc fee');
+      component.updateLine(0, 'quantity', 1);
+      component.updateLine(0, 'unitPrice', 10);
+      fixture.detectChanges();
+
+      const cells = (fixture.nativeElement as HTMLElement).querySelectorAll(
+        '.quote-form-page__table tbody tr td[data-label]',
+      );
+      const labels = Array.from(cells).map((c) => c.getAttribute('data-label'));
+      // 7 labelled cells: type / description / qty / unitPrice / tva / discount / total.
+      // The 8th cell (the trash button) intentionally omits data-label and
+      // gets the `.quote-form-page__table-actions` modifier so the mobile
+      // CSS hides its label and stretches the button across the row.
+      expect(labels.length).toBe(7);
+      expect(labels).toEqual([
+        'invoicing.form.table.type',
+        'invoicing.form.table.description',
+        'invoicing.form.table.qty',
+        'invoicing.form.table.unitPrice',
+        'invoicing.form.table.tva',
+        'invoicing.form.table.discount',
+        'invoicing.form.table.total',
+      ]);
+    });
+
+    it('action cell carries the .quote-form-page__table-actions class so mobile CSS can hide its label', () => {
+      component.addLine('service');
+      fixture.detectChanges();
+
+      const actions = (fixture.nativeElement as HTMLElement).querySelector(
+        '.quote-form-page__table tbody tr td.quote-form-page__table-actions',
+      );
+      expect(actions).toBeTruthy();
+      expect(actions?.getAttribute('data-label')).toBeNull();
+      expect(actions?.querySelector('button')).toBeTruthy();
+    });
+
+    it('description cell keeps its desc modifier so mobile CSS can full-width it', () => {
+      component.addLine('part');
+      fixture.detectChanges();
+
+      const desc = (fixture.nativeElement as HTMLElement).querySelector(
+        '.quote-form-page__table tbody tr td.quote-form-page__table-desc',
+      );
+      expect(desc).toBeTruthy();
+      expect(desc?.getAttribute('data-label')).toBe('invoicing.form.table.description');
+    });
+  });
 });

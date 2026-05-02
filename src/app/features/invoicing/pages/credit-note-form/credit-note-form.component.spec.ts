@@ -252,4 +252,34 @@ describe('CreditNoteFormPageComponent', () => {
       expect(submitBtn!.disabled).withContext('submit disabled while form invalid').toBeTrue();
     });
   });
+
+  /**
+   * S-MOB-006 — credit-note line picker stays usable on a 375 px viewport.
+   *
+   * The CSS @media (max-width: 767px) block re-flows the 4-column grid
+   * (`auto 1fr 100px 100px`) to a 2-column layout where the qty input
+   * + total stack under the description. Verifying the markup contract
+   * here pins the contract: every line row must surface checkbox / main
+   * / qty / total nodes so the mobile CSS can reach them.
+   */
+  describe('S-MOB-006 — mobile stacked line markup contract', () => {
+    it('renders the four sub-elements per credit-note line so mobile CSS can reflow', async () => {
+      configure({ invoiceId: 'inv-123' });
+      const fixture = TestBed.createComponent(CreditNoteFormPageComponent);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const lines = (fixture.nativeElement as HTMLElement).querySelectorAll(
+        'ul.credit-note-lines li.credit-note-line',
+      );
+      expect(lines.length).toBeGreaterThan(0);
+      lines.forEach((li) => {
+        expect(li.querySelector('.credit-note-line__select')).withContext('checkbox cell').not.toBeNull();
+        expect(li.querySelector('.credit-note-line__main')).withContext('main cell').not.toBeNull();
+        expect(li.querySelector('.credit-note-line__qty')).withContext('qty input').not.toBeNull();
+        expect(li.querySelector('.credit-note-line__total')).withContext('total cell').not.toBeNull();
+      });
+    });
+  });
 });

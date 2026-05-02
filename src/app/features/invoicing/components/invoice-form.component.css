@@ -11,7 +11,7 @@
   padding-bottom: 6rem; /* leave room for the sticky action bar */
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 768px) {
   .invoice-form-page {
     padding: 1.5rem 1.5rem 6rem;
   }
@@ -68,6 +68,14 @@
   gap: 1rem;
 }
 
+/* S-MOB-009 — iPad portrait (768) and up keeps the summary aside docked
+   to the right of the main column instead of collapsing to the bottom. */
+@media (min-width: 768px) {
+  .invoice-form-grid {
+    grid-template-columns: minmax(0, 1fr) 280px;
+  }
+}
+
 @media (min-width: 1024px) {
   .invoice-form-grid {
     grid-template-columns: minmax(0, 1fr) 320px;
@@ -87,7 +95,10 @@
   gap: 1rem;
 }
 
-@media (min-width: 1024px) {
+/* S-MOB-005 / S-MOB-009 — sticky aside engages from iPad portrait up.
+   Below 768 the aside falls back to `position: static` so the summary
+   block stacks at the bottom of the form (S-MOB-005). */
+@media (min-width: 768px) {
   .invoice-form-aside {
     position: sticky;
     top: 5rem;
@@ -290,6 +301,118 @@
   gap: 0.25rem;
   font-size: 0.6875rem;
   color: #6b7280;
+}
+
+/* S-MOB-006 — mobile stacked-card line items.
+ * Below 768 px the table flips into stacked cards: <thead> is hidden,
+ * each <tr> becomes a 2-column grid (label + value), and the data-label
+ * attribute on each <td> drives the per-field label. The desktop table
+ * (above 768 px, with the existing `min-width: 720px` + horizontal
+ * scroll wrap) is unchanged. Reuses every existing form-input /
+ * form-select primitive — no new components, no markup changes apart
+ * from the data-label attributes. */
+@media (max-width: 767px) {
+  .invoice-form-table-wrap {
+    overflow-x: visible;
+    margin: 0;
+    padding: 0;
+  }
+
+  .invoice-form-table {
+    min-width: 0;
+    border-collapse: separate;
+    border-spacing: 0 0.625rem;
+  }
+
+  .invoice-form-table thead {
+    /* WCAG-friendly hide: keeps headers in the a11y tree but removes
+       them from the visual layout. */
+    border: 0;
+    clip: rect(0 0 0 0);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    width: 1px;
+    white-space: nowrap;
+  }
+
+  /* Each row is a vertical stack of label/value pairs (one per <td>).
+     A single-column flex column avoids the grid `max-content` quirk where
+     a wide first track can collapse the second to 0 px and hide inputs. */
+  .invoice-form-table tbody tr {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #ffffff;
+  }
+
+  .invoice-form-table tbody tr.error {
+    border-color: rgba(239, 68, 68, 0.6);
+  }
+
+  .invoice-form-table tbody td {
+    border-bottom: none;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  .invoice-form-table tbody td::before {
+    content: attr(data-label);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    flex: 0 0 6rem;
+  }
+
+  /* Description hosts the picker + description input + optional
+     stock badge / labor-hours sub-field — the inline label would crowd
+     it, so the label sits above the controls. */
+  .invoice-form-table tbody td.invoice-form-table__desc {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.25rem;
+  }
+
+  .invoice-form-table tbody td.invoice-form-table__desc::before {
+    flex: none;
+    margin-bottom: 0.125rem;
+  }
+
+  .invoice-form-table tbody td > .form-input,
+  .invoice-form-table tbody td > .form-select {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .invoice-form-table tbody td.invoice-form-table__total {
+    justify-content: space-between;
+  }
+
+  /* Trash button row — full-width, right-aligned, no leading label. */
+  .invoice-form-table tbody td.invoice-form-table__actions {
+    justify-content: flex-end;
+  }
+
+  .invoice-form-table tbody td.invoice-form-table__actions::before {
+    content: none;
+  }
+
+  /* Numeric inputs lose their tight 6.5 rem cap so they can fill the
+     stacked-card column; tabular-nums + right alignment preserved. */
+  .invoice-form-table tbody td .form-input--num {
+    width: 100%;
+  }
 }
 
 /* Compact form inputs used inside the table */

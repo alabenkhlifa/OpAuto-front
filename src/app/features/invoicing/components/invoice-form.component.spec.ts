@@ -1128,4 +1128,85 @@ describe('InvoiceFormComponent', () => {
       expect(openSpy).not.toHaveBeenCalled();
     });
   });
+
+  /**
+   * S-MOB-006 — mobile stacked-card line items.
+   *
+   * The CSS @media (max-width: 767px) block is what actually flips the
+   * layout, but the load-bearing markup contract is the per-cell
+   * `data-label` attribute that drives the `::before` pseudo-element
+   * labels. Without the data-label the stacked-card view would render
+   * unlabelled values. These specs pin the markup contract so a future
+   * template edit can't silently break the mobile view.
+   */
+  describe('S-MOB-006: mobile stacked line-items markup contract', () => {
+    it('emits data-label on every line-items cell so mobile CSS can render labels', async () => {
+      configure();
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      cmp.form.patchValue({ customerId: 'c1', carId: 'car1' });
+      cmp.addLine('misc');
+      cmp.updateLine(0, 'description', 'Misc');
+      cmp.updateLine(0, 'quantity', 1);
+      cmp.updateLine(0, 'unitPrice', 10);
+      fixture.detectChanges();
+
+      const cells = (fixture.nativeElement as HTMLElement).querySelectorAll(
+        '.invoice-form-table tbody tr td[data-label]',
+      );
+      const labels = Array.from(cells).map((c) => c.getAttribute('data-label'));
+      // 7 labelled cells: type / description / qty / unitPrice / tva / discount / total.
+      // The 8th cell (the trash button) intentionally omits data-label and
+      // gets the `.invoice-form-table__actions` modifier so the mobile CSS
+      // hides its label and stretches the button across the row.
+      expect(labels.length).toBe(7);
+      expect(labels).toEqual([
+        'invoicing.form.table.type',
+        'invoicing.form.table.description',
+        'invoicing.form.table.qty',
+        'invoicing.form.table.unitPrice',
+        'invoicing.form.table.tva',
+        'invoicing.form.table.discount',
+        'invoicing.form.table.total',
+      ]);
+    });
+
+    it('action cell carries the .invoice-form-table__actions class so mobile CSS can hide its label', async () => {
+      configure();
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      cmp.form.patchValue({ customerId: 'c1', carId: 'car1' });
+      cmp.addLine('misc');
+      fixture.detectChanges();
+
+      const actions = (fixture.nativeElement as HTMLElement).querySelector(
+        '.invoice-form-table tbody tr td.invoice-form-table__actions',
+      );
+      expect(actions).toBeTruthy();
+      expect(actions?.getAttribute('data-label')).toBeNull();
+      // Trash button is reachable inside the action cell.
+      expect(actions?.querySelector('button')).toBeTruthy();
+    });
+
+    it('description cell keeps its desc modifier so mobile CSS can full-width it', async () => {
+      configure();
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      cmp.form.patchValue({ customerId: 'c1', carId: 'car1' });
+      cmp.addLine('service');
+      fixture.detectChanges();
+
+      const desc = (fixture.nativeElement as HTMLElement).querySelector(
+        '.invoice-form-table tbody tr td.invoice-form-table__desc',
+      );
+      expect(desc).toBeTruthy();
+      expect(desc?.getAttribute('data-label')).toBe('invoicing.form.table.description');
+    });
+  });
 });

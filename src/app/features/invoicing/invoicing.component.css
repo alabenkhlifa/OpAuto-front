@@ -180,7 +180,10 @@
   box-shadow: 0 12px 22px rgba(255, 132, 0, 0.4);
 }
 
-@media (min-width: 1024px) {
+/* S-MOB-009 — iPad portrait (768) and above keeps the in-page CTAs
+   ("New invoice", action bar) visible, so the floating "+" FAB is
+   only useful below 768 where the bottom action bar shrinks. */
+@media (min-width: 768px) {
   .invoicing-shell__fab {
     display: none;
   }
