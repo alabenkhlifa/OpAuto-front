@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Post,
   Put,
@@ -92,11 +94,21 @@ export class InvoicingController {
     return this.service.issue(id, gid, userId);
   }
 
+  /**
+   * BUG-097 (Sweep C-16) — REST contract: DELETE returns 204 No Content
+   * with an empty body. The frontend `InvoiceService.deleteInvoice()`
+   * already calls `http.delete<void>(...)` and ignores the body, so this
+   * is a backend-side correctness fix only.
+   */
   @Delete(':id')
   @Roles(UserRole.OWNER)
   @RequireModule('invoicing')
-  remove(@Param('id') id: string, @CurrentUser('garageId') gid: string) {
-    return this.service.remove(id, gid);
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(
+    @Param('id') id: string,
+    @CurrentUser('garageId') gid: string,
+  ): Promise<void> {
+    await this.service.remove(id, gid);
   }
 
   /**

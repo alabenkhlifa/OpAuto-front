@@ -60,7 +60,7 @@ describe('PaymentModalComponent', () => {
     } as any);
     component.selectMethod('check');
     component.form.patchValue({ reference: 'CHK-123' });
-    component.submit.subscribe((result: PaymentModalResult) => {
+    component.submitted.subscribe((result: PaymentModalResult) => {
       expect(result.method).toBe('check');
       expect(result.amount).toBe(250);
       expect(result.reference).toBe('CHK-123');
@@ -77,7 +77,7 @@ describe('PaymentModalComponent', () => {
     } as any);
     component.form.patchValue({ amount: 0 });
     let emitted = false;
-    component.submit.subscribe(() => (emitted = true));
+    component.submitted.subscribe(() => (emitted = true));
     component.onSubmit();
     expect(emitted).toBeFalse();
   });
@@ -178,7 +178,7 @@ describe('PaymentModalComponent', () => {
       it(`emits ${method} on submit when that chip is selected`, (done) => {
         openWith(ctx);
         component.selectMethod(method);
-        component.submit.subscribe((result) => {
+        component.submitted.subscribe((result) => {
           expect(result.method).toBe(method);
           expect(result.amount).toBe(250);
           done();
@@ -202,7 +202,7 @@ describe('PaymentModalComponent', () => {
      */
     it('submits successfully with both reference and notes left blank', (done) => {
       openWith(ctx);
-      component.submit.subscribe((result) => {
+      component.submitted.subscribe((result) => {
         expect(result.reference).toBeUndefined();
         expect(result.notes).toBeUndefined();
         done();
@@ -224,7 +224,7 @@ describe('PaymentModalComponent', () => {
     it('whitespace-only reference still emits as undefined (`v.reference || undefined`)', (done) => {
       openWith(ctx);
       component.form.patchValue({ reference: '' });
-      component.submit.subscribe((result) => {
+      component.submitted.subscribe((result) => {
         expect(result.reference).toBeUndefined();
         done();
       });
@@ -251,7 +251,7 @@ describe('PaymentModalComponent', () => {
       openWith({ ...ctx, remainingAmount: 119 });
       component.form.patchValue({ amount: 250 });
       let emitted = false;
-      component.submit.subscribe(() => (emitted = true));
+      component.submitted.subscribe(() => (emitted = true));
       component.onSubmit();
       expect(emitted).toBeFalse();
       // After a blocked submit, all controls are marked touched so the
@@ -304,7 +304,7 @@ describe('PaymentModalComponent', () => {
     it('onSubmit does not emit when amount is non-positive', () => {
       openWith(ctx);
       let emitted = false;
-      component.submit.subscribe(() => (emitted = true));
+      component.submitted.subscribe(() => (emitted = true));
       component.form.patchValue({ amount: 0 });
       component.onSubmit();
       component.form.patchValue({ amount: -10 });
@@ -345,7 +345,7 @@ describe('PaymentModalComponent', () => {
       component.form.patchValue({ amount: 50 });
 
       let payload: any;
-      component.submit.subscribe((p) => (payload = p));
+      component.submitted.subscribe((p) => (payload = p));
       component.onSubmit();
 
       expect(payload).toBeDefined();
@@ -363,10 +363,103 @@ describe('PaymentModalComponent', () => {
       component.form.patchValue({ amount: 50 });
 
       let payload: any;
-      component.submit.subscribe((p) => (payload = p));
+      component.submitted.subscribe((p) => (payload = p));
       component.onSubmit();
 
       expect(payload.paymentDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    });
+  });
+
+  /**
+   * BUG-109 — payment modal double-submit (root cause: native DOM submit
+   * event collision with the `@Output() submit` Output name).
+   *
+   * Pre-fix: a single click on the Submit button produced TWO HTTP POSTs
+   * to `/payments`. The first POST carried the proper `PaymentModalResult`
+   * payload and returned 201; the second POST carried an empty body
+   * (`{method:"", paymentDate, processedBy}` — `amount` and `method` both
+   * undefined because the listener received a raw `SubmitEvent` instead of
+   * a typed payload) and returned 500 because the state machine had
+   * already settled the invoice on the first call.
+   *
+   * Root cause: the modal's internal `<form (ngSubmit)="onSubmit()">` fires
+   * a native `submit` DOM event that bubbles up through the host element.
+   * The parent template's `(submit)="onPaymentModalSubmit($event)"`
+   * binding on `<app-payment-modal>` was matched by Angular against BOTH
+   * the `@Output() submit` EventEmitter AND the bubbling DOM submit event,
+   * so the parent listener fired twice — once with the typed payload, once
+   * with the raw `SubmitEvent`.
+   *
+   * Fix: rename the Output from `submit` to `submitted`. `(submitted)="..."`
+   * only matches the typed Output; native DOM submit no longer collides.
+   * Plus a defence-in-depth `isSubmitting` signal flipped synchronously
+   * inside `onSubmit()` so a rapid manual double-click can't slip a second
+   * emit through within a single CD tick.
+   */
+  describe('BUG-109 — submit Output rename + double-submit guard', () => {
+    it('exposes `submitted` Output (renamed from `submit` to dodge DOM submit collision)', () => {
+      // Regression: the native DOM `submit` event bubbles out of the
+      // internal form. If the Output were still named `submit`, parent
+      // bindings would receive both the typed payload AND the raw
+      // SubmitEvent on a single click — producing the double POST.
+      expect((component as any).submit).toBeUndefined();
+      expect(component.submitted).toBeDefined();
+      expect(typeof component.submitted.emit).toBe('function');
+    });
+
+
+    it('rapid double-click only emits once', () => {
+      openWith(ctx);
+      const emits: PaymentModalResult[] = [];
+      component.submitted.subscribe((p) => emits.push(p));
+
+      component.onSubmit();
+      component.onSubmit();
+
+      expect(emits.length).toBe(1);
+    });
+
+    it('canSubmit() returns false synchronously after first onSubmit', () => {
+      openWith(ctx);
+      expect(component.canSubmit()).toBeTrue();
+      component.onSubmit();
+      expect(component.canSubmit()).toBeFalse();
+      expect(component.isSubmitting()).toBeTrue();
+    });
+
+    it('isSubmitting resets on reopen so a fresh submit is allowed', () => {
+      openWith(ctx);
+      component.onSubmit();
+      expect(component.isSubmitting()).toBeTrue();
+
+      // Reopen — the parent's openKey bumped path is the partially-paid reopen.
+      const ctx2: PaymentModalContext = { ...ctx, remainingAmount: 100 };
+      component.context = ctx2;
+      component.openKey = 99;
+      component.ngOnChanges({
+        openKey: { currentValue: 99, previousValue: null, firstChange: false, isFirstChange: () => false },
+        context: { currentValue: ctx2, previousValue: ctx, firstChange: false, isFirstChange: () => false },
+      } as any);
+
+      expect(component.isSubmitting()).toBeFalse();
+      expect(component.canSubmit()).toBeTrue();
+
+      const emits: PaymentModalResult[] = [];
+      component.submitted.subscribe((p) => emits.push(p));
+      component.onSubmit();
+      expect(emits.length).toBe(1);
+    });
+
+    it('triple-click still only emits once (defence-in-depth)', () => {
+      openWith(ctx);
+      const emits: PaymentModalResult[] = [];
+      component.submitted.subscribe((p) => emits.push(p));
+
+      component.onSubmit();
+      component.onSubmit();
+      component.onSubmit();
+
+      expect(emits.length).toBe(1);
     });
   });
 });

@@ -8,13 +8,28 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { UserRole } from '@prisma/client';
 
+/**
+ * BUG-108 (Sweep C-16) — split read vs write at the route level so STAFF
+ * can read the fiscal config (default TVA, fiscal stamp threshold, RIB / MF)
+ * needed to render an invoice correctly. Mirrors the invoicing controller's
+ * pattern: `@Roles(OWNER, STAFF)` on reads, `@Roles(OWNER)` only on writes.
+ */
 @ApiTags('garage-settings')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.OWNER)
 @Controller('garage-settings')
 export class GarageSettingsController {
   constructor(private service: GarageSettingsService) {}
-  @Get() get(@CurrentUser('garageId') gid: string) { return this.service.getSettings(gid); }
-  @Put() update(@CurrentUser('garageId') gid: string, @Body() dto: UpdateGarageDto) { return this.service.updateSettings(gid, dto); }
+
+  @Get()
+  @Roles(UserRole.OWNER, UserRole.STAFF)
+  get(@CurrentUser('garageId') gid: string) {
+    return this.service.getSettings(gid);
+  }
+
+  @Put()
+  @Roles(UserRole.OWNER)
+  update(@CurrentUser('garageId') gid: string, @Body() dto: UpdateGarageDto) {
+    return this.service.updateSettings(gid, dto);
+  }
 }

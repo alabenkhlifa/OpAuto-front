@@ -62,12 +62,39 @@ export class PaymentModalComponent implements OnChanges {
   @Input() openKey: number | null = null;
 
   @Output() close = new EventEmitter<void>();
-  @Output() submit = new EventEmitter<PaymentModalResult>();
+  /**
+   * BUG-109 (Sweep C-16) — renamed from `submit` to `submitted` to avoid the
+   * native DOM `submit` event collision. The internal `<form (ngSubmit)="...">`
+   * fires a native `submit` DOM event that bubbles through the component's
+   * host element. Angular's template parser binds `(submit)="..."` on
+   * `<app-payment-modal>` to BOTH the `@Output() submit` EventEmitter AND
+   * the bubbling DOM submit event — so a single click invoked the parent's
+   * `onPaymentModalSubmit` listener TWICE: first with the proper
+   * `PaymentModalResult` payload (from the EventEmitter), then again with
+   * the raw `SubmitEvent` (from the bubbling DOM submit). The second call
+   * produced an empty-body `POST /payments` (`amount=undefined`,
+   * `method=""`) that returned 500 on the BE state machine because the
+   * first POST had already settled the invoice. Renaming the Output is the
+   * cleanest fix — `(submitted)="..."` only matches the typed Output.
+   */
+  @Output() submitted = new EventEmitter<PaymentModalResult>();
 
   private fb = inject(FormBuilder);
 
   readonly methods = PAYMENT_METHODS;
   readonly method = signal<PaymentMethod>('cash');
+
+  /**
+   * BUG-109 — in-flight guard for the Submit button (defence-in-depth).
+   *
+   * Even with the `submit` → `submitted` rename above, a rapid manual
+   * double-click on the Submit button could in principle fire `onSubmit()`
+   * twice within a single CD tick — before the parent's `submitting` Input
+   * has propagated. This signal flips synchronously inside `onSubmit()`
+   * BEFORE we emit so `canSubmit()` returns false on the second invocation.
+   * Cleared whenever the modal re-seeds (open / reopen / context change).
+   */
+  readonly isSubmitting = signal(false);
 
   form = this.fb.group({
     amount: [0, [Validators.required, Validators.min(0.01)]],
@@ -77,7 +104,7 @@ export class PaymentModalComponent implements OnChanges {
   });
 
   readonly canSubmit = computed(
-    () => this.form.valid && !this.submitting,
+    () => this.form.valid && !this.submitting && !this.isSubmitting(),
   );
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -124,6 +151,9 @@ export class PaymentModalComponent implements OnChanges {
       });
       this.form.markAsPristine();
       this.form.markAsUntouched();
+      // BUG-109 — clear the in-flight guard on every (re)open. The parent
+      // has already reset its own `submitting` flag at this point.
+      this.isSubmitting.set(false);
     }
   }
 
@@ -136,6 +166,14 @@ export class PaymentModalComponent implements OnChanges {
       this.form.markAllAsTouched();
       return;
     }
+    // BUG-109 — flip the in-flight guard SYNCHRONOUSLY before emitting,
+    // so a rapid second `(ngSubmit)` (within the same CD tick, before the
+    // parent's `submitting` Input has propagated) is rejected by `canSubmit()`
+    // above. Without this guard, the parent only flips `submitting=true`
+    // after RxJS subscribes to the HTTP observable — too late to block the
+    // second click, which produced two POST /api/payments hits (first 201,
+    // second 500 because the state machine had already transitioned).
+    this.isSubmitting.set(true);
     const v = this.form.value;
     // S-EDGE-017 — paymentDate must be a non-empty YYYY-MM-DD string.
     // The previous guard `v.paymentDate ?? <today>` only caught
@@ -144,7 +182,7 @@ export class PaymentModalComponent implements OnChanges {
     // to `new Date('')` → Invalid Date → RangeError on toISOString().
     const todayIso = new Date().toISOString().split('T')[0];
     const paymentDate = v.paymentDate && v.paymentDate.trim() ? v.paymentDate : todayIso;
-    this.submit.emit({
+    this.submitted.emit({
       amount: v.amount ?? 0,
       method: this.method(),
       paymentDate,

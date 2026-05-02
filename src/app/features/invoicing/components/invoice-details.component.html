@@ -308,7 +308,7 @@
       [context]="paymentContext()"
       [openKey]="paymentModalOpenKey()"
       (close)="onPaymentModalClose()"
-      (submit)="onPaymentModalSubmit($event)">
+      (submitted)="onPaymentModalSubmit($event)">
     </app-payment-modal>
 
     <app-send-invoice-modal
