@@ -178,6 +178,13 @@ Phase 5 backend totals: 227 tests across 17 suites passing.
 - [x] **Resend wired through compose** — `EMAIL_PROVIDER` / `RESEND_API_KEY` / `RESEND_FROM` were being added to `/opt/opauto/.env` but never reached the running container; compose only passes through what's listed in the backend service `environment:` block. Same change for `CEREBRAS_API_KEY` / `MISTRAL_API_KEY`.
 - [x] 22 new tests across orchestrator, gateway, invoicing-inventory, customers-cars, and appointments specs. Full assistant suite: **269 tests / 17 suites passing**.
 
+### Hallucination guard + OVH provider (Session 2026-05-02)
+
+- [x] **OVH AI Endpoints integration** (`opauto-backend/src/assistant/llm-gateway.service.ts`) — added pay-as-you-go OVH provider tier with default model `Meta-Llama-3_3-70B-Instruct`. New env vars: `OVH_API_KEY` (required), `OVH_BASE_URL` (default `https://oai.endpoints.kepler.ai.cloud.ovh.net/v1`), `OVH_MODEL` (default `Meta-Llama-3_3-70B-Instruct`). Reuses the existing `callOpenAiCompatible` helper (provider union extended). Strict `OVH_MODEL_PATTERN` so cross-provider model ids (e.g. Groq's `llama-3.1-8b-instant`) don't accidentally route to OVH and 404.
+- [x] **Groq llama-3.1-8b removed from active chain** — model produced "Email sent to your personal email address" without ever invoking `send_email` (zero `assistant_tool_calls` row for the turn). New chain: Gemini → OVH → Mistral → Cerebras → Claude. `callGroq` method retained; only the `complete()` wiring changed.
+- [x] **Hallucination guard in agent-runner** (`opauto-backend/src/assistant/agent-runner.service.ts`) — `detectHallucinatedAction()` scans final assistant text for action-claim patterns (sent email/SMS, recorded payment, cancelled appointment) and forces a corrective retry iteration when the matching tool was not actually invoked. Provider-agnostic — catches the same failure mode across Gemini/OVH/Mistral/Cerebras/Claude.
+- [x] **Tests** — 8 new unit/integration tests covering OVH success, OVH→Mistral fallback, OVH→Cerebras fallback, OVH model-id pattern (Groq id rejected, OVH id honored), `OVH_BASE_URL`/`OVH_MODEL` env overrides, and 5 hallucination-guard scenarios (positive, negative, retry-forces-correction, retry-not-needed-when-tool-invoked, cap-edge). Full backend suite: **601 tests / 41 suites passing**.
+
 ### Orchestrator hardening (Session 2026-04-28 evening)
 
 - [x] **Tool-call JSON leak defense** — Cerebras qwen and (sometimes) Groq llama-3.1-8b emit tool calls as TEXT in the `content` field instead of structured `tool_calls`, causing raw `{"type":"function","name":"send_sms",...}` chains and `<function=...>` markup to render in chat. Five-layer defense in depth:

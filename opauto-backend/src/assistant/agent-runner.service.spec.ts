@@ -96,7 +96,8 @@ class MockToolRegistry {
     return this.tools.get(name);
   }
 
-  listForUser(_ctx: AssistantUserContext): ToolDescriptor[] {
+  listForUser(ctx: AssistantUserContext): ToolDescriptor[] {
+    void ctx;
     const out: ToolDescriptor[] = [];
     for (const tool of this.tools.values()) {
       out.push({
@@ -109,7 +110,12 @@ class MockToolRegistry {
     return out;
   }
 
-  validateArgs(_name: string, _args: unknown): { valid: boolean; errors?: string[] } {
+  validateArgs(
+    _name: string,
+    _args: unknown,
+  ): { valid: boolean; errors?: string[] } {
+    void _name;
+    void _args;
     return { valid: true };
   }
 
@@ -126,10 +132,14 @@ class MockToolRegistry {
     name: string,
     args: unknown,
     ctx: AssistantUserContext,
-  ): Promise<{ ok: true; result: unknown; durationMs: number } | { ok: false; error: string; durationMs: number }> {
+  ): Promise<
+    | { ok: true; result: unknown; durationMs: number }
+    | { ok: false; error: string; durationMs: number }
+  > {
     this.executeCalls.push({ name, args });
     const tool = this.tools.get(name);
-    if (!tool) return { ok: false, error: `Unknown tool: ${name}`, durationMs: 0 };
+    if (!tool)
+      return { ok: false, error: `Unknown tool: ${name}`, durationMs: 0 };
     try {
       const result = await tool.handler(args, ctx);
       return { ok: true, result, durationMs: 1 };
@@ -191,9 +201,7 @@ describe('AgentRunnerService', () => {
 
     it('throws ForbiddenException when required module is missing', async () => {
       const { service } = buildService();
-      service.register(
-        makeAgent({ requiredModule: 'reports' }),
-      );
+      service.register(makeAgent({ requiredModule: 'reports' }));
       await expect(
         service.run('analytics-agent', 'hi', ownerCtx),
       ).rejects.toBeInstanceOf(ForbiddenException);
@@ -213,7 +221,9 @@ describe('AgentRunnerService', () => {
       // First system message anchors today's date — prevents the LLM from using
       // stale training-data years for "last 3 months" / "yesterday" / etc.
       expect(llm.calls[0].messages[0].role).toBe('system');
-      expect(llm.calls[0].messages[0].content).toMatch(/Today's date is \d{4}-\d{2}-\d{2}/);
+      expect(llm.calls[0].messages[0].content).toMatch(
+        /Today's date is \d{4}-\d{2}-\d{2}/,
+      );
       expect(llm.calls[0].messages[1]).toEqual({
         role: 'system',
         content: 'You are an analyst.',
@@ -288,11 +298,11 @@ describe('AgentRunnerService', () => {
           ],
         }),
       );
-      llm.enqueue(makeLlmCompletion({ content: 'sorry, can\'t use that' }));
+      llm.enqueue(makeLlmCompletion({ content: "sorry, can't use that" }));
 
       const out = await service.run('analytics-agent', 'do bad', ownerCtx);
 
-      expect(out).toEqual({ result: 'sorry, can\'t use that' });
+      expect(out).toEqual({ result: "sorry, can't use that" });
       expect(tools.executeCalls).toEqual([]); // never executed
 
       const toolMsg = llm.calls[1].messages.find((m) => m.role === 'tool');
@@ -306,9 +316,7 @@ describe('AgentRunnerService', () => {
   describe('run — write tools refused', () => {
     it('refuses CONFIRM_WRITE tools and continues', async () => {
       const { service, llm, tools } = buildService();
-      service.register(
-        makeAgent({ toolWhitelist: ['send_sms'] }),
-      );
+      service.register(makeAgent({ toolWhitelist: ['send_sms'] }));
       tools.register(
         makeTool({
           name: 'send_sms',
@@ -442,12 +450,9 @@ describe('AgentRunnerService', () => {
         return makeLlmCompletion({ content: 'too late' });
       };
 
-      const out = await service.run(
-        'analytics-agent',
-        'slow',
-        ownerCtx,
-        { runTimeoutMs: 25 },
-      );
+      const out = await service.run('analytics-agent', 'slow', ownerCtx, {
+        runTimeoutMs: 25,
+      });
 
       expect(out.result).toMatch(/timed out/i);
     });
@@ -459,17 +464,15 @@ describe('AgentRunnerService', () => {
       service.register(makeAgent());
       tools.register(makeTool({ name: 'get_revenue' }));
       // Override validation to fail this call.
-      tools.validateArgs = (_name: string) => ({
-        valid: false,
-        errors: ['period is required'],
-      });
+      tools.validateArgs = (_name: string) => {
+        void _name;
+        return { valid: false, errors: ['period is required'] };
+      };
 
       llm.enqueue(
         makeLlmCompletion({
           content: null,
-          toolCalls: [
-            { id: 'c1', name: 'get_revenue', argsJson: '{}' },
-          ],
+          toolCalls: [{ id: 'c1', name: 'get_revenue', argsJson: '{}' }],
         }),
       );
       llm.enqueue(makeLlmCompletion({ content: 'fixed it' }));
@@ -483,6 +486,179 @@ describe('AgentRunnerService', () => {
         error: 'invalid_arguments',
         detail: ['period is required'],
       });
+    });
+  });
+
+  describe('hallucination guard — detectHallucinatedActionForTest', () => {
+    it('flags "Email sent" when send_email was not invoked', () => {
+      const { service } = buildService();
+      const out = service.detectHallucinatedActionForTest(
+        'Here are the invoices. Email sent to your personal address.',
+        ['list_invoices'],
+      );
+      expect(out).toEqual({
+        action: 'sent an email',
+        requiredTool: 'send_email',
+      });
+    });
+
+    it('does NOT flag "Email sent" when send_email IS in tools used', () => {
+      const { service } = buildService();
+      const out = service.detectHallucinatedActionForTest(
+        "I've sent the email to the customer.",
+        ['list_invoices', 'send_email'],
+      );
+      expect(out).toBeNull();
+    });
+
+    it('flags "I\'ve sent an SMS" without send_sms', () => {
+      const { service } = buildService();
+      const out = service.detectHallucinatedActionForTest(
+        "I've sent an SMS to remind them.",
+        ['find_customer'],
+      );
+      expect(out?.requiredTool).toBe('send_sms');
+    });
+
+    it('flags "payment recorded" without record_payment', () => {
+      const { service } = buildService();
+      const out = service.detectHallucinatedActionForTest(
+        'The payment was recorded successfully.',
+        [],
+      );
+      expect(out?.requiredTool).toBe('record_payment');
+    });
+
+    it('flags "appointment cancelled" without cancel_appointment', () => {
+      const { service } = buildService();
+      const out = service.detectHallucinatedActionForTest(
+        'The appointment has been cancelled.',
+        [],
+      );
+      expect(out?.requiredTool).toBe('cancel_appointment');
+    });
+
+    it('returns null on empty content', () => {
+      const { service } = buildService();
+      expect(service.detectHallucinatedActionForTest('', [])).toBeNull();
+      expect(service.detectHallucinatedActionForTest('   ', [])).toBeNull();
+    });
+
+    it('returns null for innocuous text mentioning email but no claim', () => {
+      const { service } = buildService();
+      const out = service.detectHallucinatedActionForTest(
+        'You can send them an email at owner@example.com if needed.',
+        [],
+      );
+      expect(out).toBeNull();
+    });
+  });
+
+  describe('run — hallucination guard forces corrective retry', () => {
+    it('detects "Email sent" without send_email and forces another iteration', async () => {
+      const { service, llm } = buildService();
+      service.register(
+        makeAgent({ toolWhitelist: ['send_email'], iterationCap: 3 }),
+      );
+
+      // Iteration 1: model fabricates a sent-email claim with zero tool calls.
+      llm.enqueue(
+        makeLlmCompletion({
+          content: 'Email sent to your personal address.',
+          toolCalls: [],
+        }),
+      );
+      // Iteration 2: model corrects itself after the guard's nudge.
+      llm.enqueue(
+        makeLlmCompletion({
+          content:
+            'Sorry — I cannot send the email; please use the email page.',
+          toolCalls: [],
+        }),
+      );
+
+      const out = await service.run('analytics-agent', 'mail me', ownerCtx);
+
+      expect(out.result).not.toMatch(/Email sent/i);
+      expect(out.result).toMatch(/cannot send|cannot|did not/i);
+      expect(llm.calls).toHaveLength(2);
+
+      // The corrective system message must be present in the second call.
+      const correctiveMsg = llm.calls[1].messages.find(
+        (m) =>
+          m.role === 'system' &&
+          /never invoked the send_email/i.test(m.content ?? ''),
+      );
+      expect(correctiveMsg).toBeDefined();
+    });
+
+    it('does not retry when iteration cap is already reached', async () => {
+      const { service, llm } = buildService();
+      service.register(
+        makeAgent({ toolWhitelist: ['send_email'], iterationCap: 1 }),
+      );
+
+      llm.enqueue(
+        makeLlmCompletion({
+          content: 'Email sent.',
+          toolCalls: [],
+        }),
+      );
+
+      const out = await service.run('analytics-agent', 'mail me', ownerCtx);
+
+      // Cap was 1 so the guard cannot retry; the lie is returned (better
+      // surfaced via logs/dev-only than silently dropped). Production cap is 6
+      // so this only fails-open at the very edge.
+      expect(out.result).toBe('Email sent.');
+      expect(llm.calls).toHaveLength(1);
+    });
+
+    it('does not retry when send_email was actually invoked', async () => {
+      const { service, llm, tools } = buildService();
+      service.register(
+        makeAgent({ toolWhitelist: ['send_email'], iterationCap: 3 }),
+      );
+      tools.register(
+        makeTool({
+          name: 'send_email',
+          blastTier: AssistantBlastTier.AUTO_WRITE,
+          handler: async () => ({
+            providerMessageId: 'msg_1',
+            status: 'queued',
+          }),
+        }),
+      );
+
+      // Iteration 1: model invokes send_email.
+      llm.enqueue(
+        makeLlmCompletion({
+          content: null,
+          toolCalls: [
+            {
+              id: 'c1',
+              name: 'send_email',
+              argsJson: JSON.stringify({
+                to: 'a@b.c',
+                subject: 's',
+                text: 't',
+              }),
+            },
+          ],
+        }),
+      );
+      // Iteration 2: model summarizes; "Email sent" is honest now.
+      llm.enqueue(
+        makeLlmCompletion({
+          content: 'Email sent to a@b.c.',
+          toolCalls: [],
+        }),
+      );
+
+      const out = await service.run('analytics-agent', 'mail me', ownerCtx);
+
+      expect(out.result).toBe('Email sent to a@b.c.');
+      expect(llm.calls).toHaveLength(2); // No corrective retry needed.
     });
   });
 });

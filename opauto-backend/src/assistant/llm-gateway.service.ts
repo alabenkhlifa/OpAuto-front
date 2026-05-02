@@ -48,6 +48,25 @@ const CEREBRAS_MODEL = 'qwen-3-235b-a22b-instruct-2507';
 // and we override with CEREBRAS_MODEL.
 const CEREBRAS_MODEL_PATTERN = /^(llama3\.|qwen-?3-|gpt-oss-|zai-glm-)/i;
 
+// OVHcloud AI Endpoints — OpenAI-compatible inference. Pay-as-you-go (no daily
+// quota cliff like Gemini Flash-Lite, no per-minute TPM ceiling like Groq).
+// Default model Meta-Llama-3.3-70B is a reliable tool caller — it replaces the
+// llama-3.1-8b on Groq that was hallucinating "Email sent" claims after only
+// firing list_invoices in iteration 1 (see agent-runner hallucination guard).
+//
+// Pricing (catalog as of 2026-05): €0.67/1M tokens both ways → ~€0.002 per
+// tool-calling turn at OpAuto's average shape (~2.5k in / 500 out). Cheap
+// enough to sit in front of Mistral as the "always works" tool-call rail.
+const OVH_DEFAULT_URL =
+  'https://oai.endpoints.kepler.ai.cloud.ovh.net/v1/chat/completions';
+const OVH_DEFAULT_MODEL = 'Meta-Llama-3_3-70B-Instruct';
+// OVH hosts a curated set of open-weight models; accept any of them when the
+// caller passes an explicit model id. Pattern is strict so cross-provider
+// routing (e.g. Groq's bare `llama-3.1-8b-instant`) doesn't accidentally hit
+// OVH and 404 — those fall through to OVH_DEFAULT_MODEL instead.
+const OVH_MODEL_PATTERN =
+  /^(meta-llama|mistral-(small|nemo|7b|codestral|ministral)|qwen[23]|gpt-oss-(20|120)b|deepseek)/i;
+
 // Mistral OpenAI-compatible endpoint. Free tier: 1B tokens/month with phone
 // verification — a deeper safety net than Cerebras's daily bucket. Sits below
 // Cerebras in the chain so tool-heavy turns hit Cerebras first (faster), and
@@ -159,23 +178,30 @@ interface GeminiResponse {
 /**
  * Provider-agnostic completion gateway.
  *
- * Order: Gemini (250k TPM, primary) → Groq (fast 8b model, classifier-friendly)
- * → Mistral (1B tokens/month free, emits proper OpenAI `tool_calls` —
- * preferred for tool-using main turns Groq's 6k TPM rejects) → Cerebras
- * (1M tokens/day backup; Cerebras-served qwen/llama models often dump tool
- * calls as `<function=name>{args}</function>` text instead of structured
- * tool_calls, so it's the fallback rather than the primary tool path) →
- * Claude (quality, last resort). On any recoverable failure (network, non-2xx,
- * malformed tool-call JSON) we fall through. If everything is unavailable or
- * unconfigured, we return a `mock` result with content rather than throwing —
- * the orchestrator depends on always receiving a result so it can persist a
- * graceful assistant message.
+ * Order: Gemini (250k TPM, free, primary) → OVH (paid pay-as-you-go,
+ * Meta-Llama-3.3-70B for reliable multi-step tool calls — replaces Groq
+ * llama-3.1-8b which hallucinated action claims) → Mistral (1B tokens/month
+ * free safety net) → Cerebras (1M tokens/day backup) → Claude (quality, last
+ * resort). On any recoverable failure (network, non-2xx, malformed tool-call
+ * JSON) we fall through. If everything is unavailable or unconfigured, we
+ * return a `mock` result with content rather than throwing — the orchestrator
+ * depends on always receiving a result so it can persist a graceful assistant
+ * message.
+ *
+ * Groq llama-3.1-8b removed from the active chain after a 2026-05-02 incident
+ * where it produced "Email sent to your personal email address" text without
+ * ever invoking the send_email tool. The callGroq method is retained but
+ * unwired — the agent-runner hallucination guard catches similar failures
+ * across providers.
  */
 @Injectable()
 export class LlmGatewayService {
   private readonly logger = new Logger(LlmGatewayService.name);
   private readonly geminiKey: string | undefined;
   private readonly groqKey: string | undefined;
+  private readonly ovhKey: string | undefined;
+  private readonly ovhUrl: string;
+  private readonly ovhModel: string;
   private readonly cerebrasKey: string | undefined;
   private readonly mistralKey: string | undefined;
   private readonly anthropicKey: string | undefined;
@@ -183,6 +209,12 @@ export class LlmGatewayService {
   constructor(private readonly config: ConfigService) {
     this.geminiKey = this.config.get<string>('GEMINI_API_KEY');
     this.groqKey = this.config.get<string>('GROQ_API_KEY');
+    this.ovhKey = this.config.get<string>('OVH_API_KEY');
+    const ovhBase = this.config.get<string>('OVH_BASE_URL');
+    this.ovhUrl = ovhBase
+      ? `${ovhBase.replace(/\/+$/, '')}/chat/completions`
+      : OVH_DEFAULT_URL;
+    this.ovhModel = this.config.get<string>('OVH_MODEL') ?? OVH_DEFAULT_MODEL;
     this.cerebrasKey = this.config.get<string>('CEREBRAS_API_KEY');
     this.mistralKey = this.config.get<string>('MISTRAL_API_KEY');
     this.anthropicKey = this.config.get<string>('ANTHROPIC_API_KEY');
@@ -191,13 +223,13 @@ export class LlmGatewayService {
   async complete(request: LlmCompletionRequest): Promise<LlmCompletionResult> {
     if (
       !this.geminiKey &&
-      !this.groqKey &&
+      !this.ovhKey &&
       !this.cerebrasKey &&
       !this.mistralKey &&
       !this.anthropicKey
     ) {
       this.logger.warn(
-        'No LLM provider configured (GEMINI_API_KEY / GROQ_API_KEY / CEREBRAS_API_KEY / MISTRAL_API_KEY / ANTHROPIC_API_KEY missing); returning mock completion',
+        'No LLM provider configured (GEMINI_API_KEY / OVH_API_KEY / CEREBRAS_API_KEY / MISTRAL_API_KEY / ANTHROPIC_API_KEY missing); returning mock completion',
       );
       return {
         provider: 'mock',
@@ -213,69 +245,27 @@ export class LlmGatewayService {
         const validated = this.runValidator(gem.result, request);
         if (validated.ok) return validated.result;
         this.logger.warn(
-          `Gemini result rejected (${(validated as { ok: false; reason: string }).reason}); falling back to Groq`,
+          `Gemini result rejected (${(validated as { ok: false; reason: string }).reason}); falling back to OVH`,
         );
       } else {
         this.logger.warn(
-          `Gemini failed (${(gem as { reason: string }).reason}); falling back to Groq`,
+          `Gemini failed (${(gem as { reason: string }).reason}); falling back to OVH`,
         );
       }
     }
 
-    if (this.groqKey) {
-      const groq = await this.callGroq(request);
-      if (groq.ok) {
-        const validated = this.runValidator(groq.result, request);
+    if (this.ovhKey) {
+      const ovh = await this.callOvh(request);
+      if (ovh.ok) {
+        const validated = this.runValidator(ovh.result, request);
         if (validated.ok) return validated.result;
         this.logger.warn(
-          `Groq result rejected (${(validated as { ok: false; reason: string }).reason}); falling back to Mistral`,
+          `OVH result rejected (${(validated as { ok: false; reason: string }).reason}); falling back to Mistral`,
         );
       } else {
-        const reason = (groq as { reason: string }).reason;
-
-        // Llama 3.3 sometimes chokes when given many tool schemas. The
-        // user-visible failure is `tool_use_failed`. Retry the SAME prompt
-        // against Groq without the tools — the model can still compose a
-        // helpful text answer (no data lookup, but a coherent response is
-        // far better than the mock apology).
-        //
-        // We also inject a "no tools available" system message so the model
-        // doesn't hallucinate fake tool calls (e.g. "Je vais utiliser l'outil
-        // ..."). Without this, the model still tries to act on the original
-        // tool descriptions in the system prompt.
-        if (
-          request.tools &&
-          request.tools.length > 0 &&
-          (reason.includes('tool_use_failed') || reason.includes('tool_call_'))
-        ) {
-          this.logger.warn(`Groq tool-call failed (${reason}); retrying without tools`);
-          const noToolsMessages: LlmMessage[] = [
-            ...request.messages,
-            {
-              role: 'system',
-              content:
-                "IMPORTANT: tool calls are temporarily unavailable for this turn. Do NOT describe calling any tool, do NOT use placeholders like '(tool result)' or '(call to tool)', and do NOT promise to look something up. If the user asked for specific data you would need a tool for, briefly apologize that you can't fetch it right now and ask them to retry or rephrase. Otherwise answer their question directly using your general knowledge.",
-            },
-          ];
-          const retry = await this.callGroq({
-            ...request,
-            messages: noToolsMessages,
-            tools: undefined,
-          });
-          if (retry.ok) {
-            const retryValidated = this.runValidator(retry.result, request);
-            if (retryValidated.ok) return retryValidated.result;
-            this.logger.warn(
-              `Groq tools-less retry rejected (${(retryValidated as { ok: false; reason: string }).reason})`,
-            );
-          } else {
-            this.logger.warn(
-              `Groq tools-less retry also failed (${(retry as { reason: string }).reason})`,
-            );
-          }
-        } else {
-          this.logger.warn(`Groq failed (${reason}); falling back to Mistral`);
-        }
+        this.logger.warn(
+          `OVH failed (${(ovh as { reason: string }).reason}); falling back to Mistral`,
+        );
       }
     }
 
@@ -337,8 +327,7 @@ export class LlmGatewayService {
   private async callGroq(
     request: LlmCompletionRequest,
   ): Promise<
-    | { ok: true; result: LlmCompletionResult }
-    | { ok: false; reason: string }
+    { ok: true; result: LlmCompletionResult } | { ok: false; reason: string }
   > {
     const startedAt = Date.now();
     const body: Record<string, unknown> = {
@@ -416,8 +405,7 @@ export class LlmGatewayService {
     // their internal <think>…</think> trace into `content` when no tool was
     // chosen. Strip it so callers (especially the title summariser) don't
     // surface reasoning as user-visible text.
-    let content =
-      typeof message.content === 'string' ? message.content : null;
+    let content = typeof message.content === 'string' ? message.content : null;
     if (content) {
       content = content
         .replace(/<think[\s\S]*?<\/think>/gi, '')
@@ -444,13 +432,29 @@ export class LlmGatewayService {
     };
   }
 
+  // ── OVH ──────────────────────────────────────────────────────────────
+
+  private async callOvh(
+    request: LlmCompletionRequest,
+  ): Promise<
+    { ok: true; result: LlmCompletionResult } | { ok: false; reason: string }
+  > {
+    return this.callOpenAiCompatible({
+      provider: 'ovh',
+      url: this.ovhUrl,
+      apiKey: this.ovhKey!,
+      defaultModel: this.ovhModel,
+      modelPattern: OVH_MODEL_PATTERN,
+      request,
+    });
+  }
+
   // ── Cerebras ─────────────────────────────────────────────────────────
 
   private async callCerebras(
     request: LlmCompletionRequest,
   ): Promise<
-    | { ok: true; result: LlmCompletionResult }
-    | { ok: false; reason: string }
+    { ok: true; result: LlmCompletionResult } | { ok: false; reason: string }
   > {
     return this.callOpenAiCompatible({
       provider: 'cerebras',
@@ -467,8 +471,7 @@ export class LlmGatewayService {
   private async callMistral(
     request: LlmCompletionRequest,
   ): Promise<
-    | { ok: true; result: LlmCompletionResult }
-    | { ok: false; reason: string }
+    { ok: true; result: LlmCompletionResult } | { ok: false; reason: string }
   > {
     return this.callOpenAiCompatible({
       provider: 'mistral',
@@ -488,15 +491,14 @@ export class LlmGatewayService {
    * we don't want bleeding into other providers.
    */
   private async callOpenAiCompatible(opts: {
-    provider: 'cerebras' | 'mistral';
+    provider: 'cerebras' | 'mistral' | 'ovh';
     url: string;
     apiKey: string;
     defaultModel: string;
     modelPattern: RegExp;
     request: LlmCompletionRequest;
   }): Promise<
-    | { ok: true; result: LlmCompletionResult }
-    | { ok: false; reason: string }
+    { ok: true; result: LlmCompletionResult } | { ok: false; reason: string }
   > {
     const { provider, url, apiKey, defaultModel, modelPattern, request } = opts;
     const startedAt = Date.now();
@@ -599,8 +601,7 @@ export class LlmGatewayService {
   private async callClaude(
     request: LlmCompletionRequest,
   ): Promise<
-    | { ok: true; result: LlmCompletionResult }
-    | { ok: false; reason: string }
+    { ok: true; result: LlmCompletionResult } | { ok: false; reason: string }
   > {
     const startedAt = Date.now();
 
@@ -700,11 +701,12 @@ export class LlmGatewayService {
   private async callGemini(
     request: LlmCompletionRequest,
   ): Promise<
-    | { ok: true; result: LlmCompletionResult }
-    | { ok: false; reason: string }
+    { ok: true; result: LlmCompletionResult } | { ok: false; reason: string }
   > {
     const startedAt = Date.now();
-    const { systemInstruction, contents } = this.toGeminiPayload(request.messages);
+    const { systemInstruction, contents } = this.toGeminiPayload(
+      request.messages,
+    );
     const body: Record<string, unknown> = {
       contents,
       generationConfig: {

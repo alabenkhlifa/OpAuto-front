@@ -7,7 +7,10 @@ import {
   LlmValidationOutcome,
 } from './types';
 
-type FetchMock = jest.Mock<Promise<Response>, [RequestInfo | URL, RequestInit?]>;
+type FetchMock = jest.Mock<
+  Promise<Response>,
+  [RequestInfo | URL, RequestInit?]
+>;
 
 const okJson = (data: unknown): Response =>
   ({
@@ -70,33 +73,80 @@ describe('LlmGatewayService', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('returns a Groq result when Groq replies with text', async () => {
+  it('returns an OVH result when OVH replies with text', async () => {
     const fetchMock: FetchMock = jest.fn().mockResolvedValueOnce(
       okJson({
         choices: [
           {
-            message: { role: 'assistant', content: 'hi from groq' },
+            message: { role: 'assistant', content: 'hi from ovh' },
           },
         ],
         usage: { prompt_tokens: 12, completion_tokens: 5 },
       }),
     );
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
-    const service = await makeService({ GROQ_API_KEY: 'g' });
+    const service = await makeService({ OVH_API_KEY: 'o' });
 
     const result = await service.complete(baseRequest);
 
-    expect(result.provider).toBe('groq');
-    expect(result.content).toBe('hi from groq');
+    expect(result.provider).toBe('ovh');
+    expect(result.content).toBe('hi from ovh');
     expect(result.toolCalls).toEqual([]);
     expect(result.tokensIn).toBe(12);
     expect(result.tokensOut).toBe(5);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url] = fetchMock.mock.calls[0];
-    expect(String(url)).toMatch(/groq\.com/);
+    expect(String(url)).toMatch(/kepler\.ai\.cloud\.ovh\.net/);
   });
 
-  it('falls back to Claude when Groq returns 5xx', async () => {
+  it('uses OVH_BASE_URL override when provided', async () => {
+    const fetchMock: FetchMock = jest.fn().mockResolvedValueOnce(
+      okJson({
+        choices: [{ message: { role: 'assistant', content: 'override ok' } }],
+      }),
+    );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    const service = await makeService({
+      OVH_API_KEY: 'o',
+      OVH_BASE_URL: 'https://custom.example.com/v1',
+    });
+
+    await service.complete(baseRequest);
+
+    const [url] = fetchMock.mock.calls[0];
+    expect(String(url)).toBe('https://custom.example.com/v1/chat/completions');
+  });
+
+  it('uses OVH_MODEL override in the request body', async () => {
+    const fetchMock: FetchMock = jest.fn().mockResolvedValueOnce(
+      okJson({
+        choices: [{ message: { role: 'assistant', content: 'ok' } }],
+      }),
+    );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    const service = await makeService({
+      OVH_API_KEY: 'o',
+      OVH_MODEL: 'Mistral-Small-3_2-24B-Instruct-2506',
+    });
+
+    await service.complete(baseRequest);
+
+    const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
+    expect(body.model).toBe('Mistral-Small-3_2-24B-Instruct-2506');
+  });
+
+  it('skips Groq entirely (only key configured returns mock)', async () => {
+    const fetchMock: FetchMock = jest.fn();
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    const service = await makeService({ GROQ_API_KEY: 'g' });
+
+    const result = await service.complete(baseRequest);
+
+    expect(result.provider).toBe('mock');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('falls back to Claude when OVH returns 5xx', async () => {
     const fetchMock: FetchMock = jest
       .fn()
       .mockResolvedValueOnce(errJson(503, { error: { message: 'down' } }))
@@ -108,7 +158,7 @@ describe('LlmGatewayService', () => {
       );
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
     const service = await makeService({
-      GROQ_API_KEY: 'g',
+      OVH_API_KEY: 'o',
       ANTHROPIC_API_KEY: 'a',
     });
 
@@ -120,7 +170,7 @@ describe('LlmGatewayService', () => {
     expect(String(fetchMock.mock.calls[1][0])).toMatch(/anthropic\.com/);
   });
 
-  it('falls back to Claude when Groq emits malformed tool-call JSON', async () => {
+  it('falls back to Claude when OVH emits malformed tool-call JSON', async () => {
     const fetchMock: FetchMock = jest
       .fn()
       .mockResolvedValueOnce(
@@ -134,7 +184,10 @@ describe('LlmGatewayService', () => {
                   {
                     id: 'call_1',
                     type: 'function',
-                    function: { name: 'do_thing', arguments: '{not valid json' },
+                    function: {
+                      name: 'do_thing',
+                      arguments: '{not valid json',
+                    },
                   },
                 ],
               },
@@ -149,7 +202,7 @@ describe('LlmGatewayService', () => {
       );
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
     const service = await makeService({
-      GROQ_API_KEY: 'g',
+      OVH_API_KEY: 'o',
       ANTHROPIC_API_KEY: 'a',
     });
 
@@ -159,7 +212,7 @@ describe('LlmGatewayService', () => {
     expect(result.content).toBe('rescued');
   });
 
-  it('returns structured tool calls from Groq', async () => {
+  it('returns structured tool calls from OVH', async () => {
     const fetchMock: FetchMock = jest.fn().mockResolvedValueOnce(
       okJson({
         choices: [
@@ -183,7 +236,7 @@ describe('LlmGatewayService', () => {
       }),
     );
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
-    const service = await makeService({ GROQ_API_KEY: 'g' });
+    const service = await makeService({ OVH_API_KEY: 'o' });
 
     const result = await service.complete({
       messages: baseRequest.messages,
@@ -196,7 +249,7 @@ describe('LlmGatewayService', () => {
       ],
     });
 
-    expect(result.provider).toBe('groq');
+    expect(result.provider).toBe('ovh');
     expect(result.toolCalls).toEqual([
       {
         id: 'call_42',
@@ -206,7 +259,7 @@ describe('LlmGatewayService', () => {
     ]);
     expect(result.content).toBeNull();
 
-    // Verify the tools array was passed through to Groq in OpenAI shape.
+    // Verify the tools array was passed through to OVH in OpenAI shape.
     const [, init] = fetchMock.mock.calls[0];
     const body = JSON.parse(String(init?.body));
     expect(body.tools).toBeDefined();
@@ -223,7 +276,7 @@ describe('LlmGatewayService', () => {
       .mockResolvedValueOnce(errJson(500, { error: { message: 'boom' } }));
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
     const service = await makeService({
-      GROQ_API_KEY: 'g',
+      OVH_API_KEY: 'o',
       ANTHROPIC_API_KEY: 'a',
     });
 
@@ -234,10 +287,10 @@ describe('LlmGatewayService', () => {
     expect(result.toolCalls).toEqual([]);
   });
 
-  it('falls back to Mistral when Groq returns 429 (TPM exceeded)', async () => {
+  it('falls back to Mistral when OVH returns 429 (rate exceeded)', async () => {
     const fetchMock: FetchMock = jest
       .fn()
-      .mockResolvedValueOnce(errJson(429, { error: { message: 'TPM' } }))
+      .mockResolvedValueOnce(errJson(429, { error: { message: 'rate' } }))
       .mockResolvedValueOnce(
         okJson({
           choices: [{ message: { role: 'assistant', content: 'mistral hi' } }],
@@ -246,7 +299,7 @@ describe('LlmGatewayService', () => {
       );
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
     const service = await makeService({
-      GROQ_API_KEY: 'g',
+      OVH_API_KEY: 'o',
       MISTRAL_API_KEY: 'm',
     });
 
@@ -258,21 +311,19 @@ describe('LlmGatewayService', () => {
     expect(String(fetchMock.mock.calls[1][0])).toMatch(/mistral\.ai/);
   });
 
-  it('falls back to Cerebras when Groq + Mistral both fail', async () => {
+  it('falls back to Cerebras when OVH + Mistral both fail', async () => {
     const fetchMock: FetchMock = jest
       .fn()
-      .mockResolvedValueOnce(errJson(429, { error: { message: 'g' } }))
+      .mockResolvedValueOnce(errJson(429, { error: { message: 'o' } }))
       .mockResolvedValueOnce(errJson(500, { error: { message: 'm' } }))
       .mockResolvedValueOnce(
         okJson({
-          choices: [
-            { message: { role: 'assistant', content: 'cerebras hi' } },
-          ],
+          choices: [{ message: { role: 'assistant', content: 'cerebras hi' } }],
         }),
       );
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
     const service = await makeService({
-      GROQ_API_KEY: 'g',
+      OVH_API_KEY: 'o',
       MISTRAL_API_KEY: 'm',
       CEREBRAS_API_KEY: 'c',
     });
@@ -285,34 +336,45 @@ describe('LlmGatewayService', () => {
     expect(String(fetchMock.mock.calls[2][0])).toMatch(/cerebras\.ai/);
   });
 
-  it('uses default Cerebras model when caller passes a Groq-only model id', async () => {
-    const fetchMock: FetchMock = jest
-      .fn()
-      .mockResolvedValueOnce(errJson(429, { error: { message: 'TPM' } }))
-      .mockResolvedValueOnce(
-        okJson({
-          choices: [{ message: { role: 'assistant', content: 'ok' } }],
-        }),
-      );
+  it('does not pass a Groq-only model id through to OVH', async () => {
+    const fetchMock: FetchMock = jest.fn().mockResolvedValueOnce(
+      okJson({
+        choices: [{ message: { role: 'assistant', content: 'ok' } }],
+      }),
+    );
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
-    const service = await makeService({
-      GROQ_API_KEY: 'g',
-      CEREBRAS_API_KEY: 'c',
-    });
+    const service = await makeService({ OVH_API_KEY: 'o' });
 
+    // `llama-3.1-8b-instant` is Groq-shaped; OVH doesn't host it. The model
+    // pattern should reject it and the request should use OVH's default model.
     await service.complete({
       messages: baseRequest.messages,
-      // Groq-shaped id with `-instant` suffix that Cerebras doesn't host.
       model: 'llama-3.1-8b-instant',
     });
 
-    const cerebrasBody = JSON.parse(
-      String(fetchMock.mock.calls[1][1]?.body),
-    );
-    expect(cerebrasBody.model).toBe('qwen-3-235b-a22b-instruct-2507');
+    const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
+    expect(body.model).toBe('Meta-Llama-3_3-70B-Instruct');
   });
 
-  it('returns Cerebras tool calls in the same shape as Groq', async () => {
+  it('honors a caller-supplied OVH-shaped model id', async () => {
+    const fetchMock: FetchMock = jest.fn().mockResolvedValueOnce(
+      okJson({
+        choices: [{ message: { role: 'assistant', content: 'ok' } }],
+      }),
+    );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    const service = await makeService({ OVH_API_KEY: 'o' });
+
+    await service.complete({
+      messages: baseRequest.messages,
+      model: 'Meta-Llama-3_3-70B-Instruct',
+    });
+
+    const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
+    expect(body.model).toBe('Meta-Llama-3_3-70B-Instruct');
+  });
+
+  it('returns Cerebras tool calls in the same shape as OVH', async () => {
     const fetchMock: FetchMock = jest
       .fn()
       .mockResolvedValueOnce(errJson(429, { error: { message: 'TPM' } }))
@@ -340,7 +402,7 @@ describe('LlmGatewayService', () => {
       );
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
     const service = await makeService({
-      GROQ_API_KEY: 'g',
+      OVH_API_KEY: 'o',
       CEREBRAS_API_KEY: 'c',
     });
 
@@ -361,7 +423,7 @@ describe('LlmGatewayService', () => {
     ]);
   });
 
-  it('does not throw when Groq fetch itself rejects', async () => {
+  it('does not throw when OVH fetch itself rejects', async () => {
     const fetchMock: FetchMock = jest
       .fn()
       .mockRejectedValueOnce(new Error('network'))
@@ -370,7 +432,7 @@ describe('LlmGatewayService', () => {
       );
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
     const service = await makeService({
-      GROQ_API_KEY: 'g',
+      OVH_API_KEY: 'o',
       ANTHROPIC_API_KEY: 'a',
     });
 
@@ -436,8 +498,7 @@ describe('LlmGatewayService', () => {
                 content: {
                   parts: [
                     {
-                      text:
-                        '{"type":"function","name":"send_sms","arguments":{"to":"x","body":"y"}}',
+                      text: '{"type":"function","name":"send_sms","arguments":{"to":"x","body":"y"}}',
                     },
                   ],
                 },

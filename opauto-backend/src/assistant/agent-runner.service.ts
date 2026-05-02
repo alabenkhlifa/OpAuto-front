@@ -19,6 +19,53 @@ const DEFAULT_ITERATION_CAP = 6;
 const DEFAULT_RUN_TIMEOUT_MS = 60_000;
 const DEFAULT_TOOL_TIMEOUT_MS = 15_000;
 
+/**
+ * Hallucinated-action patterns. When a model claims one of these in its final
+ * text but never invoked the matching tool, force a corrective retry rather
+ * than return the lie to the user.
+ *
+ * Trigger case: 2026-05-02, Groq llama-3.1-8b emitted "Email sent to your
+ * personal email address" after only firing list_invoices. The audit table
+ * had zero send_email rows. The user thought their email had been sent.
+ */
+interface ActionClaimPattern {
+  regex: RegExp;
+  requiredTool: string;
+  label: string;
+}
+
+const ACTION_CLAIM_PATTERNS: readonly ActionClaimPattern[] = [
+  {
+    regex:
+      /(email\s+(?:was\s+|has\s+been\s+)?(?:sent|delivered|forwarded)|(?:i(?:'ve|\s+have)?\s+)?sent\s+(?:an?\s+|the\s+)?email)/i,
+    requiredTool: 'send_email',
+    label: 'sent an email',
+  },
+  {
+    regex:
+      /(sms\s+(?:was\s+|has\s+been\s+)?(?:sent|delivered)|(?:i(?:'ve|\s+have)?\s+)?sent\s+(?:an?\s+|the\s+)?(?:sms|text)|text\s+message\s+(?:sent|delivered))/i,
+    requiredTool: 'send_sms',
+    label: 'sent an SMS',
+  },
+  {
+    regex:
+      /(payment\s+(?:was\s+|has\s+been\s+)?(?:recorded|logged|registered)|(?:i(?:'ve|\s+have)?\s+)?recorded\s+(?:the\s+|a\s+)?payment)/i,
+    requiredTool: 'record_payment',
+    label: 'recorded a payment',
+  },
+  {
+    regex:
+      /(appointment\s+(?:was\s+|has\s+been\s+)?(?:cancelled|canceled)|(?:i(?:'ve|\s+have)?\s+)?cancelled\s+(?:the\s+|an?\s+)?appointment)/i,
+    requiredTool: 'cancel_appointment',
+    label: 'cancelled an appointment',
+  },
+];
+
+interface HallucinatedAction {
+  action: string;
+  requiredTool: string;
+}
+
 const TIMEOUT_RESULT = {
   result: 'Agent timed out before completing the task.',
 };
@@ -73,9 +120,7 @@ export class AgentRunnerService {
     }
 
     if (agent.requiredRole === 'OWNER' && ctx.role !== 'OWNER') {
-      throw new ForbiddenException(
-        `Agent "${name}" requires OWNER role`,
-      );
+      throw new ForbiddenException(`Agent "${name}" requires OWNER role`);
     }
     if (
       agent.requiredModule &&
@@ -113,7 +158,8 @@ export class AgentRunnerService {
     opts: RunOptions,
   ): Promise<{ result: string }> {
     const startedAt = Date.now();
-    const cap = agent.iterationCap > 0 ? agent.iterationCap : DEFAULT_ITERATION_CAP;
+    const cap =
+      agent.iterationCap > 0 ? agent.iterationCap : DEFAULT_ITERATION_CAP;
     const whitelist = new Set(agent.toolWhitelist);
     const allDescriptors = this.tools.listForUser(ctx);
     const filteredDescriptors: ToolDescriptor[] = allDescriptors.filter((d) =>
@@ -156,10 +202,31 @@ export class AgentRunnerService {
       messages.push({
         role: 'assistant',
         content: completion.content ?? null,
-        toolCalls: completion.toolCalls.length > 0 ? completion.toolCalls : undefined,
+        toolCalls:
+          completion.toolCalls.length > 0 ? completion.toolCalls : undefined,
       });
 
       if (completion.toolCalls.length === 0) {
+        const hallucinated = this.detectHallucinatedAction(
+          completion.content ?? '',
+          toolsUsed,
+        );
+        if (hallucinated && iteration < cap) {
+          this.logger.warn(
+            `agent "${agent.name}" claimed "${hallucinated.action}" without invoking ${hallucinated.requiredTool}; forcing corrective retry`,
+          );
+          messages.push({
+            role: 'system',
+            content:
+              `Your previous response claimed you "${hallucinated.action}", ` +
+              `but you never invoked the ${hallucinated.requiredTool} tool this turn. ` +
+              `You MUST either: (a) invoke ${hallucinated.requiredTool} now to actually perform the action, ` +
+              `or (b) correct your response and explicitly tell the user the action was NOT performed. ` +
+              `Never describe write actions in the past tense unless the corresponding tool was called.`,
+          });
+          continue;
+        }
+
         const totalMs = Date.now() - startedAt;
         this.logger.log(
           `agent "${agent.name}" finished after ${iteration} iter, tools=[${toolsUsed.join(',')}], ${totalMs}ms`,
@@ -185,6 +252,36 @@ export class AgentRunnerService {
       result:
         'I was unable to complete the task within my iteration budget. Please narrow the request and try again.',
     };
+  }
+
+  /**
+   * Scan the model's final text for action claims that weren't backed by an
+   * actual tool invocation this turn. Returns null if the response is honest;
+   * otherwise returns the offending claim so the caller can force a retry.
+   *
+   * Exposed-for-testing via the public `detectHallucinatedActionForTest`
+   * wrapper below — keep this method's body the single source of truth.
+   */
+  private detectHallucinatedAction(
+    content: string,
+    toolsUsed: readonly string[],
+  ): HallucinatedAction | null {
+    if (!content || content.trim().length === 0) return null;
+    const used = new Set(toolsUsed);
+    for (const pattern of ACTION_CLAIM_PATTERNS) {
+      if (pattern.regex.test(content) && !used.has(pattern.requiredTool)) {
+        return { action: pattern.label, requiredTool: pattern.requiredTool };
+      }
+    }
+    return null;
+  }
+
+  /** @internal — unit-test entrypoint for the hallucination guard. */
+  detectHallucinatedActionForTest(
+    content: string,
+    toolsUsed: readonly string[],
+  ): HallucinatedAction | null {
+    return this.detectHallucinatedAction(content, toolsUsed);
   }
 
   private async handleToolCall(

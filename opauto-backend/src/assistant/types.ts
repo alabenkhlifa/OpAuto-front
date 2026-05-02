@@ -1,4 +1,8 @@
-import { AssistantBlastTier, AssistantMessageRole, AssistantToolCallStatus } from '@prisma/client';
+import {
+  AssistantBlastTier,
+  AssistantMessageRole,
+  AssistantToolCallStatus,
+} from '@prisma/client';
 
 export { AssistantBlastTier, AssistantMessageRole, AssistantToolCallStatus };
 
@@ -30,7 +34,10 @@ export interface ToolDefinition<TArgs = unknown, TResult = unknown> {
   blastTier: AssistantBlastTier;
   requiredModule?: string;
   requiredRole?: 'OWNER' | 'STAFF';
-  resolveBlastTier?: (args: TArgs, ctx: AssistantUserContext) => AssistantBlastTier;
+  resolveBlastTier?: (
+    args: TArgs,
+    ctx: AssistantUserContext,
+  ) => AssistantBlastTier;
   handler: (args: TArgs, ctx: AssistantUserContext) => Promise<TResult>;
 }
 
@@ -113,6 +120,7 @@ export interface LlmCompletionResult {
     | 'gemini'
     | 'cerebras'
     | 'mistral'
+    | 'ovh'
     | 'mock';
   content: string | null;
   toolCalls: LlmToolCall[];
@@ -124,8 +132,20 @@ export type SseEvent =
   | { type: 'conversation'; conversationId: string }
   | { type: 'text'; delta: string }
   | { type: 'tool_call'; toolCallId: string; name: string; args: unknown }
-  | { type: 'tool_result'; toolCallId: string; result: unknown; status: 'executed' | 'failed' }
-  | { type: 'approval_request'; toolCallId: string; toolName: string; args: unknown; blastTier: AssistantBlastTier; expiresAt: string }
+  | {
+      type: 'tool_result';
+      toolCallId: string;
+      result: unknown;
+      status: 'executed' | 'failed';
+    }
+  | {
+      type: 'approval_request';
+      toolCallId: string;
+      toolName: string;
+      args: unknown;
+      blastTier: AssistantBlastTier;
+      expiresAt: string;
+    }
   | { type: 'agent_dispatch'; agentName: string; reason?: string }
   | { type: 'agent_result'; agentName: string; result: string }
   | { type: 'skill_loaded'; skillName: string }
