@@ -18,17 +18,23 @@ import {
  * Extracted from the legacy invoicing.component.html "list" view so
  * the parent shell can host it under `/invoices/list`.
  *
- * Sweep B-4 (S-INV-029): adds minimal client-side pagination.
+ * Sweep B-4 (S-INV-029): client-side pagination.
  *  - PAGE_SIZE rows per page (25), prev/next + 1-indexed counter.
- *  - Filter handlers (`onSearchChange` / `onStatusChange` /
- *    `onPaymentMethodChange` / `clearFilters`) reset `currentPage` to 1.
- *  - The `effectivePage` computed clamps to `[1, totalPages]` so the slice
- *    is always in-bounds even if the dataset shrinks asynchronously.
- *  - Server-side pagination is tracked under S-PERF-001 (P3) — not needed
- *    until the dataset grows past a few thousand rows; the BE list endpoint
- *    is currently `GET /api/invoices` (returns all rows) and would need
- *    `?page=` / `?limit=` / `?status=` / `?search=` query params before
- *    the FE can switch to pagination on the wire.
+ *  - Filter handlers reset `currentPage` to 1.
+ *
+ * Sweep C-20 (S-PERF-001): switched to server-driven pagination.
+ *  - `currentPage` is the BE page param; navigation triggers a fresh
+ *    `getInvoicesPaginated({ page, limit, search })` request.
+ *  - `totalCount` mirrors the BE's `total` so `totalPages` = ⌈total/PAGE_SIZE⌉.
+ *  - The page returned by the BE is already sliced — the in-memory
+ *    `pagedInvoices` slice reduces to a no-op pass-through so we keep
+ *    one render path for both shapes.
+ *  - Status / paymentMethod filters stay CLIENT-SIDE on the rendered
+ *    page (BE doesn't yet support status/method query params — that's
+ *    a future sweep). With PAGE_SIZE=25 and reasonable garage-level
+ *    cardinality this is acceptable; users searching for a specific
+ *    status across hundreds of invoices already use the dedicated
+ *    Pending / Overdue surfaces.
  */
 @Component({
   selector: 'app-invoice-list-page',
@@ -47,17 +53,22 @@ export class InvoiceListPageComponent implements OnInit {
   /**
    * S-PERF-002 (Sweep C-18) — debounce gate for the search input.
    * `next()` cancels any in-flight `GET /invoices?search=` via switchMap,
-   * so rapid keystrokes only result in one settled request. The client
-   * `filteredInvoices` computed still applies status / paymentMethod
-   * filters + a redundant substring match (defence in depth + zero-flicker
-   * during the 300ms debounce window).
+   * so rapid keystrokes only result in one settled request.
+   *
+   * S-PERF-001 (Sweep C-20) — page-change Subject feeds the same
+   * switchMap pipeline so a rapid Next-Next-Next click sequence only
+   * results in the latest page settling. Both signals (`searchQuery`,
+   * `currentPage`) emit through their respective Subjects on user
+   * interaction; the consolidated pipeline below routes them to one
+   * BE call.
    */
-  private readonly searchTerm$ = new Subject<string>();
+  private readonly fetch$ = new Subject<{ search: string; page: number }>();
 
   /** Pagination — page size is intentionally fixed (no UI knob) at 25. */
   static readonly PAGE_SIZE = 25;
 
   invoices = signal<InvoiceWithDetails[]>([]);
+  totalCount = signal(0);
   isLoading = signal(false);
 
   searchQuery = signal('');
@@ -66,18 +77,15 @@ export class InvoiceListPageComponent implements OnInit {
   showMobileFilters = signal(false);
   currentPage = signal(1);
 
+  /**
+   * Sweep C-20: status / paymentMethod filters apply to the SERVER-PAGED
+   * rows only (the slice the BE returned for `currentPage`). The BE
+   * doesn't yet support `?status=` / `?paymentMethod=` query params
+   * (deferred to a follow-up sweep). Search is BE-side; the in-memory
+   * substring match is removed since the BE result is already filtered.
+   */
   filteredInvoices = computed(() => {
     let filtered = [...this.invoices()];
-    const query = this.searchQuery().toLowerCase();
-    if (query) {
-      filtered = filtered.filter(
-        (inv) =>
-          inv.invoiceNumber.toLowerCase().includes(query) ||
-          inv.customerName.toLowerCase().includes(query) ||
-          inv.licensePlate.toLowerCase().includes(query) ||
-          (inv.serviceName ?? '').toLowerCase().includes(query),
-      );
-    }
     const status = this.selectedStatus();
     if (status !== 'all') {
       filtered = filtered.filter((inv) => inv.status === status);
@@ -86,20 +94,23 @@ export class InvoiceListPageComponent implements OnInit {
     if (method !== 'all') {
       filtered = filtered.filter((inv) => inv.paymentMethod === method);
     }
-    return filtered.sort((a, b) => b.issueDate.getTime() - a.issueDate.getTime());
+    return filtered;
   });
 
+  /**
+   * Server-authoritative — `totalCount` is the post-search total from
+   * the BE envelope. `Math.max(1, ...)` keeps the pagination footer
+   * stable when totalCount=0.
+   */
   totalPages = computed(() => {
-    const total = this.filteredInvoices().length;
+    const total = this.totalCount();
     return Math.max(1, Math.ceil(total / InvoiceListPageComponent.PAGE_SIZE));
   });
 
   /**
-   * Effective page number — always clamped to the available range so the
-   * computeds below never produce an out-of-bounds slice. The signal can
-   * legitimately hold a "stale" value mid-flight (e.g. if the dataset
-   * shrinks between render frames); this computed is the source of truth
-   * for everything that renders.
+   * Effective page number — clamped to `[1, totalPages]` so the BE's
+   * out-of-range pages still render coherently while the next request
+   * settles.
    */
   effectivePage = computed(() => {
     const total = this.totalPages();
@@ -107,22 +118,26 @@ export class InvoiceListPageComponent implements OnInit {
   });
 
   pageStart = computed(() => {
-    const total = this.filteredInvoices().length;
+    const total = this.totalCount();
     if (total === 0) return 0;
     return (this.effectivePage() - 1) * InvoiceListPageComponent.PAGE_SIZE + 1;
   });
 
   pageEnd = computed(() => {
-    const total = this.filteredInvoices().length;
-    return Math.min(total, this.effectivePage() * InvoiceListPageComponent.PAGE_SIZE);
+    const total = this.totalCount();
+    return Math.min(
+      total,
+      this.effectivePage() * InvoiceListPageComponent.PAGE_SIZE,
+    );
   });
 
-  pagedInvoices = computed(() => {
-    const all = this.filteredInvoices();
-    const size = InvoiceListPageComponent.PAGE_SIZE;
-    const start = (this.effectivePage() - 1) * size;
-    return all.slice(start, start + size);
-  });
+  /**
+   * Sweep C-20: server has already sliced — pass through the server
+   * page directly. Status / paymentMethod filters narrow the page in
+   * memory; the slice from `[start, end]` no longer applies because
+   * `invoices()` IS the page.
+   */
+  pagedInvoices = computed(() => this.filteredInvoices());
 
 
   ngOnInit(): void {
@@ -134,44 +149,62 @@ export class InvoiceListPageComponent implements OnInit {
       }
     });
 
-    // S-PERF-002 — wire debounced server-side search.
-    this.searchTerm$
+    // S-PERF-001 / S-PERF-002 — single fetch pipeline. Both search and
+    // page-change emit through `fetch$`; switchMap cancels any in-flight
+    // request when a newer one arrives, so rapid Next clicks or rapid
+    // typing collapse to the latest settled response.
+    this.fetch$
       .pipe(
-        debounceTime(300),
-        switchMap((term) => {
+        switchMap(({ search, page }) => {
           this.isLoading.set(true);
-          return this.invoiceService.getInvoices(term);
+          return this.invoiceService.getInvoicesPaginated({
+            search,
+            page,
+            limit: InvoiceListPageComponent.PAGE_SIZE,
+          });
         }),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
-        next: (rows) => {
-          this.invoices.set(rows);
+        next: (envelope) => {
+          this.invoices.set(envelope.items);
+          this.totalCount.set(envelope.total);
           this.isLoading.set(false);
         },
         error: () => this.isLoading.set(false),
       });
 
+    // Search input gets its own 300ms debounce upstream of the unified
+    // pipeline; page-change navigations skip the debounce (immediate).
+    this.searchDebounce$
+      .pipe(debounceTime(300), takeUntilDestroyed(this.destroyRef))
+      .subscribe((term) => {
+        this.searchQuery.set(term);
+        this.currentPage.set(1);
+        this.fetch$.next({ search: term, page: 1 });
+      });
+
     this.loadInvoices();
   }
 
+  /** Search-only debounce gate. Keeps the input responsive while still
+   * capping the BE hit-rate at one request per 300ms. */
+  private readonly searchDebounce$ = new Subject<string>();
+
   private loadInvoices(): void {
-    this.isLoading.set(true);
-    this.invoiceService.getInvoices().subscribe({
-      next: (rows) => {
-        this.invoices.set(rows);
-        this.isLoading.set(false);
-      },
-      error: () => this.isLoading.set(false),
+    this.fetch$.next({
+      search: this.searchQuery().trim(),
+      page: this.currentPage(),
     });
   }
 
   onSearchChange(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
+    // Set the visible signal immediately so the input value stays in
+    // sync with the controlled input; the BE call is debounced.
     this.searchQuery.set(value);
     this.currentPage.set(1);
-    // S-PERF-002 — fire the debounced server-side search.
-    this.searchTerm$.next(value);
+    this.searchDebounce$.next(value);
   }
   onStatusChange(event: Event): void {
     this.selectedStatus.set((event.target as HTMLSelectElement).value);
@@ -189,21 +222,29 @@ export class InvoiceListPageComponent implements OnInit {
     this.selectedStatus.set('all');
     this.selectedPaymentMethod.set('all');
     this.currentPage.set(1);
-    // S-PERF-002 — re-hydrate the full list from the BE.
-    this.searchTerm$.next('');
+    // Re-hydrate page 1 of the unfiltered set.
+    this.fetch$.next({ search: '', page: 1 });
   }
 
-  /** Pagination handlers — guarded so they never overshoot. */
+  /** Pagination handlers — server-driven; emit a fetch for the new page. */
   goToNextPage(): void {
     const next = this.effectivePage() + 1;
     if (next <= this.totalPages()) {
       this.currentPage.set(next);
+      this.fetch$.next({
+        search: this.searchQuery().trim(),
+        page: next,
+      });
     }
   }
   goToPreviousPage(): void {
     const prev = this.effectivePage() - 1;
     if (prev >= 1) {
       this.currentPage.set(prev);
+      this.fetch$.next({
+        search: this.searchQuery().trim(),
+        page: prev,
+      });
     }
   }
 

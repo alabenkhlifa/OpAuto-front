@@ -58,13 +58,27 @@ export class InvoicingController {
    * customer first/last name, and license plate; empty / whitespace
    * `search` returns the full set as before so existing callers stay
    * compatible.
+   *
+   * S-PERF-001 (Sweep C-20) — server-side pagination via `?page=` /
+   * `?limit=`. Defaults: page=1, limit=25. `limit` is clamped to
+   * [1, 100] and `page` to [1, ∞) so callers cannot force full-table
+   * scans. The response shape is now an envelope —
+   * `{ items, total, page, limit }` — with `total` reflecting the
+   * post-search row count (i.e. search filters are applied BEFORE
+   * pagination). NaN / invalid values fall back to defaults.
    */
   @Get()
   findAll(
     @CurrentUser('garageId') gid: string,
     @Query('search') search?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
-    return this.service.findAll(gid, search);
+    return this.service.findAll(gid, {
+      search,
+      page: parsePage(page),
+      limit: parseLimit(limit),
+    });
   }
 
   @Get(':id')
@@ -177,4 +191,30 @@ export class InvoicingController {
   ) {
     return this.delivery.deliverInvoice(id, gid, dto);
   }
+}
+
+/**
+ * S-PERF-001 (Sweep C-20) — query-param coercion for pagination.
+ * Both helpers are tolerant of `undefined`, NaN, decimals, and
+ * negatives so a malformed query string never throws — instead the
+ * service receives sane defaults.
+ */
+const PAGE_DEFAULT = 1;
+const LIMIT_DEFAULT = 25;
+const LIMIT_MAX = 100;
+
+function parsePage(raw?: string): number {
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return PAGE_DEFAULT;
+  const floored = Math.floor(n);
+  return floored >= 1 ? floored : PAGE_DEFAULT;
+}
+
+function parseLimit(raw?: string): number {
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return LIMIT_DEFAULT;
+  const floored = Math.floor(n);
+  if (floored < 1) return LIMIT_DEFAULT;
+  if (floored > LIMIT_MAX) return LIMIT_MAX;
+  return floored;
 }

@@ -243,27 +243,38 @@ export class SidebarComponent implements OnInit, OnDestroy {
     // Sweep C-15 — invoicing badges are visible to OWNER + STAFF (BE policy
     // is `@Roles(OWNER, STAFF)` on the list endpoints). Approvals badge
     // stays owner-gated (discount-approval is owner-only per BE).
-    this.http.get<any[]>('/invoices').subscribe({
-      next: (invs) => {
-        // Pending Payment badge (S-SB-003): all unpaid issued invoices.
-        // Per the Section-16 spec the count is SENT + PARTIALLY_PAID +
-        // OVERDUE. We also include VIEWED — it's just SENT after the
-        // customer opened the delivery email, still unpaid; treating it
-        // separately would split the same logical bucket. The destination
-        // /invoices/pending page filters to the same set so the badge
-        // equals the row count the user sees.
-        const pending = Array.isArray(invs)
-          ? invs.filter((i: any) =>
+    // Sweep C-20 (S-PERF-001): the BE list endpoint now returns the
+    // paginated envelope `{ items, total, page, limit }`. Request
+    // `limit=100` (the BE-clamped maximum) so the badge counts the
+    // first page's worth of unpaid invoices — for any garage with more
+    // than ~100 unpaid invoices the badge undercounts, which is fine
+    // for an at-a-glance affordance (the user clicks through to the
+    // /invoices/pending page for the authoritative list).
+    this.http
+      .get<{ items: any[]; total: number } | any[]>(
+        '/invoices?page=1&limit=100',
+      )
+      .subscribe({
+        next: (resp) => {
+          // Pending Payment badge (S-SB-003): all unpaid issued invoices.
+          // Per the Section-16 spec the count is SENT + PARTIALLY_PAID +
+          // OVERDUE. We also include VIEWED — it's just SENT after the
+          // customer opened the delivery email, still unpaid; treating it
+          // separately would split the same logical bucket. The destination
+          // /invoices/pending page filters to the same set so the badge
+          // equals the row count the user sees.
+          const items = Array.isArray(resp) ? resp : resp?.items ?? [];
+          const pending = items.filter(
+            (i: any) =>
               i.status === 'SENT' ||
               i.status === 'VIEWED' ||
               i.status === 'PARTIALLY_PAID' ||
               i.status === 'OVERDUE',
-            ).length
-          : 0;
-        this.badgeCounts.update(c => ({ ...c, 'invoices-pending': pending }));
-      },
-      error: () => {}
-    });
+          ).length;
+          this.badgeCounts.update((c) => ({ ...c, 'invoices-pending': pending }));
+        },
+        error: () => {},
+      });
     // Quotes badge: number of SENT (awaiting customer reply) quotes.
     this.http.get<any[]>('/quotes').subscribe({
       next: (quotes) => {

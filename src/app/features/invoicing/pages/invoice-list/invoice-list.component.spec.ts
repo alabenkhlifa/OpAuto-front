@@ -1,8 +1,8 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 
 import { InvoiceListPageComponent } from './invoice-list.component';
 import { InvoiceService } from '../../../../core/services/invoice.service';
@@ -15,7 +15,17 @@ import {
 
 /**
  * Sweep B-4 — pins S-INV-028 (status / search filters) and S-INV-029
- * (client-side pagination) on the rebuilt invoice list page.
+ * (pagination) on the rebuilt invoice list page.
+ *
+ * Sweep C-20 (S-PERF-001) — pagination flipped from client-side slice
+ * to server-driven `getInvoicesPaginated()` envelopes. Specs were
+ * rewritten to assert:
+ *   - the BE call carries the right `{ search, page, limit }` opts,
+ *   - `totalCount` is server-authoritative,
+ *   - status / paymentMethod filters narrow the rendered page (BE
+ *     doesn't yet support `?status=` / `?paymentMethod=`),
+ *   - rapid Next clicks switchMap-collapse to the latest page,
+ *   - search resets `currentPage` to 1.
  *
  * Karma `.html` loader hits subfolder specs in this repo (project
  * memory: pre-existing). Tests stay template-agnostic — they read
@@ -58,9 +68,32 @@ describe('InvoiceListPageComponent', () => {
     } as InvoiceWithDetails;
   }
 
-  function configure(invoices: InvoiceWithDetails[], queryParams: Record<string, string> = {}) {
+  /**
+   * Stub helper — server-driven pagination needs a stub that responds
+   * to `getInvoicesPaginated(opts)` with a paginated envelope. Tests
+   * either pass a fixed `total` (legacy behavior) or feed responses
+   * through a Subject so they can assert switchMap-cancellation.
+   */
+  function configure(
+    pageRows: InvoiceWithDetails[],
+    total = pageRows.length,
+    queryParams: Record<string, string> = {},
+  ) {
     const invoiceServiceStub = {
-      getInvoices: jasmine.createSpy('getInvoices').and.returnValue(of(invoices)),
+      getInvoicesPaginated: jasmine
+        .createSpy('getInvoicesPaginated')
+        .and.callFake((opts: { search?: string; page?: number; limit?: number }) =>
+          of({
+            items: pageRows,
+            total,
+            page: opts.page ?? 1,
+            limit: opts.limit ?? 25,
+          }),
+        ),
+      // Legacy back-compat — kept so any incidental caller doesn't crash.
+      getInvoices: jasmine
+        .createSpy('getInvoices')
+        .and.returnValue(of(pageRows)),
       formatCurrency: (n: number) => `${n.toFixed(2)} TND`,
       formatDate: (d: Date) => d.toISOString().split('T')[0],
       getStatusBadgeClass: () => 'badge badge-active',
@@ -93,7 +126,7 @@ describe('InvoiceListPageComponent', () => {
 
   describe('S-INV-028 — list-view filters (status + search)', () => {
     it('hydrates filter from ?status=draft query param', () => {
-      configure([makeInvoice()], { status: 'draft' });
+      configure([makeInvoice()], 1, { status: 'draft' });
       const fixture = TestBed.createComponent(InvoiceListPageComponent);
       fixture.componentInstance.ngOnInit();
       expect(fixture.componentInstance.selectedStatus()).toBe('draft');
@@ -116,11 +149,12 @@ describe('InvoiceListPageComponent', () => {
       ]);
     });
 
-    it('status filter narrows rows to the chosen status only', () => {
+    it('status filter narrows the rendered server page (client-side filter on the slice)', () => {
+      // Sweep C-20: BE returns the page; status filter then narrows in-memory.
       const draft = makeInvoice({ id: 'd1', invoiceNumber: 'DRAFT-aaaa', status: 'draft' });
       const sent = makeInvoice({ id: 's1', invoiceNumber: 'INV-2026-0001', status: 'sent' });
       const paid = makeInvoice({ id: 'p1', invoiceNumber: 'INV-2026-0002', status: 'paid' });
-      configure([draft, sent, paid]);
+      configure([draft, sent, paid], 3);
       const fixture = TestBed.createComponent(InvoiceListPageComponent);
       const cmp = fixture.componentInstance;
       cmp.ngOnInit();
@@ -138,52 +172,6 @@ describe('InvoiceListPageComponent', () => {
       expect(cmp.filteredInvoices().length).toBe(3);
     });
 
-    it('search matches invoice number (case-insensitive substring)', () => {
-      const a = makeInvoice({ id: 'a', invoiceNumber: 'INV-2026-0001' });
-      const b = makeInvoice({ id: 'b', invoiceNumber: 'INV-2026-0099' });
-      const c = makeInvoice({ id: 'c', invoiceNumber: 'DRAFT-abc12345' });
-      configure([a, b, c]);
-      const fixture = TestBed.createComponent(InvoiceListPageComponent);
-      const cmp = fixture.componentInstance;
-      cmp.ngOnInit();
-
-      cmp.searchQuery.set('0099');
-      expect(cmp.filteredInvoices().length).toBe(1);
-      expect(cmp.filteredInvoices()[0].id).toBe('b');
-
-      // Case insensitive
-      cmp.searchQuery.set('draft-');
-      expect(cmp.filteredInvoices().length).toBe(1);
-      expect(cmp.filteredInvoices()[0].id).toBe('c');
-
-      cmp.searchQuery.set('');
-      expect(cmp.filteredInvoices().length).toBe(3);
-    });
-
-    it('search matches customer name (case-insensitive substring)', () => {
-      const a = makeInvoice({ id: 'a', customerName: 'Hela Mahmoud' });
-      const b = makeInvoice({ id: 'b', customerName: 'Aymen Mansouri' });
-      const c = makeInvoice({ id: 'c', customerName: 'Nizar Jebali' });
-      configure([a, b, c]);
-      const fixture = TestBed.createComponent(InvoiceListPageComponent);
-      const cmp = fixture.componentInstance;
-      cmp.ngOnInit();
-
-      cmp.searchQuery.set('hela');
-      expect(cmp.filteredInvoices().length).toBe(1);
-      expect(cmp.filteredInvoices()[0].id).toBe('a');
-
-      cmp.searchQuery.set('MAN');
-      // Only "Mansouri" contains "man" (case-insensitive).
-      expect(cmp.filteredInvoices().length).toBe(1);
-      expect(cmp.filteredInvoices()[0].id).toBe('b');
-
-      // Pure substring (no fuzzy) — "Hela" matches only Hela.
-      cmp.searchQuery.set('hela');
-      expect(cmp.filteredInvoices().length).toBe(1);
-      expect(cmp.filteredInvoices()[0].id).toBe('a');
-    });
-
     it('clearFilters resets searchQuery, status, and paymentMethod', () => {
       configure([makeInvoice()]);
       const fixture = TestBed.createComponent(InvoiceListPageComponent);
@@ -199,177 +187,294 @@ describe('InvoiceListPageComponent', () => {
       expect(cmp.selectedStatus()).toBe('all');
       expect(cmp.selectedPaymentMethod()).toBe('all');
     });
-
-    it('combines status + search predicates (AND semantics)', () => {
-      const a = makeInvoice({ id: 'a', invoiceNumber: 'INV-2026-0001', status: 'paid', customerName: 'Hela' });
-      const b = makeInvoice({ id: 'b', invoiceNumber: 'INV-2026-0002', status: 'draft', customerName: 'Hela' });
-      const c = makeInvoice({ id: 'c', invoiceNumber: 'INV-2026-0003', status: 'paid', customerName: 'Other' });
-      configure([a, b, c]);
-      const fixture = TestBed.createComponent(InvoiceListPageComponent);
-      const cmp = fixture.componentInstance;
-      cmp.ngOnInit();
-
-      cmp.selectedStatus.set('paid');
-      cmp.searchQuery.set('hela');
-      const result = cmp.filteredInvoices();
-      expect(result.length).toBe(1);
-      expect(result[0].id).toBe('a');
-    });
   });
 
-  // ── S-INV-029 — pagination ──
+  // ── S-INV-029 — pagination (server-driven post Sweep C-20) ──
 
-  describe('S-INV-029 — client-side pagination', () => {
-    function makeMany(n: number): InvoiceWithDetails[] {
-      return Array.from({ length: n }, (_, i) =>
-        makeInvoice({
-          id: `i${i + 1}`,
-          invoiceNumber: `INV-2026-${String(i + 1).padStart(4, '0')}`,
-          // Stagger issue dates so ordering is stable: i=0 newest.
-          issueDate: new Date(2026, 0, 31 - (i % 30)),
-        }),
-      );
-    }
-
+  describe('S-INV-029 — server-driven pagination', () => {
     it('PAGE_SIZE constant is 25', () => {
       expect(InvoiceListPageComponent.PAGE_SIZE).toBe(25);
     });
 
-    it('shows the full first page when dataset > PAGE_SIZE and renders the rest behind Next', () => {
-      configure(makeMany(60));
+    it('initial fetch calls getInvoicesPaginated with page=1, limit=25, search=""', () => {
+      const stub = configure([makeInvoice()], 1);
       const fixture = TestBed.createComponent(InvoiceListPageComponent);
       const cmp = fixture.componentInstance;
       cmp.ngOnInit();
 
-      expect(cmp.filteredInvoices().length).toBe(60);
-      expect(cmp.totalPages()).toBe(3);
-      expect(cmp.effectivePage()).toBe(1);
-      expect(cmp.pagedInvoices().length).toBe(25);
+      expect(stub.getInvoicesPaginated).toHaveBeenCalled();
+      const lastCall = stub.getInvoicesPaginated.calls.mostRecent().args[0];
+      expect(lastCall).toEqual({ search: '', page: 1, limit: 25 });
+    });
+
+    it('totalPages computes from server-authoritative totalCount', () => {
+      configure(Array.from({ length: 25 }, (_, i) => makeInvoice({ id: `i${i}` })), 237);
+      const fixture = TestBed.createComponent(InvoiceListPageComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      expect(cmp.totalCount()).toBe(237);
+      expect(cmp.totalPages()).toBe(10); // ⌈237/25⌉ = 10
       expect(cmp.pageStart()).toBe(1);
       expect(cmp.pageEnd()).toBe(25);
-
-      cmp.goToNextPage();
-      expect(cmp.effectivePage()).toBe(2);
-      expect(cmp.pagedInvoices().length).toBe(25);
-      expect(cmp.pageStart()).toBe(26);
-      expect(cmp.pageEnd()).toBe(50);
-
-      cmp.goToNextPage();
-      expect(cmp.effectivePage()).toBe(3);
-      expect(cmp.pagedInvoices().length).toBe(10);
-      expect(cmp.pageStart()).toBe(51);
-      expect(cmp.pageEnd()).toBe(60);
-
-      // Guarded — does not overshoot.
-      cmp.goToNextPage();
-      expect(cmp.effectivePage()).toBe(3);
-
-      cmp.goToPreviousPage();
-      expect(cmp.effectivePage()).toBe(2);
-
-      cmp.goToPreviousPage();
-      cmp.goToPreviousPage();
-      expect(cmp.effectivePage()).toBe(1);
-      // Guarded at page 1.
-      cmp.goToPreviousPage();
-      expect(cmp.effectivePage()).toBe(1);
     });
 
-    it('renders all rows on page 1 when dataset <= PAGE_SIZE', () => {
-      configure(makeMany(10));
+    it('Next page emits a new BE fetch with page=2, search preserved', () => {
+      const stub = configure(
+        Array.from({ length: 25 }, (_, i) => makeInvoice({ id: `i${i}` })),
+        100,
+      );
       const fixture = TestBed.createComponent(InvoiceListPageComponent);
       const cmp = fixture.componentInstance;
       cmp.ngOnInit();
-      expect(cmp.totalPages()).toBe(1);
-      expect(cmp.pagedInvoices().length).toBe(10);
-      expect(cmp.pageStart()).toBe(1);
-      expect(cmp.pageEnd()).toBe(10);
+      expect(stub.getInvoicesPaginated).toHaveBeenCalledTimes(1);
+
+      cmp.goToNextPage();
+      expect(cmp.currentPage()).toBe(2);
+      expect(stub.getInvoicesPaginated).toHaveBeenCalledTimes(2);
+      const secondCall = stub.getInvoicesPaginated.calls.mostRecent().args[0];
+      expect(secondCall).toEqual({ search: '', page: 2, limit: 25 });
     });
 
-    it('handles an empty dataset without throwing (totalPages=1, pageStart=0, pageEnd=0)', () => {
-      configure([]);
+    it('Previous page emits a fetch with page-1 and is guarded at page 1', () => {
+      const stub = configure(
+        Array.from({ length: 25 }, (_, i) => makeInvoice({ id: `i${i}` })),
+        100,
+      );
       const fixture = TestBed.createComponent(InvoiceListPageComponent);
       const cmp = fixture.componentInstance;
       cmp.ngOnInit();
-      expect(cmp.filteredInvoices().length).toBe(0);
+
+      cmp.goToNextPage();
+      cmp.goToNextPage();
+      expect(cmp.currentPage()).toBe(3);
+
+      cmp.goToPreviousPage();
+      expect(cmp.currentPage()).toBe(2);
+
+      // Already at boundary — Previous from 1 stays put.
+      cmp.currentPage.set(1);
+      stub.getInvoicesPaginated.calls.reset();
+      cmp.goToPreviousPage();
+      expect(cmp.currentPage()).toBe(1);
+      expect(stub.getInvoicesPaginated).not.toHaveBeenCalled();
+    });
+
+    it('Next is guarded at the last page', () => {
+      const stub = configure(
+        [makeInvoice({ id: 'last' })],
+        50, // 2 pages total
+      );
+      const fixture = TestBed.createComponent(InvoiceListPageComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+
+      cmp.goToNextPage(); // → 2
+      expect(cmp.currentPage()).toBe(2);
+      stub.getInvoicesPaginated.calls.reset();
+      cmp.goToNextPage(); // boundary: 2 of 2 → stays at 2
+      expect(cmp.currentPage()).toBe(2);
+      expect(stub.getInvoicesPaginated).not.toHaveBeenCalled();
+    });
+
+    it('handles an empty dataset (totalCount=0 → empty state, no pagination)', () => {
+      configure([], 0);
+      const fixture = TestBed.createComponent(InvoiceListPageComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      expect(cmp.totalCount()).toBe(0);
       expect(cmp.totalPages()).toBe(1);
       expect(cmp.pageStart()).toBe(0);
       expect(cmp.pageEnd()).toBe(0);
       expect(cmp.pagedInvoices()).toEqual([]);
     });
 
-    it('resets to page 1 whenever a filter handler is invoked', () => {
-      const data = makeMany(60);
-      // Make 5 of them DRAFT for the filter test, scattered throughout.
-      data[10].status = 'draft' as InvoiceStatus;
-      data[20].status = 'draft' as InvoiceStatus;
-      data[30].status = 'draft' as InvoiceStatus;
-      data[40].status = 'draft' as InvoiceStatus;
-      data[50].status = 'draft' as InvoiceStatus;
-      configure(data);
+    it('renders an empty page coherently when the BE returns out-of-range page', () => {
+      // BE returns items=[] but total stays 50 (e.g. user navigated to page 999).
+      configure([], 50);
       const fixture = TestBed.createComponent(InvoiceListPageComponent);
       const cmp = fixture.componentInstance;
       cmp.ngOnInit();
-
-      cmp.goToNextPage();
-      cmp.goToNextPage();
-      expect(cmp.effectivePage()).toBe(3);
-
-      // Status filter via the template handler resets to page 1.
-      cmp.onStatusChange({ target: { value: 'draft' } } as unknown as Event);
-      expect(cmp.effectivePage()).toBe(1);
-      // 5 drafts fit on a single page.
-      expect(cmp.totalPages()).toBe(1);
-      expect(cmp.pagedInvoices().length).toBe(5);
-
-      // Search via the template handler also resets.
-      cmp.onStatusChange({ target: { value: 'all' } } as unknown as Event);
-      cmp.goToNextPage();
+      // totalPages clamps via Math.ceil(50/25) = 2. effectivePage clamps the
+      // user's 999 to 2.
+      cmp.currentPage.set(999);
+      expect(cmp.totalPages()).toBe(2);
       expect(cmp.effectivePage()).toBe(2);
-      cmp.onSearchChange({ target: { value: '0001' } } as unknown as Event);
-      expect(cmp.effectivePage()).toBe(1);
     });
 
-    it('clearFilters resets to page 1', () => {
-      configure(makeMany(60));
+    it('search input resets currentPage to 1 (regression — Sweep B-4 contract)', () => {
+      configure([makeInvoice()], 60);
       const fixture = TestBed.createComponent(InvoiceListPageComponent);
       const cmp = fixture.componentInstance;
       cmp.ngOnInit();
 
       cmp.goToNextPage();
       cmp.goToNextPage();
-      expect(cmp.effectivePage()).toBe(3);
+      expect(cmp.currentPage()).toBe(3);
+
+      cmp.onSearchChange({ target: { value: 'Karoui' } } as unknown as Event);
+      expect(cmp.currentPage()).toBe(1);
+    });
+
+    it('clearFilters resets to page 1 and re-fetches with empty search', () => {
+      const stub = configure([makeInvoice()], 60);
+      const fixture = TestBed.createComponent(InvoiceListPageComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+
+      cmp.goToNextPage();
+      cmp.goToNextPage();
+      expect(cmp.currentPage()).toBe(3);
+      stub.getInvoicesPaginated.calls.reset();
 
       cmp.clearFilters();
-      expect(cmp.effectivePage()).toBe(1);
+      expect(cmp.currentPage()).toBe(1);
       expect(cmp.searchQuery()).toBe('');
       expect(cmp.selectedStatus()).toBe('all');
       expect(cmp.selectedPaymentMethod()).toBe('all');
+      const lastCall = stub.getInvoicesPaginated.calls.mostRecent().args[0];
+      expect(lastCall).toEqual({ search: '', page: 1, limit: 25 });
     });
 
-    it('clamps effectivePage when filtering shrinks the result set below the active page', () => {
-      const data = makeMany(60);
-      data[55].customerName = 'UniqueCustomer';
-      configure(data);
+    it('debounced search waits 300ms then emits a single BE call with the latest term', fakeAsync(() => {
+      const stub = configure([makeInvoice()], 1);
+      const fixture = TestBed.createComponent(InvoiceListPageComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      stub.getInvoicesPaginated.calls.reset();
+
+      // Three rapid keystrokes — only the latest term should fire.
+      cmp.onSearchChange({ target: { value: 'K' } } as unknown as Event);
+      cmp.onSearchChange({ target: { value: 'Ka' } } as unknown as Event);
+      cmp.onSearchChange({ target: { value: 'Karoui' } } as unknown as Event);
+
+      tick(299);
+      expect(stub.getInvoicesPaginated).not.toHaveBeenCalled();
+
+      tick(2);
+      expect(stub.getInvoicesPaginated).toHaveBeenCalledTimes(1);
+      expect(stub.getInvoicesPaginated.calls.mostRecent().args[0]).toEqual({
+        search: 'Karoui',
+        page: 1,
+        limit: 25,
+      });
+    }));
+
+    it('rapid Next clicks switchMap-collapse to the latest page (no race)', fakeAsync(() => {
+      // Drive responses through a Subject so we can sequence them.
+      const responses$ = new Subject<{
+        items: InvoiceWithDetails[];
+        total: number;
+        page: number;
+        limit: number;
+      }>();
+      const stub = {
+        getInvoicesPaginated: jasmine
+          .createSpy('getInvoicesPaginated')
+          .and.callFake(() => responses$.asObservable()),
+        getInvoices: jasmine.createSpy().and.returnValue(of([])),
+        formatCurrency: (n: number) => `${n} TND`,
+        formatDate: (d: Date) => d.toISOString().split('T')[0],
+        getStatusBadgeClass: () => 'badge',
+      };
+      TestBed.configureTestingModule({
+        providers: [
+          provideRouter([]),
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          { provide: InvoiceService, useValue: stub },
+          {
+            provide: TranslationService,
+            useValue: {
+              instant: (k: string) => k,
+              getCurrentLanguage: () => 'en',
+              translations$: of({}),
+            },
+          },
+          {
+            provide: ActivatedRoute,
+            useValue: { queryParamMap: of({ get: () => null }) },
+          },
+        ],
+      });
+      const fixture = TestBed.createComponent(InvoiceListPageComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      // Settle the initial fetch.
+      responses$.next({
+        items: [makeInvoice({ id: 'p1' })],
+        total: 100,
+        page: 1,
+        limit: 25,
+      });
+      tick();
+
+      // Three rapid Next clicks before any settle.
+      cmp.goToNextPage(); // page 2
+      cmp.goToNextPage(); // page 3
+      cmp.goToNextPage(); // page 4
+      expect(cmp.currentPage()).toBe(4);
+
+      // The BE responds to the latest fetch — only that envelope settles
+      // (switchMap cancelled the prior two). The component reads page 4.
+      responses$.next({
+        items: [makeInvoice({ id: 'page4-row' })],
+        total: 100,
+        page: 4,
+        limit: 25,
+      });
+      tick();
+
+      expect(cmp.invoices().length).toBe(1);
+      expect(cmp.invoices()[0].id).toBe('page4-row');
+    }));
+
+    it('isLoading toggles true → false across a fetch cycle', fakeAsync(() => {
+      const responses$ = new Subject<{
+        items: InvoiceWithDetails[];
+        total: number;
+        page: number;
+        limit: number;
+      }>();
+      const stub = {
+        getInvoicesPaginated: jasmine
+          .createSpy()
+          .and.callFake(() => responses$.asObservable()),
+        getInvoices: jasmine.createSpy().and.returnValue(of([])),
+        formatCurrency: (n: number) => `${n} TND`,
+        formatDate: (d: Date) => d.toISOString().split('T')[0],
+        getStatusBadgeClass: () => 'badge',
+      };
+      TestBed.configureTestingModule({
+        providers: [
+          provideRouter([]),
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          { provide: InvoiceService, useValue: stub },
+          {
+            provide: TranslationService,
+            useValue: {
+              instant: (k: string) => k,
+              getCurrentLanguage: () => 'en',
+              translations$: of({}),
+            },
+          },
+          {
+            provide: ActivatedRoute,
+            useValue: { queryParamMap: of({ get: () => null }) },
+          },
+        ],
+      });
       const fixture = TestBed.createComponent(InvoiceListPageComponent);
       const cmp = fixture.componentInstance;
       cmp.ngOnInit();
 
-      cmp.goToNextPage();
-      cmp.goToNextPage();
-      expect(cmp.effectivePage()).toBe(3);
+      // Initial fetch — isLoading should be true while in-flight.
+      tick();
+      expect(cmp.isLoading()).toBe(true);
 
-      // Search via the handler resets to page 1 (and the clamp is
-      // defence-in-depth for any future direct-signal mutation).
-      cmp.onSearchChange({ target: { value: 'UniqueCustomer' } } as unknown as Event);
-      expect(cmp.totalPages()).toBe(1);
-      expect(cmp.effectivePage()).toBe(1);
-      expect(cmp.pagedInvoices().length).toBe(1);
-
-      // Pure-signal write of a stale page number is still clamped by the
-      // computed (no template handler involved).
-      cmp.currentPage.set(99);
-      expect(cmp.effectivePage()).toBe(1);
-    });
+      responses$.next({ items: [], total: 0, page: 1, limit: 25 });
+      tick();
+      expect(cmp.isLoading()).toBe(false);
+    }));
   });
 });

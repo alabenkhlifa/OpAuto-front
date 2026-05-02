@@ -1964,7 +1964,8 @@
         "of": "of",
         "page": "Page",
         "previous": "Previous",
-        "next": "Next"
+        "next": "Next",
+        "loading": "Loading…"
       }
     },
     "send": {

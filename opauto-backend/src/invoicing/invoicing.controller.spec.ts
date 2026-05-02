@@ -110,3 +110,165 @@ describe('InvoicingController — BUG-097 DELETE 204', () => {
     });
   });
 });
+
+/**
+ * S-PERF-001 (Sweep C-20) — `GET /api/invoices` accepts `?page=` /
+ * `?limit=` query params and forwards parsed numeric values to the
+ * service. Defaults: page=1, limit=25. `limit` clamps to [1, 100].
+ * Invalid / NaN params fall back to defaults — callers can never break
+ * the contract by sending garbage.
+ */
+describe('InvoicingController — S-PERF-001 pagination wiring', () => {
+  let app: INestApplication;
+  let svc: Record<string, jest.Mock>;
+
+  beforeEach(async () => {
+    svc = {
+      findAll: jest.fn().mockResolvedValue({
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 25,
+      }),
+      findOne: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      issue: jest.fn(),
+      remove: jest.fn(),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [InvoicingController],
+      providers: [
+        { provide: InvoicingService, useValue: svc },
+        { provide: FromJobService, useValue: { createFromJob: jest.fn() } },
+        { provide: DeliveryService, useValue: { deliverInvoice: jest.fn() } },
+        { provide: PdfRendererService, useValue: { renderInvoice: jest.fn() } },
+      ],
+    })
+      .overrideGuard(JwtAuthGuard)
+      .useValue(makeAuthGuard('OWNER'))
+      .overrideGuard(ModuleAccessGuard)
+      .useValue(PassThroughGuard)
+      .compile();
+
+    app = module.createNestApplication();
+    await app.init();
+  });
+
+  afterEach(async () => {
+    if (app) await app.close();
+  });
+
+  it('defaults to page=1, limit=25 when no query params are supplied', async () => {
+    await request(app.getHttpServer()).get('/invoices').expect(200);
+    expect(svc.findAll).toHaveBeenCalledWith(MOCK_GARAGE_ID, {
+      search: undefined,
+      page: 1,
+      limit: 25,
+    });
+  });
+
+  it('forwards ?page=2&limit=50 verbatim', async () => {
+    await request(app.getHttpServer())
+      .get('/invoices')
+      .query({ page: 2, limit: 50 })
+      .expect(200);
+    expect(svc.findAll).toHaveBeenCalledWith(MOCK_GARAGE_ID, {
+      search: undefined,
+      page: 2,
+      limit: 50,
+    });
+  });
+
+  it('clamps ?limit=999 down to 100 at the controller layer', async () => {
+    await request(app.getHttpServer())
+      .get('/invoices')
+      .query({ limit: 999 })
+      .expect(200);
+    expect(svc.findAll).toHaveBeenCalledWith(MOCK_GARAGE_ID, {
+      search: undefined,
+      page: 1,
+      limit: 100,
+    });
+  });
+
+  it('substitutes default 25 for ?limit=0 (invalid)', async () => {
+    await request(app.getHttpServer())
+      .get('/invoices')
+      .query({ limit: 0 })
+      .expect(200);
+    expect(svc.findAll).toHaveBeenCalledWith(MOCK_GARAGE_ID, {
+      search: undefined,
+      page: 1,
+      limit: 25,
+    });
+  });
+
+  it('substitutes default 25 for ?limit=foo (NaN)', async () => {
+    await request(app.getHttpServer())
+      .get('/invoices')
+      .query({ limit: 'foo' })
+      .expect(200);
+    expect(svc.findAll).toHaveBeenCalledWith(MOCK_GARAGE_ID, {
+      search: undefined,
+      page: 1,
+      limit: 25,
+    });
+  });
+
+  it('substitutes default 1 for ?page=0', async () => {
+    await request(app.getHttpServer())
+      .get('/invoices')
+      .query({ page: 0 })
+      .expect(200);
+    expect(svc.findAll).toHaveBeenCalledWith(MOCK_GARAGE_ID, {
+      search: undefined,
+      page: 1,
+      limit: 25,
+    });
+  });
+
+  it('substitutes default 1 for ?page=-3 (negative)', async () => {
+    await request(app.getHttpServer())
+      .get('/invoices')
+      .query({ page: -3 })
+      .expect(200);
+    expect(svc.findAll).toHaveBeenCalledWith(MOCK_GARAGE_ID, {
+      search: undefined,
+      page: 1,
+      limit: 25,
+    });
+  });
+
+  it('forwards search alongside pagination', async () => {
+    await request(app.getHttpServer())
+      .get('/invoices')
+      .query({ search: 'Karoui', page: 3, limit: 10 })
+      .expect(200);
+    expect(svc.findAll).toHaveBeenCalledWith(MOCK_GARAGE_ID, {
+      search: 'Karoui',
+      page: 3,
+      limit: 10,
+    });
+  });
+
+  it('returns the paginated envelope shape verbatim from the service', async () => {
+    svc.findAll.mockResolvedValueOnce({
+      items: [{ id: 'inv-1' }],
+      total: 237,
+      page: 2,
+      limit: 25,
+    });
+    const res = await request(app.getHttpServer())
+      .get('/invoices')
+      .query({ page: 2 })
+      .expect(200);
+    expect(res.body).toEqual({
+      items: [{ id: 'inv-1' }],
+      total: 237,
+      page: 2,
+      limit: 25,
+    });
+  });
+});

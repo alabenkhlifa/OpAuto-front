@@ -111,13 +111,21 @@
     }
   </div>
 
-  @if (filteredInvoices().length > 0 && totalPages() > 1) {
-    <nav class="invoice-list-page__pagination" [attr.aria-label]="'invoicing.list.pagination.label' | translate">
+  @if (totalCount() > 0 && totalPages() > 1) {
+    <nav class="invoice-list-page__pagination"
+         [class.invoice-list-page__pagination--loading]="isLoading()"
+         [attr.aria-label]="'invoicing.list.pagination.label' | translate">
       <span class="invoice-list-page__pagination-status">
         {{ 'invoicing.list.pagination.showing' | translate }}
         {{ pageStart() }}–{{ pageEnd() }}
         {{ 'invoicing.list.pagination.of' | translate }}
-        {{ filteredInvoices().length }}
+        {{ totalCount() }}
+        @if (isLoading()) {
+          <span class="invoice-list-page__pagination-loading"
+                [attr.aria-live]="'polite'">
+            · {{ 'invoicing.list.pagination.loading' | translate }}
+          </span>
+        }
       </span>
       <div class="invoice-list-page__pagination-controls">
         <button type="button"
@@ -140,7 +148,7 @@
     </nav>
   }
 
-  @if (filteredInvoices().length === 0 && !isLoading()) {
+  @if (totalCount() === 0 && !isLoading()) {
     <div class="glass-card empty-state">
       <h3 class="empty-state__title">{{ 'invoicing.list.noInvoicesFound' | translate }}</h3>
       <p class="empty-state__description">{{ 'invoicing.list.noInvoicesDescription' | translate }}</p>

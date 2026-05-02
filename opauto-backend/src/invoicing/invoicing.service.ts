@@ -57,9 +57,30 @@ export class InvoicingService {
    * `where` clause server-side across `invoiceNumber` + customer name +
    * license plate (case-insensitive substring). Empty / whitespace
    * `search` returns the full set as before.
+   *
+   * S-PERF-001 (Sweep C-20) — server-side pagination. The response is
+   * a paginated envelope — `{ items, total, page, limit }` — where
+   * `total` reflects the post-search row count so the FE can drive its
+   * pagination footer off a stable BE-authoritative number. Data + count
+   * are issued inside a single `prisma.$transaction([])` so the page
+   * slice and total stay consistent under concurrent inserts.
+   *
+   * The legacy two-arg shape `findAll(garageId, search?)` is kept for
+   * back-compat — passing a string second arg routes to default
+   * `page=1, limit=25`. New callers should pass the object form.
    */
-  async findAll(garageId: string, search?: string) {
-    const trimmed = (search ?? '').trim();
+  async findAll(
+    garageId: string,
+    opts?: string | { search?: string; page?: number; limit?: number },
+  ) {
+    const normalized = typeof opts === 'string' || opts === undefined
+      ? { search: typeof opts === 'string' ? opts : undefined, page: 1, limit: 25 }
+      : opts;
+
+    const trimmed = (normalized.search ?? '').trim();
+    const page = Math.max(1, Math.floor(normalized.page ?? 1));
+    const limit = Math.min(100, Math.max(1, Math.floor(normalized.limit ?? 25)));
+
     const where: any = trimmed
       ? {
           garageId,
@@ -85,31 +106,45 @@ export class InvoicingService {
           ],
         }
       : { garageId };
-    return this.prisma.invoice.findMany({
-      where,
-      include: {
-        customer: { select: { firstName: true, lastName: true } },
-        car: {
-          select: {
-            make: true,
-            model: true,
-            year: true,
-            licensePlate: true,
+
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.invoice.findMany({
+        where,
+        include: {
+          customer: { select: { firstName: true, lastName: true } },
+          car: {
+            select: {
+              make: true,
+              model: true,
+              year: true,
+              licensePlate: true,
+            },
           },
-        },
-        payments: {
-          select: {
-            id: true,
-            amount: true,
-            method: true,
-            paidAt: true,
-            reference: true,
+          payments: {
+            select: {
+              id: true,
+              amount: true,
+              method: true,
+              paidAt: true,
+              reference: true,
+            },
           },
+          _count: { select: { lineItems: true, payments: true } },
         },
-        _count: { select: { lineItems: true, payments: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        // S-PERF-001 (Sweep C-20): secondary sort by `id` is the stable
+        // tiebreaker — without it postgres may return overlapping or
+        // missed rows across pages when multiple invoices share a
+        // `createdAt` timestamp. The seed dataset hit this exact case
+        // (INV-202604-0014 appeared on both page 1 and page 2 of a 25-row
+        // pagination).
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.invoice.count({ where }),
+    ]);
+
+    return { items, total, page, limit };
   }
 
   async findOne(id: string, garageId: string) {

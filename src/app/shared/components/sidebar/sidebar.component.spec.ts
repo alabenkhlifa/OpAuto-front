@@ -204,33 +204,49 @@ describe('SidebarComponent', () => {
       drain('/approvals', []);
     }
 
+    /**
+     * Sweep C-20 (S-PERF-001) — sidebar now hits the paginated invoice
+     * endpoint at `/invoices?page=1&limit=100` and unwraps the envelope.
+     * Helper accepts envelope payloads so badge counters keep matching
+     * the destination /invoices/pending page row count.
+     */
+    const INVOICES_URL = '/invoices?page=1&limit=100';
+    const envelope = (items: any[]) => ({
+      items,
+      total: items.length,
+      page: 1,
+      limit: 100,
+    });
+
     it('counts SENT + VIEWED + PARTIALLY_PAID + OVERDUE invoices (S-SB-003 — all unpaid issued)', () => {
       const httpMock = TestBed.inject(HttpTestingController);
       fixture.detectChanges(); // triggers ngOnInit -> loadBadgeCounts
 
-      const invoiceReq = httpMock.expectOne('/invoices');
+      const invoiceReq = httpMock.expectOne(INVOICES_URL);
       expect(invoiceReq.request.method).toBe('GET');
 
       // Realistic mix: 3 SENT, 1 VIEWED, 2 PARTIALLY_PAID, 5 OVERDUE
       // (= 11 unpaid issued), plus 2 PAID + 1 DRAFT + 1 CANCELLED that
       // must be EXCLUDED from the badge.
-      invoiceReq.flush([
-        { id: '1', status: 'SENT' },
-        { id: '2', status: 'SENT' },
-        { id: '3', status: 'SENT' },
-        { id: '4', status: 'VIEWED' },
-        { id: '5', status: 'PARTIALLY_PAID' },
-        { id: '6', status: 'PARTIALLY_PAID' },
-        { id: '7', status: 'OVERDUE' },
-        { id: '8', status: 'OVERDUE' },
-        { id: '9', status: 'OVERDUE' },
-        { id: '10', status: 'OVERDUE' },
-        { id: '11', status: 'OVERDUE' },
-        { id: '12', status: 'PAID' },
-        { id: '13', status: 'PAID' },
-        { id: '14', status: 'DRAFT' },
-        { id: '15', status: 'CANCELLED' },
-      ]);
+      invoiceReq.flush(
+        envelope([
+          { id: '1', status: 'SENT' },
+          { id: '2', status: 'SENT' },
+          { id: '3', status: 'SENT' },
+          { id: '4', status: 'VIEWED' },
+          { id: '5', status: 'PARTIALLY_PAID' },
+          { id: '6', status: 'PARTIALLY_PAID' },
+          { id: '7', status: 'OVERDUE' },
+          { id: '8', status: 'OVERDUE' },
+          { id: '9', status: 'OVERDUE' },
+          { id: '10', status: 'OVERDUE' },
+          { id: '11', status: 'OVERDUE' },
+          { id: '12', status: 'PAID' },
+          { id: '13', status: 'PAID' },
+          { id: '14', status: 'DRAFT' },
+          { id: '15', status: 'CANCELLED' },
+        ]),
+      );
 
       flushAllPendingHttp(httpMock);
 
@@ -243,14 +259,16 @@ describe('SidebarComponent', () => {
       const httpMock = TestBed.inject(HttpTestingController);
       fixture.detectChanges();
 
-      const invoiceReq = httpMock.expectOne('/invoices');
+      const invoiceReq = httpMock.expectOne(INVOICES_URL);
       // Only PAID/DRAFT/CANCELLED — none of the unpaid statuses present.
-      invoiceReq.flush([
-        { id: '1', status: 'PAID' },
-        { id: '2', status: 'PAID' },
-        { id: '3', status: 'DRAFT' },
-        { id: '4', status: 'CANCELLED' },
-      ]);
+      invoiceReq.flush(
+        envelope([
+          { id: '1', status: 'PAID' },
+          { id: '2', status: 'PAID' },
+          { id: '3', status: 'DRAFT' },
+          { id: '4', status: 'CANCELLED' },
+        ]),
+      );
 
       flushAllPendingHttp(httpMock);
 
@@ -263,12 +281,14 @@ describe('SidebarComponent', () => {
       const httpMock = TestBed.inject(HttpTestingController);
       fixture.detectChanges();
 
-      const invoiceReq = httpMock.expectOne('/invoices');
-      invoiceReq.flush([
-        { id: '1', status: 'OVERDUE' },
-        { id: '2', status: 'OVERDUE' },
-        { id: '3', status: 'PAID' },
-      ]);
+      const invoiceReq = httpMock.expectOne(INVOICES_URL);
+      invoiceReq.flush(
+        envelope([
+          { id: '1', status: 'OVERDUE' },
+          { id: '2', status: 'OVERDUE' },
+          { id: '3', status: 'PAID' },
+        ]),
+      );
 
       flushAllPendingHttp(httpMock);
 
@@ -294,8 +314,10 @@ describe('SidebarComponent', () => {
       httpMock.match('/appointments').forEach((r) => r.flush([]));
       httpMock.match('/maintenance').forEach((r) => r.flush([]));
       httpMock
-        .match('/invoices')
-        .forEach((r) => r.flush([{ status: 'SENT' }, { status: 'OVERDUE' }]));
+        .match(INVOICES_URL)
+        .forEach((r) =>
+          r.flush(envelope([{ status: 'SENT' }, { status: 'OVERDUE' }])),
+        );
       httpMock
         .match('/quotes')
         .forEach((r) => r.flush([{ status: 'SENT' }]));
@@ -319,9 +341,13 @@ describe('SidebarComponent', () => {
       const drain = (url: string) => httpMock.match(url).forEach((r) => r.flush([]));
       drain('/appointments');
       drain('/maintenance');
-      drain('/invoices');
       drain('/quotes');
       drain('/approvals');
+      // Sweep C-20 — sidebar invoice fetch carries pagination params.
+      // `match` is exact, so drain the parameterized URL specifically.
+      httpMock
+        .match('/invoices?page=1&limit=100')
+        .forEach((r) => r.flush({ items: [], total: 0, page: 1, limit: 100 }));
     }
 
     function expectOnlyActive(expectedId: string) {
@@ -397,9 +423,13 @@ describe('SidebarComponent', () => {
       const drain = (url: string) => httpMock.match(url).forEach((r) => r.flush([]));
       drain('/appointments');
       drain('/maintenance');
-      drain('/invoices');
       drain('/quotes');
       drain('/approvals');
+      // Sweep C-20 — sidebar invoice fetch carries pagination params.
+      // `match` is exact, so drain the parameterized URL specifically.
+      httpMock
+        .match('/invoices?page=1&limit=100')
+        .forEach((r) => r.flush({ items: [], total: 0, page: 1, limit: 100 }));
     }
 
     function setDesktopViewport() {

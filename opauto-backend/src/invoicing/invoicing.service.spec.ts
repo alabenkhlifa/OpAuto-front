@@ -60,12 +60,23 @@ function makeInvoice(overrides: Partial<{
 describe('InvoicingService – findAll', () => {
   let service: InvoicingService;
   let prisma: {
-    invoice: { findMany: jest.Mock };
+    invoice: { findMany: jest.Mock; count: jest.Mock };
+    $transaction: jest.Mock;
   };
 
   beforeEach(async () => {
+    // S-PERF-001 (Sweep C-20): findAll now wraps `findMany` + `count`
+    // in a single `prisma.$transaction([...])` so the spec mock has to
+    // honor the same shape — pass-through resolves the underlying
+    // Promises in order, mirroring the runtime contract.
     prisma = {
-      invoice: { findMany: jest.fn().mockResolvedValue([]) },
+      invoice: {
+        findMany: jest.fn().mockResolvedValue([]),
+        count: jest.fn().mockResolvedValue(0),
+      },
+      $transaction: jest.fn().mockImplementation((promises: Promise<any>[]) =>
+        Promise.all(promises),
+      ),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -106,7 +117,7 @@ describe('InvoicingService – findAll', () => {
 
   // ── 2. Returned shape contains payments array ──────────────
 
-  it('returns invoices with a payments array on each item', async () => {
+  it('returns invoices with a payments array on each item (inside envelope.items)', async () => {
     const invoiceWithPayments = makeInvoice({
       payments: [
         makePayment({ id: 'p1', amount: 100, method: 'CASH' }),
@@ -123,29 +134,31 @@ describe('InvoicingService – findAll', () => {
       invoiceWithPayments,
       invoiceWithoutPayments,
     ]);
+    prisma.invoice.count.mockResolvedValueOnce(2);
 
     const result = await service.findAll(GARAGE_ID);
 
-    expect(result).toHaveLength(2);
-    for (const inv of result) {
+    expect(result.items).toHaveLength(2);
+    for (const inv of result.items) {
       expect(inv).toHaveProperty('payments');
       expect(Array.isArray((inv as any).payments)).toBe(true);
     }
-    expect((result[0] as any).payments).toHaveLength(2);
-    expect((result[0] as any).payments[0]).toEqual(
+    expect((result.items[0] as any).payments).toHaveLength(2);
+    expect((result.items[0] as any).payments[0]).toEqual(
       expect.objectContaining({ id: 'p1', amount: 100, method: 'CASH' }),
     );
-    expect((result[1] as any).payments).toHaveLength(0);
+    expect((result.items[1] as any).payments).toHaveLength(0);
   });
 
-  // ── 3. Empty array when no invoices ────────────────────────
+  // ── 3. Empty result still returns a well-formed envelope ───
 
-  it('returns empty array when no invoices exist for garage', async () => {
+  it('returns an empty envelope when no invoices exist for garage', async () => {
     prisma.invoice.findMany.mockResolvedValueOnce([]);
+    prisma.invoice.count.mockResolvedValueOnce(0);
 
     const result = await service.findAll(GARAGE_ID);
 
-    expect(result).toEqual([]);
+    expect(result).toEqual({ items: [], total: 0, page: 1, limit: 25 });
   });
 
   // ── 4. Filters by garageId ─────────────────────────────────
@@ -159,11 +172,14 @@ describe('InvoicingService – findAll', () => {
 
   // ── 5. Orders by createdAt desc ────────────────────────────
 
-  it('orders invoices by createdAt descending', async () => {
+  it('orders invoices by createdAt descending with `id` tiebreaker (stable pagination)', async () => {
     await service.findAll(GARAGE_ID);
 
     const call = prisma.invoice.findMany.mock.calls[0][0];
-    expect(call.orderBy).toEqual({ createdAt: 'desc' });
+    // Sweep C-20: `id` tiebreaker is load-bearing for pagination
+    // correctness — without it postgres may return overlapping or
+    // missing rows across pages when `createdAt` ties.
+    expect(call.orderBy).toEqual([{ createdAt: 'desc' }, { id: 'desc' }]);
   });
 
   // ── 6. Includes customer and car relations ─────────────────
@@ -192,14 +208,14 @@ describe('InvoicingService – findAll', () => {
   // ── 8. S-PERF-002 (Sweep C-18) — server-side ?search= ──────
 
   describe('S-PERF-002 — server-side ?search=', () => {
-    it('omits OR clause when search is undefined or whitespace', async () => {
+    it('omits OR clause when search is undefined or whitespace (legacy string-arg form)', async () => {
       await service.findAll(GARAGE_ID, '   ');
       const call = prisma.invoice.findMany.mock.calls[0][0];
       expect(call.where).toEqual({ garageId: GARAGE_ID });
     });
 
     it('builds case-insensitive OR across invoiceNumber / customer name / license plate', async () => {
-      await service.findAll(GARAGE_ID, 'Karoui');
+      await service.findAll(GARAGE_ID, { search: 'Karoui' });
       const call = prisma.invoice.findMany.mock.calls[0][0];
       expect(call.where.garageId).toBe(GARAGE_ID);
       expect(call.where.OR).toEqual([
@@ -223,11 +239,103 @@ describe('InvoicingService – findAll', () => {
     });
 
     it('trims surrounding whitespace before applying the filter', async () => {
-      await service.findAll(GARAGE_ID, '  INV-001  ');
+      await service.findAll(GARAGE_ID, { search: '  INV-001  ' });
       const call = prisma.invoice.findMany.mock.calls[0][0];
       expect(call.where.OR[0]).toEqual({
         invoiceNumber: { contains: 'INV-001', mode: 'insensitive' },
       });
+    });
+  });
+
+  // ── 9. S-PERF-001 (Sweep C-20) — server-side pagination ────
+
+  describe('S-PERF-001 — server-side pagination (?page= / ?limit=)', () => {
+    it('returns the paginated envelope { items, total, page, limit }', async () => {
+      const rows = [makeInvoice({ id: 'a' }), makeInvoice({ id: 'b' })];
+      prisma.invoice.findMany.mockResolvedValueOnce(rows);
+      prisma.invoice.count.mockResolvedValueOnce(237);
+
+      const result = await service.findAll(GARAGE_ID, { page: 2, limit: 25 });
+
+      expect(result).toEqual({
+        items: rows,
+        total: 237,
+        page: 2,
+        limit: 25,
+      });
+    });
+
+    it('issues findMany + count in a single $transaction call', async () => {
+      await service.findAll(GARAGE_ID, { page: 1, limit: 25 });
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      const txArg = prisma.$transaction.mock.calls[0][0];
+      // Both prisma calls are issued before $transaction is invoked
+      // (Prisma's promise-array transaction shape).
+      expect(Array.isArray(txArg)).toBe(true);
+      expect(txArg).toHaveLength(2);
+    });
+
+    it('defaults to page=1, limit=25 when no opts are passed', async () => {
+      await service.findAll(GARAGE_ID);
+      const call = prisma.invoice.findMany.mock.calls[0][0];
+      expect(call.skip).toBe(0);
+      expect(call.take).toBe(25);
+    });
+
+    it('translates page=2, limit=25 to skip=25, take=25', async () => {
+      await service.findAll(GARAGE_ID, { page: 2, limit: 25 });
+      const call = prisma.invoice.findMany.mock.calls[0][0];
+      expect(call.skip).toBe(25);
+      expect(call.take).toBe(25);
+    });
+
+    it('translates page=10, limit=50 to skip=450, take=50', async () => {
+      await service.findAll(GARAGE_ID, { page: 10, limit: 50 });
+      const call = prisma.invoice.findMany.mock.calls[0][0];
+      expect(call.skip).toBe(450);
+      expect(call.take).toBe(50);
+    });
+
+    it('clamps limit > 100 down to 100', async () => {
+      await service.findAll(GARAGE_ID, { page: 1, limit: 500 });
+      const call = prisma.invoice.findMany.mock.calls[0][0];
+      expect(call.take).toBe(100);
+    });
+
+    it('clamps limit < 1 up to 1 (defence-in-depth: controller already substitutes default for 0/NaN)', async () => {
+      await service.findAll(GARAGE_ID, { page: 1, limit: 0 });
+      const call = prisma.invoice.findMany.mock.calls[0][0];
+      expect(call.take).toBe(1);
+    });
+
+    it('clamps page < 1 up to 1', async () => {
+      await service.findAll(GARAGE_ID, { page: 0, limit: 25 });
+      const call = prisma.invoice.findMany.mock.calls[0][0];
+      expect(call.skip).toBe(0);
+    });
+
+    it('returns empty items + correct total for an out-of-range page', async () => {
+      prisma.invoice.findMany.mockResolvedValueOnce([]);
+      prisma.invoice.count.mockResolvedValueOnce(50);
+
+      const result = await service.findAll(GARAGE_ID, { page: 999, limit: 25 });
+
+      expect(result.items).toEqual([]);
+      expect(result.total).toBe(50);
+      expect(result.page).toBe(999);
+      expect(result.limit).toBe(25);
+    });
+
+    it('count uses the SAME where clause as findMany (search filter applied to total)', async () => {
+      await service.findAll(GARAGE_ID, { search: 'Karoui', page: 1, limit: 25 });
+
+      const findManyCall = prisma.invoice.findMany.mock.calls[0][0];
+      const countCall = prisma.invoice.count.mock.calls[0][0];
+
+      expect(findManyCall.where.garageId).toBe(GARAGE_ID);
+      expect(findManyCall.where.OR).toBeDefined();
+      // Whatever where is on findMany must match count's where exactly.
+      expect(countCall.where).toEqual(findManyCall.where);
     });
   });
 });

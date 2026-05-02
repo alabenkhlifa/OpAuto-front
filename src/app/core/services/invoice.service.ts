@@ -274,17 +274,61 @@ export class InvoiceService {
    * server-side instead of dumping the entire catalog into memory.
    * Empty / whitespace `search` keeps the existing all-rows behaviour
    * so other callers (cache hydration, dashboards) stay compatible.
+   *
+   * S-PERF-001 (Sweep C-20) — back-compat list-of-invoices wrapper.
+   * Calls the paginated endpoint with `limit=100` (the BE-clamped
+   * maximum) so non-list callers (dashboards, reports, the cache
+   * hydration in `pending-list`) still get a single fetch worth of
+   * rows without paging plumbing. The list page (and any other caller
+   * that needs page-driven data) should call `getInvoicesPaginated()`
+   * directly to consume the full envelope.
    */
   getInvoices(search?: string): Observable<InvoiceWithDetails[]> {
-    let params: HttpParams | undefined;
-    const trimmed = (search ?? '').trim();
-    if (trimmed) {
-      params = new HttpParams().set('search', trimmed);
-    }
-    return this.http.get<any[]>('/invoices', { params }).pipe(
-      map(items => items.map(b => this.mapFromBackend(b))),
-      tap(invoices => this.invoicesSubject.next(invoices))
+    return this.getInvoicesPaginated({ search, page: 1, limit: 100 }).pipe(
+      map(envelope => envelope.items),
+      tap(invoices => this.invoicesSubject.next(invoices)),
     );
+  }
+
+  /**
+   * S-PERF-001 (Sweep C-20) — paginated invoice list. Returns the BE
+   * envelope `{ items, total, page, limit }` so the consumer can drive
+   * its own pagination footer off a stable BE-authoritative count.
+   *
+   * Filters apply BEFORE pagination — i.e. `total` reflects the
+   * post-search row count, not the global garage row count. That's
+   * the contract `invoice-list.component` relies on to keep its
+   * "Showing 26-50 of 237" text correct under search.
+   *
+   * Empty / whitespace `search` is omitted from the query string so
+   * the BE's `where` short-circuit kicks in.
+   */
+  getInvoicesPaginated(
+    opts: { search?: string; page?: number; limit?: number } = {},
+  ): Observable<{
+    items: InvoiceWithDetails[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    let params = new HttpParams();
+    const trimmed = (opts.search ?? '').trim();
+    if (trimmed) params = params.set('search', trimmed);
+    if (opts.page !== undefined) params = params.set('page', String(opts.page));
+    if (opts.limit !== undefined) params = params.set('limit', String(opts.limit));
+    return this.http
+      .get<{ items: any[]; total: number; page: number; limit: number }>(
+        '/invoices',
+        { params },
+      )
+      .pipe(
+        map(envelope => ({
+          items: envelope.items.map(b => this.mapFromBackend(b)),
+          total: envelope.total,
+          page: envelope.page,
+          limit: envelope.limit,
+        })),
+      );
   }
 
   getInvoiceById(invoiceId: string): InvoiceWithDetails | undefined {

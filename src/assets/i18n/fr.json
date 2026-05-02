@@ -1918,7 +1918,8 @@
         "of": "sur",
         "page": "Page",
         "previous": "Précédent",
-        "next": "Suivant"
+        "next": "Suivant",
+        "loading": "Chargement…"
       }
     },
     "send": {
@@ -2057,7 +2058,8 @@
         "of": "sur",
         "page": "Page",
         "previous": "Précédent",
-        "next": "Suivant"
+        "next": "Suivant",
+        "loading": "Chargement…"
       }
     },
     "pending": {
