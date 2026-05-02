@@ -19,8 +19,15 @@ export class PendingListPageComponent implements OnInit {
   invoices = signal<InvoiceWithDetails[]>([]);
   isLoading = signal(false);
 
+  // S-SB-003 — Pending Payment is "all unpaid issued invoices": SENT (incl.
+  // VIEWED, which is just SENT after the customer opened the email),
+  // PARTIALLY_PAID, OVERDUE. The sidebar Pending-Payment badge counts the
+  // same set so the value the user sees in the rail matches this page's
+  // row count exactly.
   pendingInvoices = computed(() =>
-    this.invoices().filter((i) => ['sent', 'viewed'].includes(i.status)),
+    this.invoices().filter((i) =>
+      ['sent', 'viewed', 'partially-paid', 'overdue'].includes(i.status),
+    ),
   );
 
   ngOnInit(): void {

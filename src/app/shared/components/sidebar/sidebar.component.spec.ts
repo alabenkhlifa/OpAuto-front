@@ -177,12 +177,19 @@ describe('SidebarComponent', () => {
   // ---------------------------------------------------------------
   // Badge counter for "Pending Payment" sidebar item.
   //
-  // Bug history: the sidebar previously counted PENDING + OVERDUE,
-  // which mismatched the destination /invoices/pending page (whose
-  // "Pending" tab counts SENT/VIEWED only — OVERDUE has its own tab).
-  // The badge MUST equal exactly the number the user sees on the page.
+  // History:
+  //  - Originally counted PENDING + OVERDUE — out of sync with the
+  //    destination tab.
+  //  - Sweep B narrowed the filter to SENT + VIEWED only ("matches the
+  //    /invoices/pending page row count").
+  //  - Sweep C-11 (S-SB-003): the spec defines the badge as the count
+  //    of all unpaid issued invoices — SENT + PARTIALLY_PAID + OVERDUE.
+  //    The destination page now widens its filter to match, so the
+  //    badge still equals the row count the user sees on /invoices/pending.
+  //    VIEWED is treated as SENT (still unpaid, customer just opened
+  //    the email) and is included in the same bucket.
   // ---------------------------------------------------------------
-  describe('invoices-pending badge counter', () => {
+  describe('invoices-pending badge counter (S-SB-003)', () => {
     function flushAllPendingHttp(httpMock: HttpTestingController) {
       // The component fires multiple GETs (/appointments, /maintenance,
       // /invoices, /quotes, /approvals). We only care about /invoices for
@@ -197,39 +204,62 @@ describe('SidebarComponent', () => {
       drain('/approvals', []);
     }
 
-    it('counts only SENT/VIEWED invoices (not OVERDUE, not PAID)', () => {
+    it('counts SENT + VIEWED + PARTIALLY_PAID + OVERDUE invoices (S-SB-003 — all unpaid issued)', () => {
       const httpMock = TestBed.inject(HttpTestingController);
       fixture.detectChanges(); // triggers ngOnInit -> loadBadgeCounts
 
       const invoiceReq = httpMock.expectOne('/invoices');
       expect(invoiceReq.request.method).toBe('GET');
 
-      // Mix mirroring real-world data: 3 SENT, 1 VIEWED (=4 pending),
-      // 5 OVERDUE (must be EXCLUDED), 2 PAID, 1 DRAFT, 1 CANCELLED.
+      // Realistic mix: 3 SENT, 1 VIEWED, 2 PARTIALLY_PAID, 5 OVERDUE
+      // (= 11 unpaid issued), plus 2 PAID + 1 DRAFT + 1 CANCELLED that
+      // must be EXCLUDED from the badge.
       invoiceReq.flush([
         { id: '1', status: 'SENT' },
         { id: '2', status: 'SENT' },
         { id: '3', status: 'SENT' },
         { id: '4', status: 'VIEWED' },
-        { id: '5', status: 'OVERDUE' },
-        { id: '6', status: 'OVERDUE' },
+        { id: '5', status: 'PARTIALLY_PAID' },
+        { id: '6', status: 'PARTIALLY_PAID' },
         { id: '7', status: 'OVERDUE' },
         { id: '8', status: 'OVERDUE' },
         { id: '9', status: 'OVERDUE' },
-        { id: '10', status: 'PAID' },
-        { id: '11', status: 'PAID' },
-        { id: '12', status: 'DRAFT' },
-        { id: '13', status: 'CANCELLED' },
+        { id: '10', status: 'OVERDUE' },
+        { id: '11', status: 'OVERDUE' },
+        { id: '12', status: 'PAID' },
+        { id: '13', status: 'PAID' },
+        { id: '14', status: 'DRAFT' },
+        { id: '15', status: 'CANCELLED' },
       ]);
 
       flushAllPendingHttp(httpMock);
 
-      // SENT(3) + VIEWED(1) = 4. NOT 9 (which would include OVERDUE).
-      expect(component.getBadge('invoices-pending')).toBe(4);
+      // SENT(3) + VIEWED(1) + PARTIALLY_PAID(2) + OVERDUE(5) = 11.
+      expect(component.getBadge('invoices-pending')).toBe(11);
       httpMock.verify();
     });
 
-    it('returns null badge when there are zero SENT/VIEWED invoices, even with OVERDUE present', () => {
+    it('hides the badge (returns null) when zero unpaid issued invoices', () => {
+      const httpMock = TestBed.inject(HttpTestingController);
+      fixture.detectChanges();
+
+      const invoiceReq = httpMock.expectOne('/invoices');
+      // Only PAID/DRAFT/CANCELLED — none of the unpaid statuses present.
+      invoiceReq.flush([
+        { id: '1', status: 'PAID' },
+        { id: '2', status: 'PAID' },
+        { id: '3', status: 'DRAFT' },
+        { id: '4', status: 'CANCELLED' },
+      ]);
+
+      flushAllPendingHttp(httpMock);
+
+      // getBadge returns null for zero counts (so the badge isn't rendered).
+      expect(component.getBadge('invoices-pending')).toBeNull();
+      httpMock.verify();
+    });
+
+    it('counts OVERDUE-only data set (regression: OVERDUE alone must show a badge)', () => {
       const httpMock = TestBed.inject(HttpTestingController);
       fixture.detectChanges();
 
@@ -242,8 +272,10 @@ describe('SidebarComponent', () => {
 
       flushAllPendingHttp(httpMock);
 
-      // getBadge returns null for zero counts (so the badge isn't rendered).
-      expect(component.getBadge('invoices-pending')).toBeNull();
+      // Pre-Sweep-C-11 the badge would have been null here (OVERDUE was
+      // excluded). After the spec alignment OVERDUE counts toward the
+      // pending bucket — verify it now reads 2.
+      expect(component.getBadge('invoices-pending')).toBe(2);
       httpMock.verify();
     });
 
@@ -263,5 +295,64 @@ describe('SidebarComponent', () => {
       expect(component.getBadge('invoices-pending')).toBeNull();
       httpMock.verify();
     });
+  });
+
+  // ---------------------------------------------------------------
+  // S-SB-005 — Active child highlighted.
+  // When the user is on /invoices/<child>, the matching submenu-link
+  // must carry the .active class. We exercise the full child set —
+  // /invoices, /quotes, /list, /credit-notes, /pending, /reports —
+  // so we catch any future drift (route added but not wired, parent
+  // re-expanded incorrectly, etc.).
+  // ---------------------------------------------------------------
+  describe('S-SB-005 — invoicing submenu active state per route', () => {
+    function flushAllHttp(httpMock: HttpTestingController) {
+      const drain = (url: string) => httpMock.match(url).forEach((r) => r.flush([]));
+      drain('/appointments');
+      drain('/maintenance');
+      drain('/invoices');
+      drain('/quotes');
+      drain('/approvals');
+    }
+
+    function expectOnlyActive(expectedId: string) {
+      const invoicing = component.navItems.find((n) => n.id === 'invoices')!;
+      for (const child of invoicing.children!) {
+        if (child.id === expectedId) {
+          expect(child.isActive).withContext(`child ${child.id} should be active`).toBe(true);
+        } else {
+          expect(!!child.isActive).withContext(`child ${child.id} should NOT be active`).toBe(false);
+        }
+      }
+    }
+
+    const cases: Array<[string, string]> = [
+      ['/invoices', 'invoices-dashboard'],
+      ['/invoices/quotes', 'invoices-quotes'],
+      ['/invoices/list', 'invoices-list'],
+      ['/invoices/credit-notes', 'invoices-credit-notes'],
+      ['/invoices/pending', 'invoices-pending'],
+      ['/invoices/reports', 'invoices-reports'],
+    ];
+
+    for (const [route, expectedId] of cases) {
+      it(`marks "${expectedId}" active on ${route}`, () => {
+        const httpMock = TestBed.inject(HttpTestingController);
+        // Pre-set the router URL so initial updateActiveStates uses it.
+        Object.defineProperty(mockRouter, 'url', { value: route, configurable: true });
+        fixture.detectChanges();
+        flushAllHttp(httpMock);
+
+        // Emit a NavigationEnd to mirror real router behavior.
+        routerEvents$.next(new NavigationEnd(1, route, route));
+        flushAllHttp(httpMock);
+        fixture.detectChanges();
+
+        expectOnlyActive(expectedId);
+        // Parent should be expanded so the user sees the highlighted child.
+        const invoicing = component.navItems.find((n) => n.id === 'invoices')!;
+        expect(invoicing.isExpanded).toBe(true);
+      });
+    }
   });
 });
