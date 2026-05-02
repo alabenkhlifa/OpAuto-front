@@ -175,6 +175,7 @@ export class OrchestratorService {
         skillDescriptors,
         agentDescriptors,
         pageContext,
+        ctx,
       );
 
       const history = await this.conversation.getRecentHistory(
@@ -215,13 +216,18 @@ export class OrchestratorService {
       // the second LLM round-trip lean (no 2-3k tokens of schemas re-sent)
       // so the whole turn fits inside Groq's free-tier 6000 TPM ceiling.
       let toolHasFired = false;
+      // Track the LAST executed tool's blast tier so we can decide whether
+      // the next iteration should still offer tools. After a READ tool we
+      // must keep tools available (the model may chain into a write tool —
+      // e.g. list_invoices → send_email). After a write tool the action is
+      // complete and we can swap to the cheaper compose-only mode.
+      let lastToolTier: AssistantBlastTier | null = null;
       for (let step = 0; step < iterationCap; step++) {
         // Cost cap: stop the conversation cold once the per-conversation
         // token budget is exhausted. Checked before every LLM call so a
         // mid-turn over-spend can't keep ratcheting up the bill.
-        const totalTokens = await this.conversation.getTotalTokens(
-          conversationId,
-        );
+        const totalTokens =
+          await this.conversation.getTotalTokens(conversationId);
         if (totalTokens >= CONVERSATION_TOKEN_BUDGET) {
           subject.next({
             type: 'budget_exceeded',
@@ -240,7 +246,7 @@ export class OrchestratorService {
         if (Date.now() > turnDeadline) {
           await this.persistAssistant(
             conversationId,
-            "Sorry — I ran out of time on that turn.",
+            'Sorry — I ran out of time on that turn.',
           );
           subject.next({ type: 'error', message: 'turn_timeout' });
           subject.next({ type: 'done' });
@@ -248,16 +254,22 @@ export class OrchestratorService {
           return;
         }
 
-        // Once a tool has executed, swap the bulky system prompt (skill +
-        // agent descriptors + page context + chaining rules — ~2k tokens)
-        // for a minimal compose-only instruction. The follow-up LLM call
-        // doesn't need to pick tools; it just needs to phrase the answer
-        // around the tool result that's already in the message history.
-        // This is what keeps multi-step turns inside Groq's 6000 TPM.
-        const messagesForCall = toolHasFired
+        // After a tool fires we have two paths:
+        //   - READ tool: the model may need to chain into a write tool
+        //     (list_invoices → send_email is the canonical example). Keep
+        //     the full system prompt + tool list available so the chain
+        //     can complete. Skipping this is what made "send me invoices"
+        //     fail before — iteration 2 had no send_email to call.
+        //   - Write tool (AUTO_WRITE / CONFIRM_WRITE / TYPED_CONFIRM_WRITE):
+        //     the action is done. Swap to the minimal compose-only prompt
+        //     and stop offering tools. This is what keeps follow-up turns
+        //     inside Groq's 6000 TPM (and is cheap on every other provider).
+        const swapToComposeOnly =
+          toolHasFired && lastToolTier !== AssistantBlastTier.READ;
+        const messagesForCall = swapToComposeOnly
           ? this.swapSystemPromptForComposeOnly(llmMessages, ctx.locale)
           : llmMessages;
-        const offeredTools = toolHasFired ? undefined : llmTools;
+        const offeredTools = swapToComposeOnly ? undefined : llmTools;
         const completion = await this.llm.complete({
           messages: messagesForCall,
           tools: offeredTools,
@@ -424,8 +436,13 @@ export class OrchestratorService {
 
         const exec = await this.tools.execute(call.name, parsedArgs.value, ctx);
         if (exec.ok) {
-          const successExec = exec as { ok: true; result: unknown; durationMs: number };
+          const successExec = exec as {
+            ok: true;
+            result: unknown;
+            durationMs: number;
+          };
           toolHasFired = true;
+          lastToolTier = tier;
           subject.next({
             type: 'tool_result',
             toolCallId: call.id,
@@ -443,7 +460,11 @@ export class OrchestratorService {
           });
           this.appendToolMessage(llmMessages, call.id, successExec.result);
         } else {
-          const failExec = exec as { ok: false; error: string; durationMs: number };
+          const failExec = exec as {
+            ok: false;
+            error: string;
+            durationMs: number;
+          };
           subject.next({
             type: 'tool_result',
             toolCallId: call.id,
@@ -459,7 +480,9 @@ export class OrchestratorService {
             errorMessage: failExec.error,
             durationMs: failExec.durationMs,
           });
-          this.appendToolMessage(llmMessages, call.id, { error: failExec.error });
+          this.appendToolMessage(llmMessages, call.id, {
+            error: failExec.error,
+          });
         }
       }
 
@@ -472,7 +495,10 @@ export class OrchestratorService {
       subject.complete();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      this.logger.error(`Orchestrator turn failed: ${message}`, err instanceof Error ? err.stack : undefined);
+      this.logger.error(
+        `Orchestrator turn failed: ${message}`,
+        err instanceof Error ? err.stack : undefined,
+      );
       subject.next({ type: 'error', message });
       subject.next({ type: 'done' });
       subject.complete();
@@ -521,7 +547,11 @@ export class OrchestratorService {
       });
       const exec = await this.tools.execute(row.toolName, args, ctx);
       if (exec.ok) {
-        const successExec = exec as { ok: true; result: unknown; durationMs: number };
+        const successExec = exec as {
+          ok: true;
+          result: unknown;
+          durationMs: number;
+        };
         subject.next({
           type: 'tool_result',
           toolCallId,
@@ -536,10 +566,19 @@ export class OrchestratorService {
             durationMs: successExec.durationMs,
           },
         });
-        this.appendAssistantToolUse(llmMessages, toolCallId, row.toolName, args);
+        this.appendAssistantToolUse(
+          llmMessages,
+          toolCallId,
+          row.toolName,
+          args,
+        );
         this.appendToolMessage(llmMessages, toolCallId, successExec.result);
       } else {
-        const failExec = exec as { ok: false; error: string; durationMs: number };
+        const failExec = exec as {
+          ok: false;
+          error: string;
+          durationMs: number;
+        };
         subject.next({
           type: 'tool_result',
           toolCallId,
@@ -554,8 +593,15 @@ export class OrchestratorService {
             durationMs: failExec.durationMs,
           },
         });
-        this.appendAssistantToolUse(llmMessages, toolCallId, row.toolName, args);
-        this.appendToolMessage(llmMessages, toolCallId, { error: failExec.error });
+        this.appendAssistantToolUse(
+          llmMessages,
+          toolCallId,
+          row.toolName,
+          args,
+        );
+        this.appendToolMessage(llmMessages, toolCallId, {
+          error: failExec.error,
+        });
       }
       return true;
     }
@@ -624,9 +670,16 @@ export class OrchestratorService {
       });
       return;
     }
-    const args = parsed.value as { name?: unknown; input?: unknown; reason?: unknown };
+    const args = parsed.value as {
+      name?: unknown;
+      input?: unknown;
+      reason?: unknown;
+    };
     const agentName = typeof args?.name === 'string' ? args.name : '';
-    const input = typeof args?.input === 'string' ? args.input : JSON.stringify(args?.input ?? '');
+    const input =
+      typeof args?.input === 'string'
+        ? args.input
+        : JSON.stringify(args?.input ?? '');
     const reason = typeof args?.reason === 'string' ? args.reason : undefined;
 
     if (!agentName) {
@@ -769,33 +822,76 @@ export class OrchestratorService {
     const m = message.toLowerCase();
     const groups: { kws: string[]; tools: string[] }[] = [
       // inventory
-      { kws: ['stock', 'inventory', 'pièce', 'pieces', 'parts', 'مخزون'], tools: ['list_low_stock_parts', 'get_inventory_value'] },
+      {
+        kws: ['stock', 'inventory', 'pièce', 'pieces', 'parts', 'مخزون'],
+        tools: ['list_low_stock_parts', 'get_inventory_value'],
+      },
       // at-risk / churn
-      { kws: ['churn', 'at-risk', 'at risk', 'risque'], tools: ['list_at_risk_customers'] },
+      {
+        kws: ['churn', 'at-risk', 'at risk', 'risque'],
+        tools: ['list_at_risk_customers'],
+      },
       // top customers
-      { kws: ['top customer', 'best customer', 'biggest spender'], tools: ['list_top_customers'] },
+      {
+        kws: ['top customer', 'best customer', 'biggest spender'],
+        tools: ['list_top_customers'],
+      },
       // customer count
-      { kws: ['how many customer', 'customer count', 'new customer'], tools: ['get_customer_count'] },
+      {
+        kws: ['how many customer', 'customer count', 'new customer'],
+        tools: ['get_customer_count'],
+      },
       // overdue invoices
-      { kws: ['overdue', 'unpaid', 'late invoice', 'impayé'], tools: ['list_overdue_invoices'] },
+      {
+        kws: ['overdue', 'unpaid', 'late invoice', 'impayé'],
+        tools: ['list_overdue_invoices'],
+      },
       // invoices generic
       { kws: ['invoice', 'facture', 'فاتورة'], tools: ['list_invoices'] },
       // revenue
-      { kws: ['revenue', 'chiffre', 'sales today', 'sales this'], tools: ['get_revenue_summary'] },
+      {
+        kws: ['revenue', 'chiffre', 'sales today', 'sales this'],
+        tools: ['get_revenue_summary'],
+      },
       // dashboard / kpis
       { kws: ['dashboard', 'kpi', 'overview'], tools: ['get_dashboard_kpis'] },
       // appointments
-      { kws: ['appointment', 'rendez-vous', 'rdv', 'موعد', 'schedule today', 'schedule for'], tools: ['list_appointments'] },
+      {
+        kws: [
+          'appointment',
+          'rendez-vous',
+          'rdv',
+          'موعد',
+          'schedule today',
+          'schedule for',
+        ],
+        tools: ['list_appointments'],
+      },
       // available slot
-      { kws: ['available slot', 'free slot', 'when can i book'], tools: ['find_available_slot'] },
+      {
+        kws: ['available slot', 'free slot', 'when can i book'],
+        tools: ['find_available_slot'],
+      },
       // active jobs
-      { kws: ['active job', 'in progress', "what's being worked"], tools: ['list_active_jobs'] },
+      {
+        kws: ['active job', 'in progress', "what's being worked"],
+        tools: ['list_active_jobs'],
+      },
       // maintenance due
-      { kws: ['maintenance due', 'service due', 'needs service'], tools: ['list_maintenance_due'] },
+      {
+        kws: ['maintenance due', 'service due', 'needs service'],
+        tools: ['list_maintenance_due'],
+      },
       // car lookup
-      { kws: ['plate', 'license plate', 'find car', 'find vehicle'], tools: ['find_car'] },
+      {
+        kws: ['plate', 'license plate', 'find car', 'find vehicle'],
+        tools: ['find_car'],
+      },
       // customer lookup
-      { kws: ['find customer', 'search customer', 'look up customer'], tools: ['find_customer'] },
+      {
+        kws: ['find customer', 'search customer', 'look up customer'],
+        tools: ['find_customer'],
+      },
     ];
     for (const g of groups) {
       if (g.kws.some((kw) => m.includes(kw))) return g.tools;
@@ -869,6 +965,7 @@ export class OrchestratorService {
     skillDescriptors: { name: string; description: string }[],
     agentDescriptors: { name: string; description: string }[],
     pageContext: PageContext | undefined,
+    ctx: AssistantUserContext,
   ): string {
     const localeName: Record<Locale, string> = {
       en: 'English',
@@ -894,6 +991,31 @@ export class OrchestratorService {
         `numbers. If a tool result is 0 or empty, report exactly that — do NOT fabricate ` +
         `figures. Never ask the user for ids you can look up via tools.`,
     );
+
+    // Identity block — without this, the model has no way to resolve "send me /
+    // email me / garage owner / current user" to a concrete email address. It
+    // would either guess (often wrong) or refuse with "I cannot send directly".
+    const ownerLabel = ctx.role === 'OWNER' ? 'garage owner' : 'staff member';
+    const userEmail = ctx.email && ctx.email.length > 0 ? ctx.email : null;
+    const identityLines: string[] = [
+      `Current user: ${userEmail ?? '(no email on file)'} (role: ${ctx.role}, ${ownerLabel}).`,
+    ];
+    if (userEmail) {
+      identityLines.push(
+        `When the user says "send me", "email me", "text me", "to me", "myself", ` +
+          `"current user", or — if role is OWNER — "garage owner" / "the owner", ` +
+          `the recipient is the email above. That's a SELF-SEND and executes ` +
+          `immediately without approval (recipient == current user's email). Do NOT ` +
+          `ask the user to provide their own address; do NOT draft for manual sending.`,
+      );
+    } else {
+      identityLines.push(
+        `The current user has no email on file. If asked to "send me" or "email me", ` +
+          `tell the user their account has no email registered and ask them to set one ` +
+          `in account settings. Do NOT guess an address.`,
+      );
+    }
+    parts.push(identityLines.join('\n'));
     parts.push(
       `Formatting rules:\n` +
         `- Use Markdown: **bold** for emphasis, lists with - or 1., backticks for code, links as [text](url). The chat UI renders Markdown.\n` +
@@ -987,11 +1109,7 @@ export class OrchestratorService {
     // messages (e.g. skill bodies prepended via load_skill) are preserved.
     const first = messages.findIndex((m) => m.role === 'system');
     if (first === -1) return [compose, ...messages];
-    return [
-      compose,
-      ...messages.slice(0, first),
-      ...messages.slice(first + 1),
-    ];
+    return [compose, ...messages.slice(0, first), ...messages.slice(first + 1)];
   }
 
   /**
@@ -1046,9 +1164,7 @@ export class OrchestratorService {
   private buildLeakValidator(
     offeredTools: ToolDescriptor[] | undefined,
   ): (result: LlmCompletionResult) => LlmValidationOutcome {
-    const toolNames = new Set<string>(
-      (offeredTools ?? []).map((t) => t.name),
-    );
+    const toolNames = new Set<string>((offeredTools ?? []).map((t) => t.name));
     const wasOfferedTools = toolNames.size > 0;
     return (result) => {
       const leak = detectToolCallLeak(result.content);
@@ -1095,7 +1211,11 @@ export class OrchestratorService {
     };
   }
 
-  private safeParseArgs(json: string): { value: unknown; error?: undefined } | { value: undefined; error: string } {
+  private safeParseArgs(
+    json: string,
+  ):
+    | { value: unknown; error?: undefined }
+    | { value: undefined; error: string } {
     if (!json || json.length === 0) return { value: {} };
     try {
       const parsed = JSON.parse(json);
@@ -1103,7 +1223,11 @@ export class OrchestratorService {
       // instead of an args object when the tool takes no required params.
       // Normalise to `{}` so ajv's `type: 'object'` doesn't reject what is
       // semantically a no-arg call.
-      if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      if (
+        parsed === null ||
+        typeof parsed !== 'object' ||
+        Array.isArray(parsed)
+      ) {
         return { value: {} };
       }
       return { value: parsed };
@@ -1146,7 +1270,10 @@ export class OrchestratorService {
       return JSON.stringify(value ?? null);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      return JSON.stringify({ error: 'unserialisable_result', detail: message });
+      return JSON.stringify({
+        error: 'unserialisable_result',
+        detail: message,
+      });
     }
   }
 

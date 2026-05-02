@@ -1,6 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { firstValueFrom, toArray } from 'rxjs';
-import { AssistantBlastTier, AssistantMessageRole, AssistantToolCallStatus } from '@prisma/client';
+import {
+  AssistantBlastTier,
+  AssistantMessageRole,
+  AssistantToolCallStatus,
+} from '@prisma/client';
 import { OrchestratorService } from './orchestrator.service';
 import { ConversationService } from './conversation.service';
 import { LlmGatewayService } from './llm-gateway.service';
@@ -22,7 +26,8 @@ const ctx: AssistantUserContext = {
   locale: 'en',
 };
 
-const collectEvents = (obs: any) => firstValueFrom(obs.pipe(toArray())) as Promise<SseEvent[]>;
+const collectEvents = (obs: any) =>
+  firstValueFrom(obs.pipe(toArray())) as Promise<SseEvent[]>;
 
 const makeLlm = (results: LlmCompletionResult[]): LlmGatewayService => {
   let i = 0;
@@ -45,7 +50,10 @@ const makeConversation = (history: any[] = [], totalTokens = 0) => ({
   generateTitleFromFirstMessage: jest.fn().mockResolvedValue(null),
 });
 
-const makeTools = (toolNames: string[], execImpl?: (name: string, args: unknown) => any) => {
+const makeTools = (
+  toolNames: string[],
+  execImpl?: (name: string, args: unknown) => any,
+) => {
   const get = jest.fn().mockImplementation((name: string) =>
     toolNames.includes(name)
       ? {
@@ -67,11 +75,21 @@ const makeTools = (toolNames: string[], execImpl?: (name: string, args: unknown)
     ),
     get,
     validateArgs: jest.fn().mockReturnValue({ valid: true }),
-    resolveBlastTier: jest.fn().mockImplementation((tool: any) => tool.blastTier),
-    execute: jest.fn().mockImplementation(async (name: string, args: unknown, callerCtx: any) => {
-      if (execImpl) return execImpl(name, args);
-      return { ok: true, result: { ran: name, ctxGarage: callerCtx.garageId }, durationMs: 1 };
-    }),
+    resolveBlastTier: jest
+      .fn()
+      .mockImplementation((tool: any) => tool.blastTier),
+    execute: jest
+      .fn()
+      .mockImplementation(
+        async (name: string, args: unknown, callerCtx: any) => {
+          if (execImpl) return execImpl(name, args);
+          return {
+            ok: true,
+            result: { ran: name, ctxGarage: callerCtx.garageId },
+            durationMs: 1,
+          };
+        },
+      ),
   };
 };
 
@@ -86,7 +104,9 @@ const makeAgents = () => ({
 });
 
 const makeApprovals = () => ({
-  createPending: jest.fn().mockResolvedValue({ expiresAt: new Date('2030-01-01') }),
+  createPending: jest
+    .fn()
+    .mockResolvedValue({ expiresAt: new Date('2030-01-01') }),
 });
 
 const makeAudit = () => ({
@@ -119,14 +139,37 @@ async function makeOrchestrator(overrides: {
   const moduleRef: TestingModule = await Test.createTestingModule({
     providers: [
       OrchestratorService,
-      { provide: LlmGatewayService, useValue: overrides.llm ?? makeLlm([{ provider: 'mock', content: 'hi', toolCalls: [] }]) },
-      { provide: ConversationService, useValue: overrides.conversation ?? makeConversation() },
-      { provide: ToolRegistryService, useValue: overrides.tools ?? makeTools([]) },
-      { provide: SkillRegistryService, useValue: overrides.skills ?? makeSkills() },
-      { provide: AgentRunnerService, useValue: overrides.agents ?? makeAgents() },
-      { provide: ApprovalService, useValue: overrides.approvals ?? makeApprovals() },
+      {
+        provide: LlmGatewayService,
+        useValue:
+          overrides.llm ??
+          makeLlm([{ provider: 'mock', content: 'hi', toolCalls: [] }]),
+      },
+      {
+        provide: ConversationService,
+        useValue: overrides.conversation ?? makeConversation(),
+      },
+      {
+        provide: ToolRegistryService,
+        useValue: overrides.tools ?? makeTools([]),
+      },
+      {
+        provide: SkillRegistryService,
+        useValue: overrides.skills ?? makeSkills(),
+      },
+      {
+        provide: AgentRunnerService,
+        useValue: overrides.agents ?? makeAgents(),
+      },
+      {
+        provide: ApprovalService,
+        useValue: overrides.approvals ?? makeApprovals(),
+      },
       { provide: AuditService, useValue: overrides.audit ?? makeAudit() },
-      { provide: IntentClassifierService, useValue: overrides.classifier ?? makeClassifier() },
+      {
+        provide: IntentClassifierService,
+        useValue: overrides.classifier ?? makeClassifier(),
+      },
       { provide: PrismaService, useValue: overrides.prisma ?? makePrisma() },
     ],
   }).compile();
@@ -152,10 +195,14 @@ describe('OrchestratorService', () => {
     expect(events.find((e) => e.type === 'done')).toBeDefined();
 
     const calls = conversation.appendMessage.mock.calls.map((c: any[]) => c[0]);
-    expect(calls.find((m: any) => m.role === AssistantMessageRole.USER)).toMatchObject({
+    expect(
+      calls.find((m: any) => m.role === AssistantMessageRole.USER),
+    ).toMatchObject({
       content: 'hello',
     });
-    expect(calls.find((m: any) => m.role === AssistantMessageRole.ASSISTANT)).toMatchObject({
+    expect(
+      calls.find((m: any) => m.role === AssistantMessageRole.ASSISTANT),
+    ).toMatchObject({
       content: 'How can I help?',
       llmProvider: 'groq',
     });
@@ -167,9 +214,7 @@ describe('OrchestratorService', () => {
       {
         provider: 'groq',
         content: null,
-        toolCalls: [
-          { id: 'tc-1', name: 'get_dashboard_kpis', argsJson: '{}' },
-        ],
+        toolCalls: [{ id: 'tc-1', name: 'get_dashboard_kpis', argsJson: '{}' }],
       },
       { provider: 'groq', content: 'Revenue is 1234 TND.', toolCalls: [] },
     ]);
@@ -210,7 +255,11 @@ describe('OrchestratorService', () => {
         content: null,
         toolCalls: [{ id: 'tc-1', name: 'ghost_tool', argsJson: '{}' }],
       },
-      { provider: 'groq', content: 'I tried but the tool was unknown.', toolCalls: [] },
+      {
+        provider: 'groq',
+        content: 'I tried but the tool was unknown.',
+        toolCalls: [],
+      },
     ]);
     const orchestrator = await makeOrchestrator({ tools, llm });
 
@@ -235,7 +284,9 @@ describe('OrchestratorService', () => {
       {
         provider: 'groq',
         content: null,
-        toolCalls: [{ id: 'tc-1', name: 'send_sms', argsJson: '{"to":"+216..."}' }],
+        toolCalls: [
+          { id: 'tc-1', name: 'send_sms', argsJson: '{"to":"+216..."}' },
+        ],
       },
     ]);
     const approvals = makeApprovals();
@@ -251,7 +302,10 @@ describe('OrchestratorService', () => {
       blastTier: AssistantBlastTier.CONFIRM_WRITE,
     });
     expect(approvals.createPending).toHaveBeenCalledWith(
-      expect.objectContaining({ toolName: 'send_sms', conversationId: 'conv-1' }),
+      expect.objectContaining({
+        toolName: 'send_sms',
+        conversationId: 'conv-1',
+      }),
     );
     expect(tools.execute).not.toHaveBeenCalled();
     expect(events.find((e) => e.type === 'done')).toBeDefined();
@@ -315,7 +369,10 @@ describe('OrchestratorService', () => {
 
   it('treats invalid tool args as a recoverable failure', async () => {
     const tools = makeTools(['needs_args']);
-    tools.validateArgs.mockReturnValue({ valid: false, errors: ['count is required'] });
+    tools.validateArgs.mockReturnValue({
+      valid: false,
+      errors: ['count is required'],
+    });
     const llm = makeLlm([
       {
         provider: 'groq',
@@ -447,21 +504,23 @@ describe('OrchestratorService', () => {
 
   it('exposes load_skill / dispatch_agent pseudo-tools when available', async () => {
     const skills = {
-      list: jest.fn().mockReturnValue([
-        { name: 'daily-briefing', description: 'morning summary' },
-      ]),
+      list: jest
+        .fn()
+        .mockReturnValue([
+          { name: 'daily-briefing', description: 'morning summary' },
+        ]),
       load: jest.fn().mockReturnValue('You are a briefing assistant…'),
     };
     const agents = {
-      list: jest.fn().mockReturnValue([
-        { name: 'AnalyticsAgent', description: 'deep dives' },
-      ]),
+      list: jest
+        .fn()
+        .mockReturnValue([
+          { name: 'AnalyticsAgent', description: 'deep dives' },
+        ]),
       run: jest.fn(),
     };
     const tools = makeTools([]);
-    const llm = makeLlm([
-      { provider: 'groq', content: 'ok', toolCalls: [] },
-    ]);
+    const llm = makeLlm([{ provider: 'groq', content: 'ok', toolCalls: [] }]);
     const orchestrator = await makeOrchestrator({ tools, llm, skills, agents });
 
     await collectEvents(orchestrator.run(ctx, 'conv-1', 'hi', undefined));
@@ -475,9 +534,11 @@ describe('OrchestratorService', () => {
 
   it('emits skill_loaded when the LLM calls load_skill', async () => {
     const skills = {
-      list: jest.fn().mockReturnValue([
-        { name: 'daily-briefing', description: 'morning summary' },
-      ]),
+      list: jest
+        .fn()
+        .mockReturnValue([
+          { name: 'daily-briefing', description: 'morning summary' },
+        ]),
       load: jest.fn().mockReturnValue('You are a briefing assistant…'),
     };
     const llm = makeLlm([
@@ -511,9 +572,11 @@ describe('OrchestratorService', () => {
 
   it('dispatches an agent and forwards its result', async () => {
     const agents = {
-      list: jest.fn().mockReturnValue([
-        { name: 'AnalyticsAgent', description: 'deep dives' },
-      ]),
+      list: jest
+        .fn()
+        .mockReturnValue([
+          { name: 'AnalyticsAgent', description: 'deep dives' },
+        ]),
       run: jest.fn().mockResolvedValue({ result: 'Q3 revenue = 12345' }),
     };
     const llm = makeLlm([
@@ -584,9 +647,7 @@ describe('OrchestratorService', () => {
 
   it('runs normally when token usage is below the per-conversation budget', async () => {
     const conversation = makeConversation([], 199_999);
-    const llm = makeLlm([
-      { provider: 'groq', content: 'fine', toolCalls: [] },
-    ]);
+    const llm = makeLlm([{ provider: 'groq', content: 'fine', toolCalls: [] }]);
     const orchestrator = await makeOrchestrator({ conversation, llm });
 
     const events = await collectEvents(
@@ -611,7 +672,12 @@ describe('OrchestratorService', () => {
     }
 
     it('adds send_email when classifier picked only the read tool for "email me invoices"', async () => {
-      const tools = makeTools(['list_invoices', 'send_email', 'find_customer', 'get_dashboard_kpis']);
+      const tools = makeTools([
+        'list_invoices',
+        'send_email',
+        'find_customer',
+        'get_dashboard_kpis',
+      ]);
       const llm = makeLlm([{ provider: 'groq', content: 'ok', toolCalls: [] }]);
       const classifier = makeClassifier(['list_invoices']);
       const orchestrator = await makeOrchestrator({ tools, llm, classifier });
@@ -626,11 +692,17 @@ describe('OrchestratorService', () => {
       );
 
       const names = toolNamesFromFirstCall(llm);
-      expect(names).toEqual(expect.arrayContaining(['list_invoices', 'send_email']));
+      expect(names).toEqual(
+        expect.arrayContaining(['list_invoices', 'send_email']),
+      );
     });
 
     it('pairs find_customer with send_sms so the LLM can resolve a recipient by name', async () => {
-      const tools = makeTools(['list_overdue_invoices', 'send_sms', 'find_customer']);
+      const tools = makeTools([
+        'list_overdue_invoices',
+        'send_sms',
+        'find_customer',
+      ]);
       const llm = makeLlm([{ provider: 'groq', content: 'ok', toolCalls: [] }]);
       const classifier = makeClassifier(['list_overdue_invoices']);
       const orchestrator = await makeOrchestrator({ tools, llm, classifier });
@@ -646,7 +718,11 @@ describe('OrchestratorService', () => {
 
       const names = toolNamesFromFirstCall(llm);
       expect(names).toEqual(
-        expect.arrayContaining(['list_overdue_invoices', 'send_sms', 'find_customer']),
+        expect.arrayContaining([
+          'list_overdue_invoices',
+          'send_sms',
+          'find_customer',
+        ]),
       );
     });
 
@@ -657,11 +733,18 @@ describe('OrchestratorService', () => {
       const orchestrator = await makeOrchestrator({ tools, llm, classifier });
 
       await collectEvents(
-        orchestrator.run(ctx, 'conv-1', 'email Sarah a service reminder', undefined),
+        orchestrator.run(
+          ctx,
+          'conv-1',
+          'email Sarah a service reminder',
+          undefined,
+        ),
       );
 
       const names = toolNamesFromFirstCall(llm);
-      expect(names).toEqual(expect.arrayContaining(['send_email', 'find_customer']));
+      expect(names).toEqual(
+        expect.arrayContaining(['send_email', 'find_customer']),
+      );
     });
 
     it('adds send_email when classifier returned [] (chitchat) but the message asks to email', async () => {
@@ -671,12 +754,19 @@ describe('OrchestratorService', () => {
       const orchestrator = await makeOrchestrator({ tools, llm, classifier });
 
       await collectEvents(
-        orchestrator.run(ctx, 'conv-1', 'email me the invoices please', undefined),
+        orchestrator.run(
+          ctx,
+          'conv-1',
+          'email me the invoices please',
+          undefined,
+        ),
       );
 
       const names = toolNamesFromFirstCall(llm);
       // keywordFallback adds list_invoices via "invoice"; augmenter adds send_email
-      expect(names).toEqual(expect.arrayContaining(['list_invoices', 'send_email']));
+      expect(names).toEqual(
+        expect.arrayContaining(['list_invoices', 'send_email']),
+      );
     });
 
     it('adds send_sms for "text me" requests', async () => {
@@ -695,7 +785,9 @@ describe('OrchestratorService', () => {
       );
 
       const names = toolNamesFromFirstCall(llm);
-      expect(names).toEqual(expect.arrayContaining(['list_overdue_invoices', 'send_sms']));
+      expect(names).toEqual(
+        expect.arrayContaining(['list_overdue_invoices', 'send_sms']),
+      );
     });
 
     it('augments French "envoie-moi un email" → send_email', async () => {
@@ -714,7 +806,9 @@ describe('OrchestratorService', () => {
       );
 
       const names = toolNamesFromFirstCall(llm);
-      expect(names).toEqual(expect.arrayContaining(['get_revenue_summary', 'send_email']));
+      expect(names).toEqual(
+        expect.arrayContaining(['get_revenue_summary', 'send_email']),
+      );
     });
 
     it('augments Arabic "أرسل ... إيميل" → send_email', async () => {
@@ -733,7 +827,9 @@ describe('OrchestratorService', () => {
       );
 
       const names = toolNamesFromFirstCall(llm);
-      expect(names).toEqual(expect.arrayContaining(['list_invoices', 'send_email']));
+      expect(names).toEqual(
+        expect.arrayContaining(['list_invoices', 'send_email']),
+      );
     });
 
     it('does NOT add send_email for bare-noun "email" in non-action queries', async () => {
@@ -770,6 +866,186 @@ describe('OrchestratorService', () => {
       const names = toolNamesFromFirstCall(llm);
       expect(names).toEqual(expect.arrayContaining(['list_invoices']));
       expect(names).not.toContain('send_email');
+    });
+  });
+
+  describe('user identity in system prompt', () => {
+    function getSystemPrompt(llm: LlmGatewayService): string {
+      const call = (llm.complete as jest.Mock).mock.calls[0][0];
+      const sys = call.messages.find((m: any) => m.role === 'system');
+      return sys?.content ?? '';
+    }
+
+    it('injects current user email + role into the verbose system prompt', async () => {
+      const llm = makeLlm([{ provider: 'groq', content: 'ok', toolCalls: [] }]);
+      const orchestrator = await makeOrchestrator({ llm });
+
+      await collectEvents(orchestrator.run(ctx, 'conv-1', 'hi', undefined));
+
+      const prompt = getSystemPrompt(llm);
+      expect(prompt).toMatch(/Current user: owner@example\.com/);
+      expect(prompt).toMatch(/role: OWNER/);
+      expect(prompt).toMatch(/garage owner/);
+      expect(prompt).toMatch(/SELF-SEND/);
+    });
+
+    it('labels STAFF role correctly and omits owner alias', async () => {
+      const llm = makeLlm([{ provider: 'groq', content: 'ok', toolCalls: [] }]);
+      const orchestrator = await makeOrchestrator({ llm });
+
+      await collectEvents(
+        orchestrator.run(
+          { ...ctx, role: 'STAFF', email: 'mech@example.com' },
+          'conv-1',
+          'hi',
+          undefined,
+        ),
+      );
+
+      const prompt = getSystemPrompt(llm);
+      expect(prompt).toMatch(/Current user: mech@example\.com/);
+      expect(prompt).toMatch(/role: STAFF, staff member/);
+    });
+
+    it('handles users with no email by telling the model to refuse and not guess', async () => {
+      const llm = makeLlm([{ provider: 'groq', content: 'ok', toolCalls: [] }]);
+      const orchestrator = await makeOrchestrator({ llm });
+
+      await collectEvents(
+        orchestrator.run({ ...ctx, email: null }, 'conv-1', 'hi', undefined),
+      );
+
+      const prompt = getSystemPrompt(llm);
+      expect(prompt).toMatch(/no email on file/);
+      expect(prompt).toMatch(/Do NOT guess an address/);
+      expect(prompt).not.toMatch(/SELF-SEND/);
+    });
+  });
+
+  describe('multi-step action chaining (READ → write)', () => {
+    it('keeps tools available after a READ tool fires so the model can chain into a write tool', async () => {
+      // Iteration 1: model calls list_invoices (READ).
+      // Iteration 2: model should still have tools available so it can
+      // chain into send_email — the bug we're fixing was that iteration 2
+      // had `offeredTools = undefined`, leaving the model unable to send.
+      const tools = makeTools(['list_invoices', 'send_email']);
+      tools.resolveBlastTier.mockImplementation((tool: any) => tool.blastTier);
+      tools.get.mockImplementation((name: string) => {
+        if (name === 'list_invoices') {
+          return {
+            name,
+            description: 'd',
+            parameters: {},
+            blastTier: AssistantBlastTier.READ,
+            handler: async () => ({}),
+          };
+        }
+        if (name === 'send_email') {
+          return {
+            name,
+            description: 'd',
+            parameters: {},
+            blastTier: AssistantBlastTier.AUTO_WRITE,
+            handler: async () => ({}),
+          };
+        }
+        return undefined;
+      });
+
+      const llm = makeLlm([
+        // Iter 1: classifier picks list_invoices, model calls it.
+        {
+          provider: 'mistral',
+          content: null,
+          toolCalls: [{ id: 'tc-1', name: 'list_invoices', argsJson: '{}' }],
+        },
+        // Iter 2: model chains into send_email. THIS would have been
+        // impossible before the fix because offeredTools was undefined.
+        {
+          provider: 'mistral',
+          content: null,
+          toolCalls: [
+            {
+              id: 'tc-2',
+              name: 'send_email',
+              argsJson: '{"to":"owner@example.com","subject":"X","text":"Y"}',
+            },
+          ],
+        },
+        // Iter 3: model summarises (no more tools after the AUTO_WRITE).
+        {
+          provider: 'mistral',
+          content: 'Email sent.',
+          toolCalls: [],
+        },
+      ]);
+      const orchestrator = await makeOrchestrator({ tools, llm });
+
+      await collectEvents(
+        orchestrator.run(ctx, 'conv-1', 'email me the invoices', undefined),
+      );
+
+      const calls = (llm.complete as jest.Mock).mock.calls;
+      expect(calls.length).toBe(3);
+
+      // Iteration 2 (after the READ tool fired) MUST still receive tools.
+      expect(calls[1][0].tools).toBeDefined();
+      expect(calls[1][0].tools.length).toBeGreaterThan(0);
+
+      // Iteration 3 (after the AUTO_WRITE tool fired) should drop tools
+      // and switch to compose-only mode — the action is complete.
+      expect(calls[2][0].tools).toBeUndefined();
+
+      // Both tools were actually executed.
+      expect(tools.execute).toHaveBeenCalledWith(
+        'list_invoices',
+        expect.anything(),
+        expect.anything(),
+      );
+      expect(tools.execute).toHaveBeenCalledWith(
+        'send_email',
+        expect.anything(),
+        expect.anything(),
+      );
+    });
+
+    it('switches to compose-only immediately after a write-tier tool (no READ before)', async () => {
+      // Direct write tool — no READ chain. Should swap to compose-only
+      // on iter 2 just like before the fix (no regression).
+      const tools = makeTools(['send_email']);
+      tools.get.mockImplementation((name: string) => ({
+        name,
+        description: 'd',
+        parameters: {},
+        blastTier: AssistantBlastTier.AUTO_WRITE,
+        handler: async () => ({}),
+      }));
+      tools.resolveBlastTier.mockReturnValue(AssistantBlastTier.AUTO_WRITE);
+
+      const llm = makeLlm([
+        {
+          provider: 'mistral',
+          content: null,
+          toolCalls: [
+            {
+              id: 'tc-1',
+              name: 'send_email',
+              argsJson: '{"to":"owner@example.com","subject":"X","text":"Y"}',
+            },
+          ],
+        },
+        { provider: 'mistral', content: 'Done.', toolCalls: [] },
+      ]);
+      const orchestrator = await makeOrchestrator({ tools, llm });
+
+      await collectEvents(
+        orchestrator.run(ctx, 'conv-1', 'send a quick email', undefined),
+      );
+
+      const calls = (llm.complete as jest.Mock).mock.calls;
+      expect(calls.length).toBe(2);
+      // Compose-only kicks in immediately after a write tool.
+      expect(calls[1][0].tools).toBeUndefined();
     });
   });
 });
