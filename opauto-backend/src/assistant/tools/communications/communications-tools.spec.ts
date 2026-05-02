@@ -157,6 +157,66 @@ describe('communications tools', () => {
       expect(sms.send).not.toHaveBeenCalled();
     });
 
+    it('returns invalid_recipient when `to` is empty (handler-level guard, defends against direct invocation)', async () => {
+      const sms = makeSmsService();
+      const customers = makeCustomersService();
+      const tool = createSendSmsTool({
+        smsService: sms,
+        customersService: customers,
+      });
+
+      const result = await tool.handler(
+        { to: '', body: 'hello' } as SendSmsArgs,
+        ownerCtx,
+      );
+
+      expect(result).toEqual({
+        error: 'invalid_recipient',
+        message: expect.stringMatching(/recipient phone/i),
+      });
+      expect(sms.send).not.toHaveBeenCalled();
+    });
+
+    it('returns invalid_recipient when `to` contains non-digits', async () => {
+      const sms = makeSmsService();
+      const customers = makeCustomersService();
+      const tool = createSendSmsTool({
+        smsService: sms,
+        customersService: customers,
+      });
+
+      const result = await tool.handler(
+        { to: 'not-a-phone', body: 'hello' } as SendSmsArgs,
+        ownerCtx,
+      );
+
+      expect(result).toEqual({
+        error: 'invalid_recipient',
+        message: expect.any(String),
+      });
+      expect(sms.send).not.toHaveBeenCalled();
+    });
+
+    it('returns invalid_body when body is whitespace-only (handler-level guard)', async () => {
+      const sms = makeSmsService();
+      const customers = makeCustomersService();
+      const tool = createSendSmsTool({
+        smsService: sms,
+        customersService: customers,
+      });
+
+      const result = await tool.handler(
+        { to: '+21612345678', body: '   ' } as SendSmsArgs,
+        ownerCtx,
+      );
+
+      expect(result).toEqual({
+        error: 'invalid_body',
+        message: expect.stringMatching(/empty/i),
+      });
+      expect(sms.send).not.toHaveBeenCalled();
+    });
+
     it('rejects bad args via JSON Schema (body too long, missing fields)', () => {
       const registry = new ToolRegistryService();
       registry.register(

@@ -20,9 +20,13 @@ export interface SendSmsError {
   error:
     | 'customer_not_found'
     | 'phone_mismatch'
-    | 'send_failed';
+    | 'send_failed'
+    | 'invalid_recipient'
+    | 'invalid_body';
   message: string;
 }
+
+const PHONE_PATTERN = /^\+?[0-9]{8,15}$/;
 
 function normalisePhone(phone: string): string {
   // Strip whitespace and common separators so "+216 12 345 678" matches "+21612345678".
@@ -71,6 +75,26 @@ export function createSendSmsTool(deps: {
       args: SendSmsArgs,
       ctx: AssistantUserContext,
     ): Promise<SendSmsResult | SendSmsError> => {
+      // Defence-in-depth: re-validate the recipient and body inside the
+      // handler. Schema validation in tool-registry catches most cases, but a
+      // direct handler invocation (validation script, future agent runner)
+      // could otherwise reach the SMS provider with garbage. Better to reject
+      // here than to send to an empty/garbage number on Twilio's dime.
+      const normalisedTo = normalisePhone(args.to ?? '');
+      if (!PHONE_PATTERN.test(normalisedTo)) {
+        return {
+          error: 'invalid_recipient',
+          message:
+            'Recipient phone is missing or not in a valid format (E.164, 8–15 digits).',
+        };
+      }
+      if (!args.body || args.body.trim().length === 0) {
+        return {
+          error: 'invalid_body',
+          message: 'SMS body is empty; refusing to send a blank message.',
+        };
+      }
+
       if (args.customerId) {
         try {
           const customer = await deps.customersService.findOne(
