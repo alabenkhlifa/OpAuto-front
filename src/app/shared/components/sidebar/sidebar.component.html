@@ -6,16 +6,14 @@
 </div>
 
 <!-- Sidebar -->
-<aside 
+<aside
   class="sidebar"
   [class.collapsed]="isCollapsed()"
   [class.mobile-open]="isMobileMenuOpen()"
   [class.hovered]="isHovered()"
   (mouseenter)="onMouseEnter()"
   (mouseleave)="onMouseLeave()"
-  (click)="onSidebarClick()"
-  [style.cursor]="isCollapsed() && isDesktop() ? 'pointer' : 'default'"
-  [attr.title]="isCollapsed() && isDesktop() ? 'Click to expand sidebar' : null">
+  (click)="onSidebarClick()">
   
   <!-- Logo Section -->
   <div class="sidebar-header">
@@ -262,14 +260,9 @@
   </svg>
 </button>
 
-<!-- Desktop Show Sidebar Button (when collapsed) -->
-<button 
-  *ngIf="isCollapsed() && isDesktop()"
-  class="show-sidebar-btn"
-  (click)="toggleSidebar()"
-  [attr.aria-label]="'Show sidebar'">
-  <svg class="w-5 h-5"
-       fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-  </svg>
-</button>
+<!-- (S-SB-006 / BUG-107) The desktop "Show sidebar" floating button is
+     no longer needed: collapsed mode is now a 64px icon rail that
+     stays on-screen, and hover expands the sidebar back into a flyout.
+     The mobile-menu-btn above still drives the slide-in drawer on
+     viewports below 1024px. -->
+

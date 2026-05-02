@@ -392,9 +392,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   onSidebarClick() {
-    if (this.isDesktop() && this.isCollapsed()) {
-      this.toggleSidebar();
-    }
+    // Rail mode (S-SB-006 / BUG-107): collapsed sidebar stays as a 64px
+    // icon strip with hover-flyout — clicking blank rail space no longer
+    // auto-expands. Nav-item clicks are routed via onNavItemClick and
+    // stopPropagation, so this handler intentionally only no-ops on
+    // rail-mode clicks. Users expand permanently via the collapse-btn
+    // (visible once the rail flyout is open) or via the hamburger on
+    // mobile. Kept as a hook so future rail interactions can attach.
   }
 
   isDesktop(): boolean {

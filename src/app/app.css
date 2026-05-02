@@ -82,9 +82,14 @@
   flex: 1;
 }
 
-/* When sidebar is collapsed - hide it completely */
+/* When sidebar is collapsed (desktop), reserve a 64px gutter for the
+ * icon rail. The rail stays on-screen instead of sliding off, so the
+ * page content sits next to it rather than reflowing full-width.
+ * Hover-expand happens as an overlay (see sidebar.component.css) and
+ * does not push the main content. (S-SB-006 / BUG-107.)
+ */
 .sidebar-collapsed .main-content {
-  margin-left: 0;
+  margin-left: 64px;
 }
 
 /* No sidebar layout for auth pages */

@@ -23,10 +23,61 @@
   overflow: hidden;
 }
 
-/* Desktop Collapsed State */
+/* Desktop Collapsed State — rail mode (S-SB-006 / BUG-107).
+ *
+ * The collapsed sidebar shrinks to a ~64px-wide icon strip rather than
+ * sliding off-screen. Labels, chevrons, badges, the section title, the
+ * footer, and the logo text are hidden via the existing [class.hidden]
+ * bindings driven by shouldShowExpanded(). The icon column stays
+ * visible so the user has a 1-click target for every nav item, and a
+ * native [title] tooltip surfaces the label on hover.
+ *
+ * Hovering the rail expands the sidebar back to 280px as an overlay:
+ * the .sidebar element keeps position: fixed, the main content keeps
+ * its 64px gutter (.sidebar-collapsed .main-content { margin-left:
+ * 64px }), and the expanded panel floats above the content with a
+ * heavier shadow so it reads as a transient flyout rather than a
+ * layout shift. This matches the rail+flyout pattern S-SB-006 expects.
+ */
 @media (min-width: 1024px) {
   .sidebar.collapsed {
-    transform: translateX(-100%);
+    width: 64px;
+  }
+
+  /* Hover-expand: overlay 280px panel without re-flowing main content. */
+  .sidebar.collapsed.hovered {
+    width: 280px;
+    box-shadow: 4px 0 16px rgba(0, 0, 0, 0.12);
+    z-index: 40;
+  }
+
+  /* Center the icon column when no labels are showing. */
+  .sidebar.collapsed:not(.hovered) .nav-link {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .sidebar.collapsed:not(.hovered) .sidebar-header {
+    padding: 1rem 0.5rem;
+    justify-content: center;
+  }
+
+  .sidebar.collapsed:not(.hovered) .logo-section {
+    justify-content: center;
+  }
+
+  .sidebar.collapsed:not(.hovered) .nav-section {
+    padding: 0 0.5rem;
+  }
+
+  .sidebar.collapsed:not(.hovered) .nav-section-title {
+    margin: 0 0 0.75rem 0;
+    text-align: center;
+  }
+
+  .sidebar.collapsed:not(.hovered) .collapse-btn {
+    display: none;
   }
 }
 
@@ -286,31 +337,6 @@
   .mobile-menu-btn {
     display: none;
   }
-}
-
-/* Desktop Show Sidebar Button */
-.show-sidebar-btn {
-  position: fixed;
-  top: 1rem;
-  left: 1rem;
-  z-index: 51;
-  width: 2.75rem;
-  height: 2.75rem;
-  border-radius: 12px;
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  color: #374151;
-}
-
-.show-sidebar-btn:hover {
-  background: #e2e8f0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* Submenu Styles */

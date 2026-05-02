@@ -355,4 +355,209 @@ describe('SidebarComponent', () => {
       });
     }
   });
+
+  // ---------------------------------------------------------------
+  // S-SB-006 — Collapsed-mode rail (BUG-107).
+  //
+  // Pre-Sweep-C-14 the desktop sidebar applied transform: translateX(-100%)
+  // when collapsed and slid the entire 280px rail off-screen, leaving
+  // only a 44px floating hamburger top-left. Sweep C-14 turns the
+  // collapsed state into a 64px-wide icon rail that stays visible:
+  //   1. The .sidebar host element receives the .collapsed class but
+  //      is never translated off-screen (CSS sets width: 64px).
+  //   2. shouldShowExpanded() returns FALSE on a non-hovered desktop
+  //      collapse, so labels / chevrons / badges / footer are hidden
+  //      via the existing [class.hidden] / @if bindings — but the
+  //      icon column is preserved.
+  //   3. Hovering the rail flips isHovered=true → shouldShowExpanded()
+  //      returns true → the rail expands as an overlay flyout (CSS
+  //      grows the width back to 280px).
+  //   4. The collapse-toggle round-trips state cleanly via the existing
+  //      SidebarService.toggleSidebar contract.
+  //
+  // The CSS rules themselves live in sidebar.component.css — Karma
+  // can't easily fetch the bundled stylesheet at test-time and the
+  // CLAUDE memory steers us away from brittle computed-dimension
+  // assertions. These tests pin the markup contract that the rail
+  // mode depends on so a future refactor can't silently regress
+  // (a) the visibility of the icon column or (b) the hover-flyout
+  // expansion semantics.
+  // ---------------------------------------------------------------
+  describe('S-SB-006 — collapsed-mode rail (BUG-107)', () => {
+    function flushAllHttp(httpMock: HttpTestingController) {
+      const drain = (url: string) => httpMock.match(url).forEach((r) => r.flush([]));
+      drain('/appointments');
+      drain('/maintenance');
+      drain('/invoices');
+      drain('/quotes');
+      drain('/approvals');
+    }
+
+    function setDesktopViewport() {
+      // jasmine-defined viewport spy: shouldShowExpanded() and
+      // isMouseEnter() depend on isDesktop() which reads window.innerWidth.
+      // Karma runs at 1024+ by default, but pin it explicitly so the
+      // assertion isn't environment-dependent.
+      Object.defineProperty(window, 'innerWidth', { value: 1280, configurable: true });
+    }
+
+    it('keeps .sidebar host element on-screen with .collapsed class applied (no translateX off-screen)', () => {
+      setDesktopViewport();
+      mockSidebarService.isCollapsed.set(true);
+      const httpMock = TestBed.inject(HttpTestingController);
+      fixture.detectChanges();
+      flushAllHttp(httpMock);
+
+      const aside: HTMLElement = fixture.nativeElement.querySelector('aside.sidebar');
+      expect(aside).toBeTruthy();
+      expect(aside.classList.contains('collapsed')).toBe(true);
+      // Pre-fix the collapsed sidebar slid via translateX(-100%); now
+      // it stays at the origin (the rail width is 64px, set by CSS).
+      // We assert the host is in the DOM and is positioned with the
+      // collapsed marker class — the visual width contract belongs to
+      // the CSS and is verified live via Chrome DevTools MCP.
+      expect(aside.isConnected).toBe(true);
+      // isHovered defaults false → shouldShowExpanded() returns false.
+      expect(component.shouldShowExpanded()).toBe(false);
+    });
+
+    it('hides labels / chevrons / submenus but keeps icons present in collapsed (rail) mode', () => {
+      setDesktopViewport();
+      mockSidebarService.isCollapsed.set(true);
+      const httpMock = TestBed.inject(HttpTestingController);
+      fixture.detectChanges();
+      flushAllHttp(httpMock);
+
+      // Pick the invoicing item — it has children (the BUG-107 repro
+      // referenced /invoices specifically).
+      const invoicingLi = fixture.nativeElement.querySelector('li[data-tour="invoices"]');
+      expect(invoicingLi).toBeTruthy();
+
+      // Icon column: nav-icon span MUST remain visible in the DOM.
+      const icon = invoicingLi.querySelector('.nav-icon');
+      expect(icon).toBeTruthy();
+
+      // Label MUST carry the .hidden class because shouldShowExpanded()
+      // is false in non-hovered collapsed mode.
+      const label = invoicingLi.querySelector('.nav-label');
+      expect(label).toBeTruthy();
+      expect(label.classList.contains('hidden')).toBe(true);
+
+      // Chevron + submenu MUST NOT be present in the DOM (they are
+      // wrapped in @if (item.children && shouldShowExpanded())).
+      const chevron = invoicingLi.querySelector('.nav-chevron');
+      expect(chevron).toBeNull();
+      const submenu = invoicingLi.querySelector('.submenu');
+      expect(submenu).toBeNull();
+
+      // Tooltip: hover-state attribute carries the translation key so
+      // the user has a [title] hint on the icon when not hovering.
+      const btn = invoicingLi.querySelector('button.nav-link') as HTMLButtonElement;
+      expect(btn.getAttribute('title')).toBe('navigation.invoicing');
+    });
+
+    it('expanded mode (post-toggle) reveals labels and chevrons again', () => {
+      setDesktopViewport();
+      mockSidebarService.isCollapsed.set(false);
+      const httpMock = TestBed.inject(HttpTestingController);
+      fixture.detectChanges();
+      flushAllHttp(httpMock);
+
+      const invoicingLi = fixture.nativeElement.querySelector('li[data-tour="invoices"]');
+      const label = invoicingLi.querySelector('.nav-label');
+      expect(label.classList.contains('hidden')).toBe(false);
+
+      // Chevron is rendered when shouldShowExpanded() is true and the
+      // item has children.
+      const chevron = invoicingLi.querySelector('.nav-chevron');
+      expect(chevron).toBeTruthy();
+
+      // [title] tooltip suppressed when expanded — the label itself is
+      // visible so a hover hint would be redundant.
+      const btn = invoicingLi.querySelector('button.nav-link') as HTMLButtonElement;
+      expect(btn.hasAttribute('title')).toBe(false);
+    });
+
+    it('hovering a collapsed rail (isHovered=true) flips shouldShowExpanded() to true', () => {
+      setDesktopViewport();
+      mockSidebarService.isCollapsed.set(true);
+      const httpMock = TestBed.inject(HttpTestingController);
+      fixture.detectChanges();
+      flushAllHttp(httpMock);
+
+      // Baseline: not hovered → false.
+      expect(component.shouldShowExpanded()).toBe(false);
+
+      component.onMouseEnter();
+      expect(component.isHovered()).toBe(true);
+      // Hovered collapsed rail expands as a flyout via the same gate.
+      expect(component.shouldShowExpanded()).toBe(true);
+
+      component.onMouseLeave();
+      expect(component.isHovered()).toBe(false);
+      expect(component.shouldShowExpanded()).toBe(false);
+    });
+
+    it('toggleSidebar() round-trips between expanded and collapsed (rail) state', () => {
+      setDesktopViewport();
+      const httpMock = TestBed.inject(HttpTestingController);
+      fixture.detectChanges();
+      flushAllHttp(httpMock);
+
+      // Start expanded.
+      expect(mockSidebarService.isCollapsed()).toBe(false);
+
+      // First toggle: collapse to rail. The mock spy is wired to a
+      // setter shape that mirrors the real SidebarService — invoke
+      // it directly so the signal flips.
+      mockSidebarService.toggleSidebar.and.callFake(() => {
+        mockSidebarService.isCollapsed.set(!mockSidebarService.isCollapsed());
+      });
+
+      component.toggleSidebar();
+      expect(mockSidebarService.toggleSidebar).toHaveBeenCalledTimes(1);
+      expect(mockSidebarService.isCollapsed()).toBe(true);
+
+      // Second toggle: expand again. State must round-trip cleanly.
+      component.toggleSidebar();
+      expect(mockSidebarService.toggleSidebar).toHaveBeenCalledTimes(2);
+      expect(mockSidebarService.isCollapsed()).toBe(false);
+    });
+
+    it('floating "Show sidebar" button (.show-sidebar-btn) is no longer rendered (rail replaces it)', () => {
+      setDesktopViewport();
+      mockSidebarService.isCollapsed.set(true);
+      const httpMock = TestBed.inject(HttpTestingController);
+      fixture.detectChanges();
+      flushAllHttp(httpMock);
+
+      // Pre-Sweep-C-14 the template included
+      //   <button *ngIf="isCollapsed() && isDesktop()" class="show-sidebar-btn">
+      // as the only on-screen affordance because the rail itself was
+      // off-screen. The rail is now always visible, so the floating
+      // button is removed entirely.
+      const floatingBtn = fixture.nativeElement.querySelector('.show-sidebar-btn');
+      expect(floatingBtn).toBeNull();
+    });
+
+    it('onSidebarClick() in rail mode no longer auto-expands the sidebar', () => {
+      // Pre-Sweep-C-14 onSidebarClick() called toggleSidebar() when
+      // collapsed+desktop, so any click in the off-screen rail would
+      // pop the full sidebar back. With the rail always visible, the
+      // user's click intent is most likely an icon, and icon clicks
+      // already stopPropagation; toggling on click would now incorrectly
+      // race with item navigation. The handler is intentionally a no-op
+      // for rail-mode clicks.
+      setDesktopViewport();
+      mockSidebarService.isCollapsed.set(true);
+      const httpMock = TestBed.inject(HttpTestingController);
+      fixture.detectChanges();
+      flushAllHttp(httpMock);
+
+      mockSidebarService.toggleSidebar.calls.reset();
+      component.onSidebarClick();
+      expect(mockSidebarService.toggleSidebar).not.toHaveBeenCalled();
+      expect(mockSidebarService.isCollapsed()).toBe(true);
+    });
+  });
 });
