@@ -15,8 +15,16 @@
       </label>
 
       <label class="credit-note-form-page__checkbox">
-        <input type="checkbox" formControlName="restockParts" />
+        <input
+          type="checkbox"
+          [checked]="!!form.value.restockParts"
+          (change)="onRestockPartsToggle($any($event.target).checked)"
+          data-testid="cn-restock-all"
+        />
         <span>{{ 'invoicing.creditNotes.form.restockParts' | translate }}</span>
+        <small class="credit-note-form-page__checkbox-hint">
+          {{ 'invoicing.creditNotes.form.restockPartsHint' | translate }}
+        </small>
       </label>
 
       <h3 class="credit-note-form-page__section">
@@ -36,6 +44,18 @@
                 {{ 'invoicing.creditNotes.form.original' | translate }}:
                 {{ line.quantity }} × {{ formatCurrency(line.unitPrice) }}
               </p>
+              @if (line.partId) {
+                <label class="credit-note-line__restock"
+                       [attr.data-testid]="'cn-line-restock-' + i">
+                  <input
+                    type="checkbox"
+                    [checked]="line.restockPart"
+                    [disabled]="!line.selected"
+                    (change)="setRestockPart(i, $any($event.target).checked)"
+                  />
+                  <span>{{ 'invoicing.creditNotes.form.restockLine' | translate }}</span>
+                </label>
+              }
             </div>
             <input type="number"
                    class="form-input credit-note-line__qty"

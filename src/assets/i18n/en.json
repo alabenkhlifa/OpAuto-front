@@ -2361,6 +2361,8 @@
         "reason": "Reason",
         "reasonPlaceholder": "Customer return, billing error, …",
         "restockParts": "Return parts to inventory",
+        "restockPartsHint": "Default for all part lines below — flip individual lines to override.",
+        "restockLine": "Restock this part",
         "linesToCredit": "Lines to credit",
         "original": "Original",
         "totalCredit": "Total credit",

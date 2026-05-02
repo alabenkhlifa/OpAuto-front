@@ -48,6 +48,7 @@ describe('CreditNoteFormPageComponent', () => {
           unitPrice: 100,
           totalPrice: 100,
           taxable: true,
+          // Service line — no partId, so no per-line restock toggle.
         } as any,
       ],
       paymentTerms: 'Net 30',
@@ -374,6 +375,226 @@ describe('CreditNoteFormPageComponent', () => {
         'invoicing.creditNotes.form.createFailed',
       );
       expect(cmp.isSubmitting()).toBeFalse();
+    });
+  });
+
+  /**
+   * Sweep C-23 — S-EDGE-013 per-line credit-note restock.
+   *
+   *   - Per-line `restockPart` defaults to the parent `restockParts`
+   *     checkbox value at hydrate time.
+   *   - The parent "Apply to all" checkbox updates every part line's
+   *     flag in lockstep but leaves service / labor lines alone.
+   *   - The per-line toggle is rendered only for part lines (non-null
+   *     `partId`); service / labor lines have no `.credit-note-line__restock`.
+   *   - The submit payload carries the per-line `restockPart` for every
+   *     selected line (FE service forwards it to the BE DTO).
+   *   - When the parent flag is true but the user opts a part line out,
+   *     the payload preserves the user's per-line choice.
+   */
+  describe('S-EDGE-013 (Sweep C-23) — per-line restock toggle', () => {
+    function makeTwoPartInvoice(): InvoiceWithDetails {
+      return makeInvoice({
+        lineItems: [
+          {
+            id: 'l-A',
+            type: 'part',
+            description: 'Brake pads (front)',
+            quantity: 2,
+            unit: 'piece',
+            unitPrice: 50,
+            totalPrice: 100,
+            taxable: true,
+            partId: 'part-A',
+          } as any,
+          {
+            id: 'l-B',
+            type: 'part',
+            description: 'Brake pads (rear)',
+            quantity: 2,
+            unit: 'piece',
+            unitPrice: 50,
+            totalPrice: 100,
+            taxable: true,
+            partId: 'part-B',
+          } as any,
+        ],
+      });
+    }
+
+    function configureWithInvoice(inv: InvoiceWithDetails) {
+      const navigateSpy = jasmine
+        .createSpy('navigate')
+        .and.returnValue(Promise.resolve(true));
+      const invoiceServiceStub = {
+        fetchInvoiceById: jasmine.createSpy('fetchInvoiceById').and.returnValue(of(inv)),
+        formatCurrency: (n: number) => `${n.toFixed(2)} TND`,
+      };
+      const creditNoteServiceStub = {
+        create: jasmine.createSpy('create').and.returnValue(
+          of({ id: 'cn-1', creditNoteNumber: 'AVO-001' } as any),
+        ),
+      };
+      const toastStub = {
+        success: jasmine.createSpy('success'),
+        error: jasmine.createSpy('error'),
+        warning: jasmine.createSpy('warning'),
+      };
+      TestBed.configureTestingModule({
+        imports: [CreditNoteFormPageComponent],
+        providers: [
+          provideRouter([]),
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          {
+            provide: ActivatedRoute,
+            useValue: {
+              snapshot: { queryParamMap: { get: () => 'inv-123' } },
+            },
+          },
+          { provide: InvoiceService, useValue: invoiceServiceStub },
+          { provide: CreditNoteService, useValue: creditNoteServiceStub },
+          { provide: ToastService, useValue: toastStub },
+          {
+            provide: TranslationService,
+            useValue: {
+              instant: (k: string) => k,
+              getCurrentLanguage: () => 'en',
+              translations$: of({}),
+            },
+          },
+          { provide: Router, useValue: { navigate: navigateSpy } },
+        ],
+      });
+      return { creditNoteServiceStub, navigateSpy, toastStub };
+    }
+
+    it('hydrates each line with restockPart matching the parent restockParts default (true)', async () => {
+      configureWithInvoice(makeTwoPartInvoice());
+      const fixture = TestBed.createComponent(CreditNoteFormPageComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+
+      // Form default is restockParts=true → every line hydrates true.
+      expect(cmp.form.value.restockParts).toBeTrue();
+      expect(cmp.lines().length).toBe(2);
+      expect(cmp.lines().every((l) => l.restockPart === true)).toBeTrue();
+    });
+
+    it('setRestockPart flips one line without touching siblings', async () => {
+      configureWithInvoice(makeTwoPartInvoice());
+      const fixture = TestBed.createComponent(CreditNoteFormPageComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+
+      cmp.setRestockPart(0, false);
+
+      expect(cmp.lines()[0].restockPart).toBeFalse();
+      expect(cmp.lines()[1].restockPart).toBeTrue();
+      // Parent form flag is left alone — only per-line state shifts.
+      expect(cmp.form.value.restockParts).toBeTrue();
+    });
+
+    it('onRestockPartsToggle mass-updates every part line and persists to form', async () => {
+      configureWithInvoice(makeTwoPartInvoice());
+      const fixture = TestBed.createComponent(CreditNoteFormPageComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+
+      cmp.onRestockPartsToggle(false);
+
+      expect(cmp.form.value.restockParts).toBeFalse();
+      expect(cmp.lines().every((l) => l.restockPart === false)).toBeTrue();
+
+      cmp.onRestockPartsToggle(true);
+
+      expect(cmp.form.value.restockParts).toBeTrue();
+      expect(cmp.lines().every((l) => l.restockPart === true)).toBeTrue();
+    });
+
+    it('onRestockPartsToggle does NOT alter service / labor lines (no partId)', async () => {
+      // Default `makeInvoice()` ships one service line (no partId).
+      configureWithInvoice(makeInvoice());
+      const fixture = TestBed.createComponent(CreditNoteFormPageComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+
+      // Service line still hydrates with the parent default (true) at
+      // ngOnInit, but the mass-toggle should *only* touch part lines.
+      // Pre-flip the service line's flag to false to make it unique.
+      const beforeFlip = cmp.lines()[0].restockPart;
+      cmp.setRestockPart(0, !beforeFlip);
+      const sentinel = cmp.lines()[0].restockPart;
+
+      cmp.onRestockPartsToggle(true);
+
+      // Sentinel value preserved — the mass-toggle ignored the no-partId line.
+      expect(cmp.lines()[0].restockPart).toBe(sentinel);
+    });
+
+    it('renders the per-line restock checkbox only for lines with a partId', async () => {
+      configureWithInvoice(makeTwoPartInvoice());
+      const fixture = TestBed.createComponent(CreditNoteFormPageComponent);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const lineRows = (fixture.nativeElement as HTMLElement).querySelectorAll(
+        'ul.credit-note-lines li.credit-note-line',
+      );
+      expect(lineRows.length).toBe(2);
+      lineRows.forEach((row) => {
+        expect(row.querySelector('.credit-note-line__restock'))
+          .withContext('every part line surfaces its own restock toggle')
+          .not.toBeNull();
+      });
+    });
+
+    it('does NOT render the per-line restock checkbox for lines without a partId', async () => {
+      // Default `makeInvoice()` ships exactly one service line (no partId).
+      configureWithInvoice(makeInvoice());
+      const fixture = TestBed.createComponent(CreditNoteFormPageComponent);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const restockToggles = (fixture.nativeElement as HTMLElement).querySelectorAll(
+        '.credit-note-line__restock',
+      );
+      expect(restockToggles.length)
+        .withContext('service lines must not surface a per-line restock toggle')
+        .toBe(0);
+    });
+
+    it('payload to creditNoteService.create() carries each line restockPart', async () => {
+      const { creditNoteServiceStub } = configureWithInvoice(makeTwoPartInvoice());
+      const fixture = TestBed.createComponent(CreditNoteFormPageComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+
+      cmp.toggle(0, true);
+      cmp.toggle(1, true);
+      cmp.setRestockPart(0, true);
+      cmp.setRestockPart(1, false);
+      cmp.form.patchValue({
+        reason: 'partial restock',
+        restockParts: true,
+      });
+
+      cmp.onSubmit();
+      await fixture.whenStable();
+
+      expect(creditNoteServiceStub.create).toHaveBeenCalledTimes(1);
+      const arg = creditNoteServiceStub.create.calls.mostRecent().args[0];
+      expect(arg.restockParts).toBeTrue();
+      expect(arg.lineItems.length).toBe(2);
+      expect((arg.lineItems[0] as any).restockPart).toBeTrue();
+      expect((arg.lineItems[1] as any).restockPart).toBeFalse();
     });
   });
 });

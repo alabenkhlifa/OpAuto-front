@@ -21,8 +21,11 @@ import { InvoicingService } from './invoicing.service';
  *
  * Lifecycle:
  *   create()   → ISSUED, lockedAt set, fiscal AVO-YYYY-NNNN number,
- *                StockMovement+Part.quantity update if restockParts=true,
- *                source invoice status recomputed via InvoicingService.
+ *                StockMovement+Part.quantity update for each line whose
+ *                resolved per-line `restockPart` flag is true (S-EDGE-013,
+ *                Sweep C-23); the parent `restockParts` field stays as a
+ *                default-for-new-lines + aggregate "any line restocked".
+ *                Source invoice status recomputed via InvoicingService.
  *   findAll()  → list scoped to garageId, ordered by createdAt desc
  *   findOne()  → detail with line items + invoice basic info
  *
@@ -132,7 +135,20 @@ export class CreditNotesService {
       }
     }
 
-    const restockParts = dto.restockParts === true;
+    // S-EDGE-013 (Sweep C-23) — per-line restock semantics. The DTO's
+    // parent-level `restockParts` is now a *default-for-new-lines* flag;
+    // each line's own `restockPart` (default true at the DB layer) is the
+    // source of truth for whether to fire a StockMovement + Part.quantity
+    // increment. The aggregate parent flag is set true if any line in the
+    // payload opts into restock — keeps the legacy `CreditNote.restockParts`
+    // boolean meaningful for callers (z-report cash-refund filter, list
+    // badge) without forcing them onto the per-line model.
+    const lineRestockFlags = dto.lineItems.map((line) =>
+      line.restockPart === undefined
+        ? dto.restockParts === true
+        : line.restockPart === true,
+    );
+    const restockPartsAggregate = lineRestockFlags.some((f) => f === true);
 
     // ── 4-7. Run everything inside a single transaction ─────────
     const created = await this.prisma.$transaction(async (tx) => {
@@ -157,7 +173,7 @@ export class CreditNotesService {
         fiscalStampEnabled: false,
       });
 
-      const lineItemRows = dto.lineItems.map((item) => {
+      const lineItemRows = dto.lineItems.map((item, idx) => {
         const totals = this.taxCalculator.computeLineTotals({
           quantity: item.quantity,
           unitPrice: item.unitPrice,
@@ -177,6 +193,9 @@ export class CreditNotesService {
           tvaAmount: totals.tvaAmount,
           total: totals.lineTotal,
           discountPct: item.discountPct,
+          // Persist the resolved per-line flag so issue-time logic + later
+          // reads (PDF, list, audit) can rely on a single source of truth.
+          restockPart: lineRestockFlags[idx],
         };
       });
 
@@ -192,35 +211,39 @@ export class CreditNotesService {
           taxAmount: calc.totalTVA,
           discount: calc.invoiceDiscount,
           total: calc.totalTTC,
-          restockParts,
+          // Aggregate flag — true iff any per-line restockPart is true.
+          // Preserves z-report cash-refund filter + list badge semantics.
+          restockParts: restockPartsAggregate,
           lockedAt: new Date(),
           lineItems: { create: lineItemRows },
         },
         include: { lineItems: true },
       });
 
-      // 7. Stock restore — only when explicitly requested AND the line
-      //    has a partId. Each line creates a StockMovement audit row
-      //    and atomically increments Part.quantity.
-      if (restockParts) {
-        for (const line of dto.lineItems) {
-          if (!line.partId) continue;
-          const qty = Math.round(line.quantity);
-          if (qty <= 0) continue;
-          await tx.stockMovement.create({
-            data: {
-              partId: line.partId,
-              type: 'in', // existing column is free-text — 'in' matches stock-receipt convention
-              quantity: qty,
-              reason: `credit_note:${creditNoteNumber}`,
-              reference: cn.id,
-            },
-          });
-          await tx.part.update({
-            where: { id: line.partId },
-            data: { quantity: { increment: qty } },
-          });
-        }
+      // 7. Stock restore — per-line gated. Each line opts in via its own
+      //    `restockPart` flag (resolved above); the parent aggregate flag
+      //    is no longer consulted here. Service / labor lines fall through
+      //    via the `!partId` continue. Each restock writes a StockMovement
+      //    audit row and atomically increments Part.quantity.
+      for (let idx = 0; idx < dto.lineItems.length; idx++) {
+        const line = dto.lineItems[idx];
+        if (!line.partId) continue;
+        if (!lineRestockFlags[idx]) continue;
+        const qty = Math.round(line.quantity);
+        if (qty <= 0) continue;
+        await tx.stockMovement.create({
+          data: {
+            partId: line.partId,
+            type: 'in', // existing column is free-text — 'in' matches stock-receipt convention
+            quantity: qty,
+            reason: `credit_note:${creditNoteNumber}`,
+            reference: cn.id,
+          },
+        });
+        await tx.part.update({
+          where: { id: line.partId },
+          data: { quantity: { increment: qty } },
+        });
       }
 
       return cn;

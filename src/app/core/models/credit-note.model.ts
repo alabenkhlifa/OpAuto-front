@@ -28,12 +28,22 @@ export interface CreditNoteWithDetails extends CreditNote {
 
 export interface CreateCreditNoteRequest {
   invoiceId: string;
-  reason: string;
+  /**
+   * Parent-level "default for new lines" + aggregate flag. Each line in
+   * `lineItems` may override via its own `restockPart` (S-EDGE-013, Sweep
+   * C-23). The BE persists `CreditNote.restockParts = true` iff at least
+   * one line ends up restocking.
+   */
   restockParts: boolean;
+  reason: string;
   /**
    * Subset of source invoice line items (caller picks which to credit).
    * `tvaRate` is optional here — when omitted the service maps from the
    * legacy `taxable` flag, falling back to the garage default (19).
+   * `restockPart` is per-line and optional — when omitted the BE inherits
+   * from the parent `restockParts` flag (S-EDGE-013, Sweep C-23).
    */
-  lineItems: Array<Omit<InvoiceLineItem, 'id'> & { tvaRate?: number }>;
+  lineItems: Array<
+    Omit<InvoiceLineItem, 'id'> & { tvaRate?: number; restockPart?: boolean }
+  >;
 }

@@ -860,6 +860,12 @@ model CreditNoteLineItem {
   tvaRate      Float   @default(19)
   tvaAmount    Float   @default(0)
   discountPct  Float?
+  // S-EDGE-013 (Sweep C-23) — per-line restock toggle. When the parent
+  // CreditNote.restockParts flag is true the user-facing semantics is "any
+  // line may opt-in to a stock-restore"; this field is the per-line truth.
+  // Service / labor lines always carry true here but they are skipped at
+  // issue time because partId is null (no stock to restore).
+  restockPart  Boolean @default(true)
 
   creditNote CreditNote @relation(fields: [creditNoteId], references: [id], onDelete: Cascade)
   part       Part?      @relation(fields: [partId], references: [id], onDelete: SetNull)

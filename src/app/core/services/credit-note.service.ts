@@ -80,6 +80,11 @@ export class CreditNoteService {
         if (li.laborHours !== undefined) out.laborHours = li.laborHours;
         if (li.discountPercentage !== undefined)
           out.discountPct = li.discountPercentage;
+        // S-EDGE-013 (Sweep C-23) — per-line restock toggle. Forward only
+        // when the caller has explicitly set it; the BE DTO defaults the
+        // missing flag to the parent `restockParts` value.
+        if ((li as any).restockPart !== undefined)
+          out.restockPart = (li as any).restockPart;
         return out;
       }),
     };

@@ -2412,6 +2412,8 @@
         "reason": "Motif",
         "reasonPlaceholder": "Retour client, erreur de facturation, …",
         "restockParts": "Réintégrer les pièces au stock",
+        "restockPartsHint": "Valeur par défaut pour toutes les lignes — modifiez chaque ligne pour la personnaliser.",
+        "restockLine": "Réintégrer cette pièce",
         "linesToCredit": "Lignes à créditer",
         "original": "Original",
         "totalCredit": "Total à créditer",

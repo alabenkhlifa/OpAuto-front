@@ -375,6 +375,286 @@ describe('CreditNotesService – create', () => {
     expect(txClient.part.update).not.toHaveBeenCalled();
   });
 
+  // ── S-EDGE-013 (Sweep C-23) — per-line restock toggle ───────
+
+  describe('S-EDGE-013 — per-line restockPart flag', () => {
+    /**
+     * Helper for per-line specs: source invoice with two part lines so we
+     * can assert that one is restocked while the other is not.
+     */
+    function makeTwoPartInvoice() {
+      const inv = makeSourceInvoice();
+      inv.lineItems = [
+        {
+          id: 'li-A',
+          invoiceId: INVOICE_ID,
+          description: 'Brake pads (front)',
+          quantity: 2,
+          unitPrice: 50,
+          total: 119,
+          type: 'part',
+          partId: 'part-A',
+          tvaRate: 19,
+          tvaAmount: 19,
+        },
+        {
+          id: 'li-B',
+          invoiceId: INVOICE_ID,
+          description: 'Brake pads (rear)',
+          quantity: 2,
+          unitPrice: 50,
+          total: 119,
+          type: 'part',
+          partId: 'part-B',
+          tvaRate: 19,
+          tvaAmount: 19,
+        },
+      ];
+      return inv;
+    }
+
+    it('restocks only the lines whose own restockPart is true (other part line untouched)', async () => {
+      prisma.invoice.findFirst.mockResolvedValueOnce(makeTwoPartInvoice());
+      txClient.creditNote.create.mockResolvedValueOnce(
+        makeCreatedCreditNote({ restockParts: true }),
+      );
+      prisma.creditNote.findUnique.mockResolvedValueOnce({
+        ...makeCreatedCreditNote({ restockParts: true }),
+        invoice: {
+          id: INVOICE_ID,
+          invoiceNumber: 'INV-2026-0001',
+          status: 'PAID',
+          total: 119,
+        },
+      });
+
+      await service.create(GARAGE_ID, USER_ID, {
+        invoiceId: INVOICE_ID,
+        reason: 'partial restock',
+        // Parent flag intentionally false — per-line wins.
+        restockParts: false,
+        lineItems: [
+          {
+            description: 'Brake pads (front)',
+            quantity: 2,
+            unitPrice: 50,
+            tvaRate: 19,
+            partId: 'part-A',
+            restockPart: true,
+          },
+          {
+            description: 'Brake pads (rear)',
+            quantity: 2,
+            unitPrice: 50,
+            tvaRate: 19,
+            partId: 'part-B',
+            restockPart: false,
+          },
+        ],
+      });
+
+      // Exactly one StockMovement + one Part.update — for part-A only.
+      expect(txClient.stockMovement.create).toHaveBeenCalledTimes(1);
+      expect(txClient.stockMovement.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          partId: 'part-A',
+          type: 'in',
+          quantity: 2,
+        }),
+      });
+      expect(txClient.part.update).toHaveBeenCalledTimes(1);
+      expect(txClient.part.update).toHaveBeenCalledWith({
+        where: { id: 'part-A' },
+        data: { quantity: { increment: 2 } },
+      });
+    });
+
+    it('persists restockPart on each created line item', async () => {
+      prisma.invoice.findFirst.mockResolvedValueOnce(makeTwoPartInvoice());
+      txClient.creditNote.create.mockResolvedValueOnce(
+        makeCreatedCreditNote({ restockParts: true }),
+      );
+      prisma.creditNote.findUnique.mockResolvedValueOnce({
+        ...makeCreatedCreditNote(),
+        invoice: { id: INVOICE_ID, invoiceNumber: 'X', status: 'PAID', total: 0 },
+      });
+
+      await service.create(GARAGE_ID, USER_ID, {
+        invoiceId: INVOICE_ID,
+        reason: 'persist per-line flag',
+        lineItems: [
+          {
+            description: 'Brake pads (front)',
+            quantity: 1,
+            unitPrice: 50,
+            tvaRate: 19,
+            partId: 'part-A',
+            restockPart: true,
+          },
+          {
+            description: 'Brake pads (rear)',
+            quantity: 1,
+            unitPrice: 50,
+            tvaRate: 19,
+            partId: 'part-B',
+            restockPart: false,
+          },
+        ],
+      });
+
+      const createCall = txClient.creditNote.create.mock.calls[0][0];
+      const persistedLines = createCall.data.lineItems.create as any[];
+      expect(persistedLines.length).toBe(2);
+      expect(persistedLines[0].restockPart).toBe(true);
+      expect(persistedLines[1].restockPart).toBe(false);
+    });
+
+    it('defaults restockPart to true when the DTO field is omitted (parent restockParts=true)', async () => {
+      prisma.invoice.findFirst.mockResolvedValueOnce(makeSourceInvoice());
+      txClient.creditNote.create.mockResolvedValueOnce(
+        makeCreatedCreditNote({ restockParts: true }),
+      );
+      prisma.creditNote.findUnique.mockResolvedValueOnce({
+        ...makeCreatedCreditNote(),
+        invoice: { id: INVOICE_ID, invoiceNumber: 'X', status: 'PAID', total: 0 },
+      });
+
+      await service.create(GARAGE_ID, USER_ID, {
+        invoiceId: INVOICE_ID,
+        reason: 'omitted flag',
+        restockParts: true,
+        lineItems: [
+          {
+            description: 'Brake pads',
+            quantity: 1,
+            unitPrice: 50,
+            tvaRate: 19,
+            partId: PART_ID,
+            // restockPart deliberately omitted
+          },
+        ],
+      });
+
+      const createCall = txClient.creditNote.create.mock.calls[0][0];
+      const persistedLines = createCall.data.lineItems.create as any[];
+      expect(persistedLines[0].restockPart).toBe(true);
+      // And stock should still be restored (parent default propagates).
+      expect(txClient.stockMovement.create).toHaveBeenCalledTimes(1);
+    });
+
+    it('defaults restockPart to false when omitted AND parent restockParts is false', async () => {
+      prisma.invoice.findFirst.mockResolvedValueOnce(makeSourceInvoice());
+      txClient.creditNote.create.mockResolvedValueOnce(
+        makeCreatedCreditNote({ restockParts: false }),
+      );
+      prisma.creditNote.findUnique.mockResolvedValueOnce({
+        ...makeCreatedCreditNote(),
+        invoice: { id: INVOICE_ID, invoiceNumber: 'X', status: 'PAID', total: 0 },
+      });
+
+      await service.create(GARAGE_ID, USER_ID, {
+        invoiceId: INVOICE_ID,
+        reason: 'no restock by default',
+        restockParts: false,
+        lineItems: [
+          {
+            description: 'Brake pads',
+            quantity: 1,
+            unitPrice: 50,
+            tvaRate: 19,
+            partId: PART_ID,
+            // restockPart omitted; parent flag is false → resolved false.
+          },
+        ],
+      });
+
+      const createCall = txClient.creditNote.create.mock.calls[0][0];
+      const persistedLines = createCall.data.lineItems.create as any[];
+      expect(persistedLines[0].restockPart).toBe(false);
+      // And no stock movement should fire.
+      expect(txClient.stockMovement.create).not.toHaveBeenCalled();
+      expect(txClient.part.update).not.toHaveBeenCalled();
+    });
+
+    it('aggregate parent restockParts persists true when ANY line opts in (even if parent flag was false)', async () => {
+      prisma.invoice.findFirst.mockResolvedValueOnce(makeTwoPartInvoice());
+      txClient.creditNote.create.mockResolvedValueOnce(
+        makeCreatedCreditNote({ restockParts: true }),
+      );
+      prisma.creditNote.findUnique.mockResolvedValueOnce({
+        ...makeCreatedCreditNote(),
+        invoice: { id: INVOICE_ID, invoiceNumber: 'X', status: 'PAID', total: 0 },
+      });
+
+      await service.create(GARAGE_ID, USER_ID, {
+        invoiceId: INVOICE_ID,
+        reason: 'parent flag derived from lines',
+        restockParts: false, // parent false; one line opts in via per-line flag
+        lineItems: [
+          {
+            description: 'Brake pads (front)',
+            quantity: 1,
+            unitPrice: 50,
+            tvaRate: 19,
+            partId: 'part-A',
+            restockPart: true,
+          },
+          {
+            description: 'Brake pads (rear)',
+            quantity: 1,
+            unitPrice: 50,
+            tvaRate: 19,
+            partId: 'part-B',
+            restockPart: false,
+          },
+        ],
+      });
+
+      const createCall = txClient.creditNote.create.mock.calls[0][0];
+      // Aggregate parent flag is true because at least one line opted in.
+      expect(createCall.data.restockParts).toBe(true);
+    });
+
+    it('aggregate parent restockParts is false when EVERY line opts out', async () => {
+      prisma.invoice.findFirst.mockResolvedValueOnce(makeTwoPartInvoice());
+      txClient.creditNote.create.mockResolvedValueOnce(
+        makeCreatedCreditNote({ restockParts: false }),
+      );
+      prisma.creditNote.findUnique.mockResolvedValueOnce({
+        ...makeCreatedCreditNote(),
+        invoice: { id: INVOICE_ID, invoiceNumber: 'X', status: 'PAID', total: 0 },
+      });
+
+      await service.create(GARAGE_ID, USER_ID, {
+        invoiceId: INVOICE_ID,
+        reason: 'cash refund only',
+        restockParts: true, // parent true; every line overrides to false
+        lineItems: [
+          {
+            description: 'Brake pads (front)',
+            quantity: 1,
+            unitPrice: 50,
+            tvaRate: 19,
+            partId: 'part-A',
+            restockPart: false,
+          },
+          {
+            description: 'Brake pads (rear)',
+            quantity: 1,
+            unitPrice: 50,
+            tvaRate: 19,
+            partId: 'part-B',
+            restockPart: false,
+          },
+        ],
+      });
+
+      const createCall = txClient.creditNote.create.mock.calls[0][0];
+      expect(createCall.data.restockParts).toBe(false);
+      expect(txClient.stockMovement.create).not.toHaveBeenCalled();
+    });
+  });
+
   // ── Cross-garage isolation ──────────────────────────────────
 
   it('treats source invoice from another garage as not-found (no leak)', async () => {

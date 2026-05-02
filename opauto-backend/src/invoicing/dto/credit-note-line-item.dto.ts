@@ -1,4 +1,11 @@
-import { IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 /**
@@ -63,4 +70,17 @@ export class CreditNoteLineItemDto {
   @Max(100)
   @IsOptional()
   discountPct?: number;
+
+  /**
+   * S-EDGE-013 (Sweep C-23) — per-line restock toggle. When true (the
+   * default), this line will trigger a `StockMovement` + `Part.quantity`
+   * increment at issue time IF the line also carries a `partId`. When
+   * false, the line is committed as a paper-credit only — the customer
+   * gets the refund without the part returning to inventory. Lines
+   * without a partId ignore this flag entirely (nothing to restock).
+   */
+  @ApiProperty({ required: false, default: true })
+  @IsBoolean()
+  @IsOptional()
+  restockPart?: boolean;
 }

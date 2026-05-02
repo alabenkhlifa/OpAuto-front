@@ -16,6 +16,13 @@ import {
 interface SelectableLine extends InvoiceLineItem {
   selected: boolean;
   selectedQty: number;
+  /**
+   * S-EDGE-013 (Sweep C-23) — per-line restock toggle. Defaults to the
+   * parent `restockParts` checkbox value at hydrate time; each part line
+   * can independently flip this. Service / labor lines (no `partId`) are
+   * not surfaced as toggles in the UI but the value is harmless if set.
+   */
+  restockPart: boolean;
 }
 
 /**
@@ -66,11 +73,15 @@ export class CreditNoteFormPageComponent implements OnInit {
     this.invoiceService.fetchInvoiceById(invoiceId).subscribe({
       next: (inv) => {
         this.invoice.set(inv);
+        const defaultRestock = !!this.form.value.restockParts;
         this.lines.set(
           inv.lineItems.map((li) => ({
             ...li,
             selected: false,
             selectedQty: li.quantity,
+            // Per-line default mirrors the parent "Apply to all" checkbox
+            // at hydrate time; users can flip individual part lines below.
+            restockPart: defaultRestock,
           })),
         );
       },
@@ -92,6 +103,35 @@ export class CreditNoteFormPageComponent implements OnInit {
     const line = next[idx];
     const clamped = Math.max(0, Math.min(qty, line.quantity));
     next[idx] = { ...line, selectedQty: clamped };
+    this.lines.set(next);
+  }
+
+  /**
+   * S-EDGE-013 (Sweep C-23) — per-line restock toggle. Sets one line's
+   * `restockPart` flag without touching siblings. Service / labor lines
+   * have their toggle hidden in the template, so this only fires for
+   * part lines in practice.
+   */
+  setRestockPart(idx: number, restockPart: boolean): void {
+    const next = [...this.lines()];
+    const line = next[idx];
+    next[idx] = { ...line, restockPart };
+    this.lines.set(next);
+  }
+
+  /**
+   * Mass-toggle bound to the parent "Restock all parts" checkbox. Sets
+   * every part line's `restockPart` to the given value so the checkbox
+   * keeps its "apply to all" semantics; service / labor lines (no
+   * `partId`) are unaffected. Per-line overrides applied AFTER this
+   * mass-toggle survive — toggling the parent again resets all lines
+   * (matches the "checkbox is the master" UX expectation).
+   */
+  onRestockPartsToggle(restockParts: boolean): void {
+    this.form.patchValue({ restockParts });
+    const next = this.lines().map((line) =>
+      line.partId ? { ...line, restockPart: restockParts } : line,
+    );
     this.lines.set(next);
   }
 
@@ -152,6 +192,10 @@ export class CreditNoteFormPageComponent implements OnInit {
             discountPercentage: l.discountPercentage,
             taxable: l.taxable,
             tvaRate,
+            // S-EDGE-013 (Sweep C-23) — forward the per-line restock
+            // flag. The BE only consults this for lines with a partId;
+            // sending it for service / labor lines is a no-op.
+            restockPart: l.restockPart,
           };
         }),
       })
