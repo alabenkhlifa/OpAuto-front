@@ -155,6 +155,21 @@ export class PaymentModalComponent implements OnChanges {
       // has already reset its own `submitting` flag at this point.
       this.isSubmitting.set(false);
     }
+    // S-PAY-015 (Sweep C-19) — when the parent's `submitting` Input flips
+    // back to `false` AFTER we set `isSubmitting=true` in `onSubmit()`,
+    // it means the parent's HTTP call settled (either success — modal
+    // closed, no-op here — or error — modal stays open and we must
+    // re-enable the Submit button so the user can retry). Without this
+    // reset the modal's internal `isSubmitting()` stays `true` forever
+    // on the error path and `canSubmit()` keeps the button disabled.
+    if (
+      changes['submitting'] &&
+      changes['submitting'].previousValue === true &&
+      changes['submitting'].currentValue === false &&
+      this.isOpen
+    ) {
+      this.isSubmitting.set(false);
+    }
   }
 
   selectMethod(m: PaymentMethod): void {

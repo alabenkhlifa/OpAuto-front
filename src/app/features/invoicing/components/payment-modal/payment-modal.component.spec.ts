@@ -464,6 +464,132 @@ describe('PaymentModalComponent', () => {
   });
 
   /**
+   * S-PAY-015 (Sweep C-19) — payment network failure: modal stays open,
+   * values preserved, Submit button re-enables.
+   *
+   * Pre-fix: when the parent's HTTP call to `POST /api/payments` failed,
+   * the parent's `paymentSubmitting` flag flipped back to `false` and a
+   * toast was fired — but the modal's internal `isSubmitting()` signal
+   * stayed `true` (set inside `onSubmit()`, only cleared on `ngOnChanges`
+   * re-open). Result: the Submit button stayed disabled and the user
+   * could not retry without closing/reopening the modal.
+   *
+   * Fix: detect the parent's `submitting` Input transitioning true→false
+   * and reset the internal in-flight guard, while leaving the form's
+   * values, the selected method, and the modal's open state untouched.
+   */
+  describe('S-PAY-015 — Network failure preserves form, re-enables Submit', () => {
+    it('isSubmitting resets when parent flips submitting true→false (error path)', () => {
+      openWith(ctx);
+      // User typed distinctive values then clicked Submit.
+      component.selectMethod('card');
+      component.form.patchValue({
+        amount: 75,
+        reference: 'NET-FAIL-REF',
+        notes: 'retry me',
+      });
+      component.onSubmit();
+      expect(component.isSubmitting()).toBeTrue();
+
+      // Parent now flips its `submitting` Input to true (HTTP in flight).
+      component.submitting = true;
+      component.ngOnChanges({
+        submitting: { currentValue: true, previousValue: false, firstChange: false, isFirstChange: () => false },
+      } as any);
+
+      // Network failure: parent flips it back to false (modal stays open).
+      component.submitting = false;
+      component.ngOnChanges({
+        submitting: { currentValue: false, previousValue: true, firstChange: false, isFirstChange: () => false },
+      } as any);
+
+      // Internal guard cleared — Submit re-enabled.
+      expect(component.isSubmitting()).toBeFalse();
+      expect(component.canSubmit()).toBeTrue();
+    });
+
+    it('form values + selected method are preserved across the failure cycle', () => {
+      openWith(ctx);
+      component.selectMethod('bank-transfer');
+      component.form.patchValue({
+        amount: 119,
+        reference: 'TX-DEADBEEF',
+        notes: 'partial wire',
+      });
+
+      // submit → parent flips submitting on then off (failure).
+      component.onSubmit();
+      component.submitting = true;
+      component.ngOnChanges({
+        submitting: { currentValue: true, previousValue: false, firstChange: false, isFirstChange: () => false },
+      } as any);
+      component.submitting = false;
+      component.ngOnChanges({
+        submitting: { currentValue: false, previousValue: true, firstChange: false, isFirstChange: () => false },
+      } as any);
+
+      // Nothing the user typed was wiped.
+      expect(component.method()).toBe('bank-transfer');
+      expect(component.form.controls.amount.value).toBe(119);
+      expect(component.form.controls.reference.value).toBe('TX-DEADBEEF');
+      expect(component.form.controls.notes.value).toBe('partial wire');
+    });
+
+    it('a retry after a failure emits exactly one new payload', () => {
+      openWith(ctx);
+      const emits: PaymentModalResult[] = [];
+      component.submitted.subscribe((p) => emits.push(p));
+
+      // First submit (will "fail" downstream).
+      component.onSubmit();
+      expect(emits.length).toBe(1);
+
+      // Parent's submitting toggle: on then off.
+      component.submitting = true;
+      component.ngOnChanges({
+        submitting: { currentValue: true, previousValue: false, firstChange: false, isFirstChange: () => false },
+      } as any);
+      component.submitting = false;
+      component.ngOnChanges({
+        submitting: { currentValue: false, previousValue: true, firstChange: false, isFirstChange: () => false },
+      } as any);
+
+      // Retry — must emit a second payload.
+      component.onSubmit();
+      expect(emits.length).toBe(2);
+    });
+
+    it('does NOT reset isSubmitting on the success path (modal already closed)', () => {
+      // On success the parent flips paymentModalOpen=false and submitting=false
+      // in the same tick. ngOnChanges sees `isOpen` go true→false, so the
+      // body of the open-now branch does NOT run. The submitting-only branch
+      // also bails because `this.isOpen` is now false — meaning we don't
+      // touch the signal. The next reopen will reset it via the open path.
+      openWith(ctx);
+      component.onSubmit();
+      expect(component.isSubmitting()).toBeTrue();
+
+      component.submitting = true;
+      component.ngOnChanges({
+        submitting: { currentValue: true, previousValue: false, firstChange: false, isFirstChange: () => false },
+      } as any);
+
+      // Success: parent closes modal AND clears submitting in the same tick.
+      component.isOpen = false;
+      component.submitting = false;
+      component.ngOnChanges({
+        isOpen: { currentValue: false, previousValue: true, firstChange: false, isFirstChange: () => false },
+        submitting: { currentValue: false, previousValue: true, firstChange: false, isFirstChange: () => false },
+      } as any);
+
+      // Guarded by `this.isOpen` — the success branch doesn't fire here,
+      // because the modal is already closed. Reopening clears it via the
+      // open-now branch (already covered by the BUG-109 reopen spec above).
+      expect(component.isSubmitting()).toBeTrue();
+    });
+  });
+
+  /**
    * BUG-100 (Sweep C-17) — sticky-footer layout regression.
    *
    * Previously the dialog's `max-height: 90vh` plus body-only flow meant
