@@ -72,16 +72,28 @@ export class QuoteService {
       .pipe(map((b) => this.mapFromBackend(b)));
   }
 
+  /**
+   * Approve a SENT quote. The backend creates a DRAFT invoice from the
+   * quote's line items, links both directions (`invoice.quoteId` +
+   * `quote.convertedToInvoiceId`) and returns `{ quote, invoice }`.
+   *
+   * BUG-105 (Sweep C-4) — the previous mapping read `res.invoiceId`
+   * which is undefined in the BE shape `{ quote, invoice }`; the
+   * downstream `router.navigate(['/invoices', invoiceId])` then routed
+   * to `/invoices/undefined` and the destination page rendered "not
+   * found". We now read `res.invoice.id` and surface it as `invoiceId`
+   * for the existing call sites.
+   */
   approve(id: string): Observable<{ quote: QuoteWithDetails; invoiceId: string }> {
     return this.http
-      .post<{ quote: unknown; invoiceId: string }>(
+      .post<{ quote: unknown; invoice: { id: string } }>(
         `${this.baseUrl}/${id}/approve`,
         {},
       )
       .pipe(
         map((res) => ({
           quote: this.mapFromBackend(res.quote),
-          invoiceId: res.invoiceId,
+          invoiceId: res.invoice?.id,
         })),
       );
   }

@@ -61,6 +61,18 @@
           </button>
         }
       </div>
+
+      <!-- S-QUO-020: APPROVED → show the link to the converted invoice. -->
+      @if (q.status === 'APPROVED' && q.convertedToInvoiceId) {
+        <p class="quote-detail-page__converted">
+          <span>{{ 'invoicing.quotes.detail.convertedTo' | translate }}</span>
+          <a class="quote-detail-page__converted-link"
+             [routerLink]="['/invoices', q.convertedToInvoiceId]">
+            {{ linkedInvoiceNumber() ?? ('invoicing.quotes.detail.viewInvoice' | translate) }}
+            <span aria-hidden="true">→</span>
+          </a>
+        </p>
+      }
     </div>
 
     <div class="glass-card">

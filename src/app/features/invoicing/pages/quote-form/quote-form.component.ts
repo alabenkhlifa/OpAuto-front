@@ -2,19 +2,25 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { TranslationService } from '../../../../core/services/translation.service';
 import { ToastService } from '../../../../shared/services/toast.service';
 import { QuoteService } from '../../../../core/services/quote.service';
 import { CustomerService } from '../../../../core/services/customer.service';
 import { AppointmentService } from '../../../appointments/services/appointment.service';
+import { GarageSettingsService } from '../../../../core/services/garage-settings.service';
+import { UserService } from '../../../../core/services/user.service';
 import { Customer, Car } from '../../../../core/models/appointment.model';
 import { ServicePickerComponent } from '../../components/service-picker/service-picker.component';
 import { PartPickerComponent } from '../../components/part-picker/part-picker.component';
 import { LineItemType } from '../../../../core/models/invoice.model';
 import { ServiceCatalogEntry } from '../../../../core/models/service-catalog.model';
 import { PartWithStock } from '../../../../core/models/part.model';
+import { GarageSettings } from '../../../../core/models/garage-settings.model';
+import { User } from '../../../../core/models/user.model';
+import { UserRole } from '../../../../core/models/auth.model';
 
 // Order matters for the per-line TVA <select>: the default new-line rate
 // (19) should be the first non-exempt option so that, if a browser
@@ -58,6 +64,8 @@ export class QuoteFormPageComponent implements OnInit {
   private quoteService = inject(QuoteService);
   private customerService = inject(CustomerService);
   private appointmentService = inject(AppointmentService);
+  private garageSettings = inject(GarageSettingsService);
+  private userService = inject(UserService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private toast = inject(ToastService);
@@ -72,6 +80,15 @@ export class QuoteFormPageComponent implements OnInit {
   isEditMode = computed(() => this.quoteId() !== null);
 
   lines = signal<LineState[]>([]);
+
+  // S-QUO-022 — discount-approver gate. Quote DTO has no approver field
+  // (BE doesn't audit quote-level discounts), so this is a FE-only guard
+  // that mirrors the invoice-form pattern: any line with discount above
+  // the garage's `discountAuditThresholdPct` requires an explicit owner
+  // approver before submit. Save is blocked until both conditions hold.
+  readonly settings = signal<GarageSettings | null>(null);
+  readonly owners = signal<User[]>([]);
+  readonly approverId = signal<string>('');
 
   readonly tvaRates = TVA_RATES;
   readonly lineTypes: LineItemType[] = ['service', 'part', 'labor', 'misc'];
@@ -88,6 +105,38 @@ export class QuoteFormPageComponent implements OnInit {
   );
 
   readonly totalTTC = computed(() => this.subtotalHT() + this.totalTVA());
+
+  /** Garage's discount-audit threshold (default 5 %). */
+  readonly auditThresholdPct = computed(
+    () =>
+      (this.settings() as any)?.fiscalSettings?.discountAuditThresholdPct ?? 5,
+  );
+
+  /** Highest per-line discount % across the current line items. */
+  readonly maxLineDiscountPct = computed(() =>
+    this.lines().reduce(
+      (max, l) => Math.max(max, Math.max(0, Math.min(100, l.discountPct || 0))),
+      0,
+    ),
+  );
+
+  /** True when at least one line discount exceeds the audit threshold. */
+  readonly approverRequired = computed(
+    () => this.maxLineDiscountPct() > this.auditThresholdPct(),
+  );
+
+  /**
+   * S-QUO-022 — list of translation keys describing what's currently
+   * blocking submit. Render in a banner above the actions row when
+   * non-empty. Mirrors invoice-form's `validationIssues()` pattern.
+   */
+  readonly validationIssues = computed<string[]>(() => {
+    const issues: string[] = [];
+    if (this.approverRequired() && !this.approverId()) {
+      issues.push('invoicing.quotes.form.errors.approverRequired');
+    }
+    return issues;
+  });
 
   form = this.fb.group({
     customerId: ['', Validators.required],
@@ -107,8 +156,14 @@ export class QuoteFormPageComponent implements OnInit {
     forkJoin({
       customers: this.customerService.getCustomers(),
       cars: this.appointmentService.getCars(),
+      // S-QUO-022 — settings + owners feed the discount-approver gate.
+      // Both are non-fatal: a missing settings response just falls back
+      // to the 5 % default; a failed user list leaves the approver
+      // <select> empty and the form-blocked banner stays up.
+      settings: this.garageSettings.getSettings().pipe(catchError(() => of(null as GarageSettings | null))),
+      users: this.userService.getUsers().pipe(catchError(() => of([] as User[]))),
     }).subscribe({
-      next: ({ customers, cars }) => {
+      next: ({ customers, cars, settings, users }) => {
         this.customers.set(
           (customers as any[]).map((c) => ({
             id: c.id,
@@ -118,11 +173,26 @@ export class QuoteFormPageComponent implements OnInit {
           })) as Customer[],
         );
         this.allCars.set(cars);
+        this.settings.set(settings);
+        this.owners.set(users.filter((u) => u.role === UserRole.OWNER));
 
         const id = this.route.snapshot.paramMap.get('id');
         if (id) this.loadQuote(id);
       },
     });
+  }
+
+  // ── S-QUO-022: Discount / approver helpers ─────────────────────────────────
+
+  onApproverChange(value: string): void {
+    this.approverId.set(value || '');
+  }
+
+  getOwnerLabel(u: User): string {
+    const fn = (u as any).firstName ?? '';
+    const ln = (u as any).lastName ?? '';
+    const composed = `${fn} ${ln}`.trim();
+    return composed || u.email || u.id;
   }
 
   private loadQuote(id: string): void {
@@ -308,6 +378,16 @@ export class QuoteFormPageComponent implements OnInit {
     if (this.lines().length === 0) {
       this.toast.warning(
         this.translation.instant('invoicing.quotes.form.linesRequired'),
+      );
+      return;
+    }
+    // S-QUO-022 — guard: line discount above audit threshold without an
+    // approver picked. The catalog accepts either a FE-side block or a
+    // BE 400 — we ship the FE block here because the quote DTO has no
+    // `discountApprovedBy` field, so the BE wouldn't know to 400.
+    if (this.validationIssues().length > 0) {
+      this.toast.warning(
+        this.translation.instant(this.validationIssues()[0]),
       );
       return;
     }

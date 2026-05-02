@@ -2320,7 +2320,20 @@
         "updated": "Devis mis à jour",
         "updateFailed": "Impossible de mettre à jour le devis",
         "loadFailed": "Impossible de charger le devis",
-        "linesRequired": "Au moins une ligne est requise"
+        "linesRequired": "Au moins une ligne est requise",
+        "discount": {
+          "title": "Remise",
+          "subtitle": "Une remise par ligne supérieure à {{threshold}}% requiert un approbateur propriétaire."
+        },
+        "fields": {
+          "approver": "Approbateur (propriétaire)"
+        },
+        "placeholder": {
+          "selectApprover": "Choisir un approbateur…"
+        },
+        "errors": {
+          "approverRequired": "Un approbateur est requis pour toute remise dépassant le seuil d'audit"
+        }
       },
       "detail": {
         "issueDate": "Date d'émission",
@@ -2339,7 +2352,9 @@
         "approved": "Devis approuvé — facture créée",
         "approveFailed": "Échec de l'approbation",
         "rejected": "Devis refusé",
-        "rejectFailed": "Échec du refus"
+        "rejectFailed": "Échec du refus",
+        "convertedTo": "Converti en facture",
+        "viewInvoice": "Voir la facture"
       },
       "status": {
         "draft": "Brouillon",

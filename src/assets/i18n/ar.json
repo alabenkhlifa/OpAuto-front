@@ -2322,7 +2322,20 @@
         "updated": "تم تحديث عرض السعر",
         "updateFailed": "تعذر تحديث عرض السعر",
         "loadFailed": "تعذر تحميل عرض السعر",
-        "linesRequired": "يجب إضافة بند واحد على الأقل"
+        "linesRequired": "يجب إضافة بند واحد على الأقل",
+        "discount": {
+          "title": "خصم",
+          "subtitle": "الخصومات لكل بند فوق {{threshold}}٪ تتطلب اعتماد المالك."
+        },
+        "fields": {
+          "approver": "المعتمد (المالك)"
+        },
+        "placeholder": {
+          "selectApprover": "اختر المعتمد…"
+        },
+        "errors": {
+          "approverRequired": "يلزم اعتماد المالك لأي خصم يتجاوز عتبة التدقيق"
+        }
       },
       "detail": {
         "issueDate": "تاريخ الإصدار",
@@ -2341,7 +2354,9 @@
         "approved": "تم اعتماد عرض السعر — وأنشئت الفاتورة",
         "approveFailed": "تعذر اعتماد عرض السعر",
         "rejected": "تم رفض عرض السعر",
-        "rejectFailed": "تعذر رفض عرض السعر"
+        "rejectFailed": "تعذر رفض عرض السعر",
+        "convertedTo": "تم التحويل إلى فاتورة",
+        "viewInvoice": "عرض الفاتورة"
       },
       "status": {
         "draft": "مسودة",

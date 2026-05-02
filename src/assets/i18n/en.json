@@ -2270,7 +2270,20 @@
         "updated": "Quote updated",
         "updateFailed": "Could not update quote",
         "loadFailed": "Could not load quote",
-        "linesRequired": "At least one line item is required"
+        "linesRequired": "At least one line item is required",
+        "discount": {
+          "title": "Discount",
+          "subtitle": "Line discounts above {{threshold}}% require an owner-level approver."
+        },
+        "fields": {
+          "approver": "Approver (owner)"
+        },
+        "placeholder": {
+          "selectApprover": "Select an approver…"
+        },
+        "errors": {
+          "approverRequired": "Approver required for any line discount above the audit threshold"
+        }
       },
       "detail": {
         "issueDate": "Issue date",
@@ -2289,7 +2302,9 @@
         "approved": "Quote approved — invoice created",
         "approveFailed": "Could not approve quote",
         "rejected": "Quote rejected",
-        "rejectFailed": "Could not reject quote"
+        "rejectFailed": "Could not reject quote",
+        "convertedTo": "Converted to invoice",
+        "viewInvoice": "View invoice"
       },
       "status": {
         "draft": "Draft",

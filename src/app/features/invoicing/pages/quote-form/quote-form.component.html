@@ -187,13 +187,52 @@
       }
     </div>
 
+    <!-- S-QUO-022 — discount-approver gate. Renders only when at least
+         one line discount exceeds the garage's audit threshold. -->
+    @if (approverRequired()) {
+      <section class="quote-form-page__discount-section">
+        <header class="quote-form-page__discount-header">
+          <h3 class="quote-form-page__subtitle">
+            {{ 'invoicing.quotes.form.discount.title' | translate }}
+          </h3>
+          <p class="quote-form-page__discount-subtitle">
+            {{ 'invoicing.quotes.form.discount.subtitle' | translate:{ threshold: auditThresholdPct() } }}
+          </p>
+        </header>
+        <label class="quote-form-page__field quote-form-page__field--full">
+          <span>{{ 'invoicing.quotes.form.fields.approver' | translate }} *</span>
+          <select class="form-select"
+                  [value]="approverId()"
+                  (change)="onApproverChange($any($event.target).value)">
+            <option value="">{{ 'invoicing.quotes.form.placeholder.selectApprover' | translate }}</option>
+            @for (o of owners(); track o.id) {
+              <option [value]="o.id">{{ getOwnerLabel(o) }}</option>
+            }
+          </select>
+        </label>
+      </section>
+    }
+
+    @if (validationIssues().length > 0) {
+      <div class="quote-form-page__banner" role="alert">
+        <p class="quote-form-page__banner-title">
+          {{ 'invoicing.form.banner.fixToContinue' | translate }}
+        </p>
+        <ul class="quote-form-page__banner-list">
+          @for (issue of validationIssues(); track issue) {
+            <li>{{ issue | translate }}</li>
+          }
+        </ul>
+      </div>
+    }
+
     <div class="quote-form-page__actions">
       <button type="button" class="btn-secondary" (click)="cancel()">
         {{ 'common.cancel' | translate }}
       </button>
       <button type="submit"
               class="btn-primary"
-              [disabled]="form.invalid || lines().length === 0 || isSubmitting()">
+              [disabled]="form.invalid || lines().length === 0 || isSubmitting() || validationIssues().length > 0">
         {{ (isSubmitting()
             ? 'common.saving'
             : (isEditMode() ? 'invoicing.quotes.form.submitEdit' : 'invoicing.quotes.form.submit')

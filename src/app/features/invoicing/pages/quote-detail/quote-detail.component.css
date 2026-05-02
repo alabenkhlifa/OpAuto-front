@@ -67,6 +67,31 @@
   flex-wrap: wrap;
 }
 
+/* S-QUO-020 — link from APPROVED quote to its converted invoice. */
+.quote-detail-page__converted {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 1rem 0 0;
+  padding: 0.625rem 0.75rem;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  color: var(--color-text-primary, #111827);
+  font-size: 0.875rem;
+}
+
+.quote-detail-page__converted-link {
+  color: var(--color-orange, #ff8400);
+  font-weight: 600;
+  text-decoration: none;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.quote-detail-page__converted-link:hover {
+  text-decoration: underline;
+}
+
 .quote-detail-page__section-title {
   font-size: 1rem;
   font-weight: 600;

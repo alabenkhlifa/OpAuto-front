@@ -8,9 +8,12 @@ import { QuoteFormPageComponent } from './quote-form.component';
 import { QuoteService } from '../../../../core/services/quote.service';
 import { CustomerService } from '../../../../core/services/customer.service';
 import { AppointmentService } from '../../../appointments/services/appointment.service';
+import { GarageSettingsService } from '../../../../core/services/garage-settings.service';
+import { UserService } from '../../../../core/services/user.service';
 import { TranslationService } from '../../../../core/services/translation.service';
 import { ToastService } from '../../../../shared/services/toast.service';
 import { QuoteWithDetails } from '../../../../core/models/quote.model';
+import { UserRole } from '../../../../core/models/auth.model';
 
 /**
  * BUG-095 — quote-form must support edit mode via the `:id` route param.
@@ -91,6 +94,38 @@ describe('QuoteFormPageComponent — edit mode (BUG-095)', () => {
         {
           provide: AppointmentService,
           useValue: { getCars: () => of(cars) },
+        },
+        {
+          // S-QUO-022 — provide a settings stub with a 5 % default so the
+          // discount-approver gate can compute the threshold; tests that
+          // need a different threshold can override per-suite below.
+          provide: GarageSettingsService,
+          useValue: {
+            getSettings: () =>
+              of({ fiscalSettings: { discountAuditThresholdPct: 5 } } as any),
+          },
+        },
+        {
+          provide: UserService,
+          useValue: {
+            getUsers: () =>
+              of([
+                {
+                  id: 'owner-1',
+                  email: 'owner@autotech.tn',
+                  firstName: 'Karim',
+                  lastName: 'Owner',
+                  role: UserRole.OWNER,
+                },
+                {
+                  id: 'staff-1',
+                  email: 'staff@autotech.tn',
+                  firstName: 'Sami',
+                  lastName: 'Staff',
+                  role: UserRole.STAFF,
+                },
+              ] as any),
+          },
         },
         {
           provide: TranslationService,
@@ -482,6 +517,123 @@ describe('QuoteFormPageComponent — edit mode (BUG-095)', () => {
       expect(payload.lineItems.length).toBe(1);
       expect(payload.lineItems[0].description).toBe('Second');
       expect(payload.lineItems[0].unitPrice).toBe(50);
+    });
+  });
+
+  /**
+   * S-QUO-022 — quote line discount above the audit threshold without an
+   * approver should block submit. The quote DTO has no `discountApprovedBy`
+   * field so the BE wouldn't 400 this on its own; we ship the gate as a
+   * FE-side guard mirroring the invoice-form pattern. (Threshold defaults
+   * to 5 %; the 7 % case in the catalog should trigger the block.)
+   */
+  describe('S-QUO-022 — discount-approver gate', () => {
+    it('flags approverRequired when a line discount exceeds the 5 % threshold', async () => {
+      await setupWithRouteId(null);
+      fixture.detectChanges(); // forkJoin → settings + users hydrate
+
+      component.addLine('misc');
+      component.updateLine(0, 'description', 'Big rebate');
+      component.updateLine(0, 'unitPrice', 200);
+      component.updateLine(0, 'discountPct', 7);
+
+      expect(component.maxLineDiscountPct()).toBe(7);
+      expect(component.auditThresholdPct()).toBe(5);
+      expect(component.approverRequired()).toBeTrue();
+      expect(component.validationIssues()).toContain(
+        'invoicing.quotes.form.errors.approverRequired',
+      );
+    });
+
+    it('does NOT flag approverRequired when discount is at or below threshold', async () => {
+      await setupWithRouteId(null);
+      fixture.detectChanges();
+
+      component.addLine('misc');
+      component.updateLine(0, 'description', 'Modest rebate');
+      component.updateLine(0, 'unitPrice', 200);
+      component.updateLine(0, 'discountPct', 5);
+
+      expect(component.approverRequired()).toBeFalse();
+      expect(component.validationIssues().length).toBe(0);
+    });
+
+    it('clears the validation block once an approver is selected', async () => {
+      await setupWithRouteId(null);
+      fixture.detectChanges();
+
+      component.addLine('misc');
+      component.updateLine(0, 'description', 'Big rebate');
+      component.updateLine(0, 'unitPrice', 200);
+      component.updateLine(0, 'discountPct', 10);
+
+      expect(component.validationIssues().length).toBe(1);
+      component.onApproverChange('owner-1');
+      expect(component.validationIssues().length).toBe(0);
+    });
+
+    it('blocks onSubmit when discount > threshold and no approver picked', async () => {
+      await setupWithRouteId(null);
+      fixture.detectChanges();
+
+      // Pick the customer + car so the form is otherwise valid.
+      component.form.patchValue({ customerId: 'c-1', carId: 'car-1' });
+      component.addLine('misc');
+      component.updateLine(0, 'description', 'Big rebate');
+      component.updateLine(0, 'unitPrice', 200);
+      component.updateLine(0, 'discountPct', 7);
+
+      component.onSubmit();
+
+      expect(quoteServiceSpy.create).not.toHaveBeenCalled();
+    });
+
+    it('allows onSubmit once the approver is picked', async () => {
+      await setupWithRouteId(null);
+      fixture.detectChanges();
+      quoteServiceSpy.create.and.returnValue(of(makeQuote()));
+
+      component.form.patchValue({ customerId: 'c-1', carId: 'car-1' });
+      component.addLine('misc');
+      component.updateLine(0, 'description', 'Big rebate');
+      component.updateLine(0, 'unitPrice', 200);
+      component.updateLine(0, 'discountPct', 7);
+      component.onApproverChange('owner-1');
+
+      component.onSubmit();
+
+      expect(quoteServiceSpy.create).toHaveBeenCalled();
+    });
+
+    it('only lists OWNER users in the approver picker', async () => {
+      await setupWithRouteId(null);
+      fixture.detectChanges();
+
+      const owners = component.owners();
+      expect(owners.length).toBe(1);
+      expect(owners[0].id).toBe('owner-1');
+    });
+
+    it('renders the discount section only when approverRequired is true', async () => {
+      await setupWithRouteId(null);
+      fixture.detectChanges();
+
+      // No discount → section absent.
+      let section = (fixture.nativeElement as HTMLElement).querySelector(
+        '.quote-form-page__discount-section',
+      );
+      expect(section).toBeNull();
+
+      // Add a line with discount > threshold and re-render.
+      component.addLine('misc');
+      component.updateLine(0, 'unitPrice', 200);
+      component.updateLine(0, 'discountPct', 10);
+      fixture.detectChanges();
+
+      section = (fixture.nativeElement as HTMLElement).querySelector(
+        '.quote-form-page__discount-section',
+      );
+      expect(section).not.toBeNull();
     });
   });
 });
