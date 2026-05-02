@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  NotFoundException,
   Param,
   Post,
   Put,
@@ -79,6 +80,34 @@ export class InvoicingController {
       page: parsePage(page),
       limit: parseLimit(limit),
     });
+  }
+
+  /**
+   * S-PERF-005 (Sweep C-22) — dev-only PDF LRU cache observability.
+   * Exposes hit/miss counters from `PdfRendererService` so the
+   * `perf-cache-hitratio.ts` benchmark can compute the steady-state
+   * hit ratio without intrusive log scraping.
+   *
+   * Hard-gated to non-production environments: `NODE_ENV === 'production'`
+   * surfaces a 404 (NotFoundException) so the route is invisible in prod.
+   * Owner-only via the controller-level `@Roles(OWNER, STAFF)` plus an
+   * explicit `@Roles(OWNER)` override.
+   *
+   * Note: this route is registered BEFORE `@Get(':id')` so the
+   * literal `_debug/pdf-cache-stats` segment doesn't collide with the
+   * id-param route. Optional `?reset=true` zeroes the counters in place
+   * (used by the bench script to start from a known state).
+   */
+  @Get('_debug/pdf-cache-stats')
+  @Roles(UserRole.OWNER)
+  pdfCacheStats(@Query('reset') reset?: string) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new NotFoundException();
+    }
+    if (reset === 'true' || reset === '1') {
+      this.pdf.resetCacheStats();
+    }
+    return this.pdf.getCacheStats();
   }
 
   @Get(':id')

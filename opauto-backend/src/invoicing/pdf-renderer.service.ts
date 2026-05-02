@@ -65,6 +65,13 @@ export class PdfRendererService {
   private readonly cache: LRUCache<string, Buffer>;
   private readonly publicBaseUrl: string;
 
+  // S-PERF-005 (Sweep C-22) — observability counters for the LRU.
+  // `lru-cache@11` doesn't expose hit/miss stats out of the box, so we
+  // increment these inside `cached()`. Read by `/invoices/_debug/pdf-cache-stats`
+  // (dev-only) when measuring steady-state hit ratio.
+  private hits = 0;
+  private misses = 0;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
@@ -232,15 +239,50 @@ export class PdfRendererService {
   ): Promise<Buffer> {
     const k = `${key.kind}:${key.id}:${key.updatedAt}:${key.publicToken ?? ''}`;
     const hit = this.cache.get(k);
-    if (hit) return hit;
+    if (hit) {
+      this.hits++;
+      return hit;
+    }
+    this.misses++;
     const buf = await factory();
     this.cache.set(k, buf);
     return buf;
   }
 
-  /** Visible for testing — flushes the LRU. */
+  /** Visible for testing — flushes the LRU and resets counters. */
   clearCache(): void {
     this.cache.clear();
+    this.hits = 0;
+    this.misses = 0;
+  }
+
+  /**
+   * S-PERF-005 (Sweep C-22) — hit/miss observability.
+   * Read by the dev-only `/invoices/_debug/pdf-cache-stats` route to
+   * compute the steady-state hit ratio under realistic access patterns.
+   * `size` is the current LRU occupancy; `max` reflects the configured cap.
+   */
+  getCacheStats(): {
+    hits: number;
+    misses: number;
+    hitRatio: number;
+    size: number;
+    max: number;
+  } {
+    const total = this.hits + this.misses;
+    return {
+      hits: this.hits,
+      misses: this.misses,
+      hitRatio: total === 0 ? 0 : this.hits / total,
+      size: this.cache.size,
+      max: this.cache.max,
+    };
+  }
+
+  /** Reset the hit/miss counters without flushing the LRU buffers. */
+  resetCacheStats(): void {
+    this.hits = 0;
+    this.misses = 0;
   }
 
   // ── Rendering core ────────────────────────────────────────────

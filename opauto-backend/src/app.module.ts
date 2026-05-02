@@ -61,11 +61,21 @@ const garageIdTracker = (req: Record<string, any>): string => {
     //       storage: new ThrottlerStorageRedisService(config.get('REDIS_URL')),
     //     }),
     //   })
+    // S-PERF-003/004/005 (Sweep C-22) — `THROTTLE_DISABLED=true` raises the
+    // ceilings to effectively-infinite values so the bench scripts in
+    // `scripts/perf-*.ts` can saturate the BE. Production / dev defaults are
+    // unchanged (30/user/min, 200/garage/min). Never set this in prod.
     ThrottlerModule.forRoot({
-      throttlers: [
-        { name: 'short', limit: 30, ttl: 60_000, getTracker: userIdTracker },
-        { name: 'long', limit: 200, ttl: 60_000, getTracker: garageIdTracker },
-      ],
+      throttlers:
+        process.env.THROTTLE_DISABLED === 'true'
+          ? [
+              { name: 'short', limit: 1_000_000, ttl: 60_000, getTracker: userIdTracker },
+              { name: 'long', limit: 1_000_000, ttl: 60_000, getTracker: garageIdTracker },
+            ]
+          : [
+              { name: 'short', limit: 30, ttl: 60_000, getTracker: userIdTracker },
+              { name: 'long', limit: 200, ttl: 60_000, getTracker: garageIdTracker },
+            ],
     }),
     ScheduleModule.forRoot(),
     PrismaModule,

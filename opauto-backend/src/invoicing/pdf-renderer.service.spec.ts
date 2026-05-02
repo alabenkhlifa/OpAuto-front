@@ -173,6 +173,67 @@ describe('PdfRendererService', () => {
       expect(a).not.toBe(b);
     });
   });
+
+  // S-PERF-005 (Sweep C-22) — hit/miss observability for the bench tooling.
+  describe('getCacheStats / S-PERF-005', () => {
+    it('starts at zero hits/misses with size 0', () => {
+      const stats = service.getCacheStats();
+      expect(stats).toEqual({
+        hits: 0,
+        misses: 0,
+        hitRatio: 0,
+        size: 0,
+        max: 50,
+      });
+    });
+
+    it('counts the first render as a miss and subsequent renders as hits', async () => {
+      await service.renderInvoice('inv-1', 'g-1');
+      let stats = service.getCacheStats();
+      expect(stats.misses).toBe(1);
+      expect(stats.hits).toBe(0);
+      expect(stats.size).toBe(1);
+
+      await service.renderInvoice('inv-1', 'g-1');
+      await service.renderInvoice('inv-1', 'g-1');
+      stats = service.getCacheStats();
+      expect(stats.hits).toBe(2);
+      expect(stats.misses).toBe(1);
+      expect(stats.hitRatio).toBeCloseTo(2 / 3, 5);
+    });
+
+    it('clearCache zeroes the counters and the cache contents', async () => {
+      await service.renderInvoice('inv-1', 'g-1');
+      await service.renderInvoice('inv-1', 'g-1');
+      expect(service.getCacheStats().hits).toBe(1);
+      service.clearCache();
+      expect(service.getCacheStats()).toEqual({
+        hits: 0,
+        misses: 0,
+        hitRatio: 0,
+        size: 0,
+        max: 50,
+      });
+    });
+
+    it('resetCacheStats zeroes counters but keeps the buffers', async () => {
+      await service.renderInvoice('inv-1', 'g-1');
+      await service.renderInvoice('inv-1', 'g-1');
+      const sizeBefore = service.getCacheStats().size;
+      expect(sizeBefore).toBe(1);
+
+      service.resetCacheStats();
+      const stats = service.getCacheStats();
+      expect(stats.hits).toBe(0);
+      expect(stats.misses).toBe(0);
+      // Buffer is still cached so the next render is a hit, not a miss.
+      expect(stats.size).toBe(1);
+
+      await service.renderInvoice('inv-1', 'g-1');
+      expect(service.getCacheStats().hits).toBe(1);
+      expect(service.getCacheStats().misses).toBe(0);
+    });
+  });
 });
 
 // ── Fixtures ────────────────────────────────────────────────────
