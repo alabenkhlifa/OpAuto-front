@@ -375,6 +375,35 @@ describe('InvoiceService', () => {
       expect(received.quoteId).toBeUndefined();
     });
 
+    // ── BUG-106 — Sweep C-10 (S-I18N-001/002) ───────────────────────
+    // BE persists `InvoiceLineItem.type` as a free-form string (`labor | part | service`
+    // per the schema comment). Legacy rows can land uppercase (`SERVICE`).
+    // The detail HTML binds `('invoicing.form.lineTypes.' + li.type) | translate`
+    // and only ships keys for the lowercase variants — uppercase types miss the
+    // dictionary and surface as the raw key in the FR/AR walks.
+    // mapFromBackend now lower-cases `li.type` so the i18n binding always hits.
+    it('lowercases line item type to match the FE LineItemType enum (BUG-106)', () => {
+      let received: any;
+      service.fetchInvoiceById('inv-1').subscribe((inv) => (received = inv));
+
+      const req = httpMock.expectOne('/invoices/inv-1');
+      req.flush(
+        makeBackendInvoiceShape({
+          lineItems: [
+            { id: 'li-1', type: 'SERVICE', description: 'A', quantity: 1, unitPrice: 10, total: 10 },
+            { id: 'li-2', type: 'Part',    description: 'B', quantity: 1, unitPrice: 10, total: 10 },
+            { id: 'li-3', type: 'labor',   description: 'C', quantity: 1, unitPrice: 10, total: 10 },
+            { id: 'li-4',                  description: 'D', quantity: 1, unitPrice: 10, total: 10 }, // missing type
+          ],
+        }),
+      );
+
+      expect(received.lineItems[0].type).toBe('service');
+      expect(received.lineItems[1].type).toBe('part');
+      expect(received.lineItems[2].type).toBe('labor');
+      expect(received.lineItems[3].type).toBe('misc');
+    });
+
     it('falls back to legacy totalPrice when backend response uses the old field name', () => {
       let received: any;
       service.fetchInvoiceById('inv-1').subscribe((inv) => (received = inv));

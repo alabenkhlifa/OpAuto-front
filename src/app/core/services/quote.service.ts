@@ -138,7 +138,11 @@ export class QuoteService {
       totalAmount,
       lineItems: ((b.lineItems ?? []) as any[]).map((li) => ({
         id: li.id,
-        type: (li.type || 'misc') as LineItemType,
+        // Normalize to the FE lowercase enum (`service|part|labor|misc`).
+        // BE stores `type` as free-form string; legacy rows can be uppercase
+        // (`SERVICE`) which would miss the `invoicing.form.lineTypes.<type>`
+        // i18n key and surface as a raw key in the UI (Sweep C-10).
+        type: (typeof li.type === 'string' ? li.type.toLowerCase() : (li.type || 'misc')) as LineItemType,
         description: li.description || '',
         quantity: li.quantity || 1,
         unit: li.unit || 'service',

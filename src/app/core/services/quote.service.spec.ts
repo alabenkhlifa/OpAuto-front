@@ -139,4 +139,38 @@ describe('QuoteService — approve mapping (BUG-105, Sweep C-4)', () => {
     expect(req.request.responseType).toBe('blob');
     req.flush(new Blob(['%PDF-fake'], { type: 'application/pdf' }));
   });
+
+  // ── BUG-106 — Sweep C-10 (S-I18N-001/002) ────────────────────────
+  // Same uppercase-line-type fallout as in InvoiceService — the FE i18n
+  // binding `('invoicing.form.lineTypes.' + li.type) | translate` only
+  // resolves the lowercase enum (`service|part|labor|misc`).
+  it('lowercases line item type to match the FE LineItemType enum (BUG-106)', (done) => {
+    service.get('q-1').subscribe((q: any) => {
+      expect(q.lineItems[0].type).toBe('service');
+      expect(q.lineItems[1].type).toBe('part');
+      expect(q.lineItems[2].type).toBe('labor');
+      expect(q.lineItems[3].type).toBe('misc');
+      done();
+    });
+    const req = http.expectOne('/quotes/q-1');
+    req.flush({
+      id: 'q-1',
+      quoteNumber: 'DEV-1',
+      customerId: 'c',
+      carId: 'car',
+      status: 'DRAFT',
+      issueDate: new Date().toISOString(),
+      validUntil: new Date().toISOString(),
+      currency: 'TND',
+      totalAmount: 0,
+      lineItems: [
+        { id: 'l1', type: 'SERVICE', description: 'A', quantity: 1, unitPrice: 10, totalPrice: 10 },
+        { id: 'l2', type: 'Part',    description: 'B', quantity: 1, unitPrice: 10, totalPrice: 10 },
+        { id: 'l3', type: 'labor',   description: 'C', quantity: 1, unitPrice: 10, totalPrice: 10 },
+        { id: 'l4',                  description: 'D', quantity: 1, unitPrice: 10, totalPrice: 10 },
+      ],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+  });
 });
