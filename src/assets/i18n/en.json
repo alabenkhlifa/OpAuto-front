@@ -2340,7 +2340,11 @@
       "reference": "Reference",
       "referencePlaceholder": "Check #, transaction id…",
       "notes": "Notes",
-      "submit": "Record payment"
+      "submit": "Record payment",
+      "errors": {
+        "amountRequired": "Enter an amount greater than 0.",
+        "overPayment": "Amount cannot exceed the remaining balance ({{remaining}} {{currency}})."
+      }
     },
     "templates": {
       "title": "Templates",

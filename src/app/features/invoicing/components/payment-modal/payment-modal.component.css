@@ -106,3 +106,9 @@
   padding-top: 0.5rem;
   border-top: 1px solid #f3f4f6;
 }
+
+.payment-modal__error {
+  color: #b91c1c;
+  font-size: 0.8125rem;
+  line-height: 1.25;
+}

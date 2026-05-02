@@ -574,4 +574,147 @@ describe('InvoiceDetailsComponent', () => {
       expect(toastSpy).toHaveBeenCalledWith('invoicing.detail.errors.cancelFailed');
     });
   });
+
+  describe('S-PAY-005 — Record Payment hidden / blocked on PAID invoice', () => {
+    /**
+     * Sweep C-2: the FE prevents recording payments on a PAID invoice
+     * primarily by hiding the Record Payment CTA via `canShow()`. The
+     * BE today silently accepts over-payments on PAID (no 400 emitted),
+     * so the FE guard is the user-visible defense. If the BE ever
+     * starts returning 400 for an already-paid invoice, the existing
+     * `error` branch on `onPaymentModalSubmit()` will surface the
+     * translated `paymentFailed` toast — pinned below.
+     */
+    it('canShow("recordPayment") returns false when remainingAmount === 0 (PAID)', async () => {
+      configure(makeInvoice({ status: 'paid', paidAmount: 119, remainingAmount: 0 }));
+      const fixture = TestBed.createComponent(InvoiceDetailsComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      expect(cmp.canShow('recordPayment')).toBeFalse();
+    });
+
+    it('canShow("recordPayment") returns false on SENT invoice with remainingAmount === 0', async () => {
+      // Defense-in-depth: even if a zero-remaining SENT invoice slipped
+      // through (e.g. fractional rounding), the CTA must stay hidden.
+      configure(makeInvoice({ status: 'sent', paidAmount: 119, remainingAmount: 0 }));
+      const fixture = TestBed.createComponent(InvoiceDetailsComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      expect(cmp.canShow('recordPayment')).toBeFalse();
+    });
+
+    it('error branch surfaces the translated paymentFailed toast (no raw error)', async () => {
+      // Force the addPayment observable into the error branch — mirrors
+      // the BE returning 400 "already paid" if/when that guardrail
+      // lands. The user must see a translated toast, never the raw
+      // backend message.
+      const stub = configure(makeInvoice({ status: 'sent', remainingAmount: 119 }));
+      stub.addPayment.and.returnValue({
+        subscribe: ({ error }: any) => error({ status: 400, error: { message: 'Already paid' } }),
+      } as any);
+      const fixture = TestBed.createComponent(InvoiceDetailsComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      cmp.openPaymentModal();
+      expect(cmp.paymentModalOpen()).toBeTrue();
+      const toast = (cmp as any)['toast'];
+      const toastSpy = spyOn(toast, 'error');
+      cmp.onPaymentModalSubmit({
+        amount: 119,
+        method: 'cash',
+        paymentDate: '2026-05-01',
+      } as any);
+      expect(toastSpy).toHaveBeenCalledWith('invoicing.detail.errors.paymentFailed');
+      // submitting flag must be released so the modal CTA is clickable
+      // again on a retry.
+      expect(cmp.paymentSubmitting()).toBeFalse();
+      // Modal stays open — the user can fix the value and retry without
+      // losing their input (same contract as S-PAY-015).
+      expect(cmp.paymentModalOpen()).toBeTrue();
+    });
+  });
+
+  describe('S-PAY-015 — Payment failure (network) keeps modal open with values', () => {
+    /**
+     * Sweep C-2: same network-failure pattern as S-INV-026 (B-3). The
+     * `addPayment` error branch must:
+     *   1. fire the translated `paymentFailed` toast
+     *   2. release the `paymentSubmitting` flag so buttons are clickable
+     *   3. NOT close the modal — values stay intact for a retry
+     */
+    function configureSent(addPaymentImpl: any) {
+      const stub = configure(makeInvoice({ status: 'sent', remainingAmount: 119 }));
+      stub.addPayment.and.callFake(addPaymentImpl);
+      return stub;
+    }
+
+    it('500 from BE: toast fires, modal stays open, submitting=false', async () => {
+      configureSent(() => ({
+        subscribe: ({ error }: any) => error({ status: 500 }),
+      }));
+      const fixture = TestBed.createComponent(InvoiceDetailsComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      cmp.openPaymentModal();
+      expect(cmp.paymentModalOpen()).toBeTrue();
+      const toast = (cmp as any)['toast'];
+      const toastSpy = spyOn(toast, 'error');
+      cmp.onPaymentModalSubmit({
+        amount: 50,
+        method: 'card',
+        paymentDate: '2026-05-01',
+        reference: 'CHK-123',
+        notes: 'partial',
+      } as any);
+      expect(toastSpy).toHaveBeenCalledWith('invoicing.detail.errors.paymentFailed');
+      expect(cmp.paymentSubmitting()).toBeFalse();
+      expect(cmp.paymentModalOpen()).toBeTrue();
+    });
+
+    it('network drop (status=0) treated as failure — modal stays open', async () => {
+      configureSent(() => ({
+        subscribe: ({ error }: any) => error({ status: 0 }),
+      }));
+      const fixture = TestBed.createComponent(InvoiceDetailsComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      cmp.openPaymentModal();
+      const toast = (cmp as any)['toast'];
+      const toastSpy = spyOn(toast, 'error');
+      cmp.onPaymentModalSubmit({
+        amount: 50,
+        method: 'cash',
+        paymentDate: '2026-05-01',
+      } as any);
+      expect(toastSpy).toHaveBeenCalledWith('invoicing.detail.errors.paymentFailed');
+      expect(cmp.paymentSubmitting()).toBeFalse();
+      expect(cmp.paymentModalOpen()).toBeTrue();
+    });
+
+    it('success branch closes modal and fires paymentRecorded toast', async () => {
+      // Positive control — confirms the failure-branch behaviour above
+      // is uniquely scoped to errors and not to all submissions.
+      configure(makeInvoice({ status: 'sent', remainingAmount: 119 }));
+      const fixture = TestBed.createComponent(InvoiceDetailsComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      cmp.openPaymentModal();
+      const toast = (cmp as any)['toast'];
+      const successSpy = spyOn(toast, 'success');
+      cmp.onPaymentModalSubmit({
+        amount: 50,
+        method: 'cash',
+        paymentDate: '2026-05-01',
+      } as any);
+      expect(successSpy).toHaveBeenCalledWith('invoicing.detail.toast.paymentRecorded');
+      expect(cmp.paymentModalOpen()).toBeFalse();
+      expect(cmp.paymentSubmitting()).toBeFalse();
+    });
+  });
 });

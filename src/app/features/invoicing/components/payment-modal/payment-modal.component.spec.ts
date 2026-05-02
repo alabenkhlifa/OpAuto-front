@@ -149,4 +149,173 @@ describe('PaymentModalComponent', () => {
     expect(component.form.controls.amount.value).toBe(42);
     expect(component.form.controls.reference.value).toBe('');
   });
+
+  /**
+   * Sweep C-2 — Section 7 payment edge cases.
+   *
+   * Helpers
+   *  - openWith(c): opens the modal against context `c`. Mirrors the parent's
+   *    "open intent" — bump openKey, flip isOpen, fire ngOnChanges.
+   *  - patchAndSubmit(): expects the next emit on `submit`, returning the
+   *    payload synchronously via a test-side spy.
+   */
+  function openWith(c: PaymentModalContext) {
+    component.context = c;
+    component.isOpen = true;
+    component.ngOnChanges({
+      isOpen: { currentValue: true, previousValue: false, firstChange: true, isFirstChange: () => true },
+    } as any);
+  }
+
+  describe('S-PAY-007 — Method coverage (CARD / CHECK / BANK_TRANSFER + CASH)', () => {
+    /**
+     * The modal must emit each PaymentMethod value verbatim — the parent
+     * proxies straight through to InvoiceService.addPayment which maps to
+     * the BE PaymentMethod enum (CASH | CARD | CHECK | BANK_TRANSFER).
+     * Anything else is a wire contract regression.
+     */
+    (['cash', 'card', 'check', 'bank-transfer'] as const).forEach((method) => {
+      it(`emits ${method} on submit when that chip is selected`, (done) => {
+        openWith(ctx);
+        component.selectMethod(method);
+        component.submit.subscribe((result) => {
+          expect(result.method).toBe(method);
+          expect(result.amount).toBe(250);
+          done();
+        });
+        component.onSubmit();
+      });
+    });
+
+    it('exposes all four method chips in PAYMENT_METHODS', () => {
+      // Pin the chip list — a future map regression that drops one of the
+      // four BE-supported methods would silently hide it from the UI.
+      expect(component.methods).toEqual(['cash', 'card', 'check', 'bank-transfer']);
+    });
+  });
+
+  describe('S-PAY-010 — Reference + notes are optional', () => {
+    /**
+     * Reference (check #, transaction id, etc.) and notes must accept
+     * blank submissions so a CASH payment with nothing else to record
+     * doesn't get blocked by stray validators.
+     */
+    it('submits successfully with both reference and notes left blank', (done) => {
+      openWith(ctx);
+      component.submit.subscribe((result) => {
+        expect(result.reference).toBeUndefined();
+        expect(result.notes).toBeUndefined();
+        done();
+      });
+      component.onSubmit();
+    });
+
+    it('reference and notes controls have no validators (form valid with both blank)', () => {
+      openWith(ctx);
+      const refCtrl = component.form.controls.reference;
+      const notesCtrl = component.form.controls.notes;
+      refCtrl.setValue('');
+      notesCtrl.setValue('');
+      expect(refCtrl.valid).toBeTrue();
+      expect(notesCtrl.valid).toBeTrue();
+      expect(component.form.valid).toBeTrue();
+    });
+
+    it('whitespace-only reference still emits as undefined (`v.reference || undefined`)', (done) => {
+      openWith(ctx);
+      component.form.patchValue({ reference: '' });
+      component.submit.subscribe((result) => {
+        expect(result.reference).toBeUndefined();
+        done();
+      });
+      component.onSubmit();
+    });
+  });
+
+  describe('S-PAY-012 — Over-payment blocked via Validators.max(remainingAmount)', () => {
+    /**
+     * The modal caps the amount input at the invoice's remaining balance.
+     * Submission is blocked while the amount exceeds the cap, and the
+     * inline error renders the translated `errors.overPayment` key once
+     * the field is touched.
+     */
+    it('form invalid when amount > remainingAmount', () => {
+      openWith({ ...ctx, remainingAmount: 119 });
+      component.form.patchValue({ amount: 200 });
+      expect(component.form.controls.amount.errors?.['max']).toBeTruthy();
+      expect(component.form.valid).toBeFalse();
+      expect(component.canSubmit()).toBeFalse();
+    });
+
+    it('onSubmit does not emit when amount > remainingAmount', () => {
+      openWith({ ...ctx, remainingAmount: 119 });
+      component.form.patchValue({ amount: 250 });
+      let emitted = false;
+      component.submit.subscribe(() => (emitted = true));
+      component.onSubmit();
+      expect(emitted).toBeFalse();
+      // After a blocked submit, all controls are marked touched so the
+      // inline error renders.
+      expect(component.form.controls.amount.touched).toBeTrue();
+    });
+
+    it('form valid when amount === remainingAmount (boundary)', () => {
+      openWith({ ...ctx, remainingAmount: 119 });
+      component.form.patchValue({ amount: 119 });
+      expect(component.form.valid).toBeTrue();
+      expect(component.canSubmit()).toBeTrue();
+    });
+
+    it('max validator re-applies on every reopen (remaining can change)', () => {
+      // Open #1 with remaining=250 → 200 should be valid.
+      openWith({ ...ctx, remainingAmount: 250 });
+      component.form.patchValue({ amount: 200 });
+      expect(component.form.valid).toBeTrue();
+
+      // Reopen with remaining=100 → 200 must now fail.
+      const ctx2: PaymentModalContext = { ...ctx, remainingAmount: 100 };
+      component.context = ctx2;
+      component.openKey = 2;
+      component.ngOnChanges({
+        openKey: { currentValue: 2, previousValue: 1, firstChange: false, isFirstChange: () => false },
+        context: { currentValue: ctx2, previousValue: ctx, firstChange: false, isFirstChange: () => false },
+      } as any);
+      component.form.patchValue({ amount: 200 });
+      expect(component.form.controls.amount.errors?.['max']).toBeTruthy();
+      expect(component.form.valid).toBeFalse();
+    });
+  });
+
+  describe('S-PAY-013 — Zero / negative amount blocked via Validators.min(0.01)', () => {
+    it('form invalid when amount = 0', () => {
+      openWith(ctx);
+      component.form.patchValue({ amount: 0 });
+      expect(component.form.controls.amount.errors?.['min']).toBeTruthy();
+      expect(component.form.valid).toBeFalse();
+    });
+
+    it('form invalid when amount < 0', () => {
+      openWith(ctx);
+      component.form.patchValue({ amount: -5 });
+      expect(component.form.controls.amount.errors?.['min']).toBeTruthy();
+      expect(component.form.valid).toBeFalse();
+    });
+
+    it('onSubmit does not emit when amount is non-positive', () => {
+      openWith(ctx);
+      let emitted = false;
+      component.submit.subscribe(() => (emitted = true));
+      component.form.patchValue({ amount: 0 });
+      component.onSubmit();
+      component.form.patchValue({ amount: -10 });
+      component.onSubmit();
+      expect(emitted).toBeFalse();
+    });
+
+    it('form valid at the minimum (0.01) — boundary', () => {
+      openWith(ctx);
+      component.form.patchValue({ amount: 0.01 });
+      expect(component.form.valid).toBeTrue();
+    });
+  });
 });

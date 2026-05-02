@@ -2390,7 +2390,11 @@
       "reference": "Référence",
       "referencePlaceholder": "N° chèque, transaction…",
       "notes": "Notes",
-      "submit": "Enregistrer le paiement"
+      "submit": "Enregistrer le paiement",
+      "errors": {
+        "amountRequired": "Saisissez un montant supérieur à 0.",
+        "overPayment": "Le montant ne peut pas dépasser le solde restant ({{remaining}} {{currency}})."
+      }
     },
     "templates": {
       "title": "Modèles",

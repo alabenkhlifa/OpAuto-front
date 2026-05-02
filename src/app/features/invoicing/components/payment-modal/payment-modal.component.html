@@ -32,7 +32,22 @@
 
         <label class="payment-modal__field">
           <span>{{ 'invoicing.paymentModal.amount' | translate }} *</span>
-          <input type="number" min="0" step="0.01" class="form-input" formControlName="amount" />
+          <input type="number"
+                 min="0"
+                 step="0.01"
+                 [attr.max]="context.remainingAmount"
+                 class="form-input"
+                 formControlName="amount" />
+          @if (form.controls.amount.touched && form.controls.amount.errors?.['max']) {
+            <small class="payment-modal__error">
+              {{ 'invoicing.paymentModal.errors.overPayment' | translate:{ remaining: context.remainingAmount, currency: context.currency } }}
+            </small>
+          }
+          @if (form.controls.amount.touched && (form.controls.amount.errors?.['min'] || form.controls.amount.errors?.['required'])) {
+            <small class="payment-modal__error">
+              {{ 'invoicing.paymentModal.errors.amountRequired' | translate }}
+            </small>
+          }
         </label>
 
         <label class="payment-modal__field">

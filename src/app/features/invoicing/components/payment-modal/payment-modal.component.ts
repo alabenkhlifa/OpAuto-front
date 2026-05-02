@@ -104,6 +104,18 @@ export class PaymentModalComponent implements OnChanges {
       this.context
     ) {
       this.method.set('cash');
+      // S-PAY-012: cap the amount input at the invoice's remaining
+      // balance so the submit button stays disabled when the user
+      // tries to over-pay. Re-applies on every (re)open because the
+      // remaining amount can change between opens (after a partial
+      // payment or a credit-note offset). `min(0.01)` enforces
+      // S-PAY-013 — zero / negative values can't be submitted.
+      this.form.controls.amount.setValidators([
+        Validators.required,
+        Validators.min(0.01),
+        Validators.max(this.context.remainingAmount),
+      ]);
+      this.form.controls.amount.updateValueAndValidity({ emitEvent: false });
       this.form.reset({
         amount: this.context.remainingAmount,
         paymentDate: new Date().toISOString().split('T')[0],

@@ -2392,7 +2392,11 @@
       "reference": "المرجع",
       "referencePlaceholder": "رقم شيك، رقم العملية…",
       "notes": "ملاحظات",
-      "submit": "تسجيل الدفعة"
+      "submit": "تسجيل الدفعة",
+      "errors": {
+        "amountRequired": "أدخل مبلغًا أكبر من 0.",
+        "overPayment": "لا يمكن أن يتجاوز المبلغ الرصيد المتبقي ({{remaining}} {{currency}})."
+      }
     },
     "templates": {
       "title": "النماذج",
