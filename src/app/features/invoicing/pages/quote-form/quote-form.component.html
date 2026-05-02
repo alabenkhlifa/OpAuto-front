@@ -89,7 +89,7 @@
                             [value]="line.type"
                             (change)="onLineTypeChange(i, $any($event.target).value)">
                       @for (t of lineTypes; track t) {
-                        <option [value]="t">{{ ('invoicing.form.lineTypes.' + t) | translate }}</option>
+                        <option [value]="t" [selected]="t === line.type">{{ ('invoicing.form.lineTypes.' + t) | translate }}</option>
                       }
                     </select>
                   </td>
