@@ -575,6 +575,62 @@ describe('InvoiceDetailsComponent', () => {
     });
   });
 
+  describe('S-DEL-012 — Send (re-send) gate covers issued non-cancelled statuses', () => {
+    /**
+     * Sweep C-6: the FE Send button is the entry point for re-sending an
+     * already-delivered invoice. The BE writes a fresh DeliveryLog row on
+     * each `POST /invoices/:id/deliver` call so the affordance must stay
+     * visible across SENT / VIEWED / PARTIALLY_PAID / OVERDUE / PAID and
+     * stay hidden on DRAFT / CANCELLED.
+     */
+    const visible: Array<'sent' | 'viewed' | 'partially-paid' | 'overdue' | 'paid'> = [
+      'sent',
+      'viewed',
+      'partially-paid',
+      'overdue',
+      'paid',
+    ];
+    const hidden: Array<'draft' | 'cancelled'> = ['draft', 'cancelled'];
+
+    visible.forEach((status) => {
+      it(`canShow("send") === true on ${status}`, async () => {
+        configure(makeInvoice({ status, paidAmount: status === 'paid' ? 119 : 50, remainingAmount: status === 'paid' ? 0 : 69 }));
+        const fixture = TestBed.createComponent(InvoiceDetailsComponent);
+        const cmp = fixture.componentInstance;
+        cmp.ngOnInit();
+        await fixture.whenStable();
+        expect(cmp.canShow('send')).toBeTrue();
+      });
+    });
+
+    hidden.forEach((status) => {
+      it(`canShow("send") === false on ${status}`, async () => {
+        configure(makeInvoice({ status }));
+        const fixture = TestBed.createComponent(InvoiceDetailsComponent);
+        const cmp = fixture.componentInstance;
+        cmp.ngOnInit();
+        await fixture.whenStable();
+        expect(cmp.canShow('send')).toBeFalse();
+      });
+    });
+
+    it('two consecutive onSendModalSubmit() calls each invoke deliverInvoice (no FE-side de-dupe)', async () => {
+      const stub = configure(makeInvoice({ status: 'sent', remainingAmount: 119 }));
+      stub.deliverInvoice.and.returnValue({
+        subscribe: ({ next }: any) => next({}),
+      } as any);
+      const fixture = TestBed.createComponent(InvoiceDetailsComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      cmp.openSendModal();
+      cmp.onSendModalSubmit({ channel: 'EMAIL', to: 'a@x.tn' });
+      cmp.openSendModal();
+      cmp.onSendModalSubmit({ channel: 'EMAIL', to: 'a@x.tn' });
+      expect(stub.deliverInvoice).toHaveBeenCalledTimes(2);
+    });
+  });
+
   describe('S-PAY-005 — Record Payment hidden / blocked on PAID invoice', () => {
     /**
      * Sweep C-2: the FE prevents recording payments on a PAID invoice

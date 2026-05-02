@@ -1943,6 +1943,14 @@
         "invalidPhone": "يرجى إدخال رقم هاتف تونسي صالح"
       }
     },
+    "sendModal": {
+      "preview": {
+        "subjectLabel": "الموضوع",
+        "bodyLabel": "النص",
+        "subject": "فاتورة {{number}}",
+        "body": "مرحبًا، تجد فاتورتك {{number}} مرفقة. يمكنك أيضًا الاطلاع عليها عبر الرابط في البريد الإلكتروني."
+      }
+    },
     "allInvoices": "جميع الفواتير",
     "createInvoice": "إنشاء فاتورة",
     "pendingPayment": "الدفع المعلق",

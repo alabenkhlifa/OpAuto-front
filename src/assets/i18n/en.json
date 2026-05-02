@@ -1987,6 +1987,14 @@
         "invalidPhone": "Please enter a valid Tunisia phone number"
       }
     },
+    "sendModal": {
+      "preview": {
+        "subjectLabel": "Subject",
+        "bodyLabel": "Body",
+        "subject": "Invoice {{number}}",
+        "body": "Hello, please find your invoice {{number}} attached. You can also view it online via the link in the email."
+      }
+    },
     "allInvoices": "All Invoices",
     "createInvoice": "Create Invoice",
     "pendingPayment": "Pending Payment",

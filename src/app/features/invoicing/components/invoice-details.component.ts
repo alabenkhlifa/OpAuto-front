@@ -557,7 +557,17 @@ export class InvoiceDetailsComponent implements OnInit {
       case 'previewPdf':
         return inv.status === 'draft';
       case 'send':
-        return inv.status === 'sent' || inv.status === 'viewed';
+        // S-DEL-012: re-send must be available on every issued / non-cancelled
+        // status, not just SENT/VIEWED — the BE writes a fresh DeliveryLog on
+        // each call. DRAFT is excluded because it has no number yet, and
+        // CANCELLED documents can no longer be sent.
+        return (
+          inv.status === 'sent' ||
+          inv.status === 'viewed' ||
+          inv.status === 'partially-paid' ||
+          inv.status === 'paid' ||
+          inv.status === 'overdue'
+        );
       case 'recordPayment':
         return (
           (inv.status === 'sent' ||

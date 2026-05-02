@@ -1941,6 +1941,14 @@
         "invalidPhone": "Veuillez saisir un numéro de téléphone tunisien valide"
       }
     },
+    "sendModal": {
+      "preview": {
+        "subjectLabel": "Objet",
+        "bodyLabel": "Message",
+        "subject": "Facture {{number}}",
+        "body": "Bonjour, veuillez trouver votre facture {{number}} ci-jointe. Vous pouvez aussi la consulter en ligne via le lien dans l'e-mail."
+      }
+    },
     "allInvoices": "Toutes les factures",
     "createInvoice": "Créer une facture",
     "pendingPayment": "Paiement en attente",

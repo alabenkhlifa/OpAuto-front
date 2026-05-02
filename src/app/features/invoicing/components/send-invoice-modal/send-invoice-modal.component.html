@@ -91,15 +91,25 @@
           <span *ngIf="form.controls.to.errors?.['email']">
             {{ 'invoicing.send.errors.invalidEmail' | translate }}
           </span>
-          <span *ngIf="form.controls.to.errors?.['minlength'] || form.controls.to.errors?.['maxlength']">
+          <span *ngIf="form.controls.to.errors?.['tunisianPhone'] || form.controls.to.errors?.['minlength'] || form.controls.to.errors?.['maxlength']">
             {{ 'invoicing.send.errors.invalidPhone' | translate }}
           </span>
         </div>
       </div>
 
-      <div class="preview-pane" *ngIf="context?.previewHtml">
+      <div class="preview-pane" *ngIf="context">
         <h3 class="preview-title">{{ 'invoicing.send.preview' | translate }}</h3>
-        <div class="preview-body" [innerHTML]="context!.previewHtml"></div>
+        <div class="preview-subject" data-testid="preview-subject">
+          <span class="preview-label">{{ 'invoicing.sendModal.preview.subjectLabel' | translate }}:</span>
+          <span class="preview-text">{{ previewSubject() }}</span>
+        </div>
+        <div class="preview-body" data-testid="preview-body" *ngIf="context.previewHtml; else previewBodyText" [innerHTML]="context.previewHtml"></div>
+        <ng-template #previewBodyText>
+          <div class="preview-body" data-testid="preview-body">
+            <span class="preview-label">{{ 'invoicing.sendModal.preview.bodyLabel' | translate }}:</span>
+            <span class="preview-text">{{ previewBody() }}</span>
+          </div>
+        </ng-template>
       </div>
     </form>
 

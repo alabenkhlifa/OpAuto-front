@@ -216,12 +216,35 @@
   color: #6b7280;
 }
 
+.preview-subject,
 .preview-body {
   font-size: 0.875rem;
   color: #374151;
   line-height: 1.5;
   max-height: 160px;
   overflow-y: auto;
+}
+
+.preview-subject {
+  margin-bottom: 0.375rem;
+  font-weight: 500;
+}
+
+.preview-label {
+  display: inline-block;
+  margin-right: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+}
+
+.preview-text {
+  color: #374151;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 .submit-spinner {
