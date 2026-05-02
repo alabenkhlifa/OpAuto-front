@@ -462,4 +462,53 @@ describe('PaymentModalComponent', () => {
       expect(emits.length).toBe(1);
     });
   });
+
+  /**
+   * BUG-100 (Sweep C-17) — sticky-footer layout regression.
+   *
+   * Previously the dialog's `max-height: 90vh` plus body-only flow meant
+   * the action buttons sat below the visible viewport on iPhone landscape
+   * (667×375). Fix moves scrolling onto `.payment-modal__body` and pins
+   * `.payment-modal__footer` with `position: sticky; bottom: 0`.
+   *
+   * The spec is class-based (lock the contract via the rendered template)
+   * rather than measuring `getBoundingClientRect` — the latter is fragile
+   * under Karma's headless DPR and would tie the spec to the test runner.
+   * The live walk in the sweep validates the actual rendered behaviour.
+   */
+  describe('BUG-100 — sticky footer layout (landscape mobile)', () => {
+    it('renders the footer inside the scrolling body so it can be sticky', () => {
+      component.context = ctx;
+      component.isOpen = true;
+      component.ngOnChanges({
+        isOpen: { currentValue: true, previousValue: false, firstChange: true, isFirstChange: () => true },
+      } as any);
+      fixture.detectChanges();
+
+      const body = fixture.nativeElement.querySelector('.payment-modal__body');
+      const footer = fixture.nativeElement.querySelector('.payment-modal__footer');
+      expect(body).withContext('body element rendered').toBeTruthy();
+      expect(footer).withContext('footer element rendered').toBeTruthy();
+      // Footer is a child of the body so the sticky positioning takes
+      // effect against the body's scroll context (not the dialog).
+      expect(body.contains(footer)).withContext('footer is inside the scrolling body').toBeTrue();
+    });
+
+    it('exposes both Submit and Cancel buttons in the footer (DOM contract)', () => {
+      component.context = ctx;
+      component.isOpen = true;
+      component.ngOnChanges({
+        isOpen: { currentValue: true, previousValue: false, firstChange: true, isFirstChange: () => true },
+      } as any);
+      fixture.detectChanges();
+
+      const footer = fixture.nativeElement.querySelector('.payment-modal__footer');
+      const buttons = footer?.querySelectorAll('button') ?? [];
+      // Cancel + Submit — both must always be present so the sticky
+      // footer can keep them both in view in landscape phones.
+      expect(buttons.length).toBe(2);
+      expect((buttons[0] as HTMLButtonElement).type).toBe('button'); // Cancel
+      expect((buttons[1] as HTMLButtonElement).type).toBe('submit'); // Submit
+    });
+  });
 });

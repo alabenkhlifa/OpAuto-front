@@ -45,8 +45,7 @@
             <span class="invoice-form-field__label">{{ 'invoicing.form.fields.customer' | translate }} *</span>
             <select class="form-select"
                     formControlName="customerId"
-                    (change)="onCustomerChange()"
-                    [disabled]="isLocked()">
+                    (change)="onCustomerChange()">
               <option value="">{{ 'invoicing.form.placeholder.selectCustomer' | translate }}</option>
               @for (c of customers(); track c.id) {
                 <option [value]="c.id">{{ getCustomerLabel(c) }}</option>
@@ -58,8 +57,7 @@
             <span class="invoice-form-field__label">{{ 'invoicing.form.fields.vehicle' | translate }} *</span>
             <select class="form-select"
                     formControlName="carId"
-                    (change)="onCarChange()"
-                    [disabled]="isLocked() || !form.value.customerId">
+                    (change)="onCarChange()">
               <option value="">{{ 'invoicing.form.placeholder.selectVehicle' | translate }}</option>
               @for (c of filteredCars(); track c.id) {
                 <option [value]="c.id">{{ getCarLabel(c) }}</option>
@@ -71,8 +69,7 @@
             <span class="invoice-form-field__label">{{ 'invoicing.form.fields.linkJob' | translate }}</span>
             <select class="form-select"
                     formControlName="maintenanceJobId"
-                    (change)="onJobChange()"
-                    [disabled]="isLocked() || !form.value.carId">
+                    (change)="onJobChange()">
               <option value="">{{ 'invoicing.form.placeholder.selectJob' | translate }}</option>
               @for (j of filteredJobs(); track j.id) {
                 <option [value]="j.id">{{ getJobLabel(j) }}</option>
@@ -333,8 +330,7 @@
         <textarea class="form-input"
                   rows="3"
                   formControlName="notes"
-                  [placeholder]="'invoicing.form.placeholder.notes' | translate"
-                  [disabled]="isLocked()"></textarea>
+                  [placeholder]="'invoicing.form.placeholder.notes' | translate"></textarea>
       </section>
     </div>
 
@@ -381,7 +377,7 @@
 
         <label class="invoice-form-field">
           <span class="invoice-form-field__label">{{ 'invoicing.form.fields.dueDate' | translate }}</span>
-          <input type="date" class="form-input" formControlName="dueDate" [disabled]="isLocked()" />
+          <input type="date" class="form-input" formControlName="dueDate" />
         </label>
 
         <p class="invoice-form-summary__terms">

@@ -1376,4 +1376,114 @@ describe('InvoiceFormComponent', () => {
       expect(toastSpy).not.toHaveBeenCalledWith('invoicing.form.errors.saveLocked');
     });
   });
+
+  /**
+   * BUG-101 (Sweep C-17) — drive `formControlName`-bearing controls'
+   * disabled state from the component class via `effect()` instead of
+   * a `[disabled]` template binding. Mixing `[disabled]` with reactive
+   * forms triggers Angular's "Reactive form … disabled attribute"
+   * warning on every render. Predicates:
+   *   - customerId      → isLocked()
+   *   - carId           → isLocked() OR no customer
+   *   - maintenanceJobId → isLocked() OR no car
+   *   - notes / dueDate → isLocked()
+   *
+   * The disable/enable runs in a `Promise.resolve().then(...)` microtask
+   * to avoid `ExpressionChangedAfterItHasBeenCheckedError`, so each spec
+   * uses `await Promise.resolve()` to drain the queue.
+   */
+  describe('BUG-101 — formControlName disabled-state via effect()', () => {
+    /**
+     * Effect-driven disable/enable:
+     *  1. The signal-tracked sources change (`isLocked()` / `formValue()`)
+     *  2. `TestBed.flushEffects()` runs the queued effects synchronously
+     *     (the template doesn't render in this spec — see the file-level
+     *     "template-agnostic" note above — so we can't rely on
+     *     `fixture.detectChanges()` to flush effects)
+     *  3. The effect schedules a microtask via `Promise.resolve().then(...)`
+     *     to apply `control.disable()` / `enable()` (avoids `ExpressionChangedAfterItHasBeenCheckedError`)
+     *  4. `await Promise.resolve()` drains that microtask before assertions.
+     */
+    async function flushEffectsAsync() {
+      TestBed.flushEffects();
+      // Drain microtasks at least twice. The effect schedules a microtask
+      // via `Promise.resolve().then(...)`, and any cascading control
+      // operations inside that microtask may queue follow-on work.
+      await Promise.resolve();
+      await Promise.resolve();
+    }
+
+    it('cascading disabled: carId disabled when customerId is empty, enabled when customer is picked', async () => {
+      configure();
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      await flushEffectsAsync();
+
+      expect(cmp.form.get('carId')?.disabled)
+        .withContext('carId disabled while customerId is empty').toBeTrue();
+
+      cmp.form.patchValue({ customerId: 'c1' });
+      await fixture.whenStable();
+      await flushEffectsAsync();
+
+      expect(cmp.form.get('carId')?.enabled)
+        .withContext('carId enabled once a customer is picked').toBeTrue();
+    });
+
+    it('cascading disabled: maintenanceJobId disabled when carId is empty, enabled when car is picked', async () => {
+      configure();
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      await flushEffectsAsync();
+
+      expect(cmp.form.get('maintenanceJobId')?.disabled)
+        .withContext('maintenanceJobId disabled while carId is empty').toBeTrue();
+
+      cmp.form.patchValue({ customerId: 'c1', carId: 'car1' });
+      await fixture.whenStable();
+      await flushEffectsAsync();
+
+      expect(cmp.form.get('maintenanceJobId')?.enabled)
+        .withContext('maintenanceJobId enabled once a car is picked').toBeTrue();
+    });
+
+    it('locked invoice disables every formControlName-bearing control (customerId / carId / maintenanceJobId / notes / dueDate)', async () => {
+      configure({
+        route: { snapshot: { paramMap: { get: () => 'i1' }, queryParamMap: { get: () => null } } },
+      });
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      // The default fixture loads a `status: 'sent'` invoice so isLocked() is true.
+      await flushEffectsAsync();
+      expect(cmp.isLocked()).toBeTrue();
+      expect(cmp.form.get('customerId')?.disabled).toBeTrue();
+      expect(cmp.form.get('carId')?.disabled).toBeTrue();
+      expect(cmp.form.get('maintenanceJobId')?.disabled).toBeTrue();
+      expect(cmp.form.get('notes')?.disabled).toBeTrue();
+      expect(cmp.form.get('dueDate')?.disabled).toBeTrue();
+    });
+
+    it('unlocked DRAFT invoice keeps notes + dueDate enabled (so the user can edit)', async () => {
+      configure({
+        route: { snapshot: { paramMap: { get: () => 'i1' }, queryParamMap: { get: () => null } } },
+        invoice: { status: 'draft', lineItems: [] },
+      });
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      await flushEffectsAsync();
+
+      expect(cmp.isLocked()).toBeFalse();
+      expect(cmp.form.get('notes')?.enabled).toBeTrue();
+      expect(cmp.form.get('dueDate')?.enabled).toBeTrue();
+      expect(cmp.form.get('customerId')?.enabled).toBeTrue();
+    });
+  });
 });

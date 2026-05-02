@@ -3,6 +3,7 @@ import {
   OnInit,
   Signal,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -257,6 +258,56 @@ export class InvoiceFormComponent implements OnInit {
     });
     (this as any).formValue = toSignal(this.form.valueChanges, {
       initialValue: this.form.getRawValue(),
+    });
+
+    // BUG-101: drive `formControlName` disabled state from the component
+    // class via `effect()` instead of a `[disabled]` template binding.
+    // Mixing `[disabled]` with reactive forms triggers Angular's
+    // "Reactive form … disabled attribute" warning on every render. We
+    // mirror the locked + cascading-dropdown predicates here:
+    //   - customerId  → disabled when isLocked()
+    //   - carId       → disabled when isLocked() OR no customer selected
+    //   - maintenanceJobId → disabled when isLocked() OR no car selected
+    //   - notes       → disabled when isLocked()
+    //   - dueDate     → disabled when isLocked()
+    //
+    // We track the `formValue()` signal so the effect re-runs on every
+    // user edit, but read the actual control values via `getRawValue()`
+    // so disabled controls (which don't emit `valueChanges`) still
+    // contribute their current value to the cascade decision.
+    //
+    // Wrapped in a microtask via `Promise.resolve().then(...)` so the
+    // disable/enable call happens AFTER the current change-detection
+    // pass — prevents `ExpressionChangedAfterItHasBeenCheckedError`
+    // when the effect first fires during initial CD.
+    effect(() => {
+      const locked = this.isLocked();
+      // Subscribe to the form-value signal so the effect re-fires on
+      // any user edit. The actual cascade keys are read from the raw
+      // form value below (raw includes disabled controls' values).
+      this.formValue();
+      Promise.resolve().then(() => {
+        const raw = this.form.getRawValue() as {
+          customerId?: string;
+          carId?: string;
+        };
+        const customerId = raw.customerId;
+        const carId = raw.carId;
+        const setDisabled = (name: string, shouldDisable: boolean) => {
+          const ctrl = this.form.get(name);
+          if (!ctrl) return;
+          if (shouldDisable && ctrl.enabled) {
+            ctrl.disable({ emitEvent: false });
+          } else if (!shouldDisable && ctrl.disabled) {
+            ctrl.enable({ emitEvent: false });
+          }
+        };
+        setDisabled('customerId', locked);
+        setDisabled('carId', locked || !customerId);
+        setDisabled('maintenanceJobId', locked || !carId);
+        setDisabled('notes', locked);
+        setDisabled('dueDate', locked);
+      });
     });
   }
 
