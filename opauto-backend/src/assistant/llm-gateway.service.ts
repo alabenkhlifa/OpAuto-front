@@ -178,15 +178,20 @@ interface GeminiResponse {
 /**
  * Provider-agnostic completion gateway.
  *
- * Order: Gemini (250k TPM, free, primary) → OVH (paid pay-as-you-go,
- * Meta-Llama-3.3-70B for reliable multi-step tool calls — replaces Groq
- * llama-3.1-8b which hallucinated action claims) → Mistral (1B tokens/month
- * free safety net) → Cerebras (1M tokens/day backup) → Claude (quality, last
- * resort). On any recoverable failure (network, non-2xx, malformed tool-call
- * JSON) we fall through. If everything is unavailable or unconfigured, we
- * return a `mock` result with content rather than throwing — the orchestrator
- * depends on always receiving a result so it can persist a graceful assistant
- * message.
+ * Order: OVH (paid pay-as-you-go, Meta-Llama-3.3-70B; the floor — no quota
+ * cliffs, no per-minute TPM ceiling, so it should never legitimately fail) →
+ * Gemini (250k TPM free) → Mistral (1B tokens/month free) → Cerebras
+ * (1M tokens/day) → Claude (quality, last resort). OVH is primary because the
+ * 2026-05-02 cascade incident — Gemini RPD exhausted, OVH model-id misconfig,
+ * Mistral 400 on tool-message ordering, Cerebras RPM saturated, Claude key
+ * empty — produced a mock-fallback reply ("I'm sorry — I couldn't reach the
+ * AI service") even though the OVH spend was healthy. Putting OVH first means
+ * a quota-saturated free-tier provider can never gate the user out.
+ *
+ * On any recoverable failure (network, non-2xx, malformed tool-call JSON) we
+ * fall through. If everything is unavailable or unconfigured, we return a
+ * `mock` result with content rather than throwing — the orchestrator depends
+ * on always receiving a result so it can persist a graceful assistant message.
  *
  * Groq llama-3.1-8b removed from the active chain after a 2026-05-02 incident
  * where it produced "Email sent to your personal email address" text without
@@ -246,32 +251,32 @@ export class LlmGatewayService {
       };
     }
 
-    if (this.geminiKey) {
-      const gem = await this.callGemini(request);
-      if (gem.ok) {
-        const validated = this.runValidator(gem.result, request);
-        if (validated.ok) return validated.result;
-        this.logger.warn(
-          `Gemini result rejected (${(validated as { ok: false; reason: string }).reason}); falling back to OVH`,
-        );
-      } else {
-        this.logger.warn(
-          `Gemini failed (${(gem as { reason: string }).reason}); falling back to OVH`,
-        );
-      }
-    }
-
     if (this.ovhKey) {
       const ovh = await this.callOvh(request);
       if (ovh.ok) {
         const validated = this.runValidator(ovh.result, request);
         if (validated.ok) return validated.result;
         this.logger.warn(
-          `OVH result rejected (${(validated as { ok: false; reason: string }).reason}); falling back to Mistral`,
+          `OVH result rejected (${(validated as { ok: false; reason: string }).reason}); falling back to Gemini`,
         );
       } else {
         this.logger.warn(
-          `OVH failed (${(ovh as { reason: string }).reason}); falling back to Mistral`,
+          `OVH failed (${(ovh as { reason: string }).reason}); falling back to Gemini`,
+        );
+      }
+    }
+
+    if (this.geminiKey) {
+      const gem = await this.callGemini(request);
+      if (gem.ok) {
+        const validated = this.runValidator(gem.result, request);
+        if (validated.ok) return validated.result;
+        this.logger.warn(
+          `Gemini result rejected (${(validated as { ok: false; reason: string }).reason}); falling back to Mistral`,
+        );
+      } else {
+        this.logger.warn(
+          `Gemini failed (${(gem as { reason: string }).reason}); falling back to Mistral`,
         );
       }
     }
@@ -446,7 +451,7 @@ export class LlmGatewayService {
   ): Promise<
     { ok: true; result: LlmCompletionResult } | { ok: false; reason: string }
   > {
-    return this.callOpenAiCompatible({
+    const first = await this.callOpenAiCompatible({
       provider: 'ovh',
       url: this.ovhUrl,
       apiKey: this.ovhKey!,
@@ -454,6 +459,35 @@ export class LlmGatewayService {
       modelPattern: OVH_MODEL_PATTERN,
       request,
     });
+    if (first.ok) return first;
+
+    // OVH is pay-as-you-go — it should never fail under normal operation, so a
+    // failure here is almost always a misconfigured OVH_MODEL (catalog id
+    // typo, decommissioned model, or a Mistral.ai-format id pasted into the
+    // OVH env). Self-heal by retrying ONCE with OVH_DEFAULT_MODEL when the
+    // configured model is non-default and OVH responded 404 model-not-found.
+    // Loudly warn so ops sees the misconfig in container logs.
+    const reason = (first as { reason: string }).reason;
+    const isModelNotFound =
+      reason.startsWith('http_404') &&
+      /model.*(does not exist|not found|unknown)|unknown.*model/i.test(reason);
+    if (isModelNotFound && this.ovhModel !== OVH_DEFAULT_MODEL) {
+      this.logger.warn(
+        `OVH rejected configured model "${this.ovhModel}" (404 model-not-found). ` +
+          `Retrying with default "${OVH_DEFAULT_MODEL}". ` +
+          `Fix OVH_MODEL in /opt/opauto/.env to silence this warning.`,
+      );
+      return this.callOpenAiCompatible({
+        provider: 'ovh',
+        url: this.ovhUrl,
+        apiKey: this.ovhKey!,
+        defaultModel: OVH_DEFAULT_MODEL,
+        modelPattern: OVH_MODEL_PATTERN,
+        request,
+      });
+    }
+
+    return first;
   }
 
   // ── Cerebras ─────────────────────────────────────────────────────────

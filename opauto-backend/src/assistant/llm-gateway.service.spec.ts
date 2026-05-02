@@ -73,6 +73,63 @@ describe('LlmGatewayService', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  // Provider order: OVH is the FLOOR (pay-as-you-go, no quota cliff). When
+  // both OVH and Gemini are configured, OVH must be tried first — putting a
+  // free-tier provider in front lets a 429 RPD/RPM gate the user out even
+  // though OVH is healthy. Verified by the 2026-05-02 cascade incident where
+  // Gemini exhausted its daily quota and the chain spilled all the way to a
+  // mock fallback while OVH was untouched.
+  it('calls OVH first even when Gemini is also configured', async () => {
+    const fetchMock: FetchMock = jest.fn().mockResolvedValueOnce(
+      okJson({
+        choices: [{ message: { role: 'assistant', content: 'ovh primary' } }],
+      }),
+    );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    const service = await makeService({
+      OVH_API_KEY: 'o',
+      GEMINI_API_KEY: 'g',
+    });
+
+    const result = await service.complete(baseRequest);
+
+    expect(result.provider).toBe('ovh');
+    expect(result.content).toBe('ovh primary');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url] = fetchMock.mock.calls[0];
+    expect(String(url)).toMatch(/kepler\.ai\.cloud\.ovh\.net/);
+    expect(String(url)).not.toMatch(/generativelanguage\.googleapis\.com/);
+  });
+
+  it('falls back to Gemini when OVH fails and Gemini is configured', async () => {
+    const fetchMock: FetchMock = jest
+      .fn()
+      .mockResolvedValueOnce(errJson(503, { error: { message: 'down' } }))
+      .mockResolvedValueOnce(
+        okJson({
+          candidates: [
+            {
+              content: { parts: [{ text: 'gemini rescued' }] },
+            },
+          ],
+        }),
+      );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    const service = await makeService({
+      OVH_API_KEY: 'o',
+      GEMINI_API_KEY: 'g',
+    });
+
+    const result = await service.complete(baseRequest);
+
+    expect(result.provider).toBe('gemini');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(String(fetchMock.mock.calls[0][0])).toMatch(/ovh\.net/);
+    expect(String(fetchMock.mock.calls[1][0])).toMatch(
+      /generativelanguage\.googleapis\.com/,
+    );
+  });
+
   it('returns an OVH result when OVH replies with text', async () => {
     const fetchMock: FetchMock = jest.fn().mockResolvedValueOnce(
       okJson({
@@ -133,6 +190,83 @@ describe('LlmGatewayService', () => {
 
     const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
     expect(body.model).toBe('Mistral-Small-3_2-24B-Instruct-2506');
+  });
+
+  // Regression: prod had OVH_MODEL="Mistral-Small-3_2-24B-Instruct-2506" (a
+  // Mistral.ai catalog id pasted into the OVH env), which OVH 404s with
+  // "model does not exist". OVH is pay-as-you-go and is supposed to be the
+  // floor of the provider chain — when it fails, callers cascade through
+  // free-tier providers that may all be quota-saturated. Self-heal by
+  // retrying once with the built-in default model.
+  it('retries with default OVH model when configured OVH_MODEL 404s as not-found', async () => {
+    const fetchMock: FetchMock = jest
+      .fn()
+      .mockResolvedValueOnce(
+        errJson(404, {
+          error: {
+            message:
+              'The model `Mistral-Small-3_2-24B-Instruct-2506` does not exist',
+          },
+        }),
+      )
+      .mockResolvedValueOnce(
+        okJson({
+          choices: [{ message: { role: 'assistant', content: 'recovered' } }],
+          usage: { prompt_tokens: 8, completion_tokens: 4 },
+        }),
+      );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    const service = await makeService({
+      OVH_API_KEY: 'o',
+      OVH_MODEL: 'Mistral-Small-3_2-24B-Instruct-2506',
+    });
+
+    const result = await service.complete(baseRequest);
+
+    expect(result.provider).toBe('ovh');
+    expect(result.content).toBe('recovered');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const firstBody = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
+    const retryBody = JSON.parse(String(fetchMock.mock.calls[1][1]?.body));
+    expect(firstBody.model).toBe('Mistral-Small-3_2-24B-Instruct-2506');
+    expect(retryBody.model).toBe('Meta-Llama-3_3-70B-Instruct');
+  });
+
+  it('does NOT retry OVH when 404 is not model-not-found', async () => {
+    const fetchMock: FetchMock = jest
+      .fn()
+      .mockResolvedValueOnce(
+        errJson(404, { error: { message: 'route not found' } }),
+      );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    const service = await makeService({
+      OVH_API_KEY: 'o',
+      OVH_MODEL: 'Mistral-Small-3_2-24B-Instruct-2506',
+    });
+
+    const result = await service.complete(baseRequest);
+
+    // Single OVH attempt; cascades to mock since no other providers configured.
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(result.provider).toBe('mock');
+  });
+
+  it('does NOT retry OVH when configured model is already the default', async () => {
+    const fetchMock: FetchMock = jest
+      .fn()
+      .mockResolvedValueOnce(
+        errJson(404, { error: { message: 'model does not exist' } }),
+      );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    const service = await makeService({
+      OVH_API_KEY: 'o',
+      OVH_MODEL: 'Meta-Llama-3_3-70B-Instruct',
+    });
+
+    const result = await service.complete(baseRequest);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(result.provider).toBe('mock');
   });
 
   // Regression: docker-compose maps `OVH_MODEL: ${OVH_MODEL:-}`, which forwards
