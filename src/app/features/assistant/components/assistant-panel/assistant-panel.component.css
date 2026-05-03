@@ -125,6 +125,14 @@
   display: none;
 }
 
+/*
+ * Drawer slot — covers the entire panel so the projected drawer can
+ * render its own backdrop + sliding aside. Pointer-events is `none` on
+ * the slot so clicks pass through to the chat when no drawer is rendered;
+ * the drawer component itself overrides `pointer-events: auto` on its
+ * own `:host`, which works across the projection boundary that Angular's
+ * view encapsulation otherwise blocks.
+ */
 .assistant-panel__drawer {
   position: absolute;
   inset: 0;
@@ -133,8 +141,4 @@
 
 .assistant-panel__drawer:empty {
   display: none;
-}
-
-.assistant-panel__drawer > * {
-  pointer-events: auto;
 }

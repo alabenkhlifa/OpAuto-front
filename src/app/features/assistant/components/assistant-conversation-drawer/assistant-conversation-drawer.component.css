@@ -1,3 +1,18 @@
+/*
+ * The host sits inside the panel's `[data-slot='drawer']` projection, which
+ * is `position: absolute; inset: 0; pointer-events: none` so the chat
+ * underneath stays clickable while the drawer is hidden. Once the drawer
+ * renders content (@if (open())), we re-enable pointer-events on the host
+ * so the backdrop and the close button receive clicks.
+ *
+ * View-encapsulation note: the panel's `.assistant-panel__drawer > *` rule
+ * cannot reach this host (different ngcontent attribute), so this `:host`
+ * rule — owned by the drawer — is what actually wires pointer-events.
+ */
+:host {
+  pointer-events: auto;
+}
+
 .conv-drawer-backdrop {
   position: absolute;
   inset: 0;
