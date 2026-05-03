@@ -178,4 +178,54 @@ describe('leak-detector', () => {
       expect(err.message).toContain('cerebras');
     });
   });
+
+  describe('I-013 — bare-name JSON detection (B-11 dispatch_agent leak)', () => {
+    const knownNames = new Set([
+      'dispatch_agent',
+      'load_skill',
+      'list_at_risk_customers',
+      'list_maintenance_due',
+    ]);
+
+    it('catches `{"name":"dispatch_agent","input":...}` shapes when known names are supplied', () => {
+      const content =
+        'Here is the analysis: {"name":"dispatch_agent","input":"audit","reason":"deep dive"}';
+      // Without knownNames the legacy detector misses it.
+      expect(detectToolCallLeak(content)).toBeNull();
+      // With knownNames it is detected as raw_json.
+      const leak = detectToolCallLeak(content, knownNames);
+      expect(leak).not.toBeNull();
+      expect(leak!.kind).toBe('raw_json');
+      expect(leak!.matches.length).toBe(1);
+      expect(leak!.matches[0]).toContain('dispatch_agent');
+    });
+
+    it('catches `{"name":"<known>","arguments":{...}}` even without "type":"function"', () => {
+      const content =
+        'Result: {"name":"list_maintenance_due","arguments":{"withinDays":30}}';
+      const leak = detectToolCallLeak(content, knownNames);
+      expect(leak).not.toBeNull();
+      expect(leak!.matches[0]).toContain('list_maintenance_due');
+    });
+
+    it('does NOT match objects whose name is not a known tool', () => {
+      const content =
+        'My favorite chair: {"name":"dining_chair","arguments":{"legs":4}}';
+      expect(detectToolCallLeak(content, knownNames)).toBeNull();
+    });
+
+    it('scrubLeakFromContent removes the bare-name JSON when knownNames is supplied', () => {
+      const content =
+        'Here is the analysis. {"name":"dispatch_agent","input":"audit","reason":"x"}; And it is done.';
+      const scrubbed = scrubLeakFromContent(content, knownNames);
+      expect(scrubbed).toBe('Here is the analysis. And it is done.');
+    });
+
+    it('scrubLeakFromContent without knownNames does not strip bare-name JSON (legacy behaviour preserved)', () => {
+      const content =
+        'Hello {"name":"dispatch_agent","input":"audit","reason":"x"} world';
+      // Without the I-013 hint, the bare shape stays put.
+      expect(scrubLeakFromContent(content)).toContain('dispatch_agent');
+    });
+  });
 });

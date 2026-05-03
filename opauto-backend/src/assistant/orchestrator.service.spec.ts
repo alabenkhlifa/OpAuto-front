@@ -73,6 +73,7 @@ const makeTools = (
         parameters: { type: 'object', properties: {} },
       })),
     ),
+    listAllNames: jest.fn().mockReturnValue([...toolNames]),
     get,
     validateArgs: jest.fn().mockReturnValue({ valid: true }),
     resolveBlastTier: jest

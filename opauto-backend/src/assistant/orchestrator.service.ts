@@ -1260,8 +1260,19 @@ export class OrchestratorService {
   ): (result: LlmCompletionResult) => LlmValidationOutcome {
     const toolNames = new Set<string>((offeredTools ?? []).map((t) => t.name));
     const wasOfferedTools = toolNames.size > 0;
+    // I-013 — also scrub bare `{"name":"<known>","input":...}` leaks on
+    // compose-only turns. The orchestrator's pseudo-tools (`load_skill`,
+    // `dispatch_agent`) and every registered real tool count as "known".
+    // Without this, B-11 leaked `{"name":"dispatch_agent","input":"…"}` raw
+    // to the user even after the agent had finished.
+    const allKnownNames = new Set<string>([
+      RESERVED_LOAD_SKILL,
+      RESERVED_DISPATCH_AGENT,
+      ...toolNames,
+      ...this.tools.listAllNames(),
+    ]);
     return (result) => {
-      const leak = detectToolCallLeak(result.content);
+      const leak = detectToolCallLeak(result.content, allKnownNames);
       if (!leak) {
         return { ok: true, result };
       }
@@ -1270,7 +1281,7 @@ export class OrchestratorService {
         // Either the model made a structured call (and incidentally dumped
         // JSON), or this is a compose-only turn where retrying buys us
         // nothing. Scrub and pass through.
-        const scrubbed = scrubLeakFromContent(result.content);
+        const scrubbed = scrubLeakFromContent(result.content, allKnownNames);
         this.logger.warn(
           `assistant.leak.scrubbed provider=${result.provider} kind=${leak.kind} count=${leak.matches.length} hadStructured=${result.toolCalls.length > 0} offeredTools=${wasOfferedTools}`,
         );
@@ -1281,7 +1292,7 @@ export class OrchestratorService {
       // to salvage one clean call.
       const salvaged = salvageToolCall(leak, toolNames);
       if (salvaged) {
-        const scrubbed = scrubLeakFromContent(result.content);
+        const scrubbed = scrubLeakFromContent(result.content, allKnownNames);
         this.logger.warn(
           `assistant.leak.salvaged provider=${result.provider} kind=${leak.kind} tool=${salvaged.name}`,
         );

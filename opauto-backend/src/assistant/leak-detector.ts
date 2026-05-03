@@ -38,8 +38,25 @@ const XML_FUNCTION_TAG_RE =
 const RAW_FUNCTION_OBJECT_START_RE =
   /\{\s*"type"\s*:\s*"function"\s*,\s*"name"\s*:/g;
 
-/** Detect tool-call-shaped text leaks anywhere in the content. */
-export function detectToolCallLeak(content: string | null): DetectedLeak | null {
+// I-013 — secondary anchor that catches the shape some compose-only turns leak
+// when the model dumps a tool/pseudo-tool/agent call WITHOUT the
+// `"type":"function"` prefix (e.g. `{"name":"dispatch_agent","input":"...",
+// "reason":"..."}` — observed in B-11). We anchor on `"name":"<x>"` followed
+// by an args-shaped key (`arguments` / `parameters` / `input` / `args`) so we
+// don't match every JSON object that happens to have a `name` field.
+const RAW_NAMED_CALL_START_RE =
+  /\{\s*"name"\s*:\s*"([A-Za-z_][A-Za-z0-9_-]*)"\s*,\s*"(?:arguments|parameters|input|args)"\s*:/g;
+
+/** Detect tool-call-shaped text leaks anywhere in the content. When
+ *  `knownNames` is supplied, ALSO detects bare-name JSON shapes like
+ *  `{"name":"<x>","input":...}` where `<x>` is a registered tool, skill, or
+ *  agent — this catches the dispatch_agent / load_skill leaks that don't have
+ *  the `"type":"function"` prefix.
+ */
+export function detectToolCallLeak(
+  content: string | null,
+  knownNames?: ReadonlySet<string>,
+): DetectedLeak | null {
   if (!content) return null;
   const xml = [...content.matchAll(XML_FUNCTION_TAG_RE)].map((m) => m[0]);
   if (xml.length > 0) {
@@ -48,6 +65,12 @@ export function detectToolCallLeak(content: string | null): DetectedLeak | null 
   const raw = matchAllRawFunctionObjects(content);
   if (raw.length > 0) {
     return { kind: 'raw_json', matches: raw };
+  }
+  if (knownNames && knownNames.size > 0) {
+    const named = matchAllRawNamedCalls(content, knownNames);
+    if (named.length > 0) {
+      return { kind: 'raw_json', matches: named };
+    }
   }
   return null;
 }
@@ -78,7 +101,10 @@ export function salvageToolCall(
  * the structured tool_calls path worked but the model ALSO inlined a JSON dump.
  * Trims leftover whitespace but otherwise preserves prose.
  */
-export function scrubLeakFromContent(content: string | null): string | null {
+export function scrubLeakFromContent(
+  content: string | null,
+  knownNames?: ReadonlySet<string>,
+): string | null {
   if (!content) return content;
   // Strip XML tags first.
   let scrubbed = content.replace(XML_FUNCTION_TAG_RE, '');
@@ -94,6 +120,18 @@ export function scrubLeakFromContent(content: string | null): string | null {
       consume++;
     }
     scrubbed = scrubbed.slice(0, start) + scrubbed.slice(consume);
+  }
+  // Strip bare `{"name":"<known>","input":...}` shapes too (I-013, B-11).
+  if (knownNames && knownNames.size > 0) {
+    const namedRanges = findRawNamedCallRanges(scrubbed, knownNames);
+    for (let i = namedRanges.length - 1; i >= 0; i--) {
+      const [start, end] = namedRanges[i];
+      let consume = end + 1;
+      while (consume < scrubbed.length && /[\s;]/.test(scrubbed[consume])) {
+        consume++;
+      }
+      scrubbed = scrubbed.slice(0, start) + scrubbed.slice(consume);
+    }
   }
   scrubbed = scrubbed
     .replace(/[ \t]+\n/g, '\n')
@@ -198,6 +236,33 @@ function matchAllRawFunctionObjects(content: string): string[] {
   return findRawFunctionObjectRanges(content).map(([s, e]) =>
     content.slice(s, e + 1),
   );
+}
+
+function matchAllRawNamedCalls(
+  content: string,
+  knownNames: ReadonlySet<string>,
+): string[] {
+  return findRawNamedCallRanges(content, knownNames).map(([s, e]) =>
+    content.slice(s, e + 1),
+  );
+}
+
+function findRawNamedCallRanges(
+  content: string,
+  knownNames: ReadonlySet<string>,
+): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  for (const anchor of content.matchAll(RAW_NAMED_CALL_START_RE)) {
+    const start = anchor.index ?? -1;
+    if (start < 0) continue;
+    const callName = anchor[1];
+    if (!knownNames.has(callName)) continue;
+    const end = findMatchingBrace(content, start);
+    if (end > start) {
+      out.push([start, end]);
+    }
+  }
+  return out;
 }
 
 function findRawFunctionObjectRanges(content: string): Array<[number, number]> {

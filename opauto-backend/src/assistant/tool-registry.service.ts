@@ -69,6 +69,15 @@ export class ToolRegistryService {
     return this.tools.get(name);
   }
 
+  /**
+   * Names of every registered tool, regardless of role/module gating. Used by
+   * the orchestrator's leak detector (I-013) to identify bare-name tool-call
+   * dumps on compose-only turns.
+   */
+  listAllNames(): string[] {
+    return Array.from(this.tools.keys());
+  }
+
   listForUser(ctx: AssistantUserContext): ToolDescriptor[] {
     const descriptors: ToolDescriptor[] = [];
     for (const tool of this.tools.values()) {
