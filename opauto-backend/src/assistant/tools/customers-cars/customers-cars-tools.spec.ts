@@ -512,9 +512,14 @@ describe('Customers + Cars tools', () => {
       expect(registry.validateArgs('find_customer', { query: 'ok' }).valid).toBe(true);
     });
 
-    it('rejects get_customer without customerId', () => {
+    it('rejects get_customer without customerId or with non-uuid customerId (I-012)', () => {
       expect(registry.validateArgs('get_customer', {}).valid).toBe(false);
-      expect(registry.validateArgs('get_customer', { customerId: 'x' }).valid).toBe(true);
+      expect(registry.validateArgs('get_customer', { customerId: 'x' }).valid).toBe(false);
+      expect(
+        registry.validateArgs('get_customer', {
+          customerId: 'f3bf06a3-6e1e-45e5-83f0-e4af2e6dcba3',
+        }).valid,
+      ).toBe(true);
     });
 
     it('rejects list_at_risk_customers with invalid limit', () => {
@@ -538,9 +543,14 @@ describe('Customers + Cars tools', () => {
       expect(registry.validateArgs('find_car', { query: 'ab' }).valid).toBe(true);
     });
 
-    it('rejects get_car without carId', () => {
+    it('rejects get_car without carId or with non-uuid carId (I-012)', () => {
       expect(registry.validateArgs('get_car', {}).valid).toBe(false);
-      expect(registry.validateArgs('get_car', { carId: 'x' }).valid).toBe(true);
+      expect(registry.validateArgs('get_car', { carId: 'x' }).valid).toBe(false);
+      expect(
+        registry.validateArgs('get_car', {
+          carId: 'f3bf06a3-6e1e-45e5-83f0-e4af2e6dcba3',
+        }).valid,
+      ).toBe(true);
     });
 
     it('rejects list_maintenance_due with non-integer or out-of-range withinDays', () => {

@@ -26,7 +26,7 @@ export function buildGetInvoiceTool(
       properties: {
         invoiceId: {
           type: 'string',
-          minLength: 1,
+          format: 'uuid',
           description: 'The invoice id (uuid) to load.',
         },
       },

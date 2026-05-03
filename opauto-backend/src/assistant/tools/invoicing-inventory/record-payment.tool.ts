@@ -63,7 +63,7 @@ export function buildRecordPaymentTool(
       properties: {
         invoiceId: {
           type: 'string',
-          minLength: 1,
+          format: 'uuid',
           description: 'The invoice id (uuid) being paid.',
         },
         amount: {

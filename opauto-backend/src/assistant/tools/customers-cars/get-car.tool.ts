@@ -54,7 +54,7 @@ export function createGetCarTool(deps: {
       properties: {
         carId: {
           type: 'string',
-          minLength: 1,
+          format: 'uuid',
           description: 'Car id (uuid).',
         },
       },

@@ -37,8 +37,8 @@ export function buildCreateAppointmentTool(
       additionalProperties: false,
       required: ['customerId', 'carId', 'scheduledAt', 'durationMinutes'],
       properties: {
-        customerId: { type: 'string', minLength: 1 },
-        carId: { type: 'string', minLength: 1 },
+        customerId: { type: 'string', format: 'uuid' },
+        carId: { type: 'string', format: 'uuid' },
         scheduledAt: {
           type: 'string',
           description:

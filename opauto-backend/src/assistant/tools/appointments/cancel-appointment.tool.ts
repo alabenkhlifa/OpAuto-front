@@ -25,7 +25,11 @@ export function buildCancelAppointmentTool(
       additionalProperties: false,
       required: ['appointmentId'],
       properties: {
-        appointmentId: { type: 'string', minLength: 1 },
+        appointmentId: {
+          type: 'string',
+          format: 'uuid',
+          description: 'The appointment id (uuid) to cancel.',
+        },
         reason: {
           type: 'string',
           maxLength: 500,

@@ -62,7 +62,7 @@ export function createGetCustomerTool(deps: {
       properties: {
         customerId: {
           type: 'string',
-          minLength: 1,
+          format: 'uuid',
           description: 'Customer id (uuid).',
         },
       },
