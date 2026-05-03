@@ -1196,7 +1196,16 @@ export class OrchestratorService {
         `Today is ${todayIso}. Respond to the user in ${localeName}. The conversation above contains the tool result you need. ` +
         `Phrase a concise, direct answer using the EXACT numbers from the tool result. If the result is 0, empty, or shows no data, ` +
         `say that explicitly — do NOT invent or estimate figures. Do NOT call another tool. ` +
-        `Currency formatting: "1,234.56 TND" (English) or "1 234,56 DT" (French) — never prefix with a symbol.`,
+        `Currency formatting: "1,234.56 TND" (English) or "1 234,56 DT" (French) — never prefix with a symbol.\n\n` +
+        // I-014 — if a tool returned a structured error field (e.g. send_email
+        // → {error: "send_failed", message: "..."}), the user MUST be told the
+        // action did not succeed. Previously the LLM would happily summarise
+        // the OTHER tool results in the chain ("There are 19 overdue invoices")
+        // and the failed send was silently swallowed. Surface infra-level
+        // failures explicitly with the original message.
+        `If any tool result in the conversation contains an "error" field (for example send_email returning {error:"send_failed", message:"..."}), ` +
+        `you MUST mention the failure in your reply, prefixed with "⚠️", and quote the underlying message verbatim. Never imply the action ` +
+        `succeeded when the tool returned an error. If a write/send action failed, the user expects to know — silence is a bug.`,
     };
     // Keep all non-system messages; replace the first system message (the
     // big buildSystemPrompt output) with the compose-only one. Other system
