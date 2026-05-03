@@ -53,6 +53,12 @@ export interface SkillDefinition {
   triggers?: string[];
   toolWhitelist?: string[];
   bodyByLocale: Record<Locale, string>;
+  /**
+   * Marks the skill as internal (test fixture, scratch playbook, etc.) so it
+   * is excluded from the router-visible list passed to the LLM. Set via
+   * frontmatter `internal: true`.
+   */
+  internal?: boolean;
 }
 
 export interface SkillDescriptor {

@@ -36,7 +36,22 @@ export class SkillRegistryService implements OnModuleInit {
     this.skillsDir = dir;
   }
 
+  /**
+   * Public skill list — what the LLM router and the meta endpoint see. Hides
+   * skills marked `internal: true` in frontmatter so test fixtures (e.g.
+   * `example`) cannot be triggered by a real user message.
+   */
   list(): SkillDescriptor[] {
+    return Array.from(this.skills.values())
+      .filter((s) => !s.internal)
+      .map((s) => ({ name: s.name, description: s.description }));
+  }
+
+  /**
+   * Admin/test seam — returns every loaded skill regardless of `internal`.
+   * Use only for inventory tooling, never for routing.
+   */
+  listAll(): SkillDescriptor[] {
     return Array.from(this.skills.values()).map((s) => ({
       name: s.name,
       description: s.description,
@@ -90,6 +105,7 @@ export class SkillRegistryService implements OnModuleInit {
         description?: unknown;
         triggers?: unknown;
         tools?: unknown;
+        internal?: unknown;
       };
 
       if (typeof enData.name !== 'string' || enData.name.length === 0) {
@@ -139,6 +155,7 @@ export class SkillRegistryService implements OnModuleInit {
         triggers,
         toolWhitelist,
         bodyByLocale,
+        internal: enData.internal === true,
       });
     }
 

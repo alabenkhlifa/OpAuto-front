@@ -28,13 +28,22 @@ describe('SkillRegistryService', () => {
       await module.init();
     });
 
-    it('loads the example skill at module init', () => {
-      const skills = service.list();
-      const example = skills.find((s) => s.name === 'example');
+    it('loads the example skill at module init (visible via listAll, not list)', () => {
+      const allSkills = service.listAll();
+      const example = allSkills.find((s) => s.name === 'example');
       expect(example).toBeDefined();
       expect(example?.description).toBe(
         'A no-op skill used for testing the loader.',
       );
+    });
+
+    it('hides skills marked `internal: true` from list() so the LLM router cannot trigger them', () => {
+      // The bundled `example` skill is marked internal — it must NOT appear in
+      // the router-visible list, but it IS still loadable by name and visible
+      // via listAll() for tests / admin tooling.
+      expect(service.list().find((s) => s.name === 'example')).toBeUndefined();
+      expect(service.listAll().find((s) => s.name === 'example')).toBeDefined();
+      expect(service.load('example', 'en')).not.toBeNull();
     });
 
     it('returns the English body for load("example", "en")', () => {
