@@ -98,17 +98,55 @@ export class AssistantLauncherComponent implements OnInit {
     if (!id) return;
     this.chat.getConversation(id).subscribe({
       next: (conv) => {
-        const ui: AssistantUiMessage[] = (conv.messages ?? []).map((m) => ({
-          ...m,
-          conversationId: id,
-        }));
-        this.state.setMessages(ui);
+        this.state.setMessages(this.buildHistoryMessages(conv, id));
       },
       error: () => {
         this.state.setConversationId(null);
         this.state.setMessages([]);
       },
     });
+  }
+
+  /**
+   * Merge persisted USER/ASSISTANT messages with persisted tool_calls into
+   * a single chronologically-ordered list. UI Bug 5 — without this, F5 /
+   * conversation-switch shows only text bubbles; the live tool chips that
+   * UI Bug 1 fixed for the SSE stream disappear after a reload.
+   */
+  private buildHistoryMessages(
+    conv: {
+      messages?: { id: string; role: string; content: string; createdAt: string }[];
+      toolCalls?: import('../../services/assistant-chat.service').PersistedToolCall[];
+    },
+    conversationId: string,
+  ): AssistantUiMessage[] {
+    const textMsgs = (conv.messages ?? []).map(
+      (m) =>
+        ({
+          ...m,
+          conversationId,
+        }) as AssistantUiMessage,
+    );
+    const toolMsgs: AssistantUiMessage[] = (conv.toolCalls ?? []).map((tc) => ({
+      id: `toolcall-${tc.id}`,
+      conversationId,
+      role: 'TOOL',
+      content: '',
+      createdAt: tc.createdAt,
+      toolCall: {
+        id: tc.id,
+        toolName: tc.toolName,
+        args: tc.argsJson,
+        result: tc.resultJson ?? undefined,
+        status: tc.status,
+        blastTier: tc.blastTier,
+        durationMs: tc.durationMs ?? undefined,
+        errorMessage: tc.errorMessage ?? undefined,
+      },
+    }));
+    return [...textMsgs, ...toolMsgs].sort((a, b) =>
+      a.createdAt.localeCompare(b.createdAt),
+    );
   }
 
   toggle(): void {
@@ -192,11 +230,7 @@ export class AssistantLauncherComponent implements OnInit {
     this.state.setConversationId(id);
     this.chat.getConversation(id).subscribe({
       next: (conv) => {
-        const ui: AssistantUiMessage[] = (conv.messages ?? []).map((m) => ({
-          ...m,
-          conversationId: id,
-        }));
-        this.state.setMessages(ui);
+        this.state.setMessages(this.buildHistoryMessages(conv, id));
         this.state.setError(null);
       },
       error: () => {

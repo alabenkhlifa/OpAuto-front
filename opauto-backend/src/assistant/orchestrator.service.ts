@@ -465,7 +465,11 @@ export class OrchestratorService {
         // payloads, missing required content) BEFORE asking the user to
         // approve. Letting the LLM fix its own mistake is far better UX than
         // surfacing an empty-body approval card the user has to deny.
-        const preCheck = this.preApprovalCheck(call.name, parsedArgs.value);
+        const preCheck = await this.preApprovalCheck(
+          call.name,
+          parsedArgs.value,
+          ctx,
+        );
         if (preCheck) {
           subject.next({
             type: 'tool_result',
@@ -1225,7 +1229,16 @@ export class OrchestratorService {
             `"this appointment", etc., they mean the entity in the "selected" ` +
             `field above. Pass that exact id to tools like get_customer / ` +
             `get_car / get_invoice — do NOT call find_* with the id as a query ` +
-            `string, and do NOT ask the user for an id you already have.`,
+            `string, and do NOT ask the user for an id you already have.\n` +
+            // UI Bug 7 — when pageContext narrows the question to one entity,
+            // resist the urge to chain in unrelated lookups (e.g. calling
+            // list_at_risk_customers from within "tell me about this customer").
+            // Stay scoped to the selected entity.
+            `Stay strictly scoped to the selected entity: do NOT call ` +
+            `list_at_risk_customers, list_top_customers, list_overdue_invoices, ` +
+            `or other broad scans unless the user has explicitly asked for ` +
+            `that broader view in the same turn. The selected entity is the ` +
+            `focus; everything else is noise here.`,
         );
       }
     }
@@ -1298,28 +1311,109 @@ export class OrchestratorService {
    * wiring a per-tool hook for the one or two cases where Groq's small model
    * routinely emits empty-payload writes.
    */
-  private preApprovalCheck(
+  private async preApprovalCheck(
     toolName: string,
     args: unknown,
-  ): { error: string; message: string } | null {
-    if (toolName !== 'send_email') return null;
+    ctx: AssistantUserContext,
+  ): Promise<{ error: string; message: string } | null> {
     if (typeof args !== 'object' || args === null) return null;
     const a = args as Record<string, unknown>;
-    const html = typeof a.html === 'string' ? a.html.trim() : '';
-    const text = typeof a.text === 'string' ? a.text.trim() : '';
-    const ids = Array.isArray(a.attachInvoiceIds) ? a.attachInvoiceIds : [];
-    if (html.length === 0 && text.length === 0 && ids.length === 0) {
-      return {
-        error: 'empty_email_payload',
-        message:
-          'send_email was called with an empty body and no attachInvoiceIds. ' +
-          'You must populate `text` (or `html`) with the actual content first. ' +
-          'If the user asked for invoices/data attached, call list_invoices ' +
-          '(or the relevant read tool) first to get real data, then call ' +
-          'send_email again with a populated body and the fetched ids in ' +
-          'attachInvoiceIds.',
-      };
+
+    if (toolName === 'send_email') {
+      const html = typeof a.html === 'string' ? a.html.trim() : '';
+      const text = typeof a.text === 'string' ? a.text.trim() : '';
+      const ids = Array.isArray(a.attachInvoiceIds) ? a.attachInvoiceIds : [];
+      if (html.length === 0 && text.length === 0 && ids.length === 0) {
+        return {
+          error: 'empty_email_payload',
+          message:
+            'send_email was called with an empty body and no attachInvoiceIds. ' +
+            'You must populate `text` (or `html`) with the actual content first. ' +
+            'If the user asked for invoices/data attached, call list_invoices ' +
+            '(or the relevant read tool) first to get real data, then call ' +
+            'send_email again with a populated body and the fetched ids in ' +
+            'attachInvoiceIds.',
+        };
+      }
+      return null;
     }
+
+    // UI Bug 6 — verify id args refer to a real, garage-owned row BEFORE
+    // surfacing an approval card. The schema's format:'uuid' (I-012) catches
+    // shape errors but not "wrong-type-of-uuid" — e.g. the LLM passing a
+    // customer-id as appointmentId. Without these checks, the user is asked
+    // to approve an action that is provably going to fail.
+    if (toolName === 'cancel_appointment' && typeof a.appointmentId === 'string') {
+      const exists = await this.prisma.appointment.findFirst({
+        where: { id: a.appointmentId, garageId: ctx.garageId },
+        select: { id: true },
+      });
+      if (!exists) {
+        return {
+          error: 'appointment_not_found',
+          message:
+            `cancel_appointment received appointmentId="${a.appointmentId}", ` +
+            `but no appointment with that id exists in this garage. Did you ` +
+            `pass a customer id by mistake? Call list_appointments first to ` +
+            `find the correct appointment id, then retry.`,
+        };
+      }
+    }
+
+    if (toolName === 'record_payment' && typeof a.invoiceId === 'string') {
+      const exists = await this.prisma.invoice.findFirst({
+        where: { id: a.invoiceId, garageId: ctx.garageId },
+        select: { id: true },
+      });
+      if (!exists) {
+        return {
+          error: 'invoice_not_found',
+          message:
+            `record_payment received invoiceId="${a.invoiceId}", but no ` +
+            `invoice with that id exists in this garage. Call list_invoices ` +
+            `or get_invoice to find the correct invoice id, then retry.`,
+        };
+      }
+    }
+
+    if (
+      toolName === 'create_appointment' &&
+      typeof a.customerId === 'string' &&
+      typeof a.carId === 'string'
+    ) {
+      const customer = await this.prisma.customer.findFirst({
+        where: { id: a.customerId, garageId: ctx.garageId },
+        select: { id: true },
+      });
+      if (!customer) {
+        return {
+          error: 'customer_not_found',
+          message:
+            `create_appointment received customerId="${a.customerId}", but ` +
+            `no customer with that id exists in this garage. Use find_customer ` +
+            `or get_customer to resolve the right id first.`,
+        };
+      }
+      const car = await this.prisma.car.findFirst({
+        where: {
+          id: a.carId,
+          garageId: ctx.garageId,
+          customerId: a.customerId,
+        },
+        select: { id: true },
+      });
+      if (!car) {
+        return {
+          error: 'car_not_found',
+          message:
+            `create_appointment received carId="${a.carId}" for ` +
+            `customerId="${a.customerId}", but that car is not registered to ` +
+            `that customer in this garage. Use find_car or get_customer to ` +
+            `verify the car ↔ customer relationship.`,
+        };
+      }
+    }
+
     return null;
   }
 

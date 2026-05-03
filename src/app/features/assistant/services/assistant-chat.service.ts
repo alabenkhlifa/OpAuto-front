@@ -5,12 +5,33 @@ import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../../core/services/auth.service';
 import {
   AssistantApprovalDecision,
+  AssistantBlastTier,
   AssistantChatRequest,
   AssistantConversationSummary,
   AssistantMessage,
   AssistantRegistry,
   AssistantSseEvent,
+  AssistantToolCallStatus,
 } from '../../../core/models/assistant.model';
+
+/**
+ * Tool-call row as persisted by the backend. Mirrors the AssistantToolCall
+ * Prisma model fields the GET /conversations/:id endpoint returns. UI Bug 5
+ * — F5/conversation-switch needs these to replay tool chips alongside the
+ * persisted assistant + user messages.
+ */
+export interface PersistedToolCall {
+  id: string;
+  messageId: string | null;
+  toolName: string;
+  argsJson: unknown;
+  resultJson: unknown;
+  status: AssistantToolCallStatus;
+  blastTier: AssistantBlastTier;
+  durationMs: number | null;
+  errorMessage: string | null;
+  createdAt: string;
+}
 
 const ASSISTANT_BASE = '/assistant';
 
@@ -127,13 +148,21 @@ export class AssistantChatService {
     return this.http.get<AssistantConversationSummary[]>(`${ASSISTANT_BASE}/conversations`);
   }
 
-  /** Fetch a single conversation by id (with full message history). */
+  /** Fetch a single conversation by id (with full message history + tool calls). */
   getConversation(
     id: string,
-  ): Observable<{ id: string; title: string | null; messages: AssistantMessage[] }> {
-    return this.http.get<{ id: string; title: string | null; messages: AssistantMessage[] }>(
-      `${ASSISTANT_BASE}/conversations/${encodeURIComponent(id)}`,
-    );
+  ): Observable<{
+    id: string;
+    title: string | null;
+    messages: AssistantMessage[];
+    toolCalls?: PersistedToolCall[];
+  }> {
+    return this.http.get<{
+      id: string;
+      title: string | null;
+      messages: AssistantMessage[];
+      toolCalls?: PersistedToolCall[];
+    }>(`${ASSISTANT_BASE}/conversations/${encodeURIComponent(id)}`);
   }
 
   /** Soft-delete (archive) a conversation. */

@@ -131,11 +131,30 @@ export class ConversationService {
   }
 
   async getById(id: string, garageId: string, userId: string) {
+    // UI Bug 5 — include the tool calls in the response so the FE can replay
+    // tool chips alongside the messages on F5/conversation-switch. Without
+    // this, only USER + ASSISTANT bubbles come back — the chips that were
+    // visible during the live SSE stream disappear after a reload.
     return this.prisma.assistantConversation.findFirst({
       where: { id, garageId, userId, archivedAt: null },
       include: {
         messages: {
           orderBy: { createdAt: 'asc' },
+        },
+        toolCalls: {
+          orderBy: { createdAt: 'asc' },
+          select: {
+            id: true,
+            messageId: true,
+            toolName: true,
+            argsJson: true,
+            resultJson: true,
+            status: true,
+            blastTier: true,
+            durationMs: true,
+            errorMessage: true,
+            createdAt: true,
+          },
         },
       },
     });
