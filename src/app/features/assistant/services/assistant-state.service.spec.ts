@@ -146,6 +146,86 @@ describe('AssistantStateService', () => {
     });
   });
 
+  describe('upsertToolCall (UI Bug 1 — render auto-executed tools)', () => {
+    it('creates a new TOOL bubble on first sighting (tool_call event)', () => {
+      const svc = createService();
+      svc.upsertToolCall({
+        toolCallId: 'tc-1',
+        toolName: 'get_customer_count',
+        args: {},
+      });
+      const list = svc.messages();
+      expect(list.length).toBe(1);
+      expect(list[0].role).toBe('TOOL');
+      expect(list[0].toolCall?.toolName).toBe('get_customer_count');
+      expect(list[0].toolCall?.id).toBe('tc-1');
+    });
+
+    it('merges the tool_result into the existing TOOL bubble (preserving toolName/args)', () => {
+      const svc = createService();
+      svc.upsertToolCall({
+        toolCallId: 'tc-1',
+        toolName: 'get_customer_count',
+        args: { period: 'this-month' },
+      });
+      // Simulate the tool_result follow-up: name/args omitted intentionally,
+      // since the bubble already has them.
+      svc.upsertToolCall({
+        toolCallId: 'tc-1',
+        toolName: '',
+        args: undefined,
+        result: { total: 53 },
+        status: 'EXECUTED',
+      });
+      const list = svc.messages();
+      expect(list.length).toBe(1);
+      expect(list[0].toolCall).toEqual(
+        jasmine.objectContaining({
+          toolName: 'get_customer_count',
+          args: { period: 'this-month' },
+          result: { total: 53 },
+          status: 'EXECUTED',
+        }),
+      );
+    });
+
+    it('inserts the TOOL bubble BEFORE an in-flight streaming assistant message', () => {
+      const svc = createService();
+      svc.appendStreamingDelta('You have ');
+      svc.upsertToolCall({
+        toolCallId: 'tc-1',
+        toolName: 'get_customer_count',
+        args: {},
+      });
+      const list = svc.messages();
+      expect(list.length).toBe(2);
+      // Tool chip appears above the streaming response.
+      expect(list[0].role).toBe('TOOL');
+      expect(list[1].role).toBe('ASSISTANT');
+      expect(list[1].isStreaming).toBeTrue();
+    });
+
+    it('keeps multi-tool turns separate by toolCallId', () => {
+      const svc = createService();
+      svc.upsertToolCall({
+        toolCallId: 'tc-1',
+        toolName: 'list_invoices',
+        args: { status: 'OVERDUE' },
+      });
+      svc.upsertToolCall({
+        toolCallId: 'tc-2',
+        toolName: 'send_email',
+        args: { to: 'self' },
+      });
+      const list = svc.messages();
+      expect(list.length).toBe(2);
+      expect(list.map(m => m.toolCall?.toolName)).toEqual([
+        'list_invoices',
+        'send_email',
+      ]);
+    });
+  });
+
   describe('pending approval', () => {
     const approval: AssistantPendingApproval = {
       toolCallId: 'tc-1',

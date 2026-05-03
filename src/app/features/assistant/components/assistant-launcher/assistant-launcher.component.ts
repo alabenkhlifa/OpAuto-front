@@ -233,10 +233,34 @@ export class AssistantLauncherComponent implements OnInit {
       case 'done':
         this.state.finalizeStreamingMessage(event.messageId);
         break;
-      // tool_call / tool_result / agent_dispatch / agent_result / skill_loaded
-      // are surfaced via the message stream; for v1 we don't render them as
-      // separate UI events. Future work: enrich the in-flight assistant
-      // message with structured tool/agent receipts.
+      case 'tool_call':
+        // Surface the tool the assistant is consulting as a live TOOL bubble
+        // (chip + collapsed args) so the user has visibility into what's
+        // happening before the result arrives. UI Bug 1.
+        this.state.upsertToolCall({
+          toolCallId: event.toolCallId,
+          toolName: event.name,
+          args: event.args,
+          status: 'APPROVED',
+        });
+        break;
+      case 'tool_result':
+        this.state.upsertToolCall({
+          toolCallId: event.toolCallId,
+          toolName: '', // existing bubble already has the name
+          args: undefined,
+          result: event.result,
+          status:
+            event.status === 'executed'
+              ? 'EXECUTED'
+              : event.status === 'denied'
+                ? 'DENIED'
+                : 'FAILED',
+        });
+        break;
+      // agent_dispatch / agent_result / skill_loaded are not yet rendered
+      // in-stream — they decorate the final assistant message via .agent /
+      // .skill fields. Tracked separately.
       default:
         break;
     }

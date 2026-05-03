@@ -1,7 +1,9 @@
 import { Injectable, computed, effect, signal } from '@angular/core';
 import {
+  AssistantBlastTier,
   AssistantPanelState,
   AssistantPendingApproval,
+  AssistantToolCallStatus,
   AssistantUiMessage,
 } from '../../../core/models/assistant.model';
 
@@ -125,6 +127,77 @@ export class AssistantStateService {
         isStreaming: false,
       };
       return [...list.slice(0, -1), finalized];
+    });
+  }
+
+  /**
+   * Append an in-flight tool_call as its own TOOL-role message bubble. The
+   * existing assistant-message TOOL renderer picks this up and shows a chip
+   * with the tool name plus an expandable result preview, so the user has a
+   * live view of which tools the assistant is consulting (UI Bug 1 — until
+   * now the launcher dropped tool_call SSE events on the floor).
+   */
+  upsertToolCall(input: {
+    toolCallId: string;
+    toolName: string;
+    args: unknown;
+    blastTier?: AssistantBlastTier;
+    status?: AssistantToolCallStatus;
+    result?: unknown;
+    durationMs?: number;
+    errorMessage?: string;
+  }): void {
+    this.messages.update(list => {
+      const idx = list.findIndex(
+        m => m.role === 'TOOL' && m.toolCall?.id === input.toolCallId,
+      );
+      if (idx >= 0) {
+        const existing = list[idx];
+        const prior = existing.toolCall!;
+        const merged: AssistantUiMessage = {
+          ...existing,
+          toolCall: {
+            id: prior.id,
+            // Preserve fields a later update may not carry: tool_result events
+            // omit toolName/args because the bubble already has them.
+            toolName: input.toolName || prior.toolName,
+            args: input.args ?? prior.args,
+            blastTier: input.blastTier ?? prior.blastTier,
+            status: input.status ?? prior.status,
+            result: input.result ?? prior.result,
+            durationMs: input.durationMs ?? prior.durationMs,
+            errorMessage: input.errorMessage ?? prior.errorMessage,
+          },
+        };
+        return [...list.slice(0, idx), merged, ...list.slice(idx + 1)];
+      }
+
+      // First sighting (tool_call) — create a new TOOL bubble.
+      const newMsg: AssistantUiMessage = {
+        id: `toolcall-${input.toolCallId}`,
+        conversationId: this.currentConversationId() ?? '',
+        role: 'TOOL',
+        content: '',
+        createdAt: new Date().toISOString(),
+        toolCall: {
+          id: input.toolCallId,
+          toolName: input.toolName,
+          args: input.args,
+          result: input.result,
+          status: input.status ?? 'APPROVED',
+          blastTier: input.blastTier ?? 'READ',
+          durationMs: input.durationMs,
+          errorMessage: input.errorMessage,
+        },
+      };
+      // Insert BEFORE any in-flight streaming assistant message so the chip
+      // sits above the response text the LLM is composing.
+      const lastIdx = list.length - 1;
+      const last = list[lastIdx];
+      if (last && last.role === 'ASSISTANT' && last.isStreaming) {
+        return [...list.slice(0, lastIdx), newMsg, last];
+      }
+      return [...list, newMsg];
     });
   }
 
