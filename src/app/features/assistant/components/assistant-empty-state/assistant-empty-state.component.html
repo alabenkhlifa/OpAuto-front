@@ -1,0 +1,51 @@
+<div class="empty-state">
+  <div class="empty-state__hero">
+    <div class="empty-state__sparkle" aria-hidden="true">✨</div>
+    <h2 class="empty-state__greeting">
+      @if (hasEntity()) {
+        {{ 'assistant.empty.greetingWithEntity' | translate: { name: entityName() } }}
+      } @else {
+        {{ 'assistant.empty.greeting' | translate }}
+      }
+    </h2>
+    <p class="empty-state__sub">{{ 'assistant.empty.tryThese' | translate }}</p>
+  </div>
+
+  @if (pageChips().length > 0) {
+    <div class="empty-state__chips">
+      @for (chip of pageChips(); track chip.labelKey) {
+        <button
+          type="button"
+          class="empty-state__chip"
+          (click)="pickChip(chip.prompt)"
+        >
+          <span class="empty-state__chip-icon" aria-hidden="true">{{ chip.icon }}</span>
+          <span class="empty-state__chip-label">
+            {{ chip.labelKey | translate: chip.labelParams }}
+          </span>
+        </button>
+      }
+    </div>
+
+    <div class="empty-state__divider">
+      <span>{{ 'assistant.empty.orJustAsk' | translate }}</span>
+    </div>
+  }
+
+  @if (fallbackChips().length > 0) {
+    <div class="empty-state__chips">
+      @for (chip of fallbackChips(); track chip.labelKey) {
+        <button
+          type="button"
+          class="empty-state__chip"
+          (click)="pickChip(chip.prompt)"
+        >
+          <span class="empty-state__chip-icon" aria-hidden="true">{{ chip.icon }}</span>
+          <span class="empty-state__chip-label">
+            {{ chip.labelKey | translate: chip.labelParams }}
+          </span>
+        </button>
+      }
+    </div>
+  }
+</div>

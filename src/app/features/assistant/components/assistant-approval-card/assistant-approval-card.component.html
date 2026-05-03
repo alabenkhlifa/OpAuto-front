@@ -1,7 +1,7 @@
-@let p = pendingApproval();
+@let s = summary();
 
 <div
-  class="approval-card glass-card"
+  class="approval-card"
   [class.approval-card--expired]="isExpired()"
   [class.approval-card--typed]="isTypedConfirm()"
   role="region"
@@ -11,28 +11,13 @@
 
   <header class="approval-card__header">
     <div class="approval-card__title">
+      <span class="approval-card__title-icon" aria-hidden="true">✋</span>
       <span class="approval-card__title-text">
         {{ 'assistant.approval.title' | translate }}
       </span>
     </div>
 
     <div class="approval-card__header-right">
-      @if (isExpired()) {
-        <span class="badge badge-danger badge-sm approval-card__countdown">
-          {{ 'assistant.approval.expired' | translate }}
-        </span>
-      } @else {
-        <span
-          class="badge badge-pending badge-sm approval-card__countdown"
-          [attr.aria-live]="'polite'"
-        >
-          {{
-            'assistant.approval.expiresIn'
-              | translate: { minutes: minutesPart(), seconds: secondsPart() }
-          }}
-        </span>
-      }
-
       @if (!settled() && !isExpired()) {
         <button
           type="button"
@@ -47,30 +32,14 @@
   </header>
 
   <section class="approval-card__body">
-    <div class="approval-card__tool-row">
-      <code class="approval-card__tool-name">{{ p.toolName }}</code>
-    </div>
-
-    <button
-      type="button"
-      class="approval-card__args-toggle"
-      (click)="toggleArgs()"
-      [attr.aria-expanded]="argsExpanded()"
-    >
-      @if (!argsExpanded()) {
-        <span class="approval-card__args-summary">{{ argsSummary() }}</span>
-        <span class="approval-card__args-toggle-label">
-          {{ 'assistant.approval.expandArgs' | translate }}
-        </span>
-      } @else {
-        <span class="approval-card__args-toggle-label">
-          {{ 'assistant.approval.collapseArgs' | translate }}
-        </span>
-      }
-    </button>
-
-    @if (argsExpanded()) {
-      <pre class="approval-card__args-json">{{ argsPretty() }}</pre>
+    @if (s.previewComponent) {
+      <ng-container
+        *ngComponentOutlet="s.previewComponent; inputs: s.previewInputs"
+      ></ng-container>
+    } @else {
+      <p class="approval-card__fallback">
+        {{ 'assistant.approval.fallbackBody' | translate }}
+      </p>
     }
 
     @if (isTypedConfirm()) {
@@ -97,6 +66,25 @@
         />
       </label>
     }
+
+    <div class="approval-card__meta">
+      @if (isExpired()) {
+        <span class="approval-card__meta-expired">
+          {{ 'assistant.approval.expired' | translate }}
+        </span>
+      } @else {
+        <span class="approval-card__meta-countdown" [attr.aria-live]="'polite'">
+          {{
+            'assistant.approval.expiresIn'
+              | translate: { minutes: minutesPart(), seconds: secondsPart() }
+          }}
+        </span>
+      }
+      <span class="approval-card__meta-via">
+        {{ 'assistant.approval.viaTool' | translate }}
+        <code>{{ s.toolName }}</code>
+      </span>
+    </div>
   </section>
 
   <footer class="approval-card__footer">
@@ -114,7 +102,7 @@
       (click)="approve()"
       [disabled]="approveDisabled()"
     >
-      {{ 'assistant.approval.approve' | translate }}
+      {{ s.approveVerbKey | translate }}
     </button>
   </footer>
 </div>

@@ -48,23 +48,18 @@
       }
     </button>
 
-    <app-assistant-panel>
-      <app-assistant-conversation-list
-        data-slot="conversations"
-        [conversations]="conversations()"
-        [currentId]="state.currentConversationId()"
-        (conversationSelected)="onConvSelect($event)"
-        (newConversationRequested)="onNewConversation()"
-        (conversationDeleted)="onConvDelete($event)"
-        (conversationCleared)="onConvClear($event)"
-      />
-
-      <app-assistant-message-list
-        data-slot="messages"
-        [messages]="state.messages()"
-        [isStreaming]="state.isStreaming()"
-        (approvalRequested)="onApprovalRequested($event)"
-      />
+    <app-assistant-panel (historyClicked)="openHistory()">
+      <div data-slot="messages">
+        @if (showEmptyState()) {
+          <app-assistant-empty-state (chipPicked)="onChipPicked($event)" />
+        } @else {
+          <app-assistant-message-list
+            [messages]="state.messages()"
+            [isStreaming]="state.isStreaming()"
+            (approvalRequested)="onApprovalRequested($event)"
+          />
+        }
+      </div>
 
       @if (state.pendingApproval(); as pending) {
         <app-assistant-approval-card
@@ -80,6 +75,18 @@
         [disabled]="state.isStreaming()"
         [pendingApproval]="hasPendingApproval()"
         (submitted)="onSubmit($event)"
+      />
+
+      <app-assistant-conversation-drawer
+        data-slot="drawer"
+        [open]="historyOpen()"
+        [conversations]="conversations()"
+        [currentId]="state.currentConversationId()"
+        (closed)="closeHistory()"
+        (conversationSelected)="onConvSelect($event)"
+        (newConversationRequested)="onNewConversation()"
+        (conversationDeleted)="onConvDelete($event)"
+        (conversationCleared)="onConvClear($event)"
       />
     </app-assistant-panel>
   </div>

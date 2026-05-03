@@ -1,13 +1,17 @@
-import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { marked } from 'marked';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { AssistantUiMessage } from '../../../../core/models/assistant.model';
+import {
+  AssistantToolPresenterService,
+  PresentedTool,
+} from '../../services/assistant-tool-presenter.service';
 
-// Configure marked once. `breaks: true` turns single newlines into <br> for
-// chat-style flow; `gfm: true` enables tables, fenced code, and autolinks.
 marked.setOptions({ breaks: true, gfm: true });
+
+const DEBUG_FLAG = 'debug=assistant';
 
 @Component({
   selector: 'app-assistant-message',
@@ -18,19 +22,13 @@ marked.setOptions({ breaks: true, gfm: true });
 })
 export class AssistantMessageComponent {
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly presenter = inject(AssistantToolPresenterService);
 
   readonly message = input.required<AssistantUiMessage>();
   readonly approvalRequested = output<{ toolCallId: string }>();
 
-  readonly toolExpanded = signal(false);
-
   readonly role = computed(() => this.message().role);
 
-  /**
-   * Renders the message body as HTML for assistant turns (markdown via
-   * marked + Angular's DomSanitizer for XSS safety) and as plain text for
-   * user/system messages where markdown wouldn't make sense.
-   */
   readonly renderedBody = computed<SafeHtml | string>(() => {
     const m = this.message();
     const text = m.agent?.result ?? m.content ?? '';
@@ -41,68 +39,44 @@ export class AssistantMessageComponent {
     }
     return text;
   });
+
   readonly isUser = computed(() => this.role() === 'USER');
   readonly isAssistant = computed(() => this.role() === 'ASSISTANT');
-  readonly isTool = computed(() => this.role() === 'TOOL');
   readonly isSystem = computed(() => this.role() === 'SYSTEM');
+  // TOOL-role messages are rendered through their parent assistant turn
+  // (via toolCall on the assistant message) — silent-drop here so the panel
+  // doesn't show a separate JSON-y bubble.
+  readonly isToolStandalone = computed(() => this.role() === 'TOOL');
 
   readonly bubbleClasses = computed(() => {
     const base = 'assistant-message__bubble';
     if (this.isUser()) return `${base} assistant-message__bubble--user`;
     if (this.isAssistant()) return `${base} assistant-message__bubble--assistant`;
-    if (this.isTool()) return `${base} assistant-message__bubble--tool`;
     return `${base} assistant-message__bubble--system`;
   });
 
-  readonly toolCallStatusKey = computed(() => {
+  readonly presented = computed<PresentedTool | null>(() =>
+    this.presenter.format(this.message()),
+  );
+
+  readonly debugMode = computed(
+    () => typeof window !== 'undefined' && window.location.search.includes(DEBUG_FLAG),
+  );
+
+  readonly debugJson = computed(() => {
+    if (!this.debugMode()) return '';
     const tc = this.message().toolCall;
-    if (!tc) return null;
-    switch (tc.status) {
-      case 'PENDING_APPROVAL':
-        return 'assistant.message.toolCallPendingApproval';
-      case 'EXECUTED':
-      case 'APPROVED':
-        return 'assistant.message.toolCallExecuted';
-      case 'FAILED':
-      case 'EXPIRED':
-      case 'DENIED':
-        return 'assistant.message.toolCallFailed';
-      default:
-        return 'assistant.message.toolCallStarted';
-    }
-  });
-
-  readonly toolResultPreview = computed(() => {
-    const result = this.message().toolCall?.result;
-    if (result === undefined || result === null) return '';
+    if (!tc) return '';
     try {
-      const json = JSON.stringify(result);
-      return json.length > 120 ? `${json.slice(0, 120)}…` : json;
+      return JSON.stringify(
+        { args: tc.args, result: tc.result, status: tc.status },
+        null,
+        2,
+      );
     } catch {
-      return String(result);
+      return '';
     }
   });
-
-  readonly toolResultPretty = computed(() => {
-    const result = this.message().toolCall?.result;
-    if (result === undefined || result === null) return '';
-    try {
-      return JSON.stringify(result, null, 2);
-    } catch {
-      return String(result);
-    }
-  });
-
-  toggleToolExpand(): void {
-    this.toolExpanded.update((v) => !v);
-  }
-
-  onJsonKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      this.toolExpanded.set(false);
-    }
-  }
 
   reviewApproval(): void {
     const approval = this.message().pendingApproval;

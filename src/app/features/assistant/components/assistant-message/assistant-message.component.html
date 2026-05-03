@@ -4,7 +4,7 @@
   class="assistant-message"
   [class.assistant-message--user]="isUser()"
   [class.assistant-message--assistant]="isAssistant()"
-  [class.assistant-message--tool]="isTool()"
+  [class.assistant-message--tool]="isToolStandalone()"
   [class.assistant-message--system]="isSystem()"
 >
   @switch (role()) {
@@ -17,98 +17,104 @@
       </div>
     }
     @case ('TOOL') {
-      <div [class]="bubbleClasses()">
-        <button
-          type="button"
-          class="assistant-message__tool-toggle"
-          (click)="toggleToolExpand()"
-          [attr.aria-expanded]="toolExpanded()"
-        >
-          <span class="badge badge-pending">{{ m.toolCall?.toolName || 'tool' }}</span>
-          @if (!toolExpanded()) {
-            <code class="assistant-message__tool-preview text-gray-700">{{ toolResultPreview() }}</code>
-            <span class="text-gray-500 text-xs">{{ 'assistant.message.expand' | translate }}</span>
-          } @else {
-            <span class="text-gray-500 text-xs">{{ 'assistant.message.collapse' | translate }}</span>
-          }
-        </button>
-        @if (toolExpanded()) {
-          <pre
-            class="assistant-message__tool-json"
-            tabindex="0"
-            (keydown)="onJsonKeydown($event)"
-          >{{ toolResultPretty() }}</pre>
-        }
-      </div>
-    }
-    @default {
-      <div [class]="bubbleClasses()">
-        @if (isAssistant() && m.skill) {
-          <div class="assistant-message__meta">
-            <span class="badge badge-active badge-sm">
-              {{ 'assistant.message.skillBadge' | translate: { name: m.skill.name } }}
+      @if (presented(); as p) {
+        <div class="assistant-message__tool-card"
+          [class.assistant-message__tool-card--running]="p.state === 'running'"
+          [class.assistant-message__tool-card--failure]="p.state === 'failure'">
+          <div class="assistant-message__tool-card-glyph" aria-hidden="true">
+            @if (p.state === 'running') { <span class="assistant-message__tool-spinner">◐</span> }
+            @else if (p.state === 'success') { <span class="assistant-message__tool-check">✓</span> }
+            @else { <span class="assistant-message__tool-cross">×</span> }
+          </div>
+          <div class="assistant-message__tool-card-body">
+            <span class="assistant-message__tool-status">
+              {{ p.statusKey | translate: p.statusParams }}
+            </span>
+            <span class="assistant-message__tool-pill">
+              <span class="assistant-message__tool-pill-prefix">
+                {{ 'assistant.message.viaTool' | translate }}
+              </span>
+              <code class="assistant-message__tool-pill-name">{{ p.toolName }}</code>
+              @if (p.durationMs != null) {
+                <span class="assistant-message__tool-pill-duration">{{ p.durationMs }} ms</span>
+              }
             </span>
           </div>
-        }
-
-        @if (m.agent) {
-          <div class="assistant-message__meta">
-            <span class="badge badge-active badge-sm">
-              {{ 'assistant.message.agentBadge' | translate: { name: m.agent.name } }}
-            </span>
-          </div>
-        }
-
-        <div class="assistant-message__content">
-          @if (isAssistant()) {
-            <span class="assistant-message__markdown" [innerHTML]="renderedBody()"></span>
-          } @else {
-            <span>{{ renderedBody() }}</span>
-          }
-          @if (m.isStreaming) {
-            <span class="assistant-message__cursor" aria-hidden="true">▍</span>
-          }
         </div>
 
-        @if (m.toolCall && !m.pendingApproval) {
-          <div class="assistant-message__tool-inline">
-            <span class="badge badge-pending badge-sm">{{ m.toolCall.toolName }}</span>
-            <span class="text-gray-600 text-xs">
-              {{ toolCallStatusKey()! | translate }}
-            </span>
-            @if (m.toolCall.durationMs !== undefined && m.toolCall.durationMs !== null) {
-              <span class="text-gray-500 text-xs">{{ m.toolCall.durationMs }}ms</span>
-            }
-          </div>
+        @if (debugJson(); as raw) {
+          <details class="assistant-message__debug">
+            <summary>debug: raw tool data</summary>
+            <pre>{{ raw }}</pre>
+          </details>
+        }
+      }
+    }
+    @default {
+      <div class="assistant-message__group">
+        @if (isAssistant()) {
+          <div class="assistant-message__avatar" aria-hidden="true">✨</div>
         }
 
-        @if (m.pendingApproval) {
-          <div class="assistant-message__approval">
-            <div class="text-gray-900 font-semibold">
-              {{ 'assistant.message.toolCallPendingApproval' | translate }}:
-              {{ m.pendingApproval.toolName }}
+        <div class="assistant-message__column">
+          @if (m.content || m.agent?.result || m.isStreaming) {
+            <div [class]="bubbleClasses()">
+              @if (isAssistant() && m.skill) {
+                <div class="assistant-message__meta">
+                  <span class="badge badge-active badge-sm">
+                    {{ 'assistant.message.skillBadge' | translate: { name: m.skill.name } }}
+                  </span>
+                </div>
+              }
+
+              @if (m.agent) {
+                <div class="assistant-message__meta">
+                  <span class="badge badge-active badge-sm">
+                    {{ 'assistant.message.agentBadge' | translate: { name: m.agent.name } }}
+                  </span>
+                </div>
+              }
+
+              <div class="assistant-message__content">
+                @if (isAssistant()) {
+                  <span class="assistant-message__markdown" [innerHTML]="renderedBody()"></span>
+                } @else {
+                  <span>{{ renderedBody() }}</span>
+                }
+                @if (m.isStreaming) {
+                  <span class="assistant-message__cursor" aria-hidden="true">▍</span>
+                }
+              </div>
             </div>
-            <button
-              type="button"
-              class="btn-primary btn-sm"
-              (click)="reviewApproval()"
-            >
-              {{ 'assistant.message.reviewApproval' | translate }}
-            </button>
-          </div>
-        }
+          }
 
-        @if (m.error) {
-          <div class="assistant-message__error">
-            <div class="font-semibold text-sm" style="color: #991b1b">
-              {{ 'assistant.message.errorTitle' | translate }}
+          @if (m.pendingApproval) {
+            <div class="assistant-message__approval">
+              <span class="assistant-message__approval-text">
+                {{ 'assistant.message.toolCallPendingApproval' | translate }}
+              </span>
+              <button
+                type="button"
+                class="btn-primary btn-sm"
+                (click)="reviewApproval()"
+              >
+                {{ 'assistant.message.reviewApproval' | translate }}
+              </button>
             </div>
-            <div class="text-sm" style="color: #b91c1c">{{ m.error }}</div>
-          </div>
-        }
+          }
 
-        <div class="assistant-message__timestamp">
-          {{ m.createdAt | date: 'shortTime' }}
+          @if (m.error) {
+            <div class="assistant-message__error">
+              <div class="font-semibold text-sm" style="color: #991b1b">
+                {{ 'assistant.message.errorTitle' | translate }}
+              </div>
+              <div class="text-sm" style="color: #b91c1c">{{ m.error }}</div>
+            </div>
+          }
+
+          <div class="assistant-message__timestamp">
+            {{ m.createdAt | date: 'shortTime' }}
+          </div>
         </div>
       </div>
     }

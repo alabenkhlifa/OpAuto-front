@@ -3263,9 +3263,40 @@
     "placeholders": {
       "empty": "Posez n'importe quelle question sur votre garage…"
     },
+    "header": {
+      "title": "Assistant",
+      "thinking": "Réflexion…",
+      "history": "Historique des conversations",
+      "newConversation": "Nouvelle conversation",
+      "close": "Fermer"
+    },
+    "empty": {
+      "greeting": "Bonjour 👋 Comment puis-je aider ?",
+      "greetingWithEntity": "Vous êtes sur la page de {{name}}. Voulez-vous :",
+      "tryThese": "Essayez l'une de ces idées :",
+      "orJustAsk": "Ou demandez autre chose",
+      "chips": {
+        "todayAppointments": "Le programme du jour ?",
+        "thisWeekAppointments": "À quel point la semaine est chargée ?",
+        "lastWeekRevenue": "Comment s'est passée la semaine dernière ?",
+        "thisMonthRevenue": "Quel est le chiffre d'affaires ce mois-ci ?",
+        "carsDueService": "Quelles voitures ont besoin d'un entretien ?",
+        "addCustomer": "Ajouter un nouveau client",
+        "atRiskCustomers": "Clients que nous risquons de perdre",
+        "lowStockParts": "Pièces en rupture de stock",
+        "inventoryValue": "Quelle est la valeur de mon stock ?",
+        "overdueInvoices": "Voir les factures en retard",
+        "invoicesSummary": "Résumé des factures récentes",
+        "findFreeSlot": "Trouver un créneau libre d'une heure demain",
+        "lastInvoicesForCustomer": "Les 5 dernières factures de {{name}}",
+        "bookForCustomer": "Prendre un rendez-vous pour {{name}}",
+        "customerCarsDue": "Les voitures de {{name}} sont-elles dues pour un entretien ?"
+      }
+    },
     "message": {
       "emptyHint": "Aucun message pour l'instant. Posez votre question.",
       "thinking": "Réflexion…",
+      "viaTool": "via",
       "toolCallStarted": "Appel de {{name}}…",
       "toolCallExecuted": "{{name}} ({{ms}} ms)",
       "toolCallFailed": "Échec de {{name}}",
@@ -3298,15 +3329,200 @@
       }
     },
     "approval": {
-      "title": "Approbation requise",
-      "expiresIn": "Expire dans {{minutes}}:{{seconds}}",
-      "expired": "Cette approbation a expiré",
+      "title": "Petite vérification avant d'agir",
+      "expiresIn": "Vous avez {{minutes}}:{{seconds}} pour confirmer",
+      "expired": "Cette demande a expiré — dites-le-moi pour réessayer",
       "typeToConfirm": "Saisissez {{expectedConfirmation}} pour confirmer",
       "approve": "Approuver",
-      "deny": "Refuser",
+      "approveDefault": "Oui, faire ça",
+      "deny": "Annuler",
       "dismiss": "Ignorer",
       "expandArgs": "Afficher les détails",
-      "collapseArgs": "Masquer les détails"
+      "collapseArgs": "Masquer les détails",
+      "viaTool": "via",
+      "fallbackBody": "Je voudrais lancer cette action — confirmez pour continuer."
+    },
+    "preview": {
+      "sms": {
+        "title": "Envoyer un SMS",
+        "empty": "(message vide)",
+        "charCount": "{{count}} caractères"
+      },
+      "email": {
+        "title": "Envoyer un e-mail",
+        "toMe": "à votre adresse de compte",
+        "subject": "Objet"
+      },
+      "createAppointment": {
+        "title": "Prendre un rendez-vous",
+        "when": "Quand",
+        "duration": "Durée",
+        "minutes": "{{n}} min",
+        "serviceType": "Service"
+      },
+      "cancelAppointment": {
+        "title": "Annuler le rendez-vous",
+        "subtitle": "Cela marquera le rendez-vous comme annulé",
+        "body": "Le créneau sera libéré et le client devra être informé.",
+        "reason": "Motif"
+      },
+      "recordPayment": {
+        "title": "Enregistrer un paiement",
+        "method": "Mode",
+        "reference": "Référence"
+      }
+    },
+    "tools": {
+      "_fallback": {
+        "running": "Je m'en occupe…",
+        "success": "Terminé",
+        "failure": "Ça n'a pas fonctionné"
+      },
+      "list_appointments": {
+        "running": "Je consulte vos rendez-vous…",
+        "success": "{{count}} rendez-vous trouvé(s)",
+        "failure": "Impossible de charger les rendez-vous"
+      },
+      "find_available_slot": {
+        "running": "Je cherche un créneau libre…",
+        "success": "Meilleur créneau : {{when}}",
+        "failure": "Aucun créneau libre trouvé"
+      },
+      "create_appointment": {
+        "running": "J'enregistre le rendez-vous…",
+        "success": "Réservé pour {{when}}",
+        "failure": "Impossible de réserver le rendez-vous",
+        "approveVerb": "Oui, réserver"
+      },
+      "cancel_appointment": {
+        "running": "J'annule le rendez-vous…",
+        "success": "Rendez-vous annulé",
+        "failure": "Impossible d'annuler le rendez-vous",
+        "approveVerb": "Oui, annuler"
+      },
+      "find_customer": {
+        "running": "Je cherche dans les clients…",
+        "success": "{{count}} client(s) trouvé(s)",
+        "failure": "Impossible de chercher les clients"
+      },
+      "get_customer": {
+        "running": "Je récupère la fiche client…",
+        "success": "{{name}} chargé",
+        "failure": "Impossible de charger ce client"
+      },
+      "find_car": {
+        "running": "Je cherche dans les voitures…",
+        "success": "{{count}} voiture(s) trouvée(s)",
+        "failure": "Impossible de chercher les voitures"
+      },
+      "get_car": {
+        "running": "Je récupère la fiche voiture…",
+        "success": "{{make}} {{model}} chargée",
+        "failure": "Impossible de charger cette voiture"
+      },
+      "list_top_customers": {
+        "running": "Je classe vos meilleurs clients…",
+        "success": "Top {{count}} clients",
+        "failure": "Impossible de charger les meilleurs clients"
+      },
+      "list_at_risk_customers": {
+        "running": "Je cherche les clients que nous pourrions perdre…",
+        "success": "{{count}} client(s) à risque",
+        "failure": "Impossible de charger les clients à risque"
+      },
+      "list_returning_customers": {
+        "running": "Je cherche les clients fidèles…",
+        "success": "{{count}} client(s) revenus",
+        "failure": "Impossible de charger les clients revenus"
+      },
+      "list_maintenance_due": {
+        "running": "Je vérifie les voitures dues pour entretien…",
+        "success": "{{count}} voiture(s) dues pour entretien",
+        "failure": "Impossible de vérifier l'entretien"
+      },
+      "list_invoices": {
+        "running": "Je charge les factures…",
+        "success": "{{count}} facture(s) trouvée(s)",
+        "failure": "Impossible de charger les factures"
+      },
+      "get_invoice": {
+        "running": "Je récupère la facture…",
+        "success": "{{number}} chargée",
+        "failure": "Impossible de charger cette facture"
+      },
+      "list_overdue_invoices": {
+        "running": "Je cherche les factures en retard…",
+        "success": "{{count}} facture(s) en retard",
+        "failure": "Impossible de charger les factures en retard"
+      },
+      "list_low_stock_parts": {
+        "running": "Je vérifie le stock faible…",
+        "success": "{{count}} pièce(s) en stock faible",
+        "failure": "Impossible de vérifier le stock"
+      },
+      "get_inventory_value": {
+        "running": "Je calcule la valeur du stock…",
+        "success": "Stock total : {{value}} TND",
+        "failure": "Impossible de calculer le stock"
+      },
+      "record_payment": {
+        "running": "J'enregistre le paiement…",
+        "success": "Paiement de {{amount}} TND enregistré",
+        "failure": "Impossible d'enregistrer le paiement",
+        "approveVerb": "Oui, enregistrer"
+      },
+      "send_sms": {
+        "running": "J'envoie le SMS…",
+        "success": "SMS envoyé à {{to}}",
+        "failure": "Impossible d'envoyer le SMS",
+        "approveVerb": "Oui, envoyer le SMS"
+      },
+      "send_email": {
+        "running": "J'envoie l'e-mail…",
+        "success": "E-mail envoyé : {{subject}}",
+        "failure": "Impossible d'envoyer l'e-mail",
+        "approveVerb": "Oui, envoyer l'e-mail"
+      },
+      "propose_retention_action": {
+        "running": "Je rédige un message de fidélisation…",
+        "success": "Brouillon prêt",
+        "failure": "Impossible de rédiger le message"
+      },
+      "list_active_jobs": {
+        "running": "Je vérifie les travaux en cours…",
+        "success": "{{count}} travail(aux) actif(s)",
+        "failure": "Impossible de charger les travaux actifs"
+      },
+      "get_dashboard_kpis": {
+        "running": "Je charge les KPIs du tableau de bord…",
+        "success": "KPIs chargés",
+        "failure": "Impossible de charger les KPIs"
+      },
+      "get_invoices_summary": {
+        "running": "Je résume les factures…",
+        "success": "Total facturé : {{total}} TND",
+        "failure": "Impossible de résumer les factures"
+      },
+      "get_customer_count": {
+        "running": "Je compte les clients…",
+        "success": "{{count}} client(s)",
+        "failure": "Impossible de compter les clients"
+      },
+      "get_revenue_summary": {
+        "running": "Je calcule le chiffre d'affaires…",
+        "success": "Chiffre d'affaires : {{total}} TND",
+        "failure": "Impossible de calculer le chiffre d'affaires"
+      },
+      "generate_invoices_pdf": {
+        "running": "Je génère le PDF des factures…",
+        "success": "PDF généré pour {{count}} facture(s)",
+        "failure": "Impossible de générer le PDF"
+      },
+      "generate_period_report": {
+        "running": "Je prépare le rapport de la période…",
+        "success": "Rapport prêt",
+        "failure": "Impossible de préparer le rapport"
+      }
     },
     "conversation": {
       "title": "Conversations",

@@ -192,14 +192,6 @@ describe('AssistantApprovalCardComponent', () => {
       expect(events[0].decision).toBe('deny');
     });
 
-    it('hides _expectedConfirmation from the user-facing args summary', () => {
-      const summary = component.argsSummary();
-      expect(summary).not.toContain('_expectedConfirmation');
-      expect(summary).not.toContain('INV-007');
-      // Real args should still be visible.
-      expect(summary).toContain('invoiceId');
-    });
-
     it('returns approveDisabled=true when args._expectedConfirmation is missing (defensive)', async () => {
       await setPending(
         buildPending({
@@ -323,19 +315,23 @@ describe('AssistantApprovalCardComponent', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // Args expansion
+  // Action preview (replaces JSON args display)
   // ---------------------------------------------------------------------------
 
-  describe('args panel', () => {
-    it('toggles between summary and pretty-printed JSON', async () => {
-      await setPending(buildPending());
-      expect(component.argsExpanded()).toBe(false);
+  describe('action preview', () => {
+    it('exposes a presenter summary keyed by tool name', async () => {
+      await setPending(buildPending({ toolName: 'send_sms', args: { to: '+216123', body: 'Hello' } }));
+      const s = component.summary();
+      expect(s.toolName).toBe('send_sms');
+      // approve verb resolves through the per-tool key
+      expect(s.approveVerbKey).toContain('send_sms');
+    });
 
-      component.toggleArgs();
-      expect(component.argsExpanded()).toBe(true);
-
-      component.toggleArgs();
-      expect(component.argsExpanded()).toBe(false);
+    it('falls back to the default approve verb when tool is unknown', async () => {
+      await setPending(buildPending({ toolName: 'unknown_tool', args: { foo: 1 } }));
+      const s = component.summary();
+      expect(s.previewComponent).toBeUndefined();
+      expect(s.approveVerbKey).toBe('assistant.approval.approveDefault');
     });
   });
 });

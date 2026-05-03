@@ -10,10 +10,11 @@ import { AssistantStateService } from '../../services/assistant-state.service';
 import { AssistantChatService } from '../../services/assistant-chat.service';
 import { AssistantContextService } from '../../services/assistant-context.service';
 import { AssistantPanelComponent } from '../assistant-panel/assistant-panel.component';
-import { AssistantConversationListComponent } from '../assistant-conversation-list/assistant-conversation-list.component';
+import { AssistantConversationDrawerComponent } from '../assistant-conversation-drawer/assistant-conversation-drawer.component';
 import { AssistantMessageListComponent } from '../assistant-message-list/assistant-message-list.component';
 import { AssistantApprovalCardComponent } from '../assistant-approval-card/assistant-approval-card.component';
 import { AssistantInputComponent } from '../assistant-input/assistant-input.component';
+import { AssistantEmptyStateComponent } from '../assistant-empty-state/assistant-empty-state.component';
 import {
   AssistantApprovalDecision,
   AssistantConversationSummary,
@@ -41,10 +42,11 @@ const AUTH_ROUTE_PREFIXES = ['/auth', '/login', '/register', '/forgot-password',
     CommonModule,
     TranslatePipe,
     AssistantPanelComponent,
-    AssistantConversationListComponent,
+    AssistantConversationDrawerComponent,
     AssistantMessageListComponent,
     AssistantApprovalCardComponent,
     AssistantInputComponent,
+    AssistantEmptyStateComponent,
   ],
   templateUrl: './assistant-launcher.component.html',
   styleUrls: ['./assistant-launcher.component.css'],
@@ -58,6 +60,11 @@ export class AssistantLauncherComponent implements OnInit {
   private router = inject(Router);
 
   readonly conversations = signal<AssistantConversationSummary[]>([]);
+  readonly historyOpen = signal<boolean>(false);
+
+  readonly showEmptyState = computed(
+    () => this.state.messages().length === 0 && !this.state.isStreaming(),
+  );
 
   private readonly currentUrl = toSignal(
     this.router.events.pipe(
@@ -153,7 +160,22 @@ export class AssistantLauncherComponent implements OnInit {
     this.state.togglePanel();
     if (this.state.isOpen()) {
       this.refreshConversations();
+    } else {
+      this.historyOpen.set(false);
     }
+  }
+
+  openHistory(): void {
+    this.refreshConversations();
+    this.historyOpen.set(true);
+  }
+
+  closeHistory(): void {
+    this.historyOpen.set(false);
+  }
+
+  onChipPicked(prompt: string): void {
+    this.onSubmit(prompt);
   }
 
   // ── Input → send a message ──────────────────────────────────────────────

@@ -1,0 +1,32 @@
+@if (open()) {
+  <div class="conv-drawer-backdrop" (click)="close()" aria-hidden="true"></div>
+  <aside
+    class="conv-drawer"
+    [attr.aria-label]="'assistant.conversation.title' | translate"
+    role="dialog"
+    aria-modal="true"
+  >
+    <header class="conv-drawer__header">
+      <span class="conv-drawer__title">{{ 'assistant.conversation.title' | translate }}</span>
+      <button
+        type="button"
+        class="conv-drawer__close"
+        (click)="close()"
+        [attr.aria-label]="'assistant.closeButton' | translate"
+      >
+        ×
+      </button>
+    </header>
+
+    <div class="conv-drawer__body">
+      <app-assistant-conversation-list
+        [conversations]="conversations()"
+        [currentId]="currentId()"
+        (conversationSelected)="onConvSelect($event)"
+        (newConversationRequested)="onNewConversation()"
+        (conversationDeleted)="onConvDelete($event)"
+        (conversationCleared)="onConvClear($event)"
+      />
+    </div>
+  </aside>
+}

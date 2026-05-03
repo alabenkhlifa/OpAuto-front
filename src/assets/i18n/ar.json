@@ -3301,9 +3301,40 @@
     "placeholders": {
       "empty": "اسأل عن أي شيء يخص ورشتك…"
     },
+    "header": {
+      "title": "المساعد",
+      "thinking": "جارٍ التفكير…",
+      "history": "سجل المحادثات",
+      "newConversation": "محادثة جديدة",
+      "close": "إغلاق"
+    },
+    "empty": {
+      "greeting": "مرحبًا 👋 كيف يمكنني المساعدة؟",
+      "greetingWithEntity": "أنت في صفحة {{name}}. هل تودّ:",
+      "tryThese": "جرّب أحد هذه الاقتراحات:",
+      "orJustAsk": "أو اسأل أي شيء آخر",
+      "chips": {
+        "todayAppointments": "ما هي مواعيد اليوم؟",
+        "thisWeekAppointments": "ما مدى انشغال هذا الأسبوع؟",
+        "lastWeekRevenue": "كيف كانت نتائج الأسبوع الماضي؟",
+        "thisMonthRevenue": "كيف كانت إيرادات هذا الشهر؟",
+        "carsDueService": "أي السيارات تحتاج إلى صيانة؟",
+        "addCustomer": "إضافة عميل جديد",
+        "atRiskCustomers": "العملاء الذين قد نخسرهم",
+        "lowStockParts": "القطع التي على وشك النفاد",
+        "inventoryValue": "ما هي قيمة المخزون؟",
+        "overdueInvoices": "إظهار الفواتير المتأخرة",
+        "invoicesSummary": "ملخص الفواتير الأخيرة",
+        "findFreeSlot": "ابحث عن موعد متاح لمدة ساعة غدًا",
+        "lastInvoicesForCustomer": "آخر 5 فواتير لـ {{name}}",
+        "bookForCustomer": "احجز موعدًا لـ {{name}}",
+        "customerCarsDue": "هل سيارات {{name}} تحتاج صيانة؟"
+      }
+    },
     "message": {
       "emptyHint": "لا توجد رسائل بعد. اطرح سؤالك.",
       "thinking": "جارٍ التفكير…",
+      "viaTool": "عبر",
       "toolCallStarted": "جارٍ استدعاء {{name}}…",
       "toolCallExecuted": "{{name}} ({{ms}} م.ث)",
       "toolCallFailed": "فشل {{name}}",
@@ -3336,15 +3367,200 @@
       }
     },
     "approval": {
-      "title": "بحاجة إلى موافقتك",
-      "expiresIn": "ينتهي خلال {{minutes}}:{{seconds}}",
-      "expired": "انتهت صلاحية هذه الموافقة",
+      "title": "تأكيد سريع قبل التنفيذ",
+      "expiresIn": "أمامك {{minutes}}:{{seconds}} للتأكيد",
+      "expired": "انتهت المهلة — أخبرني إن أردت إعادة المحاولة",
       "typeToConfirm": "اكتب {{expectedConfirmation}} للتأكيد",
       "approve": "موافقة",
-      "deny": "رفض",
+      "approveDefault": "نعم، نفّذ",
+      "deny": "إلغاء",
       "dismiss": "تجاهل",
       "expandArgs": "إظهار التفاصيل",
-      "collapseArgs": "إخفاء التفاصيل"
+      "collapseArgs": "إخفاء التفاصيل",
+      "viaTool": "عبر",
+      "fallbackBody": "أرغب بتنفيذ هذا الإجراء — أكّد للمتابعة."
+    },
+    "preview": {
+      "sms": {
+        "title": "إرسال رسالة نصية",
+        "empty": "(الرسالة فارغة)",
+        "charCount": "{{count}} حرفًا"
+      },
+      "email": {
+        "title": "إرسال بريد إلكتروني",
+        "toMe": "إلى عنوان حسابك",
+        "subject": "الموضوع"
+      },
+      "createAppointment": {
+        "title": "حجز موعد",
+        "when": "متى",
+        "duration": "المدة",
+        "minutes": "{{n}} دقيقة",
+        "serviceType": "الخدمة"
+      },
+      "cancelAppointment": {
+        "title": "إلغاء الموعد",
+        "subtitle": "سيتم تعليم الموعد كملغى",
+        "body": "سيتم تحرير الفترة الزمنية ويجب إبلاغ العميل.",
+        "reason": "السبب"
+      },
+      "recordPayment": {
+        "title": "تسجيل دفعة",
+        "method": "طريقة الدفع",
+        "reference": "المرجع"
+      }
+    },
+    "tools": {
+      "_fallback": {
+        "running": "جارٍ التنفيذ…",
+        "success": "تم",
+        "failure": "تعذّر التنفيذ"
+      },
+      "list_appointments": {
+        "running": "جارٍ جلب مواعيدك…",
+        "success": "تم العثور على {{count}} موعد",
+        "failure": "تعذّر تحميل المواعيد"
+      },
+      "find_available_slot": {
+        "running": "جارٍ البحث عن موعد متاح…",
+        "success": "أفضل موعد: {{when}}",
+        "failure": "لم يُعثر على موعد متاح"
+      },
+      "create_appointment": {
+        "running": "جارٍ حجز الموعد…",
+        "success": "تم الحجز في {{when}}",
+        "failure": "تعذّر حجز الموعد",
+        "approveVerb": "نعم، احجز"
+      },
+      "cancel_appointment": {
+        "running": "جارٍ إلغاء الموعد…",
+        "success": "تم إلغاء الموعد",
+        "failure": "تعذّر إلغاء الموعد",
+        "approveVerb": "نعم، ألغِ"
+      },
+      "find_customer": {
+        "running": "جارٍ البحث في العملاء…",
+        "success": "تم العثور على {{count}} عميل",
+        "failure": "تعذّر البحث في العملاء"
+      },
+      "get_customer": {
+        "running": "جارٍ تحميل بيانات العميل…",
+        "success": "تم تحميل {{name}}",
+        "failure": "تعذّر تحميل العميل"
+      },
+      "find_car": {
+        "running": "جارٍ البحث في السيارات…",
+        "success": "تم العثور على {{count}} سيارة",
+        "failure": "تعذّر البحث في السيارات"
+      },
+      "get_car": {
+        "running": "جارٍ تحميل بيانات السيارة…",
+        "success": "تم تحميل {{make}} {{model}}",
+        "failure": "تعذّر تحميل السيارة"
+      },
+      "list_top_customers": {
+        "running": "جارٍ ترتيب أفضل العملاء…",
+        "success": "أفضل {{count}} عملاء",
+        "failure": "تعذّر تحميل أفضل العملاء"
+      },
+      "list_at_risk_customers": {
+        "running": "جارٍ البحث عن العملاء الذين قد نخسرهم…",
+        "success": "{{count}} عميل بحاجة إلى متابعة",
+        "failure": "تعذّر تحميل العملاء"
+      },
+      "list_returning_customers": {
+        "running": "جارٍ البحث عن العملاء العائدين…",
+        "success": "{{count}} عميل عائد",
+        "failure": "تعذّر تحميل العملاء"
+      },
+      "list_maintenance_due": {
+        "running": "جارٍ التحقق من السيارات التي تحتاج صيانة…",
+        "success": "{{count}} سيارة تحتاج إلى صيانة",
+        "failure": "تعذّر التحقق من الصيانة"
+      },
+      "list_invoices": {
+        "running": "جارٍ تحميل الفواتير…",
+        "success": "تم العثور على {{count}} فاتورة",
+        "failure": "تعذّر تحميل الفواتير"
+      },
+      "get_invoice": {
+        "running": "جارٍ تحميل الفاتورة…",
+        "success": "تم تحميل {{number}}",
+        "failure": "تعذّر تحميل الفاتورة"
+      },
+      "list_overdue_invoices": {
+        "running": "جارٍ البحث عن الفواتير المتأخرة…",
+        "success": "{{count}} فاتورة متأخرة",
+        "failure": "تعذّر تحميل الفواتير المتأخرة"
+      },
+      "list_low_stock_parts": {
+        "running": "جارٍ التحقق من المخزون المنخفض…",
+        "success": "{{count}} قطعة على وشك النفاد",
+        "failure": "تعذّر التحقق من المخزون"
+      },
+      "get_inventory_value": {
+        "running": "جارٍ احتساب قيمة المخزون…",
+        "success": "إجمالي المخزون: {{value}} د.ت",
+        "failure": "تعذّر احتساب المخزون"
+      },
+      "record_payment": {
+        "running": "جارٍ تسجيل الدفعة…",
+        "success": "تم تسجيل دفعة بقيمة {{amount}} د.ت",
+        "failure": "تعذّر تسجيل الدفعة",
+        "approveVerb": "نعم، سجّل الدفعة"
+      },
+      "send_sms": {
+        "running": "جارٍ إرسال الرسالة…",
+        "success": "تم إرسال الرسالة إلى {{to}}",
+        "failure": "تعذّر إرسال الرسالة",
+        "approveVerb": "نعم، أرسل الرسالة"
+      },
+      "send_email": {
+        "running": "جارٍ إرسال البريد…",
+        "success": "تم إرسال البريد: {{subject}}",
+        "failure": "تعذّر إرسال البريد",
+        "approveVerb": "نعم، أرسل البريد"
+      },
+      "propose_retention_action": {
+        "running": "جارٍ تحضير رسالة استرجاع…",
+        "success": "المسوّدة جاهزة",
+        "failure": "تعذّر تحضير الرسالة"
+      },
+      "list_active_jobs": {
+        "running": "جارٍ التحقق من الأعمال النشطة…",
+        "success": "{{count}} عمل نشط",
+        "failure": "تعذّر تحميل الأعمال النشطة"
+      },
+      "get_dashboard_kpis": {
+        "running": "جارٍ تحميل مؤشرات لوحة التحكم…",
+        "success": "تم تحميل المؤشرات",
+        "failure": "تعذّر تحميل المؤشرات"
+      },
+      "get_invoices_summary": {
+        "running": "جارٍ تلخيص الفواتير…",
+        "success": "إجمالي الفواتير: {{total}} د.ت",
+        "failure": "تعذّر تلخيص الفواتير"
+      },
+      "get_customer_count": {
+        "running": "جارٍ عدّ العملاء…",
+        "success": "{{count}} عميل",
+        "failure": "تعذّر عدّ العملاء"
+      },
+      "get_revenue_summary": {
+        "running": "جارٍ احتساب الإيرادات…",
+        "success": "الإيرادات: {{total}} د.ت",
+        "failure": "تعذّر احتساب الإيرادات"
+      },
+      "generate_invoices_pdf": {
+        "running": "جارٍ إنشاء ملف PDF للفواتير…",
+        "success": "تم إنشاء PDF لـ {{count}} فاتورة",
+        "failure": "تعذّر إنشاء الملف"
+      },
+      "generate_period_report": {
+        "running": "جارٍ تحضير تقرير الفترة…",
+        "success": "التقرير جاهز",
+        "failure": "تعذّر تحضير التقرير"
+      }
     },
     "conversation": {
       "title": "المحادثات",

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { CustomerService } from '../../../core/services/customer.service';
 import { TranslationService } from '../../../core/services/translation.service';
+import { AssistantContextService } from '../../../features/assistant/services/assistant-context.service';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 import { Customer, CustomerHistory, CustomerStatus, ContactMethod } from '../../../core/models/customer.model';
 
@@ -18,6 +19,7 @@ export class CustomerDetailsComponent implements OnInit {
   private router = inject(Router);
   private customerService = inject(CustomerService);
   private translationService = inject(TranslationService);
+  private assistantContext = inject(AssistantContextService);
 
   customer = signal<Customer | null>(null);
   history = signal<CustomerHistory | null>(null);
@@ -44,6 +46,7 @@ export class CustomerDetailsComponent implements OnInit {
       next: (customer) => {
         if (customer) {
           this.customer.set(customer);
+          this.assistantContext.setSelectedEntity('customer', customer.id, customer.name);
         }
         this.isLoading.set(false);
       },

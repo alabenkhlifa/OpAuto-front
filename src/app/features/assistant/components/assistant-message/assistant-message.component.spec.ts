@@ -65,14 +65,15 @@ describe('AssistantMessageComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('budget exceeded');
   });
 
-  it('renders a TOOL message collapsed by default and expands on click', () => {
+  it('renders a TOOL message as a friendly tool card with the tool name pill', () => {
     const toolCall: AssistantToolCallView = {
       id: 'tc1',
       toolName: 'get_revenue_summary',
       args: { period: 'week' },
-      result: { total: 1234, currency: 'TND' },
+      result: { totalRevenue: 1234 },
       status: 'EXECUTED',
       blastTier: 'READ',
+      durationMs: 42,
     };
     setMessage(
       baseMessage({
@@ -82,20 +83,20 @@ describe('AssistantMessageComponent', () => {
       }),
     );
 
-    expect(fixture.debugElement.query(By.css('.assistant-message__tool-json'))).toBeNull();
+    // No raw JSON appears anywhere in the user-facing card
+    expect(fixture.nativeElement.textContent).not.toContain('{');
+    expect(fixture.nativeElement.textContent).not.toContain('}');
 
-    const toggle = fixture.debugElement.query(By.css('.assistant-message__tool-toggle'));
-    toggle.nativeElement.click();
-    fixture.detectChanges();
+    // Friendly success line resolves to the per-tool i18n key
+    expect(fixture.nativeElement.textContent).toContain('assistant.tools.get_revenue_summary.success');
 
-    const json = fixture.debugElement.query(By.css('.assistant-message__tool-json'));
-    expect(json).toBeTruthy();
-    expect(json.nativeElement.textContent).toContain('1234');
+    // Tool name pill is shown
+    const pill = fixture.debugElement.query(By.css('.assistant-message__tool-pill'));
+    expect(pill).toBeTruthy();
+    expect(pill.nativeElement.textContent).toContain('get_revenue_summary');
 
-    // Esc collapses
-    json.nativeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
-    fixture.detectChanges();
-    expect(fixture.debugElement.query(By.css('.assistant-message__tool-json'))).toBeNull();
+    // Duration is rendered
+    expect(fixture.nativeElement.textContent).toContain('42 ms');
   });
 
   it('shows skill badge when message.skill is set', () => {
@@ -177,7 +178,7 @@ describe('AssistantMessageComponent', () => {
     expect(fixture.debugElement.query(By.css('.assistant-message__cursor'))).toBeTruthy();
   });
 
-  it('renders inline tool-call status with PENDING_APPROVAL badge label', () => {
+  it('renders a TOOL card with running state for PENDING_APPROVAL', () => {
     const toolCall: AssistantToolCallView = {
       id: 'tc-pa',
       toolName: 'cancel_appointment',
@@ -187,13 +188,17 @@ describe('AssistantMessageComponent', () => {
     };
     setMessage(
       baseMessage({
-        role: 'ASSISTANT',
-        content: 'about to cancel',
+        role: 'TOOL',
+        content: '',
         toolCall,
       }),
     );
 
-    expect(fixture.nativeElement.textContent).toContain('assistant.message.toolCallPendingApproval');
+    // running-state class
+    const card = fixture.debugElement.query(By.css('.assistant-message__tool-card'));
+    expect(card).toBeTruthy();
+    expect(card.nativeElement.classList).toContain('assistant-message__tool-card--running');
+    // Tool name still appears in the pill
     expect(fixture.nativeElement.textContent).toContain('cancel_appointment');
   });
 });

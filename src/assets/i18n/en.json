@@ -3168,9 +3168,40 @@
     "placeholders": {
       "empty": "Ask anything about your garage…"
     },
+    "header": {
+      "title": "Assistant",
+      "thinking": "Thinking…",
+      "history": "Conversation history",
+      "newConversation": "New conversation",
+      "close": "Close"
+    },
+    "empty": {
+      "greeting": "Hey 👋 What can I help with?",
+      "greetingWithEntity": "You're on {{name}}'s page. Want to:",
+      "tryThese": "Try one of these:",
+      "orJustAsk": "Or just ask anything",
+      "chips": {
+        "todayAppointments": "What's on today's schedule?",
+        "thisWeekAppointments": "How busy is this week?",
+        "lastWeekRevenue": "How was last week?",
+        "thisMonthRevenue": "How was revenue this month?",
+        "carsDueService": "Which cars are due for service?",
+        "addCustomer": "Add a new customer",
+        "atRiskCustomers": "Customers we might be losing",
+        "lowStockParts": "Parts running low in stock",
+        "inventoryValue": "How much is my inventory worth?",
+        "overdueInvoices": "Show me overdue invoices",
+        "invoicesSummary": "Summary of recent invoices",
+        "findFreeSlot": "Find a free 1-hour slot tomorrow",
+        "lastInvoicesForCustomer": "{{name}}'s last 5 invoices",
+        "bookForCustomer": "Book an appointment for {{name}}",
+        "customerCarsDue": "Are {{name}}'s cars due for service?"
+      }
+    },
     "message": {
       "emptyHint": "No messages yet. Ask anything.",
       "thinking": "Thinking…",
+      "viaTool": "via",
       "toolCallStarted": "Calling {{name}}…",
       "toolCallExecuted": "{{name}} ({{ms}} ms)",
       "toolCallFailed": "{{name}} failed",
@@ -3203,15 +3234,200 @@
       }
     },
     "approval": {
-      "title": "Approval needed",
-      "expiresIn": "Expires in {{minutes}}:{{seconds}}",
-      "expired": "This approval has expired",
+      "title": "Quick check before I do this",
+      "expiresIn": "You have {{minutes}}:{{seconds}} to confirm",
+      "expired": "This expired — let me know if you'd like to try again",
       "typeToConfirm": "Type {{expectedConfirmation}} to confirm",
       "approve": "Approve",
-      "deny": "Deny",
+      "approveDefault": "Yes, do it",
+      "deny": "Cancel",
       "dismiss": "Dismiss",
       "expandArgs": "Show details",
-      "collapseArgs": "Hide details"
+      "collapseArgs": "Hide details",
+      "viaTool": "via",
+      "fallbackBody": "I'd like to run this action — please confirm to continue."
+    },
+    "preview": {
+      "sms": {
+        "title": "Send SMS",
+        "empty": "(no message body)",
+        "charCount": "{{count}} chars"
+      },
+      "email": {
+        "title": "Send email",
+        "toMe": "to your account email",
+        "subject": "Subject"
+      },
+      "createAppointment": {
+        "title": "Book appointment",
+        "when": "When",
+        "duration": "Duration",
+        "minutes": "{{n}} min",
+        "serviceType": "Service"
+      },
+      "cancelAppointment": {
+        "title": "Cancel appointment",
+        "subtitle": "This will mark the appointment as cancelled",
+        "body": "The slot will be freed up and the customer will need to be informed.",
+        "reason": "Reason"
+      },
+      "recordPayment": {
+        "title": "Record payment",
+        "method": "Method",
+        "reference": "Reference"
+      }
+    },
+    "tools": {
+      "_fallback": {
+        "running": "Working on it…",
+        "success": "Done",
+        "failure": "That didn't work"
+      },
+      "list_appointments": {
+        "running": "Looking up your appointments…",
+        "success": "Found {{count}} appointment(s)",
+        "failure": "Couldn't load appointments"
+      },
+      "find_available_slot": {
+        "running": "Searching for an open slot…",
+        "success": "Best slot: {{when}}",
+        "failure": "Couldn't find a free slot"
+      },
+      "create_appointment": {
+        "running": "Booking the appointment…",
+        "success": "Booked for {{when}}",
+        "failure": "Couldn't book the appointment",
+        "approveVerb": "Yes, book it"
+      },
+      "cancel_appointment": {
+        "running": "Cancelling the appointment…",
+        "success": "Appointment cancelled",
+        "failure": "Couldn't cancel the appointment",
+        "approveVerb": "Yes, cancel it"
+      },
+      "find_customer": {
+        "running": "Searching customers…",
+        "success": "Found {{count}} customer(s)",
+        "failure": "Couldn't search customers"
+      },
+      "get_customer": {
+        "running": "Pulling up the customer's details…",
+        "success": "Loaded {{name}}",
+        "failure": "Couldn't load that customer"
+      },
+      "find_car": {
+        "running": "Searching cars…",
+        "success": "Found {{count}} car(s)",
+        "failure": "Couldn't search cars"
+      },
+      "get_car": {
+        "running": "Pulling up the car's details…",
+        "success": "Loaded {{make}} {{model}}",
+        "failure": "Couldn't load that car"
+      },
+      "list_top_customers": {
+        "running": "Ranking your top customers…",
+        "success": "Top {{count}} customers",
+        "failure": "Couldn't load top customers"
+      },
+      "list_at_risk_customers": {
+        "running": "Looking for customers we might lose…",
+        "success": "Found {{count}} at-risk customer(s)",
+        "failure": "Couldn't load at-risk customers"
+      },
+      "list_returning_customers": {
+        "running": "Finding returning customers…",
+        "success": "Found {{count}} returning customer(s)",
+        "failure": "Couldn't load returning customers"
+      },
+      "list_maintenance_due": {
+        "running": "Checking which cars are due for service…",
+        "success": "{{count}} car(s) due for service",
+        "failure": "Couldn't check maintenance due"
+      },
+      "list_invoices": {
+        "running": "Loading invoices…",
+        "success": "Found {{count}} invoice(s)",
+        "failure": "Couldn't load invoices"
+      },
+      "get_invoice": {
+        "running": "Pulling up the invoice…",
+        "success": "Loaded {{number}}",
+        "failure": "Couldn't load that invoice"
+      },
+      "list_overdue_invoices": {
+        "running": "Looking for overdue invoices…",
+        "success": "Found {{count}} overdue invoice(s)",
+        "failure": "Couldn't load overdue invoices"
+      },
+      "list_low_stock_parts": {
+        "running": "Checking low-stock parts…",
+        "success": "{{count}} part(s) running low",
+        "failure": "Couldn't check low stock"
+      },
+      "get_inventory_value": {
+        "running": "Calculating inventory value…",
+        "success": "Inventory total: {{value}} TND",
+        "failure": "Couldn't calculate inventory"
+      },
+      "record_payment": {
+        "running": "Recording the payment…",
+        "success": "Payment of {{amount}} TND recorded",
+        "failure": "Couldn't record the payment",
+        "approveVerb": "Yes, record payment"
+      },
+      "send_sms": {
+        "running": "Sending the SMS…",
+        "success": "SMS sent to {{to}}",
+        "failure": "Couldn't send the SMS",
+        "approveVerb": "Yes, send SMS"
+      },
+      "send_email": {
+        "running": "Sending the email…",
+        "success": "Email sent: {{subject}}",
+        "failure": "Couldn't send the email",
+        "approveVerb": "Yes, send email"
+      },
+      "propose_retention_action": {
+        "running": "Drafting a retention message…",
+        "success": "Draft ready",
+        "failure": "Couldn't draft a retention message"
+      },
+      "list_active_jobs": {
+        "running": "Checking active jobs…",
+        "success": "{{count}} active job(s)",
+        "failure": "Couldn't load active jobs"
+      },
+      "get_dashboard_kpis": {
+        "running": "Loading dashboard KPIs…",
+        "success": "KPIs loaded",
+        "failure": "Couldn't load KPIs"
+      },
+      "get_invoices_summary": {
+        "running": "Summarising invoices…",
+        "success": "Invoiced total: {{total}} TND",
+        "failure": "Couldn't summarise invoices"
+      },
+      "get_customer_count": {
+        "running": "Counting customers…",
+        "success": "{{count}} customer(s)",
+        "failure": "Couldn't count customers"
+      },
+      "get_revenue_summary": {
+        "running": "Calculating revenue…",
+        "success": "Revenue: {{total}} TND",
+        "failure": "Couldn't calculate revenue"
+      },
+      "generate_invoices_pdf": {
+        "running": "Generating the invoices PDF…",
+        "success": "Generated PDF for {{count}} invoice(s)",
+        "failure": "Couldn't generate the PDF"
+      },
+      "generate_period_report": {
+        "running": "Building the period report…",
+        "success": "Report ready",
+        "failure": "Couldn't build the report"
+      }
     },
     "conversation": {
       "title": "Conversations",
