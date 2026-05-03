@@ -166,9 +166,14 @@ export class AssistantLauncherComponent implements OnInit {
     this.chat.decideApproval(pending.toolCallId, decision).subscribe({
       next: () => {
         this.state.clearPendingApproval();
-        if (decision.decision === 'approve') {
-          // Re-enter the orchestrator via the resume sentinel so the LLM gets
-          // the executed tool result and can produce a follow-up reply.
+        // Re-enter the orchestrator via the resume sentinel for BOTH outcomes.
+        // - 'approve' → backend executes the tool, emits tool_result + the
+        //   LLM's follow-up text.
+        // - 'deny'    → backend's handleResume DENIED branch emits a
+        //   deterministic "won't run X" text (e34b898). Without this re-entry
+        //   the user clicked Deny and saw nothing — the silent-skip UX bug
+        //   from §10/§12 (UI Bug 3 still broken in re-verification).
+        if (decision.decision === 'approve' || decision.decision === 'deny') {
           this.onSubmit(`__resume__:${pending.toolCallId}`);
         }
       },

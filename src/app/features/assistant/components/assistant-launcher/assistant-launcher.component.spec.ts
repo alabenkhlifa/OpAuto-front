@@ -169,4 +169,80 @@ describe('AssistantLauncherComponent', () => {
       expect(getConversation).not.toHaveBeenCalled();
     });
   });
+
+  describe('approval decision (UI Bug 3 — DENY ack regression)', () => {
+    function setupWithChatStub(stub: Partial<AssistantChatService>): {
+      fixture: ComponentFixture<AssistantLauncherComponent>;
+      state: AssistantStateService;
+      component: AssistantLauncherComponent;
+    } {
+      TestBed.resetTestingModule();
+      return TestBed.configureTestingModule({
+        imports: [AssistantLauncherComponent, HttpClientTestingModule],
+        providers: [
+          provideRouter([
+            { path: 'dashboard', component: DashboardStub },
+            { path: 'auth', component: AuthStub },
+          ]),
+          { provide: AssistantChatService, useValue: stub },
+        ],
+      })
+        .compileComponents()
+        .then(() => {
+          const f = TestBed.createComponent(AssistantLauncherComponent);
+          const s = TestBed.inject(AssistantStateService);
+          const c = f.componentInstance;
+          f.detectChanges();
+          return { fixture: f, state: s, component: c };
+        }) as unknown as {
+        fixture: ComponentFixture<AssistantLauncherComponent>;
+        state: AssistantStateService;
+        component: AssistantLauncherComponent;
+      };
+    }
+
+    function makePending(): AssistantPendingApproval {
+      return {
+        toolCallId: 'tc-deny-1',
+        toolName: 'cancel_appointment',
+        args: { appointmentId: 'abc' },
+        blastTier: 'CONFIRM_WRITE',
+        expiresAt: new Date(Date.now() + 60_000).toISOString(),
+        receivedAt: Date.now(),
+      };
+    }
+
+    it('fires __resume__ on DENY so the backend can emit the deterministic ack text', async () => {
+      const sendMessage = jasmine.createSpy('sendMessage').and.returnValue(of());
+      const stub: Partial<AssistantChatService> = {
+        listConversations: () => of([]),
+        decideApproval: () => of({ approved: false }),
+        sendMessage,
+      };
+      const { state: s, component } = await setupWithChatStub(stub);
+      s.setPendingApproval(makePending());
+      component.onApprovalDecided({ decision: 'deny' });
+
+      expect(sendMessage).toHaveBeenCalledWith(
+        jasmine.objectContaining({ userMessage: '__resume__:tc-deny-1' }),
+      );
+      expect(s.pendingApproval()).toBeNull();
+    });
+
+    it('fires __resume__ on APPROVE for the post-execution follow-up turn', async () => {
+      const sendMessage = jasmine.createSpy('sendMessage').and.returnValue(of());
+      const stub: Partial<AssistantChatService> = {
+        listConversations: () => of([]),
+        decideApproval: () => of({ approved: true }),
+        sendMessage,
+      };
+      const { state: s, component } = await setupWithChatStub(stub);
+      s.setPendingApproval(makePending());
+      component.onApprovalDecided({ decision: 'approve' });
+
+      expect(sendMessage).toHaveBeenCalledWith(
+        jasmine.objectContaining({ userMessage: '__resume__:tc-deny-1' }),
+      );
+    });
+  });
 });
