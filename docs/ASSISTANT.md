@@ -221,3 +221,9 @@ For tools at the highest blast tier (currently only `record_payment`), the LLM m
 3. Re-check `ctx.garageId` ownership against any id args before calling out to a service — never trust ids the LLM produced.
 4. For id args, prefer `{type: 'string', format: 'uuid'}` so an LLM hallucination like `"banana"` is rejected before an approval card is shown (I-012).
 5. Tools that should NOT be re-tried after deny rely on the `handleResume` short-circuit; no per-tool work needed. Future agent-runner write tools must call into the same DENIED short-circuit semantics.
+
+## In-app help catalogue
+
+Users can click the `?` icon in the assistant panel header to open the **Help modal** — an in-app catalogue of every Tool, Skill, and Specialist Agent the assistant offers, with a one-line description and an example prompt for each. The example prompts are written for non-technical garage owners ("How many customers do I have?" rather than `customer_count(filter:{...})`).
+
+The catalogue is fully i18n'd. **Source of truth for the user-facing names, descriptions, and examples is `assistant.help.*` in `src/assets/i18n/{en,fr,ar}.json`** — when you add a new tool / skill / agent, update those keys and the corresponding constant array (`TOOL_KEYS` / `SKILL_KEYS` / `AGENT_KEYS`) in `src/app/features/assistant/components/assistant-help-modal/assistant-help-modal.component.ts`.

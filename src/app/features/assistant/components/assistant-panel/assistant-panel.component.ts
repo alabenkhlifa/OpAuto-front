@@ -25,6 +25,7 @@ export class AssistantPanelComponent {
   state = inject(AssistantStateService);
 
   readonly historyClicked = output<void>();
+  readonly helpClicked = output<void>();
 
   readonly isOpen = computed(() => this.state.isOpen());
   readonly isStreaming = computed(() => this.state.isStreaming());

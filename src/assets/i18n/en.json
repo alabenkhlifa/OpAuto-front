@@ -3173,7 +3173,240 @@
       "thinking": "Thinking…",
       "history": "Conversation history",
       "newConversation": "New conversation",
+      "help": "Help",
       "close": "Close"
+    },
+    "help": {
+      "title": "What can the assistant do?",
+      "subtitle": "Browse every action, helper, and specialist — with an example you can copy.",
+      "close": "Close",
+      "examplePrefix": "Try saying",
+      "sections": {
+        "tools": "Tools",
+        "skills": "Skills",
+        "agents": "Specialists"
+      },
+      "tools": {
+        "active_jobs": {
+          "name": "Active jobs right now",
+          "description": "See what cars and repairs are currently being worked on.",
+          "example": "What jobs are in progress?"
+        },
+        "customer_count": {
+          "name": "Total customer count",
+          "description": "Get the total number of customers in your garage.",
+          "example": "How many customers do I have?"
+        },
+        "dashboard_kpis": {
+          "name": "Dashboard KPIs",
+          "description": "Today's key numbers at a glance — revenue, jobs, and more.",
+          "example": "Show me today's KPIs"
+        },
+        "invoices_summary": {
+          "name": "Invoice totals summary",
+          "description": "A quick total of invoices billed and paid in any period.",
+          "example": "Summarize this month's invoices"
+        },
+        "revenue_summary": {
+          "name": "Revenue over a period",
+          "description": "How much you earned over a day, week, or month.",
+          "example": "How much did I make last month?"
+        },
+        "list_appointments": {
+          "name": "List appointments",
+          "description": "See appointments scheduled in any time window.",
+          "example": "What's on the schedule for tomorrow?"
+        },
+        "find_available_slot": {
+          "name": "Find a free time slot",
+          "description": "Find an open spot in your calendar for new work.",
+          "example": "Find me a 2-hour slot this Friday"
+        },
+        "create_appointment": {
+          "name": "Book a new appointment",
+          "description": "Add a new appointment to the calendar.",
+          "example": "Book Ahmed in for an oil change Tuesday at 10"
+        },
+        "cancel_appointment": {
+          "name": "Cancel an appointment",
+          "description": "Remove an appointment from the calendar.",
+          "example": "Cancel my 3pm appointment today"
+        },
+        "send_email": {
+          "name": "Send a customer email",
+          "description": "Email a customer directly from here.",
+          "example": "Email Ahmed his last invoice"
+        },
+        "send_sms": {
+          "name": "Send a customer SMS",
+          "description": "Send a quick text message to a customer.",
+          "example": "Text Sara that her car is ready"
+        },
+        "propose_retention_action": {
+          "name": "Suggest a retention offer",
+          "description": "Get an idea for how to win back a customer.",
+          "example": "What should I offer to win back Karim?"
+        },
+        "find_customer": {
+          "name": "Search customers by name",
+          "description": "Find any customer by name or phone.",
+          "example": "Find me Ahmed Ben Ali"
+        },
+        "get_customer": {
+          "name": "Customer's full profile",
+          "description": "See everything about a specific customer.",
+          "example": "Show me Ahmed's profile"
+        },
+        "find_car": {
+          "name": "Search cars by plate",
+          "description": "Find any car by license plate.",
+          "example": "Find car 123 TUN 4567"
+        },
+        "get_car": {
+          "name": "Car's full record",
+          "description": "See a car's full service history.",
+          "example": "Show me the history of plate 123 TUN 4567"
+        },
+        "list_top_customers": {
+          "name": "Top customers by revenue",
+          "description": "See your best customers ranked by spending.",
+          "example": "Who are my top 10 customers this year?"
+        },
+        "list_returning_customers": {
+          "name": "Returning customers",
+          "description": "See customers who came back recently.",
+          "example": "Which customers came back this month?"
+        },
+        "list_at_risk_customers": {
+          "name": "At-risk customers",
+          "description": "Customers we might be losing — haven't visited in a while.",
+          "example": "Which customers might I be losing?"
+        },
+        "list_maintenance_due": {
+          "name": "Cars due for service",
+          "description": "Cars that should be coming in soon for maintenance.",
+          "example": "Which cars are due for maintenance?"
+        },
+        "list_invoices": {
+          "name": "List invoices",
+          "description": "Browse invoices in any time window.",
+          "example": "Show me last week's invoices"
+        },
+        "list_overdue_invoices": {
+          "name": "Overdue invoices",
+          "description": "Invoices that are past due — who hasn't paid yet.",
+          "example": "Who hasn't paid me yet?"
+        },
+        "get_invoice": {
+          "name": "Open one invoice",
+          "description": "Pull up a specific invoice in detail.",
+          "example": "Show me invoice 2026-001"
+        },
+        "record_payment": {
+          "name": "Mark an invoice as paid",
+          "description": "Record a payment received against an invoice.",
+          "example": "Record a 350 dinar payment on invoice 2026-001"
+        },
+        "list_low_stock_parts": {
+          "name": "Parts running low",
+          "description": "Parts that are nearly out of stock.",
+          "example": "What parts am I running low on?"
+        },
+        "get_inventory_value": {
+          "name": "Total inventory value",
+          "description": "Total value of every part you have in stock.",
+          "example": "How much is my inventory worth?"
+        },
+        "generate_period_report": {
+          "name": "Period financial report",
+          "description": "Build a PDF financial report for a chosen period.",
+          "example": "Generate a report for last month"
+        },
+        "generate_invoices_pdf": {
+          "name": "Bulk invoices PDF",
+          "description": "Export many invoices into one PDF file.",
+          "example": "Export all of March's invoices as PDF"
+        }
+      },
+      "skills": {
+        "customer_360": {
+          "name": "Customer 360 view",
+          "description": "A full one-page deep-dive on a single customer.",
+          "example": "Give me a 360 view on Ahmed Ben Ali"
+        },
+        "daily_briefing": {
+          "name": "Daily briefing",
+          "description": "Your morning snapshot of the garage.",
+          "example": "Give me my morning briefing"
+        },
+        "email_composition": {
+          "name": "Email composition",
+          "description": "Draft and send a customer email together.",
+          "example": "Draft a reminder email to overdue customers"
+        },
+        "growth_advisor": {
+          "name": "Growth advisor",
+          "description": "Three to five practical ideas to grow your business.",
+          "example": "How can I grow my garage?"
+        },
+        "inventory_restocking": {
+          "name": "Inventory restocking",
+          "description": "What to reorder this week and how much.",
+          "example": "What should I restock this week?"
+        },
+        "invoice_collections": {
+          "name": "Invoice collections",
+          "description": "Help chasing down overdue payments.",
+          "example": "Help me collect overdue invoices"
+        },
+        "maintenance_due_followup": {
+          "name": "Maintenance follow-up",
+          "description": "Follow up with customers whose cars are due for service.",
+          "example": "Remind customers their cars need service"
+        },
+        "monthly_financial_report": {
+          "name": "Monthly financial report",
+          "description": "A full monthly profit-and-loss summary.",
+          "example": "Give me last month's financial report"
+        },
+        "retention_suggestions": {
+          "name": "Retention suggestions",
+          "description": "A tailored offer to keep an at-risk customer.",
+          "example": "How do I keep Karim from leaving?"
+        }
+      },
+      "agents": {
+        "analytics_agent": {
+          "name": "Analytics specialist",
+          "description": "The numbers expert for deep-dive reporting.",
+          "example": "Break down my revenue by service type for the last 6 months"
+        },
+        "communications_agent": {
+          "name": "Communications specialist",
+          "description": "Drafts customer messages — emails and SMS.",
+          "example": "Draft an SMS for my top 5 returning customers"
+        },
+        "growth_agent": {
+          "name": "Growth strategist",
+          "description": "Long-form business strategy and growth planning.",
+          "example": "Where are my biggest growth opportunities?"
+        },
+        "inventory_agent": {
+          "name": "Inventory specialist",
+          "description": "Parts and stock expert — restocking and value.",
+          "example": "Plan a restocking order for low-stock parts"
+        },
+        "scheduling_agent": {
+          "name": "Scheduling specialist",
+          "description": "Calendar and booking expert.",
+          "example": "Plan my week's schedule and find gaps"
+        },
+        "finance_agent": {
+          "name": "Finance specialist",
+          "description": "Invoicing, payments, and collections expert.",
+          "example": "Chase my top 3 overdue customers"
+        }
+      }
     },
     "empty": {
       "greeting": "Hey 👋 What can I help with?",

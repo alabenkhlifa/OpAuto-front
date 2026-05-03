@@ -11,6 +11,7 @@ import { AssistantChatService } from '../../services/assistant-chat.service';
 import { AssistantContextService } from '../../services/assistant-context.service';
 import { AssistantPanelComponent } from '../assistant-panel/assistant-panel.component';
 import { AssistantConversationDrawerComponent } from '../assistant-conversation-drawer/assistant-conversation-drawer.component';
+import { AssistantHelpModalComponent } from '../assistant-help-modal/assistant-help-modal.component';
 import { AssistantMessageListComponent } from '../assistant-message-list/assistant-message-list.component';
 import { AssistantApprovalCardComponent } from '../assistant-approval-card/assistant-approval-card.component';
 import { AssistantInputComponent } from '../assistant-input/assistant-input.component';
@@ -43,6 +44,7 @@ const AUTH_ROUTE_PREFIXES = ['/auth', '/login', '/register', '/forgot-password',
     TranslatePipe,
     AssistantPanelComponent,
     AssistantConversationDrawerComponent,
+    AssistantHelpModalComponent,
     AssistantMessageListComponent,
     AssistantApprovalCardComponent,
     AssistantInputComponent,
@@ -61,6 +63,7 @@ export class AssistantLauncherComponent implements OnInit {
 
   readonly conversations = signal<AssistantConversationSummary[]>([]);
   readonly historyOpen = signal<boolean>(false);
+  readonly helpOpen = signal<boolean>(false);
 
   readonly showEmptyState = computed(
     () => this.state.messages().length === 0 && !this.state.isStreaming(),
@@ -172,6 +175,14 @@ export class AssistantLauncherComponent implements OnInit {
 
   closeHistory(): void {
     this.historyOpen.set(false);
+  }
+
+  openHelp(): void {
+    this.helpOpen.set(true);
+  }
+
+  closeHelp(): void {
+    this.helpOpen.set(false);
   }
 
   onChipPicked(prompt: string): void {

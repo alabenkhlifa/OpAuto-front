@@ -1,0 +1,112 @@
+@if (open()) {
+  <div
+    class="assistant-help-modal__backdrop"
+    (click)="onBackdropClick($event)"
+  >
+    <div
+      class="assistant-help-modal"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="'assistant.help.title' | translate"
+    >
+      <header class="assistant-help-modal__header">
+        <div class="assistant-help-modal__title-block">
+          <span class="assistant-help-modal__title">
+            {{ 'assistant.help.title' | translate }}
+          </span>
+          <span class="assistant-help-modal__subtitle">
+            {{ 'assistant.help.subtitle' | translate }}
+          </span>
+        </div>
+        <button
+          type="button"
+          class="assistant-help-modal__close"
+          (click)="close()"
+          [attr.aria-label]="'assistant.help.close' | translate"
+        >
+          ×
+        </button>
+      </header>
+
+      <div class="assistant-help-modal__body">
+        @for (section of sections(); track section.id) {
+          <section
+            class="assistant-help-modal__section"
+            [class.is-open]="isExpanded(section.id)"
+          >
+            <button
+              type="button"
+              class="assistant-help-modal__section-toggle"
+              [attr.aria-expanded]="isExpanded(section.id)"
+              (click)="toggleSection(section.id)"
+            >
+              <span class="assistant-help-modal__section-title">
+                {{ section.titleKey | translate }}
+                <span class="assistant-help-modal__section-count">
+                  ({{ section.items.length }})
+                </span>
+              </span>
+              <span
+                class="assistant-help-modal__section-chevron"
+                aria-hidden="true"
+              >
+                @if (isExpanded(section.id)) {
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <polyline points="18 15 12 9 6 15"></polyline>
+                  </svg>
+                } @else {
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                }
+              </span>
+            </button>
+
+            @if (isExpanded(section.id)) {
+              <ul class="assistant-help-modal__items">
+                @for (item of section.items; track item.key) {
+                  <li class="assistant-help-modal__item">
+                    <div class="assistant-help-modal__item-name">
+                      {{ itemNameKey(section.id, item.key) | translate }}
+                    </div>
+                    <div class="assistant-help-modal__item-desc">
+                      {{ itemDescKey(section.id, item.key) | translate }}
+                    </div>
+                    <div class="assistant-help-modal__item-example">
+                      <span class="assistant-help-modal__item-example-prefix">
+                        {{ 'assistant.help.examplePrefix' | translate }}
+                      </span>
+                      <span class="assistant-help-modal__item-example-quote">
+                        “{{ itemExampleKey(section.id, item.key) | translate }}”
+                      </span>
+                    </div>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+        }
+      </div>
+    </div>
+  </div>
+}

@@ -3268,7 +3268,240 @@
       "thinking": "Réflexion…",
       "history": "Historique des conversations",
       "newConversation": "Nouvelle conversation",
+      "help": "Aide",
       "close": "Fermer"
+    },
+    "help": {
+      "title": "Que peut faire l'assistant ?",
+      "subtitle": "Parcourez chaque action, aide et spécialiste — avec un exemple à copier.",
+      "close": "Fermer",
+      "examplePrefix": "Essayez",
+      "sections": {
+        "tools": "Outils",
+        "skills": "Compétences",
+        "agents": "Spécialistes"
+      },
+      "tools": {
+        "active_jobs": {
+          "name": "Travaux en cours",
+          "description": "Voir quelles voitures et réparations sont actuellement en cours.",
+          "example": "Quels travaux sont en cours ?"
+        },
+        "customer_count": {
+          "name": "Nombre total de clients",
+          "description": "Le nombre total de clients dans votre garage.",
+          "example": "Combien de clients ai-je ?"
+        },
+        "dashboard_kpis": {
+          "name": "Indicateurs du tableau de bord",
+          "description": "Les chiffres clés du jour en un coup d'œil — chiffre d'affaires, travaux et plus.",
+          "example": "Affiche les indicateurs d'aujourd'hui"
+        },
+        "invoices_summary": {
+          "name": "Résumé des factures",
+          "description": "Un total rapide des factures émises et payées sur une période.",
+          "example": "Résume les factures de ce mois"
+        },
+        "revenue_summary": {
+          "name": "Chiffre d'affaires sur une période",
+          "description": "Combien vous avez gagné sur un jour, une semaine ou un mois.",
+          "example": "Combien ai-je gagné le mois dernier ?"
+        },
+        "list_appointments": {
+          "name": "Liste des rendez-vous",
+          "description": "Voir les rendez-vous prévus sur une période donnée.",
+          "example": "Quel est le programme de demain ?"
+        },
+        "find_available_slot": {
+          "name": "Trouver un créneau libre",
+          "description": "Trouver un créneau libre dans le calendrier pour un nouveau travail.",
+          "example": "Trouve-moi un créneau de 2 heures vendredi"
+        },
+        "create_appointment": {
+          "name": "Prendre un rendez-vous",
+          "description": "Ajouter un nouveau rendez-vous au calendrier.",
+          "example": "Prends rendez-vous pour Ahmed mardi à 10h pour une vidange"
+        },
+        "cancel_appointment": {
+          "name": "Annuler un rendez-vous",
+          "description": "Retirer un rendez-vous du calendrier.",
+          "example": "Annule mon rendez-vous de 15h aujourd'hui"
+        },
+        "send_email": {
+          "name": "Envoyer un e-mail à un client",
+          "description": "Envoyer un e-mail à un client directement d'ici.",
+          "example": "Envoie sa dernière facture à Ahmed par e-mail"
+        },
+        "send_sms": {
+          "name": "Envoyer un SMS à un client",
+          "description": "Envoyer un message texte rapide à un client.",
+          "example": "Envoie un SMS à Sara pour lui dire que sa voiture est prête"
+        },
+        "propose_retention_action": {
+          "name": "Suggérer une offre de fidélisation",
+          "description": "Obtenir une idée pour reconquérir un client.",
+          "example": "Que puis-je proposer pour récupérer Karim ?"
+        },
+        "find_customer": {
+          "name": "Rechercher un client par nom",
+          "description": "Trouver n'importe quel client par nom ou téléphone.",
+          "example": "Trouve-moi Ahmed Ben Ali"
+        },
+        "get_customer": {
+          "name": "Profil complet du client",
+          "description": "Voir toutes les informations sur un client.",
+          "example": "Affiche le profil d'Ahmed"
+        },
+        "find_car": {
+          "name": "Rechercher une voiture par plaque",
+          "description": "Trouver n'importe quelle voiture par sa plaque.",
+          "example": "Trouve la voiture 123 TUN 4567"
+        },
+        "get_car": {
+          "name": "Historique complet d'une voiture",
+          "description": "Voir tout l'historique d'entretien d'une voiture.",
+          "example": "Affiche l'historique de la plaque 123 TUN 4567"
+        },
+        "list_top_customers": {
+          "name": "Meilleurs clients",
+          "description": "Vos meilleurs clients classés par chiffre d'affaires.",
+          "example": "Qui sont mes 10 meilleurs clients cette année ?"
+        },
+        "list_returning_customers": {
+          "name": "Clients qui reviennent",
+          "description": "Voir les clients qui sont revenus récemment.",
+          "example": "Quels clients sont revenus ce mois-ci ?"
+        },
+        "list_at_risk_customers": {
+          "name": "Clients à risque",
+          "description": "Clients que nous risquons de perdre — ils ne sont pas venus depuis longtemps.",
+          "example": "Quels clients pourrais-je être en train de perdre ?"
+        },
+        "list_maintenance_due": {
+          "name": "Voitures à entretenir",
+          "description": "Voitures qui devraient bientôt revenir pour un entretien.",
+          "example": "Quelles voitures ont besoin d'un entretien ?"
+        },
+        "list_invoices": {
+          "name": "Liste des factures",
+          "description": "Parcourir les factures sur une période.",
+          "example": "Affiche les factures de la semaine dernière"
+        },
+        "list_overdue_invoices": {
+          "name": "Factures en retard",
+          "description": "Factures dont le paiement est en retard.",
+          "example": "Qui ne m'a pas encore payé ?"
+        },
+        "get_invoice": {
+          "name": "Ouvrir une facture",
+          "description": "Afficher une facture précise en détail.",
+          "example": "Affiche la facture 2026-001"
+        },
+        "record_payment": {
+          "name": "Marquer une facture comme payée",
+          "description": "Enregistrer un paiement reçu sur une facture.",
+          "example": "Enregistre un paiement de 350 dinars sur la facture 2026-001"
+        },
+        "list_low_stock_parts": {
+          "name": "Pièces en rupture de stock",
+          "description": "Pièces qui sont presque épuisées.",
+          "example": "Quelles pièces sont en rupture ?"
+        },
+        "get_inventory_value": {
+          "name": "Valeur totale du stock",
+          "description": "La valeur totale de toutes les pièces en stock.",
+          "example": "Quelle est la valeur de mon stock ?"
+        },
+        "generate_period_report": {
+          "name": "Rapport financier d'une période",
+          "description": "Construire un rapport PDF pour une période choisie.",
+          "example": "Génère un rapport pour le mois dernier"
+        },
+        "generate_invoices_pdf": {
+          "name": "Export PDF en lot",
+          "description": "Exporter plusieurs factures dans un seul fichier PDF.",
+          "example": "Exporte toutes les factures de mars en PDF"
+        }
+      },
+      "skills": {
+        "customer_360": {
+          "name": "Vue 360° du client",
+          "description": "Une analyse complète d'un client sur une seule page.",
+          "example": "Donne-moi une vue 360 sur Ahmed Ben Ali"
+        },
+        "daily_briefing": {
+          "name": "Briefing quotidien",
+          "description": "Votre aperçu du matin du garage.",
+          "example": "Donne-moi mon briefing du matin"
+        },
+        "email_composition": {
+          "name": "Rédaction d'e-mail",
+          "description": "Rédiger et envoyer un e-mail client ensemble.",
+          "example": "Rédige un e-mail de relance pour les clients en retard"
+        },
+        "growth_advisor": {
+          "name": "Conseil de croissance",
+          "description": "Trois à cinq idées pratiques pour développer votre activité.",
+          "example": "Comment puis-je développer mon garage ?"
+        },
+        "inventory_restocking": {
+          "name": "Réapprovisionnement",
+          "description": "Quoi recommander cette semaine et en quelle quantité.",
+          "example": "Que dois-je réapprovisionner cette semaine ?"
+        },
+        "invoice_collections": {
+          "name": "Recouvrement des factures",
+          "description": "Aide pour relancer les paiements en retard.",
+          "example": "Aide-moi à recouvrer les factures en retard"
+        },
+        "maintenance_due_followup": {
+          "name": "Suivi des entretiens",
+          "description": "Relancer les clients dont les voitures ont besoin d'un entretien.",
+          "example": "Rappelle aux clients que leurs voitures ont besoin d'un entretien"
+        },
+        "monthly_financial_report": {
+          "name": "Rapport financier mensuel",
+          "description": "Un résumé complet des résultats du mois.",
+          "example": "Donne-moi le rapport financier du mois dernier"
+        },
+        "retention_suggestions": {
+          "name": "Suggestions de fidélisation",
+          "description": "Une offre adaptée pour garder un client à risque.",
+          "example": "Comment empêcher Karim de partir ?"
+        }
+      },
+      "agents": {
+        "analytics_agent": {
+          "name": "Spécialiste des chiffres",
+          "description": "L'expert pour les analyses approfondies.",
+          "example": "Décompose mon chiffre d'affaires par type de service sur les 6 derniers mois"
+        },
+        "communications_agent": {
+          "name": "Spécialiste des messages",
+          "description": "Rédige des messages clients — e-mails et SMS.",
+          "example": "Rédige un SMS pour mes 5 meilleurs clients fidèles"
+        },
+        "growth_agent": {
+          "name": "Stratège de croissance",
+          "description": "Stratégie d'entreprise et planification de la croissance.",
+          "example": "Où sont mes plus grandes opportunités de croissance ?"
+        },
+        "inventory_agent": {
+          "name": "Spécialiste du stock",
+          "description": "Expert en pièces et stock — réapprovisionnement et valeur.",
+          "example": "Planifie une commande de réapprovisionnement pour les pièces en rupture"
+        },
+        "scheduling_agent": {
+          "name": "Spécialiste du planning",
+          "description": "Expert en calendrier et prises de rendez-vous.",
+          "example": "Planifie ma semaine et trouve des créneaux libres"
+        },
+        "finance_agent": {
+          "name": "Spécialiste finance",
+          "description": "Expert en facturation, paiements et recouvrement.",
+          "example": "Relance mes 3 clients les plus en retard"
+        }
+      }
     },
     "empty": {
       "greeting": "Bonjour 👋 Comment puis-je aider ?",

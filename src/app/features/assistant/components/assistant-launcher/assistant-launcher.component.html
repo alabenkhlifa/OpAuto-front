@@ -48,7 +48,10 @@
       }
     </button>
 
-    <app-assistant-panel (historyClicked)="openHistory()">
+    <app-assistant-panel
+      (historyClicked)="openHistory()"
+      (helpClicked)="openHelp()"
+    >
       <div data-slot="messages">
         @if (showEmptyState()) {
           <app-assistant-empty-state (chipPicked)="onChipPicked($event)" />
@@ -89,5 +92,10 @@
         (conversationCleared)="onConvClear($event)"
       />
     </app-assistant-panel>
+
+    <app-assistant-help-modal
+      [open]="helpOpen()"
+      (closed)="closeHelp()"
+    />
   </div>
 }
