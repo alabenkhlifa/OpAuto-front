@@ -73,6 +73,7 @@ npx prisma db push         # Push schema changes without migration (dev only)
 - **Fiscal record locking**: Invoices / quotes / credit notes are 423-locked after issue. Only `status` and `notes` are mutable post-issue; line / total mutations throw `InvoiceLockedException` (HTTP 423).
 - **Per-line TVA**: TVA lives on `InvoiceLineItem.tvaRate` / `tvaAmount` — totals are derived, not the source of truth. On any line edit, recompute via `TaxCalculatorService` rather than mutating totals directly.
 - **UserRole enum**: `OWNER | STAFF` only (no MECHANIC). Invoicing routes use STAFF as the second tier — `@Roles(OWNER, STAFF)` on most endpoints, `@Roles(OWNER)` only on `DELETE /invoices/:id` and discount-approval paths.
+- **View encapsulation + content projection + pointer-events**: A CSS rule like `.parent > * { pointer-events: auto }` set in component A's stylesheet does **not** match elements projected into A from component B — Angular scopes selectors to A's `_ngcontent` attribute, and the projected element carries B's. If a slot uses `pointer-events: none` to pass clicks through, override it via `:host { pointer-events: auto }` in the **projected** component's own CSS, not the host's `> *` rule. (Bit us on the assistant conversation drawer — close button silently swallowed clicks because the override never matched the host.)
 
 ## Plan Mode Review
 Offer **BIG CHANGE** (interactive, max 4 issues/section) or **SMALL CHANGE** (1 question/section).

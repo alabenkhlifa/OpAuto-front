@@ -47,6 +47,21 @@ src/app/
 │   ├── garage-settings/           ← + components/garage-info-form, business/operational/system/integration-settings
 │   ├── dashboard/                 ← KPI cards, charts (ng2-charts), AI insights widget
 │   ├── notifications/             ← Full notification page with filters
+│   ├── assistant/                 ← AI Orchestrator chat panel (mounted globally in app.html)
+│   │   ├── components/            ←   assistant-launcher (floating btn + composes panel),
+│   │   │                              assistant-panel (slide-in card + slots),
+│   │   │                              assistant-message-list, assistant-message,
+│   │   │                              assistant-input, assistant-voice-controls,
+│   │   │                              assistant-conversation-list, assistant-empty-state,
+│   │   │                              assistant-conversation-drawer (slide-in history overlay),
+│   │   │                              assistant-approval-card (action-preview body via NgComponentOutlet),
+│   │   │                              assistant-action-preview/ (sms/email/create+cancel-appointment/
+│   │   │                                record-payment per-tool preview components)
+│   │   └── services/              ←   assistant-state, assistant-chat, assistant-context,
+│   │                                  assistant-voice, assistant-tool-presenter
+│   │                                  (28-tool registry mapping → friendly i18n keys + extractors;
+│   │                                  see tool-presenters.ts; design spec
+│   │                                  docs/superpowers/specs/2026-05-03-assistant-ui-redesign-design.md)
 │   ├── profile/, auth/, subscription/, staff-management/
 │   └── modules/                   ← Module marketplace (replaces subscription tiers)
 ├── shared/
