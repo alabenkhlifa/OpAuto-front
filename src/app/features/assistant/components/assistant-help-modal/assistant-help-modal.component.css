@@ -64,8 +64,11 @@
 
   .assistant-help-modal {
     width: 100vw;
+    /* `100dvh` accounts for mobile browser chrome; `100vh` is fallback. */
     height: 100vh;
+    height: 100dvh;
     max-height: 100vh;
+    max-height: 100dvh;
     border-radius: 0;
     animation: help-modal-fade-in 0.18s ease;
   }
@@ -87,6 +90,8 @@
 @media (max-width: 767px) {
   .assistant-help-modal__header {
     padding: 1rem;
+    /* Don't sit under iOS notch / Android status bar in PWA shells. */
+    padding-top: max(1rem, env(safe-area-inset-top));
   }
 }
 

@@ -161,6 +161,11 @@ Each is intentionally left open so the team can pick them up. Context + repro st
 | BUG-087 | Reports date-range dropdown — never switched preset to confirm data refetches | Reports | 🔴 |
 | BUG-088 | Reports Refresh button — clicked but never confirmed it fires a data reload | Reports | 🔴 |
 
+### Session 2026-05-03 — Mobile assistant header invisibility
+| ID | Area | Category | Status | Commit |
+|----|------|----------|--------|--------|
+| BUG-094 | Assistant panel header invisible on mobile — user could not see/click close, new-conversation, history, or help buttons on real Android devices and `<768px` viewports. Root cause: the `@media (max-width: 767px)` branch on `.assistant-panel` set `bottom: 0; height: 100vh` but left `top: auto`, so on mobile browsers (where `100vh` is the *layout* viewport — taller than the visual viewport because URL bar / status bar overlap) the panel's top edge was pushed above the visible area, clipping the sticky header. Fix: anchor `top: 0` AND `bottom: 0`, switch height to `100dvh` (dynamic viewport, with `100vh` as fallback), and add `env(safe-area-inset-top/bottom)` padding to header/footer. Same shape of bug fixed in `assistant-help-modal` (full-screen on `<768px`). The conversation drawer is `inset: 0` inside the panel — no own change needed; it inherits the corrected panel bounds. Verified end-to-end at 390×844 + 360×800 with all 4 header buttons reachable + tappable + tablet/desktop unchanged. | Assistant | 🟢 |
+
 ### Environment notes
 - Frontend: `http://localhost:4200` (Angular dev server PID in `/private/tmp/.../bz6bmkmmz.output`)
 - Backend: `http://localhost:3000` (Nest dev server PID in `/private/tmp/.../b81ouxdwr.output`)

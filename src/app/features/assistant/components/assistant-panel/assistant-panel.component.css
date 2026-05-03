@@ -40,12 +40,22 @@
 
 @media (max-width: 767px) {
   .assistant-panel {
+    /*
+     * Mobile full-screen branch. MUST anchor BOTH top and bottom — anchoring
+     * only `bottom: 0` with `height: 100vh` pushes the panel's top edge above
+     * the visual viewport on mobile browsers (URL bar / system status bar
+     * eat into 100vh), hiding the sticky header. Use `100dvh` (dynamic
+     * viewport height) where supported, with `100vh` as fallback.
+     */
+    top: 0;
     bottom: 0;
     right: 0;
     left: 0;
     width: 100vw;
     max-height: 100vh;
+    max-height: 100dvh;
     height: 100vh;
+    height: 100dvh;
     border-radius: 0;
     border-left: none;
     border-right: none;
@@ -54,6 +64,15 @@
 
   [dir='rtl'] .assistant-panel {
     left: 0;
+  }
+
+  /* Respect notches / status bars on iOS / Android PWA shells. */
+  .assistant-panel__header {
+    padding-top: max(0.875rem, env(safe-area-inset-top));
+  }
+
+  .assistant-panel__footer {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
   }
 }
 
