@@ -171,7 +171,16 @@ export class OrchestratorService {
       }
 
       // --- Build tool descriptors visible to this user. --------------------
-      const allRealTools = this.tools.listForUser(ctx);
+      const allRealToolsRaw = this.tools.listForUser(ctx);
+      // UI Bug 7 / N-001 hard enforcement — when pageContext.selectedEntity
+      // is set the conversation is scoped to a specific entity. The system
+      // prompt already instructs the LLM not to call broad-scan tools, but
+      // the model still emits them ~30% of the time. Drop them from the
+      // tool list entirely so the model literally cannot see them.
+      const allRealTools = this.scopeToolsForPageContext(
+        allRealToolsRaw,
+        pageContext,
+      );
       const skillDescriptors = this.skills.list();
       const agentDescriptors = this.agents.list();
 
@@ -1094,6 +1103,55 @@ export class OrchestratorService {
       });
     }
     return out;
+  }
+
+  /**
+   * UI Bug 7 / N-001 — when the user is on a specific-entity detail page,
+   * drop broad-scan tools from the tool list so the LLM cannot derail into
+   * a garage-wide query (e.g. list_at_risk_customers from inside "tell me
+   * about this customer"). The system-prompt nudge alone wasn't enough.
+   *
+   * The exclusion is conservative — only fire when there's an explicit
+   * selectedEntity AND only drop tools whose name screams "broad scan".
+   * Anything that takes an id arg (get_customer, get_invoice, find_*) is
+   * left in place because those are still useful in scope.
+   */
+  private scopeToolsForPageContext(
+    tools: ToolDescriptor[],
+    pageContext: PageContext | undefined,
+  ): ToolDescriptor[] {
+    const hasSelectedEntity =
+      !!pageContext?.selectedEntity ||
+      !!deriveSelectedEntityFromRoute(pageContext?.route, pageContext?.params);
+    if (!hasSelectedEntity) return tools;
+    const BROAD_SCAN_TOOLS = new Set([
+      'list_at_risk_customers',
+      'list_top_customers',
+      'list_returning_customers',
+      'list_overdue_invoices',
+      'list_low_stock_parts',
+      'list_active_jobs',
+      'list_maintenance_due',
+      'get_dashboard_kpis',
+      'get_revenue_summary',
+      'get_invoices_summary',
+      'get_customer_count',
+      'get_inventory_value',
+    ]);
+    const dropped: string[] = [];
+    const filtered = tools.filter((t) => {
+      if (BROAD_SCAN_TOOLS.has(t.name)) {
+        dropped.push(t.name);
+        return false;
+      }
+      return true;
+    });
+    if (dropped.length > 0) {
+      this.logger.debug(
+        `assistant.scope.dropped_broad_scans count=${dropped.length} tools=${dropped.join(',')}`,
+      );
+    }
+    return filtered;
   }
 
   private buildSystemPrompt(

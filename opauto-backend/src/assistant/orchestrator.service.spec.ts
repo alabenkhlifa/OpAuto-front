@@ -585,6 +585,46 @@ describe('OrchestratorService', () => {
     });
   });
 
+  it('drops broad-scan tools from the LLM tool list when pageContext.selectedEntity is set (UI Bug 7 / N-001)', async () => {
+    // The customer-detail page's pageContext should narrow the allowed
+    // toolset — list_at_risk_customers must NOT reach the LLM, but
+    // get_customer (which takes an id) is still allowed.
+    const tools = makeTools([
+      'get_customer',
+      'list_at_risk_customers',
+      'list_top_customers',
+      'find_car',
+    ]);
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: 'Customer is fine.',
+        toolCalls: [],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({ tools, llm });
+
+    await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-scope',
+        'tell me about this customer',
+        {
+          route: '/customers/abc-123',
+          params: { id: 'abc-123' },
+        },
+      ),
+    );
+
+    // Inspect what was passed to llm.complete
+    const call = (llm.complete as jest.Mock).mock.calls[0][0];
+    const offered = (call.tools ?? []).map((t: { name: string }) => t.name);
+    expect(offered).toContain('get_customer');
+    expect(offered).toContain('find_car');
+    expect(offered).not.toContain('list_at_risk_customers');
+    expect(offered).not.toContain('list_top_customers');
+  });
+
   it('caps any tool at MAX_CALLS_PER_TOOL_PER_TURN regardless of result emptiness (I-016 broadened, B-06)', async () => {
     // find_car returns the SAME non-empty match each time but the LLM keeps
     // re-calling. Cap is 3. The 4th call must not execute — instead, the
