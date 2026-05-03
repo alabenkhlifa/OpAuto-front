@@ -160,7 +160,7 @@ describe('AssistantToolPresenterService', () => {
       'get_inventory_value', 'record_payment',
       'send_sms', 'send_email', 'propose_retention_action',
       'list_active_jobs', 'get_dashboard_kpis', 'get_invoices_summary',
-      'get_customer_count', 'get_revenue_summary',
+      'get_customer_count', 'get_revenue_summary', 'get_revenue_breakdown_by_service',
       'generate_invoices_pdf', 'generate_period_report',
     ];
     for (const t of expectedTools) {

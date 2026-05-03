@@ -182,6 +182,7 @@ export const TOOL_PRESENTERS: ToolPresenter[] = [
   present('get_revenue_summary', {
     successParams: (_a, r) => ({ total: num(r, 'totalRevenue') ?? 0 }),
   }),
+  present('get_revenue_breakdown_by_service'),
 
   // ── Reports ─────────────────────────────────────────────────────────────
   present('generate_invoices_pdf', {

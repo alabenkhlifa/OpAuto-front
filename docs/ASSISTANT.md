@@ -17,7 +17,7 @@ flowchart TD
     G -->|Gemini → Groq → Claude → mock| GP[(LLM provider)]
     GP --> G --> O
 
-    O -->|tool_call| TR[Tool Registry<br/>26 tools]
+    O -->|tool_call| TR[Tool Registry<br/>29 tools]
     TR --> O
 
     O -->|load_skill tool| SK[Skill Registry<br/>10 markdown playbooks]
@@ -34,9 +34,9 @@ flowchart TD
 | Layer | Service | Responsibility |
 |---|---|---|
 | **Orchestrator** | `OrchestratorService` | Owns the turn lifecycle: persists messages, builds system prompts (with **today's date anchor**), runs the classifier, calls the LLM, executes tool calls, gates writes through approvals, and streams SSE events back. |
-| **Intent Classifier** | `IntentClassifierService` | Cheap LLM pre-filter that narrows the 26-tool registry to ≤5 candidates. Without it the main-turn prompt would blow Groq's 6 000 TPM ceiling on every query. |
+| **Intent Classifier** | `IntentClassifierService` | Cheap LLM pre-filter that narrows the 29-tool registry to ≤5 candidates. Without it the main-turn prompt would blow Groq's 6 000 TPM ceiling on every query. |
 | **LLM Gateway** | `LlmGatewayService` | Provider-agnostic `complete()` API. Tries **Gemini 2.5 Flash-Lite (250k TPM free) → Groq (fast 8b model) → Claude (last resort) → mock**. Translates between OpenAI / Claude / Gemini message and tool-call shapes. |
-| **Tool Registry** | `ToolRegistryService` | 26 read/write tools registered at startup, each with a JSON Schema, a blast tier (READ / AUTO_WRITE / CONFIRM_WRITE / TYPED_CONFIRM_WRITE), and an async handler. The orchestrator validates args and surfaces approval prompts before executing CONFIRM_WRITE+ tools. |
+| **Tool Registry** | `ToolRegistryService` | 29 read/write tools registered at startup, each with a JSON Schema, a blast tier (READ / AUTO_WRITE / CONFIRM_WRITE / TYPED_CONFIRM_WRITE), and an async handler. The orchestrator validates args and surfaces approval prompts before executing CONFIRM_WRITE+ tools. |
 | **Skill Registry** | `SkillRegistryService` | 10 markdown playbooks loaded from disk at startup. The LLM dispatches `load_skill` to inject a playbook body as a system message — re-usable, stateless prose that teaches the model how to handle a recurring workflow without bloating every prompt. |
 | **Agent Runner** | `AgentRunnerService` | 6 specialist agents, each with its own system prompt, tool whitelist, iteration cap, and required role. Dispatched via the `dispatch_agent` tool. The runner spins a private message log and runs its own tool-call loop until the agent emits a final answer or hits its iteration cap. |
 

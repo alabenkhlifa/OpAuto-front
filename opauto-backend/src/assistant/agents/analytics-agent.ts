@@ -15,6 +15,7 @@ export function createAnalyticsAgent(): AgentDefinition {
     toolWhitelist: [
       'get_dashboard_kpis',
       'get_revenue_summary',
+      'get_revenue_breakdown_by_service',
       'get_customer_count',
       'list_active_jobs',
       'get_invoices_summary',

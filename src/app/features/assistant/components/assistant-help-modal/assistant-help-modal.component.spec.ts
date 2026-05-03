@@ -61,12 +61,12 @@ describe('AssistantHelpModalComponent', () => {
     expect(component.isExpanded('agents')).toBe(false);
   });
 
-  it('renders all 28 tool items inside the Tools section by default', () => {
+  it('renders all 29 tool items inside the Tools section by default', () => {
     setOpen(true);
     const items = fixture.debugElement.queryAll(
       By.css('.assistant-help-modal__item'),
     );
-    expect(items.length).toBe(28);
+    expect(items.length).toBe(29);
   });
 
   it('toggles to Skills section when its header is clicked, hiding Tools items', () => {
@@ -154,6 +154,6 @@ describe('AssistantHelpModalComponent', () => {
     const prefixes = fixture.debugElement.queryAll(
       By.css('.assistant-help-modal__item-example-prefix'),
     );
-    expect(prefixes.length).toBe(28);
+    expect(prefixes.length).toBe(29);
   });
 });

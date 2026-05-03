@@ -3212,6 +3212,11 @@
           "description": "How much you earned over a day, week, or month.",
           "example": "How much did I make last month?"
         },
+        "revenue_breakdown_by_service": {
+          "name": "Revenue breakdown by service",
+          "description": "Revenue split by service category — see which services drive your earnings.",
+          "example": "Break down my revenue by service type for the last 6 months"
+        },
         "list_appointments": {
           "name": "List appointments",
           "description": "See appointments scheduled in any time window.",
@@ -3650,6 +3655,11 @@
         "running": "Calculating revenue…",
         "success": "Revenue: {{total}} TND",
         "failure": "Couldn't calculate revenue"
+      },
+      "get_revenue_breakdown_by_service": {
+        "running": "Breaking revenue down by service…",
+        "success": "Revenue breakdown ready",
+        "failure": "Couldn't break down revenue by service"
       },
       "generate_invoices_pdf": {
         "running": "Generating the invoices PDF…",

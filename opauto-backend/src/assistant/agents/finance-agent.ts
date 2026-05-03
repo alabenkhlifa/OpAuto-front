@@ -14,6 +14,7 @@ export function createFinanceAgent(): AgentDefinition {
     systemPrompt: SYSTEM_PROMPT,
     toolWhitelist: [
       'get_revenue_summary',
+      'get_revenue_breakdown_by_service',
       'get_invoices_summary',
       'list_invoices',
       'get_invoice',

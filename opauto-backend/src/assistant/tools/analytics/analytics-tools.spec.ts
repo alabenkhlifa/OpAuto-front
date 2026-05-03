@@ -9,6 +9,7 @@ import {
 import { buildGetCustomerCountTool } from './customer-count.tool';
 import { buildListActiveJobsTool } from './active-jobs.tool';
 import { buildGetInvoicesSummaryTool } from './invoices-summary.tool';
+import { buildGetRevenueBreakdownByServiceTool } from './revenue-breakdown-by-service.tool';
 
 const ownerCtx: AssistantUserContext = {
   userId: 'user-1',
@@ -312,6 +313,76 @@ describe('analytics tools', () => {
       await expect(
         tool.handler({ from: 'banana' }, ownerCtx),
       ).rejects.toThrow(/Invalid from/);
+    });
+  });
+
+  describe('get_revenue_breakdown_by_service', () => {
+    it('joins paid line items with the service catalog and groups by category', async () => {
+      // Simulates two paid invoices in the same garage:
+      //   Invoice 1 — labor (resolves to Maintenance), part (no code, fallback).
+      //   Invoice 2 — service code that maps to Brakes, plus an "Other" line.
+      const invoiceFindMany = jest.fn().mockImplementation(({ where }) => {
+        if (where.garageId !== ownerCtx.garageId) return Promise.resolve([]);
+        return Promise.resolve([
+          {
+            lineItems: [
+              { total: 80, type: 'service', partId: null, serviceCode: 'OIL-CHG' },
+              { total: 40, type: 'part', partId: 'p-1', serviceCode: null },
+            ],
+          },
+          {
+            lineItems: [
+              { total: 200, type: 'service', partId: null, serviceCode: 'BRK-PAD' },
+              { total: 30, type: 'misc', partId: null, serviceCode: null },
+            ],
+          },
+        ]);
+      });
+      const catalogFindMany = jest.fn().mockResolvedValue([
+        { code: 'OIL-CHG', name: 'Oil change', category: 'Maintenance' },
+        { code: 'BRK-PAD', name: 'Brake pads', category: 'Brakes' },
+      ]);
+      const prisma = {
+        invoice: { findMany: invoiceFindMany },
+        serviceCatalog: { findMany: catalogFindMany },
+      } as any;
+      const tool = buildGetRevenueBreakdownByServiceTool(prisma);
+
+      const result = await tool.handler({ period: 'ytd' }, ownerCtx);
+
+      expect(result.totalRevenue).toBe(350);
+      expect(result.currency).toBe('TND');
+      expect(result.period).toBe('ytd');
+      // Sorted desc — Brakes (200) > Maintenance (80) > Parts (40) > Other (30).
+      expect(result.breakdown.map((b) => b.category)).toEqual([
+        'Brakes',
+        'Maintenance',
+        'Parts',
+        'Other',
+      ]);
+      expect(result.breakdown[0].totalRevenue).toBe(200);
+      expect(result.breakdown[0].lineItemCount).toBe(1);
+      expect(result.breakdown[1].totalRevenue).toBe(80);
+      expect(result.breakdown[2].totalRevenue).toBe(40);
+      expect(result.breakdown[3].totalRevenue).toBe(30);
+      // Catalog query was scoped by garageId AND only the codes we actually saw.
+      const catalogWhere = catalogFindMany.mock.calls[0][0].where;
+      expect(catalogWhere.garageId).toBe(ownerCtx.garageId);
+      expect(catalogWhere.code.in).toEqual(
+        expect.arrayContaining(['OIL-CHG', 'BRK-PAD']),
+      );
+      // Percentages sum to exactly 100.
+      const sumPct = result.breakdown.reduce((acc, b) => acc + b.percentage, 0);
+      expect(sumPct).toBeCloseTo(100, 5);
+    });
+
+    it('is registered as READ tier and OWNER-only', () => {
+      const tool = buildGetRevenueBreakdownByServiceTool({
+        invoice: { findMany: jest.fn().mockResolvedValue([]) },
+        serviceCatalog: { findMany: jest.fn().mockResolvedValue([]) },
+      } as any);
+      expect(tool.blastTier).toBe(AssistantBlastTier.READ);
+      expect(tool.requiredRole).toBe('OWNER');
     });
   });
 });

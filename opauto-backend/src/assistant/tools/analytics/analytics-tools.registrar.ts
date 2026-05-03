@@ -8,6 +8,7 @@ import { buildGetRevenueSummaryTool } from './revenue-summary.tool';
 import { buildGetCustomerCountTool } from './customer-count.tool';
 import { buildListActiveJobsTool } from './active-jobs.tool';
 import { buildGetInvoicesSummaryTool } from './invoices-summary.tool';
+import { buildGetRevenueBreakdownByServiceTool } from './revenue-breakdown-by-service.tool';
 
 /**
  * Registers all analytics tools (read, OWNER-only) with the assistant tool
@@ -31,6 +32,7 @@ export class AnalyticsToolsRegistrar implements OnModuleInit {
       buildGetCustomerCountTool(this.prisma) as ToolDefinition,
       buildListActiveJobsTool(this.prisma) as ToolDefinition,
       buildGetInvoicesSummaryTool(this.prisma) as ToolDefinition,
+      buildGetRevenueBreakdownByServiceTool(this.prisma) as ToolDefinition,
     ];
 
     for (const tool of tools) {

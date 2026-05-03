@@ -1,8 +1,19 @@
 import { AssistantBlastTier } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AssistantUserContext, ToolDefinition } from '../../types';
+import {
+  RevenuePeriod,
+  resolveRevenueWindow,
+} from './revenue-period.util';
 
-export type RevenuePeriod = 'today' | 'week' | 'month' | 'ytd';
+// Re-exported so existing call sites (specs, other tools) keep working.
+export {
+  RevenuePeriod,
+  resolveRevenuePeriod,
+  parseFromArg,
+  parseToArg,
+  resolveRevenueWindow,
+} from './revenue-period.util';
 
 export interface RevenueSummaryArgs {
   /**
@@ -34,61 +45,6 @@ export interface RevenueSummaryResult {
 }
 
 /**
- * Compute [from, to) for a named period in the server's local timezone.
- * `to` is exclusive — set to "now" so the current moment is always included.
- */
-export function resolveRevenuePeriod(
-  period: RevenuePeriod,
-  now: Date = new Date(),
-): { from: Date; to: Date } {
-  const to = new Date(now);
-  const from = new Date(now);
-  switch (period) {
-    case 'today':
-      from.setHours(0, 0, 0, 0);
-      break;
-    case 'week':
-      // Rolling 7 days ending now.
-      from.setDate(from.getDate() - 7);
-      break;
-    case 'month':
-      from.setDate(1);
-      from.setHours(0, 0, 0, 0);
-      break;
-    case 'ytd':
-      from.setMonth(0, 1);
-      from.setHours(0, 0, 0, 0);
-      break;
-    default: {
-      const exhaustive: never = period;
-      throw new Error(`Unsupported period: ${exhaustive as string}`);
-    }
-  }
-  return { from, to };
-}
-
-const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
-
-/** Date-only strings ("2026-02-01") parse as UTC midnight — natural for "starting on this day". */
-function parseFromArg(s: string): Date {
-  const d = new Date(s);
-  if (Number.isNaN(d.getTime())) throw new Error(`Invalid from date: ${s}`);
-  return d;
-}
-
-/**
- * Date-only `to` advances to the next day's UTC midnight so the day is fully
- * included under the half-open `lt` interval used downstream. Full timestamps
- * pass through.
- */
-function parseToArg(s: string): Date {
-  const d = new Date(s);
-  if (Number.isNaN(d.getTime())) throw new Error(`Invalid to date: ${s}`);
-  if (DATE_ONLY.test(s)) return new Date(d.getTime() + 24 * 60 * 60 * 1000);
-  return d;
-}
-
-/**
  * Sums Invoice.total for paid invoices within the requested window, scoped
  * to the caller's garage. Uses paidAt as the time anchor so partial/overdue
  * invoices don't show up. Returns TND.
@@ -106,7 +62,8 @@ export function buildGetRevenueSummaryTool(
       'Use the custom range whenever the user asks for something the named periods do not cover, e.g. ' +
       '"last 3 months", "Q1", "since March", "between Jan 15 and Feb 28", "last 90 days". For "last 3 months" ' +
       'pass from = today minus 90 days, to = today (both YYYY-MM-DD). ' +
-      'When both modes are supplied, `from`+`to` wins. When everything is omitted, defaults to "ytd".',
+      'When both modes are supplied, `from`+`to` wins. When everything is omitted, defaults to "ytd". ' +
+      'For breakdowns / segmentation by service type or category, use `get_revenue_breakdown_by_service` instead.',
     parameters: {
       type: 'object',
       additionalProperties: false,
@@ -135,31 +92,7 @@ export function buildGetRevenueSummaryTool(
       args: RevenueSummaryArgs,
       ctx: AssistantUserContext,
     ): Promise<RevenueSummaryResult> => {
-      let from: Date;
-      let to: Date;
-      let periodLabel: RevenueSummaryResult['period'];
-
-      if (args.from || args.to) {
-        if (!args.from || !args.to) {
-          throw new Error(
-            '`from` and `to` must be provided together. Either pass both or use `period` instead.',
-          );
-        }
-        from = parseFromArg(args.from);
-        to = parseToArg(args.to);
-        if (from.getTime() >= to.getTime()) {
-          throw new Error(
-            `Invalid range: from (${args.from}) must be earlier than to (${args.to}).`,
-          );
-        }
-        periodLabel = 'custom';
-      } else {
-        const period = args.period ?? 'ytd';
-        const resolved = resolveRevenuePeriod(period);
-        from = resolved.from;
-        to = resolved.to;
-        periodLabel = period;
-      }
+      const { from, to, periodLabel } = resolveRevenueWindow(args);
 
       const aggregate = await prisma.invoice.aggregate({
         where: {

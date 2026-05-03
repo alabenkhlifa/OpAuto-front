@@ -3,6 +3,7 @@ import { AgentDefinition } from '../types';
 import { createAnalyticsAgent } from './analytics-agent';
 import { createCommunicationsAgent } from './communications-agent';
 import { createGrowthAgent } from './growth-agent';
+import { createFinanceAgent } from './finance-agent';
 import { AgentsRegistrar } from './agents.registrar';
 
 function assertCommonShape(agent: AgentDefinition): void {
@@ -40,6 +41,11 @@ describe('assistant agents', () => {
         }
       }
     });
+
+    it('whitelists the revenue-breakdown-by-service tool so segmentation queries work', () => {
+      const agent = createAnalyticsAgent();
+      expect(agent.toolWhitelist).toContain('get_revenue_breakdown_by_service');
+    });
   });
 
   describe('createCommunicationsAgent', () => {
@@ -73,6 +79,22 @@ describe('assistant agents', () => {
           'list_top_customers',
           'list_at_risk_customers',
           'propose_retention_action',
+        ]),
+      );
+    });
+  });
+
+  describe('createFinanceAgent', () => {
+    it('whitelists revenue tools including the breakdown-by-service tool', () => {
+      const agent = createFinanceAgent();
+      expect(agent.name).toBe('finance-agent');
+      assertCommonShape(agent);
+      expect(agent.toolWhitelist).toEqual(
+        expect.arrayContaining([
+          'get_revenue_summary',
+          'get_revenue_breakdown_by_service',
+          'list_overdue_invoices',
+          'record_payment',
         ]),
       );
     });

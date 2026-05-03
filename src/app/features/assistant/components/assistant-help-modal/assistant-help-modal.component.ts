@@ -27,6 +27,7 @@ const TOOL_KEYS: string[] = [
   'dashboard_kpis',
   'invoices_summary',
   'revenue_summary',
+  'revenue_breakdown_by_service',
   'list_appointments',
   'find_available_slot',
   'create_appointment',

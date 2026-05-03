@@ -3307,6 +3307,11 @@
           "description": "Combien vous avez gagné sur un jour, une semaine ou un mois.",
           "example": "Combien ai-je gagné le mois dernier ?"
         },
+        "revenue_breakdown_by_service": {
+          "name": "Répartition du chiffre d'affaires par service",
+          "description": "Chiffre d'affaires réparti par catégorie de service — voyez ce qui rapporte le plus.",
+          "example": "Décompose mon chiffre d'affaires par type de service sur les 6 derniers mois"
+        },
         "list_appointments": {
           "name": "Liste des rendez-vous",
           "description": "Voir les rendez-vous prévus sur une période donnée.",
@@ -3745,6 +3750,11 @@
         "running": "Je calcule le chiffre d'affaires…",
         "success": "Chiffre d'affaires : {{total}} TND",
         "failure": "Impossible de calculer le chiffre d'affaires"
+      },
+      "get_revenue_breakdown_by_service": {
+        "running": "Je décompose le chiffre d'affaires par service…",
+        "success": "Répartition par service prête",
+        "failure": "Impossible de décomposer le chiffre d'affaires par service"
       },
       "generate_invoices_pdf": {
         "running": "Je génère le PDF des factures…",
