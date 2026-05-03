@@ -54,23 +54,47 @@ describe('AssistantHelpModalComponent', () => {
     expect(sections.length).toBe(3);
   });
 
-  it('opens the Tools section by default', () => {
+  it('starts with all sections collapsed when opened', () => {
     setOpen(true);
-    expect(component.isExpanded('tools')).toBe(true);
+    expect(component.expanded()).toBeNull();
+    expect(component.isExpanded('tools')).toBe(false);
     expect(component.isExpanded('skills')).toBe(false);
     expect(component.isExpanded('agents')).toBe(false);
+    const items = fixture.debugElement.queryAll(
+      By.css('.assistant-help-modal__item'),
+    );
+    expect(items.length).toBe(0);
   });
 
-  it('renders all 29 tool items inside the Tools section by default', () => {
+  it('renders all 29 tool items once the Tools section is expanded', () => {
     setOpen(true);
+    component.toggleSection('tools');
+    fixture.detectChanges();
     const items = fixture.debugElement.queryAll(
       By.css('.assistant-help-modal__item'),
     );
     expect(items.length).toBe(29);
   });
 
+  it('toggleSection("tools") opens then collapses the Tools section', () => {
+    setOpen(true);
+    expect(component.isExpanded('tools')).toBe(false);
+
+    component.toggleSection('tools');
+    fixture.detectChanges();
+    expect(component.isExpanded('tools')).toBe(true);
+    expect(component.expanded()).toBe('tools');
+
+    component.toggleSection('tools');
+    fixture.detectChanges();
+    expect(component.isExpanded('tools')).toBe(false);
+    expect(component.expanded()).toBeNull();
+  });
+
   it('toggles to Skills section when its header is clicked, hiding Tools items', () => {
     setOpen(true);
+    component.toggleSection('tools');
+    fixture.detectChanges();
     component.toggleSection('skills');
     fixture.detectChanges();
     expect(component.isExpanded('skills')).toBe(true);
@@ -151,6 +175,8 @@ describe('AssistantHelpModalComponent', () => {
 
   it('renders an example-prefix label inside each visible item', () => {
     setOpen(true);
+    component.toggleSection('tools');
+    fixture.detectChanges();
     const prefixes = fixture.debugElement.queryAll(
       By.css('.assistant-help-modal__item-example-prefix'),
     );

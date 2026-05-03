@@ -155,6 +155,8 @@
 @media (max-width: 767px) {
   .assistant-help-modal__body {
     padding: 0.5rem 1rem 1rem 1rem;
+    /* Smoother iOS momentum scroll inside the body. */
+    -webkit-overflow-scrolling: touch;
   }
 }
 
@@ -163,6 +165,14 @@
   border-radius: 12px;
   background: #ffffff;
   overflow: hidden;
+  /*
+   * Without this, the parent flex column shrinks ALL children proportionally
+   * when the expanded section's <ul> overflows, instead of triggering the
+   * body's own `overflow-y: auto`. That collapses the toggles' natural ~44px
+   * height and visually clips their titles. Pinning shrink to 0 keeps each
+   * section at its intrinsic height and lets the body scroll instead.
+   */
+  flex-shrink: 0;
 }
 
 .assistant-help-modal__section.is-open {

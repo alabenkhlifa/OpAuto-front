@@ -81,8 +81,8 @@ const AGENT_KEYS: string[] = [
  *
  * Sibling overlay (NOT projected into the panel's drawer slot) so it can
  * cover the entire viewport on mobile and stack above the assistant panel.
- * Backdrop click → close. ESC → close. Three collapsible sections with the
- * first (Tools) open by default.
+ * Backdrop click → close. ESC → close. Three collapsible sections, all
+ * sections collapsed by default; user expands the one they want.
  */
 @Component({
   selector: 'app-assistant-help-modal',
@@ -96,8 +96,8 @@ export class AssistantHelpModalComponent {
   readonly open = input<boolean>(false);
   readonly closed = output<void>();
 
-  /** Which section is currently expanded ('tools' by default; null = all collapsed). */
-  readonly expanded = signal<'tools' | 'skills' | 'agents' | null>('tools');
+  /** Which section is currently expanded; null = all collapsed (default). */
+  readonly expanded = signal<'tools' | 'skills' | 'agents' | null>(null);
 
   readonly sections = computed<HelpSection[]>(() => [
     {
@@ -118,10 +118,11 @@ export class AssistantHelpModalComponent {
   ]);
 
   constructor() {
-    // Reset to default-open Tools section every time the modal opens.
+    // Reset to all-sections-collapsed every time the modal opens, so the
+    // user picks what they want to explore.
     effect(() => {
       if (this.open()) {
-        this.expanded.set('tools');
+        this.expanded.set(null);
         // Defer focus to next tick so the close button is in the DOM.
         queueMicrotask(() => {
           const btn = document.querySelector<HTMLButtonElement>(
