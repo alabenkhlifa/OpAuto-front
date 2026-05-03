@@ -22,7 +22,7 @@
     "test:translation-reliable-dashboard": "npx playwright test tests/translation/reliable-dashboard.spec.ts",
     "test:translation-reliable-cars": "npx playwright test tests/translation/reliable-cars.spec.ts",
     "i18n:check": "node scripts/check-i18n-parity.js",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "private": true,
   "dependencies": {
