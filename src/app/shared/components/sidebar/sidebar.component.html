@@ -1,7 +1,10 @@
 <!-- Mobile Menu Overlay -->
-<div 
-  *ngIf="isMobileMenuOpen()" 
-  class="fixed inset-0 z-20 bg-black bg-opacity-50 lg:hidden"
+<!-- z-50 sits below the mobile sidebar (z-index 60) and above any
+     page-level sticky headers (commonly z-index 30–40). Modals live at
+     1000+ so we don't collide with them. -->
+<div
+  *ngIf="isMobileMenuOpen()"
+  class="fixed inset-0 z-50 bg-black bg-opacity-50 lg:hidden"
   (click)="toggleMobileMenu()">
 </div>
 

@@ -88,6 +88,17 @@
     background: #f8fafc;
     transform: translateX(-100%);
     border-right: none;
+    /* The mobile sidebar is a chrome/system overlay — it must paint above
+     * any in-page sticky shells. Several feature pages (e.g. invoicing
+     * shell, invoice form, app top-bar) use z-index in the 30–50 band
+     * for sticky headers/sub-navs. Keeping the mobile sidebar at the
+     * desktop default (30) caused those page-level stickies to bleed
+     * over the open drawer because they sit later in DOM order. We sit
+     * at 60 here so the drawer fully covers any page-level z-index ≤50,
+     * while staying well below the modal stack at 1000+. The mobile
+     * menu button (z-index 70 below) and the backdrop (z-index 50 in
+     * the template) are tuned to bracket this value. */
+    z-index: 60;
   }
 
   .sidebar.mobile-open {
@@ -314,7 +325,9 @@
   position: fixed;
   top: 1rem;
   left: 1rem;
-  z-index: 51;
+  /* Must paint above the open sidebar (z-index 60) so the burger ⇆ X
+   * icon remains clickable while the drawer is open. */
+  z-index: 70;
   width: 3rem;
   height: 3rem;
   border-radius: 12px;
