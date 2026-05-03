@@ -438,6 +438,38 @@ export class OrchestratorService {
           continue;
         }
 
+        // UI Bug 7 hardening — even though we filtered broad-scan tools out
+        // of llmTools when pageContext.selectedEntity is set, a loaded skill
+        // body or older history can still nudge the LLM to call them. Refuse
+        // any broad-scan tool when a selected entity is set, regardless of
+        // whether it survived the classifier. We do NOT block other un-offered
+        // tools (e.g. get_customer when the classifier didn't pick it) — those
+        // are still legitimate and useful in scope.
+        if (
+          this.isBroadScanTool(call.name) &&
+          this.hasSelectedEntity(pageContext)
+        ) {
+          subject.next({
+            type: 'tool_result',
+            toolCallId: call.id,
+            result: {
+              error: 'tool_not_offered',
+              name: call.name,
+              message:
+                `${call.name} is a garage-wide scan and is not available ` +
+                `while the conversation is scoped to a single entity. ` +
+                `Use the id-based tools (get_customer, get_invoice, get_car) ` +
+                `to answer about THIS entity, then compose the reply.`,
+            },
+            status: 'failed',
+          });
+          this.appendToolMessage(llmMessages, call.id, {
+            error: 'tool_not_offered',
+            name: call.name,
+          });
+          continue;
+        }
+
         const parsedArgs = this.safeParseArgs(call.argsJson);
         if (parsedArgs.error) {
           subject.next({
@@ -1116,31 +1148,40 @@ export class OrchestratorService {
    * Anything that takes an id arg (get_customer, get_invoice, find_*) is
    * left in place because those are still useful in scope.
    */
+  private static readonly BROAD_SCAN_TOOLS: ReadonlySet<string> = new Set([
+    'list_at_risk_customers',
+    'list_top_customers',
+    'list_returning_customers',
+    'list_overdue_invoices',
+    'list_low_stock_parts',
+    'list_active_jobs',
+    'list_maintenance_due',
+    'get_dashboard_kpis',
+    'get_revenue_summary',
+    'get_invoices_summary',
+    'get_customer_count',
+    'get_inventory_value',
+  ]);
+
+  private isBroadScanTool(name: string): boolean {
+    return OrchestratorService.BROAD_SCAN_TOOLS.has(name);
+  }
+
+  private hasSelectedEntity(pageContext: PageContext | undefined): boolean {
+    return (
+      !!pageContext?.selectedEntity ||
+      !!deriveSelectedEntityFromRoute(pageContext?.route, pageContext?.params)
+    );
+  }
+
   private scopeToolsForPageContext(
     tools: ToolDescriptor[],
     pageContext: PageContext | undefined,
   ): ToolDescriptor[] {
-    const hasSelectedEntity =
-      !!pageContext?.selectedEntity ||
-      !!deriveSelectedEntityFromRoute(pageContext?.route, pageContext?.params);
-    if (!hasSelectedEntity) return tools;
-    const BROAD_SCAN_TOOLS = new Set([
-      'list_at_risk_customers',
-      'list_top_customers',
-      'list_returning_customers',
-      'list_overdue_invoices',
-      'list_low_stock_parts',
-      'list_active_jobs',
-      'list_maintenance_due',
-      'get_dashboard_kpis',
-      'get_revenue_summary',
-      'get_invoices_summary',
-      'get_customer_count',
-      'get_inventory_value',
-    ]);
+    if (!this.hasSelectedEntity(pageContext)) return tools;
     const dropped: string[] = [];
     const filtered = tools.filter((t) => {
-      if (BROAD_SCAN_TOOLS.has(t.name)) {
+      if (this.isBroadScanTool(t.name)) {
         dropped.push(t.name);
         return false;
       }
