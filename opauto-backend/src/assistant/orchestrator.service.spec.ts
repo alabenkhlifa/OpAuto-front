@@ -585,6 +585,47 @@ describe('OrchestratorService', () => {
     });
   });
 
+  it('breaks the find_* retry loop after 2 empty returns and forces compose-only (I-016, B-06)', async () => {
+    // The LLM stub keeps emitting find_car. After the 2nd empty result the
+    // orchestrator injects a "stop retrying" system message and the next
+    // iteration should NOT call find_car again — forcing compose-only.
+    const tools = makeTools(['find_car'], () => ({
+      ok: true,
+      result: [], // empty array — counts as "no match"
+      durationMs: 1,
+    }));
+    const findCall = (id: string) => ({
+      provider: 'groq' as const,
+      content: null,
+      toolCalls: [
+        { id, name: 'find_car', argsJson: '{"query":"9109 TUN 804"}' },
+      ],
+    });
+    const llm = makeLlm([
+      findCall('tc-1'),
+      findCall('tc-2'),
+      // After the cap kicks in the orchestrator stops offering tools to the
+      // model — but the stub doesn't care, so we provide a fallback text.
+      {
+        provider: 'groq',
+        content: "I couldn't find a car matching that plate.",
+        toolCalls: [],
+      },
+      // Sentinel — if find_car fires a 3rd time the test will reach this
+      // and we'll know the cap leaked.
+      findCall('tc-3'),
+    ]);
+    const orchestrator = await makeOrchestrator({ tools, llm });
+
+    const events = await collectEvents(
+      orchestrator.run(ctx, 'conv-1', 'find car 9109 TUN 804', undefined),
+    );
+
+    expect(tools.execute).toHaveBeenCalledTimes(2);
+    const text = events.find((e) => e.type === 'text');
+    expect(text).toMatchObject({ delta: expect.stringMatching(/couldn't find/i) });
+  });
+
   it('caps dispatch_agent at MAX_AGENT_DISPATCHES_PER_TURN (B-23/B-24 unbounded loop)', async () => {
     // Without the cap a misbehaving model can keep emitting dispatch_agent on
     // every iteration, racking up agent runs until the 90s turn budget blows.

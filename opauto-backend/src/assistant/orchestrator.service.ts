@@ -46,6 +46,27 @@ const RESERVED_DISPATCH_AGENT = 'dispatch_agent';
 // Extracted to ./page-context-resolver for direct unit testing.
 import { deriveSelectedEntityFromRoute } from './page-context-resolver';
 
+/**
+ * Best-effort detection of "the tool returned no rows". Used by I-016 to
+ * decide whether a find_* call should count toward the retry cap. Conservative
+ * — if we can't tell for sure, we say "not empty" and let the LLM continue.
+ */
+function isEmptyResult(result: unknown): boolean {
+  if (result === null || result === undefined) return true;
+  if (Array.isArray(result)) return result.length === 0;
+  if (typeof result === 'object') {
+    const r = result as Record<string, unknown>;
+    if ('error' in r && (r.error === 'not_found' || r.error === 'no_match')) {
+      return true;
+    }
+    if (typeof r.count === 'number' && r.count === 0) return true;
+    if (typeof r.total === 'number' && r.total === 0) return true;
+    if (Array.isArray(r.results) && r.results.length === 0) return true;
+    if (Array.isArray(r.matches) && r.matches.length === 0) return true;
+  }
+  return false;
+}
+
 interface RunOptions {
   iterationCap?: number;
   totalTimeoutMs?: number;
@@ -238,6 +259,14 @@ export class OrchestratorService {
       // is plenty headroom for retry-with-feedback while still bounded.
       const MAX_AGENT_DISPATCHES_PER_TURN = 2;
       let agentDispatchesThisTurn = 0;
+      // Per-turn empty-result cap on find_* tools (I-016, B-06): the LLM
+      // would retry find_car / find_customer up to 8 times against the
+      // same data with slightly different query strings, never converging.
+      // After 2 empty returns from the same find_* tool, force the model
+      // into compose-only "no results" mode for the rest of the turn.
+      const FIND_EMPTY_RETRY_CAP = 2;
+      const findEmptyCounts = new Map<string, number>();
+      let forceComposeOnly = false;
       for (let step = 0; step < iterationCap; step++) {
         // Cost cap: stop the conversation cold once the per-conversation
         // token budget is exhausted. Checked before every LLM call so a
@@ -281,7 +310,8 @@ export class OrchestratorService {
         //     and stop offering tools. This is what keeps follow-up turns
         //     inside Groq's 6000 TPM (and is cheap on every other provider).
         const swapToComposeOnly =
-          toolHasFired && lastToolTier !== AssistantBlastTier.READ;
+          (toolHasFired && lastToolTier !== AssistantBlastTier.READ) ||
+          forceComposeOnly;
         const messagesForCall = swapToComposeOnly
           ? this.swapSystemPromptForComposeOnly(llmMessages, ctx.locale)
           : llmMessages;
@@ -490,6 +520,31 @@ export class OrchestratorService {
             durationMs: successExec.durationMs,
           });
           this.appendToolMessage(llmMessages, call.id, successExec.result);
+
+          // I-016 — break the find_* retry loop when the same tool keeps
+          // returning empty results. Without this cap the LLM would retry
+          // find_car / find_customer with marginally different queries until
+          // it ate the iteration budget (B-06: 8× retries → turn_timeout).
+          if (
+            call.name.startsWith('find_') &&
+            isEmptyResult(successExec.result)
+          ) {
+            const prev = findEmptyCounts.get(call.name) ?? 0;
+            const next = prev + 1;
+            findEmptyCounts.set(call.name, next);
+            if (next >= FIND_EMPTY_RETRY_CAP) {
+              forceComposeOnly = true;
+              llmMessages.push({
+                role: 'system',
+                content:
+                  `${call.name} returned 0 results ${next} times this turn. ` +
+                  `STOP retrying — there is no match. Compose a brief reply ` +
+                  `telling the user you couldn't find what they're looking ` +
+                  `for, optionally suggesting they double-check the spelling ` +
+                  `or try a different search term. Do NOT call ${call.name} again.`,
+              });
+            }
+          }
         } else {
           const failExec = exec as {
             ok: false;
