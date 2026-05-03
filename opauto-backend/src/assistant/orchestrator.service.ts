@@ -1113,7 +1113,15 @@ export class OrchestratorService {
         `Specialist agents you can dispatch via the dispatch_agent tool:\n` +
           agentDescriptors
             .map((a) => `- ${a.name}: ${a.description}`)
-            .join('\n'),
+            .join('\n') +
+          `\n\nWhen to dispatch an agent vs. call a tool directly (I-015):\n` +
+          `- For an atomic single-fact question ("how many X", "total Y", "list latest Z", ` +
+          `"what is my <kpi>"), prefer a DIRECT tool call. ` +
+          `e.g. "Inventory total value" → get_inventory_value, NOT dispatch_agent. ` +
+          `Each agent dispatch costs 3-5× the tokens of a direct call.\n` +
+          `- Reserve dispatch_agent for multi-step analyses that genuinely benefit from ` +
+          `a private scratchpad (retention reviews, cash-flow forecasts, audits). ` +
+          `If a single tool can answer the question, do not dispatch.`,
       );
     }
     if (pageContext) {
