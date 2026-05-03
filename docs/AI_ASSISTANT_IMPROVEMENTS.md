@@ -84,4 +84,35 @@ These are scenarios the wave-1 sweep flagged but did not exercise. They graduate
 
 ## Future improvements identified by behavior + UI sweeps
 
-(Filled in after the in-flight background agents complete. See §10 of `AI_ASSISTANT_TEST_PLAN.md`.)
+The wave-2 sweeps shipped 7 fixes (UI Bug 1-4, B-19/Deny-doesn't-stick, B-25 hallucination, B-23/B-24 agent loops). The remaining ⚠️ flaky and ❌ failed scenarios surface these follow-ups:
+
+### I-011 — JSON-Schema int coercion at the orchestrator boundary
+**Why:** B-12 hit `/limit must be integer`, B-14 hit `/durationMinutes must be integer`, B-18 hit `/attachInvoiceIds must be array` — Groq/Llama emits a numeric *string* or single-id-string where the schema requires `integer` or `array<string>`. The validation rejects, the LLM retries with the same shape, and the turn loops until it hits the iteration cap. Three of the ten ⚠️ scenarios were caused by this single root cause.
+**Acceptance:** `ToolRegistryService.validateArgs()` (or a new `coerceArgs()` step ahead of it) coerces:
+- numeric strings → `number`/`integer` for properties typed as such;
+- single string → 1-element array for properties typed `array<string>`.
+Surface a one-time warning per (tool, property) pair so we can see how often coercion saves a turn.
+
+### I-012 — Pre-approval UUID-shape validation for id args
+**Why:** B-27 sent `cancel_appointment{appointmentId:"banana"}` and the orchestrator surfaced an approval card BEFORE rejecting the obviously-invalid id. The user is being asked to approve an action that is provably going to fail. Same pattern would affect any future tool that accepts an opaque UUID arg.
+**Acceptance:** AJV format check `format:"uuid"` (or a `pattern:` regex) added to `appointmentId`, `customerId`, `carId`, `invoiceId`, etc. The pre-approval validator rejects with a structured error before persisting the approval row.
+
+### I-013 — Strip residual tool-call JSON from the final text emission
+**Why:** B-11 final assistant text was raw `dispatch_agent` JSON instead of prose — the orchestrator's compose-only prompt did not catch the leak (the leak-detector layer is wired but didn't fire on this code path). Confusing for the user; looks broken.
+**Acceptance:** wrap the compose-only LLM call's `validateResult` callback to detect any tool-call shape in the final text (`{"name":"dispatch_agent",...}`, `<function=…>` tags, etc.) and force a re-compose. Add a regression test using the B-11 prompt as fixture.
+
+### I-014 — Surface infrastructure-level send failures to the user
+**Why:** B-18 — the assistant called `send_email` to email overdue invoices to the user. Resend rejected the send (sandbox-recipient mismatch — owner@autotech.tn isn't the verified sender address; only `ala.khliifa@gmail.com` is per memory). The tool result included `error: send_failed` but the assistant text was just "There are 19 overdue invoices." with no mention of the failed send. The user thinks the email went out.
+**Acceptance:** when an `AUTO_WRITE` tool returns a structured error, the orchestrator's compose-only prompt MUST mention the failure. Or: render an explicit warning chip in the UI when a tool result has `error:` AND an `error_chip` SSE event.
+
+### I-015 — System-prompt nudge: prefer single tools over agent dispatch for atomic facts
+**Why:** B-10 ("Inventory total value") routed through `inventory-agent` (which then called `get_inventory_value`) instead of calling `get_inventory_value` directly. The agent dispatch ran 1× and produced the right answer but burned ~3× the tokens of a direct tool call. Likely affects other one-shot KPI questions.
+**Acceptance:** add to the system prompt a rule: "For atomic single-fact questions ('how many X', 'total Y', 'list latest Z'), prefer a direct tool call over `dispatch_agent`. Reserve agents for multi-step analyses that need their own scratchpad."
+
+### I-016 — `find_*` retry loops on empty returns
+**Why:** B-06 ("find car with plate 9109 TUN 804") fired `find_car` **8 times** before turn_timeout. The plate parsing likely strips the 'TUN' country segment differently each retry but never converges on a hit. B-05 ("find customer with phone …") retried 3× before getting it right. Both burn iteration budget for no value.
+**Acceptance:** classify the empty-result path: if the same `find_*` tool returns 0 rows twice in a turn with the same query, force the LLM into compose-only mode with "no results — tell the user". Adds a hard cap on `find_*` retries per turn.
+
+### I-017 — Skip-on-`__resume__` for already-DENIED tool calls
+**Why:** Already partially fixed by `e34b898` (B-19/UI Bug 3 fix), but worth pinning a documentation expectation: any future write-tier tool added must inherit the post-DENIED short-circuit semantics. A migration test in the cross-references suite (I-006) could enforce this contractually.
+**Acceptance:** docs section in `ASSISTANT.md` covering the approval state machine + DENIED short-circuit, plus a note in the "How to add a new tool" recipe about `_expectedConfirmation` and DENIED handling.
