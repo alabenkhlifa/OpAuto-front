@@ -231,6 +231,13 @@ export class OrchestratorService {
       // e.g. list_invoices → send_email). After a write tool the action is
       // complete and we can swap to the cheaper compose-only mode.
       let lastToolTier: AssistantBlastTier | null = null;
+      // Per-turn cap on dispatch_agent (B-23/B-24): without this cap a misbehaving
+      // model would re-dispatch the same specialist agent on each iteration,
+      // blowing the 90s turn budget and racking up OVH spend before
+      // converging. Each agent run is itself iteration-capped, so 2 dispatches
+      // is plenty headroom for retry-with-feedback while still bounded.
+      const MAX_AGENT_DISPATCHES_PER_TURN = 2;
+      let agentDispatchesThisTurn = 0;
       for (let step = 0; step < iterationCap; step++) {
         // Cost cap: stop the conversation cold once the per-conversation
         // token budget is exhausted. Checked before every LLM call so a
@@ -342,6 +349,21 @@ export class OrchestratorService {
           continue;
         }
         if (call.name === RESERVED_DISPATCH_AGENT) {
+          if (agentDispatchesThisTurn >= MAX_AGENT_DISPATCHES_PER_TURN) {
+            // Refuse further dispatches in this turn but keep the conversation
+            // alive — surface a tool message so the LLM can compose a final
+            // synthesis from whatever the prior agents produced rather than
+            // hard-erroring on the user.
+            this.appendToolMessage(llmMessages, call.id, {
+              error: 'agent_dispatch_capped',
+              message:
+                `Refusing to dispatch another agent — already invoked ` +
+                `${agentDispatchesThisTurn} time(s) this turn. Compose your ` +
+                `final reply from the agent results above.`,
+            });
+            continue;
+          }
+          agentDispatchesThisTurn++;
           await this.handleDispatchAgent(call, ctx, llmMessages, subject);
           continue;
         }
@@ -1022,7 +1044,13 @@ export class OrchestratorService {
         `When the user asks for a time-relative window — "today", "yesterday", "last week", ` +
         `"last 3 months", "this quarter", "since March", etc. — compute concrete from/to dates ` +
         `relative to TODAY. Never anchor to a year from your training data. For "last 3 months" ` +
-        `pass from = today minus 90 days, to = today.`,
+        `pass from = today minus 90 days, to = today.\n\n` +
+        `If the user asks for a specific past year your tools can't filter on (e.g. "in 1990", ` +
+        `"in 2010") — DO NOT silently drop the year and run with default args. Either pass an ` +
+        `explicit from/to date range that brackets the requested year, OR if the tool's schema ` +
+        `does not support that window, reply: "I don't have data filterable to <year>; my ` +
+        `records start at <earliest sensible date>." Never label present-day data with a ` +
+        `historical year — that is a fabrication and is strictly forbidden.`,
     );
     parts.push(
       `You are the OpAuto AI assistant for an automotive garage business in Tunisia. ` +

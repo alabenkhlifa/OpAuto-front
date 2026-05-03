@@ -584,6 +584,48 @@ describe('OrchestratorService', () => {
     });
   });
 
+  it('caps dispatch_agent at MAX_AGENT_DISPATCHES_PER_TURN (B-23/B-24 unbounded loop)', async () => {
+    // Without the cap a misbehaving model can keep emitting dispatch_agent on
+    // every iteration, racking up agent runs until the 90s turn budget blows.
+    // Cap is 2 per turn — extra calls return an `agent_dispatch_capped` tool
+    // message so the LLM can compose a final answer from prior results.
+    const agents = {
+      list: jest
+        .fn()
+        .mockReturnValue([
+          { name: 'InventoryAgent', description: 'parts and stock' },
+        ]),
+      run: jest.fn().mockResolvedValue({ result: 'low stock: 1 item' }),
+    };
+    // Five turns: dispatch, dispatch, dispatch, dispatch, done — only the
+    // first two should actually call agents.run().
+    const dispatchCall = (id: string) => ({
+      provider: 'groq' as const,
+      content: null,
+      toolCalls: [
+        {
+          id,
+          name: 'dispatch_agent',
+          argsJson: '{"name":"InventoryAgent","input":"audit","reason":"x"}',
+        },
+      ],
+    });
+    const llm = makeLlm([
+      dispatchCall('tc-1'),
+      dispatchCall('tc-2'),
+      dispatchCall('tc-3'),
+      dispatchCall('tc-4'),
+      { provider: 'groq', content: 'final answer', toolCalls: [] },
+    ]);
+    const orchestrator = await makeOrchestrator({ llm, agents });
+
+    await collectEvents(
+      orchestrator.run(ctx, 'conv-1', 'audit my inventory', undefined),
+    );
+
+    expect(agents.run).toHaveBeenCalledTimes(2);
+  });
+
   it('dispatches an agent and forwards its result', async () => {
     const agents = {
       list: jest
