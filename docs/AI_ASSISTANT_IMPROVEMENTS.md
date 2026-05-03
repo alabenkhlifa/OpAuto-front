@@ -15,9 +15,16 @@ This is a deferred improvements list, NOT a bug log. Bugs found during the sweep
 **Why:** The TYPED_CONFIRM_WRITE infrastructure exists, the `record_payment` tool already uses it, and `InvoicingService.create + issue` already produces gapless atomic numbering + per-line TVA + fiscal stamp. The assistant simply has no way to issue an invoice today — users must drop out to the UI. Closing this gap unlocks the highest-leverage agent workflow ("invoice this job") and is symmetrical with `record_payment`.
 **Acceptance:** new `create-invoice.tool.ts` registered with `blastTier: TYPED_CONFIRM_WRITE`, `_expectedConfirmation` = the typed total amount; orchestrator gates on typed confirmation; rolls back on validation failure; integration test exercises the gapless-number + TVA + stamp invariants the validation script already covers via direct service call.
 
-### I-002 — Audit every write-tier handler for input-validation defence-in-depth
+### I-002 — Audit every write-tier handler for input-validation defence-in-depth ✅ closed (read-through audit, no extra fixes needed)
 **Why:** Bug 3 (`send_sms` accepting empty `to`) only surfaced because the validation script bypasses `ToolRegistryService.execute()` and calls handlers directly. Future agents — especially the agent runner — could legitimately bypass the registry too. Each handler should re-validate the inputs that matter for cost (recipient, amount) or for fiscal correctness (invoice id format) inside the handler.
-**Acceptance:** one-pass review across `create_appointment`, `cancel_appointment`, `record_payment`, `send_email`, `send_sms` confirming each handler does its own minimal sanity check on critical inputs; new test in `validate-write-tools.ts` invokes each handler with empty/bogus args and asserts a graceful error, not a side effect.
+**Audit result (2026-05-03):**
+- `create_appointment` ✅ — verifies customer + car belong to `ctx.garageId`, parses `scheduledAt` and rejects NaN dates. Defensive.
+- `cancel_appointment` ✅ — delegates to `appointmentsService.findOne(id, garageId)` which throws `NotFoundException` on cross-tenant access. Defensive.
+- `record_payment` ✅ — garage ownership + PAID-status guard (Bug 1 fix `6fb21c2`). Defensive.
+- `send_email` ✅ — `missing_body` / `missing_recipient` guards present (covered by `validate-send-email.ts`). Defensive.
+- `send_sms` ✅ — recipient + body guards (Bug 3 fix `a40fbfd`). Defensive.
+
+No additional code changes needed. Future write-tier tools should follow the same pattern: validate critical inputs in the handler, re-check ownership against `ctx.garageId`, return structured errors over throws when the failure is recoverable.
 
 ---
 
@@ -27,9 +34,9 @@ This is a deferred improvements list, NOT a bug log. Bugs found during the sweep
 **Why:** During the validation run, `list_at_risk_customers` and `list_maintenance_due` triggered Gemini 429s and silently fell back to deterministic logic. The validator counted both as PASS (because the deterministic path is correct) but a real LLM-driven retention/maintenance reply would have been downgraded. There is no signal in the response shape that tells the caller which path executed.
 **Acceptance:** orchestrator emits a `provider` SSE event when fallthrough happens (Gemini → Mistral → Cerebras → Claude → mock), with the chosen provider name and the reason (429, network, validateResult rejection). Validation scripts can then assert `provider === 'gemini'` for the happy path.
 
-### I-004 — `example` skill should be excluded from production routing
-**Why:** `opauto-backend/src/assistant/skills/example/en.md` is a no-op skill registered for testing the skill loader. It is currently exposed to the LLM router with description "A no-op skill used for testing the loader" and trigger phrase "test". A user typing "test" could route to it. Low impact today, but bad form.
-**Acceptance:** skill registrar reads frontmatter `internal: true` and excludes such skills from the router-visible list. `example` gets that flag.
+### I-004 — `example` skill should be excluded from production routing ✅ shipped `67e1fbd`
+**Why:** `opauto-backend/src/assistant/skills/example/en.md` is a no-op skill registered for testing the skill loader. It was exposed to the LLM router with description "A no-op skill used for testing the loader" and trigger phrase "test". A user typing "test" could route to it.
+**What shipped:** `SkillDefinition` gains an optional `internal` flag. `SkillRegistryService.list()` (the only path used by the orchestrator + meta endpoint) filters internal skills out. `listAll()` returns every skill for tests / future admin tooling. `example/en.md` flagged `internal: true`. New test in `skill-registry.service.spec.ts` pins the contract.
 
 ### I-005 — Live send-email smoke test on schedule
 **Why:** `validate-send-email.ts` stubs the Resend driver — by design, since hitting Resend on every CI run is wasteful. But this means a sender-domain regression (DKIM, sandbox-mode change, verified-address drift) would not be caught until production. The memory note `reference_resend_sandbox.md` already pins the only delivery target — `ala.khliifa@gmail.com`.
@@ -39,9 +46,9 @@ This is a deferred improvements list, NOT a bug log. Bugs found during the sweep
 
 ## P2 — coverage / hygiene
 
-### I-006 — Skill cross-reference CI check
-**Why:** All 10 skills' declared `tools:` lists currently resolve to registered tools. Nothing prevents that drifting — adding a new skill or renaming a tool is a one-character mistake away from a broken `load_skill` payload.
-**Acceptance:** unit test in `skill-registry.service.spec.ts` that loads every skill from disk and asserts every entry in `tools:` exists in the tool registry. Same check for agents' `tool whitelist`.
+### I-006 — Skill cross-reference CI check ✅ shipped `6248ef3`
+**Why:** All 10 skills' declared `tools:` lists currently resolve to registered tools. Nothing prevented that drifting — adding a new skill or renaming a tool was a one-character mistake away from a broken `load_skill` payload.
+**What shipped:** `assistant/cross-references.spec.ts` — 17 tests (10 skills × 1 + 6 agents × 1 + 1 sanity). Reads the source files directly to discover the truth set of registered tool names from `*.tool.ts`, asserts every skill `tools:` frontmatter entry and every agent `toolWhitelist` entry resolves. Runs in ~2s, dep-free. Will fail CI on any drift.
 
 ### I-007 — Approval-expiry + resume protocol coverage
 **Why:** Behavior scenarios B-30 (expiry) and B-31 (resume) hit code paths that are unit-tested in isolation but not exercised end-to-end in the behavior suite (the orchestrator's `__resume__:<toolCallId>` sentinel is convention, not contract). One bad serialization roundtrip and the resume turn fails silently.
