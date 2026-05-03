@@ -2,8 +2,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { Component } from '@angular/core';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { of, throwError } from 'rxjs';
 import { AssistantLauncherComponent } from './assistant-launcher.component';
 import { AssistantStateService } from '../../services/assistant-state.service';
+import { AssistantChatService } from '../../services/assistant-chat.service';
 import { AssistantPendingApproval } from '../../../../core/models/assistant.model';
 
 @Component({ standalone: true, template: 'dashboard' })
@@ -95,5 +97,76 @@ describe('AssistantLauncherComponent', () => {
     fixture.detectChanges();
     const dot = fixture.nativeElement.querySelector('.assistant-launcher__dot');
     expect(dot).toBeNull();
+  });
+
+  describe('rehydrateActiveConversation (UI Bug 2)', () => {
+    function setupWithChatStub(stub: Partial<AssistantChatService>): {
+      fixture: ComponentFixture<AssistantLauncherComponent>;
+      state: AssistantStateService;
+    } {
+      TestBed.resetTestingModule();
+      return TestBed.configureTestingModule({
+        imports: [AssistantLauncherComponent, HttpClientTestingModule],
+        providers: [
+          provideRouter([
+            { path: 'dashboard', component: DashboardStub },
+            { path: 'auth', component: AuthStub },
+          ]),
+          { provide: AssistantChatService, useValue: stub },
+        ],
+      })
+        .compileComponents()
+        .then(() => {
+          const f = TestBed.createComponent(AssistantLauncherComponent);
+          const s = TestBed.inject(AssistantStateService);
+          f.detectChanges();
+          return { fixture: f, state: s };
+        }) as unknown as {
+        fixture: ComponentFixture<AssistantLauncherComponent>;
+        state: AssistantStateService;
+      };
+    }
+
+    it('reloads the saved conversation messages when localStorage holds an id', async () => {
+      localStorage.setItem('assistant.currentConversationId', 'conv-saved');
+      const stub: Partial<AssistantChatService> = {
+        listConversations: () => of([]),
+        getConversation: () =>
+          of({
+            id: 'conv-saved',
+            title: 'Yesterday chat',
+            messages: [
+              { id: 'm1', conversationId: 'conv-saved', role: 'USER', content: 'hi', createdAt: '2026-05-02T12:00:00Z' },
+              { id: 'm2', conversationId: 'conv-saved', role: 'ASSISTANT', content: 'hello', createdAt: '2026-05-02T12:00:01Z' },
+            ],
+          }) as never,
+      };
+      const { state: s } = await setupWithChatStub(stub);
+      expect(s.currentConversationId()).toBe('conv-saved');
+      expect(s.messages().length).toBe(2);
+      expect(s.messages()[0].content).toBe('hi');
+    });
+
+    it('clears the saved id silently when the saved conversation no longer exists', async () => {
+      localStorage.setItem('assistant.currentConversationId', 'conv-deleted');
+      const stub: Partial<AssistantChatService> = {
+        listConversations: () => of([]),
+        getConversation: () =>
+          throwError(() => ({ status: 404, message: 'not found' })) as never,
+      };
+      const { state: s } = await setupWithChatStub(stub);
+      expect(s.currentConversationId()).toBeNull();
+      expect(s.messages()).toEqual([]);
+    });
+
+    it('does not fetch a conversation when localStorage has no saved id', async () => {
+      const getConversation = jasmine.createSpy('getConversation');
+      const stub: Partial<AssistantChatService> = {
+        listConversations: () => of([]),
+        getConversation,
+      };
+      await setupWithChatStub(stub);
+      expect(getConversation).not.toHaveBeenCalled();
+    });
   });
 });

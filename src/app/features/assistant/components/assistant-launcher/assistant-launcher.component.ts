@@ -79,6 +79,36 @@ export class AssistantLauncherComponent implements OnInit {
 
   ngOnInit(): void {
     this.refreshConversations();
+    this.rehydrateActiveConversation();
+  }
+
+  /**
+   * UI Bug 2 — `assistant.currentConversationId` is persisted to localStorage
+   * but on F5 reload the launcher previously did nothing with it: the
+   * conversation list re-loaded but the active selection was dropped, so
+   * the user landed on a fresh "Untitled chat" instead of their last one.
+   *
+   * If a saved id is present, fetch its messages eagerly. If the server
+   * doesn't recognise it (deleted, archived, foreign garage post-relogin),
+   * clear the saved id silently — never block the user with a stale
+   * "connection error" toast.
+   */
+  private rehydrateActiveConversation(): void {
+    const id = this.state.currentConversationId();
+    if (!id) return;
+    this.chat.getConversation(id).subscribe({
+      next: (conv) => {
+        const ui: AssistantUiMessage[] = (conv.messages ?? []).map((m) => ({
+          ...m,
+          conversationId: id,
+        }));
+        this.state.setMessages(ui);
+      },
+      error: () => {
+        this.state.setConversationId(null);
+        this.state.setMessages([]);
+      },
+    });
   }
 
   toggle(): void {
