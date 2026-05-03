@@ -31,7 +31,21 @@ export class ToolRegistryService {
   private readonly ajv: Ajv;
 
   constructor() {
-    this.ajv = new Ajv({ allErrors: true, strict: false, useDefaults: false });
+    // I-011 — `coerceTypes: 'array'` lets AJV repair the type-coercion gaps
+    // we saw in the behavior sweep:
+    //   - `"limit": "5"` → `"limit": 5` (numeric string → integer)
+    //   - `"attachInvoiceIds": "abc"` → `"attachInvoiceIds": ["abc"]`
+    //     (single value → array<single>)
+    // Without this, the LLM's perfectly reasonable string-encoded ints would
+    // get rejected by AJV, the orchestrator would loop, and the turn would
+    // burn out the iteration cap. Mutates the validated args in place so
+    // downstream `execute()` calls see the coerced values too.
+    this.ajv = new Ajv({
+      allErrors: true,
+      strict: false,
+      useDefaults: false,
+      coerceTypes: 'array',
+    });
     addFormats(this.ajv);
   }
 

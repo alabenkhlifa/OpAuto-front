@@ -152,6 +152,59 @@ describe('ToolRegistryService', () => {
       expect(result.valid).toBe(false);
       expect(result.errors).toEqual(['Unknown tool: ghost_tool']);
     });
+
+    describe('I-011 — type coercion at the validator boundary', () => {
+      it('coerces a numeric string to a number when the schema is "number"', () => {
+        service.register(makeTool());
+        const args: { count: number | string } = { count: '5' };
+        const result = service.validateArgs('sample_tool', args);
+        expect(result.valid).toBe(true);
+        // AJV mutates in place — execute() will see the coerced value too.
+        expect(args.count).toBe(5);
+      });
+
+      it('coerces a numeric string to an integer when the schema is "integer"', () => {
+        service.register(
+          makeTool({
+            name: 'int_tool',
+            parameters: {
+              type: 'object',
+              properties: { limit: { type: 'integer', minimum: 1, maximum: 100 } },
+              required: ['limit'],
+              additionalProperties: false,
+            },
+          }),
+        );
+        const args: { limit: number | string } = { limit: '5' };
+        expect(service.validateArgs('int_tool', args)).toEqual({ valid: true });
+        expect(args.limit).toBe(5);
+      });
+
+      it('still rejects non-numeric strings for number/integer types', () => {
+        service.register(makeTool());
+        const result = service.validateArgs('sample_tool', { count: 'three' });
+        expect(result.valid).toBe(false);
+      });
+
+      it('coerces a single string to a 1-element array when the schema is array<string>', () => {
+        service.register(
+          makeTool({
+            name: 'array_tool',
+            parameters: {
+              type: 'object',
+              properties: {
+                ids: { type: 'array', items: { type: 'string' } },
+              },
+              required: ['ids'],
+              additionalProperties: false,
+            },
+          }),
+        );
+        const args: { ids: string | string[] } = { ids: 'abc-123' };
+        expect(service.validateArgs('array_tool', args)).toEqual({ valid: true });
+        expect(args.ids).toEqual(['abc-123']);
+      });
+    });
   });
 
   describe('resolveBlastTier', () => {
