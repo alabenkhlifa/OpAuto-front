@@ -259,13 +259,16 @@ export class OrchestratorService {
       // is plenty headroom for retry-with-feedback while still bounded.
       const MAX_AGENT_DISPATCHES_PER_TURN = 2;
       let agentDispatchesThisTurn = 0;
-      // Per-turn empty-result cap on find_* tools (I-016, B-06): the LLM
-      // would retry find_car / find_customer up to 8 times against the
-      // same data with slightly different query strings, never converging.
-      // After 2 empty returns from the same find_* tool, force the model
-      // into compose-only "no results" mode for the rest of the turn.
-      const FIND_EMPTY_RETRY_CAP = 2;
-      const findEmptyCounts = new Map<string, number>();
+      // Per-turn cap on EVERY tool, not just find_* (I-016 broadening):
+      // the original empty-result-only cap missed B-06 in the UI path
+      // because find_car returned a NON-empty array each call (the right
+      // car!) but the LLM still re-called it 8×. A hard call-count cap
+      // catches the loop regardless of result shape — if the model can't
+      // be satisfied by 3 calls to the same tool with the same args, it
+      // never will be. After hitting the cap, force compose-only so the
+      // model has to synthesise from what it already has.
+      const MAX_CALLS_PER_TOOL_PER_TURN = 3;
+      const toolCallCounts = new Map<string, number>();
       let forceComposeOnly = false;
       for (let step = 0; step < iterationCap; step++) {
         // Cost cap: stop the conversation cold once the per-conversation
@@ -533,29 +536,27 @@ export class OrchestratorService {
           });
           this.appendToolMessage(llmMessages, call.id, successExec.result);
 
-          // I-016 — break the find_* retry loop when the same tool keeps
-          // returning empty results. Without this cap the LLM would retry
-          // find_car / find_customer with marginally different queries until
-          // it ate the iteration budget (B-06: 8× retries → turn_timeout).
-          if (
-            call.name.startsWith('find_') &&
-            isEmptyResult(successExec.result)
-          ) {
-            const prev = findEmptyCounts.get(call.name) ?? 0;
-            const next = prev + 1;
-            findEmptyCounts.set(call.name, next);
-            if (next >= FIND_EMPTY_RETRY_CAP) {
-              forceComposeOnly = true;
-              llmMessages.push({
-                role: 'system',
-                content:
-                  `${call.name} returned 0 results ${next} times this turn. ` +
-                  `STOP retrying — there is no match. Compose a brief reply ` +
-                  `telling the user you couldn't find what they're looking ` +
-                  `for, optionally suggesting they double-check the spelling ` +
-                  `or try a different search term. Do NOT call ${call.name} again.`,
-              });
-            }
+          // I-016 — hard cap on per-tool calls per turn. Stops the model from
+          // looping on the same tool whether the result is empty (B-06 raw
+          // SSE: 3× find_car) or non-empty (B-06 UI path: 8× find_car against
+          // the SAME car). After the cap, inject a system message and force
+          // compose-only so the model can't call any tool again this turn.
+          const prevCount = toolCallCounts.get(call.name) ?? 0;
+          const nextCount = prevCount + 1;
+          toolCallCounts.set(call.name, nextCount);
+          if (nextCount >= MAX_CALLS_PER_TOOL_PER_TURN) {
+            forceComposeOnly = true;
+            const wasEmpty = isEmptyResult(successExec.result);
+            llmMessages.push({
+              role: 'system',
+              content: wasEmpty
+                ? `${call.name} returned no results ${nextCount} times this turn. ` +
+                  `STOP — there is no match. Compose a brief "I couldn't find …" ` +
+                  `reply and end the turn. Do NOT call any tool again.`
+                : `${call.name} has been called ${nextCount} times this turn. ` +
+                  `Synthesise the answer from the result(s) you already have. ` +
+                  `Do NOT call any tool again this turn.`,
+            });
           }
         } else {
           const failExec = exec as {

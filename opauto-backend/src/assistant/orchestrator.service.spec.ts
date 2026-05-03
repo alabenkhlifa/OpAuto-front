@@ -585,13 +585,15 @@ describe('OrchestratorService', () => {
     });
   });
 
-  it('breaks the find_* retry loop after 2 empty returns and forces compose-only (I-016, B-06)', async () => {
-    // The LLM stub keeps emitting find_car. After the 2nd empty result the
-    // orchestrator injects a "stop retrying" system message and the next
-    // iteration should NOT call find_car again — forcing compose-only.
+  it('caps any tool at MAX_CALLS_PER_TOOL_PER_TURN regardless of result emptiness (I-016 broadened, B-06)', async () => {
+    // find_car returns the SAME non-empty match each time but the LLM keeps
+    // re-calling. Cap is 3. The 4th call must not execute — instead, the
+    // orchestrator forces compose-only and the model emits a final text.
+    // Also exercises the swapToComposeOnly toolCalls-ignore guard from
+    // 9f37b4f (hallucinated tool_calls dropped on compose-only turns).
     const tools = makeTools(['find_car'], () => ({
       ok: true,
-      result: [], // empty array — counts as "no match"
+      result: [{ plate: '9109 TUN 804', make: 'Dacia' }], // non-empty
       durationMs: 1,
     }));
     const findCall = (id: string) => ({
@@ -604,26 +606,25 @@ describe('OrchestratorService', () => {
     const llm = makeLlm([
       findCall('tc-1'),
       findCall('tc-2'),
-      // After the cap kicks in the orchestrator stops offering tools to the
-      // model — but the stub doesn't care, so we provide a fallback text.
+      findCall('tc-3'),
+      // The 4th completion's tool calls would happen on a compose-only turn
+      // (cap engaged) — they are ignored by the orchestrator. The compose
+      // path then falls through to read this completion's content.
       {
         provider: 'groq',
-        content: "I couldn't find a car matching that plate.",
+        content: 'The car is a Dacia 9109 TUN 804.',
         toolCalls: [],
       },
-      // Sentinel — if find_car fires a 3rd time the test will reach this
-      // and we'll know the cap leaked.
-      findCall('tc-3'),
+      // Sentinel — should never be reached.
+      findCall('tc-99'),
     ]);
     const orchestrator = await makeOrchestrator({ tools, llm });
 
-    const events = await collectEvents(
+    await collectEvents(
       orchestrator.run(ctx, 'conv-1', 'find car 9109 TUN 804', undefined),
     );
 
-    expect(tools.execute).toHaveBeenCalledTimes(2);
-    const text = events.find((e) => e.type === 'text');
-    expect(text).toMatchObject({ delta: expect.stringMatching(/couldn't find/i) });
+    expect(tools.execute).toHaveBeenCalledTimes(3);
   });
 
   it('caps dispatch_agent at MAX_AGENT_DISPATCHES_PER_TURN (B-23/B-24 unbounded loop)', async () => {
