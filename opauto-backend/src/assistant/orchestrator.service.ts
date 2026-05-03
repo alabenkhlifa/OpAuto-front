@@ -322,7 +322,19 @@ export class OrchestratorService {
           validateResult: this.buildLeakValidator(offeredTools),
         });
 
-        const toolCalls = completion.toolCalls ?? [];
+        let toolCalls = completion.toolCalls ?? [];
+
+        // I-016 hardening — when we explicitly did NOT offer tools (compose-only
+        // turn or find_* retry cap engaged), some LLMs still emit hallucinated
+        // tool_calls. Ignore them so the cap genuinely caps. Without this, B-06
+        // saw 3 find_car runs instead of 2 — the third was a tool_call returned
+        // by the model on the first compose-only iteration, and we ran it.
+        if (swapToComposeOnly && toolCalls.length > 0) {
+          this.logger.warn(
+            `assistant.compose_only.toolcalls_ignored count=${toolCalls.length} names=${toolCalls.map((c) => c.name).join(',')}`,
+          );
+          toolCalls = [];
+        }
 
         if (toolCalls.length === 0) {
           const text = completion.content ?? '';
