@@ -448,10 +448,18 @@ describe('OrchestratorService', () => {
     expect(userMsgs).toHaveLength(0);
   });
 
-  it('records DENIED resumption without executing the tool', async () => {
+  it('records DENIED resumption without executing the tool, emits deterministic ack, and skips the LLM (UI Bug 3 + behavior finding "DENY does not stick")', async () => {
     const tools = makeTools(['send_sms']);
+    // The LLM stub MUST NOT be consumed — handleResume short-circuits on DENIED.
+    // Previously the orchestrator handed control back to the LLM which would
+    // either retry the same tool with the same payload (B-19 finding) or emit
+    // an empty completion (UI Bug 3 — chat panel showed only the user prompt).
     const llm = makeLlm([
-      { provider: 'groq', content: 'Got it, not sending.', toolCalls: [] },
+      {
+        provider: 'groq',
+        content: 'this should not be reached',
+        toolCalls: [],
+      },
     ]);
     const prisma = {
       assistantToolCall: {
@@ -473,9 +481,15 @@ describe('OrchestratorService', () => {
     );
 
     expect(tools.execute).not.toHaveBeenCalled();
-    expect(events.find((e) => e.type === 'text')).toMatchObject({
-      delta: 'Got it, not sending.',
+    expect(llm.complete).not.toHaveBeenCalled();
+    expect(events.find((e) => e.type === 'tool_result')).toMatchObject({
+      status: 'denied',
+      result: { skipped: true, reason: 'user_denied' },
     });
+    expect(events.find((e) => e.type === 'text')).toMatchObject({
+      delta: expect.stringContaining("won't run"),
+    });
+    expect(events.at(-1)?.type).toBe('done');
   });
 
   it('refuses resumption for a foreign garage', async () => {

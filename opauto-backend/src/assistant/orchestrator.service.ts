@@ -201,13 +201,19 @@ export class OrchestratorService {
           llmMessages,
           subject,
         );
-        if (!handled) {
+        if (handled === 'not_found') {
           subject.next({
             type: 'error',
             message: 'approval not found or no longer pending',
           });
           subject.next({ type: 'done' });
           subject.complete();
+          return;
+        }
+        if (handled === 'finished') {
+          // handleResume already emitted text + done + completed the subject
+          // (e.g. user denied — we acknowledge and stop, instead of asking the
+          // LLM what to do, which previously led it to retry the same tool).
           return;
         }
       }
@@ -516,18 +522,18 @@ export class OrchestratorService {
     toolCallId: string,
     llmMessages: LlmMessage[],
     subject: ReplaySubject<SseEvent>,
-  ): Promise<boolean> {
+  ): Promise<'continue' | 'finished' | 'not_found'> {
     const row = await this.prisma.assistantToolCall.findUnique({
       where: { id: toolCallId },
       include: { conversation: { select: { garageId: true, userId: true } } },
     });
-    if (!row) return false;
+    if (!row) return 'not_found';
     // Multi-tenancy guard — never act on another tenant's approval.
     if (
       row.conversation.garageId !== ctx.garageId ||
       row.conversationId !== conversationId
     ) {
-      return false;
+      return 'not_found';
     }
 
     const tool = this.tools.get(row.toolName);
@@ -536,7 +542,7 @@ export class OrchestratorService {
         error: 'unknown_tool',
         name: row.toolName,
       });
-      return true;
+      return 'continue';
     }
 
     const args = this.coerceArgs(row.argsJson);
@@ -606,15 +612,35 @@ export class OrchestratorService {
           error: failExec.error,
         });
       }
-      return true;
+      return 'continue';
     }
 
     if (row.status === AssistantToolCallStatus.DENIED) {
+      // Surface the denial to the LLM context so any follow-up text it composes
+      // knows the action was skipped (e.g. so it doesn't immediately retry the
+      // same tool with the same args).
       this.appendAssistantToolUse(llmMessages, toolCallId, row.toolName, args);
       this.appendToolMessage(llmMessages, toolCallId, {
         error: 'user_denied',
       });
-      return true;
+      // Emit a deterministic acknowledgement so the chat panel never goes
+      // silent after a Deny click. UI Bug 3: previously the resume turn would
+      // either drop the LLM response or get an empty completion, and the user
+      // saw nothing at all next to their original prompt — felt broken.
+      // Instructing the LLM via a system prompt rule was unreliable; explicit
+      // text + a deterministic event end is what users expect.
+      subject.next({
+        type: 'tool_result',
+        toolCallId,
+        result: { skipped: true, reason: 'user_denied' },
+        status: 'denied',
+      });
+      const ack = `Okay — I won't run \`${row.toolName}\`. Let me know if you'd like to try something else.`;
+      subject.next({ type: 'text', delta: ack });
+      const persisted = await this.persistAssistant(conversationId, ack);
+      subject.next({ type: 'done', messageId: persisted.id });
+      subject.complete();
+      return 'finished';
     }
 
     // EXPIRED, FAILED, EXECUTED, PENDING_APPROVAL — anything else is a no-op
@@ -623,7 +649,7 @@ export class OrchestratorService {
     this.appendToolMessage(llmMessages, toolCallId, {
       error: `tool_call_${row.status.toLowerCase()}`,
     });
-    return true;
+    return 'continue';
   }
 
   // ── Skill/agent pseudo-tool handlers ──────────────────────────────────

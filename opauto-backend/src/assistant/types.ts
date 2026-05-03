@@ -142,7 +142,7 @@ export type SseEvent =
       type: 'tool_result';
       toolCallId: string;
       result: unknown;
-      status: 'executed' | 'failed';
+      status: 'executed' | 'failed' | 'denied';
     }
   | {
       type: 'approval_request';
