@@ -43,6 +43,9 @@ const RESUME_PREFIX = '__resume__:';
 const RESERVED_LOAD_SKILL = 'load_skill';
 const RESERVED_DISPATCH_AGENT = 'dispatch_agent';
 
+// Extracted to ./page-context-resolver for direct unit testing.
+import { deriveSelectedEntityFromRoute } from './page-context-resolver';
+
 interface RunOptions {
   iterationCap?: number;
   totalTimeoutMs?: number;
@@ -1062,14 +1065,38 @@ export class OrchestratorService {
     if (pageContext) {
       const pieces: string[] = [];
       if (pageContext.route) pieces.push(`route=${pageContext.route}`);
-      if (pageContext.selectedEntity) {
-        const e = pageContext.selectedEntity;
+      // Derive a "selected entity" hint from the route pattern + params when
+      // the frontend hasn't set one explicitly. Without this, the LLM sees
+      // "route=/customers/abc-123" and has to infer the id-extraction itself,
+      // which it gets wrong often enough to break "tell me about this customer"
+      // flows. Explicit > clever.
+      const selected =
+        pageContext.selectedEntity ??
+        deriveSelectedEntityFromRoute(
+          pageContext.route,
+          pageContext.params,
+        );
+      if (selected) {
         pieces.push(
-          `selected=${e.type}:${e.id}${e.displayName ? ` (${e.displayName})` : ''}`,
+          `selected=${selected.type}:${selected.id}` +
+            (selected.displayName ? ` (${selected.displayName})` : ''),
         );
       }
+      if (pageContext.params && Object.keys(pageContext.params).length > 0) {
+        const paramStr = Object.entries(pageContext.params)
+          .map(([k, v]) => `${k}=${v}`)
+          .join(', ');
+        pieces.push(`params={${paramStr}}`);
+      }
       if (pieces.length > 0) {
-        parts.push(`Page context: ${pieces.join(', ')}`);
+        parts.push(
+          `Page context: ${pieces.join(' | ')}\n` +
+            `When the user says "this customer", "this car", "this invoice", ` +
+            `"this appointment", etc., they mean the entity in the "selected" ` +
+            `field above. Pass that exact id to tools like get_customer / ` +
+            `get_car / get_invoice — do NOT call find_* with the id as a query ` +
+            `string, and do NOT ask the user for an id you already have.`,
+        );
       }
     }
     return parts.join('\n\n');
