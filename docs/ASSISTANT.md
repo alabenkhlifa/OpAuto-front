@@ -188,3 +188,36 @@ Agents live under `opauto-backend/src/assistant/agents/`.
 - **Watch-mode caveat:** `nest start --watch` reloads `.ts` changes but **not** new skill markdown files. After adding a skill directory, do a hard restart (`pkill nest && npm run start:dev`).
 - **Tool registry hot-load:** the orchestrator pulls the user's role/module entitlements at every turn, so adding a tool with `requiredRole: 'OWNER'` will be filtered out for staff without code changes.
 - **Approval flow:** any CONFIRM_WRITE+ tool call streams a `approval_required` SSE event with the args; the user clicks approve/deny on the chat panel; the orchestrator then resumes the turn from the same conversation thread.
+
+---
+
+## Approval state machine
+
+```
+                  ┌────── 5 min TTL ──────┐
+                  ↓                        │
+PENDING_APPROVAL ─┴→ APPROVED ───────→ EXECUTED  ← happy path
+                 └→ DENIED   ───────→ (terminal, no execution)
+                 └→ EXPIRED  ───────→ (terminal, no execution)
+```
+
+`AssistantToolCall.status` lives in Postgres. The orchestrator persists the row when it streams `approval_required`, then waits for the frontend to call `POST /api/assistant/approvals/:id/decide` with `{decision: 'APPROVE' | 'DENY', typedConfirmation?: string}`. After a decision, the frontend re-issues `POST /api/assistant/chat` with `userMessage: "__resume__:<toolCallId>"`.
+
+### `__resume__:<toolCallId>` resume sentinel
+
+A reserved user-message format. The orchestrator's `handleResume()` reads the row, materialises a synthetic `assistant: tool_call` + `tool: tool_result` pair into the LLM message log so the model has context, and then either:
+- **APPROVED** → emits the `tool_call` + `tool_result` SSE events, executes the tool, returns `'continue'` so the iteration loop composes a final reply (or chains into the next tool).
+- **DENIED short-circuit** (UI Bug 3 + B-19 fix, commit `e34b898`) → emits `tool_result {status:'denied', result:{skipped:true, reason:'user_denied'}}`, emits a deterministic `text` ack ("Okay — I won't run `<tool>`. …"), persists the assistant message, emits `done`, completes the SSE subject, and returns `'finished'` so the caller bails before the LLM is reinvoked. **Never re-enters the LLM loop after a denial** — earlier we did, and the model immediately retried the same tool with the same payload (B-19 finding).
+- **EXPIRED / FAILED / EXECUTED / not_found** → returns `'not_found'`; the orchestrator emits an `error` SSE event "approval not found or no longer pending" and ends the turn.
+
+### `_expectedConfirmation` (TYPED_CONFIRM_WRITE only)
+
+For tools at the highest blast tier (currently only `record_payment`), the LLM must populate `_expectedConfirmation` in the args with the canonical string the user has to type to approve (e.g. the invoice number for `record_payment`). The frontend collects the typed string and includes it as `typedConfirmation` in the decide POST. The approval service compares them server-side and rejects with 400 if they don't match. The handler is invoked only after the typed match succeeds.
+
+### Adding a new write-tier tool — checklist
+
+1. `blastTier: AssistantBlastTier.CONFIRM_WRITE` (or `TYPED_CONFIRM_WRITE` if money/fiscal — the user must type a confirm token).
+2. Validate critical args INSIDE the handler too (defence-in-depth — the JSON-schema layer can be bypassed by direct invocation; see commits `a40fbfd` for `send_sms`, `6fb21c2` for `record_payment`).
+3. Re-check `ctx.garageId` ownership against any id args before calling out to a service — never trust ids the LLM produced.
+4. For id args, prefer `{type: 'string', format: 'uuid'}` so an LLM hallucination like `"banana"` is rejected before an approval card is shown (I-012).
+5. Tools that should NOT be re-tried after deny rely on the `handleResume` short-circuit; no per-tool work needed. Future agent-runner write tools must call into the same DENIED short-circuit semantics.
