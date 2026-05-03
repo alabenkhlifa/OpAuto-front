@@ -3,6 +3,7 @@ import { EmailService } from '../../../email/email.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AssistantUserContext, ToolDefinition } from '../../types';
 import { invoicesToPdf, InvoicePdfRow } from './invoice-pdf';
+import { detectToolCallLeak } from '../../leak-detector';
 
 export type AttachmentFormat = 'csv' | 'pdf';
 
@@ -33,7 +34,7 @@ export interface SendEmailResult {
 }
 
 export interface SendEmailError {
-  error: 'missing_body' | 'missing_recipient' | 'send_failed';
+  error: 'missing_body' | 'missing_recipient' | 'send_failed' | 'leak_in_body';
   message: string;
 }
 
@@ -88,6 +89,16 @@ function invoicesToCsv(rows: InvoiceCsvRow[]): string {
 export function createSendEmailTool(deps: {
   emailService: EmailService;
   prisma: PrismaService;
+  /**
+   * Optional supplier of every name the LLM is allowed to call (tools, skills,
+   * agents, plus the two reserved pseudo-tools). When provided, send_email
+   * scans subject + html + text for tool-call-shaped substrings before
+   * dispatching, and aborts with `error: 'leak_in_body'` if any are found.
+   * This catches the I-016 failure mode where the model embeds tool-call
+   * placeholders (`{get_dashboard_kpis: {}}`) into the email body instead of
+   * executing the tools and substituting the results.
+   */
+  getKnownNames?: () => ReadonlySet<string>;
 }): ToolDefinition<SendEmailArgs, SendEmailResult | SendEmailError> {
   return {
     name: 'send_email',
@@ -166,6 +177,29 @@ export function createSendEmailTool(deps: {
           error: 'missing_body',
           message: 'send_email requires at least one of `html` or `text`.',
         };
+      }
+
+      // I-016 — defense in depth. If a knownNames supplier is wired in (the
+      // production registrar always provides one), refuse to deliver an email
+      // whose subject/body contains tool-call-shaped substrings. The LLM
+      // should have executed the tools and substituted the results.
+      if (deps.getKnownNames) {
+        const known = deps.getKnownNames();
+        if (known.size > 0) {
+          const haystack = [args.subject, args.html ?? '', args.text ?? '']
+            .filter((s) => s && s.length > 0)
+            .join('\n');
+          const leak = detectToolCallLeak(haystack, known);
+          if (leak) {
+            return {
+              error: 'leak_in_body',
+              message:
+                'send_email body contains tool-call-shaped placeholders ' +
+                `(${leak.matches.length} match(es)). Execute the relevant data tools first, ` +
+                'then call send_email with the actual values inlined into html/text.',
+            };
+          }
+        }
       }
 
       const format: AttachmentFormat = args.attachInvoiceFormat ?? 'csv';

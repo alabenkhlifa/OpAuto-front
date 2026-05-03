@@ -112,7 +112,9 @@ describe('leak-detector', () => {
     });
 
     it('rejects when args are unparseable', () => {
-      const leak = detectToolCallLeak('<function=send_sms>not-json</function>')!;
+      const leak = detectToolCallLeak(
+        '<function=send_sms>not-json</function>',
+      )!;
       expect(salvageToolCall(leak, KNOWN)).toBeNull();
     });
 
@@ -226,6 +228,68 @@ describe('leak-detector', () => {
         'Hello {"name":"dispatch_agent","input":"audit","reason":"x"} world';
       // Without the I-013 hint, the bare shape stays put.
       expect(scrubLeakFromContent(content)).toContain('dispatch_agent');
+    });
+  });
+
+  describe('I-016 — bare-key tool-call shorthand (send_email body leak)', () => {
+    const knownNames = new Set([
+      'get_dashboard_kpis',
+      'get_revenue_summary',
+      'list_overdue_invoices',
+      'load_skill',
+      'dispatch_agent',
+    ]);
+
+    it('catches `{<known>: {}}` with empty args', () => {
+      const content =
+        'Dashboard KPIs: {get_dashboard_kpis: {}} (please review)';
+      const leak = detectToolCallLeak(content, knownNames);
+      expect(leak).not.toBeNull();
+      expect(leak!.kind).toBe('raw_json');
+      expect(leak!.matches[0]).toContain('get_dashboard_kpis');
+    });
+
+    it('catches `{<known>: {"period": "month"}}` with args', () => {
+      const content = 'Revenue: {get_revenue_summary: {"period": "month"}}';
+      const leak = detectToolCallLeak(content, knownNames);
+      expect(leak).not.toBeNull();
+      expect(leak!.matches[0]).toContain('get_revenue_summary');
+    });
+
+    it('catches the full email-body leak (multiple bare-key shorthands)', () => {
+      const content =
+        '- Dashboard KPIs: {get_dashboard_kpis: {}}\n' +
+        '- Revenue summary: {get_revenue_summary: {"period": "month"}}\n' +
+        '- Overdue invoices: {list_overdue_invoices: {"limit": 10}}\n' +
+        '- Restocking: {load_skill: {"name": "inventory-restocking"}}';
+      const leak = detectToolCallLeak(content, knownNames);
+      expect(leak).not.toBeNull();
+      expect(leak!.matches.length).toBe(4);
+    });
+
+    it('does NOT match `{<unknown>: {...}}` (object literals in prose)', () => {
+      const content =
+        'My settings: {favorite_color: {"hex": "#FF8400"}} — a typical orange.';
+      expect(detectToolCallLeak(content, knownNames)).toBeNull();
+    });
+
+    it('requires an object value — `{tool: "string"}` is not a tool-call shape', () => {
+      // Tool calls always pass an object (or nothing) as args. A bare-key with
+      // a string value is just markdown/prose and must not trip detection.
+      const content = 'Use the {get_revenue_summary: function} to fetch data.';
+      expect(detectToolCallLeak(content, knownNames)).toBeNull();
+    });
+
+    it('without knownNames, bare-key shorthand is NOT detected (legacy preserved)', () => {
+      const content = 'Bla bla {get_dashboard_kpis: {}} bla.';
+      expect(detectToolCallLeak(content)).toBeNull();
+    });
+
+    it('scrubLeakFromContent strips bare-key shorthand when knownNames supplied', () => {
+      const content = 'Hello: {get_dashboard_kpis: {}} world.';
+      // Scrubber consumes trailing whitespace after the leak — consistent with
+      // the raw_json scrub above ("Here you go: ..." → "Here you go:").
+      expect(scrubLeakFromContent(content, knownNames)).toBe('Hello: world.');
     });
   });
 });

@@ -47,6 +47,13 @@ const RAW_FUNCTION_OBJECT_START_RE =
 const RAW_NAMED_CALL_START_RE =
   /\{\s*"name"\s*:\s*"([A-Za-z_][A-Za-z0-9_-]*)"\s*,\s*"(?:arguments|parameters|input|args)"\s*:/g;
 
+// I-016 — bare-key tool-call shorthand. Some models, when asked to compose a
+// document that mentions tool data, write `{tool_name: {...args}}` as if the
+// tool name were a templating placeholder. We anchor on `{ <bareName> :` and
+// require the value to start with `{` (object) so we don't match arbitrary
+// prose like `{tool_name: function}`. Detection is gated on `knownNames`.
+const RAW_BARE_KEY_CALL_START_RE = /\{\s*([A-Za-z_][A-Za-z0-9_-]*)\s*:\s*\{/g;
+
 /** Detect tool-call-shaped text leaks anywhere in the content. When
  *  `knownNames` is supplied, ALSO detects bare-name JSON shapes like
  *  `{"name":"<x>","input":...}` where `<x>` is a registered tool, skill, or
@@ -70,6 +77,10 @@ export function detectToolCallLeak(
     const named = matchAllRawNamedCalls(content, knownNames);
     if (named.length > 0) {
       return { kind: 'raw_json', matches: named };
+    }
+    const bareKey = matchAllBareKeyCalls(content, knownNames);
+    if (bareKey.length > 0) {
+      return { kind: 'raw_json', matches: bareKey };
     }
   }
   return null;
@@ -132,6 +143,16 @@ export function scrubLeakFromContent(
       }
       scrubbed = scrubbed.slice(0, start) + scrubbed.slice(consume);
     }
+    // Strip bare-key shorthand `{<known>: {...}}` (I-016).
+    const bareKeyRanges = findBareKeyCallRanges(scrubbed, knownNames);
+    for (let i = bareKeyRanges.length - 1; i >= 0; i--) {
+      const [start, end] = bareKeyRanges[i];
+      let consume = end + 1;
+      while (consume < scrubbed.length && /[\s;]/.test(scrubbed[consume])) {
+        consume++;
+      }
+      scrubbed = scrubbed.slice(0, start) + scrubbed.slice(consume);
+    }
   }
   scrubbed = scrubbed
     .replace(/[ \t]+\n/g, '\n')
@@ -168,9 +189,10 @@ function salvageXmlTag(
   knownToolNames: ReadonlySet<string>,
   idGenerator: () => string,
 ): LlmToolCall | null {
-  const m = /<function\s*=\s*([A-Za-z_][A-Za-z0-9_]*)\s*>\s*([\s\S]*?)\s*(?:<\/function>|$)/i.exec(
-    match,
-  );
+  const m =
+    /<function\s*=\s*([A-Za-z_][A-Za-z0-9_]*)\s*>\s*([\s\S]*?)\s*(?:<\/function>|$)/i.exec(
+      match,
+    );
   if (!m) return null;
   const name = m[1];
   const argsRaw = (m[2] ?? '').trim();
@@ -218,7 +240,11 @@ function normalizeArgs(raw: string): string | null {
   if (trimmed.length === 0) return '{}';
   try {
     const parsed = JSON.parse(trimmed);
-    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    if (
+      parsed === null ||
+      typeof parsed !== 'object' ||
+      Array.isArray(parsed)
+    ) {
       return '{}';
     }
     return JSON.stringify(parsed);
@@ -245,6 +271,33 @@ function matchAllRawNamedCalls(
   return findRawNamedCallRanges(content, knownNames).map(([s, e]) =>
     content.slice(s, e + 1),
   );
+}
+
+function matchAllBareKeyCalls(
+  content: string,
+  knownNames: ReadonlySet<string>,
+): string[] {
+  return findBareKeyCallRanges(content, knownNames).map(([s, e]) =>
+    content.slice(s, e + 1),
+  );
+}
+
+function findBareKeyCallRanges(
+  content: string,
+  knownNames: ReadonlySet<string>,
+): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  for (const anchor of content.matchAll(RAW_BARE_KEY_CALL_START_RE)) {
+    const start = anchor.index ?? -1;
+    if (start < 0) continue;
+    const callName = anchor[1];
+    if (!knownNames.has(callName)) continue;
+    const end = findMatchingBrace(content, start);
+    if (end > start) {
+      out.push([start, end]);
+    }
+  }
+  return out;
 }
 
 function findRawNamedCallRanges(

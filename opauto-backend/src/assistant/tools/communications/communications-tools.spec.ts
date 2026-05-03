@@ -2,10 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import { AssistantBlastTier } from '@prisma/client';
 import { AssistantUserContext } from '../../types';
 import { createSendSmsTool, SendSmsArgs } from './send-sms.tool';
-import {
-  createSendEmailTool,
-  SendEmailArgs,
-} from './send-email.tool';
+import { createSendEmailTool, SendEmailArgs } from './send-email.tool';
 import {
   createProposeRetentionActionTool,
   ProposeRetentionActionArgs,
@@ -22,7 +19,9 @@ const ownerCtx: AssistantUserContext = {
 };
 
 function makeSmsService(send: jest.Mock = jest.fn()) {
-  return { send } as unknown as import('../../../sms/sms.service').SmsService & {
+  return {
+    send,
+  } as unknown as import('../../../sms/sms.service').SmsService & {
     send: jest.Mock;
   };
 }
@@ -35,9 +34,7 @@ function makeEmailService(send: jest.Mock = jest.fn()) {
   };
 }
 
-function makePrisma(
-  findMany: jest.Mock = jest.fn().mockResolvedValue([]),
-) {
+function makePrisma(findMany: jest.Mock = jest.fn().mockResolvedValue([])) {
   return {
     invoice: { findMany },
   } as unknown as import('../../../prisma/prisma.service').PrismaService & {
@@ -65,7 +62,9 @@ describe('communications tools', () => {
   describe('send_sms', () => {
     it('sends without a customerId binding (happy path)', async () => {
       const sms = makeSmsService(
-        jest.fn().mockResolvedValue({ providerMessageId: 'sm_1', status: 'queued' }),
+        jest
+          .fn()
+          .mockResolvedValue({ providerMessageId: 'sm_1', status: 'queued' }),
       );
       const customers = makeCustomersService();
       const tool = createSendSmsTool({
@@ -85,7 +84,9 @@ describe('communications tools', () => {
 
     it('verifies customer phone matches `to` and sends', async () => {
       const sms = makeSmsService(
-        jest.fn().mockResolvedValue({ providerMessageId: 'sm_2', status: 'queued' }),
+        jest
+          .fn()
+          .mockResolvedValue({ providerMessageId: 'sm_2', status: 'queued' }),
       );
       const customers = makeCustomersService(
         jest.fn().mockResolvedValue({
@@ -228,10 +229,14 @@ describe('communications tools', () => {
 
       expect(registry.validateArgs('send_sms', {}).valid).toBe(false);
       expect(
-        registry.validateArgs('send_sms', { to: '+21612345678', body: 'a'.repeat(1601) }).valid,
+        registry.validateArgs('send_sms', {
+          to: '+21612345678',
+          body: 'a'.repeat(1601),
+        }).valid,
       ).toBe(false);
       expect(
-        registry.validateArgs('send_sms', { to: '+21612345678', body: 'ok' }).valid,
+        registry.validateArgs('send_sms', { to: '+21612345678', body: 'ok' })
+          .valid,
       ).toBe(true);
     });
   });
@@ -248,9 +253,14 @@ describe('communications tools', () => {
 
     it('always sends to the authenticated user (recipient is server-resolved, not LLM-supplied)', async () => {
       const email = makeEmailService(
-        jest.fn().mockResolvedValue({ providerMessageId: 'em_1', status: 'queued' }),
+        jest
+          .fn()
+          .mockResolvedValue({ providerMessageId: 'em_1', status: 'queued' }),
       );
-      const tool = createSendEmailTool({ emailService: email, prisma: makePrisma() });
+      const tool = createSendEmailTool({
+        emailService: email,
+        prisma: makePrisma(),
+      });
 
       const result = await tool.handler(
         {
@@ -276,7 +286,10 @@ describe('communications tools', () => {
 
     it('returns missing_recipient error when ctx.email is null', async () => {
       const email = makeEmailService();
-      const tool = createSendEmailTool({ emailService: email, prisma: makePrisma() });
+      const tool = createSendEmailTool({
+        emailService: email,
+        prisma: makePrisma(),
+      });
 
       const result = await tool.handler(
         { subject: 'Hi', text: 'Body' } satisfies SendEmailArgs,
@@ -292,7 +305,10 @@ describe('communications tools', () => {
 
     it('returns missing_body error when neither html nor text is provided', async () => {
       const email = makeEmailService();
-      const tool = createSendEmailTool({ emailService: email, prisma: makePrisma() });
+      const tool = createSendEmailTool({
+        emailService: email,
+        prisma: makePrisma(),
+      });
 
       const result = await tool.handler(
         { subject: 'Hi' } as SendEmailArgs,
@@ -308,7 +324,9 @@ describe('communications tools', () => {
 
     it('attaches invoices.csv when attachInvoiceIds resolves to garage rows', async () => {
       const email = makeEmailService(
-        jest.fn().mockResolvedValue({ providerMessageId: 'em_2', status: 'queued' }),
+        jest
+          .fn()
+          .mockResolvedValue({ providerMessageId: 'em_2', status: 'queued' }),
       );
       const prisma = makePrisma(
         jest.fn().mockResolvedValue([
@@ -359,7 +377,9 @@ describe('communications tools', () => {
 
     it('produces a PDF attachment when attachInvoiceFormat=pdf', async () => {
       const email = makeEmailService(
-        jest.fn().mockResolvedValue({ providerMessageId: 'em_pdf', status: 'queued' }),
+        jest
+          .fn()
+          .mockResolvedValue({ providerMessageId: 'em_pdf', status: 'queued' }),
       );
       const prisma = makePrisma(
         jest.fn().mockResolvedValue([
@@ -381,13 +401,33 @@ describe('communications tools', () => {
               email: 'a.b@example.tn',
               address: 'Tunis',
             },
-            car: { make: 'Renault', model: 'Clio', year: 2020, licensePlate: '123 TUN 456' },
+            car: {
+              make: 'Renault',
+              model: 'Clio',
+              year: 2020,
+              licensePlate: '123 TUN 456',
+            },
             payments: [{ amount: 119 }],
             lineItems: [
-              { description: 'Oil & Filter Change', quantity: 1, unitPrice: 80, total: 80 },
-              { description: 'Engine Oil 5W-40 (5L)', quantity: 1, unitPrice: 20, total: 20 },
+              {
+                description: 'Oil & Filter Change',
+                quantity: 1,
+                unitPrice: 80,
+                total: 80,
+              },
+              {
+                description: 'Engine Oil 5W-40 (5L)',
+                quantity: 1,
+                unitPrice: 20,
+                total: 20,
+              },
             ],
-            garage: { name: 'AutoTech Tunisia', address: 'Tunis', phone: '+216 71 234 567', email: 'contact@autotech.tn' },
+            garage: {
+              name: 'AutoTech Tunisia',
+              address: 'Tunis',
+              phone: '+216 71 234 567',
+              email: 'contact@autotech.tn',
+            },
           },
         ]),
       );
@@ -420,7 +460,10 @@ describe('communications tools', () => {
     it('rejects bad args via JSON Schema (missing subject, or stray `to`)', () => {
       const registry = new ToolRegistryService();
       registry.register(
-        createSendEmailTool({ emailService: makeEmailService(), prisma: makePrisma() }),
+        createSendEmailTool({
+          emailService: makeEmailService(),
+          prisma: makePrisma(),
+        }),
       );
 
       // Missing subject
@@ -437,6 +480,132 @@ describe('communications tools', () => {
       expect(
         registry.validateArgs('send_email', { subject: 'x', text: 'y' }).valid,
       ).toBe(true);
+    });
+
+    describe('I-016 — body leak defense', () => {
+      const knownNames = new Set([
+        'get_dashboard_kpis',
+        'get_revenue_summary',
+        'list_overdue_invoices',
+        'load_skill',
+        'send_email',
+      ]);
+
+      it('rejects when text body contains bare-key tool-call shorthand', async () => {
+        const email = makeEmailService();
+        const tool = createSendEmailTool({
+          emailService: email,
+          prisma: makePrisma(),
+          getKnownNames: () => knownNames,
+        });
+
+        const result = await tool.handler(
+          {
+            subject: 'April snapshot',
+            text:
+              '- Dashboard KPIs: {get_dashboard_kpis: {}}\n' +
+              '- Revenue: {get_revenue_summary: {"period": "month"}}',
+          },
+          ownerCtx,
+        );
+
+        expect(result).toMatchObject({
+          error: 'leak_in_body',
+          message: expect.stringMatching(/tool[- ]call/i),
+        });
+        expect(email.send).not.toHaveBeenCalled();
+      });
+
+      it('rejects when subject contains a tool-call leak (any field is scanned)', async () => {
+        const email = makeEmailService();
+        const tool = createSendEmailTool({
+          emailService: email,
+          prisma: makePrisma(),
+          getKnownNames: () => knownNames,
+        });
+
+        const result = await tool.handler(
+          {
+            subject: 'KPI {get_dashboard_kpis: {}} report',
+            text: 'See attached.',
+          },
+          ownerCtx,
+        );
+
+        expect(result).toMatchObject({ error: 'leak_in_body' });
+        expect(email.send).not.toHaveBeenCalled();
+      });
+
+      it('rejects classic raw-JSON leak in html body', async () => {
+        const email = makeEmailService();
+        const tool = createSendEmailTool({
+          emailService: email,
+          prisma: makePrisma(),
+          getKnownNames: () => knownNames,
+        });
+
+        const result = await tool.handler(
+          {
+            subject: 'Hi',
+            html: '<p>Result: {"type":"function","name":"send_email","arguments":{"subject":"x"}}</p>',
+          },
+          ownerCtx,
+        );
+
+        expect(result).toMatchObject({ error: 'leak_in_body' });
+        expect(email.send).not.toHaveBeenCalled();
+      });
+
+      it('sends normally when getKnownNames is supplied but body is clean', async () => {
+        const email = makeEmailService(
+          jest.fn().mockResolvedValue({
+            providerMessageId: 'em_clean',
+            status: 'queued',
+          }),
+        );
+        const tool = createSendEmailTool({
+          emailService: email,
+          prisma: makePrisma(),
+          getKnownNames: () => knownNames,
+        });
+
+        const result = await tool.handler(
+          {
+            subject: 'April snapshot',
+            text: 'Revenue this month was 12,450 TND across 38 invoices.',
+          },
+          ownerCtx,
+        );
+
+        expect(email.send).toHaveBeenCalled();
+        expect(result).toMatchObject({ providerMessageId: 'em_clean' });
+      });
+
+      it('backwards-compat: when getKnownNames is omitted, no leak gating runs', async () => {
+        const email = makeEmailService(
+          jest.fn().mockResolvedValue({
+            providerMessageId: 'em_legacy',
+            status: 'queued',
+          }),
+        );
+        const tool = createSendEmailTool({
+          emailService: email,
+          prisma: makePrisma(),
+        });
+
+        // Even a body that WOULD be flagged passes through unchanged when no
+        // registry is wired in (e.g. unit tests of unrelated paths).
+        const result = await tool.handler(
+          {
+            subject: 'Hi',
+            text: 'Look: {get_dashboard_kpis: {}} (legacy, no registry)',
+          },
+          ownerCtx,
+        );
+
+        expect(email.send).toHaveBeenCalled();
+        expect(result).toMatchObject({ providerMessageId: 'em_legacy' });
+      });
     });
   });
 
@@ -458,7 +627,9 @@ describe('communications tools', () => {
           smsOptIn: true,
         },
       };
-      const aiActions = makeAiActionsService(jest.fn().mockResolvedValue(draft));
+      const aiActions = makeAiActionsService(
+        jest.fn().mockResolvedValue(draft),
+      );
       const tool = createProposeRetentionActionTool({
         aiActionsService: aiActions,
       });
@@ -468,7 +639,10 @@ describe('communications tools', () => {
         ownerCtx,
       );
 
-      expect(aiActions.draftForCustomer).toHaveBeenCalledWith('garage-1', 'cust-1');
+      expect(aiActions.draftForCustomer).toHaveBeenCalledWith(
+        'garage-1',
+        'cust-1',
+      );
       expect(result).toEqual({
         id: 'act-1',
         kind: 'WIN_BACK',
@@ -488,7 +662,9 @@ describe('communications tools', () => {
 
     it('returns customer_not_found when the customer does not belong to the garage', async () => {
       const aiActions = makeAiActionsService(
-        jest.fn().mockRejectedValue(new NotFoundException('Customer not found')),
+        jest
+          .fn()
+          .mockRejectedValue(new NotFoundException('Customer not found')),
       );
       const tool = createProposeRetentionActionTool({
         aiActionsService: aiActions,
@@ -532,12 +708,17 @@ describe('communications tools', () => {
           aiActionsService: makeAiActionsService(),
         }),
       );
-      expect(registry.validateArgs('propose_retention_action', {}).valid).toBe(false);
+      expect(registry.validateArgs('propose_retention_action', {}).valid).toBe(
+        false,
+      );
       expect(
-        registry.validateArgs('propose_retention_action', { customerId: '' }).valid,
+        registry.validateArgs('propose_retention_action', { customerId: '' })
+          .valid,
       ).toBe(false);
       expect(
-        registry.validateArgs('propose_retention_action', { customerId: 'cust-1' }).valid,
+        registry.validateArgs('propose_retention_action', {
+          customerId: 'cust-1',
+        }).valid,
       ).toBe(true);
     });
   });
