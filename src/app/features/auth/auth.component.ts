@@ -159,7 +159,7 @@ import { LanguageToggleComponent } from '../../shared/components/language-toggle
             <div class="mb-3">
               <p class="text-xs font-semibold text-amber-700 mb-1">👑 Owner</p>
               <div class="text-xs text-amber-900 space-y-0.5 pl-3">
-                <p><strong>Email:</strong> owner&#64;autotech.tn / password123</p>
+                <p><strong>Email:</strong> ala.khliifa&#64;gmail.com / password123</p>
               </div>
             </div>
 
