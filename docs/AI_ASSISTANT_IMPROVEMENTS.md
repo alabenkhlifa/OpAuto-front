@@ -86,12 +86,12 @@ These are scenarios the wave-1 sweep flagged but did not exercise. They graduate
 
 The wave-2 sweeps shipped 7 fixes (UI Bug 1-4, B-19/Deny-doesn't-stick, B-25 hallucination, B-23/B-24 agent loops). The remaining ⚠️ flaky and ❌ failed scenarios surface these follow-ups:
 
-### I-011 — JSON-Schema int coercion at the orchestrator boundary
-**Why:** B-12 hit `/limit must be integer`, B-14 hit `/durationMinutes must be integer`, B-18 hit `/attachInvoiceIds must be array` — Groq/Llama emits a numeric *string* or single-id-string where the schema requires `integer` or `array<string>`. The validation rejects, the LLM retries with the same shape, and the turn loops until it hits the iteration cap. Three of the ten ⚠️ scenarios were caused by this single root cause.
-**Acceptance:** `ToolRegistryService.validateArgs()` (or a new `coerceArgs()` step ahead of it) coerces:
-- numeric strings → `number`/`integer` for properties typed as such;
-- single string → 1-element array for properties typed `array<string>`.
-Surface a one-time warning per (tool, property) pair so we can see how often coercion saves a turn.
+### I-011 — JSON-Schema int coercion at the orchestrator boundary ✅ closed (2026-05-04)
+**Why:** B-12 hit `/limit must be integer`, B-14 hit `/durationMinutes must be integer`, B-18 hit `/attachInvoiceIds must be array`, B-12 also hit `(root) must NOT have additional properties` — Groq/Llama emits a numeric *string* / single-id-string / hallucinated extra fields where the schema requires `integer` / `array<string>` / closed-set properties. The validator rejected, the LLM retried with the same shape, and the turn looped until the iteration cap.
+**Shipped in two commits:**
+- `37932c4` — `coerceTypes: 'array'` repairs string→int and single→array.
+- (this commit) — `removeAdditional: true` strips unknown keys when `additionalProperties: false`, plus a deduped `(tool, kind, path)` warn so we can see how often the boundary saves a turn (logged once per pair, format `coercion: stripped extra property tool="..." path="..."` or `coercion: coerced value tool="..." path="..." before=... after=...`).
+**Tests:** 5 LLM-shape replay tests in `tool-registry.service.spec.ts` (`I-011 — B-12 / B-14 / B-18 / B-27 LLM-arg-shape replays`) pin every observed failure pattern. Fan-out tests in `analytics-tools.spec.ts`, `revenue-breakdown-by-service.tool.spec.ts`, and `communications-tools.spec.ts` were updated to assert strip-and-pass instead of reject.
 
 ### I-012 — Pre-approval UUID-shape validation for id args
 **Why:** B-27 sent `cancel_appointment{appointmentId:"banana"}` and the orchestrator surfaced an approval card BEFORE rejecting the obviously-invalid id. The user is being asked to approve an action that is provably going to fail. Same pattern would affect any future tool that accepts an opaque UUID arg.

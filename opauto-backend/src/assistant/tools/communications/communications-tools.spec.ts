@@ -457,7 +457,7 @@ describe('communications tools', () => {
       });
     });
 
-    it('rejects bad args via JSON Schema (missing subject, or stray `to`)', () => {
+    it('I-011: validates schema, strips stray `to` so recipient stays the owner', () => {
       const registry = new ToolRegistryService();
       registry.register(
         createSendEmailTool({
@@ -466,17 +466,27 @@ describe('communications tools', () => {
         }),
       );
 
-      // Missing subject
+      // Missing subject — required field, still rejected.
       expect(registry.validateArgs('send_email', {}).valid).toBe(false);
-      // Stray `to` is not allowed (additionalProperties: false)
-      expect(
-        registry.validateArgs('send_email', {
-          to: 'a@b.com',
-          subject: 'x',
-          text: 'y',
-        }).valid,
-      ).toBe(false);
-      // Subject + text alone is valid — recipient is implicit
+
+      // Stray `to`: pre-I-011 this was rejected (additionalProperties: false).
+      // Post-I-011 AJV strips it; the call validates AND the recipient
+      // override is gone, so the handler will fall back to ctx.email (the
+      // owner). This is strictly safer — we drop attempts to send mail to
+      // arbitrary addresses instead of rejecting the entire tool call and
+      // burning the LLM's iteration budget on retries.
+      const argsWithStrayTo: Record<string, unknown> = {
+        to: 'a@b.com',
+        subject: 'x',
+        text: 'y',
+      };
+      expect(registry.validateArgs('send_email', argsWithStrayTo).valid).toBe(
+        true,
+      );
+      expect(argsWithStrayTo.to).toBeUndefined();
+      expect(argsWithStrayTo.subject).toBe('x');
+
+      // Subject + text alone is valid — recipient is implicit.
       expect(
         registry.validateArgs('send_email', { subject: 'x', text: 'y' }).valid,
       ).toBe(true);

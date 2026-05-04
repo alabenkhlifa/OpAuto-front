@@ -52,10 +52,14 @@ describe('analytics tools', () => {
       expect(tool.requiredRole).toBe('OWNER');
     });
 
-    it('rejects extra arguments via the empty schema', () => {
+    it('I-011: strips extra arguments via the empty schema (was: rejects)', () => {
       const tool = buildGetDashboardKpisTool({ getDashboardStats: jest.fn() } as any);
-      const result = registerAndValidate(tool, { stray: 'not allowed' });
-      expect(result.valid).toBe(false);
+      const args: Record<string, unknown> = { stray: 'not allowed' };
+      const result = registerAndValidate(tool, args);
+      // Pre-I-011 this was `false`. AJV now strips unknown keys instead of
+      // rejecting, so the LLM doesn't loop on an invalid_arguments retry.
+      expect(result.valid).toBe(true);
+      expect(args.stray).toBeUndefined();
     });
   });
 
@@ -135,16 +139,20 @@ describe('analytics tools', () => {
       expect(result.period).toBe('ytd');
     });
 
-    it('schema accepts {period} alone, {from,to} alone, and rejects extras', () => {
+    it('schema accepts {period} alone, {from,to} alone, and strips extras (I-011)', () => {
       const tool = buildGetRevenueSummaryTool({ invoice: { aggregate: jest.fn() } } as any);
       expect(registerAndValidate(tool, { period: 'month' }).valid).toBe(true);
       expect(
         registerAndValidate(tool, { from: '2026-01-01', to: '2026-04-01' }).valid,
       ).toBe(true);
       expect(registerAndValidate(tool, {}).valid).toBe(true); // schema-allowed; defaults to ytd at handler
-      expect(
-        registerAndValidate(tool, { period: 'ytd', whatever: 1 } as any).valid,
-      ).toBe(false);
+      // I-011: extras get stripped instead of rejected; the call validates and
+      // the unknown property is gone from the args object.
+      const argsWithStray: Record<string, unknown> = { period: 'ytd', whatever: 1 };
+      expect(registerAndValidate(tool, argsWithStray).valid).toBe(true);
+      expect(argsWithStray.whatever).toBeUndefined();
+      // But invalid enum values for KNOWN properties still fail.
+      expect(registerAndValidate(tool, { period: 'forever' } as any).valid).toBe(false);
     });
 
     it('returns a sensible window for "today"', () => {

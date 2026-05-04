@@ -279,19 +279,21 @@ describe('get_revenue_breakdown_by_service', () => {
     expect(result.period).toBe('ytd');
   });
 
-  it('schema accepts {period}, {from,to}, and rejects extras', () => {
+  it('schema accepts {period}, {from,to}, and strips extras (I-011)', () => {
     const tool = buildGetRevenueBreakdownByServiceTool(makePrisma({}));
     expect(registerAndValidate(tool, { period: 'month' }).valid).toBe(true);
     expect(
       registerAndValidate(tool, { from: '2026-01-01', to: '2026-04-01' }).valid,
     ).toBe(true);
     expect(registerAndValidate(tool, {}).valid).toBe(true);
+    // Invalid enum values for KNOWN properties still fail.
     expect(
       registerAndValidate(tool, { period: 'forever' } as any).valid,
     ).toBe(false);
-    expect(
-      registerAndValidate(tool, { period: 'ytd', whatever: 1 } as any).valid,
-    ).toBe(false);
+    // I-011: extras get stripped instead of rejected; the call validates.
+    const argsWithStray: Record<string, unknown> = { period: 'ytd', whatever: 1 };
+    expect(registerAndValidate(tool, argsWithStray).valid).toBe(true);
+    expect(argsWithStray.whatever).toBeUndefined();
   });
 
   it('handles all-zero line totals without dividing by zero', async () => {

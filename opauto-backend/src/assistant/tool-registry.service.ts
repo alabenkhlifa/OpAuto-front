@@ -29,22 +29,31 @@ export class ToolRegistryService {
   private readonly tools = new Map<string, ToolDefinition>();
   private readonly validators = new Map<string, ValidateFunction>();
   private readonly ajv: Ajv;
+  // I-011 observability — dedupe warns to one per (tool, kind, path).
+  private readonly coercionWarnSeen = new Set<string>();
 
   constructor() {
-    // I-011 — `coerceTypes: 'array'` lets AJV repair the type-coercion gaps
-    // we saw in the behavior sweep:
-    //   - `"limit": "5"` → `"limit": 5` (numeric string → integer)
-    //   - `"attachInvoiceIds": "abc"` → `"attachInvoiceIds": ["abc"]`
-    //     (single value → array<single>)
-    // Without this, the LLM's perfectly reasonable string-encoded ints would
-    // get rejected by AJV, the orchestrator would loop, and the turn would
-    // burn out the iteration cap. Mutates the validated args in place so
-    // downstream `execute()` calls see the coerced values too.
+    // I-011 — repair the type-coercion gaps we saw in the behavior sweep so
+    // the LLM's perfectly reasonable string-encoded ints / single-id strings /
+    // hallucinated extra fields don't trigger an `invalid_arguments` retry
+    // loop that burns out the per-turn iteration cap.
+    //
+    //   - `coerceTypes: 'array'`     "limit": "5"           → 5
+    //                                "attachInvoiceIds": "x" → ["x"]
+    //   - `removeAdditional: true`   strips unknown keys when the tool's
+    //                                schema has `additionalProperties: false`
+    //                                (B-12 hit "(root) must NOT have additional
+    //                                properties" when Llama added a stray
+    //                                `customerId` to `cancel_appointment`).
+    //
+    // Mutations land on the caller's args object so downstream `execute()`
+    // sees the coerced/cleaned shape.
     this.ajv = new Ajv({
       allErrors: true,
       strict: false,
       useDefaults: false,
       coerceTypes: 'array',
+      removeAdditional: true,
     });
     addFormats(this.ajv);
   }
@@ -111,8 +120,14 @@ export class ToolRegistryService {
       return { valid: false, errors: [`Unknown tool: ${toolName}`] };
     }
 
+    // I-011 observability — snapshot the pre-validate args so we can diff
+    // against the post-validate (mutated) shape and emit a one-time warn per
+    // (tool, kind, path). Cheap: tool args are always small JSON.
+    const before = this.snapshotArgs(args);
     const valid = validator(args);
+
     if (valid) {
+      this.reportCoercions(toolName, before, args);
       return { valid: true };
     }
 
@@ -124,6 +139,93 @@ export class ToolRegistryService {
       `validateArgs: tool "${toolName}" failed validation: ${errors.join('; ')}`,
     );
     return { valid: false, errors };
+  }
+
+  /**
+   * I-011 — deep-snapshot args before AJV mutates them so we can diff and
+   * report what got coerced or stripped. Returns `undefined` for non-objects
+   * (which `validateArgs` will short-circuit anyway).
+   */
+  private snapshotArgs(args: unknown): unknown {
+    if (args === null || typeof args !== 'object') return args;
+    try {
+      return JSON.parse(JSON.stringify(args));
+    } catch {
+      return undefined;
+    }
+  }
+
+  /**
+   * I-011 — compare the pre-validate snapshot to the post-validate (mutated)
+   * args. For each top-level property that was either stripped (present
+   * before, absent after) or coerced (different type/value after), emit a
+   * one-time warn keyed by `(tool, kind, path)`.
+   *
+   * Goal: give us visibility into how often the validator boundary saves a
+   * turn — if a (tool, property) shows up here in production, we know the
+   * LLM keeps drifting on it and we can tighten the tool description.
+   */
+  private reportCoercions(
+    toolName: string,
+    before: unknown,
+    after: unknown,
+  ): void {
+    if (
+      !before ||
+      !after ||
+      typeof before !== 'object' ||
+      typeof after !== 'object' ||
+      Array.isArray(before) ||
+      Array.isArray(after)
+    ) {
+      return;
+    }
+    const beforeRecord = before as Record<string, unknown>;
+    const afterRecord = after as Record<string, unknown>;
+
+    const seenKeys = new Set<string>([
+      ...Object.keys(beforeRecord),
+      ...Object.keys(afterRecord),
+    ]);
+
+    for (const key of seenKeys) {
+      const had = key in beforeRecord;
+      const has = key in afterRecord;
+
+      if (had && !has) {
+        this.warnOnce(toolName, 'strip', key);
+        continue;
+      }
+      if (!had || !has) continue;
+
+      const beforeJson = JSON.stringify(beforeRecord[key]);
+      const afterJson = JSON.stringify(afterRecord[key]);
+      if (beforeJson !== afterJson) {
+        this.warnOnce(toolName, 'coerce', key, beforeJson, afterJson);
+      }
+    }
+  }
+
+  private warnOnce(
+    toolName: string,
+    kind: 'strip' | 'coerce',
+    path: string,
+    beforeJson?: string,
+    afterJson?: string,
+  ): void {
+    const dedupeKey = `${toolName}::${kind}::${path}`;
+    if (this.coercionWarnSeen.has(dedupeKey)) return;
+    this.coercionWarnSeen.add(dedupeKey);
+
+    if (kind === 'strip') {
+      this.logger.warn(
+        `coercion: stripped extra property tool="${toolName}" path="${path}" — LLM emitted a field not in the schema; tighten the tool description if this recurs.`,
+      );
+    } else {
+      this.logger.warn(
+        `coercion: coerced value tool="${toolName}" path="${path}" before=${beforeJson} after=${afterJson} — LLM emitted the wrong type; consider adding the right shape hint to the tool description.`,
+      );
+    }
   }
 
   resolveBlastTier(

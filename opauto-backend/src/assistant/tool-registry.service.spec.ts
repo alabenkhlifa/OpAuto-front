@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   ToolRegistryService,
@@ -231,6 +232,266 @@ describe('ToolRegistryService', () => {
           valid: true,
         });
         expect(args.ids).toEqual(['abc-123']);
+      });
+    });
+
+    describe('I-011 — additionalProperties stripping at the validator boundary', () => {
+      it('strips an unknown property when additionalProperties:false instead of rejecting', () => {
+        service.register(makeTool());
+        // LLM throws in an unknown `customerId` field; schema only knows `count`.
+        const args: Record<string, unknown> = { count: 3, customerId: 'x' };
+        const result = service.validateArgs('sample_tool', args);
+        expect(result.valid).toBe(true);
+        expect(args.count).toBe(3);
+        // Stripped because the schema has additionalProperties:false.
+        expect(args.customerId).toBeUndefined();
+        expect(Object.keys(args)).toEqual(['count']);
+      });
+
+      it('combo: strips extra property AND coerces numeric string in the same payload', () => {
+        service.register(
+          makeTool({
+            name: 'combo_tool',
+            parameters: {
+              type: 'object',
+              properties: {
+                limit: { type: 'integer' },
+              },
+              required: ['limit'],
+              additionalProperties: false,
+            },
+          }),
+        );
+        const args: Record<string, unknown> = { limit: '7', stray: true };
+        const result = service.validateArgs('combo_tool', args);
+        expect(result.valid).toBe(true);
+        expect(args.limit).toBe(7);
+        expect(args.stray).toBeUndefined();
+      });
+
+      it('preserves extra properties when the schema does NOT set additionalProperties:false', () => {
+        service.register(
+          makeTool({
+            name: 'lax_tool',
+            parameters: {
+              type: 'object',
+              properties: {
+                count: { type: 'number' },
+              },
+              required: ['count'],
+              // additionalProperties NOT set → AJV treats as `true` → allow extras.
+            },
+          }),
+        );
+        const args: Record<string, unknown> = { count: 1, extra: 'kept' };
+        expect(service.validateArgs('lax_tool', args)).toEqual({ valid: true });
+        expect(args.extra).toBe('kept');
+      });
+
+      it('emits a one-time-per-(tool,property) warn when an extra is stripped', () => {
+        const warnSpy = jest
+          .spyOn(Logger.prototype, 'warn')
+          .mockImplementation(() => undefined);
+        try {
+          service.register(makeTool());
+          service.validateArgs('sample_tool', { count: 1, customerId: 'a' });
+          service.validateArgs('sample_tool', { count: 2, customerId: 'b' });
+          service.validateArgs('sample_tool', { count: 3, customerId: 'c' });
+
+          // Three calls, all with the same (tool=sample_tool, path=customerId)
+          // → only ONE warn should fire (deduped).
+          const stripWarns = warnSpy.mock.calls.filter((call) =>
+            String(call[0] ?? '').includes('coercion'),
+          );
+          expect(stripWarns.length).toBe(1);
+          expect(String(stripWarns[0][0])).toMatch(/sample_tool/);
+          expect(String(stripWarns[0][0])).toMatch(/customerId/);
+          expect(String(stripWarns[0][0])).toMatch(/strip/i);
+        } finally {
+          warnSpy.mockRestore();
+        }
+      });
+
+      it('emits a one-time-per-(tool,property) warn when a value is coerced', () => {
+        const warnSpy = jest
+          .spyOn(Logger.prototype, 'warn')
+          .mockImplementation(() => undefined);
+        try {
+          service.register(makeTool());
+          service.validateArgs('sample_tool', { count: '1' });
+          service.validateArgs('sample_tool', { count: '2' });
+
+          const coerceWarns = warnSpy.mock.calls.filter((call) =>
+            String(call[0] ?? '').includes('coercion'),
+          );
+          expect(coerceWarns.length).toBe(1);
+          expect(String(coerceWarns[0][0])).toMatch(/sample_tool/);
+          expect(String(coerceWarns[0][0])).toMatch(/count/);
+        } finally {
+          warnSpy.mockRestore();
+        }
+      });
+    });
+
+    describe('I-011 — B-12 / B-14 / B-18 / B-27 LLM-arg-shape replays', () => {
+      // These four tests replay the *exact* arg shapes the live behavior
+      // sweep observed Groq/Llama emit. Pre-I-011, each failed validation,
+      // sent the LLM into an `invalid_arguments` retry loop, and burned the
+      // turn's iteration cap. They MUST stay green to keep that regression
+      // shut.
+
+      it('B-12: list_appointments with limit as a string is coerced to integer', () => {
+        // Live observation from B-12 (customer-360 skill): Llama emitted
+        // "/limit must be integer" repeatedly. Schema requires integer.
+        service.register(
+          makeTool({
+            name: 'list_appointments',
+            parameters: {
+              type: 'object',
+              properties: {
+                limit: { type: 'integer', minimum: 1, maximum: 100 },
+                customerId: { type: 'string' },
+              },
+              additionalProperties: false,
+            },
+          }),
+        );
+        const args: Record<string, unknown> = {
+          limit: '20',
+          customerId: 'c-123',
+        };
+        const result = service.validateArgs('list_appointments', args);
+        expect(result.valid).toBe(true);
+        expect(args.limit).toBe(20);
+        expect(args.customerId).toBe('c-123');
+      });
+
+      it('B-14: find_available_slot with durationMinutes as string is coerced', () => {
+        // Live observation from B-14 (booking flow): the LLM emitted
+        // {"date":"2026-05-12","durationMinutes":"30"} → "/durationMinutes
+        // must be integer" 3× → LLM gave up and skipped to create_appointment
+        // without ever finding a slot.
+        service.register(
+          makeTool({
+            name: 'find_available_slot',
+            parameters: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['date', 'durationMinutes'],
+              properties: {
+                date: { type: 'string' },
+                durationMinutes: {
+                  type: 'integer',
+                  minimum: 15,
+                  maximum: 600,
+                },
+              },
+            },
+          }),
+        );
+        const args: Record<string, unknown> = {
+          date: '2026-05-12',
+          durationMinutes: '30',
+        };
+        const result = service.validateArgs('find_available_slot', args);
+        expect(result.valid).toBe(true);
+        expect(args.durationMinutes).toBe(30);
+      });
+
+      it('B-18: send_email with attachInvoiceIds as a single string is wrapped to an array', () => {
+        // Live observation from B-18 (email-CSV flow): Llama emitted
+        // "attachInvoiceIds": "abc-uuid" → "/attachInvoiceIds must be array".
+        service.register(
+          makeTool({
+            name: 'send_email',
+            parameters: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['subject'],
+              properties: {
+                subject: { type: 'string' },
+                text: { type: 'string' },
+                attachInvoiceIds: {
+                  type: 'array',
+                  items: { type: 'string', minLength: 1 },
+                },
+              },
+            },
+          }),
+        );
+        const args: Record<string, unknown> = {
+          subject: 'Overdue invoices',
+          text: 'See attached.',
+          attachInvoiceIds: 'inv-abc-123',
+        };
+        const result = service.validateArgs('send_email', args);
+        expect(result.valid).toBe(true);
+        expect(args.attachInvoiceIds).toEqual(['inv-abc-123']);
+      });
+
+      it('B-27 / B-12 (root extra): cancel_appointment with stray customerId is stripped', () => {
+        // Live observation: LLM hallucinated a customerId field on
+        // cancel_appointment which only takes {appointmentId, reason}. AJV
+        // raised "(root) must NOT have additional properties" → invalid_args
+        // → user got an approval card for an action they couldn't possibly
+        // approve correctly.
+        service.register(
+          makeTool({
+            name: 'cancel_appointment',
+            parameters: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['appointmentId'],
+              properties: {
+                appointmentId: { type: 'string', format: 'uuid' },
+                reason: { type: 'string', maxLength: 500 },
+              },
+            },
+          }),
+        );
+        const validUuid = '11111111-2222-3333-4444-555555555555';
+        const args: Record<string, unknown> = {
+          appointmentId: validUuid,
+          customerId: 'c-stray',
+          reason: 'no longer needed',
+        };
+        const result = service.validateArgs('cancel_appointment', args);
+        expect(result.valid).toBe(true);
+        expect(args.appointmentId).toBe(validUuid);
+        expect(args.reason).toBe('no longer needed');
+        expect(args.customerId).toBeUndefined();
+      });
+
+      it('combined: B-14 + B-27 — same payload that hit BOTH issues at once', () => {
+        // The realistic worst case: LLM both coerces wrong AND adds extras.
+        service.register(
+          makeTool({
+            name: 'find_available_slot',
+            parameters: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['date', 'durationMinutes'],
+              properties: {
+                date: { type: 'string' },
+                durationMinutes: { type: 'integer', minimum: 15, maximum: 600 },
+                appointmentType: { type: 'string' },
+              },
+            },
+          }),
+        );
+        const args: Record<string, unknown> = {
+          date: '2026-05-12',
+          durationMinutes: '45',
+          appointmentType: 'OIL_CHANGE',
+          // Two stray fields the LLM hallucinated:
+          customerId: 'c-1',
+          mechanicPreference: 'any',
+        };
+        const result = service.validateArgs('find_available_slot', args);
+        expect(result.valid).toBe(true);
+        expect(args.durationMinutes).toBe(45);
+        expect(args.customerId).toBeUndefined();
+        expect(args.mechanicPreference).toBeUndefined();
       });
     });
   });
