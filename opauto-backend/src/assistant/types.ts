@@ -15,6 +15,17 @@ export interface AssistantUserContext {
   role: 'OWNER' | 'STAFF';
   enabledModules: string[];
   locale: Locale;
+  /**
+   * Mutable per-turn execution state, owned by the orchestrator. Optional so
+   * existing fixtures and direct unit tests of tool handlers compile without
+   * supplying it. Tools that gate on prior tool execution (notably send_email,
+   * which refuses to compose a "no data" reply when no read ran) check this.
+   * The orchestrator initializes it once at the top of `run()` and increments
+   * `readToolCallsSoFar` after each successful READ-tier tool call.
+   */
+  turnState?: {
+    readToolCallsSoFar: number;
+  };
 }
 
 export interface PageContext {

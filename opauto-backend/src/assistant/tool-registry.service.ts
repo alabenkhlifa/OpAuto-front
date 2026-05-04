@@ -62,7 +62,9 @@ export class ToolRegistryService {
 
     this.tools.set(tool.name, tool);
     this.validators.set(tool.name, validator);
-    this.logger.debug(`Registered tool "${tool.name}" (blastTier=${tool.blastTier})`);
+    this.logger.debug(
+      `Registered tool "${tool.name}" (blastTier=${tool.blastTier})`,
+    );
   }
 
   get(name: string): ToolDefinition | undefined {
@@ -81,7 +83,10 @@ export class ToolRegistryService {
   listForUser(ctx: AssistantUserContext): ToolDescriptor[] {
     const descriptors: ToolDescriptor[] = [];
     for (const tool of this.tools.values()) {
-      if (tool.requiredModule && !ctx.enabledModules.includes(tool.requiredModule)) {
+      if (
+        tool.requiredModule &&
+        !ctx.enabledModules.includes(tool.requiredModule)
+      ) {
         continue;
       }
       if (tool.requiredRole === 'OWNER' && ctx.role !== 'OWNER') {
@@ -115,7 +120,9 @@ export class ToolRegistryService {
       const where = err.instancePath || '(root)';
       return `${where} ${err.message ?? 'is invalid'}`.trim();
     });
-    this.logger.warn(`validateArgs: tool "${toolName}" failed validation: ${errors.join('; ')}`);
+    this.logger.warn(
+      `validateArgs: tool "${toolName}" failed validation: ${errors.join('; ')}`,
+    );
     return { valid: false, errors };
   }
 
@@ -158,12 +165,24 @@ export class ToolRegistryService {
     let timer: NodeJS.Timeout | undefined;
 
     try {
-      const handlerPromise = Promise.resolve().then(() => tool.handler(args, ctx));
+      const handlerPromise = Promise.resolve().then(() =>
+        tool.handler(args, ctx),
+      );
       const timeoutPromise = new Promise<never>((_, reject) => {
         timer = setTimeout(() => reject(new Error('timeout')), timeoutMs);
       });
 
       const result = await Promise.race([handlerPromise, timeoutPromise]);
+      // B-XX bookkeeping — track per-turn READ-tier executions so write tools
+      // (notably send_email) can refuse to compose "no data" replies when no
+      // read actually ran. Caller opts in by setting ctx.turnState; legacy
+      // callers see a no-op.
+      if (
+        ctx.turnState !== undefined &&
+        tool.blastTier === AssistantBlastTier.READ
+      ) {
+        ctx.turnState.readToolCallsSoFar += 1;
+      }
       return { ok: true, result, durationMs: Date.now() - startedAt };
     } catch (err) {
       const durationMs = Date.now() - startedAt;

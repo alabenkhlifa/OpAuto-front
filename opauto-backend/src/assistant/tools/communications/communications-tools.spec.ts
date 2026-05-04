@@ -581,6 +581,230 @@ describe('communications tools', () => {
         expect(result).toMatchObject({ providerMessageId: 'em_clean' });
       });
 
+      it('rejects dangling attachment reference: body says "see attachment" but attachInvoiceIds is empty', async () => {
+        const email = makeEmailService();
+        const tool = createSendEmailTool({
+          emailService: email,
+          prisma: makePrisma(),
+        });
+
+        const result = await tool.handler(
+          {
+            subject: 'April snapshot',
+            text: 'Please find the report in the attachment below.',
+          },
+          ownerCtx,
+        );
+
+        expect(result).toMatchObject({
+          error: 'dangling_attachment_reference',
+          message: expect.stringMatching(/attach/i),
+        });
+        expect(email.send).not.toHaveBeenCalled();
+      });
+
+      it('rejects dangling attachment when html mentions PDF without attachInvoiceIds', async () => {
+        const email = makeEmailService();
+        const tool = createSendEmailTool({
+          emailService: email,
+          prisma: makePrisma(),
+        });
+
+        const result = await tool.handler(
+          {
+            subject: 'Invoices',
+            html: '<p>Please find the PDF document attached.</p>',
+          },
+          ownerCtx,
+        );
+
+        expect(result).toMatchObject({
+          error: 'dangling_attachment_reference',
+        });
+        expect(email.send).not.toHaveBeenCalled();
+      });
+
+      it('rejects dangling attachment in French (ci-joint / pièce jointe)', async () => {
+        const email = makeEmailService();
+        const tool = createSendEmailTool({
+          emailService: email,
+          prisma: makePrisma(),
+        });
+
+        const result = await tool.handler(
+          {
+            subject: 'Rapport',
+            text: 'Veuillez trouver ci-joint le rapport mensuel.',
+          },
+          ownerCtx,
+        );
+
+        expect(result).toMatchObject({
+          error: 'dangling_attachment_reference',
+        });
+      });
+
+      it('allows attachment language when attachInvoiceIds is non-empty (happy path)', async () => {
+        const email = makeEmailService(
+          jest.fn().mockResolvedValue({
+            providerMessageId: 'em_ok',
+            status: 'queued',
+          }),
+        );
+        const prisma = makePrisma(
+          jest.fn().mockResolvedValue([
+            {
+              id: 'inv-1',
+              invoiceNumber: 'INV-001',
+              status: 'PAID',
+              total: 100,
+              dueDate: null,
+              createdAt: new Date('2026-01-01T00:00:00Z'),
+              customer: { firstName: 'A', lastName: 'B' },
+              payments: [{ amount: 100 }],
+            },
+          ]),
+        );
+        const tool = createSendEmailTool({ emailService: email, prisma });
+
+        const result = await tool.handler(
+          {
+            subject: 'Invoices',
+            text: 'Please find the invoices attached.',
+            attachInvoiceIds: ['inv-1'],
+          },
+          ownerCtx,
+        );
+
+        expect(email.send).toHaveBeenCalled();
+        expect(result).toMatchObject({ providerMessageId: 'em_ok' });
+      });
+
+      it('does not flag prose that incidentally contains the word "attached" without attachment intent', async () => {
+        const email = makeEmailService(
+          jest.fn().mockResolvedValue({
+            providerMessageId: 'em_neutral',
+            status: 'queued',
+          }),
+        );
+        const tool = createSendEmailTool({
+          emailService: email,
+          prisma: makePrisma(),
+        });
+
+        // "attached to the engine" — physical attachment, not email-attachment intent.
+        const result = await tool.handler(
+          {
+            subject: 'Mechanic note',
+            text: 'The new sensor was attached to the engine block during the last service.',
+          },
+          ownerCtx,
+        );
+
+        expect(email.send).toHaveBeenCalled();
+        expect(result).toMatchObject({ providerMessageId: 'em_neutral' });
+      });
+
+      it('rejects when body looks like a data summary but no read tools ran this turn', async () => {
+        const email = makeEmailService();
+        const tool = createSendEmailTool({
+          emailService: email,
+          prisma: makePrisma(),
+        });
+
+        // ctx carries a turnState with zero reads — model went straight to
+        // send_email pretending it had data.
+        const result = await tool.handler(
+          {
+            subject: 'April Month-End Ops Snapshot',
+            text:
+              'No data is available for the requested month-end ops snapshot for April, ' +
+              'including dashboard KPIs, revenue summary, and overdue invoices.',
+          },
+          { ...ownerCtx, turnState: { readToolCallsSoFar: 0 } },
+        );
+
+        expect(result).toMatchObject({
+          error: 'no_supporting_reads',
+          message: expect.stringMatching(/read tool/i),
+        });
+        expect(email.send).not.toHaveBeenCalled();
+      });
+
+      it('allows data-summary body when at least one read tool ran this turn', async () => {
+        const email = makeEmailService(
+          jest.fn().mockResolvedValue({
+            providerMessageId: 'em_ok2',
+            status: 'queued',
+          }),
+        );
+        const tool = createSendEmailTool({
+          emailService: email,
+          prisma: makePrisma(),
+        });
+
+        const result = await tool.handler(
+          {
+            subject: 'April snapshot',
+            text: 'Revenue this month: 12,450 TND across 38 invoices. Overdue: 3 invoices totalling 1,200 TND.',
+          },
+          { ...ownerCtx, turnState: { readToolCallsSoFar: 4 } },
+        );
+
+        expect(email.send).toHaveBeenCalled();
+        expect(result).toMatchObject({ providerMessageId: 'em_ok2' });
+      });
+
+      it('allows non-summary body even when no read tools ran (e.g. a quick note)', async () => {
+        const email = makeEmailService(
+          jest.fn().mockResolvedValue({
+            providerMessageId: 'em_note',
+            status: 'queued',
+          }),
+        );
+        const tool = createSendEmailTool({
+          emailService: email,
+          prisma: makePrisma(),
+        });
+
+        const result = await tool.handler(
+          {
+            subject: 'Quick reminder',
+            text: 'Hi — just a heads-up that we are closed on Friday.',
+          },
+          { ...ownerCtx, turnState: { readToolCallsSoFar: 0 } },
+        );
+
+        expect(email.send).toHaveBeenCalled();
+        expect(result).toMatchObject({ providerMessageId: 'em_note' });
+      });
+
+      it('backwards-compat: omitted turnState skips the no-supporting-reads gate', async () => {
+        const email = makeEmailService(
+          jest.fn().mockResolvedValue({
+            providerMessageId: 'em_compat',
+            status: 'queued',
+          }),
+        );
+        const tool = createSendEmailTool({
+          emailService: email,
+          prisma: makePrisma(),
+        });
+
+        // Body would be flagged as a data summary, but ctx has no turnState
+        // (legacy callers / older tests) — the gate is silent.
+        const result = await tool.handler(
+          {
+            subject: 'KPI report',
+            text: 'Monthly revenue and overdue invoices follow.',
+          },
+          ownerCtx, // no turnState
+        );
+
+        expect(email.send).toHaveBeenCalled();
+        expect(result).toMatchObject({ providerMessageId: 'em_compat' });
+      });
+
       it('backwards-compat: when getKnownNames is omitted, no leak gating runs', async () => {
         const email = makeEmailService(
           jest.fn().mockResolvedValue({

@@ -34,8 +34,76 @@ export interface SendEmailResult {
 }
 
 export interface SendEmailError {
-  error: 'missing_body' | 'missing_recipient' | 'send_failed' | 'leak_in_body';
+  error:
+    | 'missing_body'
+    | 'missing_recipient'
+    | 'send_failed'
+    | 'leak_in_body'
+    | 'dangling_attachment_reference'
+    | 'no_supporting_reads';
   message: string;
+}
+
+/**
+ * Phrases that signal "this email body is summarising data the LLM should
+ * have just fetched". When the model bypasses the read tools and lies about
+ * empty results (B-XX, observed 2026-05-04), it almost always uses one of
+ * these vocabularies. Combined with `turnState.readToolCallsSoFar === 0`,
+ * a hit means the model never actually called a read this turn.
+ */
+const DATA_SUMMARY_KEYWORDS = [
+  'kpi',
+  'kpis',
+  'revenue',
+  'overdue',
+  'invoice',
+  'invoices',
+  'snapshot',
+  'briefing',
+  'breakdown',
+  'at-risk',
+  'at risk',
+  'low-stock',
+  'low stock',
+  'active job',
+  'top customer',
+  'period report',
+  'month-end',
+  'monthly report',
+  'financial report',
+  'no data',
+  'no data is available',
+  'no data available',
+] as const;
+
+function bodyLooksLikeDataSummary(haystack: string): boolean {
+  const lower = haystack.toLowerCase();
+  return DATA_SUMMARY_KEYWORDS.some((kw) => lower.includes(kw));
+}
+
+/**
+ * Phrases that signal "the email body promises an attachment". Strict patterns
+ * — only contexts that uniquely mean a *file is attached to this email*. We
+ * deliberately avoid bare "attached" (cf. "attached to the engine block") and
+ * require either a co-occurring email-attachment word ("file", "document",
+ * "PDF", "CSV", "report attached"), the typical idiom ("please find ...
+ * attached"), or the French equivalents ("ci-joint", "pièce jointe").
+ */
+const ATTACHMENT_INTENT_PATTERNS: RegExp[] = [
+  /\bplease find\b[\s\S]{0,80}\battach(?:ed|ment)\b/i,
+  /\battach(?:ed|ment)\b[\s\S]{0,40}\b(?:file|document|pdf|csv|report|invoice|spreadsheet|herewith|below|hereto)\b/i,
+  /\b(?:file|document|pdf|csv|report|invoice|spreadsheet)\b[\s\S]{0,40}\battach(?:ed|ment)\b/i,
+  /\bsee\s+(?:the\s+)?attach(?:ed|ment)\b/i,
+  /\battachment\s+(?:below|above|here|hereto|herewith)\b/i,
+  /\bin\s+the\s+attachment\b/i,
+  /\bci-joint\b/i,
+  /\bci-joints?\b/i,
+  /\bpi[èe]ce[s]?\s+jointe[s]?\b/i,
+  /\bveuillez\s+trouver\b[\s\S]{0,80}\bci-joint\b/i,
+];
+
+function bodyReferencesAttachment(haystack: string): boolean {
+  return ATTACHMENT_INTENT_PATTERNS.some((re) => re.test(haystack));
 }
 
 /** RFC 4180-ish CSV cell escape: wrap in quotes + double inner quotes. */
@@ -66,7 +134,9 @@ function invoicesToCsv(rows: InvoiceCsvRow[]): string {
     'Outstanding (TND)',
     'Due Date',
     'Created',
-  ].map(csvCell).join(',');
+  ]
+    .map(csvCell)
+    .join(',');
   const body = rows
     .map((r) =>
       [
@@ -118,7 +188,7 @@ export function createSendEmailTool(deps: {
       "'pdf' — a multi-page `invoices.pdf` document with one full invoice (header, line items, " +
       "totals, payment status) per page. Use 'pdf' when the user wants 'invoices', 'invoice " +
       "documents', 'PDFs', 'printable copies', or anything that suggests a billing artifact " +
-      "rather than a spreadsheet export.",
+      'rather than a spreadsheet export.',
     parameters: {
       type: 'object',
       properties: {
@@ -202,6 +272,52 @@ export function createSendEmailTool(deps: {
         }
       }
 
+      // Dangling-attachment guard. The model has been observed sending emails
+      // whose body promises an attachment ("please find the report attached")
+      // while never populating `attachInvoiceIds`. The recipient gets an
+      // empty-looking email referring to a phantom file. Reject before send.
+      const hasInvoiceAttachments =
+        Array.isArray(args.attachInvoiceIds) &&
+        args.attachInvoiceIds.length > 0;
+      if (!hasInvoiceAttachments) {
+        const haystack = [args.subject, args.html ?? '', args.text ?? '']
+          .filter((s) => s && s.length > 0)
+          .join('\n');
+        if (bodyReferencesAttachment(haystack)) {
+          return {
+            error: 'dangling_attachment_reference',
+            message:
+              'send_email body references an attachment but no attachInvoiceIds were ' +
+              'provided. Either pass the relevant invoice ids in attachInvoiceIds, or ' +
+              'remove the attachment language from the body.',
+          };
+        }
+      }
+
+      // No-supporting-reads guard. When the orchestrator has plumbed
+      // `turnState`, refuse to send a body that LOOKS like a data summary if
+      // zero read tools have run this turn — the LLM is hallucinating empty
+      // data (B-XX, "No data is available for ..." with no preceding tool
+      // calls). Legacy callers that don't set turnState bypass this gate so
+      // unit tests of unrelated paths stay simple.
+      if (
+        ctx.turnState !== undefined &&
+        ctx.turnState.readToolCallsSoFar === 0
+      ) {
+        const haystack = [args.subject, args.html ?? '', args.text ?? '']
+          .filter((s) => s && s.length > 0)
+          .join('\n');
+        if (bodyLooksLikeDataSummary(haystack)) {
+          return {
+            error: 'no_supporting_reads',
+            message:
+              'send_email body summarises data (KPIs, revenue, invoices, snapshot, etc.) ' +
+              'but no read tool ran this turn. Call the relevant read tool first and ' +
+              'inline its result, or remove the data-summary language from the body.',
+          };
+        }
+      }
+
       const format: AttachmentFormat = args.attachInvoiceFormat ?? 'csv';
       let attachments:
         | { filename: string; content: string; contentType: string }[]
@@ -213,10 +329,24 @@ export function createSendEmailTool(deps: {
           format === 'pdf'
             ? {
                 customer: true,
-                car: { select: { make: true, model: true, licensePlate: true, year: true } },
+                car: {
+                  select: {
+                    make: true,
+                    model: true,
+                    licensePlate: true,
+                    year: true,
+                  },
+                },
                 payments: { select: { amount: true } },
                 lineItems: true,
-                garage: { select: { name: true, address: true, phone: true, email: true } },
+                garage: {
+                  select: {
+                    name: true,
+                    address: true,
+                    phone: true,
+                    email: true,
+                  },
+                },
               }
             : {
                 customer: { select: { firstName: true, lastName: true } },
@@ -248,7 +378,8 @@ export function createSendEmailTool(deps: {
               return {
                 invoiceNumber: inv.invoiceNumber,
                 status: inv.status,
-                customer: `${inv.customer.firstName} ${inv.customer.lastName}`.trim(),
+                customer:
+                  `${inv.customer.firstName} ${inv.customer.lastName}`.trim(),
                 customerPhone: inv.customer.phone ?? null,
                 customerEmail: inv.customer.email ?? null,
                 customerAddress: inv.customer.address ?? null,
@@ -261,9 +392,13 @@ export function createSendEmailTool(deps: {
                 total: inv.total,
                 paid,
                 outstanding: Math.max(0, inv.total - paid),
-                dueDate: inv.dueDate ? inv.dueDate.toISOString().slice(0, 10) : '',
+                dueDate: inv.dueDate
+                  ? inv.dueDate.toISOString().slice(0, 10)
+                  : '',
                 createdAt: inv.createdAt.toISOString().slice(0, 10),
-                paidAt: inv.paidAt ? inv.paidAt.toISOString().slice(0, 10) : null,
+                paidAt: inv.paidAt
+                  ? inv.paidAt.toISOString().slice(0, 10)
+                  : null,
                 lineItems: (inv.lineItems ?? []).map((li: any) => ({
                   description: li.description,
                   quantity: li.quantity,
@@ -294,11 +429,14 @@ export function createSendEmailTool(deps: {
               return {
                 invoiceNumber: inv.invoiceNumber,
                 status: inv.status,
-                customer: `${inv.customer.firstName} ${inv.customer.lastName}`.trim(),
+                customer:
+                  `${inv.customer.firstName} ${inv.customer.lastName}`.trim(),
                 total: inv.total,
                 paid,
                 outstanding: Math.max(0, inv.total - paid),
-                dueDate: inv.dueDate ? inv.dueDate.toISOString().slice(0, 10) : '',
+                dueDate: inv.dueDate
+                  ? inv.dueDate.toISOString().slice(0, 10)
+                  : '',
                 createdAt: inv.createdAt.toISOString().slice(0, 10),
               };
             });

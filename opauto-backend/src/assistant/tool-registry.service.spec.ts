@@ -1,5 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ToolRegistryService, ToolExecutionResult } from './tool-registry.service';
+import {
+  ToolRegistryService,
+  ToolExecutionResult,
+} from './tool-registry.service';
 import { AssistantBlastTier } from '@prisma/client';
 import { AssistantUserContext, ToolDefinition } from './types';
 
@@ -37,14 +40,22 @@ function makeTool(overrides: Partial<ToolDefinition> = {}): ToolDefinition {
   };
 }
 
-function asFailure(res: ToolExecutionResult): { ok: false; error: string; durationMs: number } {
+function asFailure(res: ToolExecutionResult): {
+  ok: false;
+  error: string;
+  durationMs: number;
+} {
   if (res.ok) {
     throw new Error(`Expected failure, got success: ${JSON.stringify(res)}`);
   }
   return res as { ok: false; error: string; durationMs: number };
 }
 
-function asSuccess(res: ToolExecutionResult): { ok: true; result: unknown; durationMs: number } {
+function asSuccess(res: ToolExecutionResult): {
+  ok: true;
+  result: unknown;
+  durationMs: number;
+} {
   if (!res.ok) {
     throw new Error(`Expected success, got failure: ${JSON.stringify(res)}`);
   }
@@ -92,8 +103,12 @@ describe('ToolRegistryService', () => {
 
   describe('listForUser', () => {
     it('filters out tools whose required module is not enabled', () => {
-      service.register(makeTool({ name: 'analytics_tool', requiredModule: 'analytics' }));
-      service.register(makeTool({ name: 'parts_tool', requiredModule: 'parts' }));
+      service.register(
+        makeTool({ name: 'analytics_tool', requiredModule: 'analytics' }),
+      );
+      service.register(
+        makeTool({ name: 'parts_tool', requiredModule: 'parts' }),
+      );
 
       const descriptors = service.listForUser(ownerCtx);
 
@@ -115,20 +130,29 @@ describe('ToolRegistryService', () => {
 
       const descriptors = service.listForUser(ownerCtx);
 
-      expect(descriptors.map((d) => d.name).sort()).toEqual(['open_tool', 'owner_only']);
+      expect(descriptors.map((d) => d.name).sort()).toEqual([
+        'open_tool',
+        'owner_only',
+      ]);
     });
 
     it('returns descriptors with only public-facing fields', () => {
       service.register(makeTool());
       const [descriptor] = service.listForUser(ownerCtx);
-      expect(Object.keys(descriptor).sort()).toEqual(['description', 'name', 'parameters']);
+      expect(Object.keys(descriptor).sort()).toEqual([
+        'description',
+        'name',
+        'parameters',
+      ]);
     });
   });
 
   describe('validateArgs', () => {
     it('returns valid=true for matching args', () => {
       service.register(makeTool());
-      expect(service.validateArgs('sample_tool', { count: 3 })).toEqual({ valid: true });
+      expect(service.validateArgs('sample_tool', { count: 3 })).toEqual({
+        valid: true,
+      });
     });
 
     it('returns valid=false with human-readable errors for bad args', () => {
@@ -169,7 +193,9 @@ describe('ToolRegistryService', () => {
             name: 'int_tool',
             parameters: {
               type: 'object',
-              properties: { limit: { type: 'integer', minimum: 1, maximum: 100 } },
+              properties: {
+                limit: { type: 'integer', minimum: 1, maximum: 100 },
+              },
               required: ['limit'],
               additionalProperties: false,
             },
@@ -201,7 +227,9 @@ describe('ToolRegistryService', () => {
           }),
         );
         const args: { ids: string | string[] } = { ids: 'abc-123' };
-        expect(service.validateArgs('array_tool', args)).toEqual({ valid: true });
+        expect(service.validateArgs('array_tool', args)).toEqual({
+          valid: true,
+        });
         expect(args.ids).toEqual(['abc-123']);
       });
     });
@@ -229,12 +257,12 @@ describe('ToolRegistryService', () => {
       });
       service.register(tool);
 
-      expect(service.resolveBlastTier(tool, { to: 'owner@example.com' }, ownerCtx)).toBe(
-        AssistantBlastTier.AUTO_WRITE,
-      );
-      expect(service.resolveBlastTier(tool, { to: 'someone@else.com' }, ownerCtx)).toBe(
-        AssistantBlastTier.CONFIRM_WRITE,
-      );
+      expect(
+        service.resolveBlastTier(tool, { to: 'owner@example.com' }, ownerCtx),
+      ).toBe(AssistantBlastTier.AUTO_WRITE);
+      expect(
+        service.resolveBlastTier(tool, { to: 'someone@else.com' }, ownerCtx),
+      ).toBe(AssistantBlastTier.CONFIRM_WRITE);
     });
 
     it('falls back to static tier when the dynamic resolver throws', () => {
@@ -245,14 +273,18 @@ describe('ToolRegistryService', () => {
         },
       });
       service.register(tool);
-      expect(service.resolveBlastTier(tool, {}, ownerCtx)).toBe(AssistantBlastTier.READ);
+      expect(service.resolveBlastTier(tool, {}, ownerCtx)).toBe(
+        AssistantBlastTier.READ,
+      );
     });
   });
 
   describe('execute', () => {
     it('returns ok:true with result and durationMs for a successful handler', async () => {
       service.register(makeTool());
-      const res = asSuccess(await service.execute('sample_tool', { count: 5 }, ownerCtx));
+      const res = asSuccess(
+        await service.execute('sample_tool', { count: 5 }, ownerCtx),
+      );
 
       expect(res.result).toEqual({ doubled: 10 });
       expect(typeof res.durationMs).toBe('number');
@@ -268,7 +300,9 @@ describe('ToolRegistryService', () => {
       );
 
       const res = asFailure(
-        await service.execute('slow_tool', { count: 1 }, ownerCtx, { timeoutMs: 25 }),
+        await service.execute('slow_tool', { count: 1 }, ownerCtx, {
+          timeoutMs: 25,
+        }),
       );
 
       expect(res.error).toBe('timeout');
@@ -285,15 +319,79 @@ describe('ToolRegistryService', () => {
         }),
       );
 
-      const res = asFailure(await service.execute('broken_tool', { count: 1 }, ownerCtx));
+      const res = asFailure(
+        await service.execute('broken_tool', { count: 1 }, ownerCtx),
+      );
 
       expect(res.error).toBe('handler failed');
       expect(typeof res.durationMs).toBe('number');
     });
 
     it('returns ok:false when the tool is not registered', async () => {
-      const res = asFailure(await service.execute('missing_tool', {}, ownerCtx));
+      const res = asFailure(
+        await service.execute('missing_tool', {}, ownerCtx),
+      );
       expect(res.error).toMatch(/Unknown tool/i);
+    });
+
+    describe('turnState.readToolCallsSoFar bookkeeping (B-XX)', () => {
+      it('increments after a successful READ-tier execution', async () => {
+        service.register(makeTool()); // READ-tier
+        const ctx: AssistantUserContext = {
+          ...ownerCtx,
+          turnState: { readToolCallsSoFar: 0 },
+        };
+
+        await service.execute('sample_tool', { count: 1 }, ctx);
+        await service.execute('sample_tool', { count: 2 }, ctx);
+
+        expect(ctx.turnState!.readToolCallsSoFar).toBe(2);
+      });
+
+      it('does NOT increment for non-READ tiers', async () => {
+        service.register(
+          makeTool({
+            name: 'auto_writer',
+            blastTier: AssistantBlastTier.AUTO_WRITE,
+          }),
+        );
+        const ctx: AssistantUserContext = {
+          ...ownerCtx,
+          turnState: { readToolCallsSoFar: 0 },
+        };
+
+        await service.execute('auto_writer', { count: 1 }, ctx);
+
+        expect(ctx.turnState!.readToolCallsSoFar).toBe(0);
+      });
+
+      it('does NOT increment when the handler fails', async () => {
+        service.register(
+          makeTool({
+            name: 'broken_read',
+            handler: async () => {
+              throw new Error('boom');
+            },
+          }),
+        );
+        const ctx: AssistantUserContext = {
+          ...ownerCtx,
+          turnState: { readToolCallsSoFar: 0 },
+        };
+
+        await service.execute('broken_read', { count: 1 }, ctx);
+
+        expect(ctx.turnState!.readToolCallsSoFar).toBe(0);
+      });
+
+      it('is a no-op when ctx has no turnState (legacy callers)', async () => {
+        service.register(makeTool());
+        // ownerCtx has no turnState; should not throw, should not crash.
+        const res = asSuccess(
+          await service.execute('sample_tool', { count: 1 }, ownerCtx),
+        );
+        expect(res.result).toEqual({ doubled: 2 });
+      });
     });
   });
 });

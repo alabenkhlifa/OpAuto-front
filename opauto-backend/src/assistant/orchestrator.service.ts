@@ -154,6 +154,12 @@ export class OrchestratorService {
     const turnDeadline = Date.now() + totalTimeoutMs;
     const isResume = userMessage.startsWith(RESUME_PREFIX);
 
+    // B-XX — initialise per-turn execution state. Mutated by
+    // ToolRegistryService.execute on each successful READ-tier call so write
+    // tools (notably send_email) can refuse "no data" composes when no read
+    // actually ran.
+    ctx.turnState = { readToolCallsSoFar: 0 };
+
     try {
       // Emit the conversation id up-front so the client can sync its
       // currentConversationId and stitch follow-up turns (especially the
@@ -1268,6 +1274,8 @@ export class OrchestratorService {
     parts.push(
       `Action chaining rules:\n` +
         `- When the user asks you to email/send a report or summary, FIRST call the relevant read tool to fetch real data (e.g. list_invoices, get_revenue_summary, list_at_risk_customers), THEN call send_email with a body that includes those concrete numbers. Do NOT write placeholder bodies like "please find the data below" without the data inline.\n` +
+        `- NEVER claim "no data is available" / "data could not be retrieved" / "the report is unavailable" without having actually invoked the relevant read tool this turn. If you have not called a read tool yet, call it. If the tool returns empty, report the specific empty result ("0 overdue invoices", "no at-risk customers this period") — do NOT generalise to "no data".\n` +
+        `- NEVER reference an attachment ("see attached", "please find the PDF attached", "ci-joint", "pièce jointe") in the email body unless you populate attachInvoiceIds with real invoice ids. The backend rejects emails that promise an attachment without one.\n` +
         `- When the user wants invoices attached to an email, call list_invoices first to get the invoice IDs, then pass them as attachInvoiceIds in send_email — the backend converts them to a CSV attachment automatically.\n` +
         `- Self-sends (recipient == the user's own email) execute immediately without approval. External recipients require approval — pre-fetch all data BEFORE asking the LLM to call send_email so the user only approves once.`,
     );
@@ -1305,10 +1313,7 @@ export class OrchestratorService {
       // flows. Explicit > clever.
       const selected =
         pageContext.selectedEntity ??
-        deriveSelectedEntityFromRoute(
-          pageContext.route,
-          pageContext.params,
-        );
+        deriveSelectedEntityFromRoute(pageContext.route, pageContext.params);
       if (selected) {
         pieces.push(
           `selected=${selected.type}:${selected.id}` +
@@ -1442,7 +1447,10 @@ export class OrchestratorService {
     // shape errors but not "wrong-type-of-uuid" — e.g. the LLM passing a
     // customer-id as appointmentId. Without these checks, the user is asked
     // to approve an action that is provably going to fail.
-    if (toolName === 'cancel_appointment' && typeof a.appointmentId === 'string') {
+    if (
+      toolName === 'cancel_appointment' &&
+      typeof a.appointmentId === 'string'
+    ) {
       const exists = await this.prisma.appointment.findFirst({
         where: { id: a.appointmentId, garageId: ctx.garageId },
         select: { id: true },
