@@ -47,6 +47,7 @@ const TOOL_KEYS: string[] = [
   'list_overdue_invoices',
   'get_invoice',
   'record_payment',
+  'create_invoice',
   'list_low_stock_parts',
   'get_inventory_value',
   'generate_period_report',
