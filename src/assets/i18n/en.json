@@ -3312,6 +3312,11 @@
           "description": "Record a payment received against an invoice.",
           "example": "Record a 350 dinar payment on invoice 2026-001"
         },
+        "create_invoice": {
+          "name": "Create a new invoice",
+          "description": "Create and issue a new invoice in one step — assigns a fiscal number, computes per-line TVA.",
+          "example": "Create an invoice for Asma Ben Ali — oil change 45 TND + filter 12 TND, due in 30 days"
+        },
         "list_low_stock_parts": {
           "name": "Parts running low",
           "description": "Parts that are nearly out of stock.",
@@ -3613,6 +3618,12 @@
         "success": "Payment of {{amount}} TND recorded",
         "failure": "Couldn't record the payment",
         "approveVerb": "Yes, record payment"
+      },
+      "create_invoice": {
+        "running": "Drafting the invoice ({{lineCount}} lines, total {{total}})…",
+        "success": "Invoice {{number}} issued — {{total}} TND",
+        "failure": "Couldn't create the invoice",
+        "approveVerb": "Yes, create invoice"
       },
       "send_sms": {
         "running": "Sending the SMS…",

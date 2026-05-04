@@ -6,6 +6,7 @@ import { buildListInvoicesTool } from './list-invoices.tool';
 import { buildGetInvoiceTool } from './get-invoice.tool';
 import { buildListOverdueInvoicesTool } from './list-overdue-invoices.tool';
 import { buildRecordPaymentTool } from './record-payment.tool';
+import { buildCreateInvoiceTool } from './create-invoice.tool';
 import { buildListLowStockPartsTool } from './list-low-stock-parts.tool';
 import { buildGetInventoryValueTool } from './get-inventory-value.tool';
 
@@ -394,6 +395,320 @@ describe('Invoicing + Inventory Tools', () => {
         _expectedConfirmation: 'INV-1',
       });
       expect(zero.valid).toBe(false);
+    });
+  });
+
+  describe('create_invoice (I-001 — TYPED_CONFIRM_WRITE)', () => {
+    const VALID_CUSTOMER_ID = '11111111-1111-1111-1111-111111111111';
+    const VALID_CAR_ID = '22222222-2222-2222-2222-222222222222';
+    const FOREIGN_CUSTOMER_ID = '33333333-3333-3333-3333-333333333333';
+    const FOREIGN_CAR_ID = '44444444-4444-4444-4444-444444444444';
+
+    const minimalArgs = () => ({
+      customerId: VALID_CUSTOMER_ID,
+      dueDate: '2026-06-01',
+      lineItems: [
+        { description: 'Oil change', quantity: 1, unitPrice: 45 },
+        { description: 'Filter', quantity: 1, unitPrice: 12 },
+      ],
+      _expectedConfirmation: '67.83 TND',
+    });
+
+    function makePrisma(opts: {
+      customer?: any;
+      car?: any;
+    } = {}) {
+      // Don't reuse makePrismaMock — it only stubs invoice/payment/part. The
+      // create_invoice handler needs customer + car as well.
+      const customerValue =
+        opts.customer === undefined
+          ? { id: VALID_CUSTOMER_ID, garageId: 'garage-1' }
+          : opts.customer;
+      return {
+        customer: {
+          findUnique: jest.fn().mockResolvedValue(customerValue),
+        },
+        car: {
+          findUnique: jest.fn().mockResolvedValue(opts.car ?? null),
+        },
+      } as unknown as Parameters<typeof buildCreateInvoiceTool>[0];
+    }
+
+    function makeInvoicing(overrides: Record<string, jest.Mock> = {}) {
+      return {
+        create: jest.fn().mockResolvedValue({
+          id: 'draft-1',
+          invoiceNumber: 'DRAFT-abc12345',
+          status: 'DRAFT',
+          total: 67.83,
+          currency: 'TND',
+        }),
+        issue: jest.fn().mockResolvedValue({
+          id: 'draft-1',
+          invoiceNumber: 'INV-202606-0001',
+          status: 'SENT',
+          total: 67.83,
+          currency: 'TND',
+          dueDate: new Date('2026-06-01'),
+        }),
+        remove: jest.fn().mockResolvedValue(undefined),
+        ...overrides,
+      };
+    }
+
+    it('marks the tool TYPED_CONFIRM_WRITE, OWNER-only, and requires _expectedConfirmation', () => {
+      const tool = buildCreateInvoiceTool(
+        makePrismaMock() as never,
+        makeInvoicing() as never,
+      );
+      expect(tool.blastTier).toBe(AssistantBlastTier.TYPED_CONFIRM_WRITE);
+      expect(tool.requiredRole).toBe('OWNER');
+
+      const registry = new ToolRegistryService();
+      registry.register(tool);
+
+      const missing = registry.validateArgs('create_invoice', {
+        customerId: VALID_CUSTOMER_ID,
+        dueDate: '2026-06-01',
+        lineItems: [{ description: 'x', quantity: 1, unitPrice: 1 }],
+      });
+      expect(missing.valid).toBe(false);
+      expect(missing.errors!.join(' ')).toMatch(/_expectedConfirmation/);
+    });
+
+    it('schema rejects empty lineItems', () => {
+      const tool = buildCreateInvoiceTool(
+        makePrismaMock() as never,
+        makeInvoicing() as never,
+      );
+      const registry = new ToolRegistryService();
+      registry.register(tool);
+      const result = registry.validateArgs('create_invoice', {
+        ...minimalArgs(),
+        lineItems: [],
+      });
+      expect(result.valid).toBe(false);
+      expect(result.errors!.join(' ')).toMatch(/lineItems/);
+    });
+
+    it('schema rejects negative or zero quantity', () => {
+      const tool = buildCreateInvoiceTool(
+        makePrismaMock() as never,
+        makeInvoicing() as never,
+      );
+      const registry = new ToolRegistryService();
+      registry.register(tool);
+      const negQty = registry.validateArgs('create_invoice', {
+        ...minimalArgs(),
+        lineItems: [{ description: 'x', quantity: -1, unitPrice: 10 }],
+      });
+      expect(negQty.valid).toBe(false);
+      const zeroQty = registry.validateArgs('create_invoice', {
+        ...minimalArgs(),
+        lineItems: [{ description: 'x', quantity: 0, unitPrice: 10 }],
+      });
+      expect(zeroQty.valid).toBe(false);
+    });
+
+    it('schema rejects negative unitPrice (free lines allowed at 0 — e.g. courtesy items)', () => {
+      const tool = buildCreateInvoiceTool(
+        makePrismaMock() as never,
+        makeInvoicing() as never,
+      );
+      const registry = new ToolRegistryService();
+      registry.register(tool);
+      const negative = registry.validateArgs('create_invoice', {
+        ...minimalArgs(),
+        lineItems: [{ description: 'x', quantity: 1, unitPrice: -5 }],
+      });
+      expect(negative.valid).toBe(false);
+      const zero = registry.validateArgs('create_invoice', {
+        ...minimalArgs(),
+        lineItems: [{ description: 'free', quantity: 1, unitPrice: 0 }],
+      });
+      expect(zero.valid).toBe(true);
+    });
+
+    it('schema accepts a minimal valid payload', () => {
+      const tool = buildCreateInvoiceTool(
+        makePrismaMock() as never,
+        makeInvoicing() as never,
+      );
+      const registry = new ToolRegistryService();
+      registry.register(tool);
+      expect(registry.validateArgs('create_invoice', minimalArgs()).valid).toBe(
+        true,
+      );
+    });
+
+    it('refuses when the customer belongs to a different garage', async () => {
+      const prisma = makePrisma({
+        customer: {
+          id: FOREIGN_CUSTOMER_ID,
+          garageId: 'other-garage',
+        },
+      });
+      const invoicing = makeInvoicing();
+      const tool = buildCreateInvoiceTool(prisma as never, invoicing as never);
+
+      await expect(
+        tool.handler({ ...minimalArgs(), customerId: FOREIGN_CUSTOMER_ID }, ownerCtx),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(invoicing.create).not.toHaveBeenCalled();
+    });
+
+    it('refuses when the customer does not exist', async () => {
+      const prisma = makePrisma({ customer: null });
+      const invoicing = makeInvoicing();
+      const tool = buildCreateInvoiceTool(prisma as never, invoicing as never);
+
+      await expect(tool.handler(minimalArgs(), ownerCtx)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+      expect(invoicing.create).not.toHaveBeenCalled();
+    });
+
+    it('refuses when carId is supplied but the car belongs to another garage', async () => {
+      const prisma = makePrisma({
+        customer: { id: VALID_CUSTOMER_ID, garageId: 'garage-1' },
+        car: {
+          id: FOREIGN_CAR_ID,
+          garageId: 'other-garage',
+          customerId: VALID_CUSTOMER_ID,
+        },
+      });
+      const invoicing = makeInvoicing();
+      const tool = buildCreateInvoiceTool(prisma as never, invoicing as never);
+
+      await expect(
+        tool.handler(
+          { ...minimalArgs(), carId: FOREIGN_CAR_ID },
+          ownerCtx,
+        ),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(invoicing.create).not.toHaveBeenCalled();
+    });
+
+    it('refuses when carId is supplied but the car belongs to a different customer', async () => {
+      const prisma = makePrisma({
+        customer: { id: VALID_CUSTOMER_ID, garageId: 'garage-1' },
+        car: {
+          id: VALID_CAR_ID,
+          garageId: 'garage-1',
+          customerId: 'someone-else',
+        },
+      });
+      const invoicing = makeInvoicing();
+      const tool = buildCreateInvoiceTool(prisma as never, invoicing as never);
+
+      await expect(
+        tool.handler(
+          { ...minimalArgs(), carId: VALID_CAR_ID },
+          ownerCtx,
+        ),
+      ).rejects.toThrow(/customer/i);
+      expect(invoicing.create).not.toHaveBeenCalled();
+    });
+
+    it('creates a DRAFT then issues it, returning the fiscal invoice number', async () => {
+      const prisma = makePrisma({
+        customer: { id: VALID_CUSTOMER_ID, garageId: 'garage-1' },
+        car: {
+          id: VALID_CAR_ID,
+          garageId: 'garage-1',
+          customerId: VALID_CUSTOMER_ID,
+        },
+      });
+      const invoicing = makeInvoicing();
+      const tool = buildCreateInvoiceTool(prisma as never, invoicing as never);
+
+      const result = await tool.handler(
+        { ...minimalArgs(), carId: VALID_CAR_ID, notes: 'Q2 service' },
+        ownerCtx,
+      );
+
+      expect(invoicing.create).toHaveBeenCalledWith(
+        'garage-1',
+        expect.objectContaining({
+          customerId: VALID_CUSTOMER_ID,
+          carId: VALID_CAR_ID,
+          dueDate: '2026-06-01',
+          notes: 'Q2 service',
+          lineItems: expect.arrayContaining([
+            expect.objectContaining({ description: 'Oil change', quantity: 1, unitPrice: 45 }),
+          ]),
+        }),
+        expect.objectContaining({ userId: 'user-1', role: 'OWNER' }),
+      );
+      expect(invoicing.issue).toHaveBeenCalledWith(
+        'draft-1',
+        'garage-1',
+        'user-1',
+      );
+      expect(result).toEqual({
+        invoiceId: 'draft-1',
+        invoiceNumber: 'INV-202606-0001',
+        total: 67.83,
+        currency: 'TND',
+        status: 'SENT',
+        dueDate: '2026-06-01',
+      });
+    });
+
+    it('rolls back the DRAFT when issue() fails (atomic semantics from the user POV)', async () => {
+      const prisma = makePrisma();
+      const invoicing = makeInvoicing({
+        issue: jest.fn().mockRejectedValue(
+          Object.assign(new Error('Insufficient stock to issue invoice'), {
+            response: { message: 'Insufficient stock to issue invoice' },
+          }),
+        ),
+      });
+      const tool = buildCreateInvoiceTool(prisma as never, invoicing as never);
+
+      await expect(tool.handler(minimalArgs(), ownerCtx)).rejects.toThrow(
+        /Insufficient stock/,
+      );
+      // Cleanup ran on the orphan DRAFT.
+      expect(invoicing.remove).toHaveBeenCalledWith('draft-1', 'garage-1');
+    });
+
+    it('does not blow up when the DRAFT cleanup itself fails (best-effort)', async () => {
+      const prisma = makePrisma();
+      const invoicing = makeInvoicing({
+        issue: jest.fn().mockRejectedValue(new Error('issue blew up')),
+        remove: jest.fn().mockRejectedValue(new Error('remove blew up too')),
+      });
+      const tool = buildCreateInvoiceTool(prisma as never, invoicing as never);
+
+      // Original error must still surface; cleanup failure is logged but swallowed.
+      await expect(tool.handler(minimalArgs(), ownerCtx)).rejects.toThrow(
+        /issue blew up/,
+      );
+      expect(invoicing.remove).toHaveBeenCalled();
+    });
+
+    it('passes per-line tvaRate through to the service when supplied', async () => {
+      const prisma = makePrisma();
+      const invoicing = makeInvoicing();
+      const tool = buildCreateInvoiceTool(prisma as never, invoicing as never);
+
+      await tool.handler(
+        {
+          ...minimalArgs(),
+          lineItems: [
+            { description: 'Service A', quantity: 2, unitPrice: 100, tvaRate: 7 },
+            { description: 'Part B', quantity: 1, unitPrice: 50, tvaRate: 19 },
+          ],
+        },
+        ownerCtx,
+      );
+
+      const callDto = (invoicing.create as jest.Mock).mock.calls[0][1];
+      expect(callDto.lineItems).toEqual([
+        expect.objectContaining({ tvaRate: 7 }),
+        expect.objectContaining({ tvaRate: 19 }),
+      ]);
     });
   });
 

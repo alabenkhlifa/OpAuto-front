@@ -6,6 +6,7 @@ import { buildListInvoicesTool } from './list-invoices.tool';
 import { buildGetInvoiceTool } from './get-invoice.tool';
 import { buildListOverdueInvoicesTool } from './list-overdue-invoices.tool';
 import { buildRecordPaymentTool } from './record-payment.tool';
+import { buildCreateInvoiceTool } from './create-invoice.tool';
 import { buildListLowStockPartsTool } from './list-low-stock-parts.tool';
 import { buildGetInventoryValueTool } from './get-inventory-value.tool';
 
@@ -30,6 +31,7 @@ export class InvoicingInventoryToolsRegistrar implements OnModuleInit {
       buildGetInvoiceTool(this.invoicing),
       buildListOverdueInvoicesTool(this.prisma),
       buildRecordPaymentTool(this.prisma, this.invoicing),
+      buildCreateInvoiceTool(this.prisma, this.invoicing),
       buildListLowStockPartsTool(this.prisma),
       buildGetInventoryValueTool(this.prisma),
     ];

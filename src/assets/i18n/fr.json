@@ -3407,6 +3407,11 @@
           "description": "Enregistrer un paiement reçu sur une facture.",
           "example": "Enregistre un paiement de 350 dinars sur la facture 2026-001"
         },
+        "create_invoice": {
+          "name": "Créer une nouvelle facture",
+          "description": "Créer et émettre une facture en une étape — attribue un numéro fiscal, calcule la TVA par ligne.",
+          "example": "Crée une facture pour Asma Ben Ali — vidange 45 TND + filtre 12 TND, échéance dans 30 jours"
+        },
         "list_low_stock_parts": {
           "name": "Pièces en rupture de stock",
           "description": "Pièces qui sont presque épuisées.",
@@ -3708,6 +3713,12 @@
         "success": "Paiement de {{amount}} TND enregistré",
         "failure": "Impossible d'enregistrer le paiement",
         "approveVerb": "Oui, enregistrer"
+      },
+      "create_invoice": {
+        "running": "Je rédige la facture ({{lineCount}} lignes, total {{total}})…",
+        "success": "Facture {{number}} émise — {{total}} TND",
+        "failure": "Impossible de créer la facture",
+        "approveVerb": "Oui, créer la facture"
       },
       "send_sms": {
         "running": "J'envoie le SMS…",

@@ -141,6 +141,17 @@ export const TOOL_PRESENTERS: ToolPresenter[] = [
     }),
     approveVerbKey: k('record_payment', 'approveVerb'),
   }),
+  present('create_invoice', {
+    runningParams: (a) => ({
+      total: str(a, '_expectedConfirmation') ?? '',
+      lineCount: arrLen(a, 'lineItems'),
+    }),
+    successParams: (_a, r) => ({
+      number: str(r, 'invoiceNumber') ?? '',
+      total: num(r, 'total') ?? 0,
+    }),
+    approveVerbKey: k('create_invoice', 'approveVerb'),
+  }),
 
   // ── Communications ──────────────────────────────────────────────────────
   present('send_sms', {
