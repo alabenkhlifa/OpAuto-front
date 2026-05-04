@@ -30,7 +30,7 @@ import { AuditService } from './audit.service';
 import { IntentClassifierService } from './intent-classifier.service';
 import { PrismaService } from '../prisma/prisma.service';
 
-const DEFAULT_ITERATION_CAP = 8;
+const DEFAULT_ITERATION_CAP = 12;
 const TOTAL_TURN_TIMEOUT_MS = 90_000;
 const MAX_TOOL_RESULT_BYTES = 8 * 1024;
 const HISTORY_LIMIT = 20;
