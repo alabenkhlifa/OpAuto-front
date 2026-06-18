@@ -323,6 +323,19 @@ button:disabled {
   padding: 1rem;
 }
 
+.task-usage-card {
+  min-height: 42rem;
+}
+
+.triple-grid .compact-card {
+  min-height: 30rem;
+}
+
+.agent-usage-card,
+.skill-usage-card {
+  min-height: 30rem;
+}
+
 .card-title-row {
   display: flex;
   gap: 0.75rem;
@@ -799,6 +812,21 @@ td em,
 
   .ai-admin-login__card {
     justify-self: end;
+  }
+}
+
+@media (min-width: 1101px) {
+  .task-usage-card {
+    min-height: 48rem;
+  }
+
+  .triple-grid .compact-card {
+    min-height: 54rem;
+  }
+
+  .agent-usage-card,
+  .skill-usage-card {
+    min-height: 38rem;
   }
 }
 
