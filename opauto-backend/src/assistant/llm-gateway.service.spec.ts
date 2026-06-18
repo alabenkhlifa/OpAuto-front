@@ -515,6 +515,24 @@ describe('LlmGatewayService', () => {
     expect(body.model).toBe('Meta-Llama-3_3-70B-Instruct');
   });
 
+  it('honors an OVH-shaped per-request model override', async () => {
+    const fetchMock: FetchMock = jest.fn().mockResolvedValueOnce(
+      okJson({
+        choices: [{ message: { role: 'assistant', content: 'ok' } }],
+      }),
+    );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    const service = await makeService({ OVH_API_KEY: 'o' });
+
+    await service.complete({
+      messages: baseRequest.messages,
+      model: 'Mistral-Small-3_2-24B-Instruct-2506',
+    });
+
+    const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
+    expect(body.model).toBe('Mistral-Small-3_2-24B-Instruct-2506');
+  });
+
   it('honors a caller-supplied OVH-shaped model id', async () => {
     const fetchMock: FetchMock = jest.fn().mockResolvedValueOnce(
       okJson({

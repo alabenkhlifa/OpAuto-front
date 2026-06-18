@@ -174,6 +174,7 @@ describe('IntentClassifierService', () => {
     const sentBody = JSON.stringify(calls[0][0]);
     // System prompt should mention each tool name + description, but NOT
     // include any "parameters" / JSON-schema markers that bloat token use.
+    expect(calls[0][0].model).toBe('Mistral-Small-3_2-24B-Instruct-2506');
     expect(sentBody).toContain('get_revenue_summary');
     expect(sentBody).toContain('Aggregated revenue');
     expect(sentBody).not.toContain('"parameters":');

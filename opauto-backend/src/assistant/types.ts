@@ -107,10 +107,10 @@ export interface LlmCompletionRequest {
   temperature?: number;
   maxTokens?: number;
   /**
-   * Optional Groq model override for this single call. Defaults to the
-   * gateway's primary model when omitted. Useful when a caller has a
-   * cheap/non-reasoning task (e.g. intent classification) that pairs
-   * better with `llama-3.1-8b-instant` than with the heavier primary.
+   * Optional model override for this single call. Provider adapters only
+   * honour model ids they can serve; otherwise they fall back to their default.
+   * Useful when a cheap/router task should use a different model than the
+   * main assistant brain.
    */
   model?: string;
   /**
