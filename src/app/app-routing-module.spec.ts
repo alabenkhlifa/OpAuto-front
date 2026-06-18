@@ -81,4 +81,28 @@ describe('app-routing — S-SEC-007 invoicing module gate', () => {
     const fn = moduleGuard('invoicing');
     expect(typeof fn).toBe('function');
   });
+
+  it('adds /admin/dashboard as an owner-protected route', () => {
+    const adminDashboardRoute = routes.find((r) => r.path === 'admin/dashboard');
+    expect(adminDashboardRoute).toBeTruthy();
+    expect(adminDashboardRoute?.canActivate?.[0]).toBe(authGuard);
+    expect(adminDashboardRoute?.canActivate?.[1]).toBe(ownerGuard);
+  });
+
+  it('redirects /admin/dashoard (typo) to /admin/dashboard', () => {
+    const typoRoute = routes.find((r) => r.path === 'admin/dashoard');
+    expect(typoRoute).toBeTruthy();
+    expect(typoRoute?.redirectTo).toBe('/admin/dashboard');
+    expect(typoRoute?.pathMatch).toBe('full');
+  });
+
+  it('keeps /admin/dashboard route path before wildcard catch-all', () => {
+    const wildcardIndex = routes.findIndex((r) => r.path === '**');
+    const adminRouteIndex = routes.findIndex((r) => r.path === 'admin/dashboard');
+    const typoRouteIndex = routes.findIndex((r) => r.path === 'admin/dashoard');
+    expect(adminRouteIndex).toBeGreaterThan(-1);
+    expect(typoRouteIndex).toBeGreaterThan(-1);
+    expect(adminRouteIndex).toBeLessThan(wildcardIndex);
+    expect(typoRouteIndex).toBeLessThan(wildcardIndex);
+  });
 });

@@ -33,6 +33,7 @@ import { CommunicationsToolsModule } from './assistant/tools/communications/comm
 import { ReportsToolsModule } from './assistant/tools/reports/reports-tools.module';
 import { AgentsModule } from './assistant/agents/agents.module';
 import { PublicModule } from './public/public.module';
+import { AdminAiUsageModule } from './admin-ai-usage/admin-ai-usage.module';
 
 // Per-throttler trackers: `short` keys on userId, `long` keys on garageId.
 // Both fall back to the request IP for any unauthenticated entry-point so the
@@ -91,6 +92,7 @@ const garageIdTracker = (req: Record<string, any>): string => {
     EmployeesModule,
     ApprovalsModule,
     ReportsModule,
+    AdminAiUsageModule,
     NotificationsModule,
     ModulesModule,
     GarageSettingsModule,

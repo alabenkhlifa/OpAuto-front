@@ -22,6 +22,19 @@ export const routes: Routes = [
     loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),
     canActivate: [authGuard]
   },
+	  {
+	    path: 'admin/dashboard',
+	    loadComponent: () =>
+	      import('./features/admin/ai-usage-dashboard/ai-usage-dashboard.component').then(
+	        (m) => m.AiUsageDashboardComponent,
+	      ),
+	    canActivate: [authGuard, ownerGuard],
+	  },
+  {
+    path: 'admin/dashoard',
+    redirectTo: '/admin/dashboard',
+    pathMatch: 'full',
+  },
   {
     path: 'calendar',
     loadComponent: () => import('./features/calendar/calendar.component').then(m => m.CalendarComponent),

@@ -3778,5 +3778,141 @@
         "loading": "Loading…"
       }
     }
+  },
+  "adminAiUsage": {
+    "eyebrow": "Owner monitoring",
+    "title": "AI Usage Dashboard",
+    "subtitle": "Monitor OVH AI cost, token usage, agent activity, tools, approvals, users, and garage-level consumption.",
+    "rangeSelector": "Date range",
+    "ranges": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "lastWeek": "Last week",
+      "thisMonth": "This month",
+      "lastMonth": "Last month",
+      "thisQuarter": "This quarter",
+      "lastQuarter": "Last quarter",
+      "thisYear": "This year",
+      "lastYear": "Last year"
+    },
+    "actions": {
+      "refresh": "Refresh",
+      "loading": "Refreshing..."
+    },
+    "sections": {
+      "ovhOnly": "OVH usage only",
+      "share": "Cost allocation",
+      "people": "Users",
+      "garages": "Garage",
+      "tools": "Tool activity",
+      "approvals": "Approval outcomes",
+      "agents": "Agents",
+      "skills": "Skills",
+      "expensive": "Highest cost calls",
+      "coverage": "Data coverage"
+    },
+    "kpis": {
+      "title": "Overview",
+      "spend": "OVH AI spend",
+      "spendHint": "Estimated from recorded OVH tokens",
+      "ovhCalls": "OVH calls",
+      "ovhCallsHint": "Persisted assistant message rows",
+      "inputOutputTokens": "Input / output tokens",
+      "inputOutputTokensHint": "Compact token totals for the selected range",
+      "approvalRequired": "Approval-required tool calls",
+      "approvalRequiredHint": "Approved, refused, or waiting for action"
+    },
+    "loading": "Loading usage data...",
+    "footer": {
+      "updated": "Updated {{updatedAt}}"
+    },
+    "tasks": {
+      "title": "Cost by AI task",
+      "empty": "No AI task usage was recorded for this period."
+    },
+    "costShare": {
+      "title": "Cost share by AI task",
+      "empty": "No cost share is available for this period."
+    },
+    "users": {
+      "title": "User usage",
+      "empty": "No user usage was recorded for this period."
+    },
+    "garages": {
+      "title": "Garage usage",
+      "empty": "No garage usage was recorded for this period."
+    },
+    "tools": {
+      "title": "Most used tools",
+      "breakdown": "{{approved}} approved, {{denied}} refused, {{failed}} failed",
+      "empty": "No tool calls were recorded for this period."
+    },
+    "approvals": {
+      "title": "Approval and refusal outcomes",
+      "required": "Approval required",
+      "approvedOrExecuted": "Approved or executed",
+      "refused": "Refused"
+    },
+    "agents": {
+      "title": "Agent usage",
+      "empty": "No agent usage was recorded for this period."
+    },
+    "skills": {
+      "title": "Skill usage",
+      "empty": "No skill usage was recorded for this period."
+    },
+    "topCalls": {
+      "title": "Top expensive OVH calls",
+      "empty": "No priced OVH calls were recorded for this period."
+    },
+    "coverage": {
+      "title": "Persisted data coverage",
+      "messages": "Assistant messages scanned",
+      "toolCalls": "Tool calls scanned",
+      "missingModel": "Messages missing model",
+      "missingPurpose": "Messages missing purpose",
+      "missingTokens": "Messages missing tokens"
+    },
+    "metrics": {
+      "calls": "Calls",
+      "tokens": "In / out tokens",
+      "toolCalls": "Tool calls",
+      "cost": "Cost",
+      "users": "Users",
+      "executed": "Executed",
+      "pending": "Pending",
+      "expired": "Expired",
+      "avgDuration": "Avg duration"
+    },
+    "purposeLabels": {
+      "toolSelection": "Tool selection",
+      "assistantResponse": "Assistant response",
+      "intentClassification": "Intent classification",
+      "titleGeneration": "Title generation",
+      "analyticsAgent": "Analytics agent",
+      "communicationsAgent": "Communications agent",
+      "inventoryAgent": "Inventory agent",
+      "financeAgent": "Finance agent",
+      "growthAgent": "Growth agent",
+      "schedulingAgent": "Scheduling agent",
+      "unknown": "Other AI task: {{purpose}}"
+    },
+    "purposeDescriptions": {
+      "toolSelection": "The assistant decided which internal tool or workflow should handle the user request.",
+      "assistantResponse": "The assistant generated the final message shown to the user.",
+      "intentClassification": "The lightweight classifier categorized the user's intent before routing.",
+      "titleGeneration": "The model generated or refreshed a conversation title.",
+      "analyticsAgent": "The analytics agent answered reporting and business metric requests.",
+      "communicationsAgent": "The communications agent prepared customer messaging work.",
+      "inventoryAgent": "The inventory agent handled stock, parts, and availability requests.",
+      "financeAgent": "The finance agent handled invoicing, payment, and revenue questions.",
+      "growthAgent": "The growth agent handled marketing or customer retention requests.",
+      "schedulingAgent": "The scheduling agent handled appointments and calendar planning.",
+      "unknown": "The backend recorded this AI task as {{purpose}}."
+    },
+    "errors": {
+      "loadFailed": "Unable to load AI usage data.",
+      "notImplemented": "AI usage endpoint is not available yet."
+    }
   }
 }

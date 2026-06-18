@@ -3873,5 +3873,141 @@
         "loading": "Chargement…"
       }
     }
+  },
+  "adminAiUsage": {
+    "eyebrow": "Monitoring propriétaire",
+    "title": "Tableau de bord IA",
+    "subtitle": "Surveillez le coût OVH, les tokens, les agents, les outils, les approbations, les utilisateurs et la consommation du garage.",
+    "rangeSelector": "Période",
+    "ranges": {
+      "today": "Aujourd'hui",
+      "yesterday": "Hier",
+      "lastWeek": "Semaine dernière",
+      "thisMonth": "Ce mois",
+      "lastMonth": "Mois dernier",
+      "thisQuarter": "Ce trimestre",
+      "lastQuarter": "Trimestre dernier",
+      "thisYear": "Cette année",
+      "lastYear": "Année dernière"
+    },
+    "actions": {
+      "refresh": "Actualiser",
+      "loading": "Actualisation..."
+    },
+    "sections": {
+      "ovhOnly": "Usage OVH uniquement",
+      "share": "Répartition des coûts",
+      "people": "Utilisateurs",
+      "garages": "Garage",
+      "tools": "Activité des outils",
+      "approvals": "Résultats d'approbation",
+      "agents": "Agents",
+      "skills": "Compétences",
+      "expensive": "Appels les plus coûteux",
+      "coverage": "Couverture des données"
+    },
+    "kpis": {
+      "title": "Vue d'ensemble",
+      "spend": "Dépense IA OVH",
+      "spendHint": "Estimée depuis les tokens OVH enregistrés",
+      "ovhCalls": "Appels OVH",
+      "ovhCallsHint": "Messages assistant persistés",
+      "inputOutputTokens": "Tokens entrée / sortie",
+      "inputOutputTokensHint": "Totaux compacts sur la période",
+      "approvalRequired": "Outils avec approbation",
+      "approvalRequiredHint": "Approuvés, refusés ou en attente"
+    },
+    "loading": "Chargement des données IA...",
+    "footer": {
+      "updated": "Mis à jour {{updatedAt}}"
+    },
+    "tasks": {
+      "title": "Coût par tâche IA",
+      "empty": "Aucun usage IA enregistré pour cette période."
+    },
+    "costShare": {
+      "title": "Part de coût par tâche IA",
+      "empty": "Aucune répartition disponible pour cette période."
+    },
+    "users": {
+      "title": "Usage par utilisateur",
+      "empty": "Aucun usage utilisateur enregistré pour cette période."
+    },
+    "garages": {
+      "title": "Usage garage",
+      "empty": "Aucun usage garage enregistré pour cette période."
+    },
+    "tools": {
+      "title": "Outils les plus utilisés",
+      "breakdown": "{{approved}} approuvés, {{denied}} refusés, {{failed}} échoués",
+      "empty": "Aucun appel d'outil enregistré pour cette période."
+    },
+    "approvals": {
+      "title": "Approbations et refus",
+      "required": "Approbation requise",
+      "approvedOrExecuted": "Approuvé ou exécuté",
+      "refused": "Refusé"
+    },
+    "agents": {
+      "title": "Usage des agents",
+      "empty": "Aucun usage agent enregistré pour cette période."
+    },
+    "skills": {
+      "title": "Usage des compétences",
+      "empty": "Aucun usage compétence enregistré pour cette période."
+    },
+    "topCalls": {
+      "title": "Appels OVH les plus coûteux",
+      "empty": "Aucun appel OVH facturable enregistré pour cette période."
+    },
+    "coverage": {
+      "title": "Couverture des données persistées",
+      "messages": "Messages assistant analysés",
+      "toolCalls": "Appels d'outil analysés",
+      "missingModel": "Messages sans modèle",
+      "missingPurpose": "Messages sans objectif",
+      "missingTokens": "Messages sans tokens"
+    },
+    "metrics": {
+      "calls": "Appels",
+      "tokens": "Tokens entrée / sortie",
+      "toolCalls": "Appels d'outil",
+      "cost": "Coût",
+      "users": "Utilisateurs",
+      "executed": "Exécutés",
+      "pending": "En attente",
+      "expired": "Expirés",
+      "avgDuration": "Durée moyenne"
+    },
+    "purposeLabels": {
+      "toolSelection": "Sélection d'outil",
+      "assistantResponse": "Réponse assistant",
+      "intentClassification": "Classification d'intention",
+      "titleGeneration": "Génération de titre",
+      "analyticsAgent": "Agent analytique",
+      "communicationsAgent": "Agent communications",
+      "inventoryAgent": "Agent inventaire",
+      "financeAgent": "Agent finance",
+      "growthAgent": "Agent croissance",
+      "schedulingAgent": "Agent planning",
+      "unknown": "Autre tâche IA : {{purpose}}"
+    },
+    "purposeDescriptions": {
+      "toolSelection": "L'assistant a choisi l'outil ou le workflow interne adapté à la demande.",
+      "assistantResponse": "L'assistant a généré le message final affiché à l'utilisateur.",
+      "intentClassification": "Le classifieur léger a catégorisé l'intention avant le routage.",
+      "titleGeneration": "Le modèle a généré ou actualisé le titre d'une conversation.",
+      "analyticsAgent": "L'agent analytique a traité des demandes de rapports et métriques.",
+      "communicationsAgent": "L'agent communications a préparé des messages client.",
+      "inventoryAgent": "L'agent inventaire a traité les demandes de stock, pièces et disponibilité.",
+      "financeAgent": "L'agent finance a traité les questions de facturation, paiement et revenus.",
+      "growthAgent": "L'agent croissance a traité les demandes marketing ou de rétention.",
+      "schedulingAgent": "L'agent planning a traité les rendez-vous et calendriers.",
+      "unknown": "Le backend a enregistré cette tâche IA comme {{purpose}}."
+    },
+    "errors": {
+      "loadFailed": "Impossible de charger les données IA.",
+      "notImplemented": "L'endpoint d'utilisation IA n'est pas encore disponible."
+    }
   }
 }
