@@ -816,6 +816,10 @@ td em,
 }
 
 @media (min-width: 1101px) {
+  .mock-dashboard {
+    padding-bottom: calc(1.25rem + 18px);
+  }
+
   .task-usage-card {
     min-height: 48rem;
   }
@@ -863,6 +867,10 @@ td em,
   .mock-dashboard,
   .ai-admin-login {
     padding: 0.85rem;
+  }
+
+  .task-usage-card {
+    min-height: calc(42rem - 45px);
   }
 
   .mock-title-group h1,
