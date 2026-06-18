@@ -307,9 +307,9 @@ describe('AiUsageDashboardComponent', () => {
     const fixture = setup({ currentUser: ownerUser });
     const component = fixture.componentInstance;
 
-    expect(component.purposeLabel('assistant_tool_selection')).toBe('Tool selection');
+    expect(component.purposeLabel('assistant_tool_selection')).toBe('Assistant planning');
     expect(component.purposeDescription('assistant_tool_selection')).toContain(
-      'Chooses which garage tool should run',
+      'Decides which tool or action',
     );
     expect(component.purposeLabel('unknown-task')).toBe('Unknown Task');
   });

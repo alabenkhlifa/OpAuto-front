@@ -57,19 +57,19 @@ const ADMIN_OWNER_EMAIL = 'ala.khliifa@gmail.com';
 
 const PURPOSE_COPY: Record<string, PurposeCopy> = {
   assistant_tool_selection: {
-    label: 'Tool selection',
-    description: 'Chooses which garage tool should run before the assistant replies.',
+    label: 'Assistant planning',
+    description: 'Decides which tool or action the assistant should use next.',
   },
   assistant_compose: {
-    label: 'Assistant response',
-    description: 'Generates the final message shown to the user.',
+    label: 'Assistant reply writing',
+    description: 'Writes the final user-facing answer after tools finish.',
   },
   intent_classifier: {
-    label: 'Intent classification',
-    description: 'Classifies the user request before routing it to the assistant flow.',
+    label: 'Intent routing',
+    description: 'Classifies the user request before the main assistant runs.',
   },
   conversation_title: {
-    label: 'Title generation',
+    label: 'Conversation title',
     description: 'Creates short conversation titles for the chat history.',
   },
   'agent_runner:analytics-agent': {
@@ -97,12 +97,12 @@ const PURPOSE_COPY: Record<string, PurposeCopy> = {
     description: 'Handles calendar and booking reasoning tasks.',
   },
   unknown: {
-    label: 'Unlabeled AI task',
+    label: 'Unknown AI task',
     description: 'Stored message without a recognized task label.',
   },
 };
 
-const SHARE_COLORS = ['#f97316', '#2563eb', '#16a34a', '#9333ea', '#0f766e', '#64748b'];
+const SHARE_COLORS = ['#ff7a1a', '#2563eb', '#16a34a', '#7c3aed', '#ef4444', '#0f766e', '#64748b'];
 
 @Component({
   selector: 'app-ai-usage-dashboard',
@@ -173,18 +173,21 @@ export class AiUsageDashboardComponent implements OnInit {
 
   readonly kpiCards = computed<KpiCard[]>(() => {
     const summary = this.summary();
+    const approvalShare = summary.toolCalls > 0
+      ? (this.dashboard().approvalRefusal.approvalRequired / summary.toolCalls) * 100
+      : 0;
     return [
       {
-        key: 'spend',
-        label: 'AI spend',
-        value: this.formatCost(summary.estimatedCost),
-        hint: 'Estimated OVH cost for the selected range',
+        key: 'calls',
+        label: 'OVH AI calls',
+        value: this.formatInteger(summary.assistantMessages),
+        hint: `${this.formatInteger(summary.toolCalls)} tool-call requests emitted by LLM`,
       },
       {
-        key: 'calls',
-        label: 'OVH calls',
-        value: this.formatInteger(summary.assistantMessages),
-        hint: 'Completed assistant message records',
+        key: 'spend',
+        label: 'OVH spend from tokens',
+        value: this.formatCost(summary.estimatedCost),
+        hint: 'Cost = tokens x configured OVH rate card',
       },
       {
         key: 'tokens',
@@ -194,9 +197,9 @@ export class AiUsageDashboardComponent implements OnInit {
       },
       {
         key: 'approvals',
-        label: 'Approvals requested',
+        label: 'Approval-required tool calls',
         value: this.formatInteger(this.dashboard().approvalRefusal.approvalRequired),
-        hint: 'Tool calls that required user confirmation',
+        hint: `${this.formatPercent(approvalShare)} of ${this.formatInteger(summary.toolCalls)} tool calls`,
       },
     ];
   });
@@ -207,7 +210,7 @@ export class AiUsageDashboardComponent implements OnInit {
       return [];
     }
 
-    const top = this.taskUsage().slice(0, 5).map((row, index) => ({
+    const top = this.taskUsage().slice(0, 6).map((row, index) => ({
       key: `${row.purpose}:${row.model ?? 'unknown'}`,
       label: this.purposeLabel(row.purpose),
       cost: row.estimatedCost,
@@ -222,7 +225,7 @@ export class AiUsageDashboardComponent implements OnInit {
         label: 'Other AI tasks',
         cost: remaining,
         share: (remaining / total) * 100,
-        color: SHARE_COLORS[5],
+        color: SHARE_COLORS[6],
       });
     }
     return top;
@@ -251,6 +254,19 @@ export class AiUsageDashboardComponent implements OnInit {
     Math.max(0, ...this.toolUsage().map((row) => row.calls)),
   );
   readonly updatedAt = computed(() => this.formatDateTime(this.dashboard().generatedAt));
+  readonly generatedSummary = computed(() => {
+    const generated = this.formatGeneratedAt(this.dashboard().generatedAt);
+    return `Generated ${generated}, production logs and DB aggregates`;
+  });
+  readonly rangeWindow = computed(() => this.formatRangeWindow());
+  readonly totalTokenCount = computed(() => this.summary().tokensIn + this.summary().tokensOut);
+  readonly approvalRequiredShare = computed(() => {
+    const total = this.summary().toolCalls;
+    if (total <= 0) {
+      return 0;
+    }
+    return (this.dashboard().approvalRefusal.approvalRequired / total) * 100;
+  });
 
   ngOnInit(): void {
     const currentUser = this.authService.getCurrentUser();
@@ -347,7 +363,14 @@ export class AiUsageDashboardComponent implements OnInit {
   }
 
   modelLabel(model: string | null): string {
-    return model?.trim() || 'Unknown model';
+    const value = model?.trim() ?? '';
+    if (/mistral/i.test(value)) {
+      return 'Mistral Small 3.2';
+    }
+    if (/llama/i.test(value)) {
+      return 'Llama 3.3 70B';
+    }
+    return value || 'Unknown model';
   }
 
   agentLabel(agent: string): string {
@@ -360,6 +383,21 @@ export class AiUsageDashboardComponent implements OnInit {
 
   toolOutcomeLabel(tool: AdminAiUsageToolMetric): string {
     return `${this.formatInteger(tool.approved)} approved, ${this.formatInteger(tool.denied)} refused, ${this.formatInteger(tool.failed)} failed`;
+  }
+
+  dominantToolTier(tool: AdminAiUsageToolMetric): string {
+    const entries = Object.entries(tool.tierBreakdown ?? {});
+    if (entries.length === 0) {
+      return 'Unknown access';
+    }
+    const tier = entries.sort((a, b) => b[1] - a[1])[0][0].toUpperCase();
+    const labels: Record<string, string> = {
+      READ: 'Read action',
+      WRITE: 'Write action',
+      APPROVAL_REQUIRED: 'Needs approval',
+      OWNER_ONLY: 'Owner-only action',
+    };
+    return labels[tier] ?? this.humanizeIdentifier(tier);
   }
 
   skillLabel(skill: string): string {
@@ -380,6 +418,20 @@ export class AiUsageDashboardComponent implements OnInit {
       FAILED: 'Failed',
     };
     return labels[normalized] ?? this.humanizeIdentifier(status);
+  }
+
+  statusClass(status: string): string {
+    const value = status.toUpperCase();
+    if (value === 'APPROVED' || value === 'EXECUTED') {
+      return 'status-chip status-chip--success';
+    }
+    if (value === 'DENIED' || value === 'FAILED') {
+      return 'status-chip status-chip--danger';
+    }
+    if (value === 'EXPIRED') {
+      return 'status-chip status-chip--warning';
+    }
+    return 'status-chip';
   }
 
   rowWidth(value: number, max: number): string {
@@ -434,7 +486,7 @@ export class AiUsageDashboardComponent implements OnInit {
 
   formatDuration(milliseconds: number | null): string {
     if (milliseconds === null || !Number.isFinite(milliseconds)) {
-      return '-';
+      return 'n/a';
     }
     if (milliseconds < 1000) {
       return `${milliseconds.toFixed(0)} ms`;
@@ -444,7 +496,7 @@ export class AiUsageDashboardComponent implements OnInit {
 
   formatSeconds(seconds: number): string {
     if (!Number.isFinite(seconds) || seconds <= 0) {
-      return '-';
+      return 'n/a';
     }
     return `${seconds.toFixed(1)} s`;
   }
@@ -464,6 +516,67 @@ export class AiUsageDashboardComponent implements OnInit {
       hour: '2-digit',
       minute: '2-digit',
     }).format(date);
+  }
+
+  formatShortDateTime(raw: string): string {
+    if (!raw) {
+      return 'n/a';
+    }
+    const date = new Date(raw);
+    if (Number.isNaN(date.getTime())) {
+      return 'n/a';
+    }
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'UTC',
+      hour12: false,
+    }).format(date);
+  }
+
+  formatGeneratedAt(raw: string): string {
+    if (!raw) {
+      return 'n/a';
+    }
+    const date = new Date(raw);
+    if (Number.isNaN(date.getTime())) {
+      return 'n/a';
+    }
+    return new Intl.DateTimeFormat('en-CA', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      timeZone: 'UTC',
+      hour12: false,
+    }).format(date);
+  }
+
+  formatUtcIsoMinute(raw: string): string {
+    if (!raw) {
+      return 'n/a';
+    }
+    const date = new Date(raw);
+    if (Number.isNaN(date.getTime())) {
+      return 'n/a';
+    }
+    return date.toISOString().slice(0, 16).replace('T', ' ');
+  }
+
+  taskAvgMs(_task: AdminAiUsageTaskMetric): string {
+    return 'n/a';
+  }
+
+  private formatRangeWindow(): string {
+    const range = this.dashboard().range;
+    if (!range.start || !range.end) {
+      return 'n/a';
+    }
+    return `${this.formatUtcIsoMinute(range.start)} to ${this.formatUtcIsoMinute(range.end)} UTC`;
   }
 
   trackTask = (_: number, row: AdminAiUsageTaskMetric) =>
