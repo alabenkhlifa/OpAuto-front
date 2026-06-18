@@ -6,7 +6,7 @@ const MAX_TOOLS = 5;
 const CLASSIFIER_MAX_TOKENS = 120;
 // OVH-hosted Mistral Small 3.2 24B. The main assistant brain omits a model
 // override and therefore keeps using the OVH default Llama 70B path.
-const CLASSIFIER_MODEL = 'Mistral-Small-3_2-24B-Instruct-2506';
+const CLASSIFIER_MODEL = 'Mistral-Small-3.2-24B-Instruct-2506';
 
 export interface ClassifyArgs {
   userMessage: string;
