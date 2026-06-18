@@ -90,6 +90,7 @@ ${list}`;
         ],
         temperature: 0,
         maxTokens: CLASSIFIER_MAX_TOKENS,
+        purpose: 'intent_classifier',
         model: CLASSIFIER_MODEL,
       });
 
@@ -99,7 +100,9 @@ ${list}`;
       // Tolerate the model wrapping the array in prose or markdown fences.
       const match = text.match(/\[[\s\S]*?\]/);
       if (!match) {
-        this.logger.warn(`Classifier returned non-array text: ${text.slice(0, 80)}`);
+        this.logger.warn(
+          `Classifier returned non-array text: ${text.slice(0, 80)}`,
+        );
         return null;
       }
 
@@ -107,7 +110,9 @@ ${list}`;
       try {
         parsed = JSON.parse(match[0]);
       } catch {
-        this.logger.warn(`Classifier JSON parse failed: ${match[0].slice(0, 80)}`);
+        this.logger.warn(
+          `Classifier JSON parse failed: ${match[0].slice(0, 80)}`,
+        );
         return null;
       }
 

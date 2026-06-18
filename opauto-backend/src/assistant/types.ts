@@ -107,6 +107,12 @@ export interface LlmCompletionRequest {
   temperature?: number;
   maxTokens?: number;
   /**
+   * Caller-level purpose for cost and latency attribution. This is logged by
+   * the gateway and, when the result is persisted, stored with the assistant
+   * message.
+   */
+  purpose?: string;
+  /**
    * Optional model override for this single call. Provider adapters only
    * honour model ids they can serve; otherwise they fall back to their default.
    * Useful when a cheap/router task should use a different model than the
@@ -139,6 +145,8 @@ export interface LlmCompletionResult {
     | 'mistral'
     | 'ovh'
     | 'mock';
+  purpose?: string;
+  model?: string;
   content: string | null;
   toolCalls: LlmToolCall[];
   tokensIn?: number;

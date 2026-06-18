@@ -735,6 +735,8 @@ model AssistantMessage {
   tokensIn       Int?
   tokensOut      Int?
   llmProvider    String?
+  llmModel       String?
+  llmPurpose     String?
   createdAt      DateTime             @default(now())
 
   conversation     AssistantConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)

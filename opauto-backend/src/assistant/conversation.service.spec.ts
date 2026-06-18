@@ -27,6 +27,8 @@ interface MsgRow {
   tokensIn: number | null;
   tokensOut: number | null;
   llmProvider: string | null;
+  llmModel: string | null;
+  llmPurpose: string | null;
   createdAt: Date;
 }
 
@@ -49,7 +51,11 @@ const makePrismaMock = () => {
 
   const matchesMsgWhere = (m: MsgRow, where: any) => {
     if (!where) return true;
-    if (where.conversationId != null && m.conversationId !== where.conversationId) return false;
+    if (
+      where.conversationId != null &&
+      m.conversationId !== where.conversationId
+    )
+      return false;
     if (where.role != null && m.role !== where.role) return false;
     return true;
   };
@@ -75,11 +81,14 @@ const makePrismaMock = () => {
         return row;
       }),
       findFirst: jest.fn(async ({ where, select, include }: any) => {
-        const found = [...conversations.values()].find((c) => matchesConvWhere(c, where));
+        const found = [...conversations.values()].find((c) =>
+          matchesConvWhere(c, where),
+        );
         if (!found) return null;
         if (select) {
           const out: any = {};
-          for (const key of Object.keys(select)) if (select[key]) out[key] = (found as any)[key];
+          for (const key of Object.keys(select))
+            if (select[key]) out[key] = (found as any)[key];
           return out;
         }
         if (include?.messages) {
@@ -95,13 +104,16 @@ const makePrismaMock = () => {
         if (!found) return null;
         if (select) {
           const out: any = {};
-          for (const key of Object.keys(select)) if (select[key]) out[key] = (found as any)[key];
+          for (const key of Object.keys(select))
+            if (select[key]) out[key] = (found as any)[key];
           return out;
         }
         return found;
       }),
       findMany: jest.fn(async ({ where, orderBy, take, select }: any) => {
-        let rows = [...conversations.values()].filter((c) => matchesConvWhere(c, where));
+        let rows = [...conversations.values()].filter((c) =>
+          matchesConvWhere(c, where),
+        );
         if (orderBy?.updatedAt === 'desc') {
           rows.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
         }
@@ -109,7 +121,8 @@ const makePrismaMock = () => {
         if (select) {
           return rows.map((r) => {
             const out: any = {};
-            for (const key of Object.keys(select)) if (select[key]) out[key] = (r as any)[key];
+            for (const key of Object.keys(select))
+              if (select[key]) out[key] = (r as any)[key];
             return out;
           });
         }
@@ -137,13 +150,17 @@ const makePrismaMock = () => {
           tokensIn: data.tokensIn ?? null,
           tokensOut: data.tokensOut ?? null,
           llmProvider: data.llmProvider ?? null,
+          llmModel: data.llmModel ?? null,
+          llmPurpose: data.llmPurpose ?? null,
           createdAt: tick(),
         };
         messages.set(id, row);
         return row;
       }),
       findFirst: jest.fn(async ({ where, orderBy, select }: any) => {
-        let rows = [...messages.values()].filter((m) => matchesMsgWhere(m, where));
+        let rows = [...messages.values()].filter((m) =>
+          matchesMsgWhere(m, where),
+        );
         if (orderBy?.createdAt === 'asc') {
           rows.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
         } else if (orderBy?.createdAt === 'desc') {
@@ -153,13 +170,16 @@ const makePrismaMock = () => {
         if (!found) return null;
         if (select) {
           const out: any = {};
-          for (const key of Object.keys(select)) if (select[key]) out[key] = (found as any)[key];
+          for (const key of Object.keys(select))
+            if (select[key]) out[key] = (found as any)[key];
           return out;
         }
         return found;
       }),
       findMany: jest.fn(async ({ where, orderBy, take, select }: any) => {
-        let rows = [...messages.values()].filter((m) => matchesMsgWhere(m, where));
+        let rows = [...messages.values()].filter((m) =>
+          matchesMsgWhere(m, where),
+        );
         if (orderBy?.createdAt === 'asc') {
           rows.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
         } else if (orderBy?.createdAt === 'desc') {
@@ -169,7 +189,8 @@ const makePrismaMock = () => {
         if (select) {
           return rows.map((r) => {
             const out: any = {};
-            for (const key of Object.keys(select)) if (select[key]) out[key] = (r as any)[key];
+            for (const key of Object.keys(select))
+              if (select[key]) out[key] = (r as any)[key];
             return out;
           });
         }
@@ -246,6 +267,8 @@ const seedMessage = (
     tokensIn: tokens.in ?? null,
     tokensOut: tokens.out ?? null,
     llmProvider: null,
+    llmModel: null,
+    llmPurpose: null,
     createdAt,
   };
   prisma.messages.set(id, row);
@@ -271,7 +294,10 @@ describe('ConversationService', () => {
     });
 
     it('returns the matching conversation when id, garage and user all match', async () => {
-      const seeded = seedConversation(prisma, { garageId: GARAGE_A, userId: USER_A });
+      const seeded = seedConversation(prisma, {
+        garageId: GARAGE_A,
+        userId: USER_A,
+      });
       const result = await service.getOrCreate(GARAGE_A, USER_A, seeded.id);
       expect(result.id).toBe(seeded.id);
       expect(prisma.assistantConversation.create).not.toHaveBeenCalled();
@@ -279,7 +305,11 @@ describe('ConversationService', () => {
 
     it('does NOT return a foreign-garage conversation — falls back to creating a new one', async () => {
       // Multi-tenancy guarantee
-      const foreign = seedConversation(prisma, { id: 'foreign', garageId: GARAGE_B, userId: USER_A });
+      const foreign = seedConversation(prisma, {
+        id: 'foreign',
+        garageId: GARAGE_B,
+        userId: USER_A,
+      });
       const result = await service.getOrCreate(GARAGE_A, USER_A, foreign.id);
       expect(result.id).not.toBe(foreign.id);
       expect(result.garageId).toBe(GARAGE_A);
@@ -313,6 +343,8 @@ describe('ConversationService', () => {
         tokensIn: 100,
         tokensOut: 50,
         llmProvider: 'groq',
+        llmModel: 'llama-3.1-8b-instant',
+        llmPurpose: 'assistant_tool_selection',
       });
       expect(msg.content).toBe('hello');
       expect(prisma.assistantMessage.create).toHaveBeenCalledWith({
@@ -326,6 +358,8 @@ describe('ConversationService', () => {
           tokensIn: 100,
           tokensOut: 50,
           llmProvider: 'groq',
+          llmModel: 'llama-3.1-8b-instant',
+          llmPurpose: 'assistant_tool_selection',
         },
       });
     });
@@ -336,11 +370,41 @@ describe('ConversationService', () => {
       const conv = seedConversation(prisma);
       // Seed 5 messages with strictly increasing timestamps.
       const base = Date.now();
-      seedMessage(prisma, conv.id, AssistantMessageRole.USER, 'm1', new Date(base + 1));
-      seedMessage(prisma, conv.id, AssistantMessageRole.ASSISTANT, 'm2', new Date(base + 2));
-      seedMessage(prisma, conv.id, AssistantMessageRole.TOOL, 'm3', new Date(base + 3));
-      seedMessage(prisma, conv.id, AssistantMessageRole.USER, 'm4', new Date(base + 4));
-      seedMessage(prisma, conv.id, AssistantMessageRole.ASSISTANT, 'm5', new Date(base + 5));
+      seedMessage(
+        prisma,
+        conv.id,
+        AssistantMessageRole.USER,
+        'm1',
+        new Date(base + 1),
+      );
+      seedMessage(
+        prisma,
+        conv.id,
+        AssistantMessageRole.ASSISTANT,
+        'm2',
+        new Date(base + 2),
+      );
+      seedMessage(
+        prisma,
+        conv.id,
+        AssistantMessageRole.TOOL,
+        'm3',
+        new Date(base + 3),
+      );
+      seedMessage(
+        prisma,
+        conv.id,
+        AssistantMessageRole.USER,
+        'm4',
+        new Date(base + 4),
+      );
+      seedMessage(
+        prisma,
+        conv.id,
+        AssistantMessageRole.ASSISTANT,
+        'm5',
+        new Date(base + 5),
+      );
 
       const history = await service.getRecentHistory(conv.id, 3);
       expect(history.map((h) => h.content)).toEqual(['m3', 'm4', 'm5']);
@@ -372,16 +436,32 @@ describe('ConversationService', () => {
 
   describe('listForUser', () => {
     it('excludes archived conversations and other users/garages', async () => {
-      seedConversation(prisma, { id: 'active-1', garageId: GARAGE_A, userId: USER_A });
-      seedConversation(prisma, { id: 'active-2', garageId: GARAGE_A, userId: USER_A });
+      seedConversation(prisma, {
+        id: 'active-1',
+        garageId: GARAGE_A,
+        userId: USER_A,
+      });
+      seedConversation(prisma, {
+        id: 'active-2',
+        garageId: GARAGE_A,
+        userId: USER_A,
+      });
       seedConversation(prisma, {
         id: 'archived',
         garageId: GARAGE_A,
         userId: USER_A,
         archivedAt: new Date(),
       });
-      seedConversation(prisma, { id: 'other-garage', garageId: GARAGE_B, userId: USER_A });
-      seedConversation(prisma, { id: 'other-user', garageId: GARAGE_A, userId: 'user-x' });
+      seedConversation(prisma, {
+        id: 'other-garage',
+        garageId: GARAGE_B,
+        userId: USER_A,
+      });
+      seedConversation(prisma, {
+        id: 'other-user',
+        garageId: GARAGE_A,
+        userId: 'user-x',
+      });
 
       const list = await service.listForUser(GARAGE_A, USER_A);
       const ids = list.map((c) => c.id).sort();
@@ -416,7 +496,9 @@ describe('ConversationService', () => {
       const conv = seedConversation(prisma, { id: 'c1' });
       const result = await service.softDelete(conv.id, GARAGE_A, USER_A);
       expect(result.archived).toBe(true);
-      expect(prisma.conversations.get(conv.id)?.archivedAt).toBeInstanceOf(Date);
+      expect(prisma.conversations.get(conv.id)?.archivedAt).toBeInstanceOf(
+        Date,
+      );
     });
 
     it('reports archived: false when conversation is foreign', async () => {
@@ -432,14 +514,26 @@ describe('ConversationService', () => {
       const conv = seedConversation(prisma, { id: 'c1' });
       const other = seedConversation(prisma, { id: 'c2' });
       seedMessage(prisma, conv.id, AssistantMessageRole.USER, 'a', new Date());
-      seedMessage(prisma, conv.id, AssistantMessageRole.ASSISTANT, 'b', new Date());
+      seedMessage(
+        prisma,
+        conv.id,
+        AssistantMessageRole.ASSISTANT,
+        'b',
+        new Date(),
+      );
       seedMessage(prisma, other.id, AssistantMessageRole.USER, 'c', new Date());
 
       const result = await service.clearMessages(conv.id, GARAGE_A, USER_A);
       expect(result.cleared).toBe(2);
       expect(prisma.conversations.has(conv.id)).toBe(true); // shell preserved
-      expect([...prisma.messages.values()].some((m) => m.conversationId === conv.id)).toBe(false);
-      expect([...prisma.messages.values()].some((m) => m.conversationId === other.id)).toBe(true);
+      expect(
+        [...prisma.messages.values()].some((m) => m.conversationId === conv.id),
+      ).toBe(false);
+      expect(
+        [...prisma.messages.values()].some(
+          (m) => m.conversationId === other.id,
+        ),
+      ).toBe(true);
     });
 
     it('reports cleared: 0 when conversation is foreign', async () => {
@@ -462,21 +556,38 @@ describe('ConversationService', () => {
       );
       const summarizer = jest.fn().mockResolvedValue('Weekly revenue check');
 
-      const title = await service.generateTitleFromFirstMessage(conv.id, summarizer);
+      const title = await service.generateTitleFromFirstMessage(
+        conv.id,
+        summarizer,
+      );
 
       expect(title).toBe('Weekly revenue check');
       expect(summarizer).toHaveBeenCalledWith(
         'How much revenue did I make this week and which customers paid?',
       );
-      expect(prisma.conversations.get(conv.id)?.title).toBe('Weekly revenue check');
+      expect(prisma.conversations.get(conv.id)?.title).toBe(
+        'Weekly revenue check',
+      );
     });
 
     it('returns the existing title without calling summarizer when already set', async () => {
-      const conv = seedConversation(prisma, { id: 'c1', title: 'Already named' });
-      seedMessage(prisma, conv.id, AssistantMessageRole.USER, 'msg', new Date());
+      const conv = seedConversation(prisma, {
+        id: 'c1',
+        title: 'Already named',
+      });
+      seedMessage(
+        prisma,
+        conv.id,
+        AssistantMessageRole.USER,
+        'msg',
+        new Date(),
+      );
       const summarizer = jest.fn().mockResolvedValue('Should not run');
 
-      const title = await service.generateTitleFromFirstMessage(conv.id, summarizer);
+      const title = await service.generateTitleFromFirstMessage(
+        conv.id,
+        summarizer,
+      );
 
       expect(title).toBe('Already named');
       expect(summarizer).not.toHaveBeenCalled();
@@ -485,10 +596,19 @@ describe('ConversationService', () => {
 
     it('returns null and does not throw when the summarizer rejects', async () => {
       const conv = seedConversation(prisma, { id: 'c1' });
-      seedMessage(prisma, conv.id, AssistantMessageRole.USER, 'hello', new Date());
+      seedMessage(
+        prisma,
+        conv.id,
+        AssistantMessageRole.USER,
+        'hello',
+        new Date(),
+      );
       const summarizer = jest.fn().mockRejectedValue(new Error('llm down'));
 
-      const title = await service.generateTitleFromFirstMessage(conv.id, summarizer);
+      const title = await service.generateTitleFromFirstMessage(
+        conv.id,
+        summarizer,
+      );
 
       expect(title).toBeNull();
       expect(prisma.conversations.get(conv.id)?.title).toBeNull();
@@ -497,10 +617,19 @@ describe('ConversationService', () => {
 
     it('returns null when no user message exists yet', async () => {
       const conv = seedConversation(prisma, { id: 'c1' });
-      seedMessage(prisma, conv.id, AssistantMessageRole.ASSISTANT, 'system msg', new Date());
+      seedMessage(
+        prisma,
+        conv.id,
+        AssistantMessageRole.ASSISTANT,
+        'system msg',
+        new Date(),
+      );
       const summarizer = jest.fn();
 
-      const title = await service.generateTitleFromFirstMessage(conv.id, summarizer);
+      const title = await service.generateTitleFromFirstMessage(
+        conv.id,
+        summarizer,
+      );
 
       expect(title).toBeNull();
       expect(summarizer).not.toHaveBeenCalled();
@@ -508,18 +637,30 @@ describe('ConversationService', () => {
 
     it('returns null when conversation does not exist', async () => {
       const summarizer = jest.fn();
-      const title = await service.generateTitleFromFirstMessage('nope', summarizer);
+      const title = await service.generateTitleFromFirstMessage(
+        'nope',
+        summarizer,
+      );
       expect(title).toBeNull();
       expect(summarizer).not.toHaveBeenCalled();
     });
 
     it('truncates long summaries to 60 characters with an ellipsis', async () => {
       const conv = seedConversation(prisma, { id: 'c1' });
-      seedMessage(prisma, conv.id, AssistantMessageRole.USER, 'long', new Date());
+      seedMessage(
+        prisma,
+        conv.id,
+        AssistantMessageRole.USER,
+        'long',
+        new Date(),
+      );
       const longRaw = 'a'.repeat(120);
       const summarizer = jest.fn().mockResolvedValue(longRaw);
 
-      const title = await service.generateTitleFromFirstMessage(conv.id, summarizer);
+      const title = await service.generateTitleFromFirstMessage(
+        conv.id,
+        summarizer,
+      );
 
       expect(title).not.toBeNull();
       expect(title!.length).toBeLessThanOrEqual(60);
@@ -529,9 +670,14 @@ describe('ConversationService', () => {
     it('strips wrapping quotes and newlines from summarizer output', async () => {
       const conv = seedConversation(prisma, { id: 'c1' });
       seedMessage(prisma, conv.id, AssistantMessageRole.USER, 'q', new Date());
-      const summarizer = jest.fn().mockResolvedValue('  "Customer growth strategy"\n');
+      const summarizer = jest
+        .fn()
+        .mockResolvedValue('  "Customer growth strategy"\n');
 
-      const title = await service.generateTitleFromFirstMessage(conv.id, summarizer);
+      const title = await service.generateTitleFromFirstMessage(
+        conv.id,
+        summarizer,
+      );
 
       expect(title).toBe('Customer growth strategy');
     });
@@ -545,15 +691,29 @@ describe('ConversationService', () => {
         in: 100,
         out: 0,
       });
-      seedMessage(prisma, conv.id, AssistantMessageRole.ASSISTANT, 'a', new Date(), {
-        in: 50,
-        out: 200,
-      });
+      seedMessage(
+        prisma,
+        conv.id,
+        AssistantMessageRole.ASSISTANT,
+        'a',
+        new Date(),
+        {
+          in: 50,
+          out: 200,
+        },
+      );
       // Other conversation must NOT influence the total.
-      seedMessage(prisma, other.id, AssistantMessageRole.USER, 'q', new Date(), {
-        in: 9999,
-        out: 9999,
-      });
+      seedMessage(
+        prisma,
+        other.id,
+        AssistantMessageRole.USER,
+        'q',
+        new Date(),
+        {
+          in: 9999,
+          out: 9999,
+        },
+      );
 
       const total = await service.getTotalTokens(conv.id);
 
@@ -573,7 +733,13 @@ describe('ConversationService', () => {
     it('returns 0 when messages exist but none recorded token counts', async () => {
       const conv = seedConversation(prisma, { id: 'untyped' });
       seedMessage(prisma, conv.id, AssistantMessageRole.USER, 'q', new Date());
-      seedMessage(prisma, conv.id, AssistantMessageRole.ASSISTANT, 'a', new Date());
+      seedMessage(
+        prisma,
+        conv.id,
+        AssistantMessageRole.ASSISTANT,
+        'a',
+        new Date(),
+      );
       const total = await service.getTotalTokens(conv.id);
       expect(total).toBe(0);
     });

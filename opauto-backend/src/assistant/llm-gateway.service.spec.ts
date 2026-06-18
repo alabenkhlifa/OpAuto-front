@@ -143,14 +143,23 @@ describe('LlmGatewayService', () => {
     );
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
     const service = await makeService({ OVH_API_KEY: 'o' });
+    const logSpy = jest
+      .spyOn((service as any).logger, 'log')
+      .mockImplementation();
 
     const result = await service.complete(baseRequest);
 
     expect(result.provider).toBe('ovh');
+    expect(result.model).toBe('Meta-Llama-3_3-70B-Instruct');
     expect(result.content).toBe('hi from ovh');
     expect(result.toolCalls).toEqual([]);
     expect(result.tokensIn).toBe(12);
     expect(result.tokensOut).toBe(5);
+    expect(logSpy).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'purpose=unknown, model=Meta-Llama-3_3-70B-Instruct, tokensIn=12, tokensOut=5, totalTokens=17',
+      ),
+    );
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url] = fetchMock.mock.calls[0];
     expect(String(url)).toMatch(/kepler\.ai\.cloud\.ovh\.net/);

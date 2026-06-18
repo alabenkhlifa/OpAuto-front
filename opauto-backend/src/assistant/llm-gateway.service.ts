@@ -245,6 +245,8 @@ export class LlmGatewayService {
       );
       return {
         provider: 'mock',
+        purpose: request.purpose,
+        model: 'mock',
         content:
           "I can't reach an LLM provider right now — no API key is configured on the server.",
         toolCalls: [],
@@ -328,6 +330,8 @@ export class LlmGatewayService {
 
     return {
       provider: 'mock',
+      purpose: request.purpose,
+      model: 'mock',
       content:
         "I'm sorry — I couldn't reach the AI service. Please try again in a moment.",
       toolCalls: [],
@@ -342,8 +346,9 @@ export class LlmGatewayService {
     { ok: true; result: LlmCompletionResult } | { ok: false; reason: string }
   > {
     const startedAt = Date.now();
+    const model = request.model ?? GROQ_MODEL;
     const body: Record<string, unknown> = {
-      model: request.model ?? GROQ_MODEL,
+      model,
       messages: request.messages.map((m) => this.toOpenAiMessage(m)),
       max_tokens: request.maxTokens ?? DEFAULT_MAX_TOKENS,
     };
@@ -428,18 +433,28 @@ export class LlmGatewayService {
     }
 
     const latency = Date.now() - startedAt;
-    this.logger.log(
-      `Groq completion ok in ${latency}ms (toolCalls=${toolCalls.length}, contentLen=${content?.length ?? 0})`,
-    );
+    const tokensIn = raw.usage?.prompt_tokens;
+    const tokensOut = raw.usage?.completion_tokens;
+    this.logCompletionOk('Groq', {
+      latency,
+      purpose: request.purpose,
+      model,
+      toolCalls: toolCalls.length,
+      contentLen: content?.length ?? 0,
+      tokensIn,
+      tokensOut,
+    });
 
     return {
       ok: true,
       result: {
         provider: 'groq',
+        purpose: request.purpose,
+        model,
         content,
         toolCalls,
-        tokensIn: raw.usage?.prompt_tokens,
-        tokensOut: raw.usage?.completion_tokens,
+        tokensIn,
+        tokensOut,
       },
     };
   }
@@ -621,18 +636,28 @@ export class LlmGatewayService {
         : null;
 
     const latency = Date.now() - startedAt;
-    this.logger.log(
-      `${provider[0].toUpperCase()}${provider.slice(1)} completion ok in ${latency}ms (toolCalls=${toolCalls.length}, contentLen=${content?.length ?? 0})`,
-    );
+    const tokensIn = raw.usage?.prompt_tokens;
+    const tokensOut = raw.usage?.completion_tokens;
+    this.logCompletionOk(provider, {
+      latency,
+      purpose: request.purpose,
+      model,
+      toolCalls: toolCalls.length,
+      contentLen: content?.length ?? 0,
+      tokensIn,
+      tokensOut,
+    });
 
     return {
       ok: true,
       result: {
         provider,
+        purpose: request.purpose,
+        model,
         content,
         toolCalls,
-        tokensIn: raw.usage?.prompt_tokens,
-        tokensOut: raw.usage?.completion_tokens,
+        tokensIn,
+        tokensOut,
       },
     };
   }
@@ -721,18 +746,28 @@ export class LlmGatewayService {
     const content = textOut.length > 0 ? textOut : null;
 
     const latency = Date.now() - startedAt;
-    this.logger.log(
-      `Claude completion ok in ${latency}ms (toolCalls=${toolCalls.length}, contentLen=${content?.length ?? 0})`,
-    );
+    const tokensIn = raw.usage?.input_tokens;
+    const tokensOut = raw.usage?.output_tokens;
+    this.logCompletionOk('Claude', {
+      latency,
+      purpose: request.purpose,
+      model: CLAUDE_MODEL,
+      toolCalls: toolCalls.length,
+      contentLen: content?.length ?? 0,
+      tokensIn,
+      tokensOut,
+    });
 
     return {
       ok: true,
       result: {
         provider: 'claude',
+        purpose: request.purpose,
+        model: CLAUDE_MODEL,
         content,
         toolCalls,
-        tokensIn: raw.usage?.input_tokens,
-        tokensOut: raw.usage?.output_tokens,
+        tokensIn,
+        tokensOut,
       },
     };
   }
@@ -830,20 +865,59 @@ export class LlmGatewayService {
 
     const content = textOut.length > 0 ? textOut : null;
     const latency = Date.now() - startedAt;
-    this.logger.log(
-      `Gemini completion ok in ${latency}ms (toolCalls=${toolCalls.length}, contentLen=${content?.length ?? 0})`,
-    );
+    const tokensIn = raw.usageMetadata?.promptTokenCount;
+    const tokensOut = raw.usageMetadata?.candidatesTokenCount;
+    this.logCompletionOk('Gemini', {
+      latency,
+      purpose: request.purpose,
+      model,
+      toolCalls: toolCalls.length,
+      contentLen: content?.length ?? 0,
+      tokensIn,
+      tokensOut,
+    });
 
     return {
       ok: true,
       result: {
         provider: 'gemini',
+        purpose: request.purpose,
+        model,
         content,
         toolCalls,
-        tokensIn: raw.usageMetadata?.promptTokenCount,
-        tokensOut: raw.usageMetadata?.candidatesTokenCount,
+        tokensIn,
+        tokensOut,
       },
     };
+  }
+
+  private logCompletionOk(
+    provider: string,
+    details: {
+      latency: number;
+      purpose?: string;
+      model?: string;
+      toolCalls: number;
+      contentLen: number;
+      tokensIn?: number;
+      tokensOut?: number;
+    },
+  ): void {
+    const tokensIn = details.tokensIn ?? 'n/a';
+    const tokensOut = details.tokensOut ?? 'n/a';
+    const totalTokens =
+      typeof details.tokensIn === 'number' ||
+      typeof details.tokensOut === 'number'
+        ? (details.tokensIn ?? 0) + (details.tokensOut ?? 0)
+        : 'n/a';
+    const label = `${provider[0].toUpperCase()}${provider.slice(1)}`;
+    this.logger.log(
+      `${label} completion ok in ${details.latency}ms ` +
+        `(purpose=${details.purpose ?? 'unknown'}, ` +
+        `model=${details.model ?? 'n/a'}, tokensIn=${tokensIn}, ` +
+        `tokensOut=${tokensOut}, totalTokens=${totalTokens}, ` +
+        `toolCalls=${details.toolCalls}, contentLen=${details.contentLen})`,
+    );
   }
 
   private toGeminiTool(t: ToolDescriptor): Record<string, unknown> {

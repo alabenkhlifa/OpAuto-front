@@ -181,7 +181,15 @@ describe('OrchestratorService', () => {
   it('emits text + done and persists assistant message on direct reply', async () => {
     const conversation = makeConversation();
     const llm = makeLlm([
-      { provider: 'groq', content: 'How can I help?', toolCalls: [] },
+      {
+        provider: 'groq',
+        purpose: 'assistant_tool_selection',
+        model: 'llama-3.1-8b-instant',
+        content: 'How can I help?',
+        toolCalls: [],
+        tokensIn: 44,
+        tokensOut: 6,
+      },
     ]);
     const orchestrator = await makeOrchestrator({ conversation, llm });
 
@@ -206,6 +214,10 @@ describe('OrchestratorService', () => {
     ).toMatchObject({
       content: 'How can I help?',
       llmProvider: 'groq',
+      llmModel: 'llama-3.1-8b-instant',
+      llmPurpose: 'assistant_tool_selection',
+      tokensIn: 44,
+      tokensOut: 6,
     });
   });
 
@@ -605,15 +617,10 @@ describe('OrchestratorService', () => {
     const orchestrator = await makeOrchestrator({ tools, llm });
 
     await collectEvents(
-      orchestrator.run(
-        ctx,
-        'conv-scope',
-        'tell me about this customer',
-        {
-          route: '/customers/abc-123',
-          params: { id: 'abc-123' },
-        },
-      ),
+      orchestrator.run(ctx, 'conv-scope', 'tell me about this customer', {
+        route: '/customers/abc-123',
+        params: { id: 'abc-123' },
+      }),
     );
 
     // Inspect what was passed to llm.complete

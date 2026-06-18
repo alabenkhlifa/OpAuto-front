@@ -189,6 +189,7 @@ export class AgentRunnerService {
       const completion = await this.llm.complete({
         messages,
         tools: filteredDescriptors,
+        purpose: `agent_runner:${agent.name}`,
       });
 
       // Track the latest text so iteration-cap fallbacks can echo something useful.

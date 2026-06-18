@@ -218,6 +218,7 @@ describe('AgentRunnerService', () => {
 
       expect(out).toEqual({ result: 'all done' });
       expect(llm.calls).toHaveLength(1);
+      expect(llm.calls[0].purpose).toBe('agent_runner:analytics-agent');
       // First system message anchors today's date — prevents the LLM from using
       // stale training-data years for "last 3 months" / "yesterday" / etc.
       expect(llm.calls[0].messages[0].role).toBe('system');

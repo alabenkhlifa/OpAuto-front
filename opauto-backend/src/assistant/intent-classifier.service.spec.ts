@@ -4,12 +4,20 @@ import { LlmGatewayService } from './llm-gateway.service';
 import { LlmCompletionResult } from './types';
 
 const TOOLS = [
-  { name: 'get_revenue_summary', description: 'Aggregated revenue for a period.' },
-  { name: 'list_top_customers', description: 'Top customers by revenue or visits.' },
+  {
+    name: 'get_revenue_summary',
+    description: 'Aggregated revenue for a period.',
+  },
+  {
+    name: 'list_top_customers',
+    description: 'Top customers by revenue or visits.',
+  },
   { name: 'send_sms', description: 'Send an SMS to a phone number.' },
 ];
 
-function makeLlm(result: Partial<LlmCompletionResult> & { content: string | null }) {
+function makeLlm(
+  result: Partial<LlmCompletionResult> & { content: string | null },
+) {
   return {
     complete: jest.fn(async () => ({
       provider: 'mock' as const,
@@ -33,7 +41,9 @@ async function makeService(llm: any): Promise<IntentClassifierService> {
 
 describe('IntentClassifierService', () => {
   it('returns the picked tool names from a clean JSON array reply', async () => {
-    const llm = makeLlm({ content: '["get_revenue_summary","list_top_customers"]' });
+    const llm = makeLlm({
+      content: '["get_revenue_summary","list_top_customers"]',
+    });
     const svc = await makeService(llm);
     const result = await svc.classify({
       userMessage: 'who are my best customers',
@@ -175,6 +185,7 @@ describe('IntentClassifierService', () => {
     // System prompt should mention each tool name + description, but NOT
     // include any "parameters" / JSON-schema markers that bloat token use.
     expect(calls[0][0].model).toBe('Mistral-Small-3_2-24B-Instruct-2506');
+    expect(calls[0][0].purpose).toBe('intent_classifier');
     expect(sentBody).toContain('get_revenue_summary');
     expect(sentBody).toContain('Aggregated revenue');
     expect(sentBody).not.toContain('"parameters":');

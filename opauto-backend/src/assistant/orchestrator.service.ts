@@ -337,6 +337,9 @@ export class OrchestratorService {
         const completion = await this.llm.complete({
           messages: messagesForCall,
           tools: offeredTools,
+          purpose: swapToComposeOnly
+            ? 'assistant_compose'
+            : 'assistant_tool_selection',
           validateResult: this.buildLeakValidator(offeredTools),
         });
 
@@ -359,7 +362,7 @@ export class OrchestratorService {
           const persisted = await this.persistAssistant(
             conversationId,
             text,
-            completion.provider,
+            completion,
           );
           if (text.length > 0) {
             subject.next({ type: 'text', delta: text });
@@ -381,7 +384,7 @@ export class OrchestratorService {
         await this.persistAssistant(
           conversationId,
           completion.content ?? '',
-          completion.provider,
+          completion,
         );
 
         // Mirror it into the in-memory LLM message buffer too — otherwise
@@ -1688,7 +1691,10 @@ export class OrchestratorService {
   private async persistAssistant(
     conversationId: string,
     content: string,
-    provider?: string,
+    completion?: Pick<
+      LlmCompletionResult,
+      'provider' | 'purpose' | 'model' | 'tokensIn' | 'tokensOut'
+    >,
   ): Promise<{ id: string } | null> {
     if (!content || content.length === 0) {
       // Empty assistant turns (tool-only) still need a row so history is
@@ -1699,7 +1705,11 @@ export class OrchestratorService {
       conversationId,
       role: AssistantMessageRole.ASSISTANT,
       content,
-      llmProvider: provider,
+      llmProvider: completion?.provider,
+      llmModel: completion?.model,
+      tokensIn: completion?.tokensIn,
+      tokensOut: completion?.tokensOut,
+      llmPurpose: completion?.purpose,
     });
     return { id: row.id };
   }
@@ -1719,6 +1729,7 @@ export class OrchestratorService {
               { role: 'user', content: text },
             ],
             maxTokens: 32,
+            purpose: 'conversation_title',
           });
           return (result.content ?? '').trim();
         },

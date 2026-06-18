@@ -1,5 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { AssistantConversation, AssistantMessage, Prisma } from '@prisma/client';
+import {
+  AssistantConversation,
+  AssistantMessage,
+  Prisma,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AssistantMessageRole } from './types';
 
@@ -17,6 +21,8 @@ export interface AppendMessageArgs {
   tokensIn?: number;
   tokensOut?: number;
   llmProvider?: string;
+  llmModel?: string;
+  llmPurpose?: string;
 }
 
 export interface RecentHistoryEntry {
@@ -66,6 +72,8 @@ export class ConversationService {
         tokensIn: args.tokensIn,
         tokensOut: args.tokensOut,
         llmProvider: args.llmProvider,
+        llmModel: args.llmModel,
+        llmPurpose: args.llmPurpose,
       },
     });
   }
@@ -126,7 +134,13 @@ export class ConversationService {
       where: { garageId, userId, archivedAt: null },
       orderBy: { updatedAt: 'desc' },
       take: limit,
-      select: { id: true, title: true, pinned: true, updatedAt: true, createdAt: true },
+      select: {
+        id: true,
+        title: true,
+        pinned: true,
+        updatedAt: true,
+        createdAt: true,
+      },
     });
   }
 
