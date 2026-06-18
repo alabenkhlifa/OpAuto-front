@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PATH_METADATA, GUARDS_METADATA } from '@nestjs/common/constants';
-import { ConfigService } from '@nestjs/config';
 import { ForbiddenException } from '@nestjs/common';
 import { AdminAiUsageController } from './admin-ai-usage.controller';
 import { AdminAiUsageService } from './admin-ai-usage.service';
@@ -15,7 +14,6 @@ import {
 describe('AdminAiUsageController', () => {
   let controller: AdminAiUsageController;
   let service: { getOvhUsage: jest.Mock };
-  let configService: { get: jest.Mock };
   const configuredOwnerEmail = 'ala.khliifa@gmail.com';
 
   const MOCK_RESPONSE = {
@@ -77,21 +75,10 @@ describe('AdminAiUsageController', () => {
     service = {
       getOvhUsage: jest.fn().mockResolvedValue(MOCK_RESPONSE),
     };
-    configService = {
-      get: jest.fn((key: string, fallback?: string) => {
-        if (key === 'ADMIN_AI_USAGE_OWNER_EMAIL') {
-          return configuredOwnerEmail;
-        }
-        return fallback;
-      }),
-    };
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdminAiUsageController],
-      providers: [
-        { provide: AdminAiUsageService, useValue: service },
-        { provide: ConfigService, useValue: configService },
-      ],
+      providers: [{ provide: AdminAiUsageService, useValue: service }],
     })
       .overrideGuard(JwtAuthGuard)
       .useValue({ canActivate: () => true })
@@ -129,16 +116,14 @@ describe('AdminAiUsageController', () => {
     expect(service.getOvhUsage).not.toHaveBeenCalled();
   });
 
-  it('uses configured owner email from config service', async () => {
-    const tenantEmail = 'security-approved-owner@example.com';
-    configService.get = jest
-      .fn((key: string, fallback?: string) =>
-        key === 'ADMIN_AI_USAGE_OWNER_EMAIL' ? tenantEmail : fallback,
-      );
-
-    const result = await controller.getUsage(tenantEmail, 'garage-ctrl-001', {
-      range: AiUsageRangeKey.LAST_WEEK,
-    });
+  it('accepts the fixed owner email case-insensitively', async () => {
+    const result = await controller.getUsage(
+      ' ALA.KHLIIFA@GMAIL.COM ',
+      'garage-ctrl-001',
+      {
+        range: AiUsageRangeKey.LAST_WEEK,
+      },
+    );
 
     expect(service.getOvhUsage).toHaveBeenCalledWith(
       'garage-ctrl-001',

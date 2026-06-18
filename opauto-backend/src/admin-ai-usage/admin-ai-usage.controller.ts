@@ -6,7 +6,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiQuery } from '@nestjs/swagger';
-import { ConfigService } from '@nestjs/config';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -18,27 +17,20 @@ import {
   AiUsageRangeKey,
 } from './dto/admin-ai-usage-query.dto';
 
+const AUTHORIZED_ADMIN_AI_USAGE_EMAIL = 'ala.khliifa@gmail.com';
+
 @ApiTags('admin-ai-usage')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.OWNER)
 @Controller()
 export class AdminAiUsageController {
-  private readonly authorizedOwnerEmail = 'ala.khliifa@gmail.com';
-
-  constructor(
-    private readonly service: AdminAiUsageService,
-    private readonly configService: ConfigService,
-  ) {}
+  constructor(private readonly service: AdminAiUsageService) {}
 
   private isAuthorizedOwnerEmail(email: string | null | undefined): boolean {
-    const configuredEmail = this.configService.get<string>(
-      'ADMIN_AI_USAGE_OWNER_EMAIL',
-      this.authorizedOwnerEmail,
-    );
     return (
       typeof email === 'string' &&
-      email.trim().toLowerCase() === configuredEmail.trim().toLowerCase()
+      email.trim().toLowerCase() === AUTHORIZED_ADMIN_AI_USAGE_EMAIL
     );
   }
 
