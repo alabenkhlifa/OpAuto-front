@@ -28,7 +28,6 @@ export const routes: Routes = [
 	      import('./features/admin/ai-usage-dashboard/ai-usage-dashboard.component').then(
 	        (m) => m.AiUsageDashboardComponent,
 	      ),
-	    canActivate: [authGuard, ownerGuard],
 	  },
   {
     path: 'admin/dashoard',

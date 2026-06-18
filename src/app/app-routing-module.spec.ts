@@ -82,11 +82,10 @@ describe('app-routing — S-SEC-007 invoicing module gate', () => {
     expect(typeof fn).toBe('function');
   });
 
-  it('adds /admin/dashboard as an owner-protected route', () => {
+  it('adds /admin/dashboard as a standalone route with its own login gate', () => {
     const adminDashboardRoute = routes.find((r) => r.path === 'admin/dashboard');
     expect(adminDashboardRoute).toBeTruthy();
-    expect(adminDashboardRoute?.canActivate?.[0]).toBe(authGuard);
-    expect(adminDashboardRoute?.canActivate?.[1]).toBe(ownerGuard);
+    expect(adminDashboardRoute?.canActivate).toBeUndefined();
   });
 
   it('redirects /admin/dashoard (typo) to /admin/dashboard', () => {

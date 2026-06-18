@@ -1,5 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PATH_METADATA, GUARDS_METADATA } from '@nestjs/common/constants';
+import { ConfigService } from '@nestjs/config';
+import { ForbiddenException } from '@nestjs/common';
 import { AdminAiUsageController } from './admin-ai-usage.controller';
 import { AdminAiUsageService } from './admin-ai-usage.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -13,6 +15,8 @@ import {
 describe('AdminAiUsageController', () => {
   let controller: AdminAiUsageController;
   let service: { getOvhUsage: jest.Mock };
+  let configService: { get: jest.Mock };
+  const configuredOwnerEmail = 'ala.khliifa@gmail.com';
 
   const MOCK_RESPONSE = {
     generatedAt: new Date().toISOString(),
@@ -73,10 +77,21 @@ describe('AdminAiUsageController', () => {
     service = {
       getOvhUsage: jest.fn().mockResolvedValue(MOCK_RESPONSE),
     };
+    configService = {
+      get: jest.fn((key: string, fallback?: string) => {
+        if (key === 'ADMIN_AI_USAGE_OWNER_EMAIL') {
+          return configuredOwnerEmail;
+        }
+        return fallback;
+      }),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdminAiUsageController],
-      providers: [{ provide: AdminAiUsageService, useValue: service }],
+      providers: [
+        { provide: AdminAiUsageService, useValue: service },
+        { provide: ConfigService, useValue: configService },
+      ],
     })
       .overrideGuard(JwtAuthGuard)
       .useValue({ canActivate: () => true })
@@ -88,7 +103,40 @@ describe('AdminAiUsageController', () => {
   });
 
   it('forwards explicit range and garageId into service', async () => {
-    const result = await controller.getUsage('garage-ctrl-001', {
+    const result = await controller.getUsage(
+      configuredOwnerEmail,
+      'garage-ctrl-001',
+      {
+        range: AiUsageRangeKey.LAST_WEEK,
+      },
+    );
+
+    expect(service.getOvhUsage).toHaveBeenCalledWith(
+      'garage-ctrl-001',
+      AiUsageRangeKey.LAST_WEEK,
+    );
+    expect(result).toBe(MOCK_RESPONSE);
+  });
+
+  it('rejects non-configured owner email', () => {
+    expect(() =>
+      controller.getUsage(
+        'not-authorized@example.com',
+        'garage-ctrl-001',
+        { range: AiUsageRangeKey.LAST_WEEK },
+      ),
+    ).toThrow(ForbiddenException);
+    expect(service.getOvhUsage).not.toHaveBeenCalled();
+  });
+
+  it('uses configured owner email from config service', async () => {
+    const tenantEmail = 'security-approved-owner@example.com';
+    configService.get = jest
+      .fn((key: string, fallback?: string) =>
+        key === 'ADMIN_AI_USAGE_OWNER_EMAIL' ? tenantEmail : fallback,
+      );
+
+    const result = await controller.getUsage(tenantEmail, 'garage-ctrl-001', {
       range: AiUsageRangeKey.LAST_WEEK,
     });
 
@@ -112,7 +160,11 @@ describe('AdminAiUsageController', () => {
 
   it('uses default range through DTO fallback when omitted', async () => {
     const query = new AdminAiUsageQueryDto();
-    const result = await controller.getUsage('garage-ctrl-001', query);
+    const result = await controller.getUsage(
+      configuredOwnerEmail,
+      'garage-ctrl-001',
+      query,
+    );
 
     expect(service.getOvhUsage).toHaveBeenCalledWith(
       'garage-ctrl-001',

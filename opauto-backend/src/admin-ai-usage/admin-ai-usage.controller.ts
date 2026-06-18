@@ -1,5 +1,12 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  ForbiddenException,
+  Get,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiQuery } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -17,14 +24,35 @@ import {
 @Roles(UserRole.OWNER)
 @Controller()
 export class AdminAiUsageController {
-  constructor(private readonly service: AdminAiUsageService) {}
+  private readonly authorizedOwnerEmail = 'ala.khliifa@gmail.com';
+
+  constructor(
+    private readonly service: AdminAiUsageService,
+    private readonly configService: ConfigService,
+  ) {}
+
+  private isAuthorizedOwnerEmail(email: string | null | undefined): boolean {
+    const configuredEmail = this.configService.get<string>(
+      'ADMIN_AI_USAGE_OWNER_EMAIL',
+      this.authorizedOwnerEmail,
+    );
+    return (
+      typeof email === 'string' &&
+      email.trim().toLowerCase() === configuredEmail.trim().toLowerCase()
+    );
+  }
 
   @Get(['admin-ai-usage', 'admin/ai-usage'])
   @ApiQuery({ name: 'range', required: false, enum: AiUsageRangeKey })
   getUsage(
+    @CurrentUser('email') email: string,
     @CurrentUser('garageId') garageId: string,
     @Query() query: AdminAiUsageQueryDto,
   ) {
+    if (!this.isAuthorizedOwnerEmail(email)) {
+      throw new ForbiddenException('Forbidden');
+    }
+
     return this.service.getOvhUsage(
       garageId,
       query.range ?? AiUsageRangeKey.TODAY,

@@ -1,421 +1,484 @@
-<div class="ai-usage-page">
-  <section class="glass-card ai-usage-hero">
-    <div class="ai-usage-hero__copy">
-      <p class="ai-usage-eyebrow">{{ 'adminAiUsage.eyebrow' | translate }}</p>
-      <h1>{{ 'adminAiUsage.title' | translate }}</h1>
-      <p>{{ 'adminAiUsage.subtitle' | translate }}</p>
-    </div>
-
-    <div class="ai-usage-controls">
-      <label for="aiUsageRange">{{ 'adminAiUsage.rangeSelector' | translate }}</label>
-      <div class="ai-usage-controls__row">
-        <select
-          id="aiUsageRange"
-          class="filter-select ai-usage-controls__select"
-          [value]="selectedRange()"
-          (change)="onRangeChange($event)"
-          [disabled]="isLoading()"
-        >
-          @for (option of ranges; track option.value) {
-            <option [value]="option.value">{{ option.labelKey | translate }}</option>
-          }
-        </select>
-        <button
-          type="button"
-          class="btn-tertiary btn-sm"
-          [disabled]="isLoading()"
-          (click)="reloadCurrentRange()"
-        >
-          {{ isLoading() ? ('adminAiUsage.actions.loading' | translate) : ('adminAiUsage.actions.refresh' | translate) }}
-        </button>
+<div class="ai-admin-page">
+  @if (!isAuthenticatedOwner()) {
+    <section class="ai-admin-login" aria-label="Admin AI dashboard login">
+      <div class="ai-admin-login__copy">
+        <p class="ai-usage-eyebrow">Owner analytics</p>
+        <h1>AI Usage Dashboard</h1>
+        <p>
+          Sign in with the configured owner account to monitor OVH model usage,
+          tokens, cost, tools, agents, skills, approvals, users, and garages.
+        </p>
+        <div class="ai-admin-login__facts" aria-label="Dashboard scope">
+          <span>OVH usage only</span>
+          <span>Persisted production logs</span>
+          <span>Owner-only access</span>
+        </div>
       </div>
-      <p class="ai-usage-controls__meta">
-        {{ 'adminAiUsage.footer.updated' | translate:{ updatedAt: updatedAt() } }}
-      </p>
-    </div>
-  </section>
 
-  @if (isLoading() || errorKey()) {
-    <section class="glass-card ai-usage-status" role="status" aria-live="polite">
-      @if (isLoading()) {
-        <p>{{ 'adminAiUsage.loading' | translate }}</p>
-      } @else if (errorKey()) {
-        <p class="ai-usage-status__error">{{ (errorKey() ?? '') | translate }}</p>
+      <form class="ai-admin-login__card" [formGroup]="loginForm" (ngSubmit)="submitLogin()">
+        <div>
+          <p class="ai-usage-eyebrow">Standalone login</p>
+          <h2>Open dashboard</h2>
+        </div>
+
+        <label class="ai-admin-field">
+          <span>Email</span>
+          <input
+            type="email"
+            formControlName="email"
+            autocomplete="username"
+            inputmode="email"
+          />
+          @if (loginForm.controls.email.invalid && loginForm.controls.email.touched) {
+            <small>Enter the configured owner email.</small>
+          }
+        </label>
+
+        <label class="ai-admin-field">
+          <span>Password</span>
+          <input
+            type="password"
+            formControlName="password"
+            autocomplete="current-password"
+          />
+          @if (loginForm.controls.password.invalid && loginForm.controls.password.touched) {
+            <small>Enter the dashboard password.</small>
+          }
+        </label>
+
+        @if (loginError()) {
+          <p class="ai-admin-login__error" role="alert">{{ loginError() }}</p>
+        }
+
+        <button class="ai-admin-button ai-admin-button--primary" type="submit" [disabled]="isLoginLoading()">
+          {{ isLoginLoading() ? 'Signing in...' : 'Sign in' }}
+        </button>
+      </form>
+    </section>
+  } @else {
+    <section class="ai-card ai-usage-hero">
+      <div class="ai-usage-hero__copy">
+        <p class="ai-usage-eyebrow">OVH AI monitoring</p>
+        <h1>AI Usage Dashboard</h1>
+        <p>
+          Cost and usage analytics from persisted assistant messages and tool calls.
+        </p>
+      </div>
+
+      <div class="ai-usage-controls">
+        <label for="aiUsageRange">Date range</label>
+        <div class="ai-usage-controls__row">
+          <select
+            id="aiUsageRange"
+            class="ai-admin-select"
+            [value]="selectedRange()"
+            (change)="onRangeChange($event)"
+            [disabled]="isLoading()"
+          >
+            @for (option of ranges; track trackRange($index, option)) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+          <button
+            type="button"
+            class="ai-admin-button"
+            [disabled]="isLoading()"
+            (click)="reloadCurrentRange()"
+          >
+            {{ isLoading() ? 'Loading...' : 'Refresh' }}
+          </button>
+          <button type="button" class="ai-admin-button ai-admin-button--ghost" (click)="logout()">
+            Sign out
+          </button>
+        </div>
+        <p class="ai-usage-controls__meta">Updated {{ updatedAt() }}</p>
+      </div>
+    </section>
+
+    @if (isLoading() || errorMessage()) {
+      <section class="ai-card ai-usage-status" role="status" aria-live="polite">
+        @if (isLoading()) {
+          <p>Loading AI usage analytics...</p>
+        } @else if (errorMessage()) {
+          <p class="ai-usage-status__error">{{ errorMessage() }}</p>
+        }
+      </section>
+    }
+
+    <section class="ai-usage-kpis" aria-label="AI usage summary">
+      @for (card of kpiCards(); track trackKpi($index, card)) {
+        <article class="ai-card ai-usage-kpi">
+          <p class="ai-usage-kpi__label">{{ card.label }}</p>
+          <strong>{{ card.value }}</strong>
+          <span>{{ card.hint }}</span>
+        </article>
       }
     </section>
-  }
 
-  <section class="ai-usage-kpis" [attr.aria-label]="'adminAiUsage.kpis.title' | translate">
-    @for (card of kpiCards(); track trackKpi($index, card)) {
-      <article class="glass-card ai-usage-kpi">
-        <p class="ai-usage-kpi__label">{{ card.labelKey | translate }}</p>
-        <strong>{{ card.value }}</strong>
-        <span>{{ card.hint | translate }}</span>
-      </article>
-    }
-  </section>
-
-  <section class="ai-usage-grid ai-usage-grid--primary">
-    <article class="glass-card ai-usage-card ai-usage-card--wide">
-      <div class="ai-usage-card__head">
-        <div>
-          <p class="ai-usage-eyebrow">{{ 'adminAiUsage.sections.ovhOnly' | translate }}</p>
-          <h2>{{ 'adminAiUsage.tasks.title' | translate }}</h2>
+    <section class="ai-usage-grid ai-usage-grid--primary">
+      <article class="ai-card ai-usage-card ai-usage-card--wide">
+        <div class="ai-usage-card__head">
+          <div>
+            <p class="ai-usage-eyebrow">Model cost by task</p>
+            <h2>AI Task Usage</h2>
+          </div>
+          <span class="ai-usage-pill">{{ formatCost(summary().estimatedCost) }}</span>
         </div>
-        <span class="ai-usage-pill">{{ formatCost(summary().estimatedCost) }}</span>
-      </div>
 
-      @if (taskUsage().length > 0) {
-        <div class="ai-usage-list">
-          @for (task of taskUsage(); track trackTask($index, task)) {
-            <article class="ai-usage-row">
-              <div class="ai-usage-row__main">
-                <div>
-                  <h3>{{ purposeLabelKey(task.purpose) | translate: purposeParams(task.purpose) }}</h3>
-                  <p>{{ purposeDescriptionKey(task.purpose) | translate: purposeParams(task.purpose) }}</p>
+        @if (taskUsage().length > 0) {
+          <div class="ai-usage-list">
+            @for (task of taskUsage(); track trackTask($index, task)) {
+              <article class="ai-usage-row">
+                <div class="ai-usage-row__main">
+                  <div>
+                    <h3>{{ purposeLabel(task.purpose) }}</h3>
+                    <p>{{ purposeDescription(task.purpose) }}</p>
+                  </div>
+                  <span [ngClass]="modelBadgeClass(task.model)">{{ modelLabel(task.model) }}</span>
                 </div>
-                <span [ngClass]="modelBadgeClass(task.model)">{{ modelLabel(task.model) }}</span>
+                <div class="ai-usage-bar" aria-hidden="true">
+                  <span [style.width]="rowWidth(task.estimatedCost, maxTaskCost())"></span>
+                </div>
+                <dl class="ai-usage-metrics">
+                  <div>
+                    <dt>Calls</dt>
+                    <dd>{{ formatInteger(task.calls) }}</dd>
+                  </div>
+                  <div>
+                    <dt>Tokens</dt>
+                    <dd>{{ formatTokens(task.tokensIn, task.tokensOut) }}</dd>
+                  </div>
+                  <div>
+                    <dt>Tool calls</dt>
+                    <dd>{{ formatInteger(task.toolCalls) }}</dd>
+                  </div>
+                  <div>
+                    <dt>Cost</dt>
+                    <dd>{{ formatCost(task.estimatedCost) }}</dd>
+                  </div>
+                </dl>
+              </article>
+            }
+          </div>
+        } @else {
+          <p class="ai-usage-empty">No AI task usage in this range.</p>
+        }
+      </article>
+
+      <article class="ai-card ai-usage-card">
+        <div class="ai-usage-card__head">
+          <div>
+            <p class="ai-usage-eyebrow">Spend distribution</p>
+            <h2>Cost by AI Task</h2>
+          </div>
+        </div>
+
+        <div class="ai-usage-share">
+          <div class="ai-usage-share__chart" [style.background]="costShareGradient()">
+            <span>{{ formatCost(summary().estimatedCost) }}</span>
+          </div>
+          <div class="ai-usage-share__list">
+            @for (segment of costShare(); track trackShare($index, segment)) {
+              <div class="ai-usage-share__item">
+                <span class="ai-usage-share__swatch" [style.background]="segment.color"></span>
+                <span>{{ segment.label }}</span>
+                <strong>{{ formatPercent(segment.share) }}</strong>
               </div>
-              <div class="ai-usage-bar" aria-hidden="true">
-                <span [style.width]="rowWidth(task.estimatedCost, maxTaskCost())"></span>
-              </div>
-              <dl class="ai-usage-metrics">
+            } @empty {
+              <p class="ai-usage-empty">No cost recorded in this range.</p>
+            }
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="ai-usage-grid ai-usage-grid--two">
+      <article class="ai-card ai-usage-card">
+        <div class="ai-usage-card__head">
+          <div>
+            <p class="ai-usage-eyebrow">People</p>
+            <h2>User Usage</h2>
+          </div>
+        </div>
+        <div class="ai-usage-entity-list">
+          @for (user of userUsage(); track trackUser($index, user)) {
+            <article class="ai-usage-entity">
+              <h3>{{ user.userName }}</h3>
+              <dl class="ai-usage-metrics ai-usage-metrics--compact">
                 <div>
-                  <dt>{{ 'adminAiUsage.metrics.calls' | translate }}</dt>
-                  <dd>{{ formatInteger(task.calls) }}</dd>
+                  <dt>Calls</dt>
+                  <dd>{{ formatInteger(user.calls) }}</dd>
                 </div>
                 <div>
-                  <dt>{{ 'adminAiUsage.metrics.tokens' | translate }}</dt>
-                  <dd>{{ formatTokens(task.tokensIn, task.tokensOut) }}</dd>
+                  <dt>Tokens</dt>
+                  <dd>{{ formatTokens(user.tokensIn, user.tokensOut) }}</dd>
                 </div>
                 <div>
-                  <dt>{{ 'adminAiUsage.metrics.toolCalls' | translate }}</dt>
-                  <dd>{{ formatInteger(task.toolCalls) }}</dd>
+                  <dt>Tool calls</dt>
+                  <dd>{{ formatInteger(user.toolCalls) }}</dd>
                 </div>
                 <div>
-                  <dt>{{ 'adminAiUsage.metrics.cost' | translate }}</dt>
-                  <dd>{{ formatCost(task.estimatedCost) }}</dd>
+                  <dt>Cost</dt>
+                  <dd>{{ formatCost(user.estimatedCost) }}</dd>
                 </div>
               </dl>
             </article>
-          }
-        </div>
-      } @else {
-        <p class="ai-usage-empty">{{ 'adminAiUsage.tasks.empty' | translate }}</p>
-      }
-    </article>
-
-    <article class="glass-card ai-usage-card">
-      <div class="ai-usage-card__head">
-        <div>
-          <p class="ai-usage-eyebrow">{{ 'adminAiUsage.sections.share' | translate }}</p>
-          <h2>{{ 'adminAiUsage.costShare.title' | translate }}</h2>
-        </div>
-      </div>
-
-      <div class="ai-usage-share">
-        <div class="ai-usage-share__chart" [style.background]="costShareGradient()">
-          <span>{{ formatCost(summary().estimatedCost) }}</span>
-        </div>
-        <div class="ai-usage-share__list">
-          @for (segment of costShare(); track trackShare($index, segment)) {
-            <div class="ai-usage-share__item">
-              <span class="ai-usage-share__swatch" [style.background]="segment.color"></span>
-              <span>{{ segment.label }}</span>
-              <strong>{{ formatPercent(segment.share) }}</strong>
-            </div>
           } @empty {
-            <p class="ai-usage-empty">{{ 'adminAiUsage.costShare.empty' | translate }}</p>
+            <p class="ai-usage-empty">No user usage in this range.</p>
           }
         </div>
-      </div>
-    </article>
-  </section>
+      </article>
 
-  <section class="ai-usage-grid ai-usage-grid--two">
-    <article class="glass-card ai-usage-card">
-      <div class="ai-usage-card__head">
-        <div>
-          <p class="ai-usage-eyebrow">{{ 'adminAiUsage.sections.people' | translate }}</p>
-          <h2>{{ 'adminAiUsage.users.title' | translate }}</h2>
+      <article class="ai-card ai-usage-card">
+        <div class="ai-usage-card__head">
+          <div>
+            <p class="ai-usage-eyebrow">Garages</p>
+            <h2>Garage Usage</h2>
+          </div>
         </div>
-      </div>
-      <div class="ai-usage-entity-list">
-        @for (user of userUsage(); track trackUser($index, user)) {
-          <article class="ai-usage-entity">
-            <h3>{{ user.userName }}</h3>
-            <dl class="ai-usage-metrics ai-usage-metrics--compact">
-              <div>
-                <dt>{{ 'adminAiUsage.metrics.calls' | translate }}</dt>
-                <dd>{{ formatInteger(user.calls) }}</dd>
-              </div>
-              <div>
-                <dt>{{ 'adminAiUsage.metrics.tokens' | translate }}</dt>
-                <dd>{{ formatTokens(user.tokensIn, user.tokensOut) }}</dd>
-              </div>
-              <div>
-                <dt>{{ 'adminAiUsage.metrics.toolCalls' | translate }}</dt>
-                <dd>{{ formatInteger(user.toolCalls) }}</dd>
-              </div>
-              <div>
-                <dt>{{ 'adminAiUsage.metrics.cost' | translate }}</dt>
-                <dd>{{ formatCost(user.estimatedCost) }}</dd>
-              </div>
-            </dl>
-          </article>
-        } @empty {
-          <p class="ai-usage-empty">{{ 'adminAiUsage.users.empty' | translate }}</p>
-        }
-      </div>
-    </article>
+        <div class="ai-usage-entity-list">
+          @for (garage of garageUsage(); track trackGarage($index, garage)) {
+            <article class="ai-usage-entity">
+              <h3>{{ garage.garageName }}</h3>
+              @if (garage.garageLocation) {
+                <p>{{ garage.garageLocation }}</p>
+              }
+              <dl class="ai-usage-metrics ai-usage-metrics--compact">
+                <div>
+                  <dt>Calls</dt>
+                  <dd>{{ formatInteger(garage.calls) }}</dd>
+                </div>
+                <div>
+                  <dt>Tokens</dt>
+                  <dd>{{ formatTokens(garage.tokensIn, garage.tokensOut) }}</dd>
+                </div>
+                <div>
+                  <dt>Users</dt>
+                  <dd>{{ formatInteger(garage.uniqueUsers) }}</dd>
+                </div>
+                <div>
+                  <dt>Cost</dt>
+                  <dd>{{ formatCost(garage.estimatedCost) }}</dd>
+                </div>
+              </dl>
+            </article>
+          } @empty {
+            <p class="ai-usage-empty">No garage usage in this range.</p>
+          }
+        </div>
+      </article>
+    </section>
 
-    <article class="glass-card ai-usage-card">
-      <div class="ai-usage-card__head">
-        <div>
-          <p class="ai-usage-eyebrow">{{ 'adminAiUsage.sections.garages' | translate }}</p>
-          <h2>{{ 'adminAiUsage.garages.title' | translate }}</h2>
+    <section class="ai-usage-grid ai-usage-grid--two">
+      <article class="ai-card ai-usage-card">
+        <div class="ai-usage-card__head">
+          <div>
+            <p class="ai-usage-eyebrow">Actions</p>
+            <h2>Tool Usage</h2>
+          </div>
         </div>
-      </div>
-      <div class="ai-usage-entity-list">
-        @for (garage of garageUsage(); track trackGarage($index, garage)) {
-          <article class="ai-usage-entity">
-            <h3>{{ garage.garageName }}</h3>
-            @if (garage.garageLocation) {
-              <p>{{ garage.garageLocation }}</p>
-            }
-            <dl class="ai-usage-metrics ai-usage-metrics--compact">
-              <div>
-                <dt>{{ 'adminAiUsage.metrics.calls' | translate }}</dt>
-                <dd>{{ formatInteger(garage.calls) }}</dd>
+        <div class="ai-usage-list">
+          @for (tool of toolUsage(); track trackTool($index, tool)) {
+            <article class="ai-usage-row ai-usage-row--tool">
+              <div class="ai-usage-row__main">
+                <div>
+                  <h3>{{ toolLabel(tool.toolName) }}</h3>
+                  <p>{{ toolOutcomeLabel(tool) }}</p>
+                </div>
+                <span class="ai-usage-pill">{{ formatInteger(tool.calls) }} calls</span>
               </div>
-              <div>
-                <dt>{{ 'adminAiUsage.metrics.tokens' | translate }}</dt>
-                <dd>{{ formatTokens(garage.tokensIn, garage.tokensOut) }}</dd>
+              <div class="ai-usage-bar" aria-hidden="true">
+                <span [style.width]="rowWidth(tool.calls, maxToolCalls())"></span>
               </div>
-              <div>
-                <dt>{{ 'adminAiUsage.metrics.users' | translate }}</dt>
-                <dd>{{ formatInteger(garage.uniqueUsers) }}</dd>
-              </div>
-              <div>
-                <dt>{{ 'adminAiUsage.metrics.cost' | translate }}</dt>
-                <dd>{{ formatCost(garage.estimatedCost) }}</dd>
-              </div>
-            </dl>
-          </article>
-        } @empty {
-          <p class="ai-usage-empty">{{ 'adminAiUsage.garages.empty' | translate }}</p>
-        }
-      </div>
-    </article>
-  </section>
+              <dl class="ai-usage-metrics ai-usage-metrics--compact">
+                <div>
+                  <dt>Executed</dt>
+                  <dd>{{ formatInteger(tool.executed) }}</dd>
+                </div>
+                <div>
+                  <dt>Waiting</dt>
+                  <dd>{{ formatInteger(tool.pending) }}</dd>
+                </div>
+                <div>
+                  <dt>Expired</dt>
+                  <dd>{{ formatInteger(tool.expired) }}</dd>
+                </div>
+                <div>
+                  <dt>Average time</dt>
+                  <dd>{{ formatDuration(tool.avgDurationMs) }}</dd>
+                </div>
+              </dl>
+            </article>
+          } @empty {
+            <p class="ai-usage-empty">No tool usage in this range.</p>
+          }
+        </div>
+      </article>
 
-  <section class="ai-usage-grid ai-usage-grid--two">
-    <article class="glass-card ai-usage-card">
-      <div class="ai-usage-card__head">
-        <div>
-          <p class="ai-usage-eyebrow">{{ 'adminAiUsage.sections.tools' | translate }}</p>
-          <h2>{{ 'adminAiUsage.tools.title' | translate }}</h2>
+      <article class="ai-card ai-usage-card">
+        <div class="ai-usage-card__head">
+          <div>
+            <p class="ai-usage-eyebrow">Confirmation outcomes</p>
+            <h2>Approvals and Refusals</h2>
+          </div>
         </div>
-      </div>
-      <div class="ai-usage-list">
-        @for (tool of toolUsage(); track trackTool($index, tool)) {
-          <article class="ai-usage-row ai-usage-row--tool">
-            <div class="ai-usage-row__main">
-              <div>
-                <h3>{{ toolLabel(tool.toolName) }}</h3>
-                <p>{{ 'adminAiUsage.tools.breakdown' | translate:{ approved: tool.approved, denied: tool.denied, failed: tool.failed } }}</p>
-              </div>
-              <span class="ai-usage-pill">{{ formatInteger(tool.calls) }}</span>
-            </div>
-            <div class="ai-usage-bar" aria-hidden="true">
-              <span [style.width]="rowWidth(tool.calls, maxToolCalls())"></span>
-            </div>
-            <dl class="ai-usage-metrics ai-usage-metrics--compact">
-              <div>
-                <dt>{{ 'adminAiUsage.metrics.executed' | translate }}</dt>
-                <dd>{{ formatInteger(tool.executed) }}</dd>
-              </div>
-              <div>
-                <dt>{{ 'adminAiUsage.metrics.pending' | translate }}</dt>
-                <dd>{{ formatInteger(tool.pending) }}</dd>
-              </div>
-              <div>
-                <dt>{{ 'adminAiUsage.metrics.expired' | translate }}</dt>
-                <dd>{{ formatInteger(tool.expired) }}</dd>
-              </div>
-              <div>
-                <dt>{{ 'adminAiUsage.metrics.avgDuration' | translate }}</dt>
-                <dd>{{ formatDuration(tool.avgDurationMs) }}</dd>
-              </div>
-            </dl>
-          </article>
-        } @empty {
-          <p class="ai-usage-empty">{{ 'adminAiUsage.tools.empty' | translate }}</p>
-        }
-      </div>
-    </article>
+        <div class="ai-usage-approval-summary">
+          <div>
+            <span>Approval requested</span>
+            <strong>{{ formatInteger(dashboard().approvalRefusal.approvalRequired) }}</strong>
+          </div>
+          <div>
+            <span>Approved or executed</span>
+            <strong>{{ formatInteger(dashboard().approvalRefusal.approvedOrExecuted) }}</strong>
+          </div>
+          <div>
+            <span>Refused</span>
+            <strong>{{ formatInteger(dashboard().approvalRefusal.denied) }}</strong>
+          </div>
+        </div>
+        <div class="ai-usage-status-list">
+          @for (row of dashboard().approvalRefusal.rows; track row.status) {
+            <article>
+              <span>{{ statusLabel(row.status) }}</span>
+              <strong>{{ formatInteger(row.calls) }}</strong>
+              <small>{{ formatPercent(row.share) }} of tool calls · {{ formatSeconds(row.avgDecisionSeconds) }} average decision</small>
+            </article>
+          } @empty {
+            <p class="ai-usage-empty">No approval or refusal activity in this range.</p>
+          }
+        </div>
+      </article>
+    </section>
 
-    <article class="glass-card ai-usage-card">
-      <div class="ai-usage-card__head">
-        <div>
-          <p class="ai-usage-eyebrow">{{ 'adminAiUsage.sections.approvals' | translate }}</p>
-          <h2>{{ 'adminAiUsage.approvals.title' | translate }}</h2>
+    <section class="ai-usage-grid ai-usage-grid--two">
+      <article class="ai-card ai-usage-card">
+        <div class="ai-usage-card__head">
+          <div>
+            <p class="ai-usage-eyebrow">Routed workflows</p>
+            <h2>Agent Usage</h2>
+          </div>
         </div>
-      </div>
-      <div class="ai-usage-approval-summary">
-        <div>
-          <span>{{ 'adminAiUsage.approvals.required' | translate }}</span>
-          <strong>{{ formatInteger(dashboard().approvalRefusal.approvalRequired) }}</strong>
+        <div class="ai-usage-list">
+          @for (agent of agentUsage(); track trackAgent($index, agent)) {
+            <article class="ai-usage-row">
+              <div class="ai-usage-row__main">
+                <h3>{{ agentLabel(agent.agent) }}</h3>
+                <span class="ai-usage-pill">{{ formatCost(agent.estimatedCost) }}</span>
+              </div>
+              <dl class="ai-usage-metrics ai-usage-metrics--compact">
+                <div>
+                  <dt>Calls</dt>
+                  <dd>{{ formatInteger(agent.calls) }}</dd>
+                </div>
+                <div>
+                  <dt>Tokens</dt>
+                  <dd>{{ formatTokens(agent.tokensIn, agent.tokensOut) }}</dd>
+                </div>
+              </dl>
+            </article>
+          } @empty {
+            <p class="ai-usage-empty">No agent usage in this range.</p>
+          }
         </div>
-        <div>
-          <span>{{ 'adminAiUsage.approvals.approvedOrExecuted' | translate }}</span>
-          <strong>{{ formatInteger(dashboard().approvalRefusal.approvedOrExecuted) }}</strong>
-        </div>
-        <div>
-          <span>{{ 'adminAiUsage.approvals.refused' | translate }}</span>
-          <strong>{{ formatInteger(dashboard().approvalRefusal.denied) }}</strong>
-        </div>
-      </div>
-      <div class="ai-usage-status-list">
-        @for (row of dashboard().approvalRefusal.rows; track row.status) {
-          <article>
-            <span>{{ statusLabel(row.status) }}</span>
-            <strong>{{ formatInteger(row.calls) }}</strong>
-            <small>{{ formatPercent(row.share) }} · {{ formatSeconds(row.avgDecisionSeconds) }}</small>
-          </article>
-        }
-      </div>
-    </article>
-  </section>
+      </article>
 
-  <section class="ai-usage-grid ai-usage-grid--two">
-    <article class="glass-card ai-usage-card">
-      <div class="ai-usage-card__head">
-        <div>
-          <p class="ai-usage-eyebrow">{{ 'adminAiUsage.sections.agents' | translate }}</p>
-          <h2>{{ 'adminAiUsage.agents.title' | translate }}</h2>
+      <article class="ai-card ai-usage-card">
+        <div class="ai-usage-card__head">
+          <div>
+            <p class="ai-usage-eyebrow">Assistant capability groups</p>
+            <h2>Skill Usage</h2>
+          </div>
         </div>
-      </div>
-      <div class="ai-usage-list">
-        @for (agent of agentUsage(); track trackAgent($index, agent)) {
-          <article class="ai-usage-row">
-            <div class="ai-usage-row__main">
-              <h3>{{ agentLabel(agent.agent) }}</h3>
-              <span class="ai-usage-pill">{{ formatCost(agent.estimatedCost) }}</span>
-            </div>
-            <dl class="ai-usage-metrics ai-usage-metrics--compact">
-              <div>
-                <dt>{{ 'adminAiUsage.metrics.calls' | translate }}</dt>
-                <dd>{{ formatInteger(agent.calls) }}</dd>
+        <div class="ai-usage-list">
+          @for (skill of skillUsage(); track trackSkill($index, skill)) {
+            <article class="ai-usage-row">
+              <div class="ai-usage-row__main">
+                <h3>{{ skillLabel(skill.skill) }}</h3>
+                <span class="ai-usage-pill">{{ formatCost(skill.estimatedCost) }}</span>
               </div>
-              <div>
-                <dt>{{ 'adminAiUsage.metrics.tokens' | translate }}</dt>
-                <dd>{{ formatTokens(agent.tokensIn, agent.tokensOut) }}</dd>
-              </div>
-            </dl>
-          </article>
-        } @empty {
-          <p class="ai-usage-empty">{{ 'adminAiUsage.agents.empty' | translate }}</p>
-        }
-      </div>
-    </article>
+              <dl class="ai-usage-metrics ai-usage-metrics--compact">
+                <div>
+                  <dt>Calls</dt>
+                  <dd>{{ formatInteger(skill.calls) }}</dd>
+                </div>
+                <div>
+                  <dt>Tokens</dt>
+                  <dd>{{ formatTokens(skill.tokensIn, skill.tokensOut) }}</dd>
+                </div>
+              </dl>
+            </article>
+          } @empty {
+            <p class="ai-usage-empty">No skill usage in this range.</p>
+          }
+        </div>
+      </article>
+    </section>
 
-    <article class="glass-card ai-usage-card">
-      <div class="ai-usage-card__head">
-        <div>
-          <p class="ai-usage-eyebrow">{{ 'adminAiUsage.sections.skills' | translate }}</p>
-          <h2>{{ 'adminAiUsage.skills.title' | translate }}</h2>
+    <section class="ai-usage-grid ai-usage-grid--two">
+      <article class="ai-card ai-usage-card">
+        <div class="ai-usage-card__head">
+          <div>
+            <p class="ai-usage-eyebrow">Single completion events</p>
+            <h2>Most Expensive OVH Calls</h2>
+          </div>
         </div>
-      </div>
-      <div class="ai-usage-list">
-        @for (skill of skillUsage(); track trackSkill($index, skill)) {
-          <article class="ai-usage-row">
-            <div class="ai-usage-row__main">
-              <h3>{{ skillLabel(skill.skill) }}</h3>
-              <span class="ai-usage-pill">{{ formatCost(skill.estimatedCost) }}</span>
-            </div>
-            <dl class="ai-usage-metrics ai-usage-metrics--compact">
-              <div>
-                <dt>{{ 'adminAiUsage.metrics.calls' | translate }}</dt>
-                <dd>{{ formatInteger(skill.calls) }}</dd>
+        <div class="ai-usage-list">
+          @for (call of topExpensiveCalls(); track trackTopCall($index, call)) {
+            <article class="ai-usage-row">
+              <div class="ai-usage-row__main">
+                <div>
+                  <h3>{{ purposeLabel(call.purpose) }}</h3>
+                  <p>{{ call.userName }} · {{ formatDateTime(call.createdAt) }}</p>
+                </div>
+                <span [ngClass]="modelBadgeClass(call.model)">{{ modelLabel(call.model) }}</span>
               </div>
-              <div>
-                <dt>{{ 'adminAiUsage.metrics.tokens' | translate }}</dt>
-                <dd>{{ formatTokens(skill.tokensIn, skill.tokensOut) }}</dd>
-              </div>
-            </dl>
-          </article>
-        } @empty {
-          <p class="ai-usage-empty">{{ 'adminAiUsage.skills.empty' | translate }}</p>
-        }
-      </div>
-    </article>
-  </section>
+              <dl class="ai-usage-metrics ai-usage-metrics--compact">
+                <div>
+                  <dt>Tokens</dt>
+                  <dd>{{ formatTokens(call.tokensIn, call.tokensOut) }}</dd>
+                </div>
+                <div>
+                  <dt>Cost</dt>
+                  <dd>{{ formatCost(call.estimatedCost) }}</dd>
+                </div>
+              </dl>
+            </article>
+          } @empty {
+            <p class="ai-usage-empty">No priced OVH calls in this range.</p>
+          }
+        </div>
+      </article>
 
-  <section class="ai-usage-grid ai-usage-grid--two">
-    <article class="glass-card ai-usage-card">
-      <div class="ai-usage-card__head">
-        <div>
-          <p class="ai-usage-eyebrow">{{ 'adminAiUsage.sections.expensive' | translate }}</p>
-          <h2>{{ 'adminAiUsage.topCalls.title' | translate }}</h2>
+      <article class="ai-card ai-usage-card">
+        <div class="ai-usage-card__head">
+          <div>
+            <p class="ai-usage-eyebrow">Data quality</p>
+            <h2>Log Coverage</h2>
+          </div>
         </div>
-      </div>
-      <div class="ai-usage-list">
-        @for (call of topExpensiveCalls(); track trackTopCall($index, call)) {
-          <article class="ai-usage-row">
-            <div class="ai-usage-row__main">
-              <div>
-                <h3>{{ purposeLabelKey(call.purpose) | translate: purposeParams(call.purpose) }}</h3>
-                <p>{{ call.userName }} · {{ formatDateTime(call.createdAt) }}</p>
-              </div>
-              <span [ngClass]="modelBadgeClass(call.model)">{{ modelLabel(call.model) }}</span>
-            </div>
-            <dl class="ai-usage-metrics ai-usage-metrics--compact">
-              <div>
-                <dt>{{ 'adminAiUsage.metrics.tokens' | translate }}</dt>
-                <dd>{{ formatTokens(call.tokensIn, call.tokensOut) }}</dd>
-              </div>
-              <div>
-                <dt>{{ 'adminAiUsage.metrics.cost' | translate }}</dt>
-                <dd>{{ formatCost(call.estimatedCost) }}</dd>
-              </div>
-            </dl>
-          </article>
-        } @empty {
-          <p class="ai-usage-empty">{{ 'adminAiUsage.topCalls.empty' | translate }}</p>
-        }
-      </div>
-    </article>
-
-    <article class="glass-card ai-usage-card">
-      <div class="ai-usage-card__head">
-        <div>
-          <p class="ai-usage-eyebrow">{{ 'adminAiUsage.sections.coverage' | translate }}</p>
-          <h2>{{ 'adminAiUsage.coverage.title' | translate }}</h2>
-        </div>
-      </div>
-      <dl class="ai-usage-metrics ai-usage-metrics--coverage">
-        <div>
-          <dt>{{ 'adminAiUsage.coverage.messages' | translate }}</dt>
-          <dd>{{ formatInteger(dashboard().sourceCoverage.rowCoverage.assistantMessagesScanned) }}</dd>
-        </div>
-        <div>
-          <dt>{{ 'adminAiUsage.coverage.toolCalls' | translate }}</dt>
-          <dd>{{ formatInteger(dashboard().sourceCoverage.rowCoverage.assistantToolCallsScanned) }}</dd>
-        </div>
-        <div>
-          <dt>{{ 'adminAiUsage.coverage.missingModel' | translate }}</dt>
-          <dd>{{ formatInteger(dashboard().sourceCoverage.rowCoverage.messagesWithoutModel) }}</dd>
-        </div>
-        <div>
-          <dt>{{ 'adminAiUsage.coverage.missingPurpose' | translate }}</dt>
-          <dd>{{ formatInteger(dashboard().sourceCoverage.rowCoverage.messagesWithoutPurpose) }}</dd>
-        </div>
-        <div>
-          <dt>{{ 'adminAiUsage.coverage.missingTokens' | translate }}</dt>
-          <dd>{{ formatInteger(dashboard().sourceCoverage.rowCoverage.messagesWithoutTokens) }}</dd>
-        </div>
-      </dl>
-    </article>
-  </section>
+        <dl class="ai-usage-metrics ai-usage-metrics--coverage">
+          <div>
+            <dt>Messages scanned</dt>
+            <dd>{{ formatInteger(dashboard().sourceCoverage.rowCoverage.assistantMessagesScanned) }}</dd>
+          </div>
+          <div>
+            <dt>Tool calls scanned</dt>
+            <dd>{{ formatInteger(dashboard().sourceCoverage.rowCoverage.assistantToolCallsScanned) }}</dd>
+          </div>
+          <div>
+            <dt>Missing model</dt>
+            <dd>{{ formatInteger(dashboard().sourceCoverage.rowCoverage.messagesWithoutModel) }}</dd>
+          </div>
+          <div>
+            <dt>Missing task</dt>
+            <dd>{{ formatInteger(dashboard().sourceCoverage.rowCoverage.messagesWithoutPurpose) }}</dd>
+          </div>
+          <div>
+            <dt>Missing tokens</dt>
+            <dd>{{ formatInteger(dashboard().sourceCoverage.rowCoverage.messagesWithoutTokens) }}</dd>
+          </div>
+        </dl>
+      </article>
+    </section>
+  }
 </div>

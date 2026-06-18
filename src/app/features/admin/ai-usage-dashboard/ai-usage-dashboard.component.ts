@@ -9,12 +9,13 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Subject, catchError, finalize, map, of, switchMap, tap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { distinctUntilChanged, startWith } from 'rxjs/operators';
 
-import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 import { AdminAiUsageService } from '../../../core/services/admin-ai-usage.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { User, UserRole } from '../../../core/models/auth.model';
 import {
   AdminAiUsageAgentMetric,
   AdminAiUsageDashboard,
@@ -29,12 +30,12 @@ import {
 
 interface RangeOption {
   value: AdminAiUsageRange;
-  labelKey: string;
+  label: string;
 }
 
 interface KpiCard {
   key: string;
-  labelKey: string;
+  label: string;
   value: string;
   hint: string;
 }
@@ -48,69 +49,57 @@ interface CostShareSegment {
 }
 
 interface PurposeCopy {
-  labelKey: string;
-  descriptionKey: string;
+  label: string;
+  description: string;
 }
+
+const ADMIN_OWNER_EMAIL = 'ala.khliifa@gmail.com';
 
 const PURPOSE_COPY: Record<string, PurposeCopy> = {
   assistant_tool_selection: {
-    labelKey: 'adminAiUsage.purposeLabels.toolSelection',
-    descriptionKey: 'adminAiUsage.purposeDescriptions.toolSelection',
+    label: 'Tool selection',
+    description: 'Chooses which garage tool should run before the assistant replies.',
   },
   assistant_compose: {
-    labelKey: 'adminAiUsage.purposeLabels.assistantResponse',
-    descriptionKey: 'adminAiUsage.purposeDescriptions.assistantResponse',
+    label: 'Assistant response',
+    description: 'Generates the final message shown to the user.',
   },
   intent_classifier: {
-    labelKey: 'adminAiUsage.purposeLabels.intentClassification',
-    descriptionKey: 'adminAiUsage.purposeDescriptions.intentClassification',
+    label: 'Intent classification',
+    description: 'Classifies the user request before routing it to the assistant flow.',
   },
   conversation_title: {
-    labelKey: 'adminAiUsage.purposeLabels.titleGeneration',
-    descriptionKey: 'adminAiUsage.purposeDescriptions.titleGeneration',
+    label: 'Title generation',
+    description: 'Creates short conversation titles for the chat history.',
   },
   'agent_runner:analytics-agent': {
-    labelKey: 'adminAiUsage.purposeLabels.analyticsAgent',
-    descriptionKey: 'adminAiUsage.purposeDescriptions.analyticsAgent',
+    label: 'Analytics agent',
+    description: 'Runs reporting and analysis requests through the LLM brain.',
   },
   'agent_runner:communications-agent': {
-    labelKey: 'adminAiUsage.purposeLabels.communicationsAgent',
-    descriptionKey: 'adminAiUsage.purposeDescriptions.communicationsAgent',
+    label: 'Communications agent',
+    description: 'Drafts or prepares customer communication workflows.',
   },
   'agent_runner:inventory-agent': {
-    labelKey: 'adminAiUsage.purposeLabels.inventoryAgent',
-    descriptionKey: 'adminAiUsage.purposeDescriptions.inventoryAgent',
+    label: 'Inventory agent',
+    description: 'Handles inventory-related reasoning and tool planning.',
   },
   'agent_runner:finance-agent': {
-    labelKey: 'adminAiUsage.purposeLabels.financeAgent',
-    descriptionKey: 'adminAiUsage.purposeDescriptions.financeAgent',
+    label: 'Finance agent',
+    description: 'Handles invoicing, payment, and financial reasoning tasks.',
   },
   'agent_runner:growth-agent': {
-    labelKey: 'adminAiUsage.purposeLabels.growthAgent',
-    descriptionKey: 'adminAiUsage.purposeDescriptions.growthAgent',
+    label: 'Growth agent',
+    description: 'Handles customer growth and follow-up reasoning tasks.',
   },
   'agent_runner:scheduling-agent': {
-    labelKey: 'adminAiUsage.purposeLabels.schedulingAgent',
-    descriptionKey: 'adminAiUsage.purposeDescriptions.schedulingAgent',
+    label: 'Scheduling agent',
+    description: 'Handles calendar and booking reasoning tasks.',
   },
   unknown: {
-    labelKey: 'adminAiUsage.purposeLabels.unknown',
-    descriptionKey: 'adminAiUsage.purposeDescriptions.unknown',
+    label: 'Unlabeled AI task',
+    description: 'Stored message without a recognized task label.',
   },
-};
-
-const PURPOSE_LABEL_TEXT: Record<string, string> = {
-  assistant_tool_selection: 'Tool selection',
-  assistant_compose: 'Assistant response',
-  intent_classifier: 'Intent classification',
-  conversation_title: 'Title generation',
-  'agent_runner:analytics-agent': 'Analytics agent',
-  'agent_runner:communications-agent': 'Communications agent',
-  'agent_runner:inventory-agent': 'Inventory agent',
-  'agent_runner:finance-agent': 'Finance agent',
-  'agent_runner:growth-agent': 'Growth agent',
-  'agent_runner:scheduling-agent': 'Scheduling agent',
-  unknown: 'Unknown AI task',
 };
 
 const SHARE_COLORS = ['#f97316', '#2563eb', '#16a34a', '#9333ea', '#0f766e', '#64748b'];
@@ -118,31 +107,43 @@ const SHARE_COLORS = ['#f97316', '#2563eb', '#16a34a', '#9333ea', '#0f766e', '#6
 @Component({
   selector: 'app-ai-usage-dashboard',
   standalone: true,
-  imports: [CommonModule, TranslatePipe],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './ai-usage-dashboard.component.html',
   styleUrl: './ai-usage-dashboard.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AiUsageDashboardComponent implements OnInit {
   private readonly usageService = inject(AdminAiUsageService);
+  private readonly authService = inject(AuthService);
+  private readonly formBuilder = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
   private readonly rangeTrigger = new Subject<AdminAiUsageRange>();
+  private usageStreamStarted = false;
+
+  readonly adminEmail = ADMIN_OWNER_EMAIL;
+  readonly loginForm = this.formBuilder.group({
+    email: [ADMIN_OWNER_EMAIL, [Validators.required, Validators.email]],
+    password: ['', [Validators.required]],
+  });
 
   readonly ranges: readonly RangeOption[] = [
-    { value: 'today', labelKey: 'adminAiUsage.ranges.today' },
-    { value: 'yesterday', labelKey: 'adminAiUsage.ranges.yesterday' },
-    { value: 'last_week', labelKey: 'adminAiUsage.ranges.lastWeek' },
-    { value: 'this_month', labelKey: 'adminAiUsage.ranges.thisMonth' },
-    { value: 'last_month', labelKey: 'adminAiUsage.ranges.lastMonth' },
-    { value: 'this_quarter', labelKey: 'adminAiUsage.ranges.thisQuarter' },
-    { value: 'last_quarter', labelKey: 'adminAiUsage.ranges.lastQuarter' },
-    { value: 'this_year', labelKey: 'adminAiUsage.ranges.thisYear' },
-    { value: 'last_year', labelKey: 'adminAiUsage.ranges.lastYear' },
+    { value: 'today', label: 'Today' },
+    { value: 'yesterday', label: 'Yesterday' },
+    { value: 'last_week', label: 'Last week' },
+    { value: 'this_month', label: 'This month' },
+    { value: 'last_month', label: 'Last month' },
+    { value: 'this_quarter', label: 'This quarter' },
+    { value: 'last_quarter', label: 'Last quarter' },
+    { value: 'this_year', label: 'This year' },
+    { value: 'last_year', label: 'Last year' },
   ];
 
   readonly selectedRange = signal<AdminAiUsageRange>('today');
+  readonly isAuthenticatedOwner = signal(false);
+  readonly isLoginLoading = signal(false);
+  readonly loginError = signal<string | null>(null);
   readonly isLoading = signal(false);
-  readonly errorKey = signal<string | null>(null);
+  readonly errorMessage = signal<string | null>(null);
   readonly dashboard = signal<AdminAiUsageDashboard>(this.createEmptyDashboard('today'));
 
   readonly summary = computed(() => this.dashboard().summary);
@@ -175,27 +176,27 @@ export class AiUsageDashboardComponent implements OnInit {
     return [
       {
         key: 'spend',
-        labelKey: 'adminAiUsage.kpis.spend',
+        label: 'AI spend',
         value: this.formatCost(summary.estimatedCost),
-        hint: 'adminAiUsage.kpis.spendHint',
+        hint: 'Estimated OVH cost for the selected range',
       },
       {
         key: 'calls',
-        labelKey: 'adminAiUsage.kpis.ovhCalls',
+        label: 'OVH calls',
         value: this.formatInteger(summary.assistantMessages),
-        hint: 'adminAiUsage.kpis.ovhCallsHint',
+        hint: 'Completed assistant message records',
       },
       {
         key: 'tokens',
-        labelKey: 'adminAiUsage.kpis.inputOutputTokens',
+        label: 'Input / output tokens',
         value: `${this.formatCompact(summary.tokensIn)} / ${this.formatCompact(summary.tokensOut)}`,
-        hint: 'adminAiUsage.kpis.inputOutputTokensHint',
+        hint: `${this.formatCompact(summary.tokensIn + summary.tokensOut)} total tokens`,
       },
       {
         key: 'approvals',
-        labelKey: 'adminAiUsage.kpis.approvalRequired',
+        label: 'Approvals requested',
         value: this.formatInteger(this.dashboard().approvalRefusal.approvalRequired),
-        hint: 'adminAiUsage.kpis.approvalRequiredHint',
+        hint: 'Tool calls that required user confirmation',
       },
     ];
   });
@@ -252,21 +253,56 @@ export class AiUsageDashboardComponent implements OnInit {
   readonly updatedAt = computed(() => this.formatDateTime(this.dashboard().generatedAt));
 
   ngOnInit(): void {
-    this.rangeTrigger
+    const currentUser = this.authService.getCurrentUser();
+    if (this.isAllowedOwner(currentUser)) {
+      this.isAuthenticatedOwner.set(true);
+      this.startUsageStream();
+    }
+  }
+
+  submitLogin(): void {
+    this.loginError.set(null);
+
+    if (this.loginForm.invalid) {
+      this.loginForm.markAllAsTouched();
+      return;
+    }
+
+    const email = (this.loginForm.value.email ?? '').trim();
+    const password = this.loginForm.value.password ?? '';
+
+    this.isLoginLoading.set(true);
+    this.authService
+      .login({ emailOrUsername: email, password })
       .pipe(
-        startWith(this.selectedRange()),
-        distinctUntilChanged(),
-        tap(() => {
-          this.isLoading.set(true);
-          this.errorKey.set(null);
-        }),
-        switchMap((range) => this.loadRange(range)),
+        finalize(() => this.isLoginLoading.set(false)),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe((data) => {
-        this.dashboard.set(data);
-        this.isLoading.set(false);
+      .subscribe({
+        next: (response) => {
+          if (!this.isAllowedOwner(response.user)) {
+            this.authService.logout().subscribe();
+            this.isAuthenticatedOwner.set(false);
+            this.loginError.set('This dashboard is restricted to the configured owner account.');
+            return;
+          }
+
+          this.isAuthenticatedOwner.set(true);
+          this.startUsageStream();
+          this.rangeTrigger.next(this.selectedRange());
+        },
+        error: () => {
+          this.loginError.set('Invalid admin email or password.');
+        },
       });
+  }
+
+  logout(): void {
+    this.authService.logout().subscribe(() => {
+      this.isAuthenticatedOwner.set(false);
+      this.dashboard.set(this.createEmptyDashboard(this.selectedRange()));
+      this.loginForm.patchValue({ password: '' });
+    });
   }
 
   selectRange(range: AdminAiUsageRange): void {
@@ -292,21 +328,11 @@ export class AiUsageDashboardComponent implements OnInit {
   }
 
   purposeLabel(purpose: string): string {
-    return PURPOSE_LABEL_TEXT[purpose] ?? this.humanizeIdentifier(purpose);
+    return PURPOSE_COPY[purpose]?.label ?? this.humanizeIdentifier(purpose);
   }
 
-  purposeLabelKey(purpose: string): string {
-    return (PURPOSE_COPY[purpose] ?? PURPOSE_COPY['unknown']).labelKey;
-  }
-
-  purposeDescriptionKey(purpose: string): string {
-    return (PURPOSE_COPY[purpose] ?? PURPOSE_COPY['unknown']).descriptionKey;
-  }
-
-  purposeParams(purpose: string): Record<string, string> {
-    return {
-      purpose: this.humanizeIdentifier(purpose),
-    };
+  purposeDescription(purpose: string): string {
+    return PURPOSE_COPY[purpose]?.description ?? `Stored AI call for ${this.humanizeIdentifier(purpose)}.`;
   }
 
   modelBadgeClass(model: string | null): string {
@@ -330,6 +356,10 @@ export class AiUsageDashboardComponent implements OnInit {
 
   toolLabel(tool: string): string {
     return this.humanizeIdentifier(tool);
+  }
+
+  toolOutcomeLabel(tool: AdminAiUsageToolMetric): string {
+    return `${this.formatInteger(tool.approved)} approved, ${this.formatInteger(tool.denied)} refused, ${this.formatInteger(tool.failed)} failed`;
   }
 
   skillLabel(skill: string): string {
@@ -446,21 +476,56 @@ export class AiUsageDashboardComponent implements OnInit {
   trackTopCall = (_: number, row: AdminAiUsageTopCall) => row.messageId;
   trackShare = (_: number, row: CostShareSegment) => row.key;
   trackKpi = (_: number, row: KpiCard) => row.key;
+  trackRange = (_: number, row: RangeOption) => row.value;
+
+  private startUsageStream(): void {
+    if (this.usageStreamStarted) {
+      return;
+    }
+
+    this.usageStreamStarted = true;
+    this.rangeTrigger
+      .pipe(
+        tap(() => {
+          this.isLoading.set(true);
+          this.errorMessage.set(null);
+        }),
+        switchMap((range) => this.loadRange(range)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((data) => {
+        this.dashboard.set(data);
+        this.isLoading.set(false);
+      });
+
+    this.rangeTrigger.next(this.selectedRange());
+  }
 
   private loadRange(range: AdminAiUsageRange) {
     return this.usageService.getUsage(range).pipe(
       map((data) => data || this.createEmptyDashboard(range)),
       catchError((error: unknown) => {
-        if (error instanceof HttpErrorResponse && error.status === 404) {
-          this.errorKey.set('adminAiUsage.errors.notImplemented');
+        if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
+          this.authService.forceLogout();
+          this.isAuthenticatedOwner.set(false);
+          this.loginError.set('Your admin session expired or is not allowed for this dashboard.');
+        } else if (error instanceof HttpErrorResponse && error.status === 404) {
+          this.errorMessage.set('The admin AI usage endpoint is not available on this server.');
         } else {
-          this.errorKey.set('adminAiUsage.errors.loadFailed');
+          this.errorMessage.set('Could not load AI usage analytics. Try refreshing.');
         }
         return of(this.createEmptyDashboard(range));
       }),
       finalize(() => {
         this.isLoading.set(false);
       }),
+    );
+  }
+
+  private isAllowedOwner(user: User | null): boolean {
+    return (
+      user?.role === UserRole.OWNER &&
+      (user.email ?? '').trim().toLowerCase() === ADMIN_OWNER_EMAIL
     );
   }
 

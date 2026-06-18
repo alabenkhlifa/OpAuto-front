@@ -1,14 +1,33 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { AiUsageDashboardComponent } from './ai-usage-dashboard.component';
 import { AdminAiUsageService } from '../../../core/services/admin-ai-usage.service';
-import { TranslationService } from '../../../core/services/translation.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { User, UserRole } from '../../../core/models/auth.model';
 import { AdminAiUsageDashboard, AdminAiUsageRange } from '../../../core/models/admin-ai-usage.model';
 
 interface SetupOptions {
   serviceError?: boolean;
+  currentUser?: User | null;
 }
+
+const ownerUser: User = {
+  id: 'owner-1',
+  email: 'ala.khliifa@gmail.com',
+  name: 'Ala Khliifa',
+  role: UserRole.OWNER,
+  garageName: 'AutoTech Tunisia',
+  isActive: true,
+  createdAt: new Date('2026-01-01T00:00:00.000Z'),
+  updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+};
+
+const otherOwnerUser: User = {
+  ...ownerUser,
+  id: 'owner-2',
+  email: 'other@example.com',
+};
 
 function makePayload(range: AdminAiUsageRange): AdminAiUsageDashboard {
   return {
@@ -177,20 +196,26 @@ describe('AiUsageDashboardComponent', () => {
         return of(makePayload(range));
       }),
     };
+    const authService = {
+      getCurrentUser: jasmine.createSpy('getCurrentUser').and.returnValue(opts.currentUser ?? null),
+      login: jasmine.createSpy('login').and.returnValue(
+        of({
+          user: ownerUser,
+          token: 'access-token',
+          refreshToken: 'refresh-token',
+          expiresIn: 3600,
+        }),
+      ),
+      logout: jasmine.createSpy('logout').and.returnValue(of(true)),
+      forceLogout: jasmine.createSpy('forceLogout'),
+    };
 
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       imports: [AiUsageDashboardComponent],
       providers: [
         { provide: AdminAiUsageService, useValue: dashboardService },
-        {
-          provide: TranslationService,
-          useValue: {
-            instant: (key: string) => key,
-            getCurrentLanguage: () => 'en',
-            translations$: new BehaviorSubject({}),
-          },
-        },
+        { provide: AuthService, useValue: authService },
       ],
     }).compileComponents();
 
@@ -199,19 +224,78 @@ describe('AiUsageDashboardComponent', () => {
     return fixture;
   }
 
-  it('loads initial dashboard data for today', () => {
+  it('renders the standalone login before loading dashboard data', () => {
     const fixture = setup();
     const component = fixture.componentInstance;
     const svc = TestBed.inject(AdminAiUsageService) as any;
 
+    expect(component.isAuthenticatedOwner()).toBeFalse();
+    expect(svc.getUsage).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.textContent).toContain('Standalone login');
+  });
+
+  it('loads dashboard data after the configured owner signs in', () => {
+    const fixture = setup();
+    const component = fixture.componentInstance;
+    const svc = TestBed.inject(AdminAiUsageService) as any;
+    const auth = TestBed.inject(AuthService) as any;
+
+    component.loginForm.patchValue({
+      email: 'ala.khliifa@gmail.com',
+      password: 'password123',
+    });
+    component.submitLogin();
+    fixture.detectChanges();
+
+    expect(auth.login).toHaveBeenCalledWith({
+      emailOrUsername: 'ala.khliifa@gmail.com',
+      password: 'password123',
+    });
+    expect(component.isAuthenticatedOwner()).toBeTrue();
     expect(svc.getUsage).toHaveBeenCalledWith('today');
     expect(component.summary().tokensIn + component.summary().tokensOut).toBe(3600);
+    expect(fixture.nativeElement.textContent).toContain('AI Task Usage');
+  });
+
+  it('rejects an authenticated owner when the email is not configured for this dashboard', () => {
+    const fixture = setup();
+    const component = fixture.componentInstance;
+    const auth = TestBed.inject(AuthService) as any;
+    const svc = TestBed.inject(AdminAiUsageService) as any;
+
+    auth.login.and.returnValue(
+      of({
+        user: otherOwnerUser,
+        token: 'access-token',
+        refreshToken: 'refresh-token',
+        expiresIn: 3600,
+      }),
+    );
+    component.loginForm.patchValue({
+      email: 'other@example.com',
+      password: 'password123',
+    });
+    component.submitLogin();
+
+    expect(component.isAuthenticatedOwner()).toBeFalse();
+    expect(component.loginError()).toBe('This dashboard is restricted to the configured owner account.');
+    expect(auth.logout).toHaveBeenCalled();
+    expect(svc.getUsage).not.toHaveBeenCalled();
+  });
+
+  it('loads initial dashboard data when the configured owner session already exists', () => {
+    const fixture = setup({ currentUser: ownerUser });
+    const component = fixture.componentInstance;
+    const svc = TestBed.inject(AdminAiUsageService) as any;
+
+    expect(component.isAuthenticatedOwner()).toBeTrue();
+    expect(svc.getUsage).toHaveBeenCalledWith('today');
     expect(component.hasUsage()).toBeTrue();
     expect(component.userUsage()[0].userName).toBe('Ala Khliifa');
   });
 
   it('sorts AI tasks by estimated cost for display', () => {
-    const fixture = setup();
+    const fixture = setup({ currentUser: ownerUser });
     const tasks = fixture.componentInstance.taskUsage();
 
     expect(tasks.length).toBe(2);
@@ -219,20 +303,19 @@ describe('AiUsageDashboardComponent', () => {
     expect(tasks[1].purpose).toBe('unknown-task');
   });
 
-  it('maps known purpose slugs to friendly labels and falls back for unknown', () => {
-    const fixture = setup();
+  it('maps known purpose slugs to friendly copy and falls back for unknown tasks', () => {
+    const fixture = setup({ currentUser: ownerUser });
     const component = fixture.componentInstance;
 
-    expect(component.purposeLabelKey('assistant_tool_selection')).toBe(
-      'adminAiUsage.purposeLabels.toolSelection',
+    expect(component.purposeLabel('assistant_tool_selection')).toBe('Tool selection');
+    expect(component.purposeDescription('assistant_tool_selection')).toContain(
+      'Chooses which garage tool should run',
     );
-    expect(component.purposeLabelKey('unknown-task')).toBe(
-      'adminAiUsage.purposeLabels.unknown',
-    );
+    expect(component.purposeLabel('unknown-task')).toBe('Unknown Task');
   });
 
   it('reloads data when a different range is selected', () => {
-    const fixture = setup();
+    const fixture = setup({ currentUser: ownerUser });
     const component = fixture.componentInstance;
     const svc = TestBed.inject(AdminAiUsageService) as any;
 
@@ -243,11 +326,11 @@ describe('AiUsageDashboardComponent', () => {
   });
 
   it('surfaces load errors and keeps fallback empty data', () => {
-    const fixture = setup({ serviceError: true });
+    const fixture = setup({ currentUser: ownerUser, serviceError: true });
     const component = fixture.componentInstance;
 
     expect(component.isLoading()).toBeFalse();
-    expect(component.errorKey()).toBe('adminAiUsage.errors.loadFailed');
+    expect(component.errorMessage()).toBe('Could not load AI usage analytics. Try refreshing.');
     expect(component.taskUsage().length).toBe(0);
     expect(component.userUsage().length).toBe(0);
   });

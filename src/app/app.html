@@ -1,13 +1,13 @@
-<div class="app-container" [class.sidebar-collapsed]="sidebarService.isCollapsed()" [class.hide-sidebar]="isAuthRoute()">
+<div class="app-container" [class.sidebar-collapsed]="sidebarService.isCollapsed()" [class.hide-sidebar]="isShelllessRoute()">
   <!-- Sidebar Navigation -->
-  @if (!isAuthRoute()) {
+  @if (!isShelllessRoute()) {
     <app-sidebar></app-sidebar>
   }
   
   <!-- Main Content Area -->
-  <main class="main-content" [class.no-sidebar]="isAuthRoute()">
+  <main class="main-content" [class.no-sidebar]="isShelllessRoute()">
     <!-- Top Bar with Notification, Language, User Profile -->
-    @if (!isAuthRoute()) {
+    @if (!isShelllessRoute()) {
       <div class="top-bar">
         <div class="top-bar-spacer"></div>
         <div class="top-bar-actions">
@@ -26,4 +26,6 @@
 <app-toast></app-toast>
 
 <!-- AI Assistant — floating launcher + slide-in panel (every authenticated route) -->
-<app-assistant-launcher></app-assistant-launcher>
+@if (!isShelllessRoute()) {
+  <app-assistant-launcher></app-assistant-launcher>
+}

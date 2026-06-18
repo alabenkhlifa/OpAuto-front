@@ -45,7 +45,8 @@ export class App implements OnInit {
     });
   }
 
-  public isAuthRoute(): boolean {
-    return this.router.url === '/auth' || this.router.url === '/';
+  public isShelllessRoute(): boolean {
+    const path = this.router.url.split('?')[0].split('#')[0];
+    return path === '/auth' || path === '/' || path === '/admin/dashboard' || path === '/admin/dashoard';
   }
 }
