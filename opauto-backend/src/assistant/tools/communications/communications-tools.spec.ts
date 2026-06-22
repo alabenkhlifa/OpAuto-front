@@ -273,7 +273,7 @@ describe('communications tools', () => {
       expect(email.send).toHaveBeenCalledWith({
         to: 'owner@example.com',
         subject: 'Hi',
-        html: undefined,
+        html: '<p>Body</p>',
         text: 'Body',
         attachments: undefined,
       });
@@ -318,6 +318,62 @@ describe('communications tools', () => {
       expect(result).toEqual({
         error: 'missing_body',
         message: expect.stringMatching(/at least one of/i),
+      });
+      expect(email.send).not.toHaveBeenCalled();
+    });
+
+    it('normalizes literal escaped newlines and renders text-only emails as HTML when html is blank', async () => {
+      const email = makeEmailService(
+        jest
+          .fn()
+          .mockResolvedValue({ providerMessageId: 'em_newlines', status: 'queued' }),
+      );
+      const tool = createSendEmailTool({
+        emailService: email,
+        prisma: makePrisma(),
+      });
+
+      await tool.handler(
+        {
+          subject: 'Confirmation de booking',
+          html: '',
+          text:
+            'Bonjour Rayn,\\n\\nNous vous confirmons que votre booking a été confirmée.\\n\\nCordialement,\\nL’équipe',
+        } satisfies SendEmailArgs,
+        ownerCtx,
+      );
+
+      const sendArg = email.send.mock.calls[0][0];
+      expect(sendArg.text).toContain('Bonjour Rayn,\n\nNous vous confirmons');
+      expect(sendArg.text).not.toContain('\\n');
+      expect(sendArg.html).toContain('<p>Bonjour Rayn,</p>');
+      expect(sendArg.html).toContain(
+        '<p>Nous vous confirmons que votre booking a été confirmée.</p>',
+      );
+      expect(sendArg.html).not.toContain('\\n');
+    });
+
+    it('refuses unresolved appointment placeholders before sending', async () => {
+      const email = makeEmailService();
+      const tool = createSendEmailTool({
+        emailService: email,
+        prisma: makePrisma(),
+      });
+
+      const result = await tool.handler(
+        {
+          subject: 'Confirmation de rendez-vous',
+          html:
+            '<p>Bonjour Rayen,<br><br>Nous sommes ravis de vous confirmer votre rendez-vous chez nous le [date] à [heure].<br><br>Cordialement,<br>[Votre nom]</p>',
+          text:
+            'Bonjour Rayen,\n\nNous sommes ravis de vous confirmer votre rendez-vous chez nous le [date] à [heure].\n\nCordialement,\n[Votre nom]',
+        } satisfies SendEmailArgs,
+        ownerCtx,
+      );
+
+      expect(result).toEqual({
+        error: 'unresolved_placeholder',
+        message: expect.stringMatching(/unresolved placeholder/i),
       });
       expect(email.send).not.toHaveBeenCalled();
     });

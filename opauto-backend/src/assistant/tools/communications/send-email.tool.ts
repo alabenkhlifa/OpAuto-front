@@ -40,7 +40,8 @@ export interface SendEmailError {
     | 'send_failed'
     | 'leak_in_body'
     | 'dangling_attachment_reference'
-    | 'no_supporting_reads';
+    | 'no_supporting_reads'
+    | 'unresolved_placeholder';
   message: string;
 }
 
@@ -104,6 +105,52 @@ const ATTACHMENT_INTENT_PATTERNS: RegExp[] = [
 
 function bodyReferencesAttachment(haystack: string): boolean {
   return ATTACHMENT_INTENT_PATTERNS.some((re) => re.test(haystack));
+}
+
+const UNRESOLVED_PLACEHOLDER_PATTERNS: RegExp[] = [
+  /\[(?:date|heure|time|hour|votre\s+nom|your\s+name|nom|name)\]/i,
+  /\{\{\s*(?:date|heure|time|hour|votre\s+nom|your\s+name|nom|name)\s*\}\}/i,
+  /<(?:date|heure|time|hour|votre\s+nom|your\s+name|nom|name)>/i,
+];
+
+function bodyContainsUnresolvedPlaceholder(haystack: string): boolean {
+  return UNRESOLVED_PLACEHOLDER_PATTERNS.some((re) => re.test(haystack));
+}
+
+function normalizeEmailString(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  return value
+    .replace(/\\r\\n/g, '\n')
+    .replace(/\\n/g, '\n')
+    .replace(/\\r/g, '\n');
+}
+
+function blankToUndefined(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  return value.trim().length > 0 ? value : undefined;
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function textToHtml(text: string): string {
+  return text
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter((paragraph) => paragraph.length > 0)
+    .map((paragraph) => {
+      const lines = paragraph
+        .split('\n')
+        .map((line) => escapeHtml(line.trimEnd()))
+        .join('<br>');
+      return `<p>${lines}</p>`;
+    })
+    .join('\n');
 }
 
 /** RFC 4180-ish CSV cell escape: wrap in quotes + double inner quotes. */
@@ -177,6 +224,8 @@ export function createSendEmailTool(deps: {
       'is always resolved server-side from the session — the LLM never specifies it. Use this ' +
       'for "email me the daily report", "send me the at-risk customer list", etc. At least one ' +
       'of `html` or `text` MUST be a non-empty string. ' +
+      'Never use placeholders such as [date], [heure], [time], or [Votre nom]; use real values ' +
+      'from prior tool results or ask for missing details before sending. ' +
       'IMPORTANT: do NOT call this tool with empty `text`/`html` and an empty ' +
       '`attachInvoiceIds` array. If the user asked for data attached or summarised, call the ' +
       'relevant read tool (list_invoices, get_revenue_summary, list_at_risk_customers, etc.) ' +
@@ -239,13 +288,29 @@ export function createSendEmailTool(deps: {
         };
       }
 
+      const subject = normalizeEmailString(args.subject).trim();
+      const text = blankToUndefined(normalizeEmailString(args.text));
+      const providedHtml = blankToUndefined(normalizeEmailString(args.html));
+      const html = providedHtml ?? (text ? textToHtml(text) : undefined);
+
       if (
-        (!args.html || args.html.trim().length === 0) &&
-        (!args.text || args.text.trim().length === 0)
+        (!html || html.trim().length === 0) &&
+        (!text || text.trim().length === 0)
       ) {
         return {
           error: 'missing_body',
           message: 'send_email requires at least one of `html` or `text`.',
+        };
+      }
+
+      const haystack = [subject, html ?? '', text ?? '']
+        .filter((s) => s && s.length > 0)
+        .join('\n');
+      if (bodyContainsUnresolvedPlaceholder(haystack)) {
+        return {
+          error: 'unresolved_placeholder',
+          message:
+            'send_email contains an unresolved placeholder such as [date], [heure], or [Votre nom]. Use real values from tool results or ask for the missing details before sending.',
         };
       }
 
@@ -256,9 +321,6 @@ export function createSendEmailTool(deps: {
       if (deps.getKnownNames) {
         const known = deps.getKnownNames();
         if (known.size > 0) {
-          const haystack = [args.subject, args.html ?? '', args.text ?? '']
-            .filter((s) => s && s.length > 0)
-            .join('\n');
           const leak = detectToolCallLeak(haystack, known);
           if (leak) {
             return {
@@ -280,9 +342,6 @@ export function createSendEmailTool(deps: {
         Array.isArray(args.attachInvoiceIds) &&
         args.attachInvoiceIds.length > 0;
       if (!hasInvoiceAttachments) {
-        const haystack = [args.subject, args.html ?? '', args.text ?? '']
-          .filter((s) => s && s.length > 0)
-          .join('\n');
         if (bodyReferencesAttachment(haystack)) {
           return {
             error: 'dangling_attachment_reference',
@@ -304,9 +363,6 @@ export function createSendEmailTool(deps: {
         ctx.turnState !== undefined &&
         ctx.turnState.readToolCallsSoFar === 0
       ) {
-        const haystack = [args.subject, args.html ?? '', args.text ?? '']
-          .filter((s) => s && s.length > 0)
-          .join('\n');
         if (bodyLooksLikeDataSummary(haystack)) {
           return {
             error: 'no_supporting_reads',
@@ -456,9 +512,9 @@ export function createSendEmailTool(deps: {
       try {
         const result = await deps.emailService.send({
           to: recipient,
-          subject: args.subject,
-          html: args.html,
-          text: args.text,
+          subject,
+          html,
+          text,
           attachments,
         });
 
