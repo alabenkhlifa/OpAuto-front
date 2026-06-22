@@ -6,7 +6,7 @@ import { Customer } from '../../../core/models/customer.model';
 import { CustomerService } from '../../../core/services/customer.service';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 import { TranslationService } from '../../../core/services/translation.service';
-import { Subscription } from 'rxjs';
+import { of, Subscription, switchMap } from 'rxjs';
 import { ToastService } from '../../../shared/services/toast.service';
 
 @Component({
@@ -350,6 +350,7 @@ export class CarRegistrationFormComponent implements OnInit, OnDestroy {
   private translationService = inject(TranslationService);
   private cdr = inject(ChangeDetectorRef);
   private toast = inject(ToastService);
+  private customerService = inject(CustomerService);
 
   @Output() close = new EventEmitter<void>();
   @Output() carRegistered = new EventEmitter<CarWithHistory>();
@@ -476,26 +477,30 @@ export class CarRegistrationFormComponent implements OnInit, OnDestroy {
   get customerEmail() { return this.carForm.get('customerEmail'); }
 
   private setupValidationRules(): void {
+    this.applyCustomerValidationRules(this.customerType?.value);
     this.customerType?.valueChanges.subscribe(type => {
-      if (type === 'existing') {
-        this.customerId?.setValidators([Validators.required]);
-        this.customerName?.clearValidators();
-        this.customerPhone?.clearValidators();
-      } else {
-        this.customerId?.clearValidators();
-        this.customerName?.setValidators([Validators.required]);
-        this.customerPhone?.setValidators([Validators.required, Validators.pattern(/^\+?[0-9\-\s\(\)]+$/)]);
-      }
-      
-      this.customerId?.updateValueAndValidity();
-      this.customerName?.updateValueAndValidity();
-      this.customerPhone?.updateValueAndValidity();
+      this.applyCustomerValidationRules(type);
     });
   }
 
+  private applyCustomerValidationRules(type: 'existing' | 'new'): void {
+    if (type === 'existing') {
+      this.customerId?.setValidators([Validators.required]);
+      this.customerName?.clearValidators();
+      this.customerPhone?.clearValidators();
+    } else {
+      this.customerId?.clearValidators();
+      this.customerName?.setValidators([Validators.required]);
+      this.customerPhone?.setValidators([Validators.required, Validators.pattern(/^\+?[0-9\-\s\(\)]+$/)]);
+    }
+
+    this.customerId?.updateValueAndValidity();
+    this.customerName?.updateValueAndValidity();
+    this.customerPhone?.updateValueAndValidity();
+  }
+
   private loadCustomers(): void {
-    const customerService = inject(CustomerService);
-    customerService.getCustomers().subscribe({
+    this.customerService.getCustomers().subscribe({
       next: (customers) => this.customers.set(customers),
       error: () => this.customers.set([])
     });
@@ -506,27 +511,32 @@ export class CarRegistrationFormComponent implements OnInit, OnDestroy {
       this.isSubmitting.set(true);
       
       const formValue = this.carForm.value;
-      let customerId = formValue.customerId;
+      const customerId$ = formValue.customerType === 'new'
+        ? this.customerService.createCustomer({
+            name: formValue.customerName.trim(),
+            phone: formValue.customerPhone.trim(),
+            email: formValue.customerEmail?.trim() || undefined,
+            preferredContactMethod: 'phone',
+            smsOptIn: true
+          })
+        : of({ id: formValue.customerId });
 
-      // If new customer, create customer first
-      if (formValue.customerType === 'new') {
-        // TODO: Call customer service to create new customer
-        // For now, generate a mock ID
-        customerId = 'customer_' + Date.now();
-      }
+      customerId$.pipe(
+        switchMap(customer => {
+          const newCar: Omit<CarWithHistory, 'id'> = {
+            licensePlate: formValue.licensePlate,
+            make: formValue.make,
+            model: formValue.model,
+            year: formValue.year,
+            customerId: customer.id,
+            currentMileage: formValue.currentMileage,
+            totalServices: 0,
+            serviceStatus: 'up-to-date'
+          };
 
-      const newCar: Omit<CarWithHistory, 'id'> = {
-        licensePlate: formValue.licensePlate,
-        make: formValue.make,
-        model: formValue.model,
-        year: formValue.year,
-        customerId: customerId,
-        currentMileage: formValue.currentMileage,
-        totalServices: 0,
-        serviceStatus: 'up-to-date'
-      };
-
-      this.carService.createCar(newCar).subscribe({
+          return this.carService.createCar(newCar);
+        })
+      ).subscribe({
         next: (car) => {
           this.isSubmitting.set(false);
           this.toast.success('Car registered successfully');
