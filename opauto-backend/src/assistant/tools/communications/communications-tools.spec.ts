@@ -431,6 +431,95 @@ describe('communications tools', () => {
       });
     });
 
+    it('parses stringified attachInvoiceIds arrays before fetching attachments', async () => {
+      const email = makeEmailService(
+        jest
+          .fn()
+          .mockResolvedValue({ providerMessageId: 'em_json', status: 'queued' }),
+      );
+      const rows = [
+        {
+          id: 'inv-1',
+          invoiceNumber: 'INV-001',
+          status: 'OVERDUE',
+          total: 100,
+          dueDate: null,
+          createdAt: new Date('2026-01-01T00:00:00Z'),
+          customer: { firstName: 'A', lastName: 'B' },
+          payments: [],
+        },
+        {
+          id: 'inv-2',
+          invoiceNumber: 'INV-002',
+          status: 'OVERDUE',
+          total: 200,
+          dueDate: null,
+          createdAt: new Date('2026-01-02T00:00:00Z'),
+          customer: { firstName: 'C', lastName: 'D' },
+          payments: [{ amount: 50 }],
+        },
+      ];
+      const prisma = makePrisma(
+        jest.fn(async (query) =>
+          JSON.stringify(query.where.id.in) === JSON.stringify(['inv-1', 'inv-2'])
+            ? rows
+            : [],
+        ),
+      );
+      const tool = createSendEmailTool({ emailService: email, prisma });
+
+      const result = await tool.handler(
+        {
+          subject: 'Overdue invoices',
+          text: 'Please find the overdue invoices attached to this email.',
+          attachInvoiceIds: ['["inv-1", "inv-2"]'],
+        },
+        ownerCtx,
+      );
+
+      expect(prisma.invoice.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            id: { in: ['inv-1', 'inv-2'] },
+            garageId: ownerCtx.garageId,
+          }),
+        }),
+      );
+      const sendArg = email.send.mock.calls[0][0];
+      expect(sendArg.attachments).toHaveLength(1);
+      expect(result).toMatchObject({
+        providerMessageId: 'em_json',
+        attachedInvoiceCount: 2,
+        attachmentFormat: 'csv',
+      });
+    });
+
+    it('refuses to send when requested invoice attachments resolve to no rows', async () => {
+      const email = makeEmailService(
+        jest
+          .fn()
+          .mockResolvedValue({ providerMessageId: 'em_missing', status: 'queued' }),
+      );
+      const prisma = makePrisma(jest.fn().mockResolvedValue([]));
+      const tool = createSendEmailTool({ emailService: email, prisma });
+
+      const result = await tool.handler(
+        {
+          subject: 'Overdue invoices',
+          text: 'Please find the overdue invoices attached to this email.',
+          attachInvoiceIds: ['missing-invoice-id'],
+          attachInvoiceFormat: 'pdf',
+        },
+        ownerCtx,
+      );
+
+      expect(result).toEqual({
+        error: 'missing_attachments',
+        message: expect.stringMatching(/could not find any invoices/i),
+      });
+      expect(email.send).not.toHaveBeenCalled();
+    });
+
     it('produces a PDF attachment when attachInvoiceFormat=pdf', async () => {
       const email = makeEmailService(
         jest

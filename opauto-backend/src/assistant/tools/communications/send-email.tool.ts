@@ -37,6 +37,7 @@ export interface SendEmailError {
   error:
     | 'missing_body'
     | 'missing_recipient'
+    | 'missing_attachments'
     | 'send_failed'
     | 'leak_in_body'
     | 'dangling_attachment_reference'
@@ -151,6 +152,36 @@ function textToHtml(text: string): string {
       return `<p>${lines}</p>`;
     })
     .join('\n');
+}
+
+function normalizeAttachInvoiceIds(ids: string[] | undefined): string[] {
+  if (!ids) return [];
+
+  const normalized: string[] = [];
+  for (const raw of ids) {
+    const value = raw.trim();
+    if (!value) continue;
+
+    if (value.startsWith('[')) {
+      try {
+        const parsed: unknown = JSON.parse(value);
+        if (Array.isArray(parsed)) {
+          for (const item of parsed) {
+            if (typeof item === 'string' && item.trim().length > 0) {
+              normalized.push(item.trim());
+            }
+          }
+          continue;
+        }
+      } catch {
+        // Keep the original value below so the no-match guard can fail safely.
+      }
+    }
+
+    normalized.push(value);
+  }
+
+  return Array.from(new Set(normalized));
 }
 
 /** RFC 4180-ish CSV cell escape: wrap in quotes + double inner quotes. */
@@ -338,9 +369,8 @@ export function createSendEmailTool(deps: {
       // whose body promises an attachment ("please find the report attached")
       // while never populating `attachInvoiceIds`. The recipient gets an
       // empty-looking email referring to a phantom file. Reject before send.
-      const hasInvoiceAttachments =
-        Array.isArray(args.attachInvoiceIds) &&
-        args.attachInvoiceIds.length > 0;
+      const attachInvoiceIds = normalizeAttachInvoiceIds(args.attachInvoiceIds);
+      const hasInvoiceAttachments = attachInvoiceIds.length > 0;
       if (!hasInvoiceAttachments) {
         if (bodyReferencesAttachment(haystack)) {
           return {
@@ -380,7 +410,7 @@ export function createSendEmailTool(deps: {
         | undefined;
       let attachedInvoiceCount = 0;
 
-      if (args.attachInvoiceIds && args.attachInvoiceIds.length > 0) {
+      if (attachInvoiceIds.length > 0) {
         const include =
           format === 'pdf'
             ? {
@@ -411,12 +441,21 @@ export function createSendEmailTool(deps: {
 
         const rows = await deps.prisma.invoice.findMany({
           where: {
-            id: { in: args.attachInvoiceIds },
+            id: { in: attachInvoiceIds },
             garageId: ctx.garageId,
           },
           include: include as any,
           orderBy: { createdAt: 'desc' },
         });
+
+        if (rows.length === 0) {
+          return {
+            error: 'missing_attachments',
+            message:
+              'Could not find any invoices for the requested attachments in this garage. ' +
+              'Call the invoice read tool again and pass real invoice ids before sending.',
+          };
+        }
 
         if (rows.length > 0) {
           if (format === 'pdf') {
