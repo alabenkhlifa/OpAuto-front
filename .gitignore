@@ -52,6 +52,7 @@ src/assets/i18n/*.json.tmp
 
 # Testing / Browser automation
 /.playwright-mcp/
+outputs/
 playwright-report/
 test-results/
 
