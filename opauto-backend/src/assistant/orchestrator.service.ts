@@ -158,7 +158,7 @@ export class OrchestratorService {
     // ToolRegistryService.execute on each successful READ-tier call so write
     // tools (notably send_email) can refuse "no data" composes when no read
     // actually ran.
-    ctx.turnState = { readToolCallsSoFar: 0 };
+    ctx.turnState = { readToolCallsSoFar: 0, userMessage };
 
     try {
       // Emit the conversation id up-front so the client can sync its

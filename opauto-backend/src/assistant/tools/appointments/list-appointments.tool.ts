@@ -1,13 +1,17 @@
-import { AssistantBlastTier } from '@prisma/client';
+import { AppointmentStatus, AssistantBlastTier } from '@prisma/client';
 import { AppointmentsService } from '../../../appointments/appointments.service';
 import { AssistantUserContext, ToolDefinition } from '../../types';
 
 type ListAppointmentsOrder = 'soonest' | 'latest';
+type ListAppointmentsStatus = AppointmentStatus;
 
 interface ListAppointmentsArgs {
   from?: string;
   to?: string;
+  customerId?: string;
+  customerName?: string;
   mechanicId?: string;
+  status?: ListAppointmentsStatus;
   orderBy?: ListAppointmentsOrder;
   limit?: number;
 }
@@ -27,6 +31,80 @@ interface ListedAppointment {
   employeeName: string | null;
 }
 
+const DATE_ONLY_RE = /^\d{4}-\d{2}-\d{2}$/;
+const FAR_FUTURE = '9999-12-31T23:59:59.999Z';
+const FAR_PAST = '1970-01-01T00:00:00.000Z';
+
+function startOfUtcDate(date: string): string {
+  return `${date}T00:00:00.000Z`;
+}
+
+function endOfUtcDate(date: string): string {
+  return `${date}T23:59:59.999Z`;
+}
+
+function normaliseBound(value: string | undefined, edge: 'from' | 'to'): string | undefined {
+  if (!value) return undefined;
+  if (DATE_ONLY_RE.test(value)) {
+    return edge === 'from' ? startOfUtcDate(value) : endOfUtcDate(value);
+  }
+  return value;
+}
+
+function startOfTodayUtc(): string {
+  return startOfUtcDate(new Date().toISOString().slice(0, 10));
+}
+
+function isPastRange(to: string | undefined): boolean {
+  return Boolean(to && new Date(to).getTime() < new Date(startOfTodayUtc()).getTime());
+}
+
+function asksForFuture(message: string | undefined): boolean {
+  return /\b(upcoming|future|later|coming up|booked later|next appointment|next appointments)\b/i.test(
+    message ?? '',
+  );
+}
+
+function normaliseDateRange(
+  args: ListAppointmentsArgs,
+  ctx: AssistantUserContext,
+): { from?: string; to?: string } {
+  let from = normaliseBound(args.from, 'from');
+  let to = normaliseBound(args.to, 'to');
+
+  if (from && !to) {
+    to = FAR_FUTURE;
+  } else if (!from && to) {
+    from = FAR_PAST;
+  }
+
+  if (asksForFuture(ctx.turnState?.userMessage) && isPastRange(to)) {
+    from = startOfTodayUtc();
+    to = FAR_FUTURE;
+  }
+
+  return { from, to };
+}
+
+function normaliseName(value: string): string {
+  return value.trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+function appointmentCustomerName(appointment: any): string {
+  return appointment.customer
+    ? `${appointment.customer.firstName ?? ''} ${appointment.customer.lastName ?? ''}`.trim()
+    : '';
+}
+
+const APPOINTMENT_STATUSES: ListAppointmentsStatus[] = [
+  'SCHEDULED',
+  'CONFIRMED',
+  'IN_PROGRESS',
+  'COMPLETED',
+  'CANCELLED',
+  'NO_SHOW',
+];
+
 export function buildListAppointmentsTool(
   appointmentsService: AppointmentsService,
 ): ToolDefinition<ListAppointmentsArgs, { appointments: ListedAppointment[]; count: number }> {
@@ -34,6 +112,9 @@ export function buildListAppointmentsTool(
     name: 'list_appointments',
     description:
       'List appointments for the current garage in an optional date range. Use this to see scheduled, ongoing, or completed appointments. Optionally filter by mechanic (employeeId). ' +
+      'When the user asks about a named customer, pass customerName from the user prompt or customerId from find_customer; do not run a garage-wide appointment scan for a customer-specific question. ' +
+      'For "upcoming", "later", or "future" appointments, use a from date of today or later; never pass a past year for an upcoming question. ' +
+      'A date-only from/to such as 2026-07-10 covers the full calendar day. ' +
       'IMPORTANT — ORDERING: pass `orderBy: "soonest"` (default) for "next/upcoming/first appointment(s)"; ' +
       '`orderBy: "latest"` for "last/most recent" appointments. Combine with `limit` to answer ' +
       '"first/next/last N appointments" (e.g. "next 3 appointments today" → ' +
@@ -51,9 +132,24 @@ export function buildListAppointmentsTool(
           type: 'string',
           description: 'Inclusive upper bound. Accepts YYYY-MM-DD or full ISO 8601.',
         },
+        customerId: {
+          type: 'string',
+          description:
+            'Optional customer id from find_customer. Use this for customer-specific appointment questions.',
+        },
+        customerName: {
+          type: 'string',
+          description:
+            'Optional customer full or partial name from the user prompt. Use when the user names a customer and no id is available.',
+        },
         mechanicId: {
           type: 'string',
           description: 'Optional employee/mechanic id to filter on.',
+        },
+        status: {
+          type: 'string',
+          enum: APPOINTMENT_STATUSES,
+          description: 'Optional appointment status filter.',
         },
         orderBy: {
           type: 'string',
@@ -72,11 +168,21 @@ export function buildListAppointmentsTool(
       },
     },
     handler: async (args, ctx: AssistantUserContext) => {
-      // findAll only applies a date filter when BOTH from and to are present.
-      const all = await appointmentsService.findAll(ctx.garageId, args.from, args.to);
-      const filtered = args.mechanicId
-        ? all.filter((a: any) => a.employeeId === args.mechanicId)
-        : all;
+      const { from, to } = normaliseDateRange(args, ctx);
+      const all = await appointmentsService.findAll(ctx.garageId, from, to);
+      const requestedCustomerName = args.customerName
+        ? normaliseName(args.customerName)
+        : null;
+      const filtered = all.filter((a: any) => {
+        if (args.customerId && a.customerId !== args.customerId) return false;
+        if (requestedCustomerName) {
+          const actual = normaliseName(appointmentCustomerName(a));
+          if (!actual.includes(requestedCustomerName)) return false;
+        }
+        if (args.mechanicId && a.employeeId !== args.mechanicId) return false;
+        if (args.status && a.status !== args.status) return false;
+        return true;
+      });
       const direction = args.orderBy === 'latest' ? -1 : 1;
       const sorted = [...filtered].sort((a: any, b: any) => {
         const ta = new Date(a.startTime).getTime();
@@ -92,9 +198,7 @@ export function buildListAppointmentsTool(
         startTime: new Date(a.startTime).toISOString(),
         endTime: new Date(a.endTime).toISOString(),
         customerId: a.customerId,
-        customerName: a.customer
-          ? `${a.customer.firstName ?? ''} ${a.customer.lastName ?? ''}`.trim()
-          : '',
+        customerName: appointmentCustomerName(a),
         carId: a.carId,
         carLabel: a.car
           ? `${a.car.make ?? ''} ${a.car.model ?? ''}${a.car.licensePlate ? ` · ${a.car.licensePlate}` : ''}`.trim()

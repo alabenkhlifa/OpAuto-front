@@ -66,6 +66,70 @@ describe('Appointments tools', () => {
       expect(result.appointments.map((a) => a.id)).toEqual(['a2']);
     });
 
+    it('filters by customerId in-memory after fetching', async () => {
+      const findAll = jest.fn().mockResolvedValue([
+        { id: 'a1', title: 't', status: 'SCHEDULED', type: null, startTime: new Date(), endTime: new Date(), customerId: 'c1', carId: 'car1', employeeId: null, customer: { firstName: 'Khaoula', lastName: 'Khelifi' }, car: null, employee: null },
+        { id: 'a2', title: 't', status: 'SCHEDULED', type: null, startTime: new Date(), endTime: new Date(), customerId: 'c2', carId: 'car2', employeeId: null, customer: { firstName: 'Khaoula', lastName: 'Chaabane' }, car: null, employee: null },
+      ]);
+      const tool = buildListAppointmentsTool({ findAll } as any);
+      const result = await tool.handler({ customerId: 'c1' }, ownerCtx);
+      expect(result.appointments.map((a) => a.id)).toEqual(['a1']);
+    });
+
+    it('filters by customerName in-memory after fetching', async () => {
+      const findAll = jest.fn().mockResolvedValue([
+        { id: 'future', title: 't', status: 'SCHEDULED', type: null, startTime: new Date(), endTime: new Date(), customerId: 'c1', carId: 'car1', employeeId: null, customer: { firstName: 'Khaoula', lastName: 'Khelifi' }, car: null, employee: null },
+        { id: 'other', title: 't', status: 'SCHEDULED', type: null, startTime: new Date(), endTime: new Date(), customerId: 'c2', carId: 'car2', employeeId: null, customer: { firstName: 'Mehdi', lastName: 'Gharbi' }, car: null, employee: null },
+      ]);
+      const tool = buildListAppointmentsTool({ findAll } as any);
+      const result = await tool.handler({ customerName: 'khaoula khelifi' }, ownerCtx);
+      expect(result.appointments.map((a) => a.id)).toEqual(['future']);
+    });
+
+    it('expands a date-only same-day range to the full UTC day', async () => {
+      const findAll = jest.fn().mockResolvedValue([]);
+      const tool = buildListAppointmentsTool({ findAll } as any);
+
+      await tool.handler({ from: '2026-07-10', to: '2026-07-10' }, ownerCtx);
+
+      expect(findAll).toHaveBeenCalledWith(
+        'garage-1',
+        '2026-07-10T00:00:00.000Z',
+        '2026-07-10T23:59:59.999Z',
+      );
+    });
+
+    it('supports from-only future ranges for upcoming appointment questions', async () => {
+      const findAll = jest.fn().mockResolvedValue([]);
+      const tool = buildListAppointmentsTool({ findAll } as any);
+
+      await tool.handler({ from: '2026-06-23', orderBy: 'soonest' }, ownerCtx);
+
+      expect(findAll).toHaveBeenCalledWith(
+        'garage-1',
+        '2026-06-23T00:00:00.000Z',
+        '9999-12-31T23:59:59.999Z',
+      );
+    });
+
+    it('corrects stale past ranges only when the user asked for upcoming appointments', async () => {
+      jest.useFakeTimers().setSystemTime(new Date('2026-06-23T12:00:00Z'));
+      const findAll = jest.fn().mockResolvedValue([]);
+      const tool = buildListAppointmentsTool({ findAll } as any);
+
+      await tool.handler(
+        { from: '2024-01-01', to: '2024-12-31', orderBy: 'soonest' },
+        { ...ownerCtx, turnState: { readToolCallsSoFar: 0, userMessage: 'Does Khaoula have upcoming appointments?' } },
+      );
+
+      expect(findAll).toHaveBeenCalledWith(
+        'garage-1',
+        '2026-06-23T00:00:00.000Z',
+        '9999-12-31T23:59:59.999Z',
+      );
+      jest.useRealTimers();
+    });
+
     it('orders by soonest startTime by default', async () => {
       const findAll = jest.fn().mockResolvedValue([
         { id: 'late', title: 't', status: 'SCHEDULED', type: null, startTime: new Date('2026-05-03T10:00:00Z'), endTime: new Date(), customerId: 'c', carId: 'car', employeeId: null, customer: null, car: null, employee: null },
@@ -93,7 +157,15 @@ describe('Appointments tools', () => {
       const registry = new ToolRegistryService();
       registry.register(tool);
       expect(registry.validateArgs('list_appointments', { orderBy: 'random' }).valid).toBe(false);
-      expect(registry.validateArgs('list_appointments', { orderBy: 'soonest', limit: 5 }).valid).toBe(true);
+      expect(
+        registry.validateArgs('list_appointments', {
+          orderBy: 'soonest',
+          limit: 5,
+          customerName: 'Khaoula Khelifi',
+          customerId: 'c1',
+          status: 'SCHEDULED',
+        }).valid,
+      ).toBe(true);
     });
   });
 

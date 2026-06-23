@@ -25,6 +25,7 @@ export interface AssistantUserContext {
    */
   turnState?: {
     readToolCallsSoFar: number;
+    userMessage?: string;
   };
 }
 
