@@ -977,14 +977,16 @@ export class OrchestratorService {
     let out = marker
       ? text.slice((marker.index ?? 0) + marker[0].length)
       : text;
+    const finalAnswerLinePatterns = [
+      /^(?:#+\s*)?Compile (?:the )?(?:daily )?briefing\.?\s*$/i,
+      /^(?:#+\s*)?Summari[sz]e the results in the required format\.?\s*$/i,
+    ];
     const lines = out.split('\n');
-    const briefingLineIndex = lines.findIndex((line) =>
-      /^(?:#+\s*)?Compile (?:the )?(?:daily )?briefing\.?\s*$/i.test(
-        line.trim(),
-      ),
+    const finalAnswerLineIndex = lines.findIndex((line) =>
+      finalAnswerLinePatterns.some((pattern) => pattern.test(line.trim())),
     );
-    if (briefingLineIndex >= 0) {
-      out = lines.slice(briefingLineIndex + 1).join('\n');
+    if (finalAnswerLineIndex >= 0) {
+      out = lines.slice(finalAnswerLineIndex + 1).join('\n');
     }
     out = out.replace(/^(#+\s*)Step\s+\d+\s*:\s*/gim, '$1');
     out = out.replace(/^Step\s+\d+\s*:\s*/gim, '');
@@ -994,6 +996,9 @@ export class OrchestratorService {
   private stripInternalControlMessages(text: string): string {
     return text.replace(
       /(^|\n)\s*(?:[^\w\s"']+(?:\s+|$))*["'\u201c]?Refusing to dispatch another agent\s*[-\u2013\u2014]\s*already invoked\s+\d+\s+time\(s\)\s+this turn\.\s+Compose your final reply from the agent results above\.["'\u201d]?\s*/gi,
+      '$1',
+    ).replace(
+      /(^|\n)\s*(?:[^\w\s"']+(?:\s+|$))*Error:\s*agent_dispatch_capped\.?\s*/gi,
       '$1',
     );
   }

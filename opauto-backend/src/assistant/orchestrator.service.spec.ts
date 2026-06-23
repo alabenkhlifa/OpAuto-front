@@ -1199,6 +1199,47 @@ describe('OrchestratorService', () => {
     });
   });
 
+  it('keeps only the formatted briefing when the model emits required-format process notes', async () => {
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content:
+          '## Analyze the results from the tool calls\n' +
+          'The tools returned revenue, customer, jobs, invoice, risk, and inventory data.\n\n' +
+          '## Calculate the delta in revenue\n' +
+          'The delta is 0%.\n\n' +
+          '## Summarize the results in the required format\n' +
+          '**Revenue**: Today is 0 TND, week-to-date is 0 TND.\n' +
+          '**Customers**: 1 new customer in the last 24 hours.\n' +
+          'Recommended next action: Call at-risk customers.',
+        toolCalls: [],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({ llm });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-1',
+        'Give me a quick morning briefing.',
+        undefined,
+      ),
+    );
+
+    const text = events.find((e) => e.type === 'text');
+    expect(text).toMatchObject({
+      delta: expect.stringContaining('**Revenue**: Today is 0 TND'),
+    });
+    expect(text).toMatchObject({
+      delta: expect.stringContaining('Recommended next action'),
+    });
+    expect(text).not.toMatchObject({
+      delta: expect.stringMatching(
+        /Analyze the results|Calculate the delta|Summarize the results/i,
+      ),
+    });
+  });
+
   it('strips internal agent dispatch cap text while preserving the answer', async () => {
     const llm = makeLlm([
       {
@@ -1228,6 +1269,38 @@ describe('OrchestratorService', () => {
       delta: expect.stringMatching(
         /Refusing to dispatch|dispatch another agent|Compose your final reply/i,
       ),
+    });
+  });
+
+  it('strips agent dispatch capped error text while preserving the answer', async () => {
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content:
+          '\u26a0\ufe0f Error: agent_dispatch_capped.\n' +
+          "This quarter's total revenue is 7,808.21 TND.",
+        toolCalls: [],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({ llm });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-1',
+        'Compare this quarter with last quarter.',
+        undefined,
+      ),
+    );
+
+    const text = events.find((e) => e.type === 'text');
+    expect(text).toMatchObject({
+      delta: expect.stringContaining(
+        "This quarter's total revenue is 7,808.21 TND.",
+      ),
+    });
+    expect(text).not.toMatchObject({
+      delta: expect.stringMatching(/agent_dispatch_capped|Error:/i),
     });
   });
 
