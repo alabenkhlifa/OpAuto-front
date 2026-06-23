@@ -1747,6 +1747,10 @@ describe('OrchestratorService', () => {
           'find_car',
         ]),
       );
+      const firstCall = (llm.complete as jest.Mock).mock.calls[0][0];
+      expect(firstCall.messages[0].content).toContain(
+        'If the user only gives service names like "oil change and filter" without prices, ask for the missing prices',
+      );
     });
 
     it('augments French "envoie-moi un email" → send_email', async () => {

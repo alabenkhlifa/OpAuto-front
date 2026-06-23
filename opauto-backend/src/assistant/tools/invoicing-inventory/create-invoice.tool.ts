@@ -61,7 +61,10 @@ export function buildCreateInvoiceTool(
       'requires the user to type the computed total to confirm. Set ' +
       '_expectedConfirmation to the formatted total you computed from the ' +
       'line items (e.g. "67.83 TND"); the orchestrator validates the user ' +
-      "typed it correctly before executing. Use list_low_stock_parts first " +
+      'typed it correctly before executing. Do NOT call this tool with ' +
+      'placeholder, string-only, or guessed lineItems. If the user has not ' +
+      'provided a quantity and HT unitPrice for each requested service/part, ' +
+      'ask for those missing prices first. Use list_low_stock_parts first ' +
       "if any line uses a partId — issuing the invoice decrements stock " +
       'atomically and will fail with a friendly error on shortage.',
     parameters: {
@@ -99,7 +102,8 @@ export function buildCreateInvoiceTool(
         lineItems: {
           type: 'array',
           minItems: 1,
-          description: 'At least one line is required.',
+          description:
+            'At least one line object is required. Never pass raw strings; ask the user for missing prices before calling this tool.',
           items: {
             type: 'object',
             additionalProperties: false,
