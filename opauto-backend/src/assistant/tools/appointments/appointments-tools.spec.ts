@@ -120,8 +120,51 @@ describe('Appointments tools', () => {
         preferredDate: '2026-05-01T09:00:00Z',
         language: 'en',
       });
+      expect('error' in result).toBe(false);
+      if ('error' in result) return;
       expect(result.slots).toHaveLength(3);
       expect(result.provider).toBe('mock');
+    });
+
+    it('rejects relative date text at schema level', () => {
+      const tool = buildFindAvailableSlotTool({ suggestSchedule: jest.fn() } as any);
+      const registry = new ToolRegistryService();
+      registry.register(tool);
+
+      expect(
+        registry.validateArgs('find_available_slot', {
+          date: 'this Friday',
+          durationMinutes: 120,
+          appointmentType: 'brake-inspection',
+        }).valid,
+      ).toBe(false);
+      expect(
+        registry.validateArgs('find_available_slot', {
+          date: '2026-06-26',
+          durationMinutes: 120,
+          appointmentType: 'brake-inspection',
+        }).valid,
+      ).toBe(true);
+    });
+
+    it('returns invalid_date without calling suggestSchedule for direct invalid-date invocation', async () => {
+      const suggestSchedule = jest.fn();
+      const tool = buildFindAvailableSlotTool({ suggestSchedule } as any);
+
+      const result = await tool.handler(
+        {
+          date: 'this Friday',
+          durationMinutes: 120,
+          appointmentType: 'brake-inspection',
+        },
+        ownerCtx,
+      );
+
+      expect(result).toEqual({
+        error: 'invalid_date',
+        message: expect.stringMatching(/concrete YYYY-MM-DD/i),
+      });
+      expect(suggestSchedule).not.toHaveBeenCalled();
     });
   });
 

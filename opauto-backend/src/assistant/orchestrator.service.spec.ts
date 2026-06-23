@@ -1082,6 +1082,33 @@ describe('OrchestratorService', () => {
       expect(prompt).toMatch(/SELF-SEND/);
     });
 
+    it('forbids refusing because a specialist agent conversation is needed', async () => {
+      const llm = makeLlm([{ provider: 'groq', content: 'ok', toolCalls: [] }]);
+      const agents = {
+        list: jest.fn().mockReturnValue([
+          {
+            name: 'scheduling-agent',
+            description: 'Calendar and appointment specialist.',
+          },
+        ]),
+        run: jest.fn(),
+      };
+      const orchestrator = await makeOrchestrator({ llm, agents });
+
+      await collectEvents(
+        orchestrator.run(
+          ctx,
+          'conv-1',
+          'Find a 2-hour slot this Friday',
+          undefined,
+        ),
+      );
+
+      const prompt = getSystemPrompt(llm);
+      expect(prompt).toMatch(/Never refuse by saying .*requires a conversation/i);
+      expect(prompt).toMatch(/call dispatch_agent/i);
+    });
+
     it('labels STAFF role correctly and omits owner alias', async () => {
       const llm = makeLlm([{ provider: 'groq', content: 'ok', toolCalls: [] }]);
       const orchestrator = await makeOrchestrator({ llm });

@@ -1303,7 +1303,11 @@ export class OrchestratorService {
           `Each agent dispatch costs 3-5× the tokens of a direct call.\n` +
           `- Reserve dispatch_agent for multi-step analyses that genuinely benefit from ` +
           `a private scratchpad (retention reviews, cash-flow forecasts, audits). ` +
-          `If a single tool can answer the question, do not dispatch.`,
+          `If a single tool can answer the question, do not dispatch.\n` +
+          `- Never refuse by saying a request "requires a conversation" with a specialist ` +
+          `agent. If a specialist agent is actually needed, call dispatch_agent. If direct ` +
+          `tools are enough, call the tools directly. If a tool argument is invalid, correct ` +
+          `the argument and retry once or explain the exact missing concrete value.`,
       );
     }
     if (pageContext) {
