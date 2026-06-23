@@ -983,6 +983,7 @@ export class OrchestratorService {
       ctx.turnState?.userMessage,
       successfulToolResults,
     );
+    out = this.ensureDraftOnlyNoSendNotice(out, ctx.turnState?.userMessage);
     out = this.stripReasoningScaffold(out);
     out = this.stripInternalControlMessages(out);
     out = this.stripWarningSymbols(out);
@@ -1066,10 +1067,24 @@ export class OrchestratorService {
         Array.isArray((entry.result as { slots?: unknown[] }).slots) &&
         ((entry.result as { slots?: unknown[] }).slots?.length ?? 0) > 0,
     );
-    if (!hasSlots || !/\bI found available slots\b/i.test(text)) return text;
-    if (/\bdid not create an appointment\b/i.test(text)) return text;
+    if (!hasSlots) return text;
+    if (
+      /\bI found available slots\b/i.test(text) &&
+      /\bdid not create an appointment\b/i.test(text)
+    ) {
+      return text;
+    }
+    const latestSlotResult = [...successfulToolResults]
+      .reverse()
+      .find(
+        (entry) =>
+          entry.toolName === 'find_available_slot' &&
+          Array.isArray((entry.result as { slots?: unknown[] }).slots) &&
+          ((entry.result as { slots?: unknown[] }).slots?.length ?? 0) > 0,
+      )?.result as { slots?: unknown[] } | undefined;
+    if (!latestSlotResult?.slots?.length) return text;
     return (
-      `${text.trim()}\n\n` +
+      `I found available slots:\n${this.formatSlotBullets(latestSlotResult.slots)}\n\n` +
       `I did not create an appointment yet. Please confirm the customer and vehicle, then I can show the approval request.`
     );
   }
@@ -1156,6 +1171,16 @@ export class OrchestratorService {
       `Please review these invoices and follow up with the customers.\n\n` +
       `Regards,`
     );
+  }
+
+  private ensureDraftOnlyNoSendNotice(
+    text: string,
+    userMessage: string | undefined,
+  ): string {
+    if (text.trim().length === 0) return text;
+    if (!this.userAskedForDraftOnly(userMessage)) return text;
+    if (/\bno (?:email|message) was sent\b/i.test(text)) return text;
+    return `No email was sent.\n\n${text.trim()}`;
   }
 
   private stripReasoningScaffold(text: string): string {
@@ -1440,11 +1465,16 @@ export class OrchestratorService {
       out.push('find_customer');
       out.push('get_customer');
     }
+    const asksForReportDownload = this.userAskedForReportDownload(message);
+    if (asksForReportDownload) {
+      out.push('generate_period_report');
+    }
     if (
-      /\b(?:create|make|issue|generate|prepare)\b[\s\S]{0,60}\binvoice\b/i.test(
+      !asksForReportDownload &&
+      (/\b(?:create|make|issue|generate|prepare)\b[\s\S]{0,60}\binvoice\b/i.test(
         message,
       ) ||
-      /\binvoice\b[\s\S]{0,60}\b(?:for|to)\b/i.test(message)
+        /\binvoice\b[\s\S]{0,60}\b(?:for|to)\b/i.test(message))
     ) {
       out.push('create_invoice');
       out.push('find_customer');
@@ -1486,6 +1516,18 @@ export class OrchestratorService {
       {
         kws: ['overdue', 'unpaid', 'late invoice', 'impayé'],
         tools: ['list_overdue_invoices'],
+      },
+      // downloadable reports
+      {
+        kws: [
+          'pdf report',
+          'csv report',
+          'download report',
+          'export report',
+          'generate report',
+          'report for',
+        ],
+        tools: ['generate_period_report'],
       },
       // invoices generic
       { kws: ['invoice', 'facture', 'فاتورة'], tools: ['list_invoices'] },
@@ -2207,6 +2249,17 @@ export class OrchestratorService {
       /\b(?:appointment|checkup|service|slot|rdv|rendez-?vous)\b[\s\S]{0,100}\b(?:book|schedule|create|make|set\s*up|reserve)\b/i.test(
         msg,
       )
+    );
+  }
+
+  private userAskedForReportDownload(userMessage: string | undefined): boolean {
+    const msg = userMessage ?? '';
+    return (
+      /\b(?:generate|download|export|create|prepare)\b[\s\S]{0,100}\b(?:pdf|csv|report)\b/i.test(
+        msg,
+      ) ||
+      /\b(?:pdf|csv)\b[\s\S]{0,80}\breport\b/i.test(msg) ||
+      /\breport\b[\s\S]{0,80}\b(?:pdf|csv|download|export)\b/i.test(msg)
     );
   }
 

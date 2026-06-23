@@ -616,6 +616,31 @@ describe('OrchestratorService', () => {
     });
   });
 
+  it('prepends no-send notice when draft-only text is non-empty', async () => {
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content:
+          'Here is a draft email:\n\nSubject: Overdue invoices\n\nBody:\nPlease review the overdue invoices.',
+        toolCalls: [],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({ llm });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-draft-notice',
+        'Draft an email to myself with the overdue invoices list, but do not send it.',
+        undefined,
+      ),
+    );
+
+    expect(events.find((e) => e.type === 'text')).toMatchObject({
+      delta: expect.stringMatching(/^No email was sent\.\n\nHere is a draft email:/),
+    });
+  });
+
   it('emits an apology when iteration cap is exceeded', async () => {
     const tools = makeTools(['noop']);
     // Always emit a tool call, never a text reply.
@@ -1527,7 +1552,7 @@ describe('OrchestratorService', () => {
       {
         provider: 'groq',
         content:
-          'I found available slots:\n- Tuesday, June 30 at 8:00 AM-8:30 AM with Hichem Sassi',
+          'I was not able to book a checkup. Please provide the vehicle ID.',
         toolCalls: [],
       },
     ]);
@@ -1544,7 +1569,16 @@ describe('OrchestratorService', () => {
 
     const text = events.find((e) => e.type === 'text');
     expect(text).toMatchObject({
+      delta: expect.stringContaining('I found available slots'),
+    });
+    expect(text).toMatchObject({
+      delta: expect.stringContaining('Hichem Sassi'),
+    });
+    expect(text).toMatchObject({
       delta: expect.stringContaining('I did not create an appointment yet'),
+    });
+    expect(text).not.toMatchObject({
+      delta: expect.stringMatching(/vehicle ID|was not able/i),
     });
   });
 
@@ -2110,6 +2144,32 @@ describe('OrchestratorService', () => {
       expect(firstCall.messages[0].content).toContain(
         'If the user only gives service names like "oil change and filter" without prices, ask for the missing prices',
       );
+    });
+
+    it('adds generate_period_report and skips create_invoice for invoice report exports', async () => {
+      const tools = makeTools([
+        'list_invoices',
+        'create_invoice',
+        'generate_period_report',
+      ]);
+      const llm = makeLlm([{ provider: 'groq', content: 'ok', toolCalls: [] }]);
+      const classifier = makeClassifier(['list_invoices']);
+      const orchestrator = await makeOrchestrator({ tools, llm, classifier });
+
+      await collectEvents(
+        orchestrator.run(
+          ctx,
+          'conv-1',
+          'Generate a PDF report for invoices from June 1 2026 to June 23 2026.',
+          undefined,
+        ),
+      );
+
+      const names = toolNamesFromFirstCall(llm);
+      expect(names).toEqual(
+        expect.arrayContaining(['list_invoices', 'generate_period_report']),
+      );
+      expect(names).not.toContain('create_invoice');
     });
 
     it('augments French "envoie-moi un email" → send_email', async () => {
