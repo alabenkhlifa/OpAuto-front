@@ -2255,6 +2255,13 @@ export class OrchestratorService {
     for (const name of this.actionAugmentation(userMessage)) {
       augmented.add(name);
     }
+    if (
+      this.userAskedForServiceHistory(userMessage) &&
+      !this.userAskedForInvoiceData(userMessage)
+    ) {
+      augmented.delete('list_invoices');
+      augmented.delete('list_overdue_invoices');
+    }
 
     // Classifier returned [] (chitchat) — run the deterministic keyword
     // safety net in addition to the action augmenter. The small llama model
@@ -2356,7 +2363,53 @@ export class OrchestratorService {
       out.push('find_car');
       out.push('get_car');
     }
+    if (
+      this.userAskedForCarDetails(message) ||
+      this.userAskedForServiceHistory(message)
+    ) {
+      out.push('find_customer');
+      out.push('get_customer');
+      out.push('find_car');
+      out.push('get_car');
+    }
+    if (this.userAskedForServiceHistory(message)) {
+      out.push('list_appointments');
+    }
     return out;
+  }
+
+  private userAskedForCarDetails(message: string): boolean {
+    return (
+      /\b(?:car|vehicle|auto|voiture|véhicule)\b[\s\S]{0,50}\bdetails?\b/i.test(
+        message,
+      ) ||
+      /\bdetails?\b[\s\S]{0,50}\b(?:car|vehicle|auto|voiture|véhicule)\b/i.test(
+        message,
+      )
+    );
+  }
+
+  private userAskedForServiceHistory(message: string): boolean {
+    return (
+      /\b(?:completed|past|previous|recent|recorded)\s+(?:maintenance|service|repair)\s+(?:jobs?|work|visits?|appointments?|history|records?)\b/i.test(
+        message,
+      ) ||
+      /\b(?:maintenance|service|repair)\s+(?:jobs?|history|records?|visits?|appointments?)\b/i.test(
+        message,
+      ) ||
+      /\b(?:service|repair)\s+history\b/i.test(message) ||
+      /\b(?:jobs?|work)\s+(?:completed|done)\b/i.test(message) ||
+      /\bhistorique\s+(?:d['’]?\s*)?(?:entretien|maintenance|réparation)\b/i.test(
+        message,
+      ) ||
+      /صيانة|إصلاح/.test(message)
+    );
+  }
+
+  private userAskedForInvoiceData(message: string): boolean {
+    return /\b(?:invoice|invoices|facture|factures|payment|payments|paid|unpaid|overdue|quote|credit note|devis|avoir)\b/i.test(
+      message,
+    );
   }
 
   /**

@@ -2970,6 +2970,41 @@ describe('OrchestratorService', () => {
       );
     });
 
+    it('routes completed maintenance job follow-ups to service history tools instead of invoices', async () => {
+      const tools = makeTools([
+        'list_invoices',
+        'find_customer',
+        'get_customer',
+        'find_car',
+        'get_car',
+        'list_appointments',
+      ]);
+      const llm = makeLlm([{ provider: 'groq', content: 'ok', toolCalls: [] }]);
+      const classifier = makeClassifier(['list_invoices']);
+      const orchestrator = await makeOrchestrator({ tools, llm, classifier });
+
+      await collectEvents(
+        orchestrator.run(
+          ctx,
+          'conv-1',
+          'what about completed maintenance jobs?',
+          undefined,
+        ),
+      );
+
+      const names = toolNamesFromFirstCall(llm);
+      expect(names).toEqual(
+        expect.arrayContaining([
+          'find_customer',
+          'get_customer',
+          'find_car',
+          'get_car',
+          'list_appointments',
+        ]),
+      );
+      expect(names).not.toContain('list_invoices');
+    });
+
     it('pairs find_customer with send_sms so the LLM can resolve a recipient by name', async () => {
       const tools = makeTools([
         'list_overdue_invoices',

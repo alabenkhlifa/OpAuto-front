@@ -33,6 +33,16 @@ export interface GetCustomerResult {
     licensePlate: string;
     mileage: number | null;
   }>;
+  recentServiceAppointments: Array<{
+    id: string;
+    title: string;
+    status: string;
+    type: string | null;
+    startTime: string;
+    endTime: string;
+    carId: string;
+    carLabel: string;
+  }>;
   recentInvoices: Array<{
     id: string;
     total: number;
@@ -49,6 +59,20 @@ export interface GetCustomerError {
 
 const RECENT_INVOICE_LIMIT = 5;
 const RECENT_CAR_LIMIT = 5;
+const RECENT_SERVICE_APPOINTMENT_LIMIT = 5;
+
+function toIso(value: unknown): string {
+  if (value instanceof Date) return value.toISOString();
+  return String(value);
+}
+
+function carLabel(car: {
+  make?: string | null;
+  model?: string | null;
+  licensePlate?: string | null;
+}): string {
+  return `${car.make ?? ''} ${car.model ?? ''}${car.licensePlate ? ` - ${car.licensePlate}` : ''}`.trim();
+}
 
 export function createGetCustomerTool(deps: {
   customersService: CustomersService;
@@ -56,7 +80,7 @@ export function createGetCustomerTool(deps: {
   return {
     name: 'get_customer',
     description:
-      'Get a single customer by id, including up to 5 most recent cars and 5 most recent invoices. Returns {error:"not_found"} if the customer does not belong to this garage.',
+      'Get a single customer by id, including up to 5 most recent cars, completed service appointments, and invoices. Completed appointments count as service history; use recentServiceAppointments for completed maintenance/service questions before looking at invoices. Returns {error:"not_found"} if the customer does not belong to this garage.',
     parameters: {
       type: 'object',
       properties: {
@@ -93,6 +117,32 @@ export function createGetCustomerTool(deps: {
             licensePlate: car.licensePlate,
             mileage: car.mileage ?? null,
           }));
+        const carsById = new Map(
+          (customer.cars ?? []).map((car: any) => [car.id, car]),
+        );
+
+        const recentServiceAppointments = (customer.appointments ?? [])
+          .filter((appointment: any) => appointment.status === 'COMPLETED')
+          .slice(0, RECENT_SERVICE_APPOINTMENT_LIMIT)
+          .map((appointment: any) => {
+            const car = carsById.get(appointment.carId) as
+              | {
+                  make?: string | null;
+                  model?: string | null;
+                  licensePlate?: string | null;
+                }
+              | undefined;
+            return {
+              id: appointment.id,
+              title: appointment.title,
+              status: appointment.status,
+              type: appointment.type ?? null,
+              startTime: toIso(appointment.startTime),
+              endTime: toIso(appointment.endTime),
+              carId: appointment.carId,
+              carLabel: car ? carLabel(car) : '',
+            };
+          });
 
         const recentInvoices = (customer.invoices ?? [])
           .slice(0, RECENT_INVOICE_LIMIT)
@@ -100,15 +150,8 @@ export function createGetCustomerTool(deps: {
             id: inv.id,
             total: inv.total,
             status: inv.status,
-            createdAt:
-              inv.createdAt instanceof Date
-                ? inv.createdAt.toISOString()
-                : String(inv.createdAt),
-            paidAt: inv.paidAt
-              ? inv.paidAt instanceof Date
-                ? inv.paidAt.toISOString()
-                : String(inv.paidAt)
-              : null,
+            createdAt: toIso(inv.createdAt),
+            paidAt: inv.paidAt ? toIso(inv.paidAt) : null,
           }));
 
         return {
@@ -130,6 +173,7 @@ export function createGetCustomerTool(deps: {
               ? customer.createdAt.toISOString()
               : String(customer.createdAt),
           cars,
+          recentServiceAppointments,
           recentInvoices,
         };
       } catch (err) {

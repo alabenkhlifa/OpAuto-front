@@ -95,6 +95,26 @@ describe('Customers + Cars tools', () => {
           licensePlate: `123 TUN ${i}`,
           mileage: 1000 * i,
         })),
+        appointments: [
+          {
+            id: 'appt-1',
+            title: 'Brake repair',
+            status: 'COMPLETED',
+            type: 'brake-repair',
+            startTime: fakeNow,
+            endTime: fakeNow,
+            carId: 'car-0',
+          },
+          {
+            id: 'appt-2',
+            title: 'Future service',
+            status: 'SCHEDULED',
+            type: 'oil-change',
+            startTime: fakeNow,
+            endTime: fakeNow,
+            carId: 'car-1',
+          },
+        ],
         invoices: Array.from({ length: 7 }, (_, i) => ({
           id: `inv-${i}`,
           total: 100 * i,
@@ -114,6 +134,18 @@ describe('Customers + Cars tools', () => {
       expect(result.id).toBe('cust-1');
       expect(result.displayName).toBe('Sami B');
       expect(result.cars).toHaveLength(5);
+      expect(result.recentServiceAppointments).toEqual([
+        {
+          id: 'appt-1',
+          title: 'Brake repair',
+          status: 'COMPLETED',
+          type: 'brake-repair',
+          startTime: fakeNow.toISOString(),
+          endTime: fakeNow.toISOString(),
+          carId: 'car-0',
+          carLabel: 'Peugeot 208 - 123 TUN 0',
+        },
+      ]);
       expect(result.recentInvoices).toHaveLength(5);
       expect(result.createdAt).toBe(fakeNow.toISOString());
     });
@@ -421,6 +453,24 @@ describe('Customers + Cars tools', () => {
           createdAt: fakeNow,
           completionDate: fakeNow,
         })),
+        appointments: [
+          {
+            id: 'appt-1',
+            title: 'Brake repair',
+            status: 'COMPLETED',
+            type: 'brake-repair',
+            startTime: fakeNow,
+            endTime: fakeNow,
+          },
+          {
+            id: 'appt-2',
+            title: 'Booked service',
+            status: 'SCHEDULED',
+            type: 'diagnosis',
+            startTime: fakeNow,
+            endTime: fakeNow,
+          },
+        ],
       });
       const tool = createGetCarTool({ carsService: { findOne } as any });
 
@@ -432,6 +482,33 @@ describe('Customers + Cars tools', () => {
       expect(result.plate).toBe('PL 1');
       expect(result.customerName).toBe('Sami B');
       expect(result.recentMaintenanceJobs).toHaveLength(5);
+      expect(result.recentServiceAppointments).toEqual([
+        {
+          id: 'appt-1',
+          title: 'Brake repair',
+          status: 'COMPLETED',
+          type: 'brake-repair',
+          startTime: fakeNow.toISOString(),
+          endTime: fakeNow.toISOString(),
+        },
+      ]);
+      expect(result.serviceHistory).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            source: 'appointment',
+            id: 'appt-1',
+            title: 'Brake repair',
+            type: 'brake-repair',
+            date: fakeNow.toISOString(),
+          }),
+          expect.objectContaining({
+            source: 'maintenance_job',
+            id: 'job-0',
+            title: 'Oil change',
+            date: fakeNow.toISOString(),
+          }),
+        ]),
+      );
       expect(result.lastServiceDate).toBe(fakeNow.toISOString());
     });
 

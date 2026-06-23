@@ -33,6 +33,22 @@ export interface GetCarResult {
     createdAt: string;
     completionDate: string | null;
   }>;
+  recentServiceAppointments: Array<{
+    id: string;
+    title: string;
+    status: string;
+    type: string | null;
+    startTime: string;
+    endTime: string;
+  }>;
+  serviceHistory: Array<{
+    source: 'maintenance_job' | 'appointment';
+    id: string;
+    title: string;
+    status: string;
+    type: string | null;
+    date: string;
+  }>;
 }
 
 export interface GetCarError {
@@ -41,6 +57,17 @@ export interface GetCarError {
 }
 
 const RECENT_JOBS_LIMIT = 5;
+const RECENT_SERVICE_APPOINTMENTS_LIMIT = 5;
+const SERVICE_HISTORY_LIMIT = 10;
+
+function toIso(value: unknown): string {
+  if (value instanceof Date) return value.toISOString();
+  return String(value);
+}
+
+function nullableIso(value: unknown): string | null {
+  return value ? toIso(value) : null;
+}
 
 export function createGetCarTool(deps: {
   carsService: CarsService;
@@ -48,7 +75,7 @@ export function createGetCarTool(deps: {
   return {
     name: 'get_car',
     description:
-      'Get a single car by id, including up to 5 most recent maintenance jobs. Returns {error:"not_found"} if the car does not belong to this garage.',
+      'Get a single car by id, including up to 5 most recent maintenance jobs and completed service appointments. Completed appointments count as service history; do not say there is no completed work if recentServiceAppointments or serviceHistory is non-empty. Returns {error:"not_found"} if the car does not belong to this garage.',
     parameters: {
       type: 'object',
       properties: {
@@ -83,16 +110,45 @@ export function createGetCarTool(deps: {
             id: job.id,
             title: job.title,
             status: job.status,
-            createdAt:
-              job.createdAt instanceof Date
-                ? job.createdAt.toISOString()
-                : String(job.createdAt),
-            completionDate: job.completionDate
-              ? job.completionDate instanceof Date
-                ? job.completionDate.toISOString()
-                : String(job.completionDate)
-              : null,
+            createdAt: toIso(job.createdAt),
+            completionDate: nullableIso(job.completionDate),
           }));
+
+        const recentServiceAppointments = (car.appointments ?? [])
+          .filter((appointment: any) => appointment.status === 'COMPLETED')
+          .slice(0, RECENT_SERVICE_APPOINTMENTS_LIMIT)
+          .map((appointment: any) => ({
+            id: appointment.id,
+            title: appointment.title,
+            status: appointment.status,
+            type: appointment.type ?? null,
+            startTime: toIso(appointment.startTime),
+            endTime: toIso(appointment.endTime),
+          }));
+
+        const serviceHistory = [
+          ...recentMaintenanceJobs.map((job) => ({
+            source: 'maintenance_job' as const,
+            id: job.id,
+            title: job.title,
+            status: job.status,
+            type: null,
+            date: job.completionDate ?? job.createdAt,
+          })),
+          ...recentServiceAppointments.map((appointment) => ({
+            source: 'appointment' as const,
+            id: appointment.id,
+            title: appointment.title,
+            status: appointment.status,
+            type: appointment.type,
+            date: appointment.endTime,
+          })),
+        ]
+          .sort(
+            (a, b) =>
+              new Date(b.date).getTime() - new Date(a.date).getTime(),
+          )
+          .slice(0, SERVICE_HISTORY_LIMIT);
 
         return {
           id: car.id,
@@ -119,6 +175,8 @@ export function createGetCarTool(deps: {
             : null,
           notes: car.notes ?? null,
           recentMaintenanceJobs,
+          recentServiceAppointments,
+          serviceHistory,
         };
       } catch (err) {
         if (err instanceof NotFoundException) {
