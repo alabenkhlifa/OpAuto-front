@@ -217,6 +217,30 @@ describe('Appointments tools', () => {
       );
     });
 
+    it('expands model-emitted today-only ranges for upcoming appointment questions', async () => {
+      jest.useFakeTimers().setSystemTime(new Date('2026-06-23T12:00:00Z'));
+      const findAll = jest.fn().mockResolvedValue([]);
+      const tool = buildListAppointmentsTool({ findAll } as any);
+
+      await tool.handler(
+        { from: '2026-06-23', to: '2026-06-23', orderBy: 'soonest' },
+        {
+          ...ownerCtx,
+          turnState: {
+            readToolCallsSoFar: 0,
+            userMessage: 'Show Khaoula Khelifi upcoming appointments.',
+          },
+        },
+      );
+
+      expect(findAll).toHaveBeenCalledWith(
+        'garage-1',
+        '2026-06-23T00:00:00.000Z',
+        '9999-12-31T23:59:59.999Z',
+      );
+      jest.useRealTimers();
+    });
+
     it('corrects stale past ranges only when the user asked for upcoming appointments', async () => {
       jest.useFakeTimers().setSystemTime(new Date('2026-06-23T12:00:00Z'));
       const findAll = jest.fn().mockResolvedValue([]);

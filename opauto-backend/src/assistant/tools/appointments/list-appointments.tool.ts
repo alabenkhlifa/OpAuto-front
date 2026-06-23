@@ -64,6 +64,10 @@ function startOfTodayUtc(): string {
   return startOfUtcDate(new Date().toISOString().slice(0, 10));
 }
 
+function endOfTodayUtc(): string {
+  return endOfUtcDate(new Date().toISOString().slice(0, 10));
+}
+
 function isPastRange(to: string | undefined): boolean {
   return Boolean(
     to && new Date(to).getTime() < new Date(startOfTodayUtc()).getTime(),
@@ -106,7 +110,15 @@ function normaliseDateRange(
     from = FAR_PAST;
   }
 
-  if (asksForFuture(ctx.turnState?.userMessage) && isPastRange(to)) {
+  if (
+    asksForFuture(ctx.turnState?.userMessage) &&
+    !asksForToday(ctx.turnState?.userMessage) &&
+    to &&
+    new Date(to).getTime() <= new Date(endOfTodayUtc()).getTime()
+  ) {
+    from = startOfTodayUtc();
+    to = FAR_FUTURE;
+  } else if (asksForFuture(ctx.turnState?.userMessage) && isPastRange(to)) {
     from = startOfTodayUtc();
     to = FAR_FUTURE;
   }
