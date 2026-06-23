@@ -978,7 +978,7 @@ export class OrchestratorService {
       ? text.slice((marker.index ?? 0) + marker[0].length)
       : text;
     const briefingMarker = out.match(
-      /^(?:#+\s*)?Compile the daily briefing\.?\s*$/im,
+      /^(?:#+\s*)?Compile (?:the )?(?:daily )?briefing\.?\s*$/im,
     );
     if (briefingMarker) {
       out = out.slice((briefingMarker.index ?? 0) + briefingMarker[0].length);

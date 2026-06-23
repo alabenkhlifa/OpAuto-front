@@ -1158,6 +1158,47 @@ describe('OrchestratorService', () => {
     });
   });
 
+  it('keeps only the compiled briefing when the model emits generic briefing process notes', async () => {
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content:
+          '## Analyze the revenue summary for today and the week.\n' +
+          'The revenue summary for today is 0 TND.\n\n' +
+          "## Determine the delta between today's revenue and the 7-day average.\n" +
+          'The delta is 0%.\n\n' +
+          '## Compile the briefing.\n' +
+          '**Revenue** - Today: 0 TND, Week: 0 TND, Delta: 0%.\n' +
+          '**Customers** - 1 new customer in the last 24 hours.\n' +
+          'Recommended next action: Call at-risk customers.',
+        toolCalls: [],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({ llm });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-1',
+        'Give me a quick morning briefing.',
+        undefined,
+      ),
+    );
+
+    const text = events.find((e) => e.type === 'text');
+    expect(text).toMatchObject({
+      delta: expect.stringContaining('**Revenue** - Today: 0 TND'),
+    });
+    expect(text).toMatchObject({
+      delta: expect.stringContaining('Recommended next action'),
+    });
+    expect(text).not.toMatchObject({
+      delta: expect.stringMatching(
+        /Analyze the revenue|Determine the delta|Compile the briefing/i,
+      ),
+    });
+  });
+
   it('strips internal agent dispatch cap text while preserving the answer', async () => {
     const llm = makeLlm([
       {
