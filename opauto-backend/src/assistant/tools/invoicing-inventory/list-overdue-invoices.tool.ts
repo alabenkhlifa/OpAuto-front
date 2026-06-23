@@ -6,6 +6,8 @@ export interface OverdueInvoiceItem {
   id: string;
   invoiceNumber: string;
   customerId: string;
+  customerName: string;
+  customerPhone: string | null;
   status: InvoiceStatus;
   total: number;
   dueDate: string;
@@ -19,6 +21,13 @@ export interface ListOverdueInvoicesResult {
 }
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+function displayCustomerName(customer: {
+  firstName: string;
+  lastName: string;
+}): string {
+  return `${customer.firstName} ${customer.lastName}`.trim();
+}
 
 export type ListOverdueInvoicesOrder =
   | 'most_overdue'
@@ -94,6 +103,13 @@ export function buildListOverdueInvoicesTool(
           id: true,
           invoiceNumber: true,
           customerId: true,
+          customer: {
+            select: {
+              firstName: true,
+              lastName: true,
+              phone: true,
+            },
+          },
           status: true,
           total: true,
           dueDate: true,
@@ -113,6 +129,8 @@ export function buildListOverdueInvoicesTool(
             id: row.id,
             invoiceNumber: row.invoiceNumber,
             customerId: row.customerId,
+            customerName: displayCustomerName(row.customer),
+            customerPhone: row.customer.phone,
             status: row.status,
             total: row.total,
             dueDate: row.dueDate.toISOString(),

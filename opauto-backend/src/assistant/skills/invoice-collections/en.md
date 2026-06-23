@@ -22,11 +22,13 @@ First, a compact table:
 
 | Invoice | Customer | Amount (TND) | Days overdue |
 |---|---|---:|---:|
-| INV-XXX | Name | 1,234.56 | 14 |
+| INV-XXX | customerName | 1,234.56 | 14 |
 | ... | ... | ... | ... |
 
 Then, for each row, draft ONE short SMS reminder (≤ 160 chars) the user could send. Tone: warm, professional, no shame. Include the invoice number and the amount. Example:
 > "Bonjour Ahmed, petit rappel pour la facture INV-202604-0017 (892,50 TND), échue depuis 14 jours. Merci de régler dès que possible. — AutoTech"
+
+Use `customerName` in user-facing tables and drafts. Never show `customerId`, invoice UUIDs, or any raw UUID.
 
 DO NOT call `send_sms` or `send_email` yet — leave that to the user. Just present the drafts and ask which customers they want messages sent to. The orchestrator will handle the approvals when the user picks.
 

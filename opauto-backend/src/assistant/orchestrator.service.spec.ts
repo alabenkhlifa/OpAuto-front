@@ -490,6 +490,60 @@ describe('OrchestratorService', () => {
     });
   });
 
+  it('blocks send_email when the user asked for a draft only', async () => {
+    const tools = makeTools(['send_email']);
+    tools.get.mockImplementation((name: string) => ({
+      name,
+      description: 'desc',
+      parameters: { type: 'object', properties: {} },
+      blastTier: AssistantBlastTier.AUTO_WRITE,
+      handler: async () => ({}),
+    }));
+    tools.resolveBlastTier.mockReturnValue(AssistantBlastTier.AUTO_WRITE);
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-1',
+            name: 'send_email',
+            argsJson: JSON.stringify({
+              subject: 'Overdue invoices',
+              text: 'Here is the overdue invoice list.',
+            }),
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: 'No email was sent. Draft: Here is the overdue invoice list.',
+        toolCalls: [],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({ tools, llm });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-draft-email',
+        'Draft an email to myself with the overdue invoices list, but do not send it.',
+        undefined,
+      ),
+    );
+
+    expect(tools.execute).not.toHaveBeenCalled();
+    expect(events.find((e) => e.type === 'tool_result')).toMatchObject({
+      status: 'failed',
+      result: expect.objectContaining({
+        error: 'draft_only_email_requested',
+      }),
+    });
+    expect(events.find((e) => e.type === 'text')).toMatchObject({
+      delta: 'No email was sent. Draft: Here is the overdue invoice list.',
+    });
+  });
+
   it('emits an apology when iteration cap is exceeded', async () => {
     const tools = makeTools(['noop']);
     // Always emit a tool call, never a text reply.
@@ -881,6 +935,54 @@ describe('OrchestratorService', () => {
     });
   });
 
+  it('caps repeated invalid tool arguments and forces compose-only', async () => {
+    const tools = makeTools(['cancel_appointment']);
+    tools.validateArgs.mockReturnValue({
+      valid: false,
+      errors: ['/appointmentId must match format "uuid"'],
+    });
+    const cancelCall = (id: string) => ({
+      provider: 'groq' as const,
+      content: null,
+      toolCalls: [
+        {
+          id,
+          name: 'cancel_appointment',
+          argsJson: '{"appointmentId":"banana"}',
+        },
+      ],
+    });
+    const llm = makeLlm([
+      cancelCall('tc-1'),
+      cancelCall('tc-2'),
+      cancelCall('tc-3'),
+      {
+        provider: 'groq',
+        content: 'That appointment id is not valid. Please send the real appointment id.',
+        toolCalls: [],
+      },
+      cancelCall('tc-99'),
+    ]);
+    const orchestrator = await makeOrchestrator({ tools, llm });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-invalid-cap',
+        'Cancel the appointment with id banana.',
+        undefined,
+      ),
+    );
+
+    expect(tools.execute).not.toHaveBeenCalled();
+    expect(
+      events.filter((e) => e.type === 'tool_result' && e.status === 'failed'),
+    ).toHaveLength(3);
+    expect(events.find((e) => e.type === 'text')).toMatchObject({
+      delta: 'That appointment id is not valid. Please send the real appointment id.',
+    });
+  });
+
   it('caps dispatch_agent at MAX_AGENT_DISPATCHES_PER_TURN (B-23/B-24 unbounded loop)', async () => {
     // Without the cap a misbehaving model can keep emitting dispatch_agent on
     // every iteration, racking up agent runs until the 90s turn budget blows.
@@ -1088,7 +1190,7 @@ describe('OrchestratorService', () => {
       },
       {
         provider: 'groq',
-        content: 'There are no available slots next Tuesday morning.',
+        content: 'I was unable to find a free slot next Tuesday morning.',
         toolCalls: [],
       },
     ]);
@@ -1111,7 +1213,52 @@ describe('OrchestratorService', () => {
       delta: expect.stringContaining('Hichem Sassi'),
     });
     expect(text).not.toMatchObject({
-      delta: expect.stringMatching(/no available slots/i),
+      delta: expect.stringMatching(/unable to find|no available slots/i),
+    });
+  });
+
+  it('emits a download link when a report tool succeeds but the model returns empty text', async () => {
+    const tools = makeTools(['generate_period_report'], () => ({
+      ok: true,
+      result: {
+        url: '/api/assistant/downloads/report.csv',
+        expiresAt: '2026-06-23T16:05:12.300Z',
+        period: 'month',
+        format: 'csv',
+      },
+      durationMs: 1,
+    }));
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-1',
+            name: 'generate_period_report',
+            argsJson: '{"period":"month","format":"csv"}',
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: '',
+        toolCalls: [],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({ tools, llm });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-report',
+        'Generate a CSV report for this month.',
+        undefined,
+      ),
+    );
+
+    expect(events.find((e) => e.type === 'text')).toMatchObject({
+      delta: expect.stringContaining('/api/assistant/downloads/report.csv'),
     });
   });
 
@@ -1124,6 +1271,7 @@ describe('OrchestratorService', () => {
           'The final answer is:\n' +
           '## Step 1: Invoice\n' +
           '- Customer: Hela Mahmoud\n' +
+          '| INV-202603-0030 | 75ce90a7-3221-49c8-87f8-26352a35 |\n' +
           '- Locked By: 691cb0d2-f52c-4222-8f83-b2cba96b0a0c\n' +
           '- Invoice ID: 11111111-2222-4333-8444-555555555555\n' +
           '- Total: 1,310.00 TND',
@@ -1152,7 +1300,7 @@ describe('OrchestratorService', () => {
       delta: expect.stringContaining('Total: 1,310.00 TND'),
     });
     expect(text).not.toMatchObject({
-      delta: expect.stringMatching(/Step 1|Locked By|Invoice ID|691cb0d2/i),
+      delta: expect.stringMatching(/Step 1|Locked By|Invoice ID|691cb0d2|75ce90a7/i),
     });
   });
 

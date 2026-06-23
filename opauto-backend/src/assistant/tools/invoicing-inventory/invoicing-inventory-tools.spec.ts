@@ -189,6 +189,11 @@ describe('Invoicing + Inventory Tools', () => {
               id: 'inv-1',
               invoiceNumber: 'INV-001',
               customerId: 'cust-1',
+              customer: {
+                firstName: 'Ali',
+                lastName: 'Hassine',
+                phone: '+216 20 111 222',
+              },
               status: 'SENT',
               total: 100,
               dueDate: new Date(now - TEN_DAYS),
@@ -197,6 +202,11 @@ describe('Invoicing + Inventory Tools', () => {
               id: 'inv-2',
               invoiceNumber: 'INV-002',
               customerId: 'cust-2',
+              customer: {
+                firstName: 'Mouna',
+                lastName: 'Trabelsi',
+                phone: '+216 20 333 444',
+              },
               status: 'PARTIALLY_PAID',
               total: 200,
               dueDate: new Date(now - 2 * TEN_DAYS),
@@ -210,6 +220,10 @@ describe('Invoicing + Inventory Tools', () => {
 
       expect(result.count).toBe(2);
       expect(result.totalOutstanding).toBe(300);
+      expect(result.invoices[0]).toMatchObject({
+        customerName: 'Ali Hassine',
+        customerPhone: '+216 20 111 222',
+      });
       expect(result.invoices[0].daysOverdue).toBeGreaterThanOrEqual(9);
       expect(result.invoices[0].daysOverdue).toBeLessThanOrEqual(10);
       expect(result.invoices[1].daysOverdue).toBeGreaterThanOrEqual(19);

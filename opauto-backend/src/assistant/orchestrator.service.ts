@@ -46,6 +46,8 @@ const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const UUID_IN_TEXT_PATTERN =
   /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/i;
+const UUID_FRAGMENT_IN_TEXT_PATTERN =
+  /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{8,12}\b/i;
 
 // Extracted to ./page-context-resolver for direct unit testing.
 import { deriveSelectedEntityFromRoute } from './page-context-resolver';
@@ -291,6 +293,25 @@ export class OrchestratorService {
       const toolCallCounts = new Map<string, number>();
       let forceComposeOnly = false;
       const successfulToolResults: { toolName: string; result: unknown }[] = [];
+      const recordFailedToolAttempt = (
+        toolName: string,
+        reason: string,
+      ) => {
+        const prevCount = toolCallCounts.get(toolName) ?? 0;
+        const nextCount = prevCount + 1;
+        toolCallCounts.set(toolName, nextCount);
+        if (nextCount >= MAX_CALLS_PER_TOOL_PER_TURN) {
+          forceComposeOnly = true;
+          llmMessages.push({
+            role: 'system',
+            content:
+              `${toolName} failed ${nextCount} times this turn (${reason}). ` +
+              `Stop retrying that tool. Compose a brief, user-friendly reply ` +
+              `from the latest error/result already available. Do NOT call any ` +
+              `tool again this turn.`,
+          });
+        }
+      };
       for (let step = 0; step < iterationCap; step++) {
         // Cost cap: stop the conversation cold once the per-conversation
         // token budget is exhausted. Checked before every LLM call so a
@@ -513,6 +534,7 @@ export class OrchestratorService {
             error: 'invalid_arguments',
             detail: parsedArgs.error,
           });
+          recordFailedToolAttempt(call.name, 'invalid JSON arguments');
           continue;
         }
 
@@ -528,6 +550,7 @@ export class OrchestratorService {
             error: 'invalid_arguments',
             detail: validation.errors,
           });
+          recordFailedToolAttempt(call.name, 'invalid arguments');
           continue;
         }
 
@@ -550,6 +573,7 @@ export class OrchestratorService {
             status: 'failed',
           });
           this.appendToolMessage(llmMessages, call.id, preCheck);
+          recordFailedToolAttempt(call.name, preCheck.error);
           continue;
         }
 
@@ -663,20 +687,7 @@ export class OrchestratorService {
             error: failExec.error,
           });
 
-          const prevCount = toolCallCounts.get(call.name) ?? 0;
-          const nextCount = prevCount + 1;
-          toolCallCounts.set(call.name, nextCount);
-          if (nextCount >= MAX_CALLS_PER_TOOL_PER_TURN) {
-            forceComposeOnly = true;
-            llmMessages.push({
-              role: 'system',
-              content:
-                `${call.name} failed ${nextCount} times this turn. ` +
-                `Treat the failed result as final for this request. Compose ` +
-                `a brief reply from the error/result already available. ` +
-                `Do NOT call any tool again this turn.`,
-            });
-          }
+          recordFailedToolAttempt(call.name, failExec.error);
         }
       }
 
@@ -945,7 +956,8 @@ export class OrchestratorService {
     ctx: AssistantUserContext,
     successfulToolResults: { toolName: string; result: unknown }[],
   ): string {
-    let out = this.correctSlotContradiction(text, successfulToolResults);
+    let out = this.fillEmptyReportDownloadText(text, successfulToolResults);
+    out = this.correctSlotContradiction(out, successfulToolResults);
     out = this.stripReasoningScaffold(out);
     out = this.stripInternalControlMessages(out);
     out = this.scrubInternalIds(out, ctx.turnState?.userMessage);
@@ -965,7 +977,7 @@ export class OrchestratorService {
     const latest = slotResults[slotResults.length - 1];
     if (!latest?.slots?.length) return text;
     if (
-      !/\b(no|none|not any|couldn'?t find|cannot find)\b[\s\S]{0,80}\b(slot|availability|available)\b/i.test(
+      !/\b(no|none|not any|couldn'?t find|cannot find|unable to find|not able to find|not able to execute)\b[\s\S]{0,100}\b(slot|availability|available|task|request|service)\b/i.test(
         text,
       )
     ) {
@@ -985,6 +997,37 @@ export class OrchestratorService {
     });
 
     return `I found available slots:\n${slots.join('\n')}`;
+  }
+
+  private fillEmptyReportDownloadText(
+    text: string,
+    successfulToolResults: { toolName: string; result: unknown }[],
+  ): string {
+    if (text.trim().length > 0) return text;
+    const report = [...successfulToolResults]
+      .reverse()
+      .find(
+        (entry) =>
+          (entry.toolName === 'generate_invoices_pdf' ||
+            entry.toolName === 'generate_period_report') &&
+          typeof (entry.result as { url?: unknown }).url === 'string',
+      );
+    if (!report) return text;
+    const result = report.result as {
+      url: string;
+      expiresAt?: string;
+      invoiceCount?: number;
+      period?: string;
+      format?: string;
+    };
+    const noun =
+      report.toolName === 'generate_invoices_pdf'
+        ? `invoice PDF${result.invoiceCount ? ` for ${result.invoiceCount} invoice(s)` : ''}`
+        : `${result.period ?? 'period'} ${result.format ?? 'report'} report`;
+    const expiry = result.expiresAt
+      ? ` It expires at ${result.expiresAt}.`
+      : '';
+    return `Done. Download the ${noun} here: ${result.url}.${expiry}`;
   }
 
   private stripReasoningScaffold(text: string): string {
@@ -1032,7 +1075,8 @@ export class OrchestratorService {
         (line) =>
           !technicalLabelLine.test(line) &&
           !UUID_PATTERN.test(line.trim()) &&
-          !UUID_IN_TEXT_PATTERN.test(line),
+          !UUID_IN_TEXT_PATTERN.test(line) &&
+          !UUID_FRAGMENT_IN_TEXT_PATTERN.test(line),
       )
       .join('\n');
   }
@@ -1608,8 +1652,9 @@ export class OrchestratorService {
         // and the failed send was silently swallowed. Surface infra-level
         // failures explicitly with the original message.
         `If any tool result in the conversation contains an "error" field (for example send_email returning {error:"send_failed", message:"..."}), ` +
-        `you MUST mention the failure in your reply, prefixed with "⚠️", and quote the underlying message verbatim. Never imply the action ` +
-        `succeeded when the tool returned an error. If a write/send action failed, the user expects to know — silence is a bug.`,
+        `you MUST mention the failure in plain business language. Prefix real send/write failures with "⚠️", but do not quote raw tool names, ` +
+        `schema validation messages, JSON, or internal guard text. Never imply the action succeeded when the tool returned an error. ` +
+        `If the error says the user asked for a draft only, say no email was sent and provide the draft text in the reply.`,
     };
     // Keep all non-system messages; replace the first system message (the
     // big buildSystemPrompt output) with the compose-only one. Other system
@@ -1635,6 +1680,13 @@ export class OrchestratorService {
     const a = args as Record<string, unknown>;
 
     if (toolName === 'send_email') {
+      if (this.userAskedForDraftOnly(ctx.turnState?.userMessage)) {
+        return {
+          error: 'draft_only_email_requested',
+          message:
+            'The user asked for a draft only. No email was sent. Compose the email draft in the final answer instead of calling send_email.',
+        };
+      }
       const html = typeof a.html === 'string' ? a.html.trim() : '';
       const text = typeof a.text === 'string' ? a.text.trim() : '';
       const ids = Array.isArray(a.attachInvoiceIds) ? a.attachInvoiceIds : [];
@@ -1861,6 +1913,16 @@ export class OrchestratorService {
     const normalizedPhone = this.normalisePhone(phone);
     if (!userMessage || normalizedPhone.length === 0) return false;
     return this.normalisePhone(userMessage).includes(normalizedPhone);
+  }
+
+  private userAskedForDraftOnly(userMessage: string | undefined): boolean {
+    const msg = userMessage ?? '';
+    return (
+      /\b(draft|write|compose)\b/i.test(msg) &&
+      /\b(do not|don't|dont|without|but not|no need to)\s+(?:actually\s+)?send\b/i.test(
+        msg,
+      )
+    );
   }
 
   /**

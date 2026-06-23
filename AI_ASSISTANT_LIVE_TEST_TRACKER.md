@@ -169,6 +169,25 @@ Status values: Pending, Pass, Partial, Fail, Skipped.
 | T16-NOAPPROVE | "Text Khaoula Khelifi that her car is ready. Do not send it unless I approve the approval request." | Should resolve Khaoula's real phone/customer id before surfacing SMS approval | Surfaced `send_sms` approval with placeholder phone/customer values without fetching the customer; approval was not submitted | Fail |
 | T17 | "Email me the overdue invoices list." | Would self-send to the real owner address through production Resend | Skipped in production before explicit approval because `send_email` is an auto-write self-send and production email provider is real | Skipped |
 
+## Coverage Retest After `10e711a` Deploy
+
+File evidence: `/tmp/opauto_ai_coverage_retest_10e711a.json`
+
+This batch exercised all 30 registry tools, all 9 production skills, and all 6 agents through plain-English owner prompts. It did not approve production mutations.
+
+| Area | Result | Evidence |
+|---|---:|---|
+| Live registry | Pass | `/assistant/registry` returned 30 tools, 9 skills, 6 agents |
+| Customer and appointment reads | Pass | Khaoula lookup avoided UUIDs; Khaoula future bookings returned July 10 and November 21; today's booking returned Hayfa Rahmouni appointment |
+| Inventory reads and restocking | Pass | `get_inventory_value` returned `56,266.00 TND`; restocking used `list_low_stock_parts` and `get_inventory_value` |
+| Missing customer/car/invoice controls | Mostly pass | Missing customer/car were clean; missing invoice no longer timed out, but still retried `get_invoice` 3 times before "not found" |
+| Approval card safety | Partial | Real payment and SMS stopped at approval; invalid cancel did not create approval, but returned generic timeout |
+| Reports | Fail | `generate_invoices_pdf` and `generate_period_report` created download URLs but final assistant text was empty |
+| Draft-only email | Fail | Prompt said "draft ... do not send"; assistant still called `send_email` and surfaced internal guard text |
+| Slot search synthesis | Fail | `find_available_slot` returned June 30 slots, but final said it could not find a slot |
+| Invoice creation | Fail | Create-invoice prompt looped through invalid arguments and ended with generic timeout instead of asking for missing price/car details |
+| Invoice summary formatting | Fail | Collections response leaked a customer UUID fragment because `list_overdue_invoices` exposed only `customerId` |
+
 ## Fix Log
 
 | Fix | Commit | Before | After | One-sentence implementation note |
@@ -189,6 +208,9 @@ Status values: Pending, Pass, Partial, Fail, Skipped.
 | Write approval prechecks | `a37c34b` | Invalid appointment ids could still produce cancellation approval cards; invoice creation could route to `send_email`; SMS approvals could contain placeholder recipients. | The orchestrator now rejects malformed write payloads before approval/auto-write and routes invoice creation prompts to `create_invoice` with customer lookup tools. | Added pre-approval validation for explicit invalid appointment IDs, SMS customer binding, empty/placeholder emails, and invoice creation routing regressions. |
 | Response synthesis hardening | `eb83242` | Production retest showed good tool/agent data could still end in bad final text: "today" included tomorrow, available slots were denied, invoice replies leaked technical fields, and agent iteration caps emitted a generic timeout. | The assistant now post-processes final text to correct available-slot contradictions, strip visible reasoning scaffolds and internal IDs, preserve useful agent results at the iteration cap, and clamp model-emitted today-to-tomorrow appointment ranges. | Added orchestrator regressions for slot contradiction, reasoning/ID scrubbing, and iteration-cap agent fallback, plus appointment date-range coverage and customer-360 upcoming-booking guidance. |
 | Briefing and quarter-window correction | `3ec3d0c` | After the `eb83242` deploy, T19 still exposed daily-briefing process headings and T26 anchored "this quarter vs last quarter" to stale 2024/2023 windows. | Daily briefing output now drops process sections before the compiled briefing, and stale quarter comparison revenue calls are corrected to the current quarter-to-date and previous full quarter. | Added regressions for compiled-briefing extraction and stale quarter comparison range correction. |
+| Failed-call and report synthesis hardening | local, not deployed | Invalid cancel and invoice-creation prompts could loop through invalid arguments until a generic timeout; report tools could return a URL with no visible reply; slot search could say no slot even when slots existed. | Local tests now force compose-only after repeated invalid/precheck failures, synthesize report download links from successful tool results, and correct "unable to find" slot contradictions. | Shared failed-attempt accounting across validation/precheck/execution failures and added focused orchestrator coverage. |
+| Draft-only email guard | local, not deployed | "Draft an email ... do not send" still attempted `send_email` and exposed internal guard text. | Local tests now block `send_email` before execution when the user asks for a draft only and instruct the model to provide the draft. | Added a pre-send guard for draft-only wording and safer compose-only error instructions. |
+| Overdue invoice customer labels | local, not deployed | Invoice collections tables could leak customer UUIDs because `list_overdue_invoices` returned only `customerId`. | Local tests now return `customerName` and `customerPhone`, update the collections skill to display names, and scrub partial UUID fragments. | Expanded the overdue invoice projection and response scrubber coverage. |
 
 ## Response Quality Notes
 
