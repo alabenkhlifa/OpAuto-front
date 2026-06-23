@@ -977,11 +977,14 @@ export class OrchestratorService {
     let out = marker
       ? text.slice((marker.index ?? 0) + marker[0].length)
       : text;
-    const briefingMarker = out.match(
-      /^(?:#+\s*)?Compile (?:the )?(?:daily )?briefing\.?\s*$/im,
+    const lines = out.split('\n');
+    const briefingLineIndex = lines.findIndex((line) =>
+      /^(?:#+\s*)?Compile (?:the )?(?:daily )?briefing\.?\s*$/i.test(
+        line.trim(),
+      ),
     );
-    if (briefingMarker) {
-      out = out.slice((briefingMarker.index ?? 0) + briefingMarker[0].length);
+    if (briefingLineIndex >= 0) {
+      out = lines.slice(briefingLineIndex + 1).join('\n');
     }
     out = out.replace(/^(#+\s*)Step\s+\d+\s*:\s*/gim, '$1');
     out = out.replace(/^Step\s+\d+\s*:\s*/gim, '');
