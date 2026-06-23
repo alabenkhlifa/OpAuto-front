@@ -438,6 +438,72 @@ describe('OrchestratorService', () => {
     });
   });
 
+  it('canonicalizes local-format customer SMS phone before approval', async () => {
+    const customerId = '0a19350b-7648-4d82-866d-a86508775194';
+    const tools = makeTools(['send_sms']);
+    tools.resolveBlastTier.mockReturnValue(AssistantBlastTier.CONFIRM_WRITE);
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-1',
+            name: 'send_sms',
+            argsJson: JSON.stringify({
+              to: '99783989',
+              body: 'OpAuto live AI mutation test. Please ignore.',
+              customerId,
+            }),
+          },
+        ],
+      },
+    ]);
+    const approvals = makeApprovals();
+    const prisma = {
+      ...makePrisma(),
+      customer: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: customerId,
+          phone: '+216 99 783 989',
+        }),
+      },
+    };
+    const orchestrator = await makeOrchestrator({
+      tools,
+      llm,
+      approvals,
+      prisma,
+    });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-sms-local-phone',
+        'Text Khaoula Khelifi this exact message: "OpAuto live AI mutation test. Please ignore."',
+        undefined,
+      ),
+    );
+
+    expect(events.find((e) => e.type === 'approval_request')).toMatchObject({
+      toolName: 'send_sms',
+      args: expect.objectContaining({
+        to: '+21699783989',
+        customerId,
+      }),
+    });
+    expect(approvals.createPending).toHaveBeenCalledWith(
+      expect.objectContaining({
+        toolName: 'send_sms',
+        args: expect.objectContaining({
+          to: '+21699783989',
+          customerId,
+        }),
+      }),
+    );
+    expect(tools.execute).not.toHaveBeenCalled();
+  });
+
   it('rejects empty send_email auto-write calls before executing the handler', async () => {
     const tools = makeTools(['send_email']);
     tools.get.mockImplementation((name: string) => ({

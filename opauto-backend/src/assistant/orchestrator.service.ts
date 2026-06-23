@@ -2922,7 +2922,7 @@ export class OrchestratorService {
               'get_customer to resolve the real recipient before asking for approval.',
           };
         }
-        if (this.normalisePhone(customer.phone) !== this.normalisePhone(to)) {
+        if (!this.phoneNumbersMatch(customer.phone, to)) {
           return {
             error: 'phone_mismatch',
             message:
@@ -2930,6 +2930,7 @@ export class OrchestratorService {
               'Use the phone from get_customer/find_customer before asking for approval.',
           };
         }
+        a.to = this.normalisePhone(customer.phone);
       } else if (
         !this.userMessageContainsPhone(ctx.turnState?.userMessage, to)
       ) {
@@ -3285,6 +3286,21 @@ export class OrchestratorService {
 
   private normalisePhone(value: string | null | undefined): string {
     return (value ?? '').replace(/[\s\-()]/g, '');
+  }
+
+  private phoneNumbersMatch(
+    left: string | null | undefined,
+    right: string | null | undefined,
+  ): boolean {
+    const leftDigits = this.normalisePhone(left).replace(/^\+/, '');
+    const rightDigits = this.normalisePhone(right).replace(/^\+/, '');
+    if (!leftDigits || !rightDigits) return false;
+    if (leftDigits === rightDigits) return true;
+    return (
+      leftDigits.length >= 8 &&
+      rightDigits.length >= 8 &&
+      (leftDigits.endsWith(rightDigits) || rightDigits.endsWith(leftDigits))
+    );
   }
 
   private userMessageContainsPhone(

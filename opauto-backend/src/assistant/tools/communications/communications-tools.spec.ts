@@ -111,6 +111,35 @@ describe('communications tools', () => {
       expect(result).toMatchObject({ providerMessageId: 'sm_2' });
     });
 
+    it('accepts local-format customer phone suffix and sends canonical customer phone', async () => {
+      const sms = makeSmsService(
+        jest
+          .fn()
+          .mockResolvedValue({ providerMessageId: 'sm_local', status: 'queued' }),
+      );
+      const customers = makeCustomersService(
+        jest.fn().mockResolvedValue({
+          id: 'cust-1',
+          phone: '+216 99 783 989',
+          firstName: 'Khaoula',
+          lastName: 'Khelifi',
+        }),
+      );
+      const tool = createSendSmsTool({
+        smsService: sms,
+        customersService: customers,
+      });
+
+      const result = await tool.handler(
+        { to: '99783989', body: 'hi', customerId: 'cust-1' },
+        ownerCtx,
+      );
+
+      expect(customers.findOne).toHaveBeenCalledWith('cust-1', 'garage-1');
+      expect(sms.send).toHaveBeenCalledWith('+21699783989', 'hi');
+      expect(result).toMatchObject({ providerMessageId: 'sm_local' });
+    });
+
     it('returns phone_mismatch error when customer phone differs from `to`', async () => {
       const sms = makeSmsService();
       const customers = makeCustomersService(

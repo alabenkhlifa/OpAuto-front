@@ -33,6 +33,22 @@ function normalisePhone(phone: string): string {
   return phone.replace(/[\s\-()]/g, '');
 }
 
+function phoneDigits(phone: string): string {
+  return normalisePhone(phone).replace(/^\+/, '');
+}
+
+function phonesMatch(left: string, right: string): boolean {
+  const leftDigits = phoneDigits(left);
+  const rightDigits = phoneDigits(right);
+  if (!leftDigits || !rightDigits) return false;
+  if (leftDigits === rightDigits) return true;
+  return (
+    leftDigits.length >= 8 &&
+    rightDigits.length >= 8 &&
+    (leftDigits.endsWith(rightDigits) || rightDigits.endsWith(leftDigits))
+  );
+}
+
 export function createSendSmsTool(deps: {
   smsService: SmsService;
   customersService: CustomersService;
@@ -95,13 +111,14 @@ export function createSendSmsTool(deps: {
         };
       }
 
+      let toForSend = normalisedTo;
       if (args.customerId) {
         try {
           const customer = await deps.customersService.findOne(
             args.customerId,
             ctx.garageId,
           );
-          if (normalisePhone(customer.phone) !== normalisePhone(args.to)) {
+          if (!phonesMatch(customer.phone, args.to)) {
             return {
               error: 'phone_mismatch',
               message:
@@ -109,6 +126,7 @@ export function createSendSmsTool(deps: {
                 'Refusing to send to prevent cross-customer contamination.',
             };
           }
+          toForSend = normalisePhone(customer.phone);
         } catch {
           return {
             error: 'customer_not_found',
@@ -118,7 +136,7 @@ export function createSendSmsTool(deps: {
       }
 
       try {
-        const result = await deps.smsService.send(args.to, args.body);
+        const result = await deps.smsService.send(toForSend, args.body);
         return {
           providerMessageId: result.providerMessageId,
           status: result.status,
