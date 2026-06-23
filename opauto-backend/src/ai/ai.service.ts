@@ -21,6 +21,36 @@ export interface ChurnActionDraft {
   factorsSnapshot: string[];
 }
 
+function parseScheduleDate(value?: string): Date | null {
+  if (!value) return null;
+
+  const dateOnly = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (dateOnly) {
+    const [, year, month, day] = dateOnly;
+    const parsed = new Date(Number(year), Number(month) - 1, Number(day));
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function startOfLocalDay(date: Date): Date {
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+  return start;
+}
+
+function addLocalDays(date: Date, days: number): Date {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function slotFitsWindow(start: Date, end: Date, window: { from: Date; to: Date }): boolean {
+  return start >= window.from && end <= window.to;
+}
+
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
@@ -147,24 +177,35 @@ export class AiService {
       dto.appointmentType.replace(/-/g, '_'),
     ];
 
-    // Find employees who have ANY of the relevant skills
-    let employees = await this.prisma.employee.findMany({
-      where: {
-        garageId,
-        status: 'ACTIVE',
-        skills: { hasSome: relevantSkills },
-      },
-    });
-
-    // Fallback to all active technicians if no skill match
-    if (employees.length === 0) {
+    let employees;
+    if (dto.mechanicId) {
       employees = await this.prisma.employee.findMany({
         where: {
           garageId,
           status: 'ACTIVE',
-          role: { in: ['MECHANIC', 'ELECTRICIAN', 'BODYWORK_SPECIALIST', 'TIRE_SPECIALIST'] },
+          id: dto.mechanicId,
         },
       });
+    } else {
+      // Find employees who have ANY of the relevant skills
+      employees = await this.prisma.employee.findMany({
+        where: {
+          garageId,
+          status: 'ACTIVE',
+          skills: { hasSome: relevantSkills },
+        },
+      });
+
+      // Fallback to all active technicians if no skill match
+      if (employees.length === 0) {
+        employees = await this.prisma.employee.findMany({
+          where: {
+            garageId,
+            status: 'ACTIVE',
+            role: { in: ['MECHANIC', 'ELECTRICIAN', 'BODYWORK_SPECIALIST', 'TIRE_SPECIALIST'] },
+          },
+        });
+      }
     }
     if (employees.length === 0) return { suggestedSlots: [], provider: 'none' };
 
@@ -185,18 +226,23 @@ export class AiService {
 
     // 2c — Compute search window
     const now = new Date();
+    const requestedStart = parseScheduleDate(dto.preferredStartTime);
+    if (dto.preferredStartTime && !requestedStart) {
+      return { suggestedSlots: [], provider: 'mock' };
+    }
+
     let windowStart: Date;
     let windowEnd: Date;
-    if (dto.preferredDate) {
-      const preferred = new Date(dto.preferredDate);
+    if (requestedStart) {
+      windowStart = startOfLocalDay(requestedStart);
+      windowEnd = addLocalDays(windowStart, 1);
+    } else if (dto.preferredDate) {
+      const preferred = parseScheduleDate(dto.preferredDate);
+      if (!preferred) return { suggestedSlots: [], provider: 'mock' };
+
       if (dto.exactDateOnly) {
-        windowStart = new Date(Date.UTC(
-          preferred.getUTCFullYear(),
-          preferred.getUTCMonth(),
-          preferred.getUTCDate(),
-        ));
-        windowEnd = new Date(windowStart);
-        windowEnd.setUTCDate(windowEnd.getUTCDate() + 1);
+        windowStart = startOfLocalDay(preferred);
+        windowEnd = addLocalDays(windowStart, 1);
       } else {
         windowStart = new Date(preferred);
         windowStart.setDate(windowStart.getDate() - 3);
@@ -323,6 +369,48 @@ export class AiService {
         }
         if (cursor < dayEnd) {
           freeWindows.push({ from: new Date(cursor), to: new Date(dayEnd) });
+        }
+
+        if (requestedStart) {
+          const slotEnd = new Date(requestedStart.getTime() + durationMs);
+          const withinWorkingDay =
+            requestedStart >= effectiveDayStart &&
+            requestedStart >= dayStart &&
+            slotEnd <= dayEnd;
+
+          if (withinWorkingDay) {
+            const fitsNormalWindow = freeWindows.some((w) => slotFitsWindow(requestedStart, slotEnd, w));
+            if (fitsNormalWindow) {
+              candidates.push({
+                start: requestedStart.toISOString(),
+                end: slotEnd.toISOString(),
+                mechanicId: emp.id,
+                mechanicName: `${emp.firstName} ${emp.lastName}`,
+              });
+              empSlotCount.set(emp.id, (empSlotCount.get(emp.id) || 0) + 1);
+            } else if (breakStartH >= 0) {
+              const conflictsAppointment = empAppts.some((a) => {
+                const apptStart = new Date(a.startTime);
+                const apptEnd = new Date(a.endTime);
+                return requestedStart < apptEnd && slotEnd > apptStart;
+              });
+              const breakStartTime = new Date(dayDate);
+              breakStartTime.setHours(breakStartH, breakStartM, 0, 0);
+              const breakEndTime = new Date(dayDate);
+              breakEndTime.setHours(breakEndH, breakEndM, 0, 0);
+
+              if (!conflictsAppointment && requestedStart < breakEndTime && slotEnd > breakStartTime) {
+                breakCandidates.push({
+                  start: requestedStart.toISOString(),
+                  end: slotEnd.toISOString(),
+                  mechanicId: emp.id,
+                  mechanicName: `${emp.firstName} ${emp.lastName}`,
+                  warning: 'lunch_break',
+                });
+              }
+            }
+          }
+          continue;
         }
 
         // Extract candidate slots from free windows

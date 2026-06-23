@@ -63,6 +63,8 @@ export interface AiScheduleSuggestion {
 export interface AiScheduleRequest {
   appointmentType: string;
   preferredDate?: string;
+  exactDateOnly?: boolean;
+  preferredStartTime?: string;
   mechanicId?: string;
   estimatedDuration: number;
   language?: string;

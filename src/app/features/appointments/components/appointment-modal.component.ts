@@ -6,7 +6,7 @@ import { AppointmentService } from '../services/appointment.service';
 import { Appointment, Car, Customer, Mechanic } from '../../../core/models/appointment.model';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 import { AiService } from '../../../core/services/ai.service';
-import { AiScheduleSuggestion } from '../../../core/models/ai.model';
+import { AiScheduleRequest, AiScheduleSuggestion } from '../../../core/models/ai.model';
 import { CarRegistrationFormComponent } from '../../cars/components/car-registration-form.component';
 import { LanguageService } from '../../../core/services/language.service';
 import { ToastService } from '../../../shared/services/toast.service';
@@ -522,17 +522,37 @@ export class AppointmentModalComponent {
     this.closed.emit();
   }
 
+  private buildPreferredStartTime(date: string | undefined, time: string | undefined): string | undefined {
+    if (!date || !time) return undefined;
+
+    const [year, month, day] = date.split('-').map(Number);
+    const [hours, minutes] = time.split(':').map(Number);
+    if ([year, month, day, hours, minutes].some(Number.isNaN)) return undefined;
+
+    return new Date(year, month - 1, day, hours, minutes, 0, 0).toISOString();
+  }
+
   requestAiSuggestions(): void {
     const form = this.appointmentForm.value;
-    this.suggestions.set([]);
-    this.suggestionsRequested.set(true);
-    this.aiService.suggestSchedule({
+    const preferredDate = form.scheduledDate || undefined;
+    const preferredStartTime = this.buildPreferredStartTime(form.scheduledDate, form.scheduledTime);
+    const request: AiScheduleRequest = {
       appointmentType: form.serviceType,
       estimatedDuration: form.estimatedDuration,
-      preferredDate: form.scheduledDate || undefined,
       mechanicId: form.mechanicId || undefined,
       language: this.languageService.getCurrentLanguage(),
-    }).subscribe({
+    };
+    if (preferredDate) {
+      request.preferredDate = preferredDate;
+      request.exactDateOnly = true;
+    }
+    if (preferredStartTime) {
+      request.preferredStartTime = preferredStartTime;
+    }
+
+    this.suggestions.set([]);
+    this.suggestionsRequested.set(true);
+    this.aiService.suggestSchedule(request).subscribe({
       next: (response) => {
         this.suggestions.set(response.suggestedSlots);
       },

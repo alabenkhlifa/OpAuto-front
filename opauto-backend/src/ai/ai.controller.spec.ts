@@ -90,7 +90,7 @@ describe('AiController – POST /ai/suggest-schedule', () => {
 
   // ── Passes preferredDate through ──────────────────────────
 
-  it('passes preferredDate and mechanicId to the service', async () => {
+  it('passes preferredDate, exactDateOnly, preferredStartTime and mechanicId to the service', async () => {
     aiService.suggestSchedule.mockResolvedValue({ suggestedSlots: [], provider: 'mock' });
 
     await request(app.getHttpServer())
@@ -99,6 +99,8 @@ describe('AiController – POST /ai/suggest-schedule', () => {
         appointmentType: 'brake-service',
         estimatedDuration: 120,
         preferredDate: '2026-04-05',
+        exactDateOnly: true,
+        preferredStartTime: '2026-04-05T09:30:00.000Z',
         mechanicId: 'emp-specific',
       })
       .expect(201);
@@ -109,6 +111,8 @@ describe('AiController – POST /ai/suggest-schedule', () => {
         appointmentType: 'brake-service',
         estimatedDuration: 120,
         preferredDate: '2026-04-05',
+        exactDateOnly: true,
+        preferredStartTime: '2026-04-05T09:30:00.000Z',
         mechanicId: 'emp-specific',
       }),
     );

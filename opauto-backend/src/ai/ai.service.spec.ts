@@ -58,6 +58,13 @@ function futureDate(daysFromNow: number, hour: number, minute = 0): Date {
   return d;
 }
 
+function localDateKey(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 // ── Test Suite ───────────────────────────────────────────────────
 
 describe('AiService – suggestSchedule', () => {
@@ -236,8 +243,76 @@ describe('AiService – suggestSchedule', () => {
     const windowStart: Date = apptCall.where.startTime.gte;
     const windowEnd: Date = apptCall.where.startTime.lte;
 
-    expect(windowStart.toISOString()).toBe('2026-06-30T00:00:00.000Z');
-    expect(windowEnd.toISOString()).toBe('2026-07-01T00:00:00.000Z');
+    expect(localDateKey(windowStart)).toBe('2026-06-30');
+    expect(localDateKey(new Date(windowEnd.getTime() - 1))).toBe('2026-06-30');
+    expect((windowEnd.getTime() - windowStart.getTime()) / (1000 * 60 * 60 * 24)).toBeCloseTo(1);
+  });
+
+  it('returns slots only on the selected date when exactDateOnly is set', async () => {
+    const emp = makeEmployee({ id: 'emp-1' });
+    prisma.employee.findMany.mockResolvedValueOnce([emp]);
+    prisma.appointment.findMany.mockResolvedValue([]);
+    const selectedDate = localDateKey(futureDate(3, 0));
+
+    const result = await service.suggestSchedule(GARAGE_ID, {
+      appointmentType: 'oil-change',
+      estimatedDuration: 30,
+      preferredDate: selectedDate,
+      exactDateOnly: true,
+    });
+
+    expect(result.suggestedSlots.length).toBeGreaterThan(0);
+    for (const slot of result.suggestedSlots) {
+      expect(localDateKey(new Date(slot.start))).toBe(selectedDate);
+    }
+  });
+
+  it('returns available mechanics only at the selected date and time', async () => {
+    const empBusy = makeEmployee({ id: 'emp-busy', firstName: 'Busy', skills: ['oil_change'] });
+    const empFree = makeEmployee({ id: 'emp-free', firstName: 'Free', skills: ['oil_change'] });
+    prisma.employee.findMany.mockResolvedValueOnce([empBusy, empFree]);
+
+    const selectedStart = futureDate(3, 10);
+    const selectedEnd = new Date(selectedStart.getTime() + 60 * 60 * 1000);
+    prisma.appointment.findMany.mockResolvedValue([
+      makeAppointment({ employeeId: 'emp-busy', startTime: selectedStart, endTime: selectedEnd }),
+    ]);
+
+    const result = await service.suggestSchedule(GARAGE_ID, {
+      appointmentType: 'oil-change',
+      estimatedDuration: 60,
+      preferredDate: localDateKey(selectedStart),
+      exactDateOnly: true,
+      preferredStartTime: selectedStart.toISOString(),
+    });
+
+    expect(result.suggestedSlots.length).toBeGreaterThan(0);
+    for (const slot of result.suggestedSlots) {
+      expect(slot.start).toBe(selectedStart.toISOString());
+      expect(slot.mechanicId).toBe('emp-free');
+    }
+  });
+
+  it('returns no slots when the selected mechanic is unavailable at the selected time', async () => {
+    const emp = makeEmployee({ id: 'emp-1', skills: ['oil_change'] });
+    prisma.employee.findMany.mockResolvedValueOnce([emp]);
+
+    const selectedStart = futureDate(3, 10);
+    const selectedEnd = new Date(selectedStart.getTime() + 60 * 60 * 1000);
+    prisma.appointment.findMany.mockResolvedValue([
+      makeAppointment({ employeeId: 'emp-1', startTime: selectedStart, endTime: selectedEnd }),
+    ]);
+
+    const result = await service.suggestSchedule(GARAGE_ID, {
+      appointmentType: 'oil-change',
+      estimatedDuration: 60,
+      preferredDate: localDateKey(selectedStart),
+      exactDateOnly: true,
+      preferredStartTime: selectedStart.toISOString(),
+      mechanicId: 'emp-1',
+    });
+
+    expect(result.suggestedSlots).toEqual([]);
   });
 
   // ── 6. Excludes CANCELLED and NO_SHOW from conflict check ─

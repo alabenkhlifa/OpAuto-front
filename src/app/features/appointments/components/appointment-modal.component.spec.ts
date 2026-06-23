@@ -139,6 +139,7 @@ describe('AppointmentModalComponent — AI Suggest', () => {
         appointmentType: 'oil-change',   // serviceType -> appointmentType
         estimatedDuration: 60,
         preferredDate: '2026-04-01',
+        exactDateOnly: true,
         mechanicId: 'mech-1',
         language: 'en',
       });
@@ -192,6 +193,8 @@ describe('AppointmentModalComponent — AI Suggest', () => {
 
       const callArgs = mockAiService.suggestSchedule.calls.mostRecent().args[0];
       expect(callArgs.preferredDate).toBeUndefined();
+      expect(callArgs.exactDateOnly).toBeUndefined();
+      expect(callArgs.preferredStartTime).toBeUndefined();
     });
 
     it('should pass undefined for mechanicId when not selected', () => {
@@ -202,6 +205,30 @@ describe('AppointmentModalComponent — AI Suggest', () => {
 
       const callArgs = mockAiService.suggestSchedule.calls.mostRecent().args[0];
       expect(callArgs.mechanicId).toBeUndefined();
+    });
+
+    it('should send an exact preferredStartTime when date and time are selected', () => {
+      component.appointmentForm.patchValue({ scheduledTime: '14:30' });
+      mockAiService.suggestSchedule.and.returnValue(of(mockScheduleResponse));
+
+      component.requestAiSuggestions();
+
+      const callArgs = mockAiService.suggestSchedule.calls.mostRecent().args[0];
+      expect(callArgs.preferredDate).toBe('2026-04-01');
+      expect(callArgs.exactDateOnly).toBe(true);
+      expect(callArgs.preferredStartTime).toBe(new Date(2026, 3, 1, 14, 30, 0, 0).toISOString());
+    });
+
+    it('should omit preferredStartTime when only the date is selected', () => {
+      component.appointmentForm.patchValue({ scheduledTime: '' });
+      mockAiService.suggestSchedule.and.returnValue(of(mockScheduleResponse));
+
+      component.requestAiSuggestions();
+
+      const callArgs = mockAiService.suggestSchedule.calls.mostRecent().args[0];
+      expect(callArgs.preferredDate).toBe('2026-04-01');
+      expect(callArgs.exactDateOnly).toBe(true);
+      expect(callArgs.preferredStartTime).toBeUndefined();
     });
   });
 
