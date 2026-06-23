@@ -60,6 +60,15 @@ describe('AssistantToolPresenterService', () => {
     expect(p.toolName).toBe('list_invoices');
   });
 
+  it('formats raw-array read-tool results without showing zero', () => {
+    const p = svc.format(
+      toolMsg('find_customer', 'EXECUTED', { query: 'hayfa' }, [{ id: 'cust-1' }]),
+    )!;
+    expect(p.state).toBe('success');
+    expect(p.statusKey).toBe('assistant.tools.find_customer.success');
+    expect(p.statusParams['count']).toBe(1);
+  });
+
   it('formats failure state from FAILED status', () => {
     const msg = toolMsg('list_invoices', 'FAILED', undefined, undefined);
     const p = svc.format(msg)!;

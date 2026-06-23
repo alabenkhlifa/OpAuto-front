@@ -29,7 +29,8 @@ const arr = (v: unknown, key: string): unknown[] | undefined => {
   return Array.isArray(x) ? x : undefined;
 };
 
-const arrLen = (v: unknown, key: string): number => arr(v, key)?.length ?? 0;
+const arrLen = (v: unknown, key: string): number =>
+  Array.isArray(v) ? v.length : arr(v, key)?.length ?? 0;
 
 const formatDateTime = (iso?: string): string => {
   if (!iso) return '';
