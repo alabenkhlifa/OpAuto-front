@@ -42,6 +42,9 @@ const RESUME_PREFIX = '__resume__:';
 
 const RESERVED_LOAD_SKILL = 'load_skill';
 const RESERVED_DISPATCH_AGENT = 'dispatch_agent';
+const AGENT_DISPATCH_ALIASES: Record<string, string> = {
+  'retention-suggestions': 'growth-agent',
+};
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const UUID_IN_TEXT_PATTERN =
@@ -938,7 +941,7 @@ export class OrchestratorService {
       input?: unknown;
       reason?: unknown;
     };
-    const agentName = typeof args?.name === 'string' ? args.name : '';
+    const agentName = this.resolveAgentDispatchName(args?.name);
     const input =
       typeof args?.input === 'string'
         ? args.input
@@ -967,6 +970,13 @@ export class OrchestratorService {
       });
       return null;
     }
+  }
+
+  private resolveAgentDispatchName(raw: unknown): string {
+    if (typeof raw !== 'string') return '';
+    const agentName = raw.trim();
+    if (!agentName) return '';
+    return AGENT_DISPATCH_ALIASES[agentName.toLowerCase()] ?? agentName;
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────

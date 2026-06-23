@@ -1167,6 +1167,49 @@ describe('OrchestratorService', () => {
     );
   });
 
+  it('maps retention-suggestions dispatches to growth-agent', async () => {
+    const agents = {
+      list: jest.fn().mockReturnValue([
+        { name: 'growth-agent', description: 'growth and retention reviews' },
+      ]),
+      run: jest.fn().mockResolvedValue({ result: 'Retention review ready.' }),
+    };
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-retention',
+            name: 'dispatch_agent',
+            argsJson:
+              '{"name":"retention-suggestions","input":"Run a retention review","reason":"retention review"}',
+          },
+        ],
+      },
+      { provider: 'groq', content: 'Retention review ready.', toolCalls: [] },
+    ]);
+    const orchestrator = await makeOrchestrator({ llm, agents });
+
+    const events = await collectEvents(
+      orchestrator.run(ctx, 'conv-growth', 'Run a retention review.', undefined),
+    );
+
+    expect(events.find((e) => e.type === 'agent_dispatch')).toMatchObject({
+      agentName: 'growth-agent',
+      reason: 'retention review',
+    });
+    expect(events.find((e) => e.type === 'agent_result')).toMatchObject({
+      agentName: 'growth-agent',
+      result: 'Retention review ready.',
+    });
+    expect(agents.run).toHaveBeenCalledWith(
+      'growth-agent',
+      'Run a retention review',
+      expect.objectContaining({ garageId: 'garage-1' }),
+    );
+  });
+
   it('uses the latest agent result when the final LLM response is a generic timeout', async () => {
     const agents = {
       list: jest
