@@ -1772,6 +1772,152 @@ describe('OrchestratorService', () => {
     );
   });
 
+  it('keeps booking flow going when the model answers with date-calculation text before slot lookup', async () => {
+    const customerId = '0a19350b-7648-4d82-866d-a86508775194';
+    const carId = 'c3d3cd7a-ee09-44e8-8dc6-6953aae4da7c';
+    const mechanicId = '29b30e71-420b-48dd-ad56-381dfe852f7d';
+    const tools = makeTools(
+      ['find_customer', 'find_available_slot', 'find_car', 'create_appointment'],
+      (name) => {
+        if (name === 'find_customer') {
+          return {
+            ok: true,
+            result: [{ id: customerId, displayName: 'Khaoula Khelifi' }],
+            durationMs: 1,
+          };
+        }
+        if (name === 'find_available_slot') {
+          return {
+            ok: true,
+            result: {
+              slots: [
+                {
+                  start: '2026-06-30T08:00:00.000Z',
+                  end: '2026-06-30T08:30:00.000Z',
+                  mechanicId,
+                  mechanicName: 'Hichem Sassi',
+                },
+              ],
+            },
+            durationMs: 1,
+          };
+        }
+        if (name === 'find_car') {
+          return {
+            ok: true,
+            result: [{ id: carId, customerId, plate: '8580 TUN 289' }],
+            durationMs: 1,
+          };
+        }
+        return { ok: true, result: {}, durationMs: 1 };
+      },
+    );
+    tools.resolveBlastTier.mockImplementation((tool: any) =>
+      tool.name === 'create_appointment'
+        ? AssistantBlastTier.CONFIRM_WRITE
+        : AssistantBlastTier.READ,
+    );
+    const approvals = makeApprovals();
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-customer',
+            name: 'find_customer',
+            argsJson: '{"query":"Khaoula Khelifi"}',
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content:
+          'from datetime import datetime, timedelta\nprint("next Tuesday")',
+        toolCalls: [],
+      },
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-slot',
+            name: 'find_available_slot',
+            argsJson: '{"date":"2026-06-30","durationMinutes":30}',
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: 'I found a slot and can create it.',
+        toolCalls: [],
+      },
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-car',
+            name: 'find_car',
+            argsJson: '{"query":"8580 TUN 289"}',
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-create',
+            name: 'create_appointment',
+            argsJson:
+              `{"customerId":"${customerId}","carId":"${carId}","scheduledAt":"2026-06-30T08:00:00.000Z","durationMinutes":30,"mechanicId":"${mechanicId}"}`,
+          },
+        ],
+      },
+    ]);
+    const prisma = {
+      ...makePrisma(),
+      customer: {
+        findFirst: jest.fn().mockResolvedValue({ id: customerId }),
+      },
+      car: {
+        findFirst: jest.fn().mockResolvedValue({ id: carId }),
+      },
+    };
+    const orchestrator = await makeOrchestrator({
+      tools,
+      llm,
+      approvals,
+      prisma,
+    });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-appointment-text-retry',
+        'Book a checkup for Khaoula Khelifi and her Skoda Octavia plate 8580 TUN 289 next Tuesday morning if you find a slot. Do not create it unless I approve the approval request.',
+        undefined,
+      ),
+    );
+
+    expect(tools.execute).toHaveBeenCalledWith(
+      'find_available_slot',
+      { date: '2026-06-30', durationMinutes: 30 },
+      expect.objectContaining({ garageId: 'garage-1' }),
+    );
+    expect(events.find((e) => e.type === 'text')).toBeUndefined();
+    expect(events.find((e) => e.type === 'approval_request')).toMatchObject({
+      toolName: 'create_appointment',
+      args: expect.objectContaining({
+        customerId,
+        carId,
+        scheduledAt: '2026-06-30T08:00:00.000Z',
+        mechanicId,
+      }),
+    });
+  });
+
   it('adds the no-appointment-created sentence when booking text only lists slots', async () => {
     const tools = makeTools(['find_available_slot', 'create_appointment'], (name) => {
       if (name === 'find_available_slot') {

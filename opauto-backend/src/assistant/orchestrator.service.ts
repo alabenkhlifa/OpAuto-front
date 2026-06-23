@@ -301,6 +301,7 @@ export class OrchestratorService {
       const MAX_CALLS_PER_TOOL_PER_TURN = 3;
       const toolCallCounts = new Map<string, number>();
       let forceComposeOnly = false;
+      const requiredActionRetriesIssued = new Set<string>();
       const successfulToolResults: { toolName: string; result: unknown }[] = [];
       const recordFailedToolAttempt = (
         toolName: string,
@@ -400,6 +401,25 @@ export class OrchestratorService {
         }
 
         if (toolCalls.length === 0) {
+          const requiredActionRetry =
+            !swapToComposeOnly && step < iterationCap - 1
+              ? this.requiredActionToolRetry(
+                  ctx.turnState?.userMessage,
+                  successfulToolResults,
+                )
+              : null;
+          if (
+            requiredActionRetry &&
+            !requiredActionRetriesIssued.has(requiredActionRetry.key)
+          ) {
+            requiredActionRetriesIssued.add(requiredActionRetry.key);
+            llmMessages.push({
+              role: 'system',
+              content: requiredActionRetry.content,
+            });
+            continue;
+          }
+
           let text = completion.content ?? '';
           if (lastAgentResult && this.shouldFallbackToAgentResult(text)) {
             text = lastAgentResult.result;
@@ -989,6 +1009,48 @@ export class OrchestratorService {
       /ran\s+out\s+of\s+time/i.test(text) ||
       /try\s+a\s+smaller\s+question/i.test(text)
     );
+  }
+
+  private requiredActionToolRetry(
+    userMessage: string | undefined,
+    successfulToolResults: { toolName: string; result: unknown }[],
+  ): { key: string; content: string } | null {
+    if (!this.userAskedForAppointmentCreation(userMessage)) return null;
+
+    const hasSlot = successfulToolResults.some(
+      (entry) => entry.toolName === 'find_available_slot',
+    );
+    const hasCustomer = successfulToolResults.some(
+      (entry) =>
+        entry.toolName === 'find_customer' || entry.toolName === 'get_customer',
+    );
+    const hasCar = successfulToolResults.some(
+      (entry) => entry.toolName === 'find_car' || entry.toolName === 'get_car',
+    );
+    const hasCreate = successfulToolResults.some(
+      (entry) => entry.toolName === 'create_appointment',
+    );
+
+    if (!hasSlot) {
+      return {
+        key: `appointment-slot:${hasCustomer}`,
+        content:
+          `The user asked to book or schedule an appointment. Do not answer with code, date-calculation snippets, or a final prose response yet. ` +
+          `Call find_available_slot next using a concrete YYYY-MM-DD date computed from today's system date, durationMinutes 30 when the user did not specify duration, and the best appointment type you can infer.`,
+      };
+    }
+
+    if (!hasCreate) {
+      return {
+        key: `appointment-create:${hasCustomer}:${hasCar}`,
+        content:
+          `You already have availability for a booking request. Do not stop at listing slots. ` +
+          `Resolve the real customer and vehicle with find_customer/get_customer and find_car/get_car when needed, then call create_appointment with UUID customerId/carId values, scheduledAt from the chosen available slot, durationMinutes, and mechanicId when the slot returned one. ` +
+          `The approval request will ask the user to confirm before anything is created.`,
+      };
+    }
+
+    return null;
   }
 
   private postProcessAssistantText(
