@@ -248,6 +248,99 @@ describe('Customers + Cars tools', () => {
       );
     });
 
+    it('groups paid invoices by customer for date-bounded revenue rankings', async () => {
+      const invoiceFindMany = jest.fn().mockResolvedValue([
+        {
+          total: 100,
+          customer: {
+            id: 'c1',
+            firstName: 'A',
+            lastName: 'B',
+            phone: '+1',
+            email: 'a@b',
+            visitCount: 2,
+            loyaltyTier: 'gold',
+          },
+        },
+        {
+          total: 50,
+          customer: {
+            id: 'c1',
+            firstName: 'A',
+            lastName: 'B',
+            phone: '+1',
+            email: 'a@b',
+            visitCount: 2,
+            loyaltyTier: 'gold',
+          },
+        },
+        {
+          total: 200,
+          customer: {
+            id: 'c2',
+            firstName: 'C',
+            lastName: 'D',
+            phone: '+2',
+            email: null,
+            visitCount: 1,
+            loyaltyTier: null,
+          },
+        },
+      ]);
+      const tool = createListTopCustomersTool({
+        prisma: { invoice: { findMany: invoiceFindMany } } as any,
+      });
+
+      const result = await tool.handler(
+        { by: 'revenue', from: '2026-01-01', to: '2026-12-31', limit: 2 },
+        ownerCtx,
+      );
+
+      expect(invoiceFindMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            garageId: 'garage-1',
+            status: 'PAID',
+            paidAt: {
+              gte: new Date('2026-01-01T00:00:00.000Z'),
+              lte: new Date('2026-12-31T23:59:59.999Z'),
+            },
+          },
+        }),
+      );
+      expect(result.map((c) => [c.displayName, c.totalSpent])).toEqual([
+        ['C D', 200],
+        ['A B', 150],
+      ]);
+    });
+
+    it('returns an empty list for a historical revenue window with no paid invoices', async () => {
+      const invoiceFindMany = jest.fn().mockResolvedValue([]);
+      const tool = createListTopCustomersTool({
+        prisma: { invoice: { findMany: invoiceFindMany } } as any,
+      });
+
+      const result = await tool.handler(
+        { by: 'revenue', from: '1990-01-01', to: '1990-12-31' },
+        ownerCtx,
+      );
+
+      expect(result).toEqual([]);
+    });
+
+    it('accepts date range args at schema level', () => {
+      const tool = createListTopCustomersTool({ prisma: {} as any });
+      const registry = new ToolRegistryService();
+      registry.register(tool);
+      expect(
+        registry.validateArgs('list_top_customers', {
+          by: 'revenue',
+          from: '1990-01-01',
+          to: '1990-12-31',
+        }).valid,
+      ).toBe(true);
+    });
+
     it('is OWNER-gated', () => {
       const tool = createListTopCustomersTool({ prisma: {} as any });
       expect(tool.requiredRole).toBe('OWNER');
