@@ -1815,6 +1815,14 @@ export class OrchestratorService {
       out.push('get_customer');
       out.push('find_car');
     }
+    if (this.userAskedForAppointmentCreation(message)) {
+      out.push('find_available_slot');
+      out.push('create_appointment');
+      out.push('find_customer');
+      out.push('get_customer');
+      out.push('find_car');
+      out.push('get_car');
+    }
     return out;
   }
 
@@ -2535,6 +2543,18 @@ export class OrchestratorService {
       toolName === 'create_appointment' &&
       errors.some((error) => /customerId|carId|mechanicId|uuid/i.test(error))
     ) {
+      if (this.userMessageHasAppointmentRecordHints(userMessage)) {
+        return {
+          forceComposeOnly: false,
+          content:
+            `create_appointment arguments were invalid, but the user already named the customer and vehicle. ` +
+            `Do not ask the user to confirm details that are already in the message. Retry by resolving real records first: ` +
+            `call find_customer/get_customer for the customer and find_car/get_car for the vehicle or plate. ` +
+            `Then call create_appointment with UUID customerId/carId values, scheduledAt from the selected available slot, ` +
+            `durationMinutes, and mechanicId when a slot returned one. The approval request will ask the user to confirm before execution. ` +
+            `Do not mention schemas, validation, tool names, or internal IDs.`,
+        };
+      }
       return {
         forceComposeOnly: true,
         content:
@@ -2554,6 +2574,21 @@ export class OrchestratorService {
     return /\b(?:create|make|issue|generate|prepare)\b[\s\S]{0,80}\binvoice\b/i.test(
       userMessage ?? '',
     );
+  }
+
+  private userMessageHasAppointmentRecordHints(
+    userMessage: string | undefined,
+  ): boolean {
+    const msg = userMessage ?? '';
+    if (!this.userAskedForAppointmentCreation(msg)) return false;
+    const hasVehicleHint =
+      /\b(?:plate|license|car|vehicle|skoda|renault|peugeot|dacia|toyota|bmw|mercedes|audi|volkswagen|hyundai|kia)\b/i.test(
+        msg,
+      ) || /\b\d{2,5}\s*TUN\s*\d{2,5}\b/i.test(msg);
+    const hasCustomerHint = /\bfor\s+[A-Z][A-Za-z'’-]+(?:\s+[A-Z][A-Za-z'’-]+)+\b/.test(
+      msg,
+    );
+    return hasVehicleHint && hasCustomerHint;
   }
 
   private userMessageLacksInvoicePrices(

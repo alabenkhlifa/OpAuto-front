@@ -1594,6 +1594,184 @@ describe('OrchestratorService', () => {
     });
   });
 
+  it('retries create_appointment toward approval when the user named the customer and vehicle', async () => {
+    const customerId = '0a19350b-7648-4d82-866d-a86508775194';
+    const carId = 'c3d3cd7a-ee09-44e8-8dc6-6953aae4da7c';
+    const mechanicId = '29b30e71-420b-48dd-ad56-381dfe852f7d';
+    const tools = makeTools(
+      ['find_available_slot', 'find_customer', 'find_car', 'create_appointment'],
+      (name) => {
+        if (name === 'find_available_slot') {
+          return {
+            ok: true,
+            result: {
+              slots: [
+                {
+                  start: '2026-06-30T08:00:00.000Z',
+                  end: '2026-06-30T08:30:00.000Z',
+                  mechanicId,
+                  mechanicName: 'Hichem Sassi',
+                },
+              ],
+            },
+            durationMs: 1,
+          };
+        }
+        if (name === 'find_customer') {
+          return {
+            ok: true,
+            result: [{ id: customerId, displayName: 'Khaoula Khelifi' }],
+            durationMs: 1,
+          };
+        }
+        if (name === 'find_car') {
+          return {
+            ok: true,
+            result: [
+              {
+                id: carId,
+                customerId,
+                displayName: '2024 Skoda Octavia (8580 TUN 289)',
+              },
+            ],
+            durationMs: 1,
+          };
+        }
+        return { ok: true, result: {}, durationMs: 1 };
+      },
+    );
+    tools.validateArgs.mockImplementation((name: string, args: any) => {
+      if (
+        name === 'create_appointment' &&
+        args.customerId === 'Khaoula Khelifi'
+      ) {
+        return {
+          valid: false,
+          errors: [
+            '/customerId must match format "uuid"',
+            '/carId must match format "uuid"',
+          ],
+        };
+      }
+      return { valid: true };
+    });
+    tools.resolveBlastTier.mockImplementation((tool: any) =>
+      tool.name === 'create_appointment'
+        ? AssistantBlastTier.CONFIRM_WRITE
+        : AssistantBlastTier.READ,
+    );
+    const prisma = {
+      ...makePrisma(),
+      customer: {
+        findFirst: jest.fn().mockResolvedValue({ id: customerId }),
+      },
+      car: {
+        findFirst: jest.fn().mockResolvedValue({ id: carId }),
+      },
+    };
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-slot',
+            name: 'find_available_slot',
+            argsJson:
+              '{"date":"2026-06-30","durationMinutes":30,"appointmentType":"general-inspection"}',
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-bad-create',
+            name: 'create_appointment',
+            argsJson:
+              '{"customerId":"Khaoula Khelifi","carId":"8580 TUN 289","scheduledAt":"2026-06-30T08:00:00.000Z","durationMinutes":30}',
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-customer',
+            name: 'find_customer',
+            argsJson: '{"query":"Khaoula Khelifi"}',
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-car',
+            name: 'find_car',
+            argsJson: '{"query":"8580 TUN 289"}',
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-good-create',
+            name: 'create_appointment',
+            argsJson:
+              `{"customerId":"${customerId}","carId":"${carId}","scheduledAt":"2026-06-30T08:00:00.000Z","durationMinutes":30,"mechanicId":"${mechanicId}","reason":"checkup"}`,
+          },
+        ],
+      },
+    ]);
+    const approvals = makeApprovals();
+    const orchestrator = await makeOrchestrator({
+      tools,
+      llm,
+      approvals,
+      prisma,
+    });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-appointment-real',
+        'Book a checkup for Khaoula Khelifi and her Skoda Octavia plate 8580 TUN 289 next Tuesday morning if you find a slot. Do not create it unless I approve the approval request.',
+        undefined,
+      ),
+    );
+
+    expect(tools.execute).toHaveBeenCalledWith(
+      'find_customer',
+      { query: 'Khaoula Khelifi' },
+      expect.objectContaining({ garageId: 'garage-1' }),
+    );
+    expect(tools.execute).toHaveBeenCalledWith(
+      'find_car',
+      { query: '8580 TUN 289' },
+      expect.objectContaining({ garageId: 'garage-1' }),
+    );
+    expect(events.find((e) => e.type === 'approval_request')).toMatchObject({
+      toolName: 'create_appointment',
+      blastTier: AssistantBlastTier.CONFIRM_WRITE,
+      args: expect.objectContaining({
+        customerId,
+        carId,
+        scheduledAt: '2026-06-30T08:00:00.000Z',
+        durationMinutes: 30,
+        mechanicId,
+      }),
+    });
+    expect(approvals.createPending).toHaveBeenCalledWith(
+      expect.objectContaining({ toolName: 'create_appointment' }),
+    );
+  });
+
   it('adds the no-appointment-created sentence when booking text only lists slots', async () => {
     const tools = makeTools(['find_available_slot', 'create_appointment'], (name) => {
       if (name === 'find_available_slot') {
