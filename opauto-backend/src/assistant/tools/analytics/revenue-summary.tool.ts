@@ -1,10 +1,7 @@
 import { AssistantBlastTier } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AssistantUserContext, ToolDefinition } from '../../types';
-import {
-  RevenuePeriod,
-  resolveRevenueWindow,
-} from './revenue-period.util';
+import { RevenuePeriod, resolveRevenueWindow } from './revenue-period.util';
 
 // Re-exported so existing call sites (specs, other tools) keep working.
 export {
@@ -48,11 +45,63 @@ function asksForLastMonth(message: string | undefined): boolean {
   return /\b(last|previous)\s+month\b/i.test(message ?? '');
 }
 
+function asksForQuarterComparison(message: string | undefined): boolean {
+  const m = message ?? '';
+  return (
+    /\b(this|current)\s+quarter\b/i.test(m) &&
+    /\b(last|previous)\s+quarter\b/i.test(m)
+  );
+}
+
 function previousCalendarMonthWindow(now: Date): { from: Date; to: Date } {
   const to = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
   const from = new Date(to);
   from.setUTCMonth(from.getUTCMonth() - 1);
   return { from, to };
+}
+
+function startOfUtcQuarter(now: Date): Date {
+  const quarterStartMonth = Math.floor(now.getUTCMonth() / 3) * 3;
+  return new Date(Date.UTC(now.getUTCFullYear(), quarterStartMonth, 1));
+}
+
+function addUtcMonths(date: Date, months: number): Date {
+  return new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + months, 1),
+  );
+}
+
+function currentQuarterToDateWindow(now: Date): { from: Date; to: Date } {
+  return { from: startOfUtcQuarter(now), to: new Date(now) };
+}
+
+function previousQuarterWindow(now: Date): { from: Date; to: Date } {
+  const to = startOfUtcQuarter(now);
+  return { from: addUtcMonths(to, -3), to };
+}
+
+function isStaleQuarterComparisonWindow(
+  args: RevenueSummaryArgs,
+  now: Date,
+): boolean {
+  if (!args.from || !args.to) return false;
+  const from = new Date(args.from);
+  const to = new Date(args.to);
+  if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) return false;
+  return to.getTime() <= previousQuarterWindow(now).from.getTime();
+}
+
+function nextQuarterComparisonWindow(
+  ctx: AssistantUserContext,
+  now: Date,
+): { from: Date; to: Date } {
+  const count = ctx.turnState?.revenueQuarterComparisonCalls ?? 0;
+  if (ctx.turnState) {
+    ctx.turnState.revenueQuarterComparisonCalls = count + 1;
+  }
+  return count % 2 === 0
+    ? currentQuarterToDateWindow(now)
+    : previousQuarterWindow(now);
 }
 
 /**
@@ -103,13 +152,17 @@ export function buildGetRevenueSummaryTool(
       args: RevenueSummaryArgs,
       ctx: AssistantUserContext,
     ): Promise<RevenueSummaryResult> => {
+      const now = new Date();
       const correctedWindow =
         !args.from &&
         !args.to &&
         args.period === 'month' &&
         asksForLastMonth(ctx.turnState?.userMessage)
-          ? previousCalendarMonthWindow(new Date())
-          : null;
+          ? previousCalendarMonthWindow(now)
+          : asksForQuarterComparison(ctx.turnState?.userMessage) &&
+              isStaleQuarterComparisonWindow(args, now)
+            ? nextQuarterComparisonWindow(ctx, now)
+            : null;
       const { from, to, periodLabel } = correctedWindow
         ? { ...correctedWindow, periodLabel: 'custom' as const }
         : resolveRevenueWindow(args);

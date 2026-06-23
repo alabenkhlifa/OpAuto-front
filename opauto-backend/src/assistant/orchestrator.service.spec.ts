@@ -1115,6 +1115,49 @@ describe('OrchestratorService', () => {
     });
   });
 
+  it('keeps only the compiled briefing when the model emits daily-briefing process notes', async () => {
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content:
+          '## Analyze the revenue summary for today and the week.\n' +
+          'The revenue summary for today is 0 TND.\n\n' +
+          '## Determine the delta between today and the 7-day average.\n' +
+          'The delta is 0%.\n\n' +
+          '## Compile the daily briefing.\n' +
+          '**Revenue**\n' +
+          'Today: 0 TND. Week: 0 TND.\n\n' +
+          '**Customers**\n' +
+          '1 new customer in the last 24h.\n\n' +
+          'Recommended next action: Call Mehdi Gharbi.',
+        toolCalls: [],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({ llm });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-1',
+        'Give me a quick morning briefing.',
+        undefined,
+      ),
+    );
+
+    const text = events.find((e) => e.type === 'text');
+    expect(text).toMatchObject({
+      delta: expect.stringContaining('**Revenue**'),
+    });
+    expect(text).toMatchObject({
+      delta: expect.stringContaining('Recommended next action'),
+    });
+    expect(text).not.toMatchObject({
+      delta: expect.stringMatching(
+        /Analyze the revenue|Determine the delta|Compile the daily briefing/i,
+      ),
+    });
+  });
+
   it('emits budget_exceeded + done and skips the LLM when the conversation is over budget', async () => {
     const conversation = makeConversation([], 250_000);
     const llm = makeLlm([

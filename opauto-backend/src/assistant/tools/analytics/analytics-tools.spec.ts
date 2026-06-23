@@ -36,7 +36,9 @@ describe('analytics tools', () => {
         paidInvoices: 30,
         totalCustomers: 99,
       };
-      const reports = { getDashboardStats: jest.fn().mockResolvedValue(stats) } as any;
+      const reports = {
+        getDashboardStats: jest.fn().mockResolvedValue(stats),
+      } as any;
       const tool = buildGetDashboardKpisTool(reports);
 
       const result = await tool.handler({}, ownerCtx);
@@ -47,13 +49,17 @@ describe('analytics tools', () => {
     });
 
     it('is registered as READ tier and OWNER-only', () => {
-      const tool = buildGetDashboardKpisTool({ getDashboardStats: jest.fn() } as any);
+      const tool = buildGetDashboardKpisTool({
+        getDashboardStats: jest.fn(),
+      } as any);
       expect(tool.blastTier).toBe(AssistantBlastTier.READ);
       expect(tool.requiredRole).toBe('OWNER');
     });
 
     it('I-011: strips extra arguments via the empty schema (was: rejects)', () => {
-      const tool = buildGetDashboardKpisTool({ getDashboardStats: jest.fn() } as any);
+      const tool = buildGetDashboardKpisTool({
+        getDashboardStats: jest.fn(),
+      } as any);
       const args: Record<string, unknown> = { stray: 'not allowed' };
       const result = registerAndValidate(tool, args);
       // Pre-I-011 this was `false`. AJV now strips unknown keys instead of
@@ -89,7 +95,9 @@ describe('analytics tools', () => {
     });
 
     it('rejects periods outside the enum', () => {
-      const tool = buildGetRevenueSummaryTool({ invoice: { aggregate: jest.fn() } } as any);
+      const tool = buildGetRevenueSummaryTool({
+        invoice: { aggregate: jest.fn() },
+      } as any);
       const result = registerAndValidate(tool, { period: 'forever' });
       expect(result.valid).toBe(false);
     });
@@ -141,15 +149,70 @@ describe('analytics tools', () => {
       jest.useRealTimers();
     });
 
+    it('corrects stale quarter comparison ranges to current and previous quarters', async () => {
+      jest.useFakeTimers().setSystemTime(new Date('2026-06-23T12:00:00Z'));
+      const aggregate = jest
+        .fn()
+        .mockResolvedValueOnce({ _sum: { total: 7808.21 }, _count: 31 })
+        .mockResolvedValueOnce({ _sum: { total: 28528.62 }, _count: 140 });
+      const prisma = { invoice: { aggregate } } as any;
+      const tool = buildGetRevenueSummaryTool(prisma);
+      const comparisonCtx: AssistantUserContext = {
+        ...ownerCtx,
+        turnState: {
+          readToolCallsSoFar: 0,
+          userMessage:
+            'Compare this quarter with last quarter and tell me what changed.',
+        },
+      };
+
+      const currentQuarter = await tool.handler(
+        { from: '2024-01-01', to: '2024-03-31' },
+        comparisonCtx,
+      );
+      const previousQuarter = await tool.handler(
+        { from: '2023-10-01', to: '2023-12-31' },
+        comparisonCtx,
+      );
+
+      expect(currentQuarter).toMatchObject({
+        totalRevenue: 7808.21,
+        paidInvoiceCount: 31,
+        period: 'custom',
+      });
+      expect(previousQuarter).toMatchObject({
+        totalRevenue: 28528.62,
+        paidInvoiceCount: 140,
+        period: 'custom',
+      });
+      expect(aggregate.mock.calls[0][0].where.paidAt.gte.toISOString()).toBe(
+        '2026-04-01T00:00:00.000Z',
+      );
+      expect(aggregate.mock.calls[0][0].where.paidAt.lt.toISOString()).toBe(
+        '2026-06-23T12:00:00.000Z',
+      );
+      expect(aggregate.mock.calls[1][0].where.paidAt.gte.toISOString()).toBe(
+        '2026-01-01T00:00:00.000Z',
+      );
+      expect(aggregate.mock.calls[1][0].where.paidAt.lt.toISOString()).toBe(
+        '2026-04-01T00:00:00.000Z',
+      );
+      jest.useRealTimers();
+    });
+
     it('rejects partial range (only from, no to) at handler level', async () => {
-      const tool = buildGetRevenueSummaryTool({ invoice: { aggregate: jest.fn() } } as any);
+      const tool = buildGetRevenueSummaryTool({
+        invoice: { aggregate: jest.fn() },
+      } as any);
       await expect(
         tool.handler({ from: '2026-02-01' } as any, ownerCtx),
       ).rejects.toThrow(/from.*to.*together/i);
     });
 
     it('rejects from >= to', async () => {
-      const tool = buildGetRevenueSummaryTool({ invoice: { aggregate: jest.fn() } } as any);
+      const tool = buildGetRevenueSummaryTool({
+        invoice: { aggregate: jest.fn() },
+      } as any);
       await expect(
         tool.handler({ from: '2026-04-30', to: '2026-04-01' }, ownerCtx),
       ).rejects.toThrow(/Invalid range/);
@@ -166,19 +229,27 @@ describe('analytics tools', () => {
     });
 
     it('schema accepts {period} alone, {from,to} alone, and strips extras (I-011)', () => {
-      const tool = buildGetRevenueSummaryTool({ invoice: { aggregate: jest.fn() } } as any);
+      const tool = buildGetRevenueSummaryTool({
+        invoice: { aggregate: jest.fn() },
+      } as any);
       expect(registerAndValidate(tool, { period: 'month' }).valid).toBe(true);
       expect(
-        registerAndValidate(tool, { from: '2026-01-01', to: '2026-04-01' }).valid,
+        registerAndValidate(tool, { from: '2026-01-01', to: '2026-04-01' })
+          .valid,
       ).toBe(true);
       expect(registerAndValidate(tool, {}).valid).toBe(true); // schema-allowed; defaults to ytd at handler
       // I-011: extras get stripped instead of rejected; the call validates and
       // the unknown property is gone from the args object.
-      const argsWithStray: Record<string, unknown> = { period: 'ytd', whatever: 1 };
+      const argsWithStray: Record<string, unknown> = {
+        period: 'ytd',
+        whatever: 1,
+      };
       expect(registerAndValidate(tool, argsWithStray).valid).toBe(true);
       expect(argsWithStray.whatever).toBeUndefined();
       // But invalid enum values for KNOWN properties still fail.
-      expect(registerAndValidate(tool, { period: 'forever' } as any).valid).toBe(false);
+      expect(
+        registerAndValidate(tool, { period: 'forever' } as any).valid,
+      ).toBe(false);
     });
 
     it('returns a sensible window for "today"', () => {
@@ -216,11 +287,16 @@ describe('analytics tools', () => {
 
       expect(result).toEqual({ total: 17 });
       expect(count).toHaveBeenCalledTimes(1);
-      expect(count).toHaveBeenCalledWith({ where: { garageId: ownerCtx.garageId } });
+      expect(count).toHaveBeenCalledWith({
+        where: { garageId: ownerCtx.garageId },
+      });
     });
 
     it('returns total + new when newSince is provided, garage-scoped', async () => {
-      const count = jest.fn().mockResolvedValueOnce(50).mockResolvedValueOnce(8);
+      const count = jest
+        .fn()
+        .mockResolvedValueOnce(50)
+        .mockResolvedValueOnce(8);
       const prisma = { customer: { count } } as any;
       const tool = buildGetCustomerCountTool(prisma);
 
@@ -234,12 +310,14 @@ describe('analytics tools', () => {
     });
 
     it('rejects malformed newSince via Ajv format check or runtime guard', async () => {
-      const tool = buildGetCustomerCountTool({ customer: { count: jest.fn() } } as any);
+      const tool = buildGetCustomerCountTool({
+        customer: { count: jest.fn() },
+      } as any);
       // Schema is permissive on string format — ensure the handler still
       // throws on garbage values rather than calling Prisma with NaN.
-      await expect(tool.handler({ newSince: 'not-a-date' }, ownerCtx)).rejects.toThrow(
-        /Invalid newSince/,
-      );
+      await expect(
+        tool.handler({ newSince: 'not-a-date' }, ownerCtx),
+      ).rejects.toThrow(/Invalid newSince/);
     });
   });
 
@@ -265,7 +343,10 @@ describe('analytics tools', () => {
       expect(call.take).toBe(10);
       expect(call.where.garageId).toBe(ownerCtx.garageId);
       expect(call.where.status.notIn).toEqual(
-        expect.arrayContaining([MaintenanceStatus.COMPLETED, MaintenanceStatus.CANCELLED]),
+        expect.arrayContaining([
+          MaintenanceStatus.COMPLETED,
+          MaintenanceStatus.CANCELLED,
+        ]),
       );
     });
 
@@ -287,7 +368,9 @@ describe('analytics tools', () => {
     });
 
     it('rejects non-integer limit at the schema layer', () => {
-      const tool = buildListActiveJobsTool({ maintenanceJob: { findMany: jest.fn() } } as any);
+      const tool = buildListActiveJobsTool({
+        maintenanceJob: { findMany: jest.fn() },
+      } as any);
       const result = registerAndValidate(tool, { limit: 'lots' });
       expect(result.valid).toBe(false);
     });
@@ -331,22 +414,31 @@ describe('analytics tools', () => {
 
       const result = await tool.handler({}, ownerCtx);
 
-      expect(result).toEqual({ count: 0, totalSum: 0, paidSum: 0, outstandingSum: 0 });
+      expect(result).toEqual({
+        count: 0,
+        totalSum: 0,
+        paidSum: 0,
+        outstandingSum: 0,
+      });
       const baseCall = aggregate.mock.calls[0][0];
       expect(baseCall.where.createdAt).toBeUndefined();
     });
 
     it('rejects an unknown InvoiceStatus enum value', () => {
-      const tool = buildGetInvoicesSummaryTool({ invoice: { aggregate: jest.fn() } } as any);
+      const tool = buildGetInvoicesSummaryTool({
+        invoice: { aggregate: jest.fn() },
+      } as any);
       const result = registerAndValidate(tool, { status: 'NOT_A_REAL_STATUS' });
       expect(result.valid).toBe(false);
     });
 
     it('rejects a malformed from/to date at runtime', async () => {
-      const tool = buildGetInvoicesSummaryTool({ invoice: { aggregate: jest.fn() } } as any);
-      await expect(
-        tool.handler({ from: 'banana' }, ownerCtx),
-      ).rejects.toThrow(/Invalid from/);
+      const tool = buildGetInvoicesSummaryTool({
+        invoice: { aggregate: jest.fn() },
+      } as any);
+      await expect(tool.handler({ from: 'banana' }, ownerCtx)).rejects.toThrow(
+        /Invalid from/,
+      );
     });
   });
 
@@ -360,13 +452,23 @@ describe('analytics tools', () => {
         return Promise.resolve([
           {
             lineItems: [
-              { total: 80, type: 'service', partId: null, serviceCode: 'OIL-CHG' },
+              {
+                total: 80,
+                type: 'service',
+                partId: null,
+                serviceCode: 'OIL-CHG',
+              },
               { total: 40, type: 'part', partId: 'p-1', serviceCode: null },
             ],
           },
           {
             lineItems: [
-              { total: 200, type: 'service', partId: null, serviceCode: 'BRK-PAD' },
+              {
+                total: 200,
+                type: 'service',
+                partId: null,
+                serviceCode: 'BRK-PAD',
+              },
               { total: 30, type: 'misc', partId: null, serviceCode: null },
             ],
           },
