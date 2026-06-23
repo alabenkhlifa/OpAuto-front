@@ -211,6 +211,27 @@ No current failures from the `f0bc808` full production matrix. Previous focused 
 | `T13-NOAPPROVE` | Fetched customer and car, then rejected malformed `create_invoice` attempts with `/lineItems/0 must be object`; no approval emitted | Customer `Khaoula Khelifi` and car `8580 TUN 289` resolved correctly | Invoice line-item recovery |
 | `T30-GROWTH-AGENT` | Answered retention review with data, but dispatched `retention-suggestions` instead of expected `growth-agent` | `list_at_risk_customers` returned live at-risk customer rows | Growth agent routing |
 
+## Mutating Tool Production Test Loop
+
+The previous full production matrix verified approval cards and denied unsafe mutations. The next loop is for approved production mutations and must update this file after each run.
+
+Prepared runner: `/tmp/opauto-ai-mutating-retest.mjs`
+
+| Planned ID | Plain-English prompt coverage | Write path | Verification |
+|---|---|---|---|
+| `M01-CREATE-APPOINTMENT-APPROVE` | Create a live test appointment for Khaoula Khelifi and the Skoda Octavia | `create_appointment` approval, then approved resume | Read back `/appointments/:id`, confirm title/status |
+| `M02-CANCEL-APPOINTMENT-APPROVE` | Cancel the same live test appointment | `cancel_appointment` approval, then approved resume | Read back `/appointments/:id`, confirm `CANCELLED` |
+| `M03-CREATE-INVOICE-APPROVE` | Create and issue a small live test invoice | `create_invoice` typed approval, then approved resume | Read back `/invoices/:id`, confirm `SENT` and invoice number |
+| `M04-RECORD-PAYMENT-APPROVE` | Mark that test invoice paid in cash | `record_payment` typed approval, then approved resume | Read back `/invoices/:id`, confirm `PAID` and `newBalance` 0 |
+| `M05-SEND-EMAIL-SELF` | Send a controlled self-email to the garage owner account | `send_email` auto-write self-send | Check provider message id/status in tool result |
+| `M06-SEND-SMS-APPROVE` | Send a clearly marked test SMS to Khaoula Khelifi | `send_sms` approval, then approved resume | Check provider message id/status in tool result |
+
+Current mutation-run status:
+
+| Date | Commit | Evidence file | Status | Next action |
+|---|---|---|---|---|
+| `2026-06-23` | `b827ea0` | Planned `/tmp/opauto_ai_mutating_retest_b827ea0.json` | Blocked by execution approval review; no production mutation was run | Need explicit user approval for the exact production mutations before running the prepared runner |
+
 ## Fix Log
 
 | Fix | Commit | Before | After | One-sentence implementation note |
