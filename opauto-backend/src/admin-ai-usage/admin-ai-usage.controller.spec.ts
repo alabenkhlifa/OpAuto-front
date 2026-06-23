@@ -1,7 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PATH_METADATA, GUARDS_METADATA } from '@nestjs/common/constants';
 import { ForbiddenException } from '@nestjs/common';
-import { AdminAiUsageController } from './admin-ai-usage.controller';
+import {
+  AdminAiUsageController,
+  AdminAiUsageCopyController,
+} from './admin-ai-usage.controller';
 import { AdminAiUsageService } from './admin-ai-usage.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -13,10 +16,23 @@ import {
 
 describe('AdminAiUsageController', () => {
   let controller: AdminAiUsageController;
-  let service: { getOvhUsage: jest.Mock };
+  let copyController: AdminAiUsageCopyController;
+  let service: { getOvhUsage: jest.Mock; getDashboardCopy: jest.Mock };
   const configuredOwnerEmail = 'ala.khliifa@gmail.com';
 
+  const MOCK_COPY = {
+    app: { ariaLabel: 'AI and OVH usage analytics' },
+    login: {
+      defaultEmail: configuredOwnerEmail,
+    },
+    header: {
+      title: 'AI / OVH Usage Analytics',
+    },
+    rangeOptions: [{ value: AiUsageRangeKey.TODAY, label: 'Today' }],
+  };
+
   const MOCK_RESPONSE = {
+    copy: MOCK_COPY,
     generatedAt: new Date().toISOString(),
     range: {
       key: AiUsageRangeKey.TODAY,
@@ -84,10 +100,11 @@ describe('AdminAiUsageController', () => {
   beforeEach(async () => {
     service = {
       getOvhUsage: jest.fn().mockResolvedValue(MOCK_RESPONSE),
+      getDashboardCopy: jest.fn().mockReturnValue(MOCK_COPY),
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [AdminAiUsageController],
+      controllers: [AdminAiUsageController, AdminAiUsageCopyController],
       providers: [{ provide: AdminAiUsageService, useValue: service }],
     })
       .overrideGuard(JwtAuthGuard)
@@ -97,6 +114,7 @@ describe('AdminAiUsageController', () => {
       .compile();
 
     controller = module.get(AdminAiUsageController);
+    copyController = module.get(AdminAiUsageCopyController);
   });
 
   it('forwards explicit range and garageId into service', async () => {
@@ -149,6 +167,22 @@ describe('AdminAiUsageController', () => {
     expect(path).toEqual(
       expect.arrayContaining(['admin-ai-usage', 'admin/ai-usage']),
     );
+  });
+
+  it('exposes public dashboard copy route aliases', () => {
+    const result = copyController.getCopy();
+    const path = Reflect.getMetadata(
+      PATH_METADATA,
+      AdminAiUsageCopyController.prototype.getCopy,
+    );
+    const guards =
+      Reflect.getMetadata(GUARDS_METADATA, AdminAiUsageCopyController) || [];
+
+    expect(result).toBe(MOCK_COPY);
+    expect(path).toEqual(
+      expect.arrayContaining(['admin-ai-usage/copy', 'admin/ai-usage/copy']),
+    );
+    expect(guards).toEqual([]);
   });
 
   it('uses default range through DTO fallback when omitted', async () => {

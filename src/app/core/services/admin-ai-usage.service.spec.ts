@@ -4,13 +4,92 @@ import { of, throwError } from 'rxjs';
 
 import { AdminAiUsageService } from './admin-ai-usage.service';
 import { ApiService } from './api.service';
-import { AdminAiUsageDashboard } from '../models/admin-ai-usage.model';
+import {
+  AdminAiUsageDashboard,
+  AdminAiUsageDashboardCopy,
+} from '../models/admin-ai-usage.model';
 
 describe('AdminAiUsageService', () => {
   let service: AdminAiUsageService;
   let api: jasmine.SpyObj<ApiService>;
 
+  const copy: AdminAiUsageDashboardCopy = {
+    app: { ariaLabel: 'AI usage' },
+    login: {
+      ariaLabel: 'Login',
+      eyebrow: 'Owner analytics',
+      title: 'AI / OVH Usage Analytics',
+      description: 'Usage dashboard',
+      factsAriaLabel: 'Scope',
+      facts: ['Gateway usage events'],
+      formEyebrow: 'Standalone login',
+      formTitle: 'Open dashboard',
+      emailLabel: 'Email',
+      passwordLabel: 'Password',
+      emailValidation: 'Enter email',
+      passwordValidation: 'Enter password',
+      defaultEmail: 'ala.khliifa@gmail.com',
+      submitLabel: 'Sign in',
+      submittingLabel: 'Signing in',
+      restrictedError: 'Restricted',
+      invalidCredentialsError: 'Invalid',
+      sessionExpiredError: 'Expired',
+    },
+    header: {
+      badge: 'Operations Console',
+      title: 'AI / OVH Usage Analytics',
+      generatedTemplate: 'Generated {generatedAt}',
+      rangeLabel: 'Range',
+      rangeWindowSeparator: 'to',
+      scopeLabel: 'Gateway OVH account',
+      refreshLabel: 'Refresh',
+      loadingLabel: 'Loading',
+      signOutLabel: 'Sign out',
+    },
+    rangeOptions: [{ value: 'today', label: 'Today' }],
+    kpis: {
+      calls: { label: 'Gateway AI calls', hintTemplate: '{gatewayEvents}' },
+      spend: { label: 'Estimated OVH spend', hintTemplate: '{pricedCalls}' },
+      tokens: { label: 'Input / output tokens', hintTemplate: '{totalTokens}' },
+      latency: {
+        label: 'Average completion latency',
+        hintTemplate: '{failureRate}',
+      },
+    },
+    sections: {
+      costByTask: { title: 'Cost by AI Task', subtitle: '{rangeLabel}' },
+      costShare: { title: 'AI Task Cost Share', subtitle: 'top tasks' },
+      trend: { title: 'OVH Usage Trend', subtitle: '{rangeLabel}' },
+      modelUsage: { title: 'Model Usage', subtitle: 'models' },
+      taskUsage: { title: 'AI Task Usage', subtitle: 'tasks' },
+      userUsage: { title: 'User Usage', subtitle: 'users' },
+      garageUsage: { title: 'Garage Usage', subtitle: 'garages' },
+      toolHealth: { title: 'Tool Execution Health', subtitle: 'tools' },
+      agentUsage: { title: 'Agent Usage', subtitle: 'agents' },
+      sourceCoverage: { title: 'Source Coverage', subtitle: '{coverage}' },
+      approval: { title: 'Approval / Refusal Analytics', subtitle: 'approval' },
+      topCalls: { title: 'Top Expensive AI Calls', subtitle: 'calls' },
+    },
+    tableHeaders: {
+      taskUsage: ['AI Task'],
+      agentUsage: ['Agent'],
+      sourceCoverage: ['Metric'],
+      approval: ['Status'],
+    },
+    labels: { notAvailable: 'n/a', utc: 'UTC', otherTasks: 'Other AI tasks' },
+    units: { milliseconds: 'ms', seconds: 's' },
+    booleans: { yes: 'Yes', no: 'No' },
+    messages: {},
+    approvalKpis: {},
+    statuses: { FAILED: 'Failed' },
+    tiers: {},
+    purposes: {},
+    purposeTemplates: {},
+    sourceRows: {},
+  };
+
   const payload: AdminAiUsageDashboard = {
+    copy,
     generatedAt: '2026-01-01T00:00:00.000Z',
     range: {
       key: 'today',
@@ -42,7 +121,10 @@ describe('AdminAiUsageService', () => {
     taskUsage: [
       {
         purpose: 'assistant_tool_selection:find_customer',
+        label: 'Find Customer tool planning',
+        description: 'Selects Find Customer as the next assistant action.',
         model: 'Meta-Llama-3_3-70B-Instruct',
+        modelLabel: 'Llama 3.3 70B',
         calls: 3,
         toolCalls: 2,
         tokensIn: 1200,
@@ -56,7 +138,9 @@ describe('AdminAiUsageService', () => {
     modelUsage: [
       {
         provider: 'ovh',
+        providerLabel: 'OVH',
         model: 'Meta-Llama-3_3-70B-Instruct',
+        modelLabel: 'Llama 3.3 70B',
         calls: 3,
         tokensIn: 1200,
         tokensOut: 400,
@@ -96,6 +180,7 @@ describe('AdminAiUsageService', () => {
         eventsWithoutTokens: 0,
         eventsWithoutContext: 0,
       },
+      rows: [],
     },
   };
 
@@ -118,6 +203,18 @@ describe('AdminAiUsageService', () => {
       expect(data.taskUsage[0].purpose).toBe(
         'assistant_tool_selection:find_customer',
       );
+      expect(data.copy.header.title).toBe('AI / OVH Usage Analytics');
+      expect(data.taskUsage[0].label).toBe('Find Customer tool planning');
+      done();
+    });
+  });
+
+  it('fetches dashboard copy from the public copy endpoint', (done) => {
+    api.get.and.returnValue(of(copy));
+
+    service.getCopy().subscribe((data) => {
+      expect(api.get).toHaveBeenCalledWith('/admin/ai-usage/copy');
+      expect(data.login.defaultEmail).toBe('ala.khliifa@gmail.com');
       done();
     });
   });

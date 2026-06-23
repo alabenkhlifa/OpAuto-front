@@ -17,6 +17,98 @@ export interface AdminAiUsageRangeWindow {
   scope: 'ovh-only' | 'gateway-ovh-account';
 }
 
+export interface AdminAiUsageRangeOption {
+  value: AdminAiUsageRange;
+  label: string;
+}
+
+export interface AdminAiUsageSectionCopy {
+  title: string;
+  subtitle: string;
+}
+
+export interface AdminAiUsageKpiCopy {
+  label: string;
+  hintTemplate: string;
+}
+
+export interface AdminAiUsageDashboardCopy {
+  app: {
+    ariaLabel: string;
+  };
+  login: {
+    ariaLabel: string;
+    eyebrow: string;
+    title: string;
+    description: string;
+    factsAriaLabel: string;
+    facts: string[];
+    formEyebrow: string;
+    formTitle: string;
+    emailLabel: string;
+    passwordLabel: string;
+    emailValidation: string;
+    passwordValidation: string;
+    defaultEmail: string;
+    submitLabel: string;
+    submittingLabel: string;
+    restrictedError: string;
+    invalidCredentialsError: string;
+    sessionExpiredError: string;
+  };
+  header: {
+    badge: string;
+    title: string;
+    generatedTemplate: string;
+    rangeLabel: string;
+    rangeWindowSeparator: string;
+    scopeLabel: string;
+    refreshLabel: string;
+    loadingLabel: string;
+    signOutLabel: string;
+  };
+  rangeOptions: AdminAiUsageRangeOption[];
+  kpis: {
+    calls: AdminAiUsageKpiCopy;
+    spend: AdminAiUsageKpiCopy;
+    tokens: AdminAiUsageKpiCopy;
+    latency: AdminAiUsageKpiCopy;
+  };
+  sections: {
+    costByTask: AdminAiUsageSectionCopy;
+    costShare: AdminAiUsageSectionCopy;
+    trend: AdminAiUsageSectionCopy;
+    modelUsage: AdminAiUsageSectionCopy;
+    taskUsage: AdminAiUsageSectionCopy;
+    userUsage: AdminAiUsageSectionCopy;
+    garageUsage: AdminAiUsageSectionCopy;
+    toolHealth: AdminAiUsageSectionCopy;
+    agentUsage: AdminAiUsageSectionCopy;
+    sourceCoverage: AdminAiUsageSectionCopy;
+    approval: AdminAiUsageSectionCopy;
+    topCalls: AdminAiUsageSectionCopy;
+  };
+  tableHeaders: {
+    taskUsage: string[];
+    agentUsage: string[];
+    sourceCoverage: string[];
+    approval: string[];
+  };
+  labels: Record<string, string>;
+  units: Record<string, string>;
+  booleans: Record<string, string>;
+  messages: Record<string, string>;
+  approvalKpis: Record<string, string>;
+  statuses: Record<string, string>;
+  tiers: Record<string, string>;
+  purposes: Record<string, { label: string; description: string }>;
+  purposeTemplates: Record<string, string>;
+  sourceRows: Record<
+    string,
+    { label: string; statusLabel: string; tone: 'primary' | 'neutral' | 'warn' }
+  >;
+}
+
 export interface AdminAiUsageSummary {
   llmCalls: number;
   assistantMessages: number;
@@ -40,7 +132,10 @@ export interface AdminAiUsageSummary {
 
 export interface AdminAiUsageTaskMetric {
   purpose: string;
+  label: string;
+  description: string;
   model: string | null;
+  modelLabel: string;
   calls: number;
   toolCalls: number;
   tokensIn: number;
@@ -53,7 +148,9 @@ export interface AdminAiUsageTaskMetric {
 
 export interface AdminAiUsageModelMetric {
   provider: string;
+  providerLabel: string;
   model: string | null;
+  modelLabel: string;
   calls: number;
   tokensIn: number;
   tokensOut: number;
@@ -75,6 +172,8 @@ export interface AdminAiUsageTimeBucket {
 
 export interface AdminAiUsageAgentMetric {
   agent: string;
+  label: string;
+  description: string;
   calls: number;
   tokensIn: number;
   tokensOut: number;
@@ -83,6 +182,8 @@ export interface AdminAiUsageAgentMetric {
 
 export interface AdminAiUsageSkillMetric {
   skill: string;
+  label: string;
+  description: string;
   calls: number;
   tokensIn: number;
   tokensOut: number;
@@ -113,6 +214,10 @@ export interface AdminAiUsageGarageMetric {
 
 export interface AdminAiUsageToolMetric {
   toolName: string;
+  label: string;
+  description: string;
+  dominantTierLabel: string;
+  outcomeLabel: string;
   calls: number;
   failed: number;
   approved: number;
@@ -133,8 +238,11 @@ export interface AdminAiUsageToolMetric {
 
 export interface AdminAiUsageApprovalRow {
   status: string;
+  label: string;
   calls: number;
   share: number;
+  approvalRequired: boolean;
+  approvalRequiredLabel: string;
   avgDecisionSeconds: number;
 }
 
@@ -157,14 +265,27 @@ export interface AdminAiUsageTopCall {
   garageName: string | null;
   createdAt: string;
   provider: string;
+  providerLabel: string;
   purpose: string;
+  label: string;
+  description: string;
   model: string | null;
+  modelLabel: string;
   tokensIn: number;
   tokensOut: number;
   estimatedCost: number;
   priced: boolean;
   latencyMs: number | null;
   status: string;
+  statusLabel: string;
+}
+
+export interface AdminAiUsageSourceCoverageRow {
+  key: string;
+  label: string;
+  value: number;
+  statusLabel: string;
+  tone: 'primary' | 'neutral' | 'warn';
 }
 
 export interface AdminAiUsageSourceCoverage {
@@ -186,9 +307,11 @@ export interface AdminAiUsageSourceCoverage {
     eventsWithoutTokens?: number;
     eventsWithoutContext?: number;
   };
+  rows?: AdminAiUsageSourceCoverageRow[];
 }
 
 export interface AdminAiUsageDashboard {
+  copy: AdminAiUsageDashboardCopy;
   generatedAt: string;
   range: AdminAiUsageRangeWindow;
   summary: AdminAiUsageSummary;

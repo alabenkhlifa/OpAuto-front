@@ -1,18 +1,17 @@
 <div class="ai-admin-page">
   @if (!isAuthenticatedOwner()) {
-    <section class="ai-admin-login" aria-label="Admin AI dashboard login">
+    <section class="ai-admin-login" [attr.aria-label]="copy().login.ariaLabel">
       <div class="ai-admin-login__copy">
-        <p class="ai-usage-eyebrow">Owner analytics</p>
-        <h1>AI / OVH Usage Analytics</h1>
-        <p>
-          Sign in with the configured owner account to monitor gateway-level OVH
-          model usage, tokens, cost, tools, agents, skills, approvals, users,
-          and garages.
-        </p>
-        <div class="ai-admin-login__facts" aria-label="Dashboard scope">
-          <span>Gateway usage events</span>
-          <span>OVH account scope</span>
-          <span>Owner-only access</span>
+        <p class="ai-usage-eyebrow">{{ copy().login.eyebrow }}</p>
+        <h1>{{ copy().login.title }}</h1>
+        <p>{{ copy().login.description }}</p>
+        <div
+          class="ai-admin-login__facts"
+          [attr.aria-label]="copy().login.factsAriaLabel"
+        >
+          @for (fact of copy().login.facts; track fact) {
+            <span>{{ fact }}</span>
+          }
         </div>
       </div>
 
@@ -22,12 +21,12 @@
         (ngSubmit)="submitLogin()"
       >
         <div>
-          <p class="ai-usage-eyebrow">Standalone login</p>
-          <h2>Open dashboard</h2>
+          <p class="ai-usage-eyebrow">{{ copy().login.formEyebrow }}</p>
+          <h2>{{ copy().login.formTitle }}</h2>
         </div>
 
         <label class="ai-admin-field">
-          <span>Email</span>
+          <span>{{ copy().login.emailLabel }}</span>
           <input
             type="email"
             formControlName="email"
@@ -37,12 +36,12 @@
           @if (
             loginForm.controls.email.invalid && loginForm.controls.email.touched
           ) {
-            <small>Enter the configured owner email.</small>
+            <small>{{ copy().login.emailValidation }}</small>
           }
         </label>
 
         <label class="ai-admin-field">
-          <span>Password</span>
+          <span>{{ copy().login.passwordLabel }}</span>
           <input
             type="password"
             formControlName="password"
@@ -52,7 +51,7 @@
             loginForm.controls.password.invalid &&
             loginForm.controls.password.touched
           ) {
-            <small>Enter the dashboard password.</small>
+            <small>{{ copy().login.passwordValidation }}</small>
           }
         </label>
 
@@ -65,77 +64,90 @@
           type="submit"
           [disabled]="isLoginLoading()"
         >
-          {{ isLoginLoading() ? "Signing in..." : "Sign in" }}
+          {{
+            isLoginLoading()
+              ? copy().login.submittingLabel
+              : copy().login.submitLabel
+          }}
         </button>
       </form>
     </section>
   } @else {
-    <section class="mock-dashboard" aria-label="AI and OVH usage analytics">
-      <header class="mock-header">
-        <div class="mock-title-group">
-          <span class="console-badge">Operations Console</span>
-          <h1>AI / OVH Usage Analytics</h1>
+    <section class="dashboard-page" [attr.aria-label]="copy().app.ariaLabel">
+      <header class="dashboard-header">
+        <div class="dashboard-title">
+          <span class="console-badge">{{ copy().header.badge }}</span>
+          <h1>{{ copy().header.title }}</h1>
           <p>{{ generatedSummary() }}</p>
         </div>
 
-        <div class="mock-controls">
-          <label for="aiUsageRange">Range</label>
+        <div class="dashboard-controls">
+          <label for="aiUsageRange">{{ copy().header.rangeLabel }}</label>
           <select
             id="aiUsageRange"
-            class="mock-select"
+            class="dashboard-select"
             [value]="selectedRange()"
             (change)="onRangeChange($event)"
             [disabled]="isLoading()"
           >
-            @for (option of ranges; track trackRange($index, option)) {
+            @for (option of ranges(); track trackRange($index, option)) {
               <option [value]="option.value">{{ option.label }}</option>
             }
           </select>
           <span class="range-pill">{{ rangeWindow() }}</span>
-          <span class="range-pill">Gateway OVH account</span>
+          <span class="range-pill">{{ copy().header.scopeLabel }}</span>
           <button
             class="refresh-button"
             type="button"
             [disabled]="isLoading()"
             (click)="reloadCurrentRange()"
           >
-            {{ isLoading() ? "Loading" : "Refresh" }}
+            {{
+              isLoading()
+                ? copy().header.loadingLabel
+                : copy().header.refreshLabel
+            }}
           </button>
-          <button class="mock-link-button" type="button" (click)="logout()">
-            Sign out
+          <button class="secondary-button" type="button" (click)="logout()">
+            {{ copy().header.signOutLabel }}
           </button>
         </div>
       </header>
 
       @if (isLoading() || errorMessage()) {
-        <section class="mock-card status-card" role="status" aria-live="polite">
+        <section
+          class="dashboard-card status-card"
+          role="status"
+          aria-live="polite"
+        >
           @if (isLoading()) {
-            <p>Loading AI usage analytics...</p>
+            <p>{{ copy().messages["loadingAnalytics"] }}</p>
           } @else if (errorMessage()) {
             <p class="status-card__error">{{ errorMessage() }}</p>
           }
         </section>
       }
 
-      <section class="kpi-grid" aria-label="AI usage summary">
+      <section class="kpi-grid">
         @for (card of kpiCards(); track trackKpi($index, card)) {
-          <article class="mock-card kpi-card">
-            <strong>{{ card.value }}</strong>
-            <span>{{ card.label }}</span>
-            <small>{{ card.hint }}</small>
+          <article class="dashboard-card kpi-card">
+            <div class="kpi-card__icon" aria-hidden="true"></div>
+            <div>
+              <strong>{{ card.value }}</strong>
+              <span>{{ card.label }}</span>
+              <small>{{ card.hint }}</small>
+            </div>
           </article>
         }
       </section>
 
-      <section class="single-grid">
-        <article class="mock-card cost-list-card">
+      <section class="dashboard-grid dashboard-grid--wide-first">
+        <article class="dashboard-card panel-card cost-list-card">
           <div class="card-title-row">
-            <h2>Cost by AI Task</h2>
-            <span
-              >{{
-                selectedRange() === "today" ? "Today" : dashboard().range.label
-              }}, {{ formatCost(summary().estimatedCost) }} total</span
-            >
+            <div>
+              <h2>{{ copy().sections.costByTask.title }}</h2>
+              <p>{{ costByTaskSubtitle() }}</p>
+            </div>
           </div>
 
           <div class="task-cost-list">
@@ -145,13 +157,14 @@
             ) {
               <article class="task-cost-item">
                 <div>
-                  <h3>{{ purposeLabel(task.purpose) }}</h3>
-                  <p>{{ purposeDescription(task.purpose) }}</p>
+                  <h3>{{ task.label }}</h3>
+                  <p>{{ task.description }}</p>
                 </div>
-                <span
-                  >{{ formatInteger(task.calls) }} calls,
-                  {{ formatCost(task.estimatedCost) }}</span
-                >
+                <span>
+                  {{ formatInteger(task.calls) }}
+                  {{ copy().labels["calls"] }},
+                  {{ formatCost(task.estimatedCost) }}
+                </span>
                 <div class="mini-bar" aria-hidden="true">
                   <i
                     [style.width]="rowWidth(task.estimatedCost, maxTaskCost())"
@@ -159,17 +172,19 @@
                 </div>
               </article>
             } @empty {
-              <p class="mock-empty">No AI task usage in this range.</p>
+              <p class="dashboard-empty">
+                {{ copy().messages["noTaskUsage"] }}
+              </p>
             }
           </div>
         </article>
-      </section>
 
-      <section class="single-grid">
-        <article class="mock-card share-card share-card--wide">
+        <article class="dashboard-card panel-card share-card">
           <div class="card-title-row">
-            <h2>AI Task Cost Share</h2>
-            <span>top tasks</span>
+            <div>
+              <h2>{{ copy().sections.costShare.title }}</h2>
+              <p>{{ copy().sections.costShare.subtitle }}</p>
+            </div>
           </div>
           <div class="share-layout">
             <div class="donut" [style.background]="costShareGradient()">
@@ -183,20 +198,22 @@
                   <strong>{{ formatPercent(segment.share) }}</strong>
                 </div>
               } @empty {
-                <p class="mock-empty">No cost recorded in this range.</p>
+                <p class="dashboard-empty">{{ copy().messages["noCost"] }}</p>
               }
             </div>
           </div>
         </article>
       </section>
 
-      <section class="split-grid">
-        <article class="mock-card trend-card">
+      <section class="dashboard-grid">
+        <article class="dashboard-card panel-card trend-card">
           <div class="card-title-row">
-            <h2>OVH Usage Trend</h2>
-            <span>{{ dashboard().range.label }} buckets</span>
+            <div>
+              <h2>{{ copy().sections.trend.title }}</h2>
+              <p>{{ trendSubtitle() }}</p>
+            </div>
           </div>
-          <div class="usage-bars" aria-label="Spend by time bucket">
+          <div class="usage-bars">
             @for (bucket of timeBuckets(); track trackBucket($index, bucket)) {
               <article>
                 <div
@@ -206,69 +223,77 @@
                 ></div>
                 <strong>{{ formatCost(bucket.estimatedCost) }}</strong>
                 <small>{{ bucket.label }}</small>
-                <span>{{ formatInteger(bucket.calls) }} calls</span>
+                <span>
+                  {{ formatInteger(bucket.calls) }}
+                  {{ copy().labels["calls"] }}
+                </span>
               </article>
             } @empty {
-              <p class="mock-empty">No usage trend in this range.</p>
+              <p class="dashboard-empty">{{ copy().messages["noTrend"] }}</p>
             }
           </div>
         </article>
 
-        <article class="mock-card model-card">
+        <article class="dashboard-card panel-card model-card">
           <div class="card-title-row">
-            <h2>Model Usage</h2>
-            <span>gateway calls by model</span>
+            <div>
+              <h2>{{ copy().sections.modelUsage.title }}</h2>
+              <p>{{ copy().sections.modelUsage.subtitle }}</p>
+            </div>
           </div>
           <div class="model-list">
             @for (model of modelUsage(); track trackModel($index, model)) {
               <article>
                 <div>
-                  <strong>{{ modelLabel(model.model) }}</strong>
-                  <small
-                    >{{ model.provider | uppercase }} ·
-                    {{ formatTokens(model.tokensIn, model.tokensOut) }}</small
-                  >
+                  <strong>{{ model.modelLabel }}</strong>
+                  <small>{{ model.providerLabel }}</small>
+                  <small>{{
+                    formatTokens(model.tokensIn, model.tokensOut)
+                  }}</small>
                 </div>
-                <span>{{ formatInteger(model.calls) }} calls</span>
+                <span>
+                  {{ formatInteger(model.calls) }}
+                  {{ copy().labels["calls"] }}
+                </span>
                 <b>{{ formatCost(model.estimatedCost) }}</b>
                 <small>{{ modelAvgMs(model) }}</small>
               </article>
             } @empty {
-              <p class="mock-empty">No model usage in this range.</p>
+              <p class="dashboard-empty">
+                {{ copy().messages["noModelUsage"] }}
+              </p>
             }
           </div>
         </article>
       </section>
 
-      <article class="mock-card table-card task-usage-card">
+      <article class="dashboard-card panel-card table-card task-usage-card">
         <div class="card-title-row">
-          <h2>AI Task Usage</h2>
-          <span>usage grouped by task and model</span>
+          <div>
+            <h2>{{ copy().sections.taskUsage.title }}</h2>
+            <p>{{ copy().sections.taskUsage.subtitle }}</p>
+          </div>
         </div>
         <div class="table-scroll">
           <table>
             <thead>
               <tr>
-                <th>AI Task</th>
-                <th>Model</th>
-                <th>Calls</th>
-                <th>Input tokens</th>
-                <th>Output tokens</th>
-                <th>Cost</th>
-                <th>Avg ms</th>
+                @for (heading of copy().tableHeaders.taskUsage; track heading) {
+                  <th>{{ heading }}</th>
+                }
               </tr>
             </thead>
             <tbody>
               @for (task of taskUsage(); track trackTask($index, task)) {
                 <tr>
                   <td>
-                    <strong>{{ purposeLabel(task.purpose) }}</strong>
-                    <small>{{ purposeDescription(task.purpose) }}</small>
+                    <strong>{{ task.label }}</strong>
+                    <small>{{ task.description }}</small>
                   </td>
                   <td>
-                    <span [ngClass]="modelBadgeClass(task.model)">{{
-                      modelLabel(task.model)
-                    }}</span>
+                    <span [ngClass]="modelBadgeClass(task.model)">
+                      {{ task.modelLabel }}
+                    </span>
                   </td>
                   <td>{{ formatInteger(task.calls) }}</td>
                   <td>{{ formatInteger(task.tokensIn) }}</td>
@@ -278,7 +303,11 @@
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="7">No AI task usage in this range.</td>
+                  <td
+                    [attr.colspan]="copy().tableHeaders.taskUsage.length || 1"
+                  >
+                    {{ copy().messages["noTaskUsage"] }}
+                  </td>
                 </tr>
               }
             </tbody>
@@ -287,39 +316,44 @@
       </article>
 
       <section class="triple-grid">
-        <article class="mock-card compact-card">
+        <article class="dashboard-card panel-card compact-card">
           <div class="card-title-row">
-            <h2>User Usage</h2>
-            <span>gateway events grouped by user</span>
+            <div>
+              <h2>{{ copy().sections.userUsage.title }}</h2>
+              <p>{{ copy().sections.userUsage.subtitle }}</p>
+            </div>
           </div>
           @for (user of userUsage(); track trackUser($index, user)) {
             <article class="entity-box">
               <div class="entity-heading">
                 <strong>{{ user.userName }}</strong>
-                <span>OWNER</span>
               </div>
               <div class="metric-strip">
                 <div>
-                  <small>AI calls</small><b>{{ formatInteger(user.calls) }}</b>
+                  <small>{{ copy().labels["aiCalls"] }}</small>
+                  <b>{{ formatInteger(user.calls) }}</b>
                 </div>
                 <div>
-                  <small>Tokens</small
-                  ><b>{{ formatCompact(user.tokensIn + user.tokensOut) }}</b>
+                  <small>{{ copy().labels["tokens"] }}</small>
+                  <b>{{ formatCompact(user.tokensIn + user.tokensOut) }}</b>
                 </div>
                 <div>
-                  <small>Cost</small><b>{{ formatCost(user.estimatedCost) }}</b>
+                  <small>{{ copy().labels["cost"] }}</small>
+                  <b>{{ formatCost(user.estimatedCost) }}</b>
                 </div>
               </div>
             </article>
           } @empty {
-            <p class="mock-empty">No user usage in this range.</p>
+            <p class="dashboard-empty">{{ copy().messages["noUserUsage"] }}</p>
           }
         </article>
 
-        <article class="mock-card compact-card">
+        <article class="dashboard-card panel-card compact-card">
           <div class="card-title-row">
-            <h2>Garage Usage</h2>
-            <span>gateway events grouped by garage</span>
+            <div>
+              <h2>{{ copy().sections.garageUsage.title }}</h2>
+              <p>{{ copy().sections.garageUsage.subtitle }}</p>
+            </div>
           </div>
           @for (garage of garageUsage(); track trackGarage($index, garage)) {
             <article class="entity-box">
@@ -331,91 +365,111 @@
               }
               <div class="metric-strip">
                 <div>
-                  <small>AI calls</small
-                  ><b>{{ formatInteger(garage.calls) }}</b>
+                  <small>{{ copy().labels["aiCalls"] }}</small>
+                  <b>{{ formatInteger(garage.calls) }}</b>
                 </div>
                 <div>
-                  <small>Tokens</small
-                  ><b>{{
-                    formatCompact(garage.tokensIn + garage.tokensOut)
-                  }}</b>
+                  <small>{{ copy().labels["tokens"] }}</small>
+                  <b>{{ formatCompact(garage.tokensIn + garage.tokensOut) }}</b>
                 </div>
                 <div>
-                  <small>Cost</small
-                  ><b>{{ formatCost(garage.estimatedCost) }}</b>
+                  <small>{{ copy().labels["cost"] }}</small>
+                  <b>{{ formatCost(garage.estimatedCost) }}</b>
                 </div>
               </div>
             </article>
           } @empty {
-            <p class="mock-empty">No garage usage in this range.</p>
+            <p class="dashboard-empty">
+              {{ copy().messages["noGarageUsage"] }}
+            </p>
           }
         </article>
 
-        <article class="mock-card compact-card">
+        <article class="dashboard-card panel-card compact-card">
           <div class="card-title-row">
-            <h2>Tool Execution Health</h2>
-            <span>actual tool calls and outcomes</span>
+            <div>
+              <h2>{{ copy().sections.toolHealth.title }}</h2>
+              <p>{{ copy().sections.toolHealth.subtitle }}</p>
+            </div>
           </div>
-          <div class="mini-table-list">
+          <div class="tool-health-list">
             @for (
               tool of toolUsage().slice(0, 8);
               track trackTool($index, tool)
             ) {
-              <article>
+              <article class="tool-health-item">
                 <div>
-                  <strong>{{ toolLabel(tool.toolName) }}</strong>
-                  <small>Tool invoked by the assistant.</small>
+                  <strong>{{ tool.label }}</strong>
+                  <small>{{ tool.description }}</small>
                 </div>
-                <span class="tier-chip">{{ dominantToolTier(tool) }}</span>
-                <b>{{ formatInteger(tool.calls) }}</b>
-                <b>{{ formatInteger(tool.failed) }}</b>
-                <b>{{ formatDuration(tool.avgDurationMs) }}</b>
+                <span class="tier-chip">{{ tool.dominantTierLabel }}</span>
+                <div class="tool-health-metrics">
+                  <span>
+                    <small>{{ copy().labels["calls"] }}</small>
+                    <b>{{ formatInteger(tool.calls) }}</b>
+                  </span>
+                  <span>
+                    <small>{{ copy().statuses["FAILED"] }}</small>
+                    <b>{{ formatInteger(tool.failed) }}</b>
+                  </span>
+                  <span>
+                    <small>{{ copy().labels["avgMs"] }}</small>
+                    <b>{{ formatDuration(tool.avgDurationMs) }}</b>
+                  </span>
+                </div>
               </article>
             } @empty {
-              <p class="mock-empty">No tool usage in this range.</p>
+              <p class="dashboard-empty">
+                {{ copy().messages["noToolUsage"] }}
+              </p>
             }
           </div>
         </article>
       </section>
 
-      <section class="split-grid">
-        <article class="mock-card table-card agent-usage-card">
+      <section class="dashboard-grid">
+        <article class="dashboard-card panel-card table-card agent-usage-card">
           <div class="card-title-row">
-            <h2>Agent Usage</h2>
-            <span>specialized agent calls from gateway events</span>
+            <div>
+              <h2>{{ copy().sections.agentUsage.title }}</h2>
+              <p>{{ copy().sections.agentUsage.subtitle }}</p>
+            </div>
           </div>
           <div class="table-scroll">
             <table>
               <thead>
                 <tr>
-                  <th>Agent</th>
-                  <th>Calls</th>
-                  <th>Input tokens</th>
-                  <th>Output tokens</th>
-                  <th>Tool calls</th>
-                  <th>Cost</th>
-                  <th>Avg ms</th>
+                  @for (
+                    heading of copy().tableHeaders.agentUsage;
+                    track heading
+                  ) {
+                    <th>{{ heading }}</th>
+                  }
                 </tr>
               </thead>
               <tbody>
                 @for (agent of agentUsage(); track trackAgent($index, agent)) {
                   <tr>
                     <td>
-                      <strong>{{ agentLabel(agent.agent) }}</strong>
-                      <small>{{
-                        purposeDescription("agent_runner:" + agent.agent)
-                      }}</small>
+                      <strong>{{ agent.label }}</strong>
+                      <small>{{ agent.description }}</small>
                     </td>
                     <td>{{ formatInteger(agent.calls) }}</td>
                     <td>{{ formatInteger(agent.tokensIn) }}</td>
                     <td>{{ formatInteger(agent.tokensOut) }}</td>
                     <td>{{ formatDuration(null) }}</td>
                     <td>{{ formatCost(agent.estimatedCost) }}</td>
-                    <td>n/a</td>
+                    <td>{{ formatDuration(null) }}</td>
                   </tr>
                 } @empty {
                   <tr>
-                    <td colspan="7">No agent usage in this range.</td>
+                    <td
+                      [attr.colspan]="
+                        copy().tableHeaders.agentUsage.length || 1
+                      "
+                    >
+                      {{ copy().messages["noAgentUsage"] }}
+                    </td>
                   </tr>
                 }
               </tbody>
@@ -423,107 +477,70 @@
           </div>
         </article>
 
-        <article class="mock-card table-card skill-usage-card">
+        <article class="dashboard-card panel-card table-card source-card">
           <div class="card-title-row">
-            <h2>Source Coverage</h2>
-            <span>{{ contextCoverageLabel() }}</span>
+            <div>
+              <h2>{{ copy().sections.sourceCoverage.title }}</h2>
+              <p>{{ sourceCoverageSubtitle() }}</p>
+            </div>
           </div>
           <div class="table-scroll">
             <table>
               <thead>
                 <tr>
-                  <th>Metric</th>
-                  <th>Rows</th>
-                  <th>Status</th>
+                  @for (
+                    heading of copy().tableHeaders.sourceCoverage;
+                    track heading
+                  ) {
+                    <th>{{ heading }}</th>
+                  }
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td><strong>Gateway events scanned</strong></td>
-                  <td>
-                    {{
-                      formatInteger(
-                        dashboard().sourceCoverage.rowCoverage
-                          .gatewayEventsScanned ?? 0
-                      )
-                    }}
-                  </td>
-                  <td>
-                    <span class="tier-chip tier-chip--orange"
-                      >Primary usage source</span
-                    >
-                  </td>
-                </tr>
-                <tr>
-                  <td><strong>Tool calls scanned</strong></td>
-                  <td>
-                    {{
-                      formatInteger(
-                        dashboard().sourceCoverage.rowCoverage
-                          .assistantToolCallsScanned
-                      )
-                    }}
-                  </td>
-                  <td>
-                    <span class="tier-chip">Execution health source</span>
-                  </td>
-                </tr>
-                <tr>
-                  <td><strong>Events missing context</strong></td>
-                  <td>
-                    {{
-                      formatInteger(
-                        dashboard().sourceCoverage.rowCoverage
-                          .eventsWithoutContext ?? 0
-                      )
-                    }}
-                  </td>
-                  <td>
-                    <span class="tier-chip">Still counted in OVH totals</span>
-                  </td>
-                </tr>
-                <tr>
-                  <td><strong>Events missing tokens</strong></td>
-                  <td>
-                    {{
-                      formatInteger(
-                        dashboard().sourceCoverage.rowCoverage
-                          .eventsWithoutTokens ?? 0
-                      )
-                    }}
-                  </td>
-                  <td><span class="tier-chip">Cost may be incomplete</span></td>
-                </tr>
+                @for (
+                  row of sourceCoverageRows();
+                  track trackSourceRow($index, row)
+                ) {
+                  <tr>
+                    <td>
+                      <strong>{{ row.label }}</strong>
+                    </td>
+                    <td>{{ formatInteger(row.value) }}</td>
+                    <td>
+                      <span [ngClass]="sourceToneClass(row)">
+                        {{ row.statusLabel }}
+                      </span>
+                    </td>
+                  </tr>
+                }
               </tbody>
             </table>
           </div>
         </article>
       </section>
 
-      <section class="split-grid split-grid--bottom">
-        <article class="mock-card table-card approval-usage-card">
+      <section class="dashboard-grid dashboard-grid--bottom">
+        <article class="dashboard-card panel-card table-card approval-card">
           <div class="card-title-row">
-            <h2>Approval / Refusal Analytics</h2>
-            <span>tool calls grouped by approval outcome</span>
+            <div>
+              <h2>{{ copy().sections.approval.title }}</h2>
+              <p>{{ copy().sections.approval.subtitle }}</p>
+            </div>
           </div>
           <div class="approval-kpis">
             <div>
-              <strong>{{ formatPercent(approvalRequiredShare()) }}</strong
-              ><span>Approval-required share</span>
+              <strong>{{ formatPercent(approvalRequiredShare()) }}</strong>
+              <span>{{ copy().approvalKpis["approvalRequiredShare"] }}</span>
             </div>
             <div>
-              <strong>{{
-                formatPercent(
-                  dashboard().approvalRefusal.approvedOrExecuted ? 100 : 0
-                )
-              }}</strong
-              ><span>Approved/executed writes</span>
+              <strong>{{ formatPercent(approvedExecutedShare()) }}</strong>
+              <span>{{ copy().approvalKpis["approvedOrExecutedWrites"] }}</span>
             </div>
             <div>
               <strong>{{
                 formatInteger(dashboard().approvalRefusal.denied)
-              }}</strong
-              ><span>Denied/refused</span>
+              }}</strong>
+              <span>{{ copy().approvalKpis["deniedOrRefused"] }}</span>
             </div>
             <div>
               <strong>{{
@@ -531,19 +548,20 @@
                   dashboard().approvalRefusal.expired +
                     dashboard().approvalRefusal.pending
                 )
-              }}</strong
-              ><span>Expired or pending</span>
+              }}</strong>
+              <span>{{ copy().approvalKpis["expiredOrPending"] }}</span>
             </div>
           </div>
           <div class="table-scroll">
             <table>
               <thead>
                 <tr>
-                  <th>Status</th>
-                  <th>Calls</th>
-                  <th>Share</th>
-                  <th>Approval-required</th>
-                  <th>Avg decision</th>
+                  @for (
+                    heading of copy().tableHeaders.approval;
+                    track heading
+                  ) {
+                    <th>{{ heading }}</th>
+                  }
                 </tr>
               </thead>
               <tbody>
@@ -553,21 +571,21 @@
                 ) {
                   <tr>
                     <td>
-                      <span [ngClass]="statusClass(row.status)">{{
-                        statusLabel(row.status)
-                      }}</span>
+                      <span [ngClass]="statusClass(row.status)">
+                        {{ row.label }}
+                      </span>
                     </td>
                     <td>{{ formatInteger(row.calls) }}</td>
                     <td>{{ formatPercent(row.share) }}</td>
-                    <td>
-                      {{ row.status === "PENDING_APPROVAL" ? "Yes" : "No" }}
-                    </td>
+                    <td>{{ row.approvalRequiredLabel }}</td>
                     <td>{{ formatSeconds(row.avgDecisionSeconds) }}</td>
                   </tr>
                 } @empty {
                   <tr>
-                    <td colspan="5">
-                      No approval or refusal activity in this range.
+                    <td
+                      [attr.colspan]="copy().tableHeaders.approval.length || 1"
+                    >
+                      {{ copy().messages["noApprovalActivity"] }}
                     </td>
                   </tr>
                 }
@@ -576,10 +594,12 @@
           </div>
         </article>
 
-        <article class="mock-card top-calls-card">
+        <article class="dashboard-card panel-card top-calls-card">
           <div class="card-title-row">
-            <h2>Top Expensive AI Calls</h2>
-            <span>individual gateway completion events</span>
+            <div>
+              <h2>{{ copy().sections.topCalls.title }}</h2>
+              <p>{{ copy().sections.topCalls.subtitle }}</p>
+            </div>
           </div>
           <div class="top-call-list">
             @for (
@@ -587,18 +607,24 @@
               track trackTopCall($index, call)
             ) {
               <article>
-                <time>{{ formatShortDateTime(call.createdAt) }} UTC</time>
-                <strong>{{ purposeLabel(call.purpose) }}</strong>
-                <small>{{ purposeDescription(call.purpose) }}</small>
-                <span>{{ formatCost(call.estimatedCost) }}</span>
-                <div>
-                  <b>Tokens</b>
-                  {{ formatTokens(call.tokensIn, call.tokensOut) }}
-                  <b>Latency</b> {{ formatDuration(call.latencyMs) }}
+                <div class="top-call-heading">
+                  <time>
+                    {{ formatShortDateTime(call.createdAt) }}
+                    {{ copy().labels["utc"] }}
+                  </time>
+                  <span>{{ formatCost(call.estimatedCost) }}</span>
+                </div>
+                <strong>{{ call.label }}</strong>
+                <small>{{ call.description }}</small>
+                <div class="top-call-meta">
+                  <b>{{ copy().labels["tokens"] }}</b>
+                  <span>{{ formatTokens(call.tokensIn, call.tokensOut) }}</span>
+                  <b>{{ copy().labels["latency"] }}</b>
+                  <span>{{ formatDuration(call.latencyMs) }}</span>
                 </div>
               </article>
             } @empty {
-              <p class="mock-empty">No priced OVH calls in this range.</p>
+              <p class="dashboard-empty">{{ copy().messages["noTopCalls"] }}</p>
             }
           </div>
         </article>

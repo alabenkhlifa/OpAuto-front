@@ -7,6 +7,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { User, UserRole } from '../../../core/models/auth.model';
 import {
   AdminAiUsageDashboard,
+  AdminAiUsageDashboardCopy,
   AdminAiUsageRange,
 } from '../../../core/models/admin-ai-usage.model';
 
@@ -32,8 +33,190 @@ const otherOwnerUser: User = {
   email: 'other@example.com',
 };
 
-function makePayload(range: AdminAiUsageRange): AdminAiUsageDashboard {
+function makeCopy(): AdminAiUsageDashboardCopy {
   return {
+    app: { ariaLabel: 'AI and OVH usage analytics' },
+    login: {
+      ariaLabel: 'Admin AI dashboard login',
+      eyebrow: 'Owner analytics',
+      title: 'AI / OVH Usage Analytics',
+      description: 'Usage dashboard',
+      factsAriaLabel: 'Dashboard scope',
+      facts: ['Gateway usage events', 'OVH account scope'],
+      formEyebrow: 'Standalone login',
+      formTitle: 'Open dashboard',
+      emailLabel: 'Email',
+      passwordLabel: 'Password',
+      emailValidation: 'Enter the configured owner email.',
+      passwordValidation: 'Enter the dashboard password.',
+      defaultEmail: 'ala.khliifa@gmail.com',
+      submitLabel: 'Sign in',
+      submittingLabel: 'Signing in...',
+      restrictedError:
+        'This dashboard is restricted to the configured owner account.',
+      invalidCredentialsError: 'Invalid admin email or password.',
+      sessionExpiredError:
+        'Your admin session expired or is not allowed for this dashboard.',
+    },
+    header: {
+      badge: 'Operations Console',
+      title: 'AI / OVH Usage Analytics',
+      generatedTemplate:
+        'Generated {generatedAt}, gateway-level OVH usage events',
+      rangeLabel: 'Range',
+      rangeWindowSeparator: 'to',
+      scopeLabel: 'Gateway OVH account',
+      refreshLabel: 'Refresh',
+      loadingLabel: 'Loading',
+      signOutLabel: 'Sign out',
+    },
+    rangeOptions: [
+      { value: 'today', label: 'Today' },
+      { value: 'this_quarter', label: 'This quarter' },
+    ],
+    kpis: {
+      calls: {
+        label: 'Gateway AI calls',
+        hintTemplate: '{gatewayEvents} OVH completion events recorded',
+      },
+      spend: {
+        label: 'Estimated OVH spend',
+        hintTemplate: '{pricedCalls} priced calls, {unpricedCalls} unpriced',
+      },
+      tokens: {
+        label: 'Input / output tokens',
+        hintTemplate: '{totalTokens} total tokens',
+      },
+      latency: {
+        label: 'Average completion latency',
+        hintTemplate: '{failureRate} failed or rejected provider attempts',
+      },
+    },
+    sections: {
+      costByTask: {
+        title: 'Cost by AI Task',
+        subtitle: '{rangeLabel}, {totalCost} total',
+      },
+      costShare: { title: 'AI Task Cost Share', subtitle: 'top tasks' },
+      trend: { title: 'OVH Usage Trend', subtitle: '{rangeLabel} buckets' },
+      modelUsage: { title: 'Model Usage', subtitle: 'gateway calls by model' },
+      taskUsage: {
+        title: 'AI Task Usage',
+        subtitle: 'usage grouped by task and model',
+      },
+      userUsage: {
+        title: 'User Usage',
+        subtitle: 'gateway events grouped by user',
+      },
+      garageUsage: {
+        title: 'Garage Usage',
+        subtitle: 'gateway events grouped by garage',
+      },
+      toolHealth: {
+        title: 'Tool Execution Health',
+        subtitle: 'actual tool calls and outcomes',
+      },
+      agentUsage: {
+        title: 'Agent Usage',
+        subtitle: 'specialized agent calls from gateway events',
+      },
+      sourceCoverage: {
+        title: 'Source Coverage',
+        subtitle: '{coverage} attributed to user and garage',
+      },
+      approval: {
+        title: 'Approval / Refusal Analytics',
+        subtitle: 'tool calls grouped by approval outcome',
+      },
+      topCalls: {
+        title: 'Top Expensive AI Calls',
+        subtitle: 'individual gateway completion events',
+      },
+    },
+    tableHeaders: {
+      taskUsage: [
+        'AI Task',
+        'Model',
+        'Calls',
+        'Input tokens',
+        'Output tokens',
+        'Cost',
+        'Avg ms',
+      ],
+      agentUsage: [
+        'Agent',
+        'Calls',
+        'Input tokens',
+        'Output tokens',
+        'Tool calls',
+        'Cost',
+        'Avg ms',
+      ],
+      sourceCoverage: ['Metric', 'Rows', 'Status'],
+      approval: [
+        'Status',
+        'Calls',
+        'Share',
+        'Approval-required',
+        'Avg decision',
+      ],
+    },
+    labels: {
+      calls: 'calls',
+      aiCalls: 'AI calls',
+      tokens: 'Tokens',
+      cost: 'Cost',
+      latency: 'Latency',
+      avgMs: 'Avg ms',
+      notAvailable: 'n/a',
+      utc: 'UTC',
+      otherTasks: 'Other AI tasks',
+    },
+    units: { milliseconds: 'ms', seconds: 's' },
+    booleans: { yes: 'Yes', no: 'No' },
+    messages: {
+      loadingAnalytics: 'Loading AI usage analytics...',
+      endpointUnavailable:
+        'The admin AI usage endpoint is not available on this server.',
+      analyticsLoadFailed: 'Could not load AI usage analytics. Try refreshing.',
+      noTaskUsage: 'No AI task usage in this range.',
+      noCost: 'No cost recorded in this range.',
+      noTrend: 'No usage trend in this range.',
+      noModelUsage: 'No model usage in this range.',
+      noUserUsage: 'No user usage in this range.',
+      noGarageUsage: 'No garage usage in this range.',
+      noToolUsage: 'No tool usage in this range.',
+      noAgentUsage: 'No agent usage in this range.',
+      noApprovalActivity: 'No approval or refusal activity in this range.',
+      noTopCalls: 'No priced OVH calls in this range.',
+      noGatewayEvents: 'No gateway events in range',
+    },
+    approvalKpis: {
+      approvalRequiredShare: 'Approval-required share',
+      approvedOrExecutedWrites: 'Approved/executed writes',
+      deniedOrRefused: 'Denied/refused',
+      expiredOrPending: 'Expired or pending',
+    },
+    statuses: {
+      APPROVED: 'Approved',
+      DENIED: 'Refused',
+      FAILED: 'Failed',
+    },
+    tiers: {
+      READ: 'Read action',
+      CONFIRM_WRITE: 'Needs approval',
+      UNKNOWN: 'Unknown access',
+    },
+    purposes: {},
+    purposeTemplates: {},
+    sourceRows: {},
+  };
+}
+
+function makePayload(range: AdminAiUsageRange): AdminAiUsageDashboard {
+  const copy = makeCopy();
+  return {
+    copy,
     generatedAt: '2026-01-01T12:34:56.000Z',
     range: {
       key: range,
@@ -65,7 +248,10 @@ function makePayload(range: AdminAiUsageRange): AdminAiUsageDashboard {
     taskUsage: [
       {
         purpose: 'assistant_tool_selection:find_customer',
+        label: 'Find Customer tool planning',
+        description: 'Selects Find Customer as the next assistant action.',
         model: 'Meta-Llama-3_3-70B-Instruct',
+        modelLabel: 'Llama 3.3 70B',
         calls: 10,
         toolCalls: 4,
         tokensIn: 2000,
@@ -77,7 +263,10 @@ function makePayload(range: AdminAiUsageRange): AdminAiUsageDashboard {
       },
       {
         purpose: 'unknown-task',
+        label: 'Unknown Task',
+        description: 'Stored AI call for Unknown Task.',
         model: 'OVH-Mistral-Small-3.2-24B-Instruct-2506',
+        modelLabel: 'Mistral Small 3.2',
         calls: 4,
         toolCalls: 1,
         tokensIn: 120,
@@ -91,7 +280,9 @@ function makePayload(range: AdminAiUsageRange): AdminAiUsageDashboard {
     modelUsage: [
       {
         provider: 'ovh',
+        providerLabel: 'OVH',
         model: 'Meta-Llama-3_3-70B-Instruct',
+        modelLabel: 'Llama 3.3 70B',
         calls: 10,
         tokensIn: 2000,
         tokensOut: 1200,
@@ -115,6 +306,9 @@ function makePayload(range: AdminAiUsageRange): AdminAiUsageDashboard {
     agentUsage: [
       {
         agent: 'analytics-agent',
+        label: 'Analytics agent',
+        description:
+          'Runs reporting and analysis requests through the LLM brain.',
         calls: 2,
         tokensIn: 500,
         tokensOut: 100,
@@ -124,6 +318,8 @@ function makePayload(range: AdminAiUsageRange): AdminAiUsageDashboard {
     skillUsage: [
       {
         skill: 'direct_assistant',
+        label: 'Direct assistant',
+        description: 'Direct assistant usage',
         calls: 12,
         tokensIn: 1500,
         tokensOut: 700,
@@ -157,6 +353,10 @@ function makePayload(range: AdminAiUsageRange): AdminAiUsageDashboard {
     toolUsage: [
       {
         toolName: 'find_customer',
+        label: 'Find Customer',
+        description: 'Tool invoked by the assistant.',
+        dominantTierLabel: 'Read action',
+        outcomeLabel: '2 approved, 1 refused, 0 failed',
         calls: 5,
         failed: 0,
         approved: 2,
@@ -185,8 +385,11 @@ function makePayload(range: AdminAiUsageRange): AdminAiUsageDashboard {
       rows: [
         {
           status: 'APPROVED',
+          label: 'Approved',
           calls: 2,
           share: 40,
+          approvalRequired: true,
+          approvalRequiredLabel: 'Yes',
           avgDecisionSeconds: 6,
         },
       ],
@@ -201,14 +404,19 @@ function makePayload(range: AdminAiUsageRange): AdminAiUsageDashboard {
         garageName: 'AutoTech Tunisia',
         createdAt: '2026-01-01T12:00:00.000Z',
         provider: 'ovh',
+        providerLabel: 'OVH',
         purpose: 'assistant_tool_selection:find_customer',
+        label: 'Find Customer tool planning',
+        description: 'Selects Find Customer as the next assistant action.',
         model: 'Meta-Llama-3_3-70B-Instruct',
+        modelLabel: 'Llama 3.3 70B',
         tokensIn: 2000,
         tokensOut: 1200,
         estimatedCost: 0.002368,
         priced: true,
         latencyMs: 180,
         status: 'SUCCESS',
+        statusLabel: 'Completed',
       },
     ],
     sourceCoverage: {
@@ -226,6 +434,15 @@ function makePayload(range: AdminAiUsageRange): AdminAiUsageDashboard {
         eventsWithoutTokens: 0,
         eventsWithoutContext: 0,
       },
+      rows: [
+        {
+          key: 'gatewayEventsScanned',
+          label: 'Gateway events scanned',
+          value: 14,
+          statusLabel: 'Primary usage source',
+          tone: 'primary',
+        },
+      ],
     },
   };
 }
@@ -235,6 +452,7 @@ describe('AiUsageDashboardComponent', () => {
     opts: SetupOptions = {},
   ): ComponentFixture<AiUsageDashboardComponent> {
     const dashboardService = {
+      getCopy: jasmine.createSpy('getCopy').and.returnValue(of(makeCopy())),
       getUsage: jasmine
         .createSpy('getUsage')
         .and.callFake((range: AdminAiUsageRange) => {
@@ -280,6 +498,7 @@ describe('AiUsageDashboardComponent', () => {
     const svc = TestBed.inject(AdminAiUsageService) as any;
 
     expect(component.isAuthenticatedOwner()).toBeFalse();
+    expect(svc.getCopy).toHaveBeenCalled();
     expect(svc.getUsage).not.toHaveBeenCalled();
     expect(fixture.nativeElement.textContent).toContain('Standalone login');
   });
@@ -357,20 +576,16 @@ describe('AiUsageDashboardComponent', () => {
     expect(tasks[1].purpose).toBe('unknown-task');
   });
 
-  it('maps known purpose slugs to friendly copy and falls back for unknown tasks', () => {
+  it('renders API-provided task labels and descriptions', () => {
     const fixture = setup({ currentUser: ownerUser });
-    const component = fixture.componentInstance;
+    fixture.detectChanges();
+    const text = fixture.nativeElement.textContent;
 
-    expect(
-      component.purposeLabel('assistant_tool_selection:find_customer'),
-    ).toBe('Find Customer tool planning');
-    expect(
-      component.purposeDescription('assistant_tool_selection:find_customer'),
-    ).toContain('Selects Find Customer');
-    expect(component.purposeLabel('assistant_compose:send_email')).toBe(
-      'Send Email reply writing',
+    expect(text).toContain('Find Customer tool planning');
+    expect(text).toContain(
+      'Selects Find Customer as the next assistant action.',
     );
-    expect(component.purposeLabel('unknown-task')).toBe('Unknown Task');
+    expect(text).toContain('Unknown Task');
   });
 
   it('reloads data when a different range is selected', () => {

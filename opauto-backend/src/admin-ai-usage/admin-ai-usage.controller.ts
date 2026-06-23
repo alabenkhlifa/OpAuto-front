@@ -11,13 +11,14 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { UserRole } from '@prisma/client';
-import { AdminAiUsageService } from './admin-ai-usage.service';
+import {
+  ADMIN_AI_USAGE_OWNER_EMAIL,
+  AdminAiUsageService,
+} from './admin-ai-usage.service';
 import {
   AdminAiUsageQueryDto,
   AiUsageRangeKey,
 } from './dto/admin-ai-usage-query.dto';
-
-const AUTHORIZED_ADMIN_AI_USAGE_EMAIL = 'ala.khliifa@gmail.com';
 
 @ApiTags('admin-ai-usage')
 @ApiBearerAuth()
@@ -30,7 +31,7 @@ export class AdminAiUsageController {
   private isAuthorizedOwnerEmail(email: string | null | undefined): boolean {
     return (
       typeof email === 'string' &&
-      email.trim().toLowerCase() === AUTHORIZED_ADMIN_AI_USAGE_EMAIL
+      email.trim().toLowerCase() === ADMIN_AI_USAGE_OWNER_EMAIL
     );
   }
 
@@ -49,5 +50,16 @@ export class AdminAiUsageController {
       garageId,
       query.range ?? AiUsageRangeKey.TODAY,
     );
+  }
+}
+
+@ApiTags('admin-ai-usage')
+@Controller()
+export class AdminAiUsageCopyController {
+  constructor(private readonly service: AdminAiUsageService) {}
+
+  @Get(['admin-ai-usage/copy', 'admin/ai-usage/copy'])
+  getCopy() {
+    return this.service.getDashboardCopy();
   }
 }

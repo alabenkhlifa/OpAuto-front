@@ -19,21 +19,18 @@ import { User, UserRole } from '../../../core/models/auth.model';
 import {
   AdminAiUsageAgentMetric,
   AdminAiUsageDashboard,
+  AdminAiUsageDashboardCopy,
   AdminAiUsageGarageMetric,
   AdminAiUsageModelMetric,
   AdminAiUsageRange,
-  AdminAiUsageSkillMetric,
+  AdminAiUsageRangeOption,
+  AdminAiUsageSourceCoverageRow,
   AdminAiUsageTaskMetric,
   AdminAiUsageTimeBucket,
   AdminAiUsageToolMetric,
   AdminAiUsageTopCall,
   AdminAiUsageUserMetric,
 } from '../../../core/models/admin-ai-usage.model';
-
-interface RangeOption {
-  value: AdminAiUsageRange;
-  label: string;
-}
 
 interface KpiCard {
   key: string;
@@ -50,69 +47,89 @@ interface CostShareSegment {
   color: string;
 }
 
-interface PurposeCopy {
-  label: string;
-  description: string;
-}
-
-const ADMIN_OWNER_EMAIL = 'ala.khliifa@gmail.com';
-
-const PURPOSE_COPY: Record<string, PurposeCopy> = {
-  assistant_tool_selection: {
-    label: 'Tool planning',
-    description: 'The assistant selected the next tool or action.',
-  },
-  assistant_compose: {
-    label: 'Assistant reply writing',
-    description: 'The assistant wrote the final user-facing answer.',
-  },
-  intent_classifier: {
-    label: 'Intent routing',
-    description: 'Classifies the user request before the main assistant runs.',
-  },
-  conversation_title: {
-    label: 'Conversation title generation',
-    description: 'Creates short conversation titles for the chat history.',
-  },
-  'agent_runner:analytics-agent': {
-    label: 'Analytics agent',
-    description: 'Runs reporting and analysis requests through the LLM brain.',
-  },
-  'agent_runner:communications-agent': {
-    label: 'Communications agent',
-    description: 'Drafts or prepares customer communication workflows.',
-  },
-  'agent_runner:inventory-agent': {
-    label: 'Inventory agent',
-    description: 'Handles inventory-related reasoning and tool planning.',
-  },
-  'agent_runner:finance-agent': {
-    label: 'Finance agent',
-    description: 'Handles invoicing, payment, and financial reasoning tasks.',
-  },
-  'agent_runner:growth-agent': {
-    label: 'Growth agent',
-    description: 'Handles customer growth and follow-up reasoning tasks.',
-  },
-  'agent_runner:scheduling-agent': {
-    label: 'Scheduling agent',
-    description: 'Handles calendar and booking reasoning tasks.',
-  },
-  unknown: {
-    label: 'Unknown AI task',
-    description: 'Stored message without a recognized task label.',
-  },
-};
-
 const SHARE_COLORS = [
-  '#ff7a1a',
-  '#2563eb',
-  '#16a34a',
-  '#7c3aed',
-  '#ef4444',
-  '#0f766e',
-  '#64748b',
+  '#465fff',
+  '#12b76a',
+  '#f79009',
+  '#7a5af8',
+  '#f04438',
+  '#0ba5ec',
+  '#667085',
 ];
+
+function createEmptyCopy(): AdminAiUsageDashboardCopy {
+  return {
+    app: { ariaLabel: '' },
+    login: {
+      ariaLabel: '',
+      eyebrow: '',
+      title: '',
+      description: '',
+      factsAriaLabel: '',
+      facts: [],
+      formEyebrow: '',
+      formTitle: '',
+      emailLabel: '',
+      passwordLabel: '',
+      emailValidation: '',
+      passwordValidation: '',
+      defaultEmail: '',
+      submitLabel: '',
+      submittingLabel: '',
+      restrictedError: '',
+      invalidCredentialsError: '',
+      sessionExpiredError: '',
+    },
+    header: {
+      badge: '',
+      title: '',
+      generatedTemplate: '',
+      rangeLabel: '',
+      rangeWindowSeparator: '',
+      scopeLabel: '',
+      refreshLabel: '',
+      loadingLabel: '',
+      signOutLabel: '',
+    },
+    rangeOptions: [],
+    kpis: {
+      calls: { label: '', hintTemplate: '' },
+      spend: { label: '', hintTemplate: '' },
+      tokens: { label: '', hintTemplate: '' },
+      latency: { label: '', hintTemplate: '' },
+    },
+    sections: {
+      costByTask: { title: '', subtitle: '' },
+      costShare: { title: '', subtitle: '' },
+      trend: { title: '', subtitle: '' },
+      modelUsage: { title: '', subtitle: '' },
+      taskUsage: { title: '', subtitle: '' },
+      userUsage: { title: '', subtitle: '' },
+      garageUsage: { title: '', subtitle: '' },
+      toolHealth: { title: '', subtitle: '' },
+      agentUsage: { title: '', subtitle: '' },
+      sourceCoverage: { title: '', subtitle: '' },
+      approval: { title: '', subtitle: '' },
+      topCalls: { title: '', subtitle: '' },
+    },
+    tableHeaders: {
+      taskUsage: [],
+      agentUsage: [],
+      sourceCoverage: [],
+      approval: [],
+    },
+    labels: {},
+    units: {},
+    booleans: {},
+    messages: {},
+    approvalKpis: {},
+    statuses: {},
+    tiers: {},
+    purposes: {},
+    purposeTemplates: {},
+    sourceRows: {},
+  };
+}
 
 @Component({
   selector: 'app-ai-usage-dashboard',
@@ -130,23 +147,11 @@ export class AiUsageDashboardComponent implements OnInit {
   private readonly rangeTrigger = new Subject<AdminAiUsageRange>();
   private usageStreamStarted = false;
 
-  readonly adminEmail = ADMIN_OWNER_EMAIL;
+  readonly copy = signal<AdminAiUsageDashboardCopy>(createEmptyCopy());
   readonly loginForm = this.formBuilder.group({
-    email: [ADMIN_OWNER_EMAIL, [Validators.required, Validators.email]],
+    email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required]],
   });
-
-  readonly ranges: readonly RangeOption[] = [
-    { value: 'today', label: 'Today' },
-    { value: 'yesterday', label: 'Yesterday' },
-    { value: 'last_week', label: 'Last week' },
-    { value: 'this_month', label: 'This month' },
-    { value: 'last_month', label: 'Last month' },
-    { value: 'this_quarter', label: 'This quarter' },
-    { value: 'last_quarter', label: 'Last quarter' },
-    { value: 'this_year', label: 'This year' },
-    { value: 'last_year', label: 'Last year' },
-  ];
 
   readonly selectedRange = signal<AdminAiUsageRange>('today');
   readonly isAuthenticatedOwner = signal(false);
@@ -158,6 +163,7 @@ export class AiUsageDashboardComponent implements OnInit {
     this.createEmptyDashboard('today'),
   );
 
+  readonly ranges = computed(() => this.copy().rangeOptions);
   readonly summary = computed(() => this.dashboard().summary);
   readonly taskUsage = computed(() =>
     [...this.dashboard().taskUsage].sort(
@@ -182,17 +188,15 @@ export class AiUsageDashboardComponent implements OnInit {
       (a, b) => b.estimatedCost - a.estimatedCost,
     ),
   );
-  readonly skillUsage = computed(() =>
-    [...this.dashboard().skillUsage].sort(
-      (a, b) => b.estimatedCost - a.estimatedCost,
-    ),
-  );
   readonly modelUsage = computed(() =>
     [...this.dashboard().modelUsage].sort(
       (a, b) => b.estimatedCost - a.estimatedCost,
     ),
   );
   readonly timeBuckets = computed(() => this.dashboard().timeBuckets ?? []);
+  readonly sourceCoverageRows = computed(
+    () => this.dashboard().sourceCoverage.rows ?? [],
+  );
   readonly topExpensiveCalls = computed(() =>
     this.dashboard().topExpensiveCalls.slice(0, 8),
   );
@@ -202,36 +206,49 @@ export class AiUsageDashboardComponent implements OnInit {
   );
 
   readonly kpiCards = computed<KpiCard[]>(() => {
+    const copy = this.copy();
     const summary = this.summary();
     const failedShare =
       summary.llmCalls > 0
         ? ((summary.failedCalls + summary.rejectedCalls) / summary.llmCalls) *
           100
         : 0;
+
     return [
       {
         key: 'calls',
-        label: 'Gateway AI calls',
+        label: copy.kpis.calls.label,
         value: this.formatInteger(summary.llmCalls),
-        hint: `${this.formatInteger(summary.gatewayEvents)} OVH completion events recorded`,
+        hint: this.formatTemplate(copy.kpis.calls.hintTemplate, {
+          gatewayEvents: this.formatInteger(summary.gatewayEvents),
+        }),
       },
       {
         key: 'spend',
-        label: 'Estimated OVH spend',
+        label: copy.kpis.spend.label,
         value: this.formatCost(summary.estimatedCost),
-        hint: `${this.formatInteger(summary.ovhMessagesPriced)} priced calls, ${this.formatInteger(summary.ovhMessagesUnpriced)} unpriced`,
+        hint: this.formatTemplate(copy.kpis.spend.hintTemplate, {
+          pricedCalls: this.formatInteger(summary.ovhMessagesPriced),
+          unpricedCalls: this.formatInteger(summary.ovhMessagesUnpriced),
+        }),
       },
       {
         key: 'tokens',
-        label: 'Input / output tokens',
-        value: `${this.formatCompact(summary.tokensIn)} / ${this.formatCompact(summary.tokensOut)}`,
-        hint: `${this.formatCompact(summary.tokensIn + summary.tokensOut)} total tokens`,
+        label: copy.kpis.tokens.label,
+        value: `${this.formatCompact(summary.tokensIn)} / ${this.formatCompact(
+          summary.tokensOut,
+        )}`,
+        hint: this.formatTemplate(copy.kpis.tokens.hintTemplate, {
+          totalTokens: this.formatCompact(summary.tokensIn + summary.tokensOut),
+        }),
       },
       {
         key: 'latency',
-        label: 'Average completion latency',
+        label: copy.kpis.latency.label,
         value: this.formatDuration(summary.avgLatencyMs),
-        hint: `${this.formatPercent(failedShare)} failed or rejected provider attempts`,
+        hint: this.formatTemplate(copy.kpis.latency.hintTemplate, {
+          failureRate: this.formatPercent(failedShare),
+        }),
       },
     ];
   });
@@ -246,7 +263,7 @@ export class AiUsageDashboardComponent implements OnInit {
       .slice(0, 6)
       .map((row, index) => ({
         key: `${row.purpose}:${row.model ?? 'unknown'}`,
-        label: this.purposeLabel(row.purpose),
+        label: row.label,
         cost: row.estimatedCost,
         share: (row.estimatedCost / total) * 100,
         color: SHARE_COLORS[index],
@@ -256,7 +273,7 @@ export class AiUsageDashboardComponent implements OnInit {
     if (remaining > 0.000001) {
       top.push({
         key: 'other',
-        label: 'Other AI tasks',
+        label: this.copy().labels['otherTasks'] ?? '',
         cost: remaining,
         share: (remaining / total) * 100,
         color: SHARE_COLORS[6],
@@ -268,7 +285,7 @@ export class AiUsageDashboardComponent implements OnInit {
   readonly costShareGradient = computed(() => {
     const segments = this.costShare();
     if (segments.length === 0) {
-      return 'conic-gradient(#e5e7eb 0deg 360deg)';
+      return 'conic-gradient(#eef2f6 0deg 360deg)';
     }
 
     let cursor = 0;
@@ -278,7 +295,7 @@ export class AiUsageDashboardComponent implements OnInit {
       cursor = end;
       return `${segment.color} ${start.toFixed(2)}deg ${end.toFixed(2)}deg`;
     });
-    return `conic-gradient(${stops.join(', ')}, #e5e7eb ${cursor.toFixed(2)}deg 360deg)`;
+    return `conic-gradient(${stops.join(', ')}, #eef2f6 ${cursor.toFixed(2)}deg 360deg)`;
   });
 
   readonly maxTaskCost = computed(() =>
@@ -290,17 +307,12 @@ export class AiUsageDashboardComponent implements OnInit {
   readonly maxBucketCost = computed(() =>
     Math.max(0, ...this.timeBuckets().map((row) => row.estimatedCost)),
   );
-  readonly updatedAt = computed(() =>
-    this.formatDateTime(this.dashboard().generatedAt),
+  readonly generatedSummary = computed(() =>
+    this.formatTemplate(this.copy().header.generatedTemplate, {
+      generatedAt: this.formatGeneratedAt(this.dashboard().generatedAt),
+    }),
   );
-  readonly generatedSummary = computed(() => {
-    const generated = this.formatGeneratedAt(this.dashboard().generatedAt);
-    return `Generated ${generated}, gateway-level OVH usage events`;
-  });
   readonly rangeWindow = computed(() => this.formatRangeWindow());
-  readonly totalTokenCount = computed(
-    () => this.summary().tokensIn + this.summary().tokensOut,
-  );
   readonly approvalRequiredShare = computed(() => {
     const total = this.summary().toolCalls;
     if (total <= 0) {
@@ -308,23 +320,60 @@ export class AiUsageDashboardComponent implements OnInit {
     }
     return (this.dashboard().approvalRefusal.approvalRequired / total) * 100;
   });
-  readonly contextCoverageLabel = computed(() => {
+  readonly approvedExecutedShare = computed(() => {
+    const total = this.summary().toolCalls;
+    if (total <= 0) {
+      return 0;
+    }
+    return (this.dashboard().approvalRefusal.approvedOrExecuted / total) * 100;
+  });
+  readonly costByTaskSubtitle = computed(() =>
+    this.formatTemplate(this.copy().sections.costByTask.subtitle, {
+      rangeLabel: this.dashboard().range.label,
+      totalCost: this.formatCost(this.summary().estimatedCost),
+    }),
+  );
+  readonly trendSubtitle = computed(() =>
+    this.formatTemplate(this.copy().sections.trend.subtitle, {
+      rangeLabel: this.dashboard().range.label,
+    }),
+  );
+  readonly sourceCoverageSubtitle = computed(() => {
     const events =
       this.dashboard().sourceCoverage.rowCoverage.gatewayEventsScanned ?? 0;
     const missing =
       this.dashboard().sourceCoverage.rowCoverage.eventsWithoutContext ?? 0;
     if (events <= 0) {
-      return 'No gateway events in range';
+      return this.copy().messages['noGatewayEvents'] ?? '';
     }
-    return `${this.formatPercent(((events - missing) / events) * 100)} attributed to user and garage`;
+    return this.formatTemplate(this.copy().sections.sourceCoverage.subtitle, {
+      coverage: this.formatPercent(((events - missing) / events) * 100),
+    });
   });
 
   ngOnInit(): void {
-    const currentUser = this.authService.getCurrentUser();
-    if (this.isAllowedOwner(currentUser)) {
-      this.isAuthenticatedOwner.set(true);
-      this.startUsageStream();
-    }
+    this.usageService
+      .getCopy()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (copy) => {
+          this.copy.set(copy);
+          this.dashboard.set({
+            ...this.dashboard(),
+            copy,
+          });
+          const configuredEmail = copy.login.defaultEmail.trim();
+          if (configuredEmail && !this.loginForm.controls.email.value) {
+            this.loginForm.patchValue({ email: configuredEmail });
+          }
+
+          const currentUser = this.authService.getCurrentUser();
+          if (this.isAllowedOwner(currentUser)) {
+            this.isAuthenticatedOwner.set(true);
+            this.startUsageStream();
+          }
+        },
+      });
   }
 
   submitLogin(): void {
@@ -350,9 +399,7 @@ export class AiUsageDashboardComponent implements OnInit {
           if (!this.isAllowedOwner(response.user)) {
             this.authService.logout().subscribe();
             this.isAuthenticatedOwner.set(false);
-            this.loginError.set(
-              'This dashboard is restricted to the configured owner account.',
-            );
+            this.loginError.set(this.copy().login.restrictedError);
             return;
           }
 
@@ -361,7 +408,7 @@ export class AiUsageDashboardComponent implements OnInit {
           this.rangeTrigger.next(this.selectedRange());
         },
         error: () => {
-          this.loginError.set('Invalid admin email or password.');
+          this.loginError.set(this.copy().login.invalidCredentialsError);
         },
       });
   }
@@ -396,31 +443,6 @@ export class AiUsageDashboardComponent implements OnInit {
     this.selectRange(select.value as AdminAiUsageRange);
   }
 
-  purposeLabel(purpose: string): string {
-    const scoped = this.scopedToolPurpose(purpose);
-    if (scoped) {
-      const tool = this.humanizeIdentifier(scoped.toolName);
-      return scoped.basePurpose === 'assistant_compose'
-        ? `${tool} reply writing`
-        : `${tool} tool planning`;
-    }
-    return PURPOSE_COPY[purpose]?.label ?? this.humanizeIdentifier(purpose);
-  }
-
-  purposeDescription(purpose: string): string {
-    const scoped = this.scopedToolPurpose(purpose);
-    if (scoped) {
-      const tool = this.humanizeIdentifier(scoped.toolName);
-      return scoped.basePurpose === 'assistant_compose'
-        ? `Writes the final user-facing answer after ${tool} finishes.`
-        : `Selects ${tool} as the next assistant action.`;
-    }
-    return (
-      PURPOSE_COPY[purpose]?.description ??
-      `Stored AI call for ${this.humanizeIdentifier(purpose)}.`
-    );
-  }
-
   modelBadgeClass(model: string | null): string {
     const value = model?.toLowerCase() ?? '';
     if (value.includes('llama')) {
@@ -430,64 +452,6 @@ export class AiUsageDashboardComponent implements OnInit {
       return 'model-badge model-badge--mistral';
     }
     return 'model-badge model-badge--unknown';
-  }
-
-  modelLabel(model: string | null): string {
-    const value = model?.trim() ?? '';
-    if (/mistral/i.test(value)) {
-      return 'Mistral Small 3.2';
-    }
-    if (/llama/i.test(value)) {
-      return 'Llama 3.3 70B';
-    }
-    return value || 'Unknown model';
-  }
-
-  agentLabel(agent: string): string {
-    return this.humanizeIdentifier(agent.replace(/-agent$/i, ' agent'));
-  }
-
-  toolLabel(tool: string): string {
-    return this.humanizeIdentifier(tool);
-  }
-
-  toolOutcomeLabel(tool: AdminAiUsageToolMetric): string {
-    return `${this.formatInteger(tool.approved)} approved, ${this.formatInteger(tool.denied)} refused, ${this.formatInteger(tool.failed)} failed`;
-  }
-
-  dominantToolTier(tool: AdminAiUsageToolMetric): string {
-    const entries = Object.entries(tool.tierBreakdown ?? {});
-    if (entries.length === 0) {
-      return 'Unknown access';
-    }
-    const tier = entries.sort((a, b) => b[1] - a[1])[0][0].toUpperCase();
-    const labels: Record<string, string> = {
-      READ: 'Read action',
-      WRITE: 'Write action',
-      APPROVAL_REQUIRED: 'Needs approval',
-      OWNER_ONLY: 'Owner-only action',
-    };
-    return labels[tier] ?? this.humanizeIdentifier(tier);
-  }
-
-  skillLabel(skill: string): string {
-    if (skill === 'direct_assistant') {
-      return 'Direct assistant';
-    }
-    return this.humanizeIdentifier(skill);
-  }
-
-  statusLabel(status: string): string {
-    const normalized = status.toUpperCase();
-    const labels: Record<string, string> = {
-      APPROVED: 'Approved',
-      DENIED: 'Refused',
-      EXPIRED: 'Expired',
-      PENDING_APPROVAL: 'Waiting for approval',
-      EXECUTED: 'Executed',
-      FAILED: 'Failed',
-    };
-    return labels[normalized] ?? this.humanizeIdentifier(status);
   }
 
   statusClass(status: string): string {
@@ -502,6 +466,14 @@ export class AiUsageDashboardComponent implements OnInit {
       return 'status-chip status-chip--warning';
     }
     return 'status-chip';
+  }
+
+  sourceToneClass(row: AdminAiUsageSourceCoverageRow): string {
+    return row.tone === 'primary'
+      ? 'tier-chip tier-chip--blue'
+      : row.tone === 'warn'
+        ? 'tier-chip tier-chip--warning'
+        : 'tier-chip';
   }
 
   rowWidth(value: number, max: number): string {
@@ -556,45 +528,28 @@ export class AiUsageDashboardComponent implements OnInit {
 
   formatDuration(milliseconds: number | null): string {
     if (milliseconds === null || !Number.isFinite(milliseconds)) {
-      return 'n/a';
+      return this.copy().labels['notAvailable'] ?? '';
     }
     if (milliseconds < 1000) {
-      return `${milliseconds.toFixed(0)} ms`;
+      return `${milliseconds.toFixed(0)} ${this.copy().units['milliseconds'] ?? ''}`;
     }
-    return `${(milliseconds / 1000).toFixed(1)} s`;
+    return `${(milliseconds / 1000).toFixed(1)} ${this.copy().units['seconds'] ?? ''}`;
   }
 
   formatSeconds(seconds: number): string {
     if (!Number.isFinite(seconds) || seconds <= 0) {
-      return 'n/a';
+      return this.copy().labels['notAvailable'] ?? '';
     }
-    return `${seconds.toFixed(1)} s`;
-  }
-
-  formatDateTime(raw: string): string {
-    if (!raw) {
-      return '-';
-    }
-    const date = new Date(raw);
-    if (Number.isNaN(date.getTime())) {
-      return '-';
-    }
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(date);
+    return `${seconds.toFixed(1)} ${this.copy().units['seconds'] ?? ''}`;
   }
 
   formatShortDateTime(raw: string): string {
     if (!raw) {
-      return 'n/a';
+      return this.copy().labels['notAvailable'] ?? '';
     }
     const date = new Date(raw);
     if (Number.isNaN(date.getTime())) {
-      return 'n/a';
+      return this.copy().labels['notAvailable'] ?? '';
     }
     return new Intl.DateTimeFormat('en-US', {
       month: 'short',
@@ -608,11 +563,11 @@ export class AiUsageDashboardComponent implements OnInit {
 
   formatGeneratedAt(raw: string): string {
     if (!raw) {
-      return 'n/a';
+      return this.copy().labels['notAvailable'] ?? '';
     }
     const date = new Date(raw);
     if (Number.isNaN(date.getTime())) {
-      return 'n/a';
+      return this.copy().labels['notAvailable'] ?? '';
     }
     return new Intl.DateTimeFormat('en-CA', {
       year: 'numeric',
@@ -628,17 +583,17 @@ export class AiUsageDashboardComponent implements OnInit {
 
   formatUtcIsoMinute(raw: string): string {
     if (!raw) {
-      return 'n/a';
+      return this.copy().labels['notAvailable'] ?? '';
     }
     const date = new Date(raw);
     if (Number.isNaN(date.getTime())) {
-      return 'n/a';
+      return this.copy().labels['notAvailable'] ?? '';
     }
     return date.toISOString().slice(0, 16).replace('T', ' ');
   }
 
-  taskAvgMs(_task: AdminAiUsageTaskMetric): string {
-    return this.formatDuration(_task.avgLatencyMs);
+  taskAvgMs(task: AdminAiUsageTaskMetric): string {
+    return this.formatDuration(task.avgLatencyMs);
   }
 
   modelAvgMs(model: AdminAiUsageModelMetric): string {
@@ -649,28 +604,20 @@ export class AiUsageDashboardComponent implements OnInit {
     return this.rowWidth(bucket.estimatedCost, this.maxBucketCost());
   }
 
-  private formatRangeWindow(): string {
-    const range = this.dashboard().range;
-    if (!range.start || !range.end) {
-      return 'n/a';
-    }
-    return `${this.formatUtcIsoMinute(range.start)} to ${this.formatUtcIsoMinute(range.end)} UTC`;
-  }
-
   trackTask = (_: number, row: AdminAiUsageTaskMetric) =>
     `${row.purpose}:${row.model ?? 'unknown'}`;
   trackUser = (_: number, row: AdminAiUsageUserMetric) => row.userId;
   trackGarage = (_: number, row: AdminAiUsageGarageMetric) => row.garageId;
   trackTool = (_: number, row: AdminAiUsageToolMetric) => row.toolName;
   trackAgent = (_: number, row: AdminAiUsageAgentMetric) => row.agent;
-  trackSkill = (_: number, row: AdminAiUsageSkillMetric) => row.skill;
   trackTopCall = (_: number, row: AdminAiUsageTopCall) => row.eventId;
   trackModel = (_: number, row: AdminAiUsageModelMetric) =>
     `${row.provider}:${row.model ?? 'unknown'}`;
   trackBucket = (_: number, row: AdminAiUsageTimeBucket) => row.start;
   trackShare = (_: number, row: CostShareSegment) => row.key;
   trackKpi = (_: number, row: KpiCard) => row.key;
-  trackRange = (_: number, row: RangeOption) => row.value;
+  trackRange = (_: number, row: AdminAiUsageRangeOption) => row.value;
+  trackSourceRow = (_: number, row: AdminAiUsageSourceCoverageRow) => row.key;
 
   private startUsageStream(): void {
     if (this.usageStreamStarted) {
@@ -688,6 +635,7 @@ export class AiUsageDashboardComponent implements OnInit {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((data) => {
+        this.copy.set(data.copy);
         this.dashboard.set(data);
         this.isLoading.set(false);
       });
@@ -705,17 +653,11 @@ export class AiUsageDashboardComponent implements OnInit {
         ) {
           this.authService.forceLogout();
           this.isAuthenticatedOwner.set(false);
-          this.loginError.set(
-            'Your admin session expired or is not allowed for this dashboard.',
-          );
+          this.loginError.set(this.copy().login.sessionExpiredError);
         } else if (error instanceof HttpErrorResponse && error.status === 404) {
-          this.errorMessage.set(
-            'The admin AI usage endpoint is not available on this server.',
-          );
+          this.errorMessage.set(this.copy().messages['endpointUnavailable']);
         } else {
-          this.errorMessage.set(
-            'Could not load AI usage analytics. Try refreshing.',
-          );
+          this.errorMessage.set(this.copy().messages['analyticsLoadFailed']);
         }
         return of(this.createEmptyDashboard(range));
       }),
@@ -728,38 +670,35 @@ export class AiUsageDashboardComponent implements OnInit {
   private isAllowedOwner(user: User | null): boolean {
     return (
       user?.role === UserRole.OWNER &&
-      (user.email ?? '').trim().toLowerCase() === ADMIN_OWNER_EMAIL
+      (user.email ?? '').trim().toLowerCase() ===
+        this.copy().login.defaultEmail.trim().toLowerCase()
     );
   }
 
-  private humanizeIdentifier(value: string): string {
-    const cleaned = (value || 'unknown')
-      .replace(/^agent_runner:/, '')
-      .replace(/[_:.-]+/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-    return cleaned.replace(/\b\w/g, (match) => match.toUpperCase());
-  }
-
-  private scopedToolPurpose(
-    purpose: string,
-  ): { basePurpose: string; toolName: string } | null {
-    const match = /^(assistant_tool_selection|assistant_compose):(.+)$/.exec(
-      purpose,
-    );
-    if (!match?.[2]?.trim()) {
-      return null;
+  private formatRangeWindow(): string {
+    const range = this.dashboard().range;
+    if (!range.start || !range.end) {
+      return this.copy().labels['notAvailable'] ?? '';
     }
-    return {
-      basePurpose: match[1],
-      toolName: match[2].trim(),
-    };
+    return `${this.formatUtcIsoMinute(range.start)} ${
+      this.copy().header.rangeWindowSeparator
+    } ${this.formatUtcIsoMinute(range.end)} ${this.copy().labels['utc'] ?? ''}`;
+  }
+
+  private formatTemplate(
+    template: string,
+    values: Record<string, string | number>,
+  ): string {
+    return template.replace(/\{([a-zA-Z0-9_]+)\}/g, (match, key) =>
+      values[key] === undefined ? match : String(values[key]),
+    );
   }
 
   private createEmptyDashboard(
     range: AdminAiUsageRange,
   ): AdminAiUsageDashboard {
     return {
+      copy: this.copy(),
       generatedAt: '',
       range: {
         key: range,
@@ -821,6 +760,7 @@ export class AiUsageDashboardComponent implements OnInit {
           eventsWithoutTokens: 0,
           eventsWithoutContext: 0,
         },
+        rows: [],
       },
     };
   }
