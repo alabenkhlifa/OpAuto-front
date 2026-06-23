@@ -1271,7 +1271,7 @@ export class OrchestratorService {
         `- Use Markdown: **bold** for emphasis, lists with - or 1., backticks for code, links as [text](url). The chat UI renders Markdown.\n` +
         `- Currency is Tunisian Dinar. Format amounts as "1,234.56 TND" (English) or "1 234,56 DT" (French). NEVER prefix with a currency symbol — no ₸, no د.ت, no $, no €. Just the number and the code.\n` +
         `- Round currency to 2 decimal places.\n` +
-        `- Reference customer/car/invoice IDs as monospace code (\`abc-123\`) when you must show them; prefer human-readable names otherwise.\n` +
+        `- Do NOT include internal database IDs (customerId, carId, appointmentId, invoice UUIDs, toolCallId, or raw UUIDs) unless the user explicitly asks for technical IDs. Use names, phone numbers, invoice numbers, license plates, dates, and amounts instead.\n` +
         `- NEVER write tool-call markup in your reply. Do NOT print JSON like \`{"type":"function","name":"...","arguments":...}\`, do NOT use \`<function=name>{...}</function>\` tags, and do NOT narrate "I will call tool X". Either invoke the tool through the structured tool-use channel (the assistant runtime executes it) or describe the result in plain prose. Tool-call JSON in your reply text is treated as a malformed response and discarded.`,
     );
     parts.push(
@@ -1396,7 +1396,8 @@ export class OrchestratorService {
         `Today is ${todayIso}. Respond to the user in ${localeName}. The conversation above contains the tool result you need. ` +
         `Phrase a concise, direct answer using the EXACT numbers from the tool result. If the result is 0, empty, or shows no data, ` +
         `say that explicitly — do NOT invent or estimate figures. Do NOT call another tool. ` +
-        `Currency formatting: "1,234.56 TND" (English) or "1 234,56 DT" (French) — never prefix with a symbol.\n\n` +
+        `Currency formatting: "1,234.56 TND" (English) or "1 234,56 DT" (French) — never prefix with a symbol. ` +
+        `Do NOT include internal database IDs (customerId, carId, appointmentId, invoice UUIDs, toolCallId, or raw UUIDs) unless the user explicitly asks for technical IDs. Use names, phone numbers, invoice numbers, license plates, dates, and amounts instead.\n\n` +
         // I-014 — if a tool returned a structured error field (e.g. send_email
         // → {error: "send_failed", message: "..."}), the user MUST be told the
         // action did not succeed. Previously the LLM would happily summarise

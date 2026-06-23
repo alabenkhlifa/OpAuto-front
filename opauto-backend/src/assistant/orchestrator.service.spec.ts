@@ -1080,6 +1080,8 @@ describe('OrchestratorService', () => {
       expect(prompt).toMatch(/role: OWNER/);
       expect(prompt).toMatch(/garage owner/);
       expect(prompt).toMatch(/SELF-SEND/);
+      expect(prompt).toMatch(/Do NOT include internal database IDs/);
+      expect(prompt).toMatch(/Use names, phone numbers, invoice numbers, license plates/);
     });
 
     it('forbids refusing because a specialist agent conversation is needed', async () => {
@@ -1266,6 +1268,9 @@ describe('OrchestratorService', () => {
       expect(calls.length).toBe(2);
       // Compose-only kicks in immediately after a write tool.
       expect(calls[1][0].tools).toBeUndefined();
+      expect(calls[1][0].messages[0].content).toMatch(
+        /Do NOT include internal database IDs/,
+      );
     });
   });
 });
