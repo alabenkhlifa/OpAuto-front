@@ -43,7 +43,16 @@ function endOfUtcDate(date: string): string {
   return `${date}T23:59:59.999Z`;
 }
 
-function normaliseBound(value: string | undefined, edge: 'from' | 'to'): string | undefined {
+function nextUtcDate(date: string): string {
+  const next = new Date(`${date}T00:00:00.000Z`);
+  next.setUTCDate(next.getUTCDate() + 1);
+  return next.toISOString().slice(0, 10);
+}
+
+function normaliseBound(
+  value: string | undefined,
+  edge: 'from' | 'to',
+): string | undefined {
   if (!value) return undefined;
   if (DATE_ONLY_RE.test(value)) {
     return edge === 'from' ? startOfUtcDate(value) : endOfUtcDate(value);
@@ -56,11 +65,19 @@ function startOfTodayUtc(): string {
 }
 
 function isPastRange(to: string | undefined): boolean {
-  return Boolean(to && new Date(to).getTime() < new Date(startOfTodayUtc()).getTime());
+  return Boolean(
+    to && new Date(to).getTime() < new Date(startOfTodayUtc()).getTime(),
+  );
 }
 
 function asksForFuture(message: string | undefined): boolean {
   return /\b(upcoming|future|later|coming up|booked later|next appointment|next appointments)\b/i.test(
+    message ?? '',
+  );
+}
+
+function asksForToday(message: string | undefined): boolean {
+  return /\b(today|this morning|this afternoon|this evening)\b/i.test(
     message ?? '',
   );
 }
@@ -71,6 +88,17 @@ function normaliseDateRange(
 ): { from?: string; to?: string } {
   let from = normaliseBound(args.from, 'from');
   let to = normaliseBound(args.to, 'to');
+
+  if (
+    asksForToday(ctx.turnState?.userMessage) &&
+    args.from &&
+    args.to &&
+    DATE_ONLY_RE.test(args.from) &&
+    DATE_ONLY_RE.test(args.to) &&
+    args.to === nextUtcDate(args.from)
+  ) {
+    to = endOfUtcDate(args.from);
+  }
 
   if (from && !to) {
     to = FAR_FUTURE;
@@ -107,7 +135,10 @@ const APPOINTMENT_STATUSES: ListAppointmentsStatus[] = [
 
 export function buildListAppointmentsTool(
   appointmentsService: AppointmentsService,
-): ToolDefinition<ListAppointmentsArgs, { appointments: ListedAppointment[]; count: number }> {
+): ToolDefinition<
+  ListAppointmentsArgs,
+  { appointments: ListedAppointment[]; count: number }
+> {
   return {
     name: 'list_appointments',
     description:
@@ -115,10 +146,11 @@ export function buildListAppointmentsTool(
       'When the user asks about a named customer, pass customerName from the user prompt or customerId from find_customer; do not run a garage-wide appointment scan for a customer-specific question. ' +
       'For "upcoming", "later", or "future" appointments, use a from date of today or later; never pass a past year for an upcoming question. ' +
       'A date-only from/to such as 2026-07-10 covers the full calendar day. ' +
+      'For "today", pass the same YYYY-MM-DD as both from and to; do not pass tomorrow as the upper bound. ' +
       'IMPORTANT — ORDERING: pass `orderBy: "soonest"` (default) for "next/upcoming/first appointment(s)"; ' +
       '`orderBy: "latest"` for "last/most recent" appointments. Combine with `limit` to answer ' +
       '"first/next/last N appointments" (e.g. "next 3 appointments today" → ' +
-      '{from:"2026-04-27", to:"2026-04-28", orderBy:"soonest", limit:3}).',
+      '{from:"2026-04-27", to:"2026-04-27", orderBy:"soonest", limit:3}).',
     blastTier: AssistantBlastTier.READ,
     parameters: {
       type: 'object',
@@ -126,11 +158,13 @@ export function buildListAppointmentsTool(
       properties: {
         from: {
           type: 'string',
-          description: 'Inclusive lower bound. Accepts YYYY-MM-DD or full ISO 8601.',
+          description:
+            'Inclusive lower bound. Accepts YYYY-MM-DD or full ISO 8601.',
         },
         to: {
           type: 'string',
-          description: 'Inclusive upper bound. Accepts YYYY-MM-DD or full ISO 8601.',
+          description:
+            'Inclusive upper bound. Accepts YYYY-MM-DD or full ISO 8601.',
         },
         customerId: {
           type: 'string',

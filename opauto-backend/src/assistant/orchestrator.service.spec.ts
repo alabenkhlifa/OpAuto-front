@@ -974,6 +974,147 @@ describe('OrchestratorService', () => {
     });
   });
 
+  it('uses the latest agent result when the main loop reaches the iteration cap', async () => {
+    const agents = {
+      list: jest
+        .fn()
+        .mockReturnValue([
+          { name: 'FinanceAgent', description: 'cash flow analysis' },
+        ]),
+      run: jest.fn().mockResolvedValue({
+        result:
+          'There are 49 overdue invoices totaling 11,980.12 TND. Prioritize the oldest invoices first.',
+      }),
+    };
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-1',
+            name: 'dispatch_agent',
+            argsJson:
+              '{"name":"FinanceAgent","input":"cash-flow risk","reason":"risk summary"}',
+          },
+        ],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({ llm, agents });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-1',
+        'Give me a cash-flow risk summary.',
+        undefined,
+        { iterationCap: 1 },
+      ),
+    );
+
+    expect(events.find((e) => e.type === 'text')).toMatchObject({
+      delta:
+        'There are 49 overdue invoices totaling 11,980.12 TND. Prioritize the oldest invoices first.',
+    });
+  });
+
+  it('corrects final answers that deny available slots returned by the tool', async () => {
+    const tools = makeTools(['find_available_slot'], () => ({
+      ok: true,
+      result: {
+        slots: [
+          {
+            start: '2026-06-30T08:00:00.000Z',
+            end: '2026-06-30T08:30:00.000Z',
+            mechanicName: 'Hichem Sassi',
+          },
+        ],
+      },
+      durationMs: 1,
+    }));
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-1',
+            name: 'find_available_slot',
+            argsJson:
+              '{"date":"2026-06-30","durationMinutes":30,"appointmentType":"quick-service"}',
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: 'There are no available slots next Tuesday morning.',
+        toolCalls: [],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({ tools, llm });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-1',
+        'Find me a free slot next Tuesday morning for a quick service.',
+        undefined,
+      ),
+    );
+
+    const text = events.find((e) => e.type === 'text');
+    expect(text).toMatchObject({
+      delta: expect.stringContaining('I found available slots'),
+    });
+    expect(text).toMatchObject({
+      delta: expect.stringContaining('Hichem Sassi'),
+    });
+    expect(text).not.toMatchObject({
+      delta: expect.stringMatching(/no available slots/i),
+    });
+  });
+
+  it('strips reasoning scaffolds and internal ids from final assistant text', async () => {
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content:
+          '## Step 1: Analyze the tool output\n' +
+          'The final answer is:\n' +
+          '## Step 1: Invoice\n' +
+          '- Customer: Hela Mahmoud\n' +
+          '- Locked By: 691cb0d2-f52c-4222-8f83-b2cba96b0a0c\n' +
+          '- Invoice ID: 11111111-2222-4333-8444-555555555555\n' +
+          '- Total: 1,310.00 TND',
+        toolCalls: [],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({ llm });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-1',
+        'Show me invoice INV-2026-0001.',
+        undefined,
+      ),
+    );
+
+    const text = events.find((e) => e.type === 'text');
+    expect(text).toMatchObject({
+      delta: expect.stringContaining('## Invoice'),
+    });
+    expect(text).toMatchObject({
+      delta: expect.stringContaining('Customer: Hela Mahmoud'),
+    });
+    expect(text).toMatchObject({
+      delta: expect.stringContaining('Total: 1,310.00 TND'),
+    });
+    expect(text).not.toMatchObject({
+      delta: expect.stringMatching(/Step 1|Locked By|Invoice ID|691cb0d2/i),
+    });
+  });
+
   it('emits budget_exceeded + done and skips the LLM when the conversation is over budget', async () => {
     const conversation = makeConversation([], 250_000);
     const llm = makeLlm([

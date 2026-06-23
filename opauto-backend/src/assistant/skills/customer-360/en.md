@@ -17,17 +17,19 @@ If exactly one match comes back, continue immediately to data gathering with tha
 
 1. `get_customer({"customerId": <id>})` — profile, totalSpent, visitCount, loyaltyTier, status.
 2. `list_invoices({"customerId": <id>})` if the tool accepts that filter; otherwise `list_invoices({"status": "OVERDUE"})` and filter client-side by customerId.
-3. `list_appointments({"from": "<today − 6 months YYYY-MM-DD>", "to": "<today YYYY-MM-DD>"})` — past activity (filter to this customer in your head).
-4. `list_at_risk_customers({"limit": 50})` — check whether the customer appears, and if so what their churnRisk + factors are.
+3. `list_appointments({"from": "<today − 6 months YYYY-MM-DD>", "to": "<today YYYY-MM-DD>", "customerId": "<id>"})` — past activity.
+4. `list_appointments({"from": "<today YYYY-MM-DD>", "customerId": "<id>", "orderBy": "soonest", "limit": 5})` — upcoming bookings. Do not omit this; a customer health snapshot must mention future appointments when they exist.
+5. `list_at_risk_customers({"limit": 50})` — check whether the customer appears, and if so what their churnRisk + factors are.
 
 ## Output
 
-Produce 5 short sections:
+Produce 6 short sections:
 
 1. **Profile** — name · phone · loyalty tier · status · totalSpent · visitCount.
 2. **Vehicles** — list each car (year make model, plate); flag any whose nextServiceDate is past or within 30 days.
 3. **Recent activity** — last 3 visits with date and service type. If silent for >90 days, say so and quote the days-silent number.
-4. **Invoices** — count of paid / sent / overdue, and the outstanding amount.
-5. **Recommendation** — 1-2 specific next actions. Pull from the data: e.g. "send a 90-day winback (last visit YYYY-MM-DD)", "call about INV-XXXX (overdue 14 days, 350 TND)", "book service before nextServiceDate YYYY-MM-DD".
+4. **Upcoming bookings** — next scheduled appointments by date/time/service, or "no upcoming bookings".
+5. **Invoices** — count of paid / sent / overdue, and the outstanding amount.
+6. **Recommendation** — 1-2 specific next actions. Pull from the data: e.g. "send a 90-day winback (last visit YYYY-MM-DD)", "call about INV-XXXX (overdue 14 days, 350 TND)", "book service before nextServiceDate YYYY-MM-DD".
 
 Keep the whole response under ~250 words. Currency: "1,234.56 TND". Never invent figures — if a tool returns 0 or empty, say "no data" plainly.

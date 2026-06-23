@@ -58,8 +58,34 @@ describe('Appointments tools', () => {
 
     it('filters by mechanicId in-memory after fetching', async () => {
       const findAll = jest.fn().mockResolvedValue([
-        { id: 'a1', title: 't', status: 'SCHEDULED', type: null, startTime: new Date(), endTime: new Date(), customerId: 'c1', carId: 'car1', employeeId: 'emp1', customer: null, car: null, employee: null },
-        { id: 'a2', title: 't', status: 'SCHEDULED', type: null, startTime: new Date(), endTime: new Date(), customerId: 'c1', carId: 'car1', employeeId: 'emp2', customer: null, car: null, employee: null },
+        {
+          id: 'a1',
+          title: 't',
+          status: 'SCHEDULED',
+          type: null,
+          startTime: new Date(),
+          endTime: new Date(),
+          customerId: 'c1',
+          carId: 'car1',
+          employeeId: 'emp1',
+          customer: null,
+          car: null,
+          employee: null,
+        },
+        {
+          id: 'a2',
+          title: 't',
+          status: 'SCHEDULED',
+          type: null,
+          startTime: new Date(),
+          endTime: new Date(),
+          customerId: 'c1',
+          carId: 'car1',
+          employeeId: 'emp2',
+          customer: null,
+          car: null,
+          employee: null,
+        },
       ]);
       const tool = buildListAppointmentsTool({ findAll } as any);
       const result = await tool.handler({ mechanicId: 'emp2' }, ownerCtx);
@@ -68,8 +94,34 @@ describe('Appointments tools', () => {
 
     it('filters by customerId in-memory after fetching', async () => {
       const findAll = jest.fn().mockResolvedValue([
-        { id: 'a1', title: 't', status: 'SCHEDULED', type: null, startTime: new Date(), endTime: new Date(), customerId: 'c1', carId: 'car1', employeeId: null, customer: { firstName: 'Khaoula', lastName: 'Khelifi' }, car: null, employee: null },
-        { id: 'a2', title: 't', status: 'SCHEDULED', type: null, startTime: new Date(), endTime: new Date(), customerId: 'c2', carId: 'car2', employeeId: null, customer: { firstName: 'Khaoula', lastName: 'Chaabane' }, car: null, employee: null },
+        {
+          id: 'a1',
+          title: 't',
+          status: 'SCHEDULED',
+          type: null,
+          startTime: new Date(),
+          endTime: new Date(),
+          customerId: 'c1',
+          carId: 'car1',
+          employeeId: null,
+          customer: { firstName: 'Khaoula', lastName: 'Khelifi' },
+          car: null,
+          employee: null,
+        },
+        {
+          id: 'a2',
+          title: 't',
+          status: 'SCHEDULED',
+          type: null,
+          startTime: new Date(),
+          endTime: new Date(),
+          customerId: 'c2',
+          carId: 'car2',
+          employeeId: null,
+          customer: { firstName: 'Khaoula', lastName: 'Chaabane' },
+          car: null,
+          employee: null,
+        },
       ]);
       const tool = buildListAppointmentsTool({ findAll } as any);
       const result = await tool.handler({ customerId: 'c1' }, ownerCtx);
@@ -78,11 +130,40 @@ describe('Appointments tools', () => {
 
     it('filters by customerName in-memory after fetching', async () => {
       const findAll = jest.fn().mockResolvedValue([
-        { id: 'future', title: 't', status: 'SCHEDULED', type: null, startTime: new Date(), endTime: new Date(), customerId: 'c1', carId: 'car1', employeeId: null, customer: { firstName: 'Khaoula', lastName: 'Khelifi' }, car: null, employee: null },
-        { id: 'other', title: 't', status: 'SCHEDULED', type: null, startTime: new Date(), endTime: new Date(), customerId: 'c2', carId: 'car2', employeeId: null, customer: { firstName: 'Mehdi', lastName: 'Gharbi' }, car: null, employee: null },
+        {
+          id: 'future',
+          title: 't',
+          status: 'SCHEDULED',
+          type: null,
+          startTime: new Date(),
+          endTime: new Date(),
+          customerId: 'c1',
+          carId: 'car1',
+          employeeId: null,
+          customer: { firstName: 'Khaoula', lastName: 'Khelifi' },
+          car: null,
+          employee: null,
+        },
+        {
+          id: 'other',
+          title: 't',
+          status: 'SCHEDULED',
+          type: null,
+          startTime: new Date(),
+          endTime: new Date(),
+          customerId: 'c2',
+          carId: 'car2',
+          employeeId: null,
+          customer: { firstName: 'Mehdi', lastName: 'Gharbi' },
+          car: null,
+          employee: null,
+        },
       ]);
       const tool = buildListAppointmentsTool({ findAll } as any);
-      const result = await tool.handler({ customerName: 'khaoula khelifi' }, ownerCtx);
+      const result = await tool.handler(
+        { customerName: 'khaoula khelifi' },
+        ownerCtx,
+      );
       expect(result.appointments.map((a) => a.id)).toEqual(['future']);
     });
 
@@ -97,6 +178,30 @@ describe('Appointments tools', () => {
         '2026-07-10T00:00:00.000Z',
         '2026-07-10T23:59:59.999Z',
       );
+    });
+
+    it('clamps model-emitted today-to-tomorrow ranges to today only', async () => {
+      jest.useFakeTimers().setSystemTime(new Date('2026-06-23T12:00:00Z'));
+      const findAll = jest.fn().mockResolvedValue([]);
+      const tool = buildListAppointmentsTool({ findAll } as any);
+
+      await tool.handler(
+        { from: '2026-06-23', to: '2026-06-24', orderBy: 'soonest' },
+        {
+          ...ownerCtx,
+          turnState: {
+            readToolCallsSoFar: 0,
+            userMessage: 'What do we have booked today?',
+          },
+        },
+      );
+
+      expect(findAll).toHaveBeenCalledWith(
+        'garage-1',
+        '2026-06-23T00:00:00.000Z',
+        '2026-06-23T23:59:59.999Z',
+      );
+      jest.useRealTimers();
     });
 
     it('supports from-only future ranges for upcoming appointment questions', async () => {
@@ -119,7 +224,13 @@ describe('Appointments tools', () => {
 
       await tool.handler(
         { from: '2024-01-01', to: '2024-12-31', orderBy: 'soonest' },
-        { ...ownerCtx, turnState: { readToolCallsSoFar: 0, userMessage: 'Does Khaoula have upcoming appointments?' } },
+        {
+          ...ownerCtx,
+          turnState: {
+            readToolCallsSoFar: 0,
+            userMessage: 'Does Khaoula have upcoming appointments?',
+          },
+        },
       );
 
       expect(findAll).toHaveBeenCalledWith(
@@ -132,23 +243,108 @@ describe('Appointments tools', () => {
 
     it('orders by soonest startTime by default', async () => {
       const findAll = jest.fn().mockResolvedValue([
-        { id: 'late', title: 't', status: 'SCHEDULED', type: null, startTime: new Date('2026-05-03T10:00:00Z'), endTime: new Date(), customerId: 'c', carId: 'car', employeeId: null, customer: null, car: null, employee: null },
-        { id: 'early', title: 't', status: 'SCHEDULED', type: null, startTime: new Date('2026-05-01T10:00:00Z'), endTime: new Date(), customerId: 'c', carId: 'car', employeeId: null, customer: null, car: null, employee: null },
-        { id: 'mid', title: 't', status: 'SCHEDULED', type: null, startTime: new Date('2026-05-02T10:00:00Z'), endTime: new Date(), customerId: 'c', carId: 'car', employeeId: null, customer: null, car: null, employee: null },
+        {
+          id: 'late',
+          title: 't',
+          status: 'SCHEDULED',
+          type: null,
+          startTime: new Date('2026-05-03T10:00:00Z'),
+          endTime: new Date(),
+          customerId: 'c',
+          carId: 'car',
+          employeeId: null,
+          customer: null,
+          car: null,
+          employee: null,
+        },
+        {
+          id: 'early',
+          title: 't',
+          status: 'SCHEDULED',
+          type: null,
+          startTime: new Date('2026-05-01T10:00:00Z'),
+          endTime: new Date(),
+          customerId: 'c',
+          carId: 'car',
+          employeeId: null,
+          customer: null,
+          car: null,
+          employee: null,
+        },
+        {
+          id: 'mid',
+          title: 't',
+          status: 'SCHEDULED',
+          type: null,
+          startTime: new Date('2026-05-02T10:00:00Z'),
+          endTime: new Date(),
+          customerId: 'c',
+          carId: 'car',
+          employeeId: null,
+          customer: null,
+          car: null,
+          employee: null,
+        },
       ]);
       const tool = buildListAppointmentsTool({ findAll } as any);
       const result = await tool.handler({}, ownerCtx);
-      expect(result.appointments.map((a) => a.id)).toEqual(['early', 'mid', 'late']);
+      expect(result.appointments.map((a) => a.id)).toEqual([
+        'early',
+        'mid',
+        'late',
+      ]);
     });
 
     it('honors orderBy="latest" + limit for "last N appointments"', async () => {
       const findAll = jest.fn().mockResolvedValue([
-        { id: 'a', title: 't', status: 'SCHEDULED', type: null, startTime: new Date('2026-05-01T10:00:00Z'), endTime: new Date(), customerId: 'c', carId: 'car', employeeId: null, customer: null, car: null, employee: null },
-        { id: 'b', title: 't', status: 'SCHEDULED', type: null, startTime: new Date('2026-05-02T10:00:00Z'), endTime: new Date(), customerId: 'c', carId: 'car', employeeId: null, customer: null, car: null, employee: null },
-        { id: 'c', title: 't', status: 'SCHEDULED', type: null, startTime: new Date('2026-05-03T10:00:00Z'), endTime: new Date(), customerId: 'c', carId: 'car', employeeId: null, customer: null, car: null, employee: null },
+        {
+          id: 'a',
+          title: 't',
+          status: 'SCHEDULED',
+          type: null,
+          startTime: new Date('2026-05-01T10:00:00Z'),
+          endTime: new Date(),
+          customerId: 'c',
+          carId: 'car',
+          employeeId: null,
+          customer: null,
+          car: null,
+          employee: null,
+        },
+        {
+          id: 'b',
+          title: 't',
+          status: 'SCHEDULED',
+          type: null,
+          startTime: new Date('2026-05-02T10:00:00Z'),
+          endTime: new Date(),
+          customerId: 'c',
+          carId: 'car',
+          employeeId: null,
+          customer: null,
+          car: null,
+          employee: null,
+        },
+        {
+          id: 'c',
+          title: 't',
+          status: 'SCHEDULED',
+          type: null,
+          startTime: new Date('2026-05-03T10:00:00Z'),
+          endTime: new Date(),
+          customerId: 'c',
+          carId: 'car',
+          employeeId: null,
+          customer: null,
+          car: null,
+          employee: null,
+        },
       ]);
       const tool = buildListAppointmentsTool({ findAll } as any);
-      const result = await tool.handler({ orderBy: 'latest', limit: 2 }, ownerCtx);
+      const result = await tool.handler(
+        { orderBy: 'latest', limit: 2 },
+        ownerCtx,
+      );
       expect(result.appointments.map((a) => a.id)).toEqual(['c', 'b']);
     });
 
@@ -156,7 +352,9 @@ describe('Appointments tools', () => {
       const tool = buildListAppointmentsTool({ findAll: jest.fn() } as any);
       const registry = new ToolRegistryService();
       registry.register(tool);
-      expect(registry.validateArgs('list_appointments', { orderBy: 'random' }).valid).toBe(false);
+      expect(
+        registry.validateArgs('list_appointments', { orderBy: 'random' }).valid,
+      ).toBe(false);
       expect(
         registry.validateArgs('list_appointments', {
           orderBy: 'soonest',
@@ -173,16 +371,48 @@ describe('Appointments tools', () => {
     it('wraps suggestSchedule with locale, duration, preferredDate', async () => {
       const suggestSchedule = jest.fn().mockResolvedValue({
         suggestedSlots: [
-          { start: 's1', end: 'e1', mechanicId: 'm1', mechanicName: 'M1', score: 0.9, reason: 'r' },
-          { start: 's2', end: 'e2', mechanicId: 'm2', mechanicName: 'M2', score: 0.8, reason: 'r' },
-          { start: 's3', end: 'e3', mechanicId: 'm3', mechanicName: 'M3', score: 0.7, reason: 'r' },
-          { start: 's4', end: 'e4', mechanicId: 'm4', mechanicName: 'M4', score: 0.6, reason: 'r' },
+          {
+            start: 's1',
+            end: 'e1',
+            mechanicId: 'm1',
+            mechanicName: 'M1',
+            score: 0.9,
+            reason: 'r',
+          },
+          {
+            start: 's2',
+            end: 'e2',
+            mechanicId: 'm2',
+            mechanicName: 'M2',
+            score: 0.8,
+            reason: 'r',
+          },
+          {
+            start: 's3',
+            end: 'e3',
+            mechanicId: 'm3',
+            mechanicName: 'M3',
+            score: 0.7,
+            reason: 'r',
+          },
+          {
+            start: 's4',
+            end: 'e4',
+            mechanicId: 'm4',
+            mechanicName: 'M4',
+            score: 0.6,
+            reason: 'r',
+          },
         ],
         provider: 'mock',
       });
       const tool = buildFindAvailableSlotTool({ suggestSchedule } as any);
       const result = await tool.handler(
-        { date: '2026-05-01T09:00:00Z', durationMinutes: 60, appointmentType: 'oil-change' },
+        {
+          date: '2026-05-01T09:00:00Z',
+          durationMinutes: 60,
+          appointmentType: 'oil-change',
+        },
         ownerCtx,
       );
 
@@ -199,7 +429,9 @@ describe('Appointments tools', () => {
     });
 
     it('rejects relative date text at schema level', () => {
-      const tool = buildFindAvailableSlotTool({ suggestSchedule: jest.fn() } as any);
+      const tool = buildFindAvailableSlotTool({
+        suggestSchedule: jest.fn(),
+      } as any);
       const registry = new ToolRegistryService();
       registry.register(tool);
 
@@ -322,14 +554,17 @@ describe('Appointments tools', () => {
         ownerCtx,
       );
 
-      expect(create).toHaveBeenCalledWith('garage-1', expect.objectContaining({
-        customerId: 'c1',
-        carId: 'car1',
-        startTime: '2026-05-01T09:00:00.000Z',
-        endTime: '2026-05-01T10:30:00.000Z',
-        type: 'oil-change',
-        title: 'oil-change',
-      }));
+      expect(create).toHaveBeenCalledWith(
+        'garage-1',
+        expect.objectContaining({
+          customerId: 'c1',
+          carId: 'car1',
+          startTime: '2026-05-01T09:00:00.000Z',
+          endTime: '2026-05-01T10:30:00.000Z',
+          type: 'oil-change',
+          title: 'oil-change',
+        }),
+      );
       expect(result.appointmentId).toBe('a1');
     });
 
@@ -376,7 +611,9 @@ describe('Appointments tools', () => {
 
   describe('cancel_appointment', () => {
     it('refuses an appointment from another garage (findOne throws)', async () => {
-      const findOne = jest.fn().mockRejectedValue(new Error('Appointment not found'));
+      const findOne = jest
+        .fn()
+        .mockRejectedValue(new Error('Appointment not found'));
       const update = jest.fn();
       const tool = buildCancelAppointmentTool({ findOne, update } as any);
 

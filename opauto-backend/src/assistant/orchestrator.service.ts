@@ -44,6 +44,8 @@ const RESERVED_LOAD_SKILL = 'load_skill';
 const RESERVED_DISPATCH_AGENT = 'dispatch_agent';
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_IN_TEXT_PATTERN =
+  /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/i;
 
 // Extracted to ./page-context-resolver for direct unit testing.
 import { deriveSelectedEntityFromRoute } from './page-context-resolver';
@@ -288,6 +290,7 @@ export class OrchestratorService {
       const MAX_CALLS_PER_TOOL_PER_TURN = 3;
       const toolCallCounts = new Map<string, number>();
       let forceComposeOnly = false;
+      const successfulToolResults: { toolName: string; result: unknown }[] = [];
       for (let step = 0; step < iterationCap; step++) {
         // Cost cap: stop the conversation cold once the per-conversation
         // token budget is exhausted. Checked before every LLM call so a
@@ -365,6 +368,11 @@ export class OrchestratorService {
           if (lastAgentResult && this.shouldFallbackToAgentResult(text)) {
             text = lastAgentResult.result;
           }
+          text = this.postProcessAssistantText(
+            text,
+            ctx,
+            successfulToolResults,
+          );
           const persisted = await this.persistAssistant(
             conversationId,
             text,
@@ -587,6 +595,10 @@ export class OrchestratorService {
           };
           toolHasFired = true;
           lastToolTier = tier;
+          successfulToolResults.push({
+            toolName: call.name,
+            result: successExec.result,
+          });
           subject.next({
             type: 'tool_result',
             toolCallId: call.id,
@@ -654,10 +666,18 @@ export class OrchestratorService {
       }
 
       // Iteration cap exceeded.
-      const apology =
-        "I couldn't finish the task in time — let's try a smaller question.";
-      await this.persistAssistant(conversationId, apology);
-      subject.next({ type: 'text', delta: apology });
+      const text =
+        lastAgentResult &&
+        !this.shouldFallbackToAgentResult(lastAgentResult.result)
+          ? lastAgentResult.result
+          : "I couldn't finish the task in time — let's try a smaller question.";
+      const finalText = this.postProcessAssistantText(
+        text,
+        ctx,
+        successfulToolResults,
+      );
+      await this.persistAssistant(conversationId, finalText);
+      subject.next({ type: 'text', delta: finalText });
       subject.next({ type: 'done' });
       subject.complete();
     } catch (err) {
@@ -898,9 +918,117 @@ export class OrchestratorService {
   private shouldFallbackToAgentResult(text: string): boolean {
     return (
       /couldn'?t\s+finish/i.test(text) ||
+      /unable\s+to\s+complete/i.test(text) ||
+      /iteration\s+budget/i.test(text) ||
       /ran\s+out\s+of\s+time/i.test(text) ||
       /try\s+a\s+smaller\s+question/i.test(text)
     );
+  }
+
+  private postProcessAssistantText(
+    text: string,
+    ctx: AssistantUserContext,
+    successfulToolResults: { toolName: string; result: unknown }[],
+  ): string {
+    let out = this.correctSlotContradiction(text, successfulToolResults);
+    out = this.stripReasoningScaffold(out);
+    out = this.scrubInternalIds(out, ctx.turnState?.userMessage);
+    return out.trim();
+  }
+
+  private correctSlotContradiction(
+    text: string,
+    successfulToolResults: { toolName: string; result: unknown }[],
+  ): string {
+    const slotResults = successfulToolResults
+      .filter((entry) => entry.toolName === 'find_available_slot')
+      .map((entry) => entry.result as { slots?: unknown[] })
+      .filter(
+        (result) => Array.isArray(result.slots) && result.slots.length > 0,
+      );
+    const latest = slotResults[slotResults.length - 1];
+    if (!latest?.slots?.length) return text;
+    if (
+      !/\b(no|none|not any|couldn'?t find|cannot find)\b[\s\S]{0,80}\b(slot|availability|available)\b/i.test(
+        text,
+      )
+    ) {
+      return text;
+    }
+
+    const slots = latest.slots.slice(0, 3).map((slot) => {
+      const s = slot as {
+        start?: string;
+        end?: string;
+        mechanicName?: string | null;
+      };
+      const start = this.formatUtcDateTime(s.start);
+      const end = this.formatUtcTime(s.end);
+      const mechanic = s.mechanicName ? ` with ${s.mechanicName}` : '';
+      return `- ${start}${end ? `-${end}` : ''}${mechanic}`;
+    });
+
+    return `I found available slots:\n${slots.join('\n')}`;
+  }
+
+  private stripReasoningScaffold(text: string): string {
+    const marker = text.match(/the final answer is:\s*/i);
+    let out = marker
+      ? text.slice((marker.index ?? 0) + marker[0].length)
+      : text;
+    out = out.replace(/^(#+\s*)Step\s+\d+\s*:\s*/gim, '$1');
+    out = out.replace(/^Step\s+\d+\s*:\s*/gim, '');
+    return out;
+  }
+
+  private scrubInternalIds(
+    text: string,
+    userMessage: string | undefined,
+  ): string {
+    if (this.userAskedForTechnicalIds(userMessage)) return text;
+
+    const technicalLabelLine =
+      /^\s*[-*]?\s*(locked by|locked at|created at|updated at|issued number|customer id|car id|invoice id|appointment id|toolcallid|tool call id)\s*:/i;
+    return text
+      .split('\n')
+      .filter(
+        (line) =>
+          !technicalLabelLine.test(line) &&
+          !UUID_PATTERN.test(line.trim()) &&
+          !UUID_IN_TEXT_PATTERN.test(line),
+      )
+      .join('\n');
+  }
+
+  private userAskedForTechnicalIds(userMessage: string | undefined): boolean {
+    return /\b(uuid|technical id|technical ids|database id|database ids|raw id|raw ids|internal id|internal ids|customer id|invoice id|appointment id)\b/i.test(
+      userMessage ?? '',
+    );
+  }
+
+  private formatUtcDateTime(value: string | undefined): string {
+    if (!value) return 'available time';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone: 'UTC',
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    }).format(date);
+  }
+
+  private formatUtcTime(value: string | undefined): string {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone: 'UTC',
+      hour: 'numeric',
+      minute: '2-digit',
+    }).format(date);
   }
 
   private async filterToolsByIntent(
