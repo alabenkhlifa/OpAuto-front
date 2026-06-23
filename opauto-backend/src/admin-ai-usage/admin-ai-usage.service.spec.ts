@@ -334,4 +334,117 @@ describe('AdminAiUsageService', () => {
       result.sourceCoverage.includesGatewayOnlySignals.classifierCalls,
     ).toBe(false);
   });
+
+  it('scopes broad assistant tasks to the related tool name', async () => {
+    prisma.assistantMessage.findMany.mockResolvedValue([
+      {
+        id: 'm-tool-plan',
+        conversationId: 'c-tool',
+        role: AssistantMessageRole.ASSISTANT,
+        content: 'tool call',
+        toolCallId: null,
+        tokensIn: 1000,
+        tokensOut: 20,
+        llmProvider: 'ovh',
+        llmModel: 'Meta-Llama-3_3-70B-Instruct',
+        llmPurpose: 'assistant_tool_selection',
+        skillUsed: null,
+        createdAt: new Date('2026-06-18T06:00:00.000Z'),
+        conversation: {
+          userId: 'u1',
+          user: {
+            id: 'u1',
+            firstName: 'Ana',
+            lastName: 'Analytic',
+            email: 'ana@opauto.test',
+          },
+          garage: {
+            id: 'garage-1',
+            name: 'AutoTech Tunisia',
+            address: '15 Avenue Habib Bourguiba, Tunis 1000',
+          },
+        },
+      },
+      {
+        id: 'm-tool-reply',
+        conversationId: 'c-tool',
+        role: AssistantMessageRole.ASSISTANT,
+        content: 'Found the customer.',
+        toolCallId: null,
+        tokensIn: 400,
+        tokensOut: 80,
+        llmProvider: 'ovh',
+        llmModel: 'Meta-Llama-3_3-70B-Instruct',
+        llmPurpose: 'assistant_compose',
+        skillUsed: null,
+        createdAt: new Date('2026-06-18T06:02:00.000Z'),
+        conversation: {
+          userId: 'u1',
+          user: {
+            id: 'u1',
+            firstName: 'Ana',
+            lastName: 'Analytic',
+            email: 'ana@opauto.test',
+          },
+          garage: {
+            id: 'garage-1',
+            name: 'AutoTech Tunisia',
+            address: '15 Avenue Habib Bourguiba, Tunis 1000',
+          },
+        },
+      },
+    ]);
+
+    prisma.assistantToolCall.findMany.mockResolvedValue([
+      {
+        id: 'tc-find',
+        conversationId: 'c-tool',
+        messageId: null,
+        toolName: 'find_customer',
+        status: AssistantToolCallStatus.EXECUTED,
+        blastTier: 'READ',
+        durationMs: 25,
+        approvedAt: null,
+        createdAt: new Date('2026-06-18T06:01:00.000Z'),
+        conversation: {
+          userId: 'u1',
+          user: {
+            id: 'u1',
+            firstName: 'Ana',
+            lastName: 'Analytic',
+            email: 'ana@opauto.test',
+          },
+          garage: {
+            id: 'garage-1',
+            name: 'AutoTech Tunisia',
+            address: '15 Avenue Habib Bourguiba, Tunis 1000',
+          },
+        },
+        emitter: null,
+      },
+    ]);
+
+    const result = await service.getOvhUsage('garage-1', AiUsageRangeKey.TODAY);
+
+    expect(result.taskUsage).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          purpose: 'assistant_tool_selection:find_customer',
+          calls: 1,
+          toolCalls: 1,
+        }),
+        expect.objectContaining({
+          purpose: 'assistant_compose:find_customer',
+          calls: 1,
+          toolCalls: 1,
+        }),
+      ]),
+    );
+    expect(result.topExpensiveCalls.map((call) => call.purpose)).toContain(
+      'assistant_tool_selection:find_customer',
+    );
+    expect(result.topExpensiveCalls.map((call) => call.purpose)).toContain(
+      'assistant_compose:find_customer',
+    );
+  });
 });

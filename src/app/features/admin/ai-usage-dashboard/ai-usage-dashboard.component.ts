@@ -57,12 +57,12 @@ const ADMIN_OWNER_EMAIL = 'ala.khliifa@gmail.com';
 
 const PURPOSE_COPY: Record<string, PurposeCopy> = {
   assistant_tool_selection: {
-    label: 'Assistant planning',
-    description: 'Decides which tool or action the assistant should use next.',
+    label: 'No-tool assistant response',
+    description: 'The model answered without a recorded tool call for this completion.',
   },
   assistant_compose: {
-    label: 'Assistant reply writing',
-    description: 'Writes the final user-facing answer after tools finish.',
+    label: 'Final assistant reply',
+    description: 'The model wrote the final user-facing answer without a linked tool name.',
   },
   intent_classifier: {
     label: 'Intent routing',
@@ -344,10 +344,24 @@ export class AiUsageDashboardComponent implements OnInit {
   }
 
   purposeLabel(purpose: string): string {
+    const scoped = this.scopedToolPurpose(purpose);
+    if (scoped) {
+      const tool = this.humanizeIdentifier(scoped.toolName);
+      return scoped.basePurpose === 'assistant_compose'
+        ? `${tool} reply writing`
+        : `${tool} tool planning`;
+    }
     return PURPOSE_COPY[purpose]?.label ?? this.humanizeIdentifier(purpose);
   }
 
   purposeDescription(purpose: string): string {
+    const scoped = this.scopedToolPurpose(purpose);
+    if (scoped) {
+      const tool = this.humanizeIdentifier(scoped.toolName);
+      return scoped.basePurpose === 'assistant_compose'
+        ? `Writes the final user-facing answer after ${tool} finishes.`
+        : `Selects ${tool} as the next assistant action.`;
+    }
     return PURPOSE_COPY[purpose]?.description ?? `Stored AI call for ${this.humanizeIdentifier(purpose)}.`;
   }
 
@@ -649,6 +663,17 @@ export class AiUsageDashboardComponent implements OnInit {
       .replace(/\s+/g, ' ')
       .trim();
     return cleaned.replace(/\b\w/g, (match) => match.toUpperCase());
+  }
+
+  private scopedToolPurpose(purpose: string): { basePurpose: string; toolName: string } | null {
+    const match = /^(assistant_tool_selection|assistant_compose):(.+)$/.exec(purpose);
+    if (!match?.[2]?.trim()) {
+      return null;
+    }
+    return {
+      basePurpose: match[1],
+      toolName: match[2].trim(),
+    };
   }
 
   private createEmptyDashboard(range: AdminAiUsageRange): AdminAiUsageDashboard {

@@ -34,7 +34,7 @@ describe('AdminAiUsageService', () => {
     },
     taskUsage: [
       {
-        purpose: 'assistant_tool_selection',
+        purpose: 'assistant_tool_selection:find_customer',
         model: 'Meta-Llama-3_3-70B-Instruct',
         calls: 3,
         toolCalls: 2,
@@ -93,7 +93,7 @@ describe('AdminAiUsageService', () => {
     service.getUsage('today').subscribe((data) => {
       expect(api.get).toHaveBeenCalledWith('/admin/ai-usage', { range: 'today' });
       expect(data.summary.tokensIn + data.summary.tokensOut).toBe(1600);
-      expect(data.taskUsage[0].purpose).toBe('assistant_tool_selection');
+      expect(data.taskUsage[0].purpose).toBe('assistant_tool_selection:find_customer');
       done();
     });
   });

@@ -54,7 +54,7 @@ function makePayload(range: AdminAiUsageRange): AdminAiUsageDashboard {
     },
     taskUsage: [
       {
-        purpose: 'assistant_tool_selection',
+        purpose: 'assistant_tool_selection:find_customer',
         model: 'Meta-Llama-3_3-70B-Instruct',
         calls: 10,
         toolCalls: 4,
@@ -160,7 +160,7 @@ function makePayload(range: AdminAiUsageRange): AdminAiUsageDashboard {
         userId: 'user-1',
         userName: 'Ala Khliifa',
         createdAt: '2026-01-01T12:00:00.000Z',
-        purpose: 'assistant_tool_selection',
+        purpose: 'assistant_tool_selection:find_customer',
         model: 'Meta-Llama-3_3-70B-Instruct',
         tokensIn: 2000,
         tokensOut: 1200,
@@ -299,7 +299,7 @@ describe('AiUsageDashboardComponent', () => {
     const tasks = fixture.componentInstance.taskUsage();
 
     expect(tasks.length).toBe(2);
-    expect(tasks[0].purpose).toBe('assistant_tool_selection');
+    expect(tasks[0].purpose).toBe('assistant_tool_selection:find_customer');
     expect(tasks[1].purpose).toBe('unknown-task');
   });
 
@@ -307,10 +307,13 @@ describe('AiUsageDashboardComponent', () => {
     const fixture = setup({ currentUser: ownerUser });
     const component = fixture.componentInstance;
 
-    expect(component.purposeLabel('assistant_tool_selection')).toBe('Assistant planning');
-    expect(component.purposeDescription('assistant_tool_selection')).toContain(
-      'Decides which tool or action',
+    expect(component.purposeLabel('assistant_tool_selection:find_customer')).toBe(
+      'Find Customer tool planning',
     );
+    expect(component.purposeDescription('assistant_tool_selection:find_customer')).toContain(
+      'Selects Find Customer',
+    );
+    expect(component.purposeLabel('assistant_compose:send_email')).toBe('Send Email reply writing');
     expect(component.purposeLabel('unknown-task')).toBe('Unknown Task');
   });
 

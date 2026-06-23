@@ -189,11 +189,17 @@ type MessageRow = {
       address: string | null;
     };
   };
+  emittedToolCalls?: {
+    id: string;
+    toolName: string;
+    createdAt: Date;
+  }[];
 };
 
 type ToolCallRow = {
   id: string;
   conversationId: string;
+  messageId: string | null;
   toolName: string;
   status: AssistantToolCallStatus;
   blastTier: string;
@@ -221,6 +227,8 @@ type ToolCallRow = {
 };
 
 const MILLION = 1_000_000;
+const ASSISTANT_TOOL_SELECTION_PURPOSE = 'assistant_tool_selection';
+const ASSISTANT_COMPOSE_PURPOSE = 'assistant_compose';
 const OVH_PRICING = {
   LLAMA: {
     matcher: /(meta[-_]llama|llama)/i,
@@ -240,9 +248,29 @@ function taskGroupKey(purpose: string, model: string | null): string {
   return `${purpose}::${model ?? 'unknown-model'}`;
 }
 
+function shouldScopePurposeToTool(purpose: string): boolean {
+  return (
+    purpose === ASSISTANT_TOOL_SELECTION_PURPOSE ||
+    purpose === ASSISTANT_COMPOSE_PURPOSE
+  );
+}
+
+function toolScopedPurpose(purpose: string, toolName: string): string {
+  return `${purpose}:${toolName}`;
+}
+
 function addToMap<K extends string, V>(map: Map<K, V>, key: K, seed: () => V) {
   if (!map.has(key)) map.set(key, seed());
   return map.get(key) as V;
+}
+
+function addToList<K, V>(map: Map<K, V[]>, key: K, value: V): void {
+  const current = map.get(key);
+  if (current) {
+    current.push(value);
+    return;
+  }
+  map.set(key, [value]);
 }
 
 function userNameFromRecord(row: {
@@ -271,6 +299,65 @@ function getOvhPricing(model: string | null | undefined) {
     return OVH_PRICING.LLAMA;
   }
   return null;
+}
+
+function firstToolName(
+  rows: readonly { toolName: string; createdAt: Date }[] | undefined,
+): string | null {
+  const row = rows?.find((item) => item.toolName.trim().length > 0);
+  return row?.toolName.trim() || null;
+}
+
+function relatedToolNameForMessage(
+  message: MessageRow,
+  rawPurpose: string,
+  boundaries: { previous?: Date; next?: Date } | undefined,
+  toolCallsByConversation: Map<string, ToolCallRow[]>,
+  toolCallsByMessageId: Map<string, ToolCallRow[]>,
+): string | null {
+  const emittedTool = firstToolName(message.emittedToolCalls);
+  if (emittedTool) {
+    return emittedTool;
+  }
+
+  const directTool = firstToolName(toolCallsByMessageId.get(message.id));
+  if (directTool) {
+    return directTool;
+  }
+
+  if (!shouldScopePurposeToTool(rawPurpose)) {
+    return null;
+  }
+
+  const conversationToolCalls =
+    toolCallsByConversation.get(message.conversationId) ?? [];
+  if (conversationToolCalls.length === 0) {
+    return null;
+  }
+
+  const currentTime = message.createdAt.getTime();
+  const previousTime = boundaries?.previous?.getTime();
+  const nextTime = boundaries?.next?.getTime();
+
+  if (rawPurpose === ASSISTANT_TOOL_SELECTION_PURPOSE) {
+    const toolCall = conversationToolCalls.find((row) => {
+      const toolTime = row.createdAt.getTime();
+      return (
+        toolTime >= currentTime &&
+        (nextTime === undefined || toolTime < nextTime)
+      );
+    });
+    return toolCall?.toolName.trim() || null;
+  }
+
+  const priorToolCalls = conversationToolCalls.filter((row) => {
+    const toolTime = row.createdAt.getTime();
+    return (
+      toolTime <= currentTime &&
+      (previousTime === undefined || toolTime > previousTime)
+    );
+  });
+  return firstToolName([...priorToolCalls].reverse());
 }
 
 function startOfUtcDay(base: Date): Date {
@@ -498,8 +585,82 @@ export class AdminAiUsageService {
             },
           },
         },
+        emittedToolCalls: {
+          orderBy: { createdAt: 'asc' },
+          select: {
+            id: true,
+            toolName: true,
+            createdAt: true,
+          },
+        },
       },
     })) as MessageRow[];
+
+    const whereToolCalls = {
+      createdAt: { gte: window.start, lt: window.end },
+      conversation: { garageId },
+    } as const;
+    const toolCalls = (await this.prisma.assistantToolCall.findMany({
+      where: whereToolCalls,
+      orderBy: { createdAt: 'asc' },
+      include: {
+        conversation: {
+          select: {
+            userId: true,
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+              },
+            },
+            garage: {
+              select: {
+                id: true,
+                name: true,
+                address: true,
+              },
+            },
+          },
+        },
+        emitter: {
+          select: {
+            llmPurpose: true,
+            llmModel: true,
+          },
+        },
+      },
+    })) as ToolCallRow[];
+
+    const toolCallsByConversation = new Map<string, ToolCallRow[]>();
+    const toolCallsByMessageId = new Map<string, ToolCallRow[]>();
+    for (const toolCall of toolCalls) {
+      addToList(toolCallsByConversation, toolCall.conversationId, toolCall);
+      if (toolCall.messageId) {
+        addToList(toolCallsByMessageId, toolCall.messageId, toolCall);
+      }
+    }
+
+    const messagesByConversation = new Map<string, MessageRow[]>();
+    for (const message of messages) {
+      addToList(messagesByConversation, message.conversationId, message);
+    }
+    const messageBoundariesById = new Map<
+      string,
+      { previous?: Date; next?: Date }
+    >();
+    for (const conversationMessages of messagesByConversation.values()) {
+      const sorted = [...conversationMessages].sort(
+        (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+      );
+      sorted.forEach((message, index) => {
+        messageBoundariesById.set(message.id, {
+          previous: sorted[index - 1]?.createdAt,
+          next: sorted[index + 1]?.createdAt,
+        });
+      });
+    }
 
     const summary: OvhUsageSummary = {
       assistantMessages: 0,
@@ -537,7 +698,18 @@ export class AdminAiUsageService {
       const tokensOut = msg.tokensOut ?? 0;
       const hasTokenCoverage = msg.tokensIn !== null || msg.tokensOut !== null;
       const hasModel = Boolean(msg.llmModel && msg.llmModel.trim().length > 0);
-      const purpose = (msg.llmPurpose ?? 'unknown').trim() || 'unknown';
+      const rawPurpose = (msg.llmPurpose ?? 'unknown').trim() || 'unknown';
+      const relatedToolName = relatedToolNameForMessage(
+        msg,
+        rawPurpose,
+        messageBoundariesById.get(msg.id),
+        toolCallsByConversation,
+        toolCallsByMessageId,
+      );
+      const purpose =
+        relatedToolName && shouldScopePurposeToTool(rawPurpose)
+          ? toolScopedPurpose(rawPurpose, relatedToolName)
+          : rawPurpose;
       const model = msg.llmModel?.trim() || null;
       const taskKey = taskGroupKey(purpose, model);
 
@@ -547,7 +719,7 @@ export class AdminAiUsageService {
       summary.tokensOut += tokensOut;
       if (!hasTokenCoverage) summary.tokensMissing += 1;
       if (!hasModel) summary.rowsWithMissingModel += 1;
-      if (purpose === 'unknown') summary.rowsWithMissingPurpose += 1;
+      if (rawPurpose === 'unknown') summary.rowsWithMissingPurpose += 1;
 
       const pricing = getOvhPricing(model);
       const estimatedCost = pricing
@@ -636,6 +808,12 @@ export class AdminAiUsageService {
       if (msg.toolCallId) {
         toolCallTaskKeyById.set(msg.toolCallId, taskKey);
       }
+      if (relatedToolName && shouldScopePurposeToTool(rawPurpose)) {
+        purposeToolCounts.set(
+          taskKey,
+          (purposeToolCounts.get(taskKey) ?? 0) + 1,
+        );
+      }
 
       const skill = msg.skillUsed?.trim() || 'direct_assistant';
       const skillRow = addToMap(skills, skill, () => ({
@@ -650,43 +828,6 @@ export class AdminAiUsageService {
       skillRow.tokensOut += tokensOut;
       skillRow.estimatedCost += estimatedCost;
     }
-
-    const whereToolCalls = {
-      createdAt: { gte: window.start, lt: window.end },
-      conversation: { garageId },
-    } as const;
-    const toolCalls = (await this.prisma.assistantToolCall.findMany({
-      where: whereToolCalls,
-      orderBy: { createdAt: 'asc' },
-      include: {
-        conversation: {
-          select: {
-            userId: true,
-            user: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                email: true,
-              },
-            },
-            garage: {
-              select: {
-                id: true,
-                name: true,
-                address: true,
-              },
-            },
-          },
-        },
-        emitter: {
-          select: {
-            llmPurpose: true,
-            llmModel: true,
-          },
-        },
-      },
-    })) as ToolCallRow[];
 
     const toolRows = new Map<string, OvhToolUsageRow>();
     const approvalStatus = new Map<string, number>();
@@ -821,9 +962,11 @@ export class AdminAiUsageService {
       const purpose = tc.emitter?.llmPurpose?.trim() || 'unknown';
       const model = tc.emitter?.llmModel?.trim() || null;
       const taskKey =
-        purpose !== 'unknown'
-          ? taskGroupKey(purpose, model)
-          : toolCallTaskKeyById.get(tc.id);
+        purpose === 'unknown'
+          ? toolCallTaskKeyById.get(tc.id)
+          : shouldScopePurposeToTool(purpose)
+            ? undefined
+            : taskGroupKey(purpose, model);
       if (taskKey) {
         const taskToolCalls = purposeToolCounts.get(taskKey) ?? 0;
         purposeToolCounts.set(taskKey, taskToolCalls + 1);
