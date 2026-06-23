@@ -840,6 +840,47 @@ describe('OrchestratorService', () => {
     expect(tools.execute).toHaveBeenCalledTimes(3);
   });
 
+  it('caps repeated failed tool executions and forces compose-only', async () => {
+    const tools = makeTools(['get_invoice'], () => ({
+      ok: false,
+      error: 'not_found',
+      durationMs: 1,
+    }));
+    const invoiceCall = (id: string) => ({
+      provider: 'groq' as const,
+      content: null,
+      toolCalls: [
+        { id, name: 'get_invoice', argsJson: '{"invoiceId":"INV-2026-0207"}' },
+      ],
+    });
+    const llm = makeLlm([
+      invoiceCall('tc-1'),
+      invoiceCall('tc-2'),
+      invoiceCall('tc-3'),
+      {
+        provider: 'groq',
+        content: 'I could not find invoice INV-2026-0207.',
+        toolCalls: [],
+      },
+      invoiceCall('tc-99'),
+    ]);
+    const orchestrator = await makeOrchestrator({ tools, llm });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-failed-cap',
+        'show invoice INV-2026-0207',
+        undefined,
+      ),
+    );
+
+    expect(tools.execute).toHaveBeenCalledTimes(3);
+    expect(events.find((e) => e.type === 'text')).toMatchObject({
+      delta: 'I could not find invoice INV-2026-0207.',
+    });
+  });
+
   it('caps dispatch_agent at MAX_AGENT_DISPATCHES_PER_TURN (B-23/B-24 unbounded loop)', async () => {
     // Without the cap a misbehaving model can keep emitting dispatch_agent on
     // every iteration, racking up agent runs until the 90s turn budget blows.

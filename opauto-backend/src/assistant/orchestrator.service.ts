@@ -662,6 +662,21 @@ export class OrchestratorService {
           this.appendToolMessage(llmMessages, call.id, {
             error: failExec.error,
           });
+
+          const prevCount = toolCallCounts.get(call.name) ?? 0;
+          const nextCount = prevCount + 1;
+          toolCallCounts.set(call.name, nextCount);
+          if (nextCount >= MAX_CALLS_PER_TOOL_PER_TURN) {
+            forceComposeOnly = true;
+            llmMessages.push({
+              role: 'system',
+              content:
+                `${call.name} failed ${nextCount} times this turn. ` +
+                `Treat the failed result as final for this request. Compose ` +
+                `a brief reply from the error/result already available. ` +
+                `Do NOT call any tool again this turn.`,
+            });
+          }
         }
       }
 
