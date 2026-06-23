@@ -196,6 +196,18 @@ export class InvoicingService {
     return invoice;
   }
 
+  async findOneByIdentifier(identifier: string, garageId: string) {
+    const invoice = await this.prisma.invoice.findFirst({
+      where: {
+        garageId,
+        OR: [{ id: identifier }, { invoiceNumber: identifier }],
+      },
+      include: { customer: true, car: true, lineItems: true, payments: true },
+    });
+    if (!invoice) throw new NotFoundException('Invoice not found');
+    return invoice;
+  }
+
   async create(
     garageId: string,
     dto: CreateInvoiceDto,

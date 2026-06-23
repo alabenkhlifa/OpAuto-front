@@ -143,14 +143,38 @@ describe('Invoicing + Inventory Tools', () => {
   });
 
   describe('get_invoice', () => {
-    it('delegates to InvoicingService.findOne with garage scope', async () => {
-      const findOne = jest.fn().mockResolvedValue({ id: 'inv-1' });
-      const tool = buildGetInvoiceTool({ findOne } as never);
+    it('delegates to InvoicingService.findOneByIdentifier with garage scope', async () => {
+      const findOneByIdentifier = jest.fn().mockResolvedValue({ id: 'inv-1' });
+      const tool = buildGetInvoiceTool({ findOneByIdentifier } as never);
 
       const out = await tool.handler({ invoiceId: 'inv-1' }, ownerCtx);
 
-      expect(findOne).toHaveBeenCalledWith('inv-1', 'garage-1');
+      expect(findOneByIdentifier).toHaveBeenCalledWith('inv-1', 'garage-1');
       expect(out).toEqual({ id: 'inv-1' });
+    });
+
+    it('accepts a visible invoice number, not only an internal UUID', async () => {
+      const findOneByIdentifier = jest.fn().mockResolvedValue({
+        id: 'uuid-1',
+        invoiceNumber: 'INV-2026-0001',
+      });
+      const tool = buildGetInvoiceTool({ findOneByIdentifier } as never);
+
+      const out = await tool.handler({ invoiceId: 'INV-2026-0001' }, ownerCtx);
+
+      expect(findOneByIdentifier).toHaveBeenCalledWith('INV-2026-0001', 'garage-1');
+      expect(out).toEqual({ id: 'uuid-1', invoiceNumber: 'INV-2026-0001' });
+    });
+
+    it('validates invoice numbers at schema level', () => {
+      const tool = buildGetInvoiceTool({ findOneByIdentifier: jest.fn() } as never);
+      const registry = new ToolRegistryService();
+      registry.register(tool);
+
+      expect(
+        registry.validateArgs('get_invoice', { invoiceId: 'INV-2026-0001' }).valid,
+      ).toBe(true);
+      expect(registry.validateArgs('get_invoice', { invoiceId: '' }).valid).toBe(false);
     });
   });
 

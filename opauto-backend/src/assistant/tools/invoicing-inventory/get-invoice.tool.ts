@@ -7,9 +7,8 @@ export interface GetInvoiceArgs {
 }
 
 /**
- * Loads a single invoice by id (garage-scoped) including line items, payments,
- * customer, and car. Wraps InvoicingService.findOne which throws NotFound when
- * the invoice doesn't belong to this garage.
+ * Loads a single invoice by id or invoice number (garage-scoped) including
+ * line items, payments, customer, and car.
  */
 export function buildGetInvoiceTool(
   invoicing: InvoicingService,
@@ -17,17 +16,18 @@ export function buildGetInvoiceTool(
   return {
     name: 'get_invoice',
     description:
-      'Returns the full invoice record for a given invoiceId, including line ' +
+      'Returns the full invoice record for a given invoice id or visible invoice number, including line ' +
       'items, payments, customer, and car. Garage-scoped — invoices from ' +
       'other garages are rejected. Use when the user asks for invoice details, ' +
-      '"show me invoice INV-...", or "what is on this invoice".',
+      '"show me invoice INV-...", or "what is on this invoice". Users usually know the invoice number, not the internal UUID.',
     parameters: {
       type: 'object',
       properties: {
         invoiceId: {
           type: 'string',
-          format: 'uuid',
-          description: 'The invoice id (uuid) to load.',
+          minLength: 1,
+          description:
+            'The internal invoice UUID or visible invoice number to load, e.g. INV-2026-0001.',
         },
       },
       required: ['invoiceId'],
@@ -39,7 +39,7 @@ export function buildGetInvoiceTool(
       args: GetInvoiceArgs,
       ctx: AssistantUserContext,
     ): Promise<unknown> => {
-      return invoicing.findOne(args.invoiceId, ctx.garageId);
+      return invoicing.findOneByIdentifier(args.invoiceId, ctx.garageId);
     },
   };
 }

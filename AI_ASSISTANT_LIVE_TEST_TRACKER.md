@@ -148,6 +148,7 @@ Status values: Pending, Pass, Partial, Fail, Skipped.
 | Missing email attachments | `cc9f769` | Assistant email sends could lose expected attachments. | Email sending now defends against missing generated attachments. | Hardened the email tool attachment path and added coverage. |
 | Email content normalization | `b332fc2` | Assistant-generated email content could include malformed or overly technical tool residue. | Email content is normalized before sending. | Cleaned assistant email body/subject handling and covered the observed shapes. |
 | Appointment lookup by customer/date | pending local commit | Customer-specific appointment prompts used stale 2024 dates, missed full-day bookings when from/to were the same date, and could scan the whole garage instead of the named customer. | `list_appointments` now supports customer filters, full-day date-only ranges, one-sided future ranges, and stale-range correction only for future/upcoming prompts. | Patched the appointment tool and added focused Jest coverage for the production failure modes. |
+| Invoice lookup by invoice number | pending local commit | Users asking for `INV-...` saw UUID validation errors or a refusal instead of invoice details. | `get_invoice` now accepts visible invoice numbers as well as internal UUIDs while staying garage-scoped. | Added invoice identifier lookup in the invoicing service and schema/tests for invoice numbers. |
 
 ## Response Quality Notes
 
