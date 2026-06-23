@@ -578,15 +578,29 @@ export class OrchestratorService {
           parsedArgs.value,
           ctx.turnState?.userMessage,
         );
+        parsedArgs.value = this.normaliseRecordPaymentArgs(
+          call.name,
+          parsedArgs.value,
+          ctx.turnState?.userMessage,
+        );
         let validation = this.tools.validateArgs(call.name, parsedArgs.value);
         if (!validation.valid) {
-          const recoveredArgs = this.recoverCreateInvoiceArgsFromContext(
+          let recoveredArgs = this.recoverCreateInvoiceArgsFromContext(
             call.name,
             parsedArgs.value,
             validation.errors ?? [],
             ctx.turnState?.userMessage,
             successfulToolResults,
           );
+          if (!recoveredArgs) {
+            recoveredArgs = this.recoverRecordPaymentArgsFromContext(
+              call.name,
+              parsedArgs.value,
+              validation.errors ?? [],
+              ctx.turnState?.userMessage,
+              successfulToolResults,
+            );
+          }
           if (recoveredArgs) {
             const recoveredValidation = this.tools.validateArgs(
               call.name,
@@ -1170,6 +1184,129 @@ export class OrchestratorService {
     return normalised;
   }
 
+  private normaliseRecordPaymentArgs(
+    toolName: string,
+    args: unknown,
+    userMessage?: string,
+  ): unknown {
+    if (toolName !== 'record_payment') return args;
+    if (!args || typeof args !== 'object' || Array.isArray(args)) return args;
+    const a = args as Record<string, unknown>;
+    const out: Record<string, unknown> = { ...a };
+    const invoiceId =
+      typeof out.invoiceId === 'string' ? out.invoiceId.trim() : '';
+    if (invoiceId) {
+      out.invoiceId = invoiceId;
+    }
+
+    if (typeof out.amount === 'string') {
+      const amount = this.parsePaymentAmount(out.amount);
+      if (amount !== null) {
+        out.amount = amount;
+      }
+    }
+
+    if (typeof out._expectedConfirmation !== 'string') {
+      const invoiceRef = this.parseInvoiceIdentifier(userMessage);
+      if (invoiceRef) {
+        out._expectedConfirmation = invoiceRef;
+      }
+    }
+
+    if (typeof out.method === 'string') {
+      const method = this.normalisePaymentMethod(out.method);
+      if (method) {
+        out.method = method;
+      }
+    }
+
+    return out;
+  }
+
+  private recoverRecordPaymentArgsFromContext(
+    toolName: string,
+    args: unknown,
+    errors: string[],
+    userMessage: string | undefined,
+    successfulToolResults: { toolName: string; result: unknown }[],
+  ): unknown | null {
+    if (toolName !== 'record_payment') return null;
+    if (!args || typeof args !== 'object' || Array.isArray(args)) return null;
+
+    const hasInvoiceIdError = /invoiceId/i.test(errors.join(' '));
+    const hasAmountError = /amount/i.test(errors.join(' '));
+    const hasMethodError = /method/i.test(errors.join(' '));
+    if (!hasInvoiceIdError && !hasAmountError && !hasMethodError) {
+      return null;
+    }
+
+    const original = args as Record<string, unknown>;
+    const recovered: Record<string, unknown> = { ...original };
+    let changed = false;
+
+    const explicitInvoiceRef = this.parseInvoiceIdentifier(userMessage);
+    const invoiceRef = explicitInvoiceRef
+      ? this.stripPunctuation(explicitInvoiceRef)
+      : '';
+    const resolvedInvoice = this.findInvoiceResultRecord(
+      successfulToolResults,
+      invoiceRef,
+    );
+
+    if (
+      hasInvoiceIdError &&
+      (typeof recovered.invoiceId !== 'string' ||
+        !UUID_PATTERN.test(recovered.invoiceId))
+    ) {
+      if (resolvedInvoice?.id) {
+        recovered.invoiceId = resolvedInvoice.id;
+        changed = true;
+      }
+    }
+
+    if (
+      hasAmountError &&
+      (typeof recovered.amount !== 'number' || !Number.isFinite(recovered.amount))
+    ) {
+      const amountFromMessage = this.parsePaymentAmount(userMessage);
+      if (amountFromMessage !== null) {
+        recovered.amount = amountFromMessage;
+        changed = true;
+      }
+    }
+
+    if (hasMethodError && typeof recovered.method !== 'string') {
+      const normalisedMethod = this.extractPaymentMethodFromText(userMessage);
+      if (normalisedMethod) {
+        recovered.method = normalisedMethod;
+        changed = true;
+      }
+    }
+
+    if (
+      (typeof recovered._expectedConfirmation !== 'string' ||
+        recovered._expectedConfirmation.trim().length === 0) &&
+      resolvedInvoice?.invoiceNumber
+    ) {
+      recovered._expectedConfirmation = resolvedInvoice.invoiceNumber;
+      changed = true;
+    }
+    if (
+      !changed &&
+      typeof recovered.invoiceId === 'string' &&
+      !UUID_PATTERN.test(recovered.invoiceId) &&
+      invoiceRef
+    ) {
+      const parsed = this.parseInvoiceIdentifier(invoiceRef);
+      if (parsed) {
+        recovered._expectedConfirmation = parsed;
+        changed = true;
+      }
+    }
+
+    return changed ? recovered : null;
+  }
+
   private recoverCreateInvoiceArgsFromContext(
     toolName: string,
     args: unknown,
@@ -1236,6 +1373,88 @@ export class OrchestratorService {
     }
 
     return changed ? recovered : null;
+  }
+
+  private findInvoiceResultRecord(
+    successfulToolResults: { toolName: string; result: unknown }[],
+    invoiceIdentifier?: string,
+  ): { id?: string; invoiceNumber?: string } | null {
+    const invoiceTools = ['create_invoice', 'get_invoice', 'list_invoices'];
+    const allowed = new Set(invoiceTools);
+    const wanted = invoiceIdentifier?.trim().toLowerCase();
+    const records: Array<{ id?: string; invoiceNumber?: string }> = [];
+    for (const entry of [...successfulToolResults].reverse()) {
+      if (!allowed.has(entry.toolName)) continue;
+      const raw = entry.result;
+      const candidates = Array.isArray(raw) ? raw : [raw];
+      for (const candidate of candidates) {
+        const extracted = this.extractInvoiceRecordsFromResult(candidate);
+        records.push(...extracted);
+      }
+    }
+
+    if (wanted) {
+      const exact = records.find(
+        (record) =>
+          record.id?.toLowerCase() === wanted ||
+          record.invoiceNumber?.toLowerCase() === wanted,
+      );
+      if (exact) return exact;
+    }
+
+    for (let i = 0; i < records.length; i += 1) {
+      const record = records[i];
+      if (record.id && UUID_PATTERN.test(record.id)) return record;
+    }
+
+    return null;
+  }
+
+  private extractInvoiceRecordsFromResult(
+    result: unknown,
+  ): { id?: string; invoiceNumber?: string }[] {
+    if (!result || typeof result !== 'object') return [];
+    const out: { id?: string; invoiceNumber?: string }[] = [];
+    const candidates = Array.isArray(result) ? result : [result];
+    for (const candidate of candidates) {
+      if (!candidate || typeof candidate !== 'object') continue;
+      const record = candidate as Record<string, unknown>;
+      const nested = record.invoices;
+      if (Array.isArray(nested)) {
+        for (const nestedCandidate of nested) {
+          if (!nestedCandidate || typeof nestedCandidate !== 'object') continue;
+          const invoice = nestedCandidate as Record<string, unknown>;
+          const id =
+            typeof invoice.id === 'string'
+              ? invoice.id
+              : typeof invoice.invoiceId === 'string'
+                ? invoice.invoiceId
+                : undefined;
+          out.push({
+            id,
+            invoiceNumber:
+              typeof invoice.invoiceNumber === 'string'
+                ? invoice.invoiceNumber
+                : undefined,
+          });
+        }
+      } else if (
+        typeof record.id === 'string' ||
+        typeof record.invoiceId === 'string'
+      ) {
+        out.push({
+          id:
+            typeof record.id === 'string'
+              ? record.id
+              : (record.invoiceId as string),
+          invoiceNumber:
+            typeof record.invoiceNumber === 'string'
+              ? record.invoiceNumber
+              : undefined,
+        });
+      }
+    }
+    return out;
   }
 
   private findResultRecord(
@@ -1355,15 +1574,130 @@ export class OrchestratorService {
     return Number.isFinite(parsed) ? parsed : null;
   }
 
+  private parsePaymentAmount(raw: unknown): number | null {
+    if (typeof raw === 'number') {
+      return Number.isFinite(raw) ? raw : null;
+    }
+    if (typeof raw !== 'string') return null;
+
+    const trimmed = raw.trim().toLowerCase();
+    if (!trimmed) return null;
+    if (trimmed === 'undefined' || trimmed === 'null') return null;
+
+    const withCurrency =
+      trimmed.match(/(\d+(?:[.,]\d+)?)\s*(?:tnd|dt)\b/i)?.[1] ??
+      trimmed.match(/(?:amount|total|pay|paid|for)\s*(?:of|=|:)?\s*(\d+(?:[.,]\d+)?)\s*(?:tnd|dt)\b/i)?.[1];
+    if (withCurrency) {
+      const parsed = Number(withCurrency.replace(',', '.'));
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+
+    if (/^[0-9]+(?:[.,][0-9]+)?$/.test(trimmed)) {
+      const parsed = Number(trimmed.replace(',', '.'));
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+
+    return null;
+  }
+
+  private normalisePaymentMethod(raw: string): string | null {
+    const value = raw.trim().toLowerCase();
+    if (!value || value === 'undefined' || value === 'null') return null;
+
+    if (value === 'cash') return 'CASH';
+    if (value === 'card' || value === 'credit card' || value === 'debit card') {
+      return 'CARD';
+    }
+    if (
+      value === 'bank transfer' ||
+      value === 'bank_transfer' ||
+      value === 'bankwire' ||
+      value === 'transfer' ||
+      value === 'wire transfer'
+    ) {
+      return 'BANK_TRANSFER';
+    }
+    if (value === 'check' || value === 'cheque' || value === 'chq') {
+      return 'CHECK';
+    }
+    if (
+      value === 'mobile payment' ||
+      value === 'mobile_payment' ||
+      value === 'mobile' ||
+      value === 'mobile money'
+    ) {
+      return 'MOBILE_PAYMENT';
+    }
+    if (
+      ['cash', 'card', 'bank transfer', 'check', 'mobile payment'].includes(value)
+    ) {
+      return value.toUpperCase().replace(' ', '_');
+    }
+    if (value === 'bank_transfer' || value === 'mobile_payment') {
+      return value.toUpperCase();
+    }
+    return null;
+  }
+
+  private extractPaymentMethodFromText(text: string | undefined): string | null {
+    if (!text) return null;
+    const lowered = text.toLowerCase();
+    const matches = [
+      /(cash|in cash|by cash|espèces|espece)/i,
+      /(credit card|debit card|card|by card|carte)/i,
+      /(bank transfer|bank_transfer|wire transfer|transfer|virement)/i,
+      /(mobile payment|mobile_payment|mobile money|mobile)/i,
+      /(cheque|check|chèque)/i,
+    ];
+    const normalized = [
+      'CASH',
+      'CARD',
+      'BANK_TRANSFER',
+      'MOBILE_PAYMENT',
+      'CHECK',
+    ];
+    for (let i = 0; i < matches.length; i += 1) {
+      if (matches[i].test(lowered)) return normalized[i];
+    }
+    return null;
+  }
+
+  private parseInvoiceIdentifier(
+    text: string | undefined,
+  ): string | null {
+    if (!text) return null;
+    const match = text.match(
+      /\bINV-[A-Z0-9][A-Z0-9-]*[0-9]\b/gi,
+    );
+    return match?.[0]?.trim() ?? null;
+  }
+
+  private stripPunctuation(raw: string): string {
+    return raw.replace(/[`"'\u2018\u2019\(\)\[\]]/g, '').trim();
+  }
+
   private parseInvoiceLineItemString(
     raw: string,
   ): { description: string; quantity: number; unitPrice: number } | null {
     const trimmed = raw.trim();
-    const match = trimmed.match(
+    const atForMatch = trimmed.match(
       /^\s*(\d+(?:[.,]\d+)?)\s+(.+?)\s+(?:at|@|for)\s+(\d+(?:[.,]\d+)?)\s*(?:tnd|dt)\b/i,
     );
-    if (!match) return null;
-    return this.buildParsedInvoiceLine(match[1], match[2], match[3]);
+    if (atForMatch) {
+      return this.buildParsedInvoiceLine(atForMatch[1], atForMatch[2], atForMatch[3]);
+    }
+
+    const quantityLabelMatch = trimmed.match(
+      /^\s*(?:for\s+)?(.+?)\s*,?\s*(?:quantity|qty)\s+(\d+(?:[.,]\d+)?)\s*,?\s*(?:unit\s*price|price)\s+(\d+(?:[.,]\d+)?)\s*(?:tnd|dt)\b/i,
+    );
+    if (quantityLabelMatch) {
+      return this.buildParsedInvoiceLine(
+        quantityLabelMatch[2],
+        quantityLabelMatch[1],
+        quantityLabelMatch[3],
+      );
+    }
+    return null;
   }
 
   private buildParsedInvoiceLine(
@@ -1373,6 +1707,7 @@ export class OrchestratorService {
   ): { description: string; quantity: number; unitPrice: number } | null {
     const quantity = Number(rawQuantity.replace(',', '.'));
     const description = rawDescription
+      .replace(/^.*\b(?:line|item)\s*:\s*/i, '')
       .replace(/\bHT\b/gi, '')
       .replace(/\s+/g, ' ')
       .trim();
@@ -1386,7 +1721,18 @@ export class OrchestratorService {
     ) {
       return null;
     }
-    return { description, quantity, unitPrice };
+    const parsed: {
+      description: string;
+      quantity: number;
+      unitPrice: number;
+      tvaRate?: number;
+    } = { description, quantity, unitPrice };
+    const tvaMatch = rawDescription.match(/\b(?:TVA|VAT)\s*(\d+(?:[.,]\d+)?)\s*%/i);
+    if (tvaMatch) {
+      const tvaRate = Number(tvaMatch[1].replace(',', '.'));
+      if (Number.isFinite(tvaRate)) parsed.tvaRate = tvaRate;
+    }
+    return parsed;
   }
 
   private parseInvoiceLineItemTuple(
@@ -1448,6 +1794,18 @@ export class OrchestratorService {
       /(?:^|[.,;]|\bwith\b|\band\b)\s*(\d+(?:[.,]\d+)?)\s+(.+?)\s+(?:at|@|for)\s+(\d+(?:[.,]\d+)?)\s*(?:tnd|dt)\b/gi;
     for (const match of text.matchAll(pattern)) {
       const parsed = this.buildParsedInvoiceLine(match[1], match[2], match[3]);
+      if (parsed) lines.push(parsed);
+    }
+    const structuredPattern =
+      /(?:^|[.;]|\bwith\b|\band\b|:)\s*(?:line\s*\d+\s*:\s*)?([^.;:\n]+?)\s*,?\s*(?:quantity|qty)\s+(\d+(?:[.,]\d+)?)\s*,?\s*(?:unit\s*price|price)\s+(\d+(?:[.,]\d+)?)\s*(?:tnd|dt)\b(?:\s*HT)?(?:\s*,?\s*(?:TVA|VAT)\s*(\d+(?:[.,]\d+)?)\s*%)?/gi;
+    for (const match of text.matchAll(structuredPattern)) {
+      const parsed = this.buildParsedInvoiceLine(match[2], match[1], match[3]);
+      if (parsed && match[4]) {
+        const tvaRate = Number(match[4].replace(',', '.'));
+        if (Number.isFinite(tvaRate)) {
+          (parsed as { tvaRate?: number }).tvaRate = tvaRate;
+        }
+      }
       if (parsed) lines.push(parsed);
     }
     return lines;
@@ -2580,18 +2938,47 @@ export class OrchestratorService {
     }
 
     if (toolName === 'record_payment' && typeof a.invoiceId === 'string') {
-      const exists = await this.prisma.invoice.findFirst({
-        where: { id: a.invoiceId, garageId: ctx.garageId },
-        select: { id: true },
+      const invoiceLookup = a.invoiceId.trim();
+      if (!invoiceLookup) {
+        return {
+          error: 'invoice_not_found',
+          message:
+            'record_payment was called without an invoice identifier. Ask the user to provide the visible invoice number, then call get_invoice and record_payment.',
+        };
+      }
+      if (!UUID_PATTERN.test(invoiceLookup)) {
+        return {
+          error: 'invoice_not_found',
+          message:
+            `record_payment received invoiceId="${a.invoiceId}", but only a UUID is accepted for execution. ` +
+            'Call get_invoice with the visible invoice number first, then retry with the resolved UUID.',
+        };
+      }
+      const invoice = await this.prisma.invoice.findFirst({
+        where: {
+          garageId: ctx.garageId,
+          OR: [{ id: invoiceLookup }, { invoiceNumber: invoiceLookup }],
+        },
+        select: { id: true, invoiceNumber: true },
       });
-      if (!exists) {
+      if (!invoice) {
         return {
           error: 'invoice_not_found',
           message:
             `record_payment received invoiceId="${a.invoiceId}", but no ` +
-            `invoice with that id exists in this garage. Call list_invoices ` +
-            `or get_invoice to find the correct invoice id, then retry.`,
+            `invoice with that identifier exists in this garage. ` +
+            `Call get_invoice ` +
+            `with the visible invoice number (or list_invoices), then retry with the resolved UUID.`,
         };
+      }
+      a.invoiceId = invoice.id;
+      if (
+        typeof a._expectedConfirmation !== 'string' ||
+        a._expectedConfirmation.trim().length === 0
+      ) {
+        if (invoice.invoiceNumber) {
+          a._expectedConfirmation = invoice.invoiceNumber;
+        }
       }
     }
 
@@ -2737,6 +3124,23 @@ export class OrchestratorService {
           `Tell the user no appointment was created. If available slots are already in the conversation, ` +
           `show the best slots and ask the user to confirm the customer and vehicle before approval. ` +
           `Do not mention the orchestrator, schemas, validation, tool names, or internal IDs.`,
+      };
+    }
+
+    if (
+      toolName === 'record_payment' &&
+      errors.some((error) => /invoiceId|amount|method|uuid|_expectedConfirmation/i.test(error))
+    ) {
+      return {
+        forceComposeOnly: false,
+        content:
+          `record_payment arguments were invalid, but the user already supplied payment intent. ` +
+          `Resolve the invoice identifier first if needed, then retry with typed values only: ` +
+          `invoiceId must be the invoice UUID, amount must be a number in TND, ` +
+          `method must be one of CASH, CARD, BANK_TRANSFER, CHECK, or MOBILE_PAYMENT, ` +
+          `and _expectedConfirmation should be the visible invoice number. ` +
+          `Prefer resolving invoiceId via get_invoice using the provided invoice number. ` +
+          `Do not expose schema text, JSON validation wording, tool names, or internal IDs in the user reply.`,
       };
     }
 

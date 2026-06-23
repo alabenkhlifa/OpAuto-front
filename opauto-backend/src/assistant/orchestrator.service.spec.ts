@@ -2269,6 +2269,364 @@ describe('OrchestratorService', () => {
     ).toBe(true);
   });
 
+  it('recovers create_invoice approval from fetched customer/car when lineItems stay malformed', async () => {
+    const customerId = '0a19350b-7648-4d82-866d-a86508775194';
+    const carId = 'c3d3cd7a-ee09-44e8-8dc6-6953aae4da7c';
+    const mutationLabel = 'mut-20260623213623';
+    const tools = makeTools(
+      ['find_customer', 'find_car', 'create_invoice'],
+      (name) => {
+        if (name === 'find_customer') {
+          return {
+            ok: true,
+            result: [
+              {
+                id: customerId,
+                displayName: 'Khaoula Khelifi',
+                phone: '+216 99 783 989',
+              },
+            ],
+            durationMs: 1,
+          };
+        }
+        if (name === 'find_car') {
+          return {
+            ok: true,
+            result: [
+              {
+                id: carId,
+                customerId,
+                displayName: '2024 Skoda Octavia (8580 TUN 289)',
+                plate: '8580 TUN 289',
+              },
+            ],
+            durationMs: 1,
+          };
+        }
+        return { ok: true, result: {}, durationMs: 1 };
+      },
+    );
+    tools.validateArgs.mockImplementation((name: string, args: any) => {
+      if (name !== 'create_invoice') return { valid: true };
+      const errors: string[] = [];
+      if (args.customerId !== customerId) {
+        errors.push('/customerId must match format "uuid"');
+      }
+      if (args.carId !== carId) {
+        errors.push('/carId must match format "uuid"');
+      }
+      const firstLine = Array.isArray(args.lineItems)
+        ? args.lineItems[0]
+        : null;
+      if (
+        !firstLine ||
+        typeof firstLine !== 'object' ||
+        typeof firstLine.description !== 'string' ||
+        firstLine.description !== `AI mutation test labor ${mutationLabel}` ||
+        firstLine.quantity !== 1 ||
+        firstLine.unitPrice !== 10 ||
+        firstLine.tvaRate !== 0
+      ) {
+        errors.push('/lineItems/0 must be object');
+      }
+      return errors.length > 0 ? { valid: false, errors } : { valid: true };
+    });
+    tools.resolveBlastTier.mockImplementation((tool: any) =>
+      tool.name === 'create_invoice'
+        ? AssistantBlastTier.TYPED_CONFIRM_WRITE
+        : AssistantBlastTier.READ,
+    );
+    const approvals = makeApprovals();
+    const prisma = {
+      ...makePrisma(),
+      customer: {
+        findFirst: jest.fn().mockResolvedValue({ id: customerId }),
+      },
+      car: {
+        findFirst: jest.fn().mockResolvedValue({ id: carId }),
+      },
+    };
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-bad-invoice',
+            name: 'create_invoice',
+            argsJson:
+              `{"customerId":"Khaoula Khelifi","carId":"8580 TUN 289","dueDate":"2026-07-31","lineItems":["AI mutation test labor ${mutationLabel}"],"_expectedConfirmation":"10.00 TND"}`,
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-customer',
+            name: 'find_customer',
+            argsJson: '{"query":"Khaoula Khelifi"}',
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-car',
+            name: 'find_car',
+            argsJson: '{"query":"8580 TUN 289"}',
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-still-malformed-invoice',
+            name: 'create_invoice',
+            argsJson:
+              `{"customerId":"${customerId}","carId":"${carId}","dueDate":"2026-07-31","lineItems":["AI mutation test labor ${mutationLabel}"],"_expectedConfirmation":"10.00 TND"}`,
+          },
+        ],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({
+      tools,
+      llm,
+      approvals,
+      prisma,
+    });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-invoice-mutating-recovery',
+        `Create and issue a live test invoice ${mutationLabel} for Khaoula Khelifi and the Skoda Octavia plate 8580 TUN 289, due July 31 2026. Use exactly one line: AI mutation test labor ${mutationLabel}, quantity 1, unit price 10 TND HT, TVA 0%. Approve it when the typed confirmation card appears.`,
+        undefined,
+      ),
+    );
+
+    expect(tools.execute).toHaveBeenCalledWith(
+      'find_customer',
+      { query: 'Khaoula Khelifi' },
+      expect.objectContaining({ garageId: 'garage-1' }),
+    );
+    expect(tools.execute).toHaveBeenCalledWith(
+      'find_car',
+      { query: '8580 TUN 289' },
+      expect.objectContaining({ garageId: 'garage-1' }),
+    );
+    expect(events.find((e) => e.type === 'approval_request')).toMatchObject({
+      toolName: 'create_invoice',
+      blastTier: AssistantBlastTier.TYPED_CONFIRM_WRITE,
+      args: expect.objectContaining({
+        customerId,
+        carId,
+        dueDate: '2026-07-31',
+        _expectedConfirmation: '10.00 TND',
+        lineItems: [
+          {
+            description: `AI mutation test labor ${mutationLabel}`,
+            quantity: 1,
+            unitPrice: 10,
+            tvaRate: 0,
+          },
+        ],
+      }),
+    });
+    expect(approvals.createPending).toHaveBeenCalledWith(
+      expect.objectContaining({
+        toolName: 'create_invoice',
+        blastTier: AssistantBlastTier.TYPED_CONFIRM_WRITE,
+        args: expect.objectContaining({
+          customerId,
+          carId,
+          lineItems: [
+            {
+              description: `AI mutation test labor ${mutationLabel}`,
+              quantity: 1,
+              unitPrice: 10,
+              tvaRate: 0,
+            },
+          ],
+        }),
+      }),
+    );
+    expect(tools.execute).not.toHaveBeenCalledWith(
+      'create_invoice',
+      expect.anything(),
+      expect.anything(),
+    );
+  });
+
+  it('recovers record_payment approval by resolving the visible invoice number first', async () => {
+    const invoiceId = 'f6eab332-3594-4d7c-94fb-19d1ee77fd65';
+    const invoiceNumber = 'INV-202606-0207';
+    const tools = makeTools(['get_invoice', 'record_payment'], (name, args) => {
+      if (name === 'get_invoice') {
+        return {
+          ok: true,
+          result: {
+            id: invoiceId,
+            invoiceNumber,
+            total: 10,
+            balance: 10,
+            status: 'ISSUED',
+          },
+          durationMs: 1,
+        };
+      }
+      return { ok: true, result: { args }, durationMs: 1 };
+    });
+    tools.validateArgs.mockImplementation((name: string, args: any) => {
+      if (name === 'get_invoice') {
+        return typeof args.invoiceId === 'string' && args.invoiceId.length > 0
+          ? { valid: true }
+          : { valid: false, errors: ['/invoiceId must be string'] };
+      }
+      if (name !== 'record_payment') return { valid: true };
+      const errors: string[] = [];
+      if (args.invoiceId !== invoiceId) {
+        errors.push('/invoiceId must match format "uuid"');
+      }
+      if (typeof args.amount !== 'number') {
+        errors.push('/amount must be number');
+      }
+      if (args.method !== 'CASH') {
+        errors.push('/method must be equal to one of the allowed values');
+      }
+      if (args._expectedConfirmation !== invoiceNumber) {
+        errors.push('/_expectedConfirmation must be exact invoice number');
+      }
+      return errors.length > 0 ? { valid: false, errors } : { valid: true };
+    });
+    tools.resolveBlastTier.mockImplementation((tool: any) =>
+      tool.name === 'record_payment'
+        ? AssistantBlastTier.TYPED_CONFIRM_WRITE
+        : AssistantBlastTier.READ,
+    );
+    const approvals = makeApprovals();
+    const prisma = {
+      ...makePrisma(),
+      invoice: {
+        findFirst: jest.fn().mockResolvedValue({ id: invoiceId }),
+      },
+    };
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-bad-payment',
+            name: 'record_payment',
+            argsJson:
+              `{"invoiceId":"${invoiceNumber}","amount":"10","method":"CASH","_expectedConfirmation":"${invoiceNumber}"}`,
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-get-invoice',
+            name: 'get_invoice',
+            argsJson: `{"invoiceId":"${invoiceNumber}"}`,
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-good-payment',
+            name: 'record_payment',
+            argsJson:
+              `{"invoiceId":"${invoiceId}","amount":10,"method":"CASH","_expectedConfirmation":"${invoiceNumber}","notes":"live AI mutation test payment mut-20260623213623"}`,
+          },
+        ],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({
+      tools,
+      llm,
+      approvals,
+      prisma,
+    });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-payment-mutating-recovery',
+        `Mark invoice ${invoiceNumber} as paid in cash for 10 TND. This is the live AI mutation test payment mut-20260623213623. Approve it when the typed confirmation card appears.`,
+        undefined,
+      ),
+    );
+
+    expect(events.find((e) => e.type === 'tool_result')).toMatchObject({
+      toolCallId: 'tc-bad-payment',
+      status: 'failed',
+      result: expect.objectContaining({
+        error: 'invalid_arguments',
+        detail: expect.arrayContaining([
+          '/invoiceId must match format "uuid"',
+        ]),
+      }),
+    });
+    expect(tools.execute).toHaveBeenCalledWith(
+      'get_invoice',
+      { invoiceId: invoiceNumber },
+      expect.objectContaining({ garageId: 'garage-1' }),
+    );
+    expect(events.find((e) => e.type === 'approval_request')).toMatchObject({
+      toolName: 'record_payment',
+      blastTier: AssistantBlastTier.TYPED_CONFIRM_WRITE,
+      args: expect.objectContaining({
+        invoiceId,
+        amount: 10,
+        method: 'CASH',
+        _expectedConfirmation: invoiceNumber,
+      }),
+    });
+    expect(approvals.createPending).toHaveBeenCalledWith(
+      expect.objectContaining({
+        toolName: 'record_payment',
+        blastTier: AssistantBlastTier.TYPED_CONFIRM_WRITE,
+        args: expect.objectContaining({
+          invoiceId,
+          amount: 10,
+          method: 'CASH',
+          _expectedConfirmation: invoiceNumber,
+        }),
+      }),
+    );
+    expect(prisma.invoice.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ garageId: 'garage-1' }),
+        select: expect.objectContaining({ id: true }),
+      }),
+    );
+    expect(tools.execute).not.toHaveBeenCalledWith(
+      'record_payment',
+      expect.anything(),
+      expect.anything(),
+    );
+    const finalText = events
+      .filter((e) => e.type === 'text')
+      .map((e: any) => e.delta)
+      .join('\n');
+    expect(finalText).not.toMatch(
+      /schema|valid UUID|invoiceId|_expectedConfirmation|record_payment|tool|arguments/i,
+    );
+    expect(finalText).toBe('');
+  });
+
   it('strips reasoning scaffolds and internal ids from final assistant text', async () => {
     const llm = makeLlm([
       {
