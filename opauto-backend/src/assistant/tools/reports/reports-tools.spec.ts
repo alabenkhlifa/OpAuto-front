@@ -126,6 +126,41 @@ describe('reports tools', () => {
       expect(new Date(result.expiresAt).getTime()).toBeGreaterThan(Date.now());
     });
 
+    it('accepts a custom date range for exact report windows', async () => {
+      const tool = buildGeneratePeriodReportTool(new Logger('test'));
+      const registry = new ToolRegistryService();
+      registry.register(tool as any);
+
+      const args: GeneratePeriodReportArgs = {
+        period: 'custom',
+        format: 'pdf',
+        from: '2026-06-01',
+        to: '2026-06-24',
+      };
+      expect(registry.validateArgs('generate_period_report', args).valid).toBe(true);
+
+      const result = await tool.handler(args, ownerCtx);
+
+      expect(result.url).toMatch(/^\/api\/assistant\/downloads\/[0-9a-f-]+\.pdf$/);
+      expect(result.period).toBe('custom');
+      expect(result.from).toBe(new Date('2026-06-01').toISOString());
+      expect(result.to).toBe(new Date('2026-06-24').toISOString());
+    });
+
+    it('requires from and to when period is custom', () => {
+      const tool = buildGeneratePeriodReportTool(new Logger('test'));
+      const registry = new ToolRegistryService();
+      registry.register(tool as any);
+
+      const result = registry.validateArgs('generate_period_report', {
+        period: 'custom',
+        format: 'pdf',
+      });
+
+      expect(result.valid).toBe(false);
+      expect(result.errors!.join(' ')).toMatch(/from|to|required/i);
+    });
+
     it('fails arg validation for an unsupported period enum', () => {
       const tool = buildGeneratePeriodReportTool(new Logger('test'));
       const registry = new ToolRegistryService();
@@ -192,6 +227,15 @@ describe('reports tools', () => {
         expect(from.getDate()).toBe(1);
         expect(from.getHours()).toBe(0);
         expect(from.getFullYear()).toBe(NOW.getFullYear());
+      });
+
+      it('custom: uses the explicit date bounds', () => {
+        const { from, to } = resolveReportPeriod('custom', NOW, {
+          from: '2026-06-01',
+          to: '2026-06-24',
+        });
+        expect(from.toISOString()).toBe(new Date('2026-06-01').toISOString());
+        expect(to.toISOString()).toBe(new Date('2026-06-24').toISOString());
       });
     });
   });

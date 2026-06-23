@@ -550,6 +550,15 @@ export class OrchestratorService {
             error: 'invalid_arguments',
             detail: validation.errors,
           });
+          const invalidWriteGuidance = this.guidanceForInvalidWriteArgs(
+            call.name,
+            validation.errors ?? [],
+            ctx.turnState?.userMessage,
+          );
+          if (invalidWriteGuidance) {
+            forceComposeOnly = true;
+            llmMessages.push({ role: 'system', content: invalidWriteGuidance });
+          }
           recordFailedToolAttempt(call.name, 'invalid arguments');
           continue;
         }
@@ -958,8 +967,15 @@ export class OrchestratorService {
   ): string {
     let out = this.fillEmptyReportDownloadText(text, successfulToolResults);
     out = this.correctSlotContradiction(out, successfulToolResults);
+    out = this.rewriteInternalAgentRefusal(out, successfulToolResults);
+    out = this.rewriteMissingInvoiceDetailsResponse(
+      out,
+      ctx.turnState?.userMessage,
+      successfulToolResults,
+    );
     out = this.stripReasoningScaffold(out);
     out = this.stripInternalControlMessages(out);
+    out = this.stripWarningSymbols(out);
     out = this.scrubInternalIds(out, ctx.turnState?.userMessage);
     return out.trim();
   }
@@ -984,19 +1000,7 @@ export class OrchestratorService {
       return text;
     }
 
-    const slots = latest.slots.slice(0, 3).map((slot) => {
-      const s = slot as {
-        start?: string;
-        end?: string;
-        mechanicName?: string | null;
-      };
-      const start = this.formatUtcDateTime(s.start);
-      const end = this.formatUtcTime(s.end);
-      const mechanic = s.mechanicName ? ` with ${s.mechanicName}` : '';
-      return `- ${start}${end ? `-${end}` : ''}${mechanic}`;
-    });
-
-    return `I found available slots:\n${slots.join('\n')}`;
+    return `I found available slots:\n${this.formatSlotBullets(latest.slots)}`;
   }
 
   private fillEmptyReportDownloadText(
@@ -1049,6 +1053,81 @@ export class OrchestratorService {
     out = out.replace(/^(#+\s*)Step\s+\d+\s*:\s*/gim, '$1');
     out = out.replace(/^Step\s+\d+\s*:\s*/gim, '');
     return out;
+  }
+
+  private rewriteInternalAgentRefusal(
+    text: string,
+    successfulToolResults: { toolName: string; result: unknown }[],
+  ): string {
+    if (!/\borchestrator\b|agent cannot perform write actions/i.test(text)) {
+      return text;
+    }
+    const slotResults = successfulToolResults
+      .filter((entry) => entry.toolName === 'find_available_slot')
+      .map((entry) => entry.result as { slots?: unknown[] })
+      .filter(
+        (result) => Array.isArray(result.slots) && result.slots.length > 0,
+      );
+    const latest = slotResults[slotResults.length - 1];
+    if (!latest?.slots?.length) {
+      return text.replace(/\borchestrator\b/gi, 'assistant');
+    }
+
+    return (
+      `I found available slots:\n${this.formatSlotBullets(latest.slots)}\n\n` +
+      `I did not create an appointment yet. Please confirm the customer and vehicle, then I can show the approval request.`
+    );
+  }
+
+  private rewriteMissingInvoiceDetailsResponse(
+    text: string,
+    userMessage: string | undefined,
+    successfulToolResults: { toolName: string; result: unknown }[],
+  ): string {
+    if (!this.userAskedForInvoiceCreation(userMessage)) return text;
+    if (
+      successfulToolResults.some((entry) => entry.toolName === 'create_invoice')
+    ) {
+      return text;
+    }
+    if (!this.userMessageLacksInvoicePrices(userMessage)) return text;
+    if (
+      !/\binvoice\b/i.test(text) ||
+      !/(unable|failed|confirm|proceed|create|prepare|amount|total|tnd)/i.test(
+        text,
+      )
+    ) {
+      return text;
+    }
+
+    const itemHint = this.extractInvoiceLineItemHint(userMessage);
+    const itemText = itemHint ? ` for ${itemHint}` : '';
+    return (
+      `I found the customer, but I did not create the invoice. ` +
+      `Please provide the quantity and HT unit price for each line item${itemText}. ` +
+      `Once you provide those, I can prepare the invoice for approval.`
+    );
+  }
+
+  private stripWarningSymbols(text: string): string {
+    return text.replace(/(^|\n)\s*\u26a0\ufe0f?\s*/g, '$1');
+  }
+
+  private formatSlotBullets(slots: unknown[]): string {
+    return slots
+      .slice(0, 3)
+      .map((slot) => {
+        const s = slot as {
+          start?: string;
+          end?: string;
+          mechanicName?: string | null;
+        };
+        const start = this.formatUtcDateTime(s.start);
+        const end = this.formatUtcTime(s.end);
+        const mechanic = s.mechanicName ? ` with ${s.mechanicName}` : '';
+        return `- ${start}${end ? `-${end}` : ''}${mechanic}`;
+      })
+      .join('\n');
   }
 
   private stripInternalControlMessages(text: string): string {
@@ -1652,7 +1731,7 @@ export class OrchestratorService {
         // and the failed send was silently swallowed. Surface infra-level
         // failures explicitly with the original message.
         `If any tool result in the conversation contains an "error" field (for example send_email returning {error:"send_failed", message:"..."}), ` +
-        `you MUST mention the failure in plain business language. Prefix real send/write failures with "⚠️", but do not quote raw tool names, ` +
+        `you MUST mention the failure in plain business language, but do not quote raw tool names, ` +
         `schema validation messages, JSON, or internal guard text. Never imply the action succeeded when the tool returned an error. ` +
         `If the error says the user asked for a draft only, say no email was sent and provide the draft text in the reply.`,
     };
@@ -1900,6 +1979,82 @@ export class OrchestratorService {
       /<(?:[^>]*(?:insert|placeholder|id|todo|tbd)[^>]*)>/i.test(value) ||
       /\b(?:insert|placeholder|todo|tbd)\b/i.test(value)
     );
+  }
+
+  private guidanceForInvalidWriteArgs(
+    toolName: string,
+    errors: string[],
+    userMessage: string | undefined,
+  ): string | null {
+    if (
+      toolName === 'create_invoice' &&
+      (errors.some((error) => /lineItems/i.test(error)) ||
+        this.userMessageLacksInvoicePrices(userMessage))
+    ) {
+      return (
+        `create_invoice arguments are incomplete. Stop retrying tools. ` +
+        `Tell the user no invoice was created. Ask for quantity and HT unitPrice ` +
+        `for each line item. Do not invent prices, totals, discounts, or taxes. ` +
+        `Do not mention schemas, validation, tool names, or internal IDs.`
+      );
+    }
+
+    if (
+      toolName === 'create_appointment' &&
+      errors.some((error) => /customerId|carId|mechanicId|uuid/i.test(error))
+    ) {
+      return (
+        `create_appointment arguments are incomplete. Stop retrying tools and do not dispatch an agent. ` +
+        `Tell the user no appointment was created. If available slots are already in the conversation, ` +
+        `show the best slots and ask the user to confirm the customer and vehicle before approval. ` +
+        `Do not mention the orchestrator, schemas, validation, tool names, or internal IDs.`
+      );
+    }
+
+    return null;
+  }
+
+  private userAskedForInvoiceCreation(
+    userMessage: string | undefined,
+  ): boolean {
+    return /\b(?:create|make|issue|generate|prepare)\b[\s\S]{0,80}\binvoice\b/i.test(
+      userMessage ?? '',
+    );
+  }
+
+  private userMessageLacksInvoicePrices(
+    userMessage: string | undefined,
+  ): boolean {
+    const msg = userMessage ?? '';
+    if (!this.userAskedForInvoiceCreation(msg)) return false;
+    if (
+      /\b(?:unit\s*price|price|prix|amount|total|subtotal|ht|tnd|dt)\b/i.test(
+        msg,
+      ) ||
+      /\d+(?:[.,]\d{1,2})?\s*(?:tnd|dt)\b/i.test(msg)
+    ) {
+      return false;
+    }
+    return /\b(?:for|with)\b[\s\S]{0,120}\b(?:change|filter|oil|brake|service|part|labor|labour)\b/i.test(
+      msg,
+    );
+  }
+
+  private extractInvoiceLineItemHint(
+    userMessage: string | undefined,
+  ): string | null {
+    const msg = (userMessage ?? '').replace(/\s+/g, ' ').trim();
+    const matches = [...msg.matchAll(/\bfor\s+([^.!?]+?)(?=\.|$)/gi)];
+    const candidate = matches[matches.length - 1]?.[1]?.trim();
+    if (!candidate) return null;
+    if (
+      !/\b(change|filter|oil|brake|service|part|labor|labour)\b/i.test(
+        candidate,
+      )
+    ) {
+      return null;
+    }
+    return candidate.replace(/\bdo not create.*$/i, '').trim();
   }
 
   private normalisePhone(value: string | null | undefined): string {

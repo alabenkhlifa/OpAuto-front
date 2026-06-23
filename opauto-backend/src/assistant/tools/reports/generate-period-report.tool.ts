@@ -3,12 +3,14 @@ import { randomUUID } from 'crypto';
 import { AssistantBlastTier } from '@prisma/client';
 import { AssistantUserContext, ToolDefinition } from '../../types';
 
-export type ReportPeriod = 'today' | 'week' | 'month' | 'ytd';
+export type ReportPeriod = 'today' | 'week' | 'month' | 'ytd' | 'custom';
 export type ReportFormat = 'pdf' | 'csv';
 
 export interface GeneratePeriodReportArgs {
   period: ReportPeriod;
   format: ReportFormat;
+  from?: string;
+  to?: string;
 }
 
 export interface GeneratePeriodReportResult {
@@ -28,7 +30,20 @@ export interface GeneratePeriodReportResult {
 export function resolveReportPeriod(
   period: ReportPeriod,
   now: Date = new Date(),
+  custom?: { from?: string; to?: string },
 ): { from: Date; to: Date } {
+  if (period === 'custom') {
+    const from = custom?.from ? new Date(custom.from) : null;
+    const to = custom?.to ? new Date(custom.to) : null;
+    if (!from || Number.isNaN(from.getTime())) {
+      throw new Error('Custom report period requires a valid from date.');
+    }
+    if (!to || Number.isNaN(to.getTime())) {
+      throw new Error('Custom report period requires a valid to date.');
+    }
+    return { from, to };
+  }
+
   const to = new Date(now);
   const from = new Date(now);
   switch (period) {
@@ -67,7 +82,7 @@ export function buildGeneratePeriodReportTool(
     name: 'generate_period_report',
     description:
       'Generates a downloadable report (PDF or CSV) of garage activity for a fixed period: ' +
-      'today, the last 7 days, the current calendar month, or year-to-date. ' +
+      'today, the last 7 days, the current calendar month, year-to-date, or an explicit custom date range. ' +
       'Returns a short-lived signed URL. Use when the user asks to "export", "download", or ' +
       '"email me a report" for a time window.',
     parameters: {
@@ -75,17 +90,34 @@ export function buildGeneratePeriodReportTool(
       properties: {
         period: {
           type: 'string',
-          enum: ['today', 'week', 'month', 'ytd'],
-          description: 'Reporting window. "week" is rolling 7 days; "month" is current calendar month.',
+          enum: ['today', 'week', 'month', 'ytd', 'custom'],
+          description:
+            'Reporting window. "week" is rolling 7 days; "month" is current calendar month. Use "custom" with from/to for exact date ranges.',
         },
         format: {
           type: 'string',
           enum: ['pdf', 'csv'],
           description: 'Output format. PDF for printable summaries, CSV for spreadsheet drilldowns.',
         },
+        from: {
+          type: 'string',
+          description:
+            'Required when period is "custom". Inclusive ISO date or date-time lower bound.',
+        },
+        to: {
+          type: 'string',
+          description:
+            'Required when period is "custom". Exclusive ISO date or date-time upper bound.',
+        },
       },
       required: ['period', 'format'],
       additionalProperties: false,
+      allOf: [
+        {
+          if: { properties: { period: { const: 'custom' } } },
+          then: { required: ['from', 'to'] },
+        },
+      ],
     },
     blastTier: AssistantBlastTier.READ,
     requiredRole: 'OWNER',
@@ -93,7 +125,10 @@ export function buildGeneratePeriodReportTool(
       args: GeneratePeriodReportArgs,
       ctx: AssistantUserContext,
     ): Promise<GeneratePeriodReportResult> => {
-      const { from, to } = resolveReportPeriod(args.period);
+      const { from, to } = resolveReportPeriod(args.period, new Date(), {
+        from: args.from,
+        to: args.to,
+      });
 
       const token = randomUUID();
       const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();

@@ -1262,6 +1262,162 @@ describe('OrchestratorService', () => {
     });
   });
 
+  it('rewrites invalid appointment creation into slots plus a confirmation request', async () => {
+    const tools = makeTools(['find_available_slot', 'create_appointment'], (name) => {
+      if (name === 'find_available_slot') {
+        return {
+          ok: true,
+          result: {
+            slots: [
+              {
+                start: '2026-06-30T08:00:00.000Z',
+                end: '2026-06-30T08:30:00.000Z',
+                mechanicName: 'Hichem Sassi',
+              },
+            ],
+          },
+          durationMs: 1,
+        };
+      }
+      return { ok: true, result: {}, durationMs: 1 };
+    });
+    tools.validateArgs.mockImplementation((name: string) =>
+      name === 'create_appointment'
+        ? {
+            valid: false,
+            errors: [
+              '/customerId must match format "uuid"',
+              '/carId must match format "uuid"',
+            ],
+          }
+        : { valid: true },
+    );
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-slot',
+            name: 'find_available_slot',
+            argsJson: '{"date":"2026-06-30","durationMinutes":30}',
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-create',
+            name: 'create_appointment',
+            argsJson: '{"customerId":"Khaoula","carId":"Khaoula"}',
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content:
+          'I am not able to create an appointment. Please ask the orchestrator to handle this request.',
+        toolCalls: [],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({ tools, llm });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-appointment',
+        'Book a checkup for Khaoula Khelifi next Tuesday morning.',
+        undefined,
+      ),
+    );
+
+    const text = events.find((e) => e.type === 'text');
+    expect(text).toMatchObject({
+      delta: expect.stringContaining('I found available slots'),
+    });
+    expect(text).toMatchObject({
+      delta: expect.stringContaining('Hichem Sassi'),
+    });
+    expect(text).toMatchObject({
+      delta: expect.stringContaining('I did not create an appointment yet'),
+    });
+    expect(text).not.toMatchObject({
+      delta: expect.stringMatching(/orchestrator|schema|uuid/i),
+    });
+  });
+
+  it('asks for line item prices instead of inventing invoice totals after invalid create_invoice args', async () => {
+    const tools = makeTools(['find_customer', 'create_invoice'], (name) => {
+      if (name === 'find_customer') {
+        return {
+          ok: true,
+          result: [{ displayName: 'Khaoula Khelifi', phone: '+216 99 783 989' }],
+          durationMs: 1,
+        };
+      }
+      return { ok: true, result: {}, durationMs: 1 };
+    });
+    tools.validateArgs.mockImplementation((name: string) =>
+      name === 'create_invoice'
+        ? { valid: false, errors: ['/lineItems/0 must be object'] }
+        : { valid: true },
+    );
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-customer',
+            name: 'find_customer',
+            argsJson: '{"query":"Khaoula Khelifi"}',
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-invoice',
+            name: 'create_invoice',
+            argsJson:
+              '{"customerId":"0a19350b-7648-4d82-866d-a86508775194","lineItems":["oil change","filter"]}',
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content:
+          '\u26a0\ufe0f I was unable to create an invoice. Please confirm if you would like to proceed with the invoice for 67.83 TND.',
+        toolCalls: [],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({ tools, llm });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-invoice-missing',
+        'Create an invoice for Khaoula Khelifi for oil change and filter.',
+        undefined,
+      ),
+    );
+
+    const text = events.find((e) => e.type === 'text');
+    expect(text).toMatchObject({
+      delta: expect.stringContaining('I found the customer, but I did not create the invoice'),
+    });
+    expect(text).toMatchObject({
+      delta: expect.stringContaining('quantity and HT unit price'),
+    });
+    expect(text).not.toMatchObject({
+      delta: expect.stringMatching(/67\.83|\u26a0|uuid|schema/i),
+    });
+  });
+
   it('strips reasoning scaffolds and internal ids from final assistant text', async () => {
     const llm = makeLlm([
       {
