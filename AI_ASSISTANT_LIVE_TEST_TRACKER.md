@@ -63,7 +63,7 @@ Production registry difference for the owner account:
 
 - Present in local source but not exposed by production registry for this account: `create_invoice`, `list_low_stock_parts`, `get_inventory_value`.
 - `example` skill is correctly absent from production registry.
-- Cause still needs verification: module entitlement filtering vs deployed backend staleness.
+- Verified cause: the garage has active `inventory` and `invoicing` module rows in production, but the assistant context defaulted to `enabledModules: []` from the auth payload before filtering the registry.
 
 ## Production Data Fixtures
 
@@ -151,6 +151,7 @@ Status values: Pending, Pass, Partial, Fail, Skipped.
 | Invoice lookup by invoice number | pending local commit | Users asking for `INV-...` saw UUID validation errors or a refusal instead of invoice details. | `get_invoice` now accepts visible invoice numbers as well as internal UUIDs while staying garage-scoped. | Added invoice identifier lookup in the invoicing service and schema/tests for invoice numbers. |
 | Hide internal IDs in replies | pending local commit | Customer lookup answered correctly but exposed raw customer IDs in the user-facing response. | The main and compose-only assistant prompts now forbid internal database IDs unless the user explicitly asks for technical IDs. | Strengthened response-format rules and pinned them in orchestrator tests. |
 | Historical top-customer windows | pending local commit | "Top customers in 1990" fabricated current top customers as historical data. | `list_top_customers` now accepts `from`/`to` and date-bounded revenue rankings return an empty list when there are no paid invoices in that window. | Added date-window support and regression tests for historical empty results. |
+| Assistant module entitlements | pending local commit | Production has active `inventory` and `invoicing` rows, but `/assistant/registry` exposed only 27 of 30 local tools for the owner. | Assistant chat and registry contexts now load active garage modules before filtering module-gated tools. | Injected `ModulesService` into the assistant controller, merged free and active module IDs into context, and added controller regression tests. |
 
 ## Response Quality Notes
 

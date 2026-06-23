@@ -23,6 +23,7 @@ import { ApprovalService } from './approval.service';
 import { ToolRegistryService } from './tool-registry.service';
 import { SkillRegistryService } from './skill-registry.service';
 import { AgentRunnerService } from './agent-runner.service';
+import { ModulesService } from '../modules/modules.service';
 
 @ApiTags('assistant')
 @ApiBearerAuth()
@@ -36,7 +37,33 @@ export class AssistantController {
     private readonly tools: ToolRegistryService,
     private readonly skills: SkillRegistryService,
     private readonly agents: AgentRunnerService,
+    private readonly modules: ModulesService,
   ) {}
+
+  private async buildContext(
+    user: any,
+    locale: Locale = 'en',
+  ): Promise<AssistantUserContext> {
+    const enabledModules = new Set<string>(user.enabledModules ?? []);
+    const catalog = this.modules.getCatalog();
+    const activeModules = await this.modules.getActiveModules(user.garageId);
+
+    for (const module of catalog) {
+      if (module.price === 0) enabledModules.add(module.id);
+    }
+    for (const module of activeModules) {
+      enabledModules.add(module.moduleId);
+    }
+
+    return {
+      userId: user.userId ?? user.id,
+      garageId: user.garageId,
+      email: user.email,
+      role: user.role,
+      enabledModules: Array.from(enabledModules),
+      locale,
+    };
+  }
 
   @Post('chat')
   // Per-user 30/min (short) and per-garage 200/min (long). Trackers configured
@@ -50,14 +77,10 @@ export class AssistantController {
     @CurrentUser() user: any,
     @Body() dto: ChatRequestDto,
   ): Promise<Observable<{ data: SseEvent }>> {
-    const ctx: AssistantUserContext = {
-      userId: user.userId ?? user.id,
-      garageId: user.garageId,
-      email: user.email,
-      role: user.role,
-      enabledModules: user.enabledModules ?? [],
-      locale: (dto.locale ?? user.locale ?? 'en') as Locale,
-    };
+    const ctx = await this.buildContext(
+      user,
+      (dto.locale ?? user.locale ?? 'en') as Locale,
+    );
     const conv = await this.conversation.getOrCreate(
       ctx.garageId,
       ctx.userId,
@@ -108,15 +131,8 @@ export class AssistantController {
   }
 
   @Get('registry')
-  registry(@CurrentUser() user: any) {
-    const ctx: AssistantUserContext = {
-      userId: user.userId ?? user.id,
-      garageId: user.garageId,
-      email: user.email,
-      role: user.role,
-      enabledModules: user.enabledModules ?? [],
-      locale: 'en',
-    };
+  async registry(@CurrentUser() user: any) {
+    const ctx = await this.buildContext(user);
     return {
       tools: this.tools.listForUser(ctx),
       skills: this.skills.list(),

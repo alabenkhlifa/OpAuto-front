@@ -3,6 +3,7 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { AiModule } from '../ai/ai.module';
 import { SmsModule } from '../sms/sms.module';
 import { EmailModule } from '../email/email.module';
+import { ModulesModule } from '../modules/modules.module';
 import { AssistantController } from './assistant.controller';
 import { OrchestratorService } from './orchestrator.service';
 import { LlmGatewayService } from './llm-gateway.service';
@@ -16,7 +17,7 @@ import { AuditService } from './audit.service';
 import { IntentClassifierService } from './intent-classifier.service';
 
 @Module({
-  imports: [PrismaModule, AiModule, SmsModule, EmailModule],
+  imports: [PrismaModule, AiModule, SmsModule, EmailModule, ModulesModule],
   controllers: [AssistantController],
   providers: [
     OrchestratorService,
