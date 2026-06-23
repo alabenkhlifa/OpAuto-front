@@ -578,7 +578,26 @@ export class OrchestratorService {
           parsedArgs.value,
           ctx.turnState?.userMessage,
         );
-        const validation = this.tools.validateArgs(call.name, parsedArgs.value);
+        let validation = this.tools.validateArgs(call.name, parsedArgs.value);
+        if (!validation.valid) {
+          const recoveredArgs = this.recoverCreateInvoiceArgsFromContext(
+            call.name,
+            parsedArgs.value,
+            validation.errors ?? [],
+            ctx.turnState?.userMessage,
+            successfulToolResults,
+          );
+          if (recoveredArgs) {
+            const recoveredValidation = this.tools.validateArgs(
+              call.name,
+              recoveredArgs,
+            );
+            if (recoveredValidation.valid) {
+              parsedArgs.value = recoveredArgs;
+              validation = recoveredValidation;
+            }
+          }
+        }
         if (!validation.valid) {
           subject.next({
             type: 'tool_result',
@@ -1149,6 +1168,100 @@ export class OrchestratorService {
       normalised._expectedConfirmation = `${total.toFixed(2)} TND`;
     }
     return normalised;
+  }
+
+  private recoverCreateInvoiceArgsFromContext(
+    toolName: string,
+    args: unknown,
+    errors: string[],
+    userMessage: string | undefined,
+    successfulToolResults: { toolName: string; result: unknown }[],
+  ): unknown | null {
+    if (toolName !== 'create_invoice') return null;
+    if (!args || typeof args !== 'object' || Array.isArray(args)) return null;
+    if (!errors.some((error) => /customerId|carId|lineItems|uuid/i.test(error))) {
+      return null;
+    }
+
+    const userMessageLines = this.parseInvoiceLineItemsFromText(userMessage);
+    if (userMessageLines.length === 0) return null;
+
+    const original = args as Record<string, unknown>;
+    const recovered: Record<string, unknown> = { ...original };
+    let changed = false;
+
+    if (
+      typeof recovered.customerId !== 'string' ||
+      !UUID_PATTERN.test(recovered.customerId)
+    ) {
+      const customer = this.findResultRecord(successfulToolResults, [
+        'find_customer',
+        'get_customer',
+      ]);
+      if (customer?.id && UUID_PATTERN.test(customer.id)) {
+        recovered.customerId = customer.id;
+        changed = true;
+      }
+    }
+
+    if (
+      typeof recovered.carId !== 'string' ||
+      !UUID_PATTERN.test(recovered.carId)
+    ) {
+      const car = this.findResultRecord(successfulToolResults, [
+        'find_car',
+        'get_car',
+      ]);
+      if (car?.id && UUID_PATTERN.test(car.id)) {
+        recovered.carId = car.id;
+        changed = true;
+      }
+    }
+
+    if (errors.some((error) => /lineItems/i.test(error))) {
+      recovered.lineItems = userMessageLines;
+      changed = true;
+    }
+
+    if (
+      typeof recovered._expectedConfirmation !== 'string' ||
+      recovered._expectedConfirmation.trim().length === 0
+    ) {
+      const total = userMessageLines.reduce(
+        (sum, item) => sum + item.quantity * item.unitPrice,
+        0,
+      );
+      recovered._expectedConfirmation = `${total.toFixed(2)} TND`;
+      changed = true;
+    }
+
+    return changed ? recovered : null;
+  }
+
+  private findResultRecord(
+    successfulToolResults: { toolName: string; result: unknown }[],
+    toolNames: string[],
+  ): { id?: string; customerId?: string } | null {
+    const allowed = new Set(toolNames);
+    for (const entry of [...successfulToolResults].reverse()) {
+      if (!allowed.has(entry.toolName)) continue;
+      const candidates = Array.isArray(entry.result)
+        ? entry.result
+        : [entry.result];
+      for (const candidate of candidates) {
+        if (!candidate || typeof candidate !== 'object') continue;
+        const record = candidate as Record<string, unknown>;
+        if (typeof record.id !== 'string') continue;
+        return {
+          id: record.id,
+          customerId:
+            typeof record.customerId === 'string'
+              ? record.customerId
+              : undefined,
+        };
+      }
+    }
+    return null;
   }
 
   private normaliseInvoiceLineItem(

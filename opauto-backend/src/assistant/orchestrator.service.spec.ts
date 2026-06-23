@@ -2104,14 +2104,31 @@ describe('OrchestratorService', () => {
       },
     );
     tools.validateArgs.mockImplementation((name: string, args: any) => {
-      if (name === 'create_invoice' && args.customerId === 'Khaoula Khelifi') {
+      if (name !== 'create_invoice') return { valid: true };
+      const errors: string[] = [];
+      if (args.customerId !== customerId) {
+        errors.push('/customerId must match format "uuid"');
+      }
+      if (args.carId !== carId) {
+        errors.push('/carId must match format "uuid"');
+      }
+      if (
+        !Array.isArray(args.lineItems) ||
+        args.lineItems.some(
+          (item: any) =>
+            !item ||
+            typeof item !== 'object' ||
+            typeof item.description !== 'string' ||
+            typeof item.quantity !== 'number' ||
+            typeof item.unitPrice !== 'number',
+        )
+      ) {
+        errors.push('/lineItems/0 must be object');
+      }
+      if (errors.length > 0) {
         return {
           valid: false,
-          errors: [
-            '/customerId must match format "uuid"',
-            '/carId must match format "uuid"',
-            '/lineItems/0 must be object',
-          ],
+          errors,
         };
       }
       return { valid: true };
@@ -2168,10 +2185,10 @@ describe('OrchestratorService', () => {
         content: null,
         toolCalls: [
           {
-            id: 'tc-good-invoice',
+            id: 'tc-primitive-invoice',
             name: 'create_invoice',
             argsJson:
-              `{"customerId":"${customerId}","carId":"${carId}","dueDate":"2026-07-23","lineItems":["oil change labor","oil filter",80,25],"_expectedConfirmation":"105.00 TND"}`,
+              `{"customerId":"${customerId}","carId":"${carId}","dueDate":"2026-07-23","lineItems":["oil change labor","oil filter"],"_expectedConfirmation":"105.00 TND"}`,
           },
         ],
       },
