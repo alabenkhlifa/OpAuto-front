@@ -3609,6 +3609,11 @@
         "body": "Le créneau sera libéré et le client devra être informé.",
         "reason": "Motif"
       },
+      "createInvoice": {
+        "title": "Créer une facture",
+        "total": "Total",
+        "downloadDraftInvoice": "Télécharger l’aperçu de la facture"
+      },
       "recordPayment": {
         "title": "Enregistrer un paiement",
         "method": "Mode",

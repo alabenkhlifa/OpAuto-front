@@ -3647,6 +3647,11 @@
         "body": "سيتم تحرير الفترة الزمنية ويجب إبلاغ العميل.",
         "reason": "السبب"
       },
+      "createInvoice": {
+        "title": "إنشاء فاتورة",
+        "total": "الإجمالي",
+        "downloadDraftInvoice": "تحميل مسودة الفاتورة"
+      },
       "recordPayment": {
         "title": "تسجيل دفعة",
         "method": "طريقة الدفع",

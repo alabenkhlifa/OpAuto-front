@@ -803,6 +803,33 @@ export class OrchestratorService {
         }
 
         if (
+          typeof parsedArgs.value === 'object' &&
+          parsedArgs.value !== null &&
+          tool.prepareApprovalArgs
+        ) {
+          try {
+            parsedArgs.value = await tool.prepareApprovalArgs(
+              parsedArgs.value,
+              ctx,
+            );
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            subject.next({
+              type: 'tool_result',
+              toolCallId: call.id,
+              result: { error: 'approval_prep_failed', detail: message },
+              status: 'failed',
+            });
+            this.appendToolMessage(llmMessages, call.id, {
+              error: 'approval_prep_failed',
+              detail: message,
+            });
+            recordFailedToolAttempt(call.name, 'approval prep failed');
+            continue;
+          }
+        }
+
+        if (
           tier === AssistantBlastTier.CONFIRM_WRITE ||
           tier === AssistantBlastTier.TYPED_CONFIRM_WRITE
         ) {
@@ -1046,6 +1073,16 @@ export class OrchestratorService {
     }
 
     if (row.status === AssistantToolCallStatus.DENIED) {
+      if (tool.cleanupApprovalArgs) {
+        try {
+          await tool.cleanupApprovalArgs(args, ctx);
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          this.logger.warn(
+            `Approval cleanup failed for ${row.toolName}/${toolCallId}: ${message}`,
+          );
+        }
+      }
       // Surface the denial to the LLM context so any follow-up text it composes
       // knows the action was skipped (e.g. so it doesn't immediately retry the
       // same tool with the same args).

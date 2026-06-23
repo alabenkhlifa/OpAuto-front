@@ -8,6 +8,7 @@ import {
 import { SmsPreviewComponent } from '../components/assistant-action-preview/sms-preview.component';
 import { CreateAppointmentPreviewComponent } from '../components/assistant-action-preview/create-appointment-preview.component';
 import { RecordPaymentPreviewComponent } from '../components/assistant-action-preview/record-payment-preview.component';
+import { CreateInvoicePreviewComponent } from '../components/assistant-action-preview/create-invoice-preview.component';
 
 describe('AssistantToolPresenterService', () => {
   let svc: AssistantToolPresenterService;
@@ -139,6 +140,34 @@ describe('AssistantToolPresenterService', () => {
     expect(s.previewInputs?.['type']).toBe('oil-change');
   });
 
+  it('returns the create-invoice preview with total and draft link URL', () => {
+    const s = svc.approvalSummary(
+      pending('create_invoice', {
+        _expectedConfirmation: 124.95,
+        lineItems: [{ name: 'OIL CHANGE', amount: 50 }],
+        previewDownloadUrl: 'https://invoices.example.com/preview/42',
+      }),
+    );
+    expect(s.previewComponent).toBe(CreateInvoicePreviewComponent);
+    expect(s.previewInputs?.['total']).toBe(124.95);
+    expect(s.previewInputs?.['downloadUrl']).toBe(
+      'https://invoices.example.com/preview/42',
+    );
+    expect(s.approveVerbKey).toBe('assistant.tools.create_invoice.approveVerb');
+  });
+
+  it('falls back to invoicePreview.url for create-invoice preview link when needed', () => {
+    const s = svc.approvalSummary(
+      pending('create_invoice', {
+        _expectedConfirmation: '124.95',
+        invoicePreview: { url: 'https://invoices.example.com/preview/77' },
+      }),
+    );
+    expect(s.previewInputs?.['downloadUrl']).toBe(
+      'https://invoices.example.com/preview/77',
+    );
+  });
+
   it('returns the record-payment preview and uses _expectedConfirmation as invoiceNumber', () => {
     const s = svc.approvalSummary(
       pending('record_payment', {
@@ -166,7 +195,7 @@ describe('AssistantToolPresenterService', () => {
       'find_customer', 'get_customer', 'find_car', 'get_car',
       'list_top_customers', 'list_at_risk_customers', 'list_returning_customers', 'list_maintenance_due',
       'list_invoices', 'get_invoice', 'list_overdue_invoices', 'list_low_stock_parts',
-      'get_inventory_value', 'record_payment',
+      'get_inventory_value', 'record_payment', 'create_invoice',
       'send_sms', 'send_email', 'propose_retention_action',
       'list_active_jobs', 'get_dashboard_kpis', 'get_invoices_summary',
       'get_customer_count', 'get_revenue_summary', 'get_revenue_breakdown_by_service',

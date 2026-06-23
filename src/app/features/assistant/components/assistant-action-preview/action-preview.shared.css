@@ -125,6 +125,23 @@
   background: #e5e7eb;
 }
 
+.action-preview__download {
+  font-size: 0.8125rem;
+  color: #1d4ed8;
+  font-weight: 600;
+  text-decoration: none;
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.action-preview__download:hover,
+.action-preview__download:focus-visible {
+  text-decoration: underline;
+  outline: none;
+}
+
 .action-preview__email-body,
 .action-preview__notes,
 .action-preview__warning-text {

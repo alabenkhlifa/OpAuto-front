@@ -4,6 +4,7 @@ import { EmailPreviewComponent } from '../components/assistant-action-preview/em
 import { CreateAppointmentPreviewComponent } from '../components/assistant-action-preview/create-appointment-preview.component';
 import { CancelAppointmentPreviewComponent } from '../components/assistant-action-preview/cancel-appointment-preview.component';
 import { RecordPaymentPreviewComponent } from '../components/assistant-action-preview/record-payment-preview.component';
+import { CreateInvoicePreviewComponent } from '../components/assistant-action-preview/create-invoice-preview.component';
 
 const obj = (v: unknown): Record<string, unknown> | null =>
   v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : null;
@@ -20,6 +21,37 @@ const num = (v: unknown, key: string): number | undefined => {
   if (!o) return undefined;
   const x = o[key];
   return typeof x === 'number' ? x : undefined;
+};
+
+const numOrStr = (v: unknown, key: string): number | string | undefined => {
+  const o = obj(v);
+  if (!o) return undefined;
+  const x = o[key];
+  if (typeof x === 'number' || typeof x === 'string') return x;
+  return undefined;
+};
+
+const objKey = (v: unknown, key: string): Record<string, unknown> | null => {
+  const o = obj(v);
+  if (!o) return null;
+  const x = o[key];
+  return obj(x);
+};
+
+const previewUrl = (v: unknown): string | undefined => {
+  const primary = str(v, 'previewDownloadUrl');
+  if (primary) return primary;
+
+  const alt = str(v, 'previewUrl');
+  if (alt) return alt;
+
+  const fallback = str(v, 'downloadUrl');
+  if (fallback) return fallback;
+
+  const draft = str(v, '_draftInvoicePreviewUrl');
+  if (draft) return draft;
+
+  return str(objKey(v, 'invoicePreview'), 'url');
 };
 
 const arr = (v: unknown, key: string): unknown[] | undefined => {
@@ -144,12 +176,17 @@ export const TOOL_PRESENTERS: ToolPresenter[] = [
   }),
   present('create_invoice', {
     runningParams: (a) => ({
-      total: str(a, '_expectedConfirmation') ?? '',
+      total: numOrStr(a, '_expectedConfirmation') ?? '',
       lineCount: arrLen(a, 'lineItems'),
     }),
     successParams: (_a, r) => ({
       number: str(r, 'invoiceNumber') ?? '',
       total: num(r, 'total') ?? 0,
+    }),
+    previewComponent: CreateInvoicePreviewComponent,
+    previewInputs: (a) => ({
+      total: numOrStr(a, '_expectedConfirmation') ?? '',
+      downloadUrl: previewUrl(a),
     }),
     approveVerbKey: k('create_invoice', 'approveVerb'),
   }),

@@ -579,6 +579,117 @@ describe('Invoicing + Inventory Tools', () => {
       );
     });
 
+    it('prepareApprovalArgs creates a DRAFT invoice and exposes a signed preview URL', async () => {
+      const prisma = makePrisma({
+        customer: { id: VALID_CUSTOMER_ID, garageId: 'garage-1' },
+        car: {
+          id: VALID_CAR_ID,
+          garageId: 'garage-1',
+          customerId: VALID_CUSTOMER_ID,
+        },
+      });
+      const invoicing = makeInvoicing();
+      const invoiceTokenService = {
+        sign: jest.fn().mockReturnValue('preview-token'),
+      };
+      const tool = buildCreateInvoiceTool(
+        prisma as never,
+        invoicing as never,
+        invoiceTokenService as never,
+        'https://opauto.example.test',
+      );
+
+      const args = await tool.prepareApprovalArgs!(
+        { ...minimalArgs(), carId: VALID_CAR_ID },
+        ownerCtx,
+      );
+
+      expect(invoicing.create).toHaveBeenCalledWith(
+        'garage-1',
+        expect.objectContaining({
+          customerId: VALID_CUSTOMER_ID,
+          carId: VALID_CAR_ID,
+        }),
+        expect.objectContaining({ userId: 'user-1', role: 'OWNER' }),
+      );
+      expect(invoiceTokenService.sign).toHaveBeenCalledWith('draft-1', 'invoice');
+      expect(args).toEqual(
+        expect.objectContaining({
+          _draftInvoiceId: 'draft-1',
+          _draftInvoicePreviewUrl:
+            'https://opauto.example.test/api/public/invoices/preview-token',
+          previewDownloadUrl:
+            'https://opauto.example.test/api/public/invoices/preview-token',
+          _expectedConfirmation: '67.83 TND',
+        }),
+      );
+      expect(args).toMatchObject(minimalArgs());
+      expect(invoicing.issue).not.toHaveBeenCalled();
+    });
+
+    it('prepareApprovalArgs is idempotent when a draft id already exists', async () => {
+      const prisma = makePrisma({
+        customer: { id: VALID_CUSTOMER_ID, garageId: 'garage-1' },
+        car: {
+          id: VALID_CAR_ID,
+          garageId: 'garage-1',
+          customerId: VALID_CUSTOMER_ID,
+        },
+      });
+      const invoicing = makeInvoicing();
+      const invoiceTokenService = {
+        sign: jest.fn().mockReturnValue('preview-token'),
+      };
+      const tool = buildCreateInvoiceTool(
+        prisma as never,
+        invoicing as never,
+        invoiceTokenService as never,
+        'https://opauto.example.test',
+      );
+
+      const args = await tool.prepareApprovalArgs!(
+        {
+          ...minimalArgs(),
+          _draftInvoiceId: 'existing-draft',
+          _draftInvoicePreviewUrl: 'https://example.test/api/public/invoices/old',
+          previewDownloadUrl: 'https://example.test/api/public/invoices/old',
+        },
+        ownerCtx,
+      );
+
+      expect(args._draftInvoiceId).toBe('existing-draft');
+      expect(invoiceTokenService.sign).not.toHaveBeenCalled();
+      expect(invoicing.create).not.toHaveBeenCalled();
+      expect(args._draftInvoicePreviewUrl).toBe(
+        'https://example.test/api/public/invoices/old',
+      );
+      expect(args.previewDownloadUrl).toBe(
+        'https://example.test/api/public/invoices/old',
+      );
+    });
+
+    it('cleanupApprovalArgs removes the prepared DRAFT when approval is denied', async () => {
+      const prisma = makePrisma();
+      const invoicing = makeInvoicing();
+      const tool = buildCreateInvoiceTool(prisma as never, invoicing as never);
+
+      await tool.cleanupApprovalArgs!(
+        {
+          ...minimalArgs(),
+          _draftInvoiceId: 'draft-denied',
+          _draftInvoicePreviewUrl: '/api/public/invoices/preview-token',
+          previewDownloadUrl: '/api/public/invoices/preview-token',
+        },
+        ownerCtx,
+      );
+
+      expect(invoicing.remove).toHaveBeenCalledWith(
+        'draft-denied',
+        'garage-1',
+      );
+      expect(invoicing.issue).not.toHaveBeenCalled();
+    });
+
     it('refuses when the customer belongs to a different garage', async () => {
       const prisma = makePrisma({
         customer: {
@@ -747,6 +858,41 @@ describe('Invoicing + Inventory Tools', () => {
         expect.objectContaining({ tvaRate: 7 }),
         expect.objectContaining({ tvaRate: 19 }),
       ]);
+    });
+
+    it('issues a prepared DRAFT when _draftInvoiceId is present', async () => {
+      const prisma = makePrisma();
+      const invoicing = makeInvoicing();
+      const invoicingIssueSpy = jest.spyOn(invoicing, 'issue');
+      const invoicingCreateSpy = jest.spyOn(invoicing, 'create');
+      const tool = buildCreateInvoiceTool(prisma as never, invoicing as never);
+
+      const result = await tool.handler(
+        {
+          ...minimalArgs(),
+          _draftInvoiceId: 'prepared-draft-id',
+          _draftInvoicePreviewUrl:
+            'https://opauto.example.test/api/public/invoices/prepared-token',
+          previewDownloadUrl:
+            'https://opauto.example.test/api/public/invoices/prepared-token',
+        },
+        ownerCtx,
+      );
+
+      expect(invoicingIssueSpy).toHaveBeenCalledWith(
+        'prepared-draft-id',
+        'garage-1',
+        'user-1',
+      );
+      expect(invoicingCreateSpy).not.toHaveBeenCalled();
+      expect(result).toEqual({
+        invoiceId: 'draft-1',
+        invoiceNumber: 'INV-202606-0001',
+        total: 67.83,
+        currency: 'TND',
+        status: 'SENT',
+        dueDate: '2026-06-01',
+      });
     });
   });
 

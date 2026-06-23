@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { InvoicingService } from '../../../invoicing/invoicing.service';
+import { InvoiceTokenService } from '../../../public/invoice-token.service';
 import { AssistantUserContext, ToolDefinition } from '../../types';
 
 export interface CreateInvoiceLineArgs {
@@ -35,6 +36,12 @@ export interface CreateInvoiceArgs {
    * match if the LLM did its math right.
    */
   _expectedConfirmation: string;
+  /** Internal draft id used for preview + post-approval execution. */
+  _draftInvoiceId?: string;
+  /** Internal URL to preview the generated draft invoice PDF before approval. */
+  _draftInvoicePreviewUrl?: string;
+  /** User-facing URL for the approval card's draft invoice download link. */
+  previewDownloadUrl?: string;
 }
 
 export interface CreateInvoiceResult {
@@ -48,9 +55,99 @@ export interface CreateInvoiceResult {
 
 const logger = new Logger('CreateInvoiceTool');
 
+function withPublicBaseUrl(url?: string): string {
+  const trimmed = (url ?? '').trim();
+  if (!trimmed) return '';
+  return trimmed.replace(/\/+$/, '');
+}
+
+function toInvoicePublicUrl(publicBaseUrl: string, token: string): string {
+  const baseUrl = withPublicBaseUrl(publicBaseUrl);
+  const apiBase = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
+  return `${apiBase}/public/invoices/${token}`;
+}
+
+function toTndFormatted(value: number): string {
+  return `${value.toFixed(2)} TND`;
+}
+
+function toCreateInvoiceDto(args: CreateInvoiceArgs) {
+  return {
+    customerId: args.customerId,
+    carId: args.carId,
+    dueDate: args.dueDate,
+    discount: args.discount,
+    notes: args.notes,
+    lineItems: args.lineItems.map((line) => ({
+      description: line.description,
+      quantity: line.quantity,
+      unitPrice: line.unitPrice,
+      tvaRate: line.tvaRate,
+      type: line.type,
+      partId: line.partId,
+      serviceCode: line.serviceCode,
+    })),
+  };
+}
+
+function toCreateInvoiceResult(invoice: {
+  id: string;
+  invoiceNumber: string;
+  total: number;
+  currency: string;
+  status: string;
+  dueDate: Date | null;
+}) {
+  return {
+    invoiceId: invoice.id,
+    invoiceNumber: invoice.invoiceNumber,
+    total: invoice.total,
+    currency: invoice.currency,
+    status: invoice.status,
+    dueDate: invoice.dueDate ? new Date(invoice.dueDate).toISOString().slice(0, 10) : null,
+  };
+}
+
+async function ensureGarageScopedCustomerAndCar(
+  prisma: PrismaService,
+  args: CreateInvoiceArgs,
+  garageId: string,
+) {
+  const customer = await prisma.customer.findUnique({
+    where: { id: args.customerId },
+    select: { id: true, garageId: true },
+  });
+  if (!customer) {
+    throw new NotFoundException('Customer not found');
+  }
+  if (customer.garageId !== garageId) {
+    throw new ForbiddenException('Customer does not belong to this garage');
+  }
+
+  if (args.carId) {
+    const car = await prisma.car.findUnique({
+      where: { id: args.carId },
+      select: { id: true, garageId: true, customerId: true },
+    });
+    if (!car) {
+      throw new NotFoundException('Car not found');
+    }
+    if (car.garageId !== garageId) {
+      throw new ForbiddenException('Car does not belong to this garage');
+    }
+    if (car.customerId !== args.customerId) {
+      throw new BadRequestException(
+        'Car belongs to a different customer than the one supplied',
+      );
+    }
+  }
+}
+
 export function buildCreateInvoiceTool(
   prisma: PrismaService,
   invoicing: InvoicingService,
+  invoiceTokenService?: InvoiceTokenService,
+  publicBaseUrl: string = '',
 ): ToolDefinition<CreateInvoiceArgs, CreateInvoiceResult> {
   return {
     name: 'create_invoice',
@@ -152,61 +249,103 @@ export function buildCreateInvoiceTool(
     blastTier: AssistantBlastTier.TYPED_CONFIRM_WRITE,
     requiredRole: 'OWNER',
     requiredModule: 'invoicing',
+    prepareApprovalArgs: async (
+      args: CreateInvoiceArgs,
+      ctx: AssistantUserContext,
+    ): Promise<CreateInvoiceArgs> => {
+      if (
+        typeof args._draftInvoiceId === 'string' &&
+        args._draftInvoiceId.trim().length > 0
+      ) {
+        return args;
+      }
+      if (!invoiceTokenService) {
+        throw new Error(
+          'create_invoice preview unavailable: InvoiceTokenService was not provided',
+        );
+      }
+
+      await ensureGarageScopedCustomerAndCar(prisma, args, ctx.garageId);
+
+      const draft = await invoicing.create(
+        ctx.garageId,
+        toCreateInvoiceDto(args),
+        { userId: ctx.userId, role: ctx.role },
+      );
+      try {
+        const token = invoiceTokenService.sign(draft.id, 'invoice');
+        const previewUrl = toInvoicePublicUrl(publicBaseUrl, token);
+        return {
+          ...args,
+          _draftInvoiceId: draft.id,
+          _draftInvoicePreviewUrl: previewUrl,
+          previewDownloadUrl: previewUrl,
+          _expectedConfirmation: toTndFormatted(draft.total),
+        };
+      } catch (err) {
+        try {
+          await invoicing.remove(draft.id, ctx.garageId);
+        } catch (cleanupErr) {
+          const message =
+            cleanupErr instanceof Error
+              ? cleanupErr.message
+              : String(cleanupErr);
+          logger.warn(
+            `create_invoice: failed to clean up DRAFT ${draft.id} after preview-signing error: ${message}`,
+          );
+        }
+        throw err;
+      }
+    },
+    cleanupApprovalArgs: async (
+      args: CreateInvoiceArgs,
+      ctx: AssistantUserContext,
+    ): Promise<void> => {
+      const draftInvoiceId =
+        typeof args._draftInvoiceId === 'string'
+          ? args._draftInvoiceId.trim()
+          : '';
+      if (!draftInvoiceId) return;
+
+      await invoicing.remove(draftInvoiceId, ctx.garageId);
+    },
     handler: async (
       args: CreateInvoiceArgs,
       ctx: AssistantUserContext,
     ): Promise<CreateInvoiceResult> => {
-      const customer = await prisma.customer.findUnique({
-        where: { id: args.customerId },
-        select: { id: true, garageId: true },
-      });
-      if (!customer) {
-        throw new NotFoundException('Customer not found');
-      }
-      if (customer.garageId !== ctx.garageId) {
-        throw new ForbiddenException(
-          'Customer does not belong to this garage',
-        );
-      }
+      await ensureGarageScopedCustomerAndCar(prisma, args, ctx.garageId);
 
-      if (args.carId) {
-        const car = await prisma.car.findUnique({
-          where: { id: args.carId },
-          select: { id: true, garageId: true, customerId: true },
-        });
-        if (!car) {
-          throw new NotFoundException('Car not found');
-        }
-        if (car.garageId !== ctx.garageId) {
-          throw new ForbiddenException(
-            'Car does not belong to this garage',
+      const draftInvoiceId =
+        typeof args._draftInvoiceId === 'string'
+          ? args._draftInvoiceId.trim()
+          : '';
+      if (draftInvoiceId) {
+        try {
+          const issued = await invoicing.issue(
+            draftInvoiceId,
+            ctx.garageId,
+            ctx.userId,
           );
-        }
-        if (car.customerId !== args.customerId) {
-          throw new BadRequestException(
-            'Car belongs to a different customer than the one supplied',
-          );
+          return toCreateInvoiceResult(issued);
+        } catch (issueErr) {
+          try {
+            await invoicing.remove(draftInvoiceId, ctx.garageId);
+          } catch (cleanupErr) {
+            const message =
+              cleanupErr instanceof Error
+                ? cleanupErr.message
+                : String(cleanupErr);
+            logger.warn(
+              `create_invoice: failed to clean up prepared DRAFT ${draftInvoiceId} after issue() error: ${message}`,
+            );
+          }
+          throw issueErr;
         }
       }
 
       const draft = await invoicing.create(
         ctx.garageId,
-        {
-          customerId: args.customerId,
-          carId: args.carId,
-          dueDate: args.dueDate,
-          discount: args.discount,
-          notes: args.notes,
-          lineItems: args.lineItems.map((line) => ({
-            description: line.description,
-            quantity: line.quantity,
-            unitPrice: line.unitPrice,
-            tvaRate: line.tvaRate,
-            type: line.type,
-            partId: line.partId,
-            serviceCode: line.serviceCode,
-          })),
-        },
+        toCreateInvoiceDto(args),
         { userId: ctx.userId, role: ctx.role },
       );
 
@@ -216,16 +355,7 @@ export function buildCreateInvoiceTool(
           ctx.garageId,
           ctx.userId,
         );
-        return {
-          invoiceId: issued.id,
-          invoiceNumber: issued.invoiceNumber,
-          total: issued.total,
-          currency: issued.currency,
-          status: issued.status,
-          dueDate: issued.dueDate
-            ? new Date(issued.dueDate).toISOString().slice(0, 10)
-            : null,
-        };
+        return toCreateInvoiceResult(issued);
       } catch (issueErr) {
         // Atomic semantics from the user POV — if issue() fails (insufficient
         // stock, fiscal counter race, etc.) we drop the orphan DRAFT so the

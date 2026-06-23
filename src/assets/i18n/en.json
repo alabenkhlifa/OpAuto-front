@@ -3514,6 +3514,11 @@
         "body": "The slot will be freed up and the customer will need to be informed.",
         "reason": "Reason"
       },
+      "createInvoice": {
+        "title": "Create invoice",
+        "total": "Total",
+        "downloadDraftInvoice": "Download draft invoice"
+      },
       "recordPayment": {
         "title": "Record payment",
         "method": "Method",

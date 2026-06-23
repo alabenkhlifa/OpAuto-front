@@ -121,6 +121,63 @@ const makePrisma = () => ({
   },
 });
 
+const INVOICE_APPROVAL_PREVIEW_FIELDS = [
+  'previewDownloadUrl',
+  'previewInvoiceUrl',
+  'invoicePreviewUrl',
+  'draftInvoiceUrl',
+  'invoiceDraftUrl',
+  'invoiceDownloadUrl',
+  'downloadUrl',
+  'previewUrl',
+  'draftUrl',
+  'reviewUrl',
+  '_draftInvoicePreviewUrl',
+];
+
+const findInvoiceApprovalPreviewField = (
+  approvalPayload: unknown,
+): { field: string; value: string } | null => {
+  const roots = [
+    approvalPayload,
+    (approvalPayload as any)?.args,
+    (approvalPayload as any)?.preview,
+    (approvalPayload as any)?.draft,
+    (approvalPayload as any)?.invoicePreview,
+    (approvalPayload as any)?.draftInvoice,
+    (approvalPayload as any)?.args?.preview,
+    (approvalPayload as any)?.args?.draft,
+    (approvalPayload as any)?.args?.invoicePreview,
+    (approvalPayload as any)?.args?.draftInvoice,
+  ];
+
+  for (const root of roots) {
+    if (!root || typeof root !== 'object' || Array.isArray(root)) continue;
+    for (const field of INVOICE_APPROVAL_PREVIEW_FIELDS) {
+      const value = (root as Record<string, unknown>)[field];
+      if (typeof value === 'string' && value.trim().length > 0) {
+        return { field, value };
+      }
+    }
+    const nestedUrl = (root as { url?: unknown }).url;
+    if (typeof nestedUrl === 'string' && nestedUrl.trim().length > 0) {
+      return { field: 'url', value: nestedUrl };
+    }
+  }
+
+  return null;
+};
+
+const expectInvoiceApprovalReviewPreview = (approvalPayload: unknown) => {
+  const preview = findInvoiceApprovalPreviewField(approvalPayload);
+  expect(preview).toEqual(
+    expect.objectContaining({
+      field: expect.stringMatching(/preview|draft|download|review|url/i),
+      value: expect.stringMatching(/^(?:https?:\/\/|\/)/),
+    }),
+  );
+};
+
 function makeClassifier(picked: string[] | null = null) {
   // null → "always fall through" so existing tests see the full tool set
   return { classify: jest.fn(async () => picked) };
@@ -846,6 +903,19 @@ describe('OrchestratorService', () => {
 
   it('records DENIED resumption without executing the tool, emits deterministic ack, and skips the LLM (UI Bug 3 + behavior finding "DENY does not stick")', async () => {
     const tools = makeTools(['send_sms']);
+    const cleanupApprovalArgs = jest.fn().mockResolvedValue(undefined);
+    tools.get.mockImplementation((name: string) =>
+      name === 'send_sms'
+        ? {
+            name,
+            description: 'desc',
+            parameters: { type: 'object', properties: {} },
+            blastTier: AssistantBlastTier.CONFIRM_WRITE,
+            cleanupApprovalArgs,
+            handler: async () => ({}),
+          }
+        : undefined,
+    );
     // The LLM stub MUST NOT be consumed — handleResume short-circuits on DENIED.
     // Previously the orchestrator handed control back to the LLM which would
     // either retry the same tool with the same payload (B-19 finding) or emit
@@ -877,6 +947,10 @@ describe('OrchestratorService', () => {
     );
 
     expect(tools.execute).not.toHaveBeenCalled();
+    expect(cleanupApprovalArgs).toHaveBeenCalledWith(
+      { to: '+216...' },
+      expect.objectContaining({ garageId: 'garage-1' }),
+    );
     expect(llm.complete).not.toHaveBeenCalled();
     expect(events.find((e) => e.type === 'tool_result')).toMatchObject({
       status: 'denied',
@@ -2556,6 +2630,34 @@ describe('OrchestratorService', () => {
         return { ok: true, result: {}, durationMs: 1 };
       },
     );
+    tools.get.mockImplementation((name: string) => {
+      if (name === 'create_invoice') {
+        return {
+          name,
+          description: 'desc',
+          parameters: { type: 'object', properties: {} },
+          blastTier: AssistantBlastTier.TYPED_CONFIRM_WRITE,
+          prepareApprovalArgs: (args: any) =>
+            Promise.resolve({
+              ...args,
+              _draftInvoiceId: 'draft-1',
+              _draftInvoicePreviewUrl:
+                'https://approval.opauto.test/public/invoices/token',
+              previewDownloadUrl:
+                'https://approval.opauto.test/public/invoices/token',
+            }),
+          handler: async () => ({}),
+        };
+      }
+
+      return {
+        name,
+        description: 'desc',
+        parameters: { type: 'object', properties: {} },
+        blastTier: AssistantBlastTier.READ,
+        handler: async () => ({}),
+      };
+    });
     tools.validateArgs.mockImplementation((name: string, args: any) => {
       if (name !== 'create_invoice') return { valid: true };
       const errors: string[] = [];
@@ -2672,12 +2774,14 @@ describe('OrchestratorService', () => {
       { query: '8580 TUN 289' },
       expect.objectContaining({ garageId: 'garage-1' }),
     );
-    expect(events.find((e) => e.type === 'approval_request')).toMatchObject({
+    const approval = events.find((e) => e.type === 'approval_request');
+    expect(approval).toMatchObject({
       toolName: 'create_invoice',
       blastTier: AssistantBlastTier.TYPED_CONFIRM_WRITE,
       args: expect.objectContaining({
         customerId,
         carId,
+        _expectedConfirmation: '105.00 TND',
         lineItems: expect.arrayContaining([
           expect.objectContaining({
             description: 'oil change labor',
@@ -2692,12 +2796,22 @@ describe('OrchestratorService', () => {
         ]),
       }),
     });
+    expectInvoiceApprovalReviewPreview(approval);
     expect(approvals.createPending).toHaveBeenCalledWith(
-      expect.objectContaining({ toolName: 'create_invoice' }),
+      expect.objectContaining({
+        toolName: 'create_invoice',
+        args: expect.objectContaining({
+          _expectedConfirmation: '105.00 TND',
+        }),
+      }),
+    );
+    expectInvoiceApprovalReviewPreview(
+      (approvals.createPending as jest.Mock).mock.calls[0][0],
     );
     expect(tools.validateArgs).toHaveBeenCalledWith(
       'create_invoice',
       expect.objectContaining({
+        _expectedConfirmation: '105.00 TND',
         lineItems: expect.arrayContaining([
           expect.objectContaining({
             description: 'oil change labor',
@@ -2759,6 +2873,34 @@ describe('OrchestratorService', () => {
         return { ok: true, result: {}, durationMs: 1 };
       },
     );
+    tools.get.mockImplementation((name: string) => {
+      if (name === 'create_invoice') {
+        return {
+          name,
+          description: 'desc',
+          parameters: { type: 'object', properties: {} },
+          blastTier: AssistantBlastTier.TYPED_CONFIRM_WRITE,
+          prepareApprovalArgs: (args: any) =>
+            Promise.resolve({
+              ...args,
+              _draftInvoiceId: 'draft-2',
+              _draftInvoicePreviewUrl:
+                'https://approval.opauto.test/public/invoices/token',
+              previewDownloadUrl:
+                'https://approval.opauto.test/public/invoices/token',
+            }),
+          handler: async () => ({}),
+        };
+      }
+
+      return {
+        name,
+        description: 'desc',
+        parameters: { type: 'object', properties: {} },
+        blastTier: AssistantBlastTier.READ,
+        handler: async () => ({}),
+      };
+    });
     tools.validateArgs.mockImplementation((name: string, args: any) => {
       if (name !== 'create_invoice') return { valid: true };
       const errors: string[] = [];
@@ -2873,7 +3015,8 @@ describe('OrchestratorService', () => {
       { query: '8580 TUN 289' },
       expect.objectContaining({ garageId: 'garage-1' }),
     );
-    expect(events.find((e) => e.type === 'approval_request')).toMatchObject({
+    const approval = events.find((e) => e.type === 'approval_request');
+    expect(approval).toMatchObject({
       toolName: 'create_invoice',
       blastTier: AssistantBlastTier.TYPED_CONFIRM_WRITE,
       args: expect.objectContaining({
@@ -2891,6 +3034,7 @@ describe('OrchestratorService', () => {
         ],
       }),
     });
+    expectInvoiceApprovalReviewPreview(approval);
     expect(approvals.createPending).toHaveBeenCalledWith(
       expect.objectContaining({
         toolName: 'create_invoice',
@@ -2898,6 +3042,7 @@ describe('OrchestratorService', () => {
         args: expect.objectContaining({
           customerId,
           carId,
+          _expectedConfirmation: '10.00 TND',
           lineItems: [
             {
               description: `AI mutation test labor ${mutationLabel}`,
@@ -2908,6 +3053,9 @@ describe('OrchestratorService', () => {
           ],
         }),
       }),
+    );
+    expectInvoiceApprovalReviewPreview(
+      (approvals.createPending as jest.Mock).mock.calls[0][0],
     );
     expect(tools.execute).not.toHaveBeenCalledWith(
       'create_invoice',

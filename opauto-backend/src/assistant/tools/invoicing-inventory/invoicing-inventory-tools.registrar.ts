@@ -1,6 +1,8 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, Inject, forwardRef } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { InvoicingService } from '../../../invoicing/invoicing.service';
+import { InvoiceTokenService } from '../../../public/invoice-token.service';
 import { ToolRegistryService } from '../../tool-registry.service';
 import { buildListInvoicesTool } from './list-invoices.tool';
 import { buildGetInvoiceTool } from './get-invoice.tool';
@@ -23,6 +25,9 @@ export class InvoicingInventoryToolsRegistrar implements OnModuleInit {
     private readonly registry: ToolRegistryService,
     private readonly prisma: PrismaService,
     private readonly invoicing: InvoicingService,
+    @Inject(forwardRef(() => InvoiceTokenService))
+    private readonly invoiceTokenService: InvoiceTokenService,
+    private readonly config: ConfigService,
   ) {}
 
   onModuleInit(): void {
@@ -31,7 +36,12 @@ export class InvoicingInventoryToolsRegistrar implements OnModuleInit {
       buildGetInvoiceTool(this.invoicing),
       buildListOverdueInvoicesTool(this.prisma),
       buildRecordPaymentTool(this.prisma, this.invoicing),
-      buildCreateInvoiceTool(this.prisma, this.invoicing),
+      buildCreateInvoiceTool(
+        this.prisma,
+        this.invoicing,
+        this.invoiceTokenService,
+        this.config.get<string>('PUBLIC_BASE_URL') ?? '',
+      ),
       buildListLowStockPartsTool(this.prisma),
       buildGetInventoryValueTool(this.prisma),
     ];

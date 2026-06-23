@@ -327,6 +327,41 @@ describe('AssistantApprovalCardComponent', () => {
       expect(s.approveVerbKey).toContain('send_sms');
     });
 
+    it('renders create-invoice preview link and shows it before typed confirmation input', async () => {
+      await setPending(
+        buildPending({
+          toolName: 'create_invoice',
+          blastTier: 'TYPED_CONFIRM_WRITE',
+          args: {
+            _expectedConfirmation: 'CONFIRM-INVOICE',
+            previewUrl: 'https://invoices.example.com/preview/55',
+          },
+        }),
+      );
+
+      const link = fixture.nativeElement.querySelector('.action-preview__download-link');
+      const typedInput = fixture.nativeElement.querySelector('.approval-card__typed-input');
+
+      expect(link).not.toBeNull();
+      expect(typedInput).not.toBeNull();
+      expect(
+        link!.compareDocumentPosition(typedInput) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeGreaterThan(0);
+    });
+
+    it('renders create-invoice preview total from _expectedConfirmation', async () => {
+      await setPending(
+        buildPending({
+          toolName: 'create_invoice',
+          args: {
+            _expectedConfirmation: 124.95,
+          },
+        }),
+      );
+      const body = fixture.nativeElement.textContent || '';
+      expect(body).toContain('124.95');
+    });
+
     it('falls back to the default approve verb when tool is unknown', async () => {
       await setPending(buildPending({ toolName: 'unknown_tool', args: { foo: 1 } }));
       const s = component.summary();

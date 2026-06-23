@@ -47,6 +47,24 @@ export interface ToolDefinition<TArgs = unknown, TResult = unknown> {
   blastTier: AssistantBlastTier;
   requiredModule?: string;
   requiredRole?: 'OWNER' | 'STAFF';
+  /**
+   * Optional hook to mutate args right before approval is persisted.
+   * Keep this write-specific path side-effect-aware (e.g. draft creation
+   * for confirm-write tools) and return the enriched args that should be
+   * shown in the approval payload.
+   */
+  prepareApprovalArgs?: (
+    args: TArgs,
+    ctx: AssistantUserContext,
+  ) => Promise<TArgs> | TArgs;
+  /**
+   * Optional best-effort cleanup for side effects created by
+   * prepareApprovalArgs when the user denies the approval.
+   */
+  cleanupApprovalArgs?: (
+    args: TArgs,
+    ctx: AssistantUserContext,
+  ) => Promise<void> | void;
   resolveBlastTier?: (
     args: TArgs,
     ctx: AssistantUserContext,
