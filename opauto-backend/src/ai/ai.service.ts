@@ -189,10 +189,20 @@ export class AiService {
     let windowEnd: Date;
     if (dto.preferredDate) {
       const preferred = new Date(dto.preferredDate);
-      windowStart = new Date(preferred);
-      windowStart.setDate(windowStart.getDate() - 3);
-      windowEnd = new Date(preferred);
-      windowEnd.setDate(windowEnd.getDate() + 3);
+      if (dto.exactDateOnly) {
+        windowStart = new Date(Date.UTC(
+          preferred.getUTCFullYear(),
+          preferred.getUTCMonth(),
+          preferred.getUTCDate(),
+        ));
+        windowEnd = new Date(windowStart);
+        windowEnd.setUTCDate(windowEnd.getUTCDate() + 1);
+      } else {
+        windowStart = new Date(preferred);
+        windowStart.setDate(windowStart.getDate() - 3);
+        windowEnd = new Date(preferred);
+        windowEnd.setDate(windowEnd.getDate() + 3);
+      }
     } else {
       windowStart = new Date(now);
       windowEnd = new Date(now);

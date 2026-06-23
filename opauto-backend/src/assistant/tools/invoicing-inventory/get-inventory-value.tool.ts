@@ -5,6 +5,7 @@ import { AssistantUserContext, ToolDefinition } from '../../types';
 export interface GetInventoryValueResult {
   totalCount: number;
   totalValue: number;
+  totalValueFormatted: string;
   currency: 'TND';
 }
 
@@ -20,7 +21,8 @@ export function buildGetInventoryValueTool(
     name: 'get_inventory_value',
     description:
       "Returns the total inventory value (sum of quantity * costPrice across " +
-      "every part in the owner's garage) plus the total part count. Use when " +
+      "every part in the owner's garage) plus the total part count. Also returns " +
+      'totalValueFormatted; copy that field when writing the currency amount. Use when ' +
       'the user asks "how much is my inventory worth", "stock value", ' +
       '"inventory worth", etc. Currency is TND.',
     parameters: {
@@ -51,6 +53,10 @@ export function buildGetInventoryValueTool(
       return {
         totalCount,
         totalValue,
+        totalValueFormatted: `${totalValue.toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })} TND`,
         currency: 'TND',
       };
     },

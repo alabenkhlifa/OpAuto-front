@@ -26,6 +26,45 @@ interface FindAvailableSlotError {
 const CONCRETE_DATE_PATTERN =
   '^\\d{4}-\\d{2}-\\d{2}(?:T\\d{2}:\\d{2}(?::\\d{2}(?:\\.\\d{1,3})?)?(?:Z|[+-]\\d{2}:?\\d{2})?)?$';
 const CONCRETE_DATE_RE = new RegExp(CONCRETE_DATE_PATTERN);
+const WEEKDAYS: Record<string, number> = {
+  sunday: 0,
+  monday: 1,
+  tuesday: 2,
+  wednesday: 3,
+  thursday: 4,
+  friday: 5,
+  saturday: 6,
+};
+
+function toUtcDateOnly(date: Date): Date {
+  return new Date(Date.UTC(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate(),
+  ));
+}
+
+function resolveWeekdayReference(
+  message: string | undefined,
+  now: Date = new Date(),
+): string | null {
+  if (!message) return null;
+  const match = message.match(
+    /\b(next|this)\s+(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/i,
+  );
+  if (!match) return null;
+
+  const qualifier = match[1].toLowerCase();
+  const targetDay = WEEKDAYS[match[2].toLowerCase()];
+  const today = toUtcDateOnly(now);
+  const currentDay = today.getUTCDay();
+  let delta = (targetDay - currentDay + 7) % 7;
+  if (qualifier === 'next' && delta === 0) delta = 7;
+
+  const resolved = new Date(today);
+  resolved.setUTCDate(resolved.getUTCDate() + delta);
+  return resolved.toISOString().slice(0, 10);
+}
 
 function isValidConcreteDate(value: string): boolean {
   if (!CONCRETE_DATE_RE.test(value)) return false;
@@ -87,12 +126,23 @@ export function buildFindAvailableSlotTool(
         };
       }
 
-      const result = await aiService.suggestSchedule(ctx.garageId, {
+      const weekdayDate = resolveWeekdayReference(ctx.turnState?.userMessage);
+      const preferredDate = weekdayDate ?? args.date;
+      const scheduleRequest: {
+        appointmentType: string;
+        estimatedDuration: number;
+        preferredDate: string;
+        exactDateOnly?: boolean;
+        language: AssistantUserContext['locale'];
+      } = {
         appointmentType: args.appointmentType ?? 'general-inspection',
         estimatedDuration: args.durationMinutes,
-        preferredDate: args.date,
+        preferredDate,
         language: ctx.locale,
-      });
+      };
+      if (weekdayDate) scheduleRequest.exactDateOnly = true;
+
+      const result = await aiService.suggestSchedule(ctx.garageId, scheduleRequest);
       return {
         slots: result.suggestedSlots.slice(0, 3),
         provider: result.provider,

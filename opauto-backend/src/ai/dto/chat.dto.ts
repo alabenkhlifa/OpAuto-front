@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsArray, IsNumber } from 'class-validator';
+import { IsString, IsOptional, IsArray, IsNumber, IsBoolean } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class ChatMessageDto {
@@ -37,6 +37,8 @@ export class AiSuggestScheduleDto {
   @ApiProperty() @IsNumber() estimatedDuration: number;
 
   @ApiProperty({ required: false }) @IsString() @IsOptional() preferredDate?: string;
+
+  @ApiProperty({ required: false }) @IsBoolean() @IsOptional() exactDateOnly?: boolean;
 
   @ApiProperty({ required: false }) @IsString() @IsOptional() mechanicId?: string;
 

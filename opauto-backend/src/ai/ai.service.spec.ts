@@ -220,6 +220,26 @@ describe('AiService – suggestSchedule', () => {
     expect(diffDays).toBeCloseTo(6, 0);
   });
 
+  it('uses a one-day window when exactDateOnly is set', async () => {
+    const emp = makeEmployee({ id: 'emp-1' });
+    prisma.employee.findMany.mockResolvedValueOnce([emp]);
+    prisma.appointment.findMany.mockResolvedValue([]);
+
+    await service.suggestSchedule(GARAGE_ID, {
+      appointmentType: 'oil-change',
+      estimatedDuration: 30,
+      preferredDate: '2026-06-30',
+      exactDateOnly: true,
+    });
+
+    const apptCall = prisma.appointment.findMany.mock.calls[0][0];
+    const windowStart: Date = apptCall.where.startTime.gte;
+    const windowEnd: Date = apptCall.where.startTime.lte;
+
+    expect(windowStart.toISOString()).toBe('2026-06-30T00:00:00.000Z');
+    expect(windowEnd.toISOString()).toBe('2026-07-01T00:00:00.000Z');
+  });
+
   // ── 6. Excludes CANCELLED and NO_SHOW from conflict check ─
 
   it('excludes CANCELLED and NO_SHOW appointments from query', async () => {

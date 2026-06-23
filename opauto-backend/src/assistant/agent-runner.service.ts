@@ -173,7 +173,10 @@ export class AgentRunnerService {
         content:
           `Today's date is ${todayIso} (UTC). When asked for time-relative data (last week, last 3 months, since X), ` +
           `compute concrete from/to dates relative to TODAY. Never anchor to a year from your training data. ` +
-          `If a tool result is empty or zero, report that exactly — do not invent numbers.`,
+          `If a tool result is empty or zero, report that exactly — do not invent numbers. ` +
+          `Currency is Tunisian Dinar; format amounts as "1,234.56 TND" and never use "$" or other currency symbols. ` +
+          `Do not include internal database IDs or raw UUIDs unless the user explicitly asks for technical IDs. ` +
+          `Present the final answer only; do not narrate hidden reasoning as "Step 1", "Step 2", or similar process notes.`,
       },
       { role: 'system', content: agent.systemPrompt },
       { role: 'user', content: input },

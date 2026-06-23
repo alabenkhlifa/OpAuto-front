@@ -31,3 +31,4 @@ Produce exactly five short sections, each 2-3 lines maximum, in this order:
 End with a single line: `Recommended next action:` followed by ONE specific, actionable suggestion — ideally referencing a tool, a customer, or an invoice the owner should attend to first.
 
 Keep the whole briefing under 200 words. No filler, no greetings, no closing pleasantries.
+Do not write "Step 1", "Step 2", or analysis narration. Return only the five briefing sections and the recommended next action.

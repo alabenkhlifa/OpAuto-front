@@ -115,6 +115,32 @@ describe('analytics tools', () => {
       expect(where.paidAt.lt.toISOString()).toBe('2026-05-01T00:00:00.000Z');
     });
 
+    it('corrects period month to the previous calendar month when the user asked for last month', async () => {
+      jest.useFakeTimers().setSystemTime(new Date('2026-06-23T12:00:00Z'));
+      const aggregate = jest
+        .fn()
+        .mockResolvedValue({ _sum: { total: 0 }, _count: 0 });
+      const prisma = { invoice: { aggregate } } as any;
+      const tool = buildGetRevenueSummaryTool(prisma);
+
+      const result = await tool.handler(
+        { period: 'month' },
+        {
+          ...ownerCtx,
+          turnState: {
+            readToolCallsSoFar: 0,
+            userMessage: "Walk me through last month's numbers.",
+          },
+        },
+      );
+
+      expect(result.period).toBe('custom');
+      const where = aggregate.mock.calls[0][0].where;
+      expect(where.paidAt.gte.toISOString()).toBe('2026-05-01T00:00:00.000Z');
+      expect(where.paidAt.lt.toISOString()).toBe('2026-06-01T00:00:00.000Z');
+      jest.useRealTimers();
+    });
+
     it('rejects partial range (only from, no to) at handler level', async () => {
       const tool = buildGetRevenueSummaryTool({ invoice: { aggregate: jest.fn() } } as any);
       await expect(

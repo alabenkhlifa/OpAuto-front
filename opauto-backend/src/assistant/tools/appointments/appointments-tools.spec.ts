@@ -219,6 +219,49 @@ describe('Appointments tools', () => {
       ).toBe(true);
     });
 
+    it('corrects next-weekday dates from the user message and requests exact-day search', async () => {
+      jest.useFakeTimers().setSystemTime(new Date('2026-06-23T12:00:00Z'));
+      const suggestSchedule = jest.fn().mockResolvedValue({
+        suggestedSlots: [
+          {
+            start: '2026-06-30T08:00:00.000Z',
+            end: '2026-06-30T08:30:00.000Z',
+            mechanicId: 'm1',
+            mechanicName: 'M1',
+            score: 0.95,
+            reason: 'r',
+          },
+        ],
+        provider: 'mock',
+      });
+      const tool = buildFindAvailableSlotTool({ suggestSchedule } as any);
+
+      await tool.handler(
+        {
+          date: '2026-06-28',
+          durationMinutes: 30,
+          appointmentType: 'quick-service',
+        },
+        {
+          ...ownerCtx,
+          turnState: {
+            readToolCallsSoFar: 0,
+            userMessage:
+              'Find me a free slot next Tuesday morning for a quick service.',
+          },
+        },
+      );
+
+      expect(suggestSchedule).toHaveBeenCalledWith('garage-1', {
+        appointmentType: 'quick-service',
+        estimatedDuration: 30,
+        preferredDate: '2026-06-30',
+        exactDateOnly: true,
+        language: 'en',
+      });
+      jest.useRealTimers();
+    });
+
     it('returns invalid_date without calling suggestSchedule for direct invalid-date invocation', async () => {
       const suggestSchedule = jest.fn();
       const tool = buildFindAvailableSlotTool({ suggestSchedule } as any);

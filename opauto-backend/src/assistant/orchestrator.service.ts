@@ -274,6 +274,7 @@ export class OrchestratorService {
       // is plenty headroom for retry-with-feedback while still bounded.
       const MAX_AGENT_DISPATCHES_PER_TURN = 2;
       let agentDispatchesThisTurn = 0;
+      let lastAgentResult: { agentName: string; result: string } | null = null;
       // Per-turn cap on EVERY tool, not just find_* (I-016 broadening):
       // the original empty-result-only cap missed B-06 in the UI path
       // because find_car returned a NON-empty array each call (the right
@@ -358,7 +359,13 @@ export class OrchestratorService {
         }
 
         if (toolCalls.length === 0) {
-          const text = completion.content ?? '';
+          let text = completion.content ?? '';
+          if (
+            lastAgentResult &&
+            this.shouldFallbackToAgentResult(text)
+          ) {
+            text = lastAgentResult.result;
+          }
           const persisted = await this.persistAssistant(
             conversationId,
             text,
@@ -427,7 +434,15 @@ export class OrchestratorService {
             continue;
           }
           agentDispatchesThisTurn++;
-          await this.handleDispatchAgent(call, ctx, llmMessages, subject);
+          const agentResult = await this.handleDispatchAgent(
+            call,
+            ctx,
+            llmMessages,
+            subject,
+          );
+          if (agentResult) {
+            lastAgentResult = agentResult;
+          }
           continue;
         }
 
@@ -834,14 +849,14 @@ export class OrchestratorService {
     ctx: AssistantUserContext,
     llmMessages: LlmMessage[],
     subject: ReplaySubject<SseEvent>,
-  ): Promise<void> {
+  ): Promise<{ agentName: string; result: string } | null> {
     const parsed = this.safeParseArgs(call.argsJson);
     if (parsed.error) {
       this.appendToolMessage(llmMessages, call.id, {
         error: 'invalid_arguments',
         detail: parsed.error,
       });
-      return;
+      return null;
     }
     const args = parsed.value as {
       name?: unknown;
@@ -860,7 +875,7 @@ export class OrchestratorService {
         error: 'invalid_arguments',
         detail: 'name is required',
       });
-      return;
+      return null;
     }
 
     subject.next({ type: 'agent_dispatch', agentName, reason });
@@ -868,16 +883,26 @@ export class OrchestratorService {
       const { result } = await this.agents.run(agentName, input, ctx);
       subject.next({ type: 'agent_result', agentName, result });
       this.appendToolMessage(llmMessages, call.id, { result });
+      return { agentName, result };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       this.appendToolMessage(llmMessages, call.id, {
         error: 'agent_failed',
         detail: message,
       });
+      return null;
     }
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────
+
+  private shouldFallbackToAgentResult(text: string): boolean {
+    return (
+      /couldn'?t\s+finish/i.test(text) ||
+      /ran\s+out\s+of\s+time/i.test(text) ||
+      /try\s+a\s+smaller\s+question/i.test(text)
+    );
+  }
 
   private async filterToolsByIntent(
     userMessage: string,
@@ -1269,6 +1294,7 @@ export class OrchestratorService {
     parts.push(
       `Formatting rules:\n` +
         `- Use Markdown: **bold** for emphasis, lists with - or 1., backticks for code, links as [text](url). The chat UI renders Markdown.\n` +
+        `- Present the final answer only. Do NOT narrate hidden reasoning or data-gathering steps as "Step 1", "Step 2", "Analyze the tool output", or similar process notes.\n` +
         `- Currency is Tunisian Dinar. Format amounts as "1,234.56 TND" (English) or "1 234,56 DT" (French). NEVER prefix with a currency symbol — no ₸, no د.ت, no $, no €. Just the number and the code.\n` +
         `- Round currency to 2 decimal places.\n` +
         `- Do NOT include internal database IDs (customerId, carId, appointmentId, invoice UUIDs, toolCallId, or raw UUIDs) unless the user explicitly asks for technical IDs. Use names, phone numbers, invoice numbers, license plates, dates, and amounts instead.\n` +

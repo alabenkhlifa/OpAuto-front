@@ -761,6 +761,52 @@ describe('OrchestratorService', () => {
     );
   });
 
+  it('uses the latest agent result when the final LLM response is a generic timeout', async () => {
+    const agents = {
+      list: jest
+        .fn()
+        .mockReturnValue([
+          { name: 'FinanceAgent', description: 'cash flow analysis' },
+        ]),
+      run: jest.fn().mockResolvedValue({
+        result: 'There are 49 overdue invoices totaling 11,980.12 TND.',
+      }),
+    };
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-1',
+            name: 'dispatch_agent',
+            argsJson:
+              '{"name":"FinanceAgent","input":"cash-flow risk","reason":"risk summary"}',
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: "I couldn't finish the task in time - let's try a smaller question.",
+        toolCalls: [],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({ llm, agents });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-1',
+        'Give me a cash-flow risk summary.',
+        undefined,
+      ),
+    );
+
+    expect(events.find((e) => e.type === 'text')).toMatchObject({
+      delta: 'There are 49 overdue invoices totaling 11,980.12 TND.',
+    });
+  });
+
   it('emits budget_exceeded + done and skips the LLM when the conversation is over budget', async () => {
     const conversation = makeConversation([], 250_000);
     const llm = makeLlm([
@@ -1082,6 +1128,7 @@ describe('OrchestratorService', () => {
       expect(prompt).toMatch(/SELF-SEND/);
       expect(prompt).toMatch(/Do NOT include internal database IDs/);
       expect(prompt).toMatch(/Use names, phone numbers, invoice numbers, license plates/);
+      expect(prompt).toMatch(/Do NOT narrate hidden reasoning/);
     });
 
     it('forbids refusing because a specialist agent conversation is needed', async () => {

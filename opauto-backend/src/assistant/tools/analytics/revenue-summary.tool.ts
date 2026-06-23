@@ -44,6 +44,17 @@ export interface RevenueSummaryResult {
   currency: 'TND';
 }
 
+function asksForLastMonth(message: string | undefined): boolean {
+  return /\b(last|previous)\s+month\b/i.test(message ?? '');
+}
+
+function previousCalendarMonthWindow(now: Date): { from: Date; to: Date } {
+  const to = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const from = new Date(to);
+  from.setUTCMonth(from.getUTCMonth() - 1);
+  return { from, to };
+}
+
 /**
  * Sums Invoice.total for paid invoices within the requested window, scoped
  * to the caller's garage. Uses paidAt as the time anchor so partial/overdue
@@ -92,7 +103,16 @@ export function buildGetRevenueSummaryTool(
       args: RevenueSummaryArgs,
       ctx: AssistantUserContext,
     ): Promise<RevenueSummaryResult> => {
-      const { from, to, periodLabel } = resolveRevenueWindow(args);
+      const correctedWindow =
+        !args.from &&
+        !args.to &&
+        args.period === 'month' &&
+        asksForLastMonth(ctx.turnState?.userMessage)
+          ? previousCalendarMonthWindow(new Date())
+          : null;
+      const { from, to, periodLabel } = correctedWindow
+        ? { ...correctedWindow, periodLabel: 'custom' as const }
+        : resolveRevenueWindow(args);
 
       const aggregate = await prisma.invoice.aggregate({
         where: {

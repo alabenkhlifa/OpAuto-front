@@ -10,11 +10,12 @@ You are producing a restocking plan. The orchestrator has placed today's date in
 ## Pull the data
 
 1. `list_low_stock_parts` — every part where `quantity ≤ minQuantity`. Each entry returns id, name, partNumber, quantity, minQuantity, unitPrice.
-2. `get_inventory_value` — total current stock value (for context only).
+2. `get_inventory_value` — total current stock value (for context only). Use `totalValueFormatted` exactly when writing the stock value; do not reformat the raw number yourself.
 
 ## Compute suggested order
 
 For each low-stock part, suggest order quantity = `2 × minQuantity − quantity`. That refills the buffer to 2× the minimum, which is the standard rule of thumb the seed uses.
+Compute this arithmetic yourself from the two tool results. There is no separate calculation tool; do not call `calculate_suggested_order` or any unlisted tool.
 
 ## Output
 

@@ -225,6 +225,9 @@ describe('AgentRunnerService', () => {
       expect(llm.calls[0].messages[0].content).toMatch(
         /Today's date is \d{4}-\d{2}-\d{2}/,
       );
+      expect(llm.calls[0].messages[0].content).toMatch(/1,234\.56 TND/);
+      expect(llm.calls[0].messages[0].content).toMatch(/raw UUIDs/);
+      expect(llm.calls[0].messages[0].content).toMatch(/Step 1/);
       expect(llm.calls[0].messages[1]).toEqual({
         role: 'system',
         content: 'You are an analyst.',

@@ -816,6 +816,7 @@ describe('Invoicing + Inventory Tools', () => {
 
       expect(result.totalCount).toBe(13);
       expect(result.totalValue).toBe(50 + 60 + 0);
+      expect(result.totalValueFormatted).toBe('110.00 TND');
       expect(result.currency).toBe('TND');
     });
 

@@ -81,6 +81,13 @@ These read-only DB facts are the expected answers for green and empty-result AI 
 | Invoice `INV-2026-0001` | Exists; status `SENT`; total `1310 TND`; due `2026-07-13`; customer `Hela Mahmoud` |
 | Invoice `INV-2026-0207` | No matching invoice in production |
 | Customer `NotARealCustomer` | No matching customer |
+| Today's schedule on `2026-06-23` | One booking: `08:30-11:50`, title `Patenet`, customer `hayfa rahmouni`, plate `222 TUN 4534` |
+| Next Tuesday `2026-06-30` | No bookings found |
+| June 2026 paid revenue | `0 TND` from 0 paid invoices |
+| May 2026 paid revenue | `0 TND` from 0 paid invoices |
+| YTD paid revenue by service bucket | `Parts` `16,306 TND`; `Labor` `14,233 TND` |
+| Overdue invoices | 49 invoices totaling `11,980.12 TND`; oldest visible row `INV-202509-0001` for Ali Hassine, due `2025-09-25`, total `49.98 TND` |
+| Inventory | 1,911 units with stock value `56,266 TND`; one low-stock part: `Clutch Kit - Small Engine`, quantity `2`, min `2` |
 
 ## Scenario Matrix
 
@@ -139,6 +146,22 @@ Status values: Pending, Pass, Partial, Fail, Skipped.
 | G-INV-1 | "Show me invoice INV-2026-0001 in simple terms." | Exists: SENT, 1310 TND, due 2026-07-13, customer Hela Mahmoud | Failed validation because `get_invoice` requires UUID | Fail |
 | M-INV-1 | "Show me invoice INV-2026-0207 in simple terms." | No such invoice number | Failed validation and asked user for UUID | Fail |
 | G-DATE-1 | "What bookings do we have on July 10 2026?" | One booking: 11:00 Transmission Fluid Service for Khaoula Khelifi | Used `list_appointments` with same from/to date; returned empty and answered none | Fail |
+| T04 | "What do we have booked today?" | One booking on `2026-06-23` at `08:30` | Used `list_appointments` with same date-only `from`/`to`; returned empty | Fail |
+| T05 | "Find me a free slot next Tuesday morning for a quick service." | Next Tuesday is `2026-06-30`, with no bookings that day | Used `find_available_slot` with `date: 2026-06-28` and answered Sunday slots as Tuesday | Fail |
+| T09 | "Which services brought in the most money this year?" | Parts `16,306 TND`, Labor `14,233 TND` | Used `get_revenue_breakdown_by_service`; answer matched expected buckets | Pass |
+| T11B | "Show me invoice INV-2026-0001 in simple terms." | Exists: SENT, 1310 TND, due 2026-07-13, customer Hela Mahmoud | Retried with a placeholder UUID and answered not found | Fail |
+| T14 | "What parts are running low?" | One low-stock part; inventory value `56,266 TND` | Used restocking skill and correct tools, but rendered stock value as `5,626.66 TND` | Fail |
+| T15 | "How much stock value do we have?" | Inventory value `56,266 TND`, 1,911 units | Called no tool and asked for more details | Fail |
+| T19 | "Give me a quick morning briefing for the garage." | Should return five concise sections using live data | Loaded `daily-briefing` and tools, but exposed step-by-step analysis narration | Fail |
+| T20 | "Give me a health snapshot for Khaoula Khelifi." | Customer exists with future appointments and profile data | Loaded `customer-360`, called only `find_customer`, then stopped with an incomplete "now let's gather data" reply | Fail |
+| T23 | "Help me plan what parts to reorder." | One reorder item: Clutch Kit - Small Engine | Used restocking skill and tools; also hallucinated `calculate_suggested_order` and misrendered stock value | Fail |
+| T24 | "Walk me through last month's numbers." | May 2026 paid revenue is `0 TND` from 0 invoices | Used `get_revenue_summary` with current-month period; answer was numerically same only because May and June are both zero | Partial |
+| T25 | "What should I do to grow the garage?" | Should use TND and customer names, not internal IDs | Loaded `growth-advisor` twice and dispatched `growth-agent`; agent result used `$` and raw UUIDs | Fail |
+| T26 | "Compare this quarter with last quarter and tell me what changed." | Q1 `28,528.62 TND`/140 paid invoices; Q2-to-date `7,808.21 TND`/31 | Final answer matched expected figures after duplicate analytics-agent dispatch | Partial |
+| T27 | "Give me a cash-flow risk summary." | Overdue invoices: 49 totaling `11,980.12 TND` | Finance agent returned usable data twice, but final reply said it could not finish | Fail |
+| T28 | "Audit my inventory." | Inventory value `56,266 TND`, 1 low-stock part | Inventory agent answered correctly | Pass |
+| T29 | "How busy is my calendar next week?" | Production agent said 2 appointments; independent check still needed for full week window | Scheduling agent answered with two appointments | Pending |
+| T30 | "Run a retention review." | Should route to growth/retention analysis and avoid fake agent names | First attempted nonexistent `retention-suggestions` as an agent, then used `growth-agent` and produced a plausible review | Partial |
 
 ## Fix Log
 
@@ -152,6 +175,11 @@ Status values: Pending, Pass, Partial, Fail, Skipped.
 | Hide internal IDs in replies | pending local commit | Customer lookup answered correctly but exposed raw customer IDs in the user-facing response. | The main and compose-only assistant prompts now forbid internal database IDs unless the user explicitly asks for technical IDs. | Strengthened response-format rules and pinned them in orchestrator tests. |
 | Historical top-customer windows | pending local commit | "Top customers in 1990" fabricated current top customers as historical data. | `list_top_customers` now accepts `from`/`to` and date-bounded revenue rankings return an empty list when there are no paid invoices in that window. | Added date-window support and regression tests for historical empty results. |
 | Assistant module entitlements | pending local commit | Production has active `inventory` and `invoicing` rows, but `/assistant/registry` exposed only 27 of 30 local tools for the owner. | Assistant chat and registry contexts now load active garage modules before filtering module-gated tools. | Injected `ModulesService` into the assistant controller, merged free and active module IDs into context, and added controller regression tests. |
+| Exact weekday slot search | pending local commit | "Next Tuesday" was resolved as `2026-06-28`, and the scheduler could return nearby days while the reply claimed they were Tuesday. | `find_available_slot` now recomputes `next/this <weekday>` from today's date and requests an exact-day scheduler window for those prompts. | Added exact-date scheduler support and appointment-tool regressions for the observed weekday mismatch. |
+| Last-month revenue windows | pending local commit | "Last month's numbers" could call `get_revenue_summary` with current-month `period: "month"`. | The revenue tool now corrects that argument to the previous calendar month when the original user message says last/previous month. | Added a June 23, 2026 regression that queries May 1 through June 1. |
+| Inventory value formatting | pending local commit | Inventory restocking answers misread raw `56266` as `5,626.66 TND`. | `get_inventory_value` now returns `totalValueFormatted`, and the restocking skill tells the model to copy it exactly. | Added formatted-value coverage in the inventory tool test. |
+| Agent result fallback | pending local commit | Finance agent produced the overdue-invoice summary, but the final answer discarded it and said the task could not finish. | If an agent returned data and the final LLM reply is a generic timeout/refusal, the orchestrator now emits the latest agent result instead. | Added an orchestrator regression for the cash-flow timeout shape. |
+| Response-format guards | pending local commit | Daily briefing exposed "Step 1" analysis text, and agent output used `$` and raw UUIDs. | Main assistant and agent prompts now forbid visible reasoning steps, raw UUIDs, and currency symbols other than TND formatting. | Added prompt assertions and tightened the daily briefing/customer-360/restocking skill instructions. |
 
 ## Response Quality Notes
 
