@@ -82,6 +82,23 @@ describe('MaintenanceService — mapFromBackend', () => {
     expect(received.customerId).toBe('customer-from-car');
   });
 
+  it('reads customerId from b.car.customer.id when the BE embeds a customer object', () => {
+    let received: any;
+    service.getMaintenanceJob('job-1').subscribe((j) => (received = j));
+
+    httpMock.expectOne('/maintenance/job-1').flush(
+      backendJob({
+        customerId: undefined,
+        car: {
+          id: 'car-1',
+          customer: { id: 'customer-from-car-customer' },
+        },
+      }),
+    );
+
+    expect(received.customerId).toBe('customer-from-car-customer');
+  });
+
   it('falls back to top-level b.customerId when the car is not embedded', () => {
     let received: any;
     service.getMaintenanceJob('job-1').subscribe((j) => (received = j));

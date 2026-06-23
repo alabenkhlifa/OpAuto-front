@@ -51,6 +51,8 @@ export class CreateLineItemDto {
 export class CreateInvoiceDto {
   @ApiProperty() @IsString() customerId: string;
   @ApiProperty({ required: false }) @IsString() @IsOptional() carId?: string;
+  @ApiProperty({ required: false }) @IsString() @IsOptional() appointmentId?: string;
+  @ApiProperty({ required: false }) @IsString() @IsOptional() maintenanceJobId?: string;
   @ApiProperty({ required: false }) @IsDateString() @IsOptional() dueDate?: string;
   @ApiProperty({ required: false }) @IsNumber() @IsOptional() discount?: number;
   @ApiProperty({ required: false }) @IsString() @IsOptional() notes?: string;

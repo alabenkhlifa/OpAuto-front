@@ -283,12 +283,31 @@ export class InvoicingService {
       };
     });
 
+    const appointmentId = dto.appointmentId
+      ? await this.validateAppointmentLink(
+          dto.appointmentId,
+          garageId,
+          dto.customerId,
+          dto.carId,
+        )
+      : undefined;
+    const maintenanceJobId = dto.maintenanceJobId
+      ? await this.validateMaintenanceJobLink(
+          dto.maintenanceJobId,
+          garageId,
+          dto.customerId,
+          dto.carId,
+        )
+      : undefined;
+
     return this.prisma.$transaction(async (tx) => {
       const invoice = await tx.invoice.create({
         data: {
           garageId,
           customerId: dto.customerId,
           carId: dto.carId,
+          appointmentId,
+          maintenanceJobId,
           // Placeholder identifier for the DRAFT — `invoiceNumber` is
           // NOT NULL UNIQUE, but we don't want to burn a fiscal sequence
           // number on a draft that may never be issued. Replaced by
@@ -380,6 +399,37 @@ export class InvoicingService {
     if (dto.carId !== undefined) {
       data.car = dto.carId
         ? { connect: { id: dto.carId } }
+        : { disconnect: true };
+    }
+    const nextCustomerId = dto.customerId ?? invoice.customerId;
+    const nextCarId =
+      dto.carId !== undefined ? dto.carId || undefined : invoice.carId ?? undefined;
+    if (dto.appointmentId !== undefined) {
+      data.appointment = dto.appointmentId
+        ? {
+            connect: {
+              id: await this.validateAppointmentLink(
+                dto.appointmentId,
+                garageId,
+                nextCustomerId,
+                nextCarId,
+              ),
+            },
+          }
+        : { disconnect: true };
+    }
+    if (dto.maintenanceJobId !== undefined) {
+      data.maintenanceJob = dto.maintenanceJobId
+        ? {
+            connect: {
+              id: await this.validateMaintenanceJobLink(
+                dto.maintenanceJobId,
+                garageId,
+                nextCustomerId,
+                nextCarId,
+              ),
+            },
+          }
         : { disconnect: true };
     }
 
@@ -508,6 +558,50 @@ export class InvoicingService {
   }
 
   // ── Phase 3.2 helpers ─────────────────────────────────────────
+
+  private async validateAppointmentLink(
+    appointmentId: string,
+    garageId: string,
+    customerId: string,
+    carId?: string,
+  ): Promise<string> {
+    const appointment = await this.prisma.appointment.findFirst({
+      where: { id: appointmentId, garageId },
+      select: { id: true, customerId: true, carId: true },
+    });
+    if (!appointment) throw new NotFoundException('Appointment not found');
+    if (appointment.customerId !== customerId) {
+      throw new BadRequestException('Appointment does not belong to the invoice customer');
+    }
+    if (carId && appointment.carId !== carId) {
+      throw new BadRequestException('Appointment does not belong to the invoice car');
+    }
+    return appointment.id;
+  }
+
+  private async validateMaintenanceJobLink(
+    maintenanceJobId: string,
+    garageId: string,
+    customerId: string,
+    carId?: string,
+  ): Promise<string> {
+    const job = await this.prisma.maintenanceJob.findFirst({
+      where: { id: maintenanceJobId, garageId },
+      select: {
+        id: true,
+        carId: true,
+        car: { select: { customerId: true } },
+      },
+    });
+    if (!job) throw new NotFoundException('Maintenance job not found');
+    if (job.car.customerId !== customerId) {
+      throw new BadRequestException('Maintenance job does not belong to the invoice customer');
+    }
+    if (carId && job.carId !== carId) {
+      throw new BadRequestException('Maintenance job does not belong to the invoice car');
+    }
+    return job.id;
+  }
 
   /**
    * Builds the list of discount-audit rows that need to be persisted

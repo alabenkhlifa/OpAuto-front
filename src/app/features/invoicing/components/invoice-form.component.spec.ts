@@ -48,7 +48,15 @@ describe('InvoiceFormComponent', () => {
     updatedAt: new Date(),
   });
 
-  function configure(overrides?: { route?: any; settings?: GarageSettings; invoice?: Partial<InvoiceWithDetails> }) {
+  function configure(overrides?: {
+    route?: any;
+    settings?: GarageSettings;
+    invoice?: Partial<InvoiceWithDetails>;
+    customers?: any[];
+    cars?: any[];
+    appointments?: any[];
+    jobs?: any[];
+  }) {
     const settings = overrides?.settings ?? buildSettings();
     const invoiceServiceStub = {
       fetchInvoiceById: jasmine.createSpy('fetchInvoiceById').and.returnValue(
@@ -72,10 +80,16 @@ describe('InvoiceFormComponent', () => {
       formatCurrency: (n: number) => `${n.toFixed(2)} TND`,
       pdfUrl: (id: string) => `/invoices/${id}/pdf`,
     };
-    const customerServiceStub = { getCustomers: () => of([{ id: 'c1', name: 'Foo', phone: '+216' } as any]) };
-    const carsStub = [{ id: 'car1', customerId: 'c1', make: 'Toy', model: 'C', year: 2020, licensePlate: '111TUN1' }];
-    const appointmentServiceStub = { getCars: () => of(carsStub) };
-    const maintenanceServiceStub = { getMaintenanceJobs: () => of([]) };
+    const customersStub = overrides?.customers ?? [{ id: 'c1', name: 'Foo', phone: '+216' } as any];
+    const carsStub = overrides?.cars ?? [{ id: 'car1', customerId: 'c1', make: 'Toy', model: 'C', year: 2020, licensePlate: '111TUN1' }];
+    const appointmentsStub = overrides?.appointments ?? [];
+    const jobsStub = overrides?.jobs ?? [];
+    const customerServiceStub = { getCustomers: () => of(customersStub) };
+    const appointmentServiceStub = {
+      getCars: () => of(carsStub),
+      getAppointments: () => of(appointmentsStub),
+    };
+    const maintenanceServiceStub = { getMaintenanceJobs: () => of(jobsStub) };
     const garageSettingsStub = { getSettings: () => of(settings) };
     const userServiceStub = { getUsers: () => of([{ id: 'u1', role: 'owner', firstName: 'O', lastName: 'Wner', email: 'o@w' } as any]) };
 
@@ -810,7 +824,7 @@ describe('InvoiceFormComponent', () => {
           } },
           { provide: InvoiceService, useValue: invoiceServiceStub },
           { provide: CustomerService, useValue: { getCustomers: () => of(customers) } },
-          { provide: AppointmentService, useValue: { getCars: () => of(cars) } },
+          { provide: AppointmentService, useValue: { getCars: () => of(cars), getAppointments: () => of([]) } },
           { provide: MaintenanceService, useValue: { getMaintenanceJobs: () => of(jobs) } },
           { provide: GarageSettingsService, useValue: { getSettings: () => of(settings) } },
           { provide: UserService, useValue: { getUsers: () => of([{ id: 'u1', role: 'owner', firstName: 'O', lastName: 'W', email: 'o@w' } as any]) } },
@@ -1449,6 +1463,86 @@ describe('InvoiceFormComponent', () => {
 
       expect(cmp.form.get('maintenanceJobId')?.enabled)
         .withContext('maintenanceJobId enabled once a car is picked').toBeTrue();
+    });
+
+    it('single-car auto-pick updates validation and maintenance job filtering while carId is still disabled', async () => {
+      configure({
+        jobs: [
+          {
+            id: 'job1',
+            customerId: 'c1',
+            carId: 'car1',
+            jobTitle: 'Oil service',
+            description: '',
+            licensePlate: '111TUN1',
+          } as any,
+        ],
+      });
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      await flushEffectsAsync();
+
+      expect(cmp.form.get('carId')?.disabled)
+        .withContext('carId starts disabled until a customer is selected').toBeTrue();
+
+      cmp.form.patchValue({ customerId: 'c1' });
+      cmp.onCustomerChange();
+
+      expect(cmp.form.getRawValue().carId).toBe('car1');
+      expect(cmp.validationIssues()).not.toContain('invoicing.form.errors.vehicleRequired');
+      expect(cmp.filteredJobs().map((j) => j.id)).toEqual(['job1']);
+      expect(cmp.filteredSourceLinks().map((link) => link.value)).toContain('job:job1');
+    });
+
+    it('completed appointments appear in the link dropdown and prepopulate service + labor lines', async () => {
+      configure({
+        appointments: [
+          {
+            id: 'appt1',
+            customerId: 'c1',
+            carId: 'car1',
+            mechanicId: 'mech1',
+            serviceType: 'oil-change',
+            serviceName: 'Oil change',
+            scheduledDate: new Date('2026-06-20T09:00:00Z'),
+            estimatedDuration: 90,
+            status: 'completed',
+            priority: 'medium',
+            createdAt: new Date('2026-06-19T09:00:00Z'),
+            updatedAt: new Date('2026-06-20T10:30:00Z'),
+          },
+        ],
+      });
+      const fixture = TestBed.createComponent(InvoiceFormComponent);
+      const cmp = fixture.componentInstance;
+      cmp.ngOnInit();
+      await fixture.whenStable();
+      await flushEffectsAsync();
+
+      cmp.form.patchValue({ customerId: 'c1' });
+      cmp.onCustomerChange();
+
+      expect(cmp.filteredSourceLinks().map((link) => link.value)).toEqual(['appointment:appt1']);
+
+      cmp.form.patchValue({ maintenanceJobId: 'appointment:appt1' });
+      cmp.onJobChange();
+
+      expect(cmp.linkedAppointment()?.id).toBe('appt1');
+      expect(cmp.lines().length).toBe(2);
+      expect(cmp.lines()[0]).toEqual(jasmine.objectContaining({
+        type: 'service',
+        description: 'Oil change',
+        serviceCode: 'oil-change',
+      }));
+      expect(cmp.lines()[1]).toEqual(jasmine.objectContaining({
+        type: 'labor',
+        quantity: 1.5,
+        laborHours: 1.5,
+        unitPrice: 30,
+        mechanicId: 'mech1',
+      }));
     });
 
     it('locked invoice disables every formControlName-bearing control (customerId / carId / maintenanceJobId / notes / dueDate)', async () => {

@@ -229,6 +229,8 @@ export class InvoiceService {
 
     if (f.customerId !== undefined) payload.customerId = f.customerId;
     if (f.carId !== undefined) payload.carId = f.carId;
+    if (f.appointmentId !== undefined) payload.appointmentId = f.appointmentId;
+    if (f.maintenanceJobId !== undefined) payload.maintenanceJobId = f.maintenanceJobId;
     if (f.dueDate !== undefined) {
       payload.dueDate = f.dueDate instanceof Date ? f.dueDate.toISOString() : f.dueDate;
     }

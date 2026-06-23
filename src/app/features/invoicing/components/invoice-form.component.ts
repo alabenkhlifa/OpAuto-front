@@ -1,13 +1,13 @@
 import {
   Component,
   OnInit,
-  Signal,
+  WritableSignal,
   computed,
   effect,
   inject,
   signal,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import {
   FormArray,
@@ -39,7 +39,7 @@ import {
   InvoiceWithDetails,
   LineItemType,
 } from '../../../core/models/invoice.model';
-import { Car } from '../../../core/models/appointment.model';
+import { Appointment, Car } from '../../../core/models/appointment.model';
 import { Customer as RootCustomer } from '../../../core/models/customer.model';
 import { GarageSettings } from '../../../core/models/garage-settings.model';
 import { User } from '../../../core/models/user.model';
@@ -69,8 +69,17 @@ interface LineState {
   laborHours?: number;
   partId?: string;
   serviceCode?: string;
+  mechanicId?: string;
   /** Live stock for parts — used to flag overdraw rows. */
   partStock?: number;
+}
+
+interface InvoiceSourceLink {
+  kind: 'job' | 'appointment';
+  id: string;
+  value: string;
+  label: string;
+  sortDate: number;
 }
 
 /**
@@ -127,11 +136,13 @@ export class InvoiceFormComponent implements OnInit {
   readonly customers = signal<RootCustomer[]>([]);
   readonly cars = signal<Car[]>([]);
   readonly jobs = signal<MaintenanceJob[]>([]);
+  readonly appointments = signal<Appointment[]>([]);
   readonly owners = signal<User[]>([]);
   readonly settings = signal<GarageSettings | null>(null);
 
   // Section 2 state
   readonly linkedJob = signal<MaintenanceJob | null>(null);
+  readonly linkedAppointment = signal<Appointment | null>(null);
   readonly jobPulled = signal(false);
 
   // Send modal
@@ -207,12 +218,13 @@ export class InvoiceFormComponent implements OnInit {
   );
 
   /**
-   * Reactive mirror of the form's value. `this.form.value` is a plain
-   * property read and does NOT track in `computed()` — without this
-   * signal, `filteredCars()` / `filteredJobs()` / `validationIssues()`
-   * memoize their first read forever (the dropdown-stuck-empty bug).
+   * Reactive mirror of the form's raw value. `FormGroup.value` excludes
+   * disabled controls, so cascading auto-picks can display in the select
+   * while still being invisible to computed validation/filtering. Raw
+   * values keep `filteredCars()` / `filteredJobs()` / `validationIssues()`
+   * aligned with what the controls actually hold.
    */
-  private readonly formValue!: Signal<any>;
+  private readonly formValue: WritableSignal<any>;
 
   /** Issues the form has — surfaced in the sticky validation banner. */
   readonly validationIssues = computed<string[]>(() => {
@@ -256,9 +268,10 @@ export class InvoiceFormComponent implements OnInit {
       dueDate: [this.todayPlusDaysIso(30), Validators.required],
       notes: [''],
     });
-    (this as any).formValue = toSignal(this.form.valueChanges, {
-      initialValue: this.form.getRawValue(),
-    });
+    this.formValue = signal(this.form.getRawValue());
+    this.form.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.syncFormValue());
 
     // BUG-101: drive `formControlName` disabled state from the component
     // class via `effect()` instead of a `[disabled]` template binding.
@@ -317,12 +330,14 @@ export class InvoiceFormComponent implements OnInit {
     forkJoin({
       customers: this.customerService.getCustomers().pipe(catchError(() => of([] as RootCustomer[]))),
       cars: this.appointmentService.getCars().pipe(catchError(() => of([] as Car[]))),
+      appointments: this.appointmentService.getAppointments().pipe(catchError(() => of([] as Appointment[]))),
       jobs: this.maintenanceService.getMaintenanceJobs().pipe(catchError(() => of([] as MaintenanceJob[]))),
       settings: this.garageSettings.getSettings().pipe(catchError(() => of(null as GarageSettings | null))),
       users: this.userService.getUsers().pipe(catchError(() => of([] as User[]))),
-    }).subscribe(({ customers, cars, jobs, settings, users }) => {
+    }).subscribe(({ customers, cars, appointments, jobs, settings, users }) => {
       this.customers.set(customers);
       this.cars.set(cars);
+      this.appointments.set(appointments);
       this.jobs.set(jobs);
       this.settings.set(settings);
       this.owners.set(users.filter((u) => u.role === UserRole.OWNER));
@@ -330,7 +345,7 @@ export class InvoiceFormComponent implements OnInit {
       // Once settings are loaded, refresh the dueDate default if the form has not been touched.
       if (settings && !this.form.controls['dueDate'].dirty) {
         const days = settings.fiscalSettings?.defaultPaymentTermsDays ?? 30;
-        this.form.patchValue({ dueDate: this.todayPlusDaysIso(days) }, { emitEvent: false });
+        this.patchFormValue({ dueDate: this.todayPlusDaysIso(days) }, { emitEvent: false });
       }
 
       const id = this.route.snapshot.paramMap.get('id');
@@ -352,10 +367,14 @@ export class InvoiceFormComponent implements OnInit {
       next: (inv) => {
         this.currentInvoice.set(inv);
         this.isEditMode.set(true);
-        this.form.patchValue({
+        this.patchFormValue({
           customerId: inv.customerId,
           carId: inv.carId,
-          maintenanceJobId: inv.maintenanceJobId ?? '',
+          maintenanceJobId: inv.maintenanceJobId
+            ? this.jobLinkValue(inv.maintenanceJobId)
+            : inv.appointmentId
+              ? this.appointmentLinkValue(inv.appointmentId)
+              : '',
           issueDate: inv.issueDate.toISOString().split('T')[0],
           dueDate: inv.dueDate.toISOString().split('T')[0],
           notes: inv.notes || '',
@@ -376,6 +395,7 @@ export class InvoiceFormComponent implements OnInit {
             laborHours: li.laborHours,
             partId: li.partId,
             serviceCode: li.serviceCode,
+            mechanicId: li.mechanicId,
           })),
         );
 
@@ -383,6 +403,9 @@ export class InvoiceFormComponent implements OnInit {
           const job = this.jobs().find((j) => j.id === inv.maintenanceJobId);
           this.linkedJob.set(job ?? null);
           this.jobPulled.set(true);
+        } else if (inv.appointmentId) {
+          const appointment = this.appointments().find((a) => a.id === inv.appointmentId);
+          this.linkedAppointment.set(appointment ?? null);
         }
         this.isLoading.set(false);
       },
@@ -406,43 +429,97 @@ export class InvoiceFormComponent implements OnInit {
     return this.jobs().filter((j) => j.carId === carId).slice(0, 10);
   });
 
+  filteredAppointments = computed(() => {
+    const carId = this.formValue().carId;
+    if (!carId) return [];
+    return this.appointments()
+      .filter((a) => a.carId === carId && a.status === 'completed')
+      .slice(0, 10);
+  });
+
+  filteredSourceLinks = computed<InvoiceSourceLink[]>(() => {
+    const jobLinks = this.filteredJobs().map((job) => ({
+      kind: 'job' as const,
+      id: job.id,
+      value: this.jobLinkValue(job.id),
+      label: this.getJobLabel(job),
+      sortDate: this.dateMillis(job.completionDate ?? job.startDate ?? job.createdAt),
+    }));
+    const appointmentLinks = this.filteredAppointments().map((appointment) => ({
+      kind: 'appointment' as const,
+      id: appointment.id,
+      value: this.appointmentLinkValue(appointment.id),
+      label: this.getAppointmentLabel(appointment),
+      sortDate: this.dateMillis(appointment.scheduledDate),
+    }));
+    return [...jobLinks, ...appointmentLinks]
+      .sort((a, b) => b.sortDate - a.sortDate)
+      .slice(0, 10);
+  });
+
   onCustomerChange(): void {
-    const customerId = this.form.value.customerId;
+    const customerId = this.form.getRawValue().customerId;
     if (customerId) {
       const cars = this.cars().filter((c) => c.customerId === customerId);
-      if (cars.length === 1) this.form.patchValue({ carId: cars[0].id });
-      else this.form.patchValue({ carId: '' });
+      if (cars.length === 1) this.patchFormValue({ carId: cars[0].id });
+      else this.patchFormValue({ carId: '' });
     }
-    this.form.patchValue({ maintenanceJobId: '' });
+    this.patchFormValue({ maintenanceJobId: '' });
     this.linkedJob.set(null);
+    this.linkedAppointment.set(null);
     this.jobPulled.set(false);
   }
 
   onCarChange(): void {
-    this.form.patchValue({ maintenanceJobId: '' });
+    this.patchFormValue({ maintenanceJobId: '' });
     this.linkedJob.set(null);
+    this.linkedAppointment.set(null);
     this.jobPulled.set(false);
   }
 
   onJobChange(): void {
-    const jobId = this.form.value.maintenanceJobId;
-    this.linkJobById(jobId);
+    const linkValue = this.form.getRawValue().maintenanceJobId;
+    this.linkSourceByValue(linkValue);
   }
 
   private linkJobById(jobId: string): void {
-    if (!jobId) {
+    this.linkSourceByValue(this.jobLinkValue(jobId));
+  }
+
+  private linkSourceByValue(linkValue: string): void {
+    if (!linkValue) {
       this.linkedJob.set(null);
+      this.linkedAppointment.set(null);
       this.jobPulled.set(false);
       return;
     }
+    const parsed = this.parseSourceLink(linkValue);
+    if (parsed.kind === 'appointment') {
+      const appointment = this.appointments().find((a) => a.id === parsed.id) ?? null;
+      this.linkedAppointment.set(appointment);
+      this.linkedJob.set(null);
+      this.jobPulled.set(false);
+      if (appointment) {
+        this.patchFormValue({
+          customerId: appointment.customerId,
+          carId: appointment.carId,
+          maintenanceJobId: this.appointmentLinkValue(appointment.id),
+        });
+        this.prefillFromAppointment(appointment);
+      }
+      return;
+    }
+
+    const jobId = parsed.id;
     const job = this.jobs().find((j) => j.id === jobId) ?? null;
     this.linkedJob.set(job);
+    this.linkedAppointment.set(null);
     this.jobPulled.set(false);
     if (job) {
-      this.form.patchValue({
+      this.patchFormValue({
         customerId: job.customerId,
         carId: job.carId,
-        maintenanceJobId: job.id,
+        maintenanceJobId: this.jobLinkValue(job.id),
       });
     }
   }
@@ -512,6 +589,7 @@ export class InvoiceFormComponent implements OnInit {
         type,
         partId: undefined,
         serviceCode: undefined,
+        mechanicId: undefined,
         partStock: undefined,
         laborHours: type === 'labor' ? prev.laborHours ?? 1 : undefined,
       };
@@ -552,6 +630,43 @@ export class InvoiceFormComponent implements OnInit {
       };
       return next;
     });
+  }
+
+  private prefillFromAppointment(appointment: Appointment): void {
+    if (this.lines().length > 0) return;
+
+    const defaultTva = this.normalizeTvaRate(this.defaultTva());
+    const durationHours = Math.max(0, (appointment.estimatedDuration || 0) / 60);
+    const laborRate =
+      (this.settings() as any)?.businessSettings?.pricingRules?.laborRatePerHour ?? 0;
+
+    const nextLines: LineState[] = [
+      {
+        type: 'service',
+        description: appointment.serviceName || appointment.serviceType || 'Appointment service',
+        quantity: 1,
+        unitPrice: 0,
+        tvaRate: defaultTva,
+        discountPct: 0,
+        serviceCode: appointment.serviceType,
+        mechanicId: appointment.mechanicId,
+      },
+    ];
+
+    if (durationHours > 0) {
+      nextLines.push({
+        type: 'labor',
+        description: `Labor - ${appointment.serviceName || appointment.serviceType || 'appointment'}`,
+        quantity: durationHours,
+        unitPrice: laborRate,
+        tvaRate: defaultTva,
+        discountPct: 0,
+        laborHours: durationHours,
+        mechanicId: appointment.mechanicId,
+      });
+    }
+
+    this.lines.set(nextLines);
   }
 
   /** Net HT for a single line (qty × unitPrice − line discount). */
@@ -727,7 +842,7 @@ export class InvoiceFormComponent implements OnInit {
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   private buildPayload(status: 'draft' | 'sent'): CreateInvoiceRequest {
-    const f = this.form.value;
+    const f = this.form.getRawValue();
     const lines = this.lines().map<InvoiceLineItem>((l, i) => ({
       id: `line_${Date.now()}_${i}`,
       type: l.type,
@@ -738,6 +853,7 @@ export class InvoiceFormComponent implements OnInit {
       totalPrice: this.lineNetHT(l),
       partId: l.partId,
       serviceCode: l.serviceCode,
+      mechanicId: l.mechanicId,
       laborHours: l.laborHours,
       discountPercentage: l.discountPct || undefined,
       taxable: l.tvaRate > 0,
@@ -759,7 +875,14 @@ export class InvoiceFormComponent implements OnInit {
         this.translation.instant('invoicing.form.summary.defaultPaymentTermsLabel'),
       createdBy: 'current-user',
     };
-    if (f.maintenanceJobId) (payload as any).maintenanceJobId = f.maintenanceJobId;
+    const sourceLink = this.parseSourceLink(f.maintenanceJobId);
+    if (sourceLink.kind === 'job' && sourceLink.id) {
+      (payload as any).maintenanceJobId = sourceLink.id;
+      (payload as any).appointmentId = '';
+    } else if (sourceLink.kind === 'appointment' && sourceLink.id) {
+      (payload as any).appointmentId = sourceLink.id;
+      (payload as any).maintenanceJobId = '';
+    }
     if (this.invoiceDiscountReason().trim())
       (payload as any).discountReason = this.invoiceDiscountReason().trim();
     if (this.approverRequired() && this.approverId())
@@ -783,6 +906,43 @@ export class InvoiceFormComponent implements OnInit {
 
   private normalizeTvaRate(rate: number): TvaRate {
     return (TVA_RATES as readonly number[]).includes(rate) ? (rate as TvaRate) : 19;
+  }
+
+  private patchFormValue(value: Record<string, unknown>, options?: { emitEvent?: boolean }): void {
+    this.form.patchValue(value, options);
+    this.syncFormValue();
+  }
+
+  private syncFormValue(): void {
+    this.formValue.set(this.form.getRawValue());
+  }
+
+  private jobLinkValue(id: string): string {
+    return `job:${id}`;
+  }
+
+  private appointmentLinkValue(id: string): string {
+    return `appointment:${id}`;
+  }
+
+  private parseSourceLink(value: unknown): { kind: 'job' | 'appointment' | null; id: string } {
+    if (typeof value !== 'string' || !value) return { kind: null, id: '' };
+    if (value.startsWith('job:')) return { kind: 'job', id: value.slice(4) };
+    if (value.startsWith('appointment:')) {
+      return { kind: 'appointment', id: value.slice('appointment:'.length) };
+    }
+    // Backward compatibility for old query params and draft form values.
+    if (this.appointments().some((a) => a.id === value)) {
+      return { kind: 'appointment', id: value };
+    }
+    return { kind: 'job', id: value };
+  }
+
+  private dateMillis(value: Date | string | undefined | null): number {
+    if (!value) return 0;
+    const date = value instanceof Date ? value : new Date(value);
+    const time = date.getTime();
+    return Number.isFinite(time) ? time : 0;
   }
 
   /**
@@ -843,6 +1003,13 @@ export class InvoiceFormComponent implements OnInit {
 
   getJobLabel(j: MaintenanceJob): string {
     return `${j.jobTitle || j.description || j.id.slice(0, 6)} · ${j.licensePlate}`;
+  }
+
+  getAppointmentLabel(a: Appointment): string {
+    const car = this.cars().find((c) => c.id === a.carId);
+    const plate = car?.licensePlate ? ` · ${car.licensePlate}` : '';
+    const date = a.scheduledDate ? ` · ${a.scheduledDate.toLocaleDateString()}` : '';
+    return `${a.serviceName || a.serviceType || a.id.slice(0, 6)}${plate}${date}`;
   }
 
   getOwnerLabel(u: User): string {

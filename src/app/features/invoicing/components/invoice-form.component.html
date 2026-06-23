@@ -71,8 +71,8 @@
                     formControlName="maintenanceJobId"
                     (change)="onJobChange()">
               <option value="">{{ 'invoicing.form.placeholder.selectJob' | translate }}</option>
-              @for (j of filteredJobs(); track j.id) {
-                <option [value]="j.id">{{ getJobLabel(j) }}</option>
+              @for (link of filteredSourceLinks(); track link.value) {
+                <option [value]="link.value">{{ link.label }}</option>
               }
             </select>
           </label>

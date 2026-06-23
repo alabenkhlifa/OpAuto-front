@@ -83,11 +83,12 @@ describe('InvoiceService', () => {
   // ── createInvoice — top-level payload shape ─────────────────────
 
   describe('createInvoice — payload shape', () => {
-    it('POSTs only whitelisted top-level fields (customerId, carId, dueDate, notes, lineItems)', () => {
+    it('POSTs only whitelisted top-level fields, including source links', () => {
       const request: CreateInvoiceRequest = {
         customerId: 'c1',
         carId: 'car1',
-        appointmentId: 'appt-1',          // must NOT be sent
+        appointmentId: 'appt-1',
+        maintenanceJobId: 'job-1',
         issueDate: new Date('2026-04-30'), // must NOT be sent
         dueDate: new Date('2026-05-30'),
         status: 'draft',                   // must NOT be sent (create path)
@@ -108,7 +109,15 @@ describe('InvoiceService', () => {
       expect(req.request.method).toBe('POST');
 
       const body = req.request.body;
-      const allowed = ['customerId', 'carId', 'dueDate', 'notes', 'lineItems'];
+      const allowed = [
+        'customerId',
+        'carId',
+        'appointmentId',
+        'maintenanceJobId',
+        'dueDate',
+        'notes',
+        'lineItems',
+      ];
       const forbidden = [
         'status',
         'issueDate',
@@ -119,7 +128,6 @@ describe('InvoiceService', () => {
         'paymentTerms',
         'createdBy',
         'paymentMethod',
-        'appointmentId',
       ];
 
       for (const f of forbidden) {
@@ -131,6 +139,8 @@ describe('InvoiceService', () => {
       }
       expect(body.customerId).toBe('c1');
       expect(body.carId).toBe('car1');
+      expect(body.appointmentId).toBe('appt-1');
+      expect(body.maintenanceJobId).toBe('job-1');
       expect(body.notes).toBe('hello');
       // dueDate is serialized to ISO string
       expect(typeof body.dueDate).toBe('string');
@@ -348,29 +358,32 @@ describe('InvoiceService', () => {
       expect(li.taxable).toBeTrue();
     });
 
-    it('exposes maintenanceJobId and quoteId from the backend payload (BUG-099)', () => {
+    it('exposes appointmentId, maintenanceJobId and quoteId from the backend payload (BUG-099)', () => {
       let received: any;
       service.fetchInvoiceById('inv-1').subscribe((inv) => (received = inv));
 
       const req = httpMock.expectOne('/invoices/inv-1');
       req.flush(
         makeBackendInvoiceShape({
+          appointmentId: 'appt-789',
           maintenanceJobId: 'job-123',
           quoteId: 'quote-456',
         }),
       );
 
+      expect(received.appointmentId).toBe('appt-789');
       expect(received.maintenanceJobId).toBe('job-123');
       expect(received.quoteId).toBe('quote-456');
     });
 
-    it('leaves maintenanceJobId / quoteId undefined when the backend omits them', () => {
+    it('leaves appointmentId / maintenanceJobId / quoteId undefined when the backend omits them', () => {
       let received: any;
       service.fetchInvoiceById('inv-1').subscribe((inv) => (received = inv));
 
       const req = httpMock.expectOne('/invoices/inv-1');
       req.flush(makeBackendInvoiceShape());
 
+      expect(received.appointmentId).toBeUndefined();
       expect(received.maintenanceJobId).toBeUndefined();
       expect(received.quoteId).toBeUndefined();
     });
