@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { LlmGatewayService } from './llm-gateway.service';
-import { Locale } from './types';
+import { LlmUsageContext, Locale } from './types';
 
 const MAX_TOOLS = 5;
 const CLASSIFIER_MAX_TOKENS = 120;
@@ -12,6 +12,7 @@ export interface ClassifyArgs {
   userMessage: string;
   locale: Locale;
   candidates: { name: string; description: string }[];
+  usageContext?: LlmUsageContext;
 }
 
 /**
@@ -92,6 +93,7 @@ ${list}`;
         maxTokens: CLASSIFIER_MAX_TOKENS,
         purpose: 'intent_classifier',
         model: CLASSIFIER_MODEL,
+        usageContext: args.usageContext,
       });
 
       const text = (result.content ?? '').trim();

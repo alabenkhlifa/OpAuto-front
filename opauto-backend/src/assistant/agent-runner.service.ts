@@ -193,6 +193,10 @@ export class AgentRunnerService {
         messages,
         tools: filteredDescriptors,
         purpose: `agent_runner:${agent.name}`,
+        usageContext: {
+          garageId: ctx.garageId,
+          userId: ctx.userId,
+        },
       });
 
       // Track the latest text so iteration-cap fallbacks can echo something useful.

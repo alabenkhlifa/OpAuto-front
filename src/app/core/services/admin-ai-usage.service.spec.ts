@@ -17,9 +17,10 @@ describe('AdminAiUsageService', () => {
       label: 'Today',
       start: '2026-01-01T00:00:00.000Z',
       end: '2026-01-02T00:00:00.000Z',
-      scope: 'ovh-only',
+      scope: 'gateway-ovh-account',
     },
     summary: {
+      llmCalls: 3,
       assistantMessages: 3,
       ovhMessagesPriced: 3,
       ovhMessagesUnpriced: 0,
@@ -31,6 +32,12 @@ describe('AdminAiUsageService', () => {
       estimatedCost: 0.001184,
       rowsWithMissingPurpose: 0,
       rowsWithMissingModel: 0,
+      failedCalls: 0,
+      rejectedCalls: 0,
+      mockCalls: 0,
+      avgLatencyMs: 220,
+      gatewayEvents: 3,
+      eventsMissingContext: 0,
     },
     taskUsage: [
       {
@@ -42,8 +49,23 @@ describe('AdminAiUsageService', () => {
         tokensOut: 400,
         estimatedCost: 0.001184,
         unpricedCalls: 0,
+        avgLatencyMs: 220,
+        failedCalls: 0,
       },
     ],
+    modelUsage: [
+      {
+        provider: 'ovh',
+        model: 'Meta-Llama-3_3-70B-Instruct',
+        calls: 3,
+        tokensIn: 1200,
+        tokensOut: 400,
+        estimatedCost: 0.001184,
+        avgLatencyMs: 220,
+        failedCalls: 0,
+      },
+    ],
+    timeBuckets: [],
     agentUsage: [],
     skillUsage: [],
     userUsage: [],
@@ -60,18 +82,19 @@ describe('AdminAiUsageService', () => {
     },
     topExpensiveCalls: [],
     sourceCoverage: {
-      dataSource: 'persisted_tables_only',
+      dataSource: 'gateway_usage_events',
       includesGatewayOnlySignals: {
-        classifierCalls: false,
-        conversationTitles: false,
-        rawGatewayLatency: false,
+        classifierCalls: true,
+        conversationTitles: true,
+        rawGatewayLatency: true,
       },
       rowCoverage: {
-        assistantMessagesScanned: 3,
+        gatewayEventsScanned: 3,
         assistantToolCallsScanned: 2,
-        messagesWithoutModel: 0,
-        messagesWithoutPurpose: 0,
-        messagesWithoutTokens: 0,
+        eventsWithoutModel: 0,
+        eventsWithoutPurpose: 0,
+        eventsWithoutTokens: 0,
+        eventsWithoutContext: 0,
       },
     },
   };
@@ -79,10 +102,7 @@ describe('AdminAiUsageService', () => {
   beforeEach(() => {
     api = jasmine.createSpyObj<ApiService>('ApiService', ['get']);
     TestBed.configureTestingModule({
-      providers: [
-        AdminAiUsageService,
-        { provide: ApiService, useValue: api },
-      ],
+      providers: [AdminAiUsageService, { provide: ApiService, useValue: api }],
     });
     service = TestBed.inject(AdminAiUsageService);
   });
@@ -91,9 +111,13 @@ describe('AdminAiUsageService', () => {
     api.get.and.returnValue(of(payload));
 
     service.getUsage('today').subscribe((data) => {
-      expect(api.get).toHaveBeenCalledWith('/admin/ai-usage', { range: 'today' });
+      expect(api.get).toHaveBeenCalledWith('/admin/ai-usage', {
+        range: 'today',
+      });
       expect(data.summary.tokensIn + data.summary.tokensOut).toBe(1600);
-      expect(data.taskUsage[0].purpose).toBe('assistant_tool_selection:find_customer');
+      expect(data.taskUsage[0].purpose).toBe(
+        'assistant_tool_selection:find_customer',
+      );
       done();
     });
   });

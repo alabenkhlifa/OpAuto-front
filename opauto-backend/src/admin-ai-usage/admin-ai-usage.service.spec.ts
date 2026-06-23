@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AssistantMessageRole, AssistantToolCallStatus } from '@prisma/client';
+import { AssistantToolCallStatus } from '@prisma/client';
 import { AdminAiUsageService } from './admin-ai-usage.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AiUsageRangeKey } from './dto/admin-ai-usage-query.dto';
@@ -7,128 +7,104 @@ import { AiUsageRangeKey } from './dto/admin-ai-usage-query.dto';
 describe('AdminAiUsageService', () => {
   let service: AdminAiUsageService;
   let prisma: any;
-  const NOW = new Date('2026-06-18T12:00:00.000Z');
 
   beforeEach(async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-06-18T12:00:00.000Z'));
     prisma = {
-      assistantMessage: {
+      llmUsageEvent: {
         findMany: jest.fn(),
       },
       assistantToolCall: {
         findMany: jest.fn(),
       },
+      user: {
+        findMany: jest.fn(),
+      },
+      garage: {
+        findMany: jest.fn(),
+      },
     };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AdminAiUsageService,
         { provide: PrismaService, useValue: prisma },
       ],
     }).compile();
+
     service = module.get(AdminAiUsageService);
-    jest.spyOn(Date, 'now').mockReturnValue(NOW.getTime());
   });
 
   afterEach(() => {
+    jest.useRealTimers();
     jest.restoreAllMocks();
   });
 
-  it('aggregates OVH usage and costs from persisted messages and tool calls', async () => {
-    prisma.assistantMessage.findMany.mockResolvedValue([
+  it('aggregates OVH usage from gateway events instead of assistant messages', async () => {
+    prisma.llmUsageEvent.findMany.mockResolvedValue([
       {
-        id: 'm1',
-        conversationId: 'c1',
-        role: AssistantMessageRole.ASSISTANT,
-        content: 'ok',
-        toolCallId: 't1',
+        id: 'ev-plan',
+        provider: 'ovh',
+        model: 'Meta-Llama-3_3-70B-Instruct',
+        purpose: 'assistant_tool_selection',
+        status: 'SUCCESS',
         tokensIn: 1000,
         tokensOut: 100,
-        llmProvider: 'ovh',
-        llmModel: 'Meta-Llama-3_3-70B-Instruct',
-        llmPurpose: 'agent_runner:analytics-agent',
-        skillUsed: 'analytics',
+        latencyMs: 450,
+        estimatedCost: 0.000814,
+        priced: true,
+        conversationId: 'c1',
+        garageId: 'garage-1',
+        userId: 'u1',
+        toolName: 'find_customer',
         createdAt: new Date('2026-06-18T06:00:00.000Z'),
-        conversation: {
-          userId: 'u1',
-          user: {
-            id: 'u1',
-            firstName: 'Ana',
-            lastName: 'Analytic',
-            email: 'ana@opauto.test',
-          },
-          garage: {
-            id: 'garage-1',
-            name: 'AutoTech Tunisia',
-            address: '15 Avenue Habib Bourguiba, Tunis 1000',
-          },
-        },
       },
       {
-        id: 'm2',
-        conversationId: 'c2',
-        role: AssistantMessageRole.ASSISTANT,
-        content: 'ok',
-        toolCallId: null,
+        id: 'ev-classifier',
+        provider: 'ovh',
+        model: 'Mistral-Small-3_2-24B-Instruct-2506',
+        purpose: 'intent_classifier',
+        status: 'SUCCESS',
         tokensIn: 500,
-        tokensOut: 20,
-        llmProvider: 'ovh',
-        llmModel: 'mistral-small-latest',
-        llmPurpose: 'maintenance-check',
-        skillUsed: null,
-        createdAt: new Date('2026-06-18T06:20:00.000Z'),
-        conversation: {
-          userId: 'u2',
-          user: {
-            id: 'u2',
-            firstName: 'Mia',
-            lastName: 'Tools',
-            email: 'mia@opauto.test',
-          },
-          garage: {
-            id: 'garage-1',
-            name: 'AutoTech Tunisia',
-            address: '15 Avenue Habib Bourguiba, Tunis 1000',
-          },
-        },
+        tokensOut: 12,
+        latencyMs: 150,
+        estimatedCost: 0.00005,
+        priced: true,
+        conversationId: 'c1',
+        garageId: 'garage-1',
+        userId: 'u1',
+        toolName: null,
+        createdAt: new Date('2026-06-18T06:00:01.000Z'),
       },
       {
-        id: 'm3',
-        conversationId: 'c3',
-        role: AssistantMessageRole.ASSISTANT,
-        content: 'ok',
-        toolCallId: null,
+        id: 'ev-failed',
+        provider: 'ovh',
+        model: null,
+        purpose: null,
+        status: 'FAILED',
         tokensIn: null,
         tokensOut: null,
-        llmProvider: 'ovh',
-        llmModel: null,
-        llmPurpose: null,
-        skillUsed: null,
-        createdAt: new Date('2026-06-18T07:00:00.000Z'),
-        conversation: {
-          userId: 'u2',
-          user: {
-            id: 'u2',
-            firstName: 'Mia',
-            lastName: 'Tools',
-            email: 'mia@opauto.test',
-          },
-          garage: {
-            id: 'garage-1',
-            name: 'AutoTech Tunisia',
-            address: '15 Avenue Habib Bourguiba, Tunis 1000',
-          },
-        },
+        latencyMs: null,
+        estimatedCost: 0,
+        priced: false,
+        conversationId: null,
+        garageId: null,
+        userId: null,
+        toolName: null,
+        createdAt: new Date('2026-06-18T06:01:00.000Z'),
       },
     ]);
 
     prisma.assistantToolCall.findMany.mockResolvedValue([
       {
-        id: 't1',
+        id: 'tc-find',
         conversationId: 'c1',
-        toolName: 'get_revenue_summary',
-        status: AssistantToolCallStatus.APPROVED,
+        messageId: null,
+        toolName: 'find_customer',
+        status: AssistantToolCallStatus.EXECUTED,
         blastTier: 'READ',
-        durationMs: 120,
-        approvedAt: new Date('2026-06-18T06:01:00.000Z'),
+        durationMs: 25,
+        approvedAt: null,
         createdAt: new Date('2026-06-18T06:00:20.000Z'),
         conversation: {
           userId: 'u1',
@@ -144,287 +120,49 @@ describe('AdminAiUsageService', () => {
             address: '15 Avenue Habib Bourguiba, Tunis 1000',
           },
         },
-        emitter: {
-          llmPurpose: 'agent_runner:analytics-agent',
-          llmModel: 'Meta-Llama-3_3-70B-Instruct',
-        },
       },
+    ]);
+
+    prisma.user.findMany.mockResolvedValue([
       {
-        id: 't2',
-        conversationId: 'c2',
-        toolName: 'list_maintenance',
-        status: AssistantToolCallStatus.DENIED,
-        blastTier: 'CONFIRM_WRITE',
-        durationMs: 40,
-        approvedAt: new Date('2026-06-18T07:00:22.000Z'),
-        createdAt: new Date('2026-06-18T07:00:10.000Z'),
-        conversation: {
-          userId: 'u2',
-          user: {
-            id: 'u2',
-            firstName: 'Mia',
-            lastName: 'Tools',
-            email: 'mia@opauto.test',
-          },
-          garage: {
-            id: 'garage-1',
-            name: 'AutoTech Tunisia',
-            address: '15 Avenue Habib Bourguiba, Tunis 1000',
-          },
-        },
-        emitter: {
-          llmPurpose: 'maintenance-check',
-          llmModel: 'mistral-small-latest',
-        },
+        id: 'u1',
+        firstName: 'Ana',
+        lastName: 'Analytic',
+        email: 'ana@opauto.test',
       },
+    ]);
+    prisma.garage.findMany.mockResolvedValue([
       {
-        id: 't3',
-        conversationId: 'c2',
-        toolName: 'get_revenue_summary',
-        status: AssistantToolCallStatus.EXECUTED,
-        blastTier: 'READ',
-        durationMs: 45,
-        approvedAt: null,
-        createdAt: new Date('2026-06-18T07:30:00.000Z'),
-        conversation: {
-          userId: 'u2',
-          user: {
-            id: 'u2',
-            firstName: 'Mia',
-            lastName: 'Tools',
-            email: 'mia@opauto.test',
-          },
-          garage: {
-            id: 'garage-1',
-            name: 'AutoTech Tunisia',
-            address: '15 Avenue Habib Bourguiba, Tunis 1000',
-          },
-        },
-        emitter: {
-          llmPurpose: 'maintenance-check',
-          llmModel: 'mistral-small-latest',
-        },
+        id: 'garage-1',
+        name: 'AutoTech Tunisia',
+        address: '15 Avenue Habib Bourguiba, Tunis 1000',
       },
     ]);
 
     const result = await service.getOvhUsage('garage-1', AiUsageRangeKey.TODAY);
 
-    expect(prisma.assistantMessage.findMany).toHaveBeenCalled();
-    expect(prisma.assistantToolCall.findMany).toHaveBeenCalled();
-
-    expect(result.summary.assistantMessages).toBe(3);
-    expect(result.summary.toolCalls).toBe(3);
-    expect(result.summary.uniqueUsers).toBe(2);
-    expect(result.summary.ovhMessagesPriced).toBe(2);
-    expect(result.summary.ovhMessagesUnpriced).toBe(1);
-    expect(result.summary.rowsWithMissingPurpose).toBe(1);
-    expect(result.summary.rowsWithMissingModel).toBe(1);
-    expect(result.summary.rowsWithMissingPurpose).toBe(1);
-    expect(result.summary.tokensIn).toBe(1500);
-    expect(result.summary.tokensOut).toBe(120);
-    expect(result.summary.estimatedCost).toBeCloseTo(
-      (1100 * 0.74 + 500 * 0.1) / 1_000_000,
-      10,
+    expect(prisma.llmUsageEvent.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ provider: 'ovh' }),
+      }),
     );
-
-    expect(result.taskUsage).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          purpose: 'agent_runner:analytics-agent',
-          calls: 1,
-          toolCalls: 1,
-        }),
-        expect.objectContaining({
-          purpose: 'maintenance-check',
-          calls: 1,
-          toolCalls: 2,
-        }),
-        expect.objectContaining({
-          purpose: 'unknown',
-          calls: 1,
-          unpricedCalls: 1,
-        }),
-      ]),
-    );
-
-    expect(result.agentUsage).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ agent: 'analytics-agent', calls: 1 }),
-      ]),
-    );
-    expect(result.skillUsage).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ skill: 'analytics', calls: 1 }),
-        expect.objectContaining({ skill: 'direct_assistant', calls: 2 }),
-      ]),
-    );
-
-    const top = result.topExpensiveCalls[0];
-    expect(top.messageId).toBe('m1');
-    expect(top.priced).toBe(true);
-
-    const revTool = result.toolUsage.find(
-      (t) => t.toolName === 'get_revenue_summary',
-    );
-    const maintenanceTool = result.toolUsage.find(
-      (t) => t.toolName === 'list_maintenance',
-    );
-    expect(revTool?.calls).toBe(2);
-    expect(revTool?.approved).toBe(1);
-    expect(revTool?.executed).toBe(1);
-    expect(revTool?.tierBreakdown.READ).toBe(2);
-    expect(maintenanceTool?.denied).toBe(1);
-
-    expect(result.approvalRefusal.totalToolCalls).toBe(3);
-    expect(result.approvalRefusal.approvalRequired).toBe(2);
-    expect(result.approvalRefusal.approvedOrExecuted).toBe(2);
-    expect(result.approvalRefusal.denied).toBe(1);
-  });
-
-  it('maps user and garage usage tool-call counts separately from assistant messages', async () => {
-    prisma.assistantMessage.findMany.mockResolvedValue([]);
-    prisma.assistantToolCall.findMany.mockResolvedValue([
-      {
-        id: 'tc1',
-        conversationId: 'c-ghost',
-        toolName: 'find_customer',
-        status: AssistantToolCallStatus.PENDING_APPROVAL,
-        blastTier: 'CONFIRM_WRITE',
-        durationMs: 12,
-        approvedAt: null,
-        createdAt: new Date('2026-06-18T10:00:00.000Z'),
-        conversation: {
-          userId: 'u9',
-          user: {
-            id: 'u9',
-            firstName: 'Rui',
-            lastName: 'Ghost',
-            email: 'rui@opauto.test',
-          },
-          garage: {
-            id: 'garage-1',
-            name: 'AutoTech Tunisia',
-            address: '15 Avenue Habib Bourguiba, Tunis 1000',
-          },
-        },
-        emitter: {
-          llmPurpose: 'agent_runner:inventory-agent',
-          llmModel: 'Meta-Llama-3_3-70B-Instruct',
-        },
-      },
-    ]);
-
-    const result = await service.getOvhUsage('garage-1', AiUsageRangeKey.TODAY);
-
-    expect(result.summary.assistantMessages).toBe(0);
-    expect(result.summary.toolCalls).toBe(1);
-    expect(result.summary.uniqueUsers).toBe(1);
-    expect(result.userUsage[0]).toMatchObject({
-      userId: 'u9',
-      calls: 0,
-      toolCalls: 1,
+    expect(result.sourceCoverage.dataSource).toBe('gateway_usage_events');
+    expect(result.sourceCoverage.includesGatewayOnlySignals).toMatchObject({
+      classifierCalls: true,
+      conversationTitles: true,
+      rawGatewayLatency: true,
     });
-    expect(result.garageUsage[0].toolCalls).toBe(1);
-    expect(result.garageUsage[0].calls).toBe(0);
-    expect(result.garageUsage[0].uniqueUsers).toBe(1);
-    expect(result.garageUsage[0].garageName).toBe('AutoTech Tunisia');
-    expect(result.sourceCoverage.rowCoverage.assistantMessagesScanned).toBe(0);
-    expect(result.sourceCoverage.rowCoverage.assistantToolCallsScanned).toBe(1);
-    expect(
-      result.sourceCoverage.includesGatewayOnlySignals.classifierCalls,
-    ).toBe(false);
-  });
-
-  it('scopes broad assistant tasks to the related tool name', async () => {
-    prisma.assistantMessage.findMany.mockResolvedValue([
-      {
-        id: 'm-tool-plan',
-        conversationId: 'c-tool',
-        role: AssistantMessageRole.ASSISTANT,
-        content: 'tool call',
-        toolCallId: null,
-        tokensIn: 1000,
-        tokensOut: 20,
-        llmProvider: 'ovh',
-        llmModel: 'Meta-Llama-3_3-70B-Instruct',
-        llmPurpose: 'assistant_tool_selection',
-        skillUsed: null,
-        createdAt: new Date('2026-06-18T06:00:00.000Z'),
-        conversation: {
-          userId: 'u1',
-          user: {
-            id: 'u1',
-            firstName: 'Ana',
-            lastName: 'Analytic',
-            email: 'ana@opauto.test',
-          },
-          garage: {
-            id: 'garage-1',
-            name: 'AutoTech Tunisia',
-            address: '15 Avenue Habib Bourguiba, Tunis 1000',
-          },
-        },
-      },
-      {
-        id: 'm-tool-reply',
-        conversationId: 'c-tool',
-        role: AssistantMessageRole.ASSISTANT,
-        content: 'Found the customer.',
-        toolCallId: null,
-        tokensIn: 400,
-        tokensOut: 80,
-        llmProvider: 'ovh',
-        llmModel: 'Meta-Llama-3_3-70B-Instruct',
-        llmPurpose: 'assistant_compose',
-        skillUsed: null,
-        createdAt: new Date('2026-06-18T06:02:00.000Z'),
-        conversation: {
-          userId: 'u1',
-          user: {
-            id: 'u1',
-            firstName: 'Ana',
-            lastName: 'Analytic',
-            email: 'ana@opauto.test',
-          },
-          garage: {
-            id: 'garage-1',
-            name: 'AutoTech Tunisia',
-            address: '15 Avenue Habib Bourguiba, Tunis 1000',
-          },
-        },
-      },
-    ]);
-
-    prisma.assistantToolCall.findMany.mockResolvedValue([
-      {
-        id: 'tc-find',
-        conversationId: 'c-tool',
-        messageId: null,
-        toolName: 'find_customer',
-        status: AssistantToolCallStatus.EXECUTED,
-        blastTier: 'READ',
-        durationMs: 25,
-        approvedAt: null,
-        createdAt: new Date('2026-06-18T06:01:00.000Z'),
-        conversation: {
-          userId: 'u1',
-          user: {
-            id: 'u1',
-            firstName: 'Ana',
-            lastName: 'Analytic',
-            email: 'ana@opauto.test',
-          },
-          garage: {
-            id: 'garage-1',
-            name: 'AutoTech Tunisia',
-            address: '15 Avenue Habib Bourguiba, Tunis 1000',
-          },
-        },
-        emitter: null,
-      },
-    ]);
-
-    const result = await service.getOvhUsage('garage-1', AiUsageRangeKey.TODAY);
+    expect(result.summary.llmCalls).toBe(3);
+    expect(result.summary.gatewayEvents).toBe(3);
+    expect(result.summary.assistantMessages).toBe(3);
+    expect(result.summary.toolCalls).toBe(1);
+    expect(result.summary.tokensIn).toBe(1500);
+    expect(result.summary.tokensOut).toBe(112);
+    expect(result.summary.failedCalls).toBe(1);
+    expect(result.summary.tokensMissing).toBe(1);
+    expect(result.summary.eventsMissingContext).toBe(1);
+    expect(result.summary.avgLatencyMs).toBe(300);
+    expect(result.summary.estimatedCost).toBeCloseTo(0.000864, 6);
 
     expect(result.taskUsage).toEqual(
       expect.arrayContaining([
@@ -434,17 +172,93 @@ describe('AdminAiUsageService', () => {
           toolCalls: 1,
         }),
         expect.objectContaining({
-          purpose: 'assistant_compose:find_customer',
+          purpose: 'intent_classifier',
           calls: 1,
-          toolCalls: 1,
+        }),
+        expect.objectContaining({
+          purpose: 'unknown',
+          calls: 1,
+          failedCalls: 1,
         }),
       ]),
     );
-    expect(result.topExpensiveCalls.map((call) => call.purpose)).toContain(
-      'assistant_tool_selection:find_customer',
+    expect(result.modelUsage).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          provider: 'ovh',
+          model: 'Meta-Llama-3_3-70B-Instruct',
+          calls: 1,
+        }),
+        expect.objectContaining({
+          provider: 'ovh',
+          model: 'Mistral-Small-3_2-24B-Instruct-2506',
+          calls: 1,
+        }),
+      ]),
     );
-    expect(result.topExpensiveCalls.map((call) => call.purpose)).toContain(
-      'assistant_compose:find_customer',
-    );
+    expect(result.topExpensiveCalls[0]).toMatchObject({
+      eventId: 'ev-plan',
+      purpose: 'assistant_tool_selection:find_customer',
+      userName: 'Ana Analytic',
+      garageName: 'AutoTech Tunisia',
+      latencyMs: 450,
+      status: 'SUCCESS',
+    });
+    expect(result.toolUsage[0]).toMatchObject({
+      toolName: 'find_customer',
+      calls: 1,
+      executed: 1,
+      avgDurationMs: 25,
+    });
+    expect(result.userUsage[0]).toMatchObject({
+      userId: 'u1',
+      calls: 2,
+      toolCalls: 1,
+    });
+    expect(result.garageUsage[0]).toMatchObject({
+      garageId: 'garage-1',
+      calls: 2,
+      toolCalls: 1,
+      uniqueUsers: 1,
+    });
+    expect(result.timeBuckets.some((bucket) => bucket.calls > 0)).toBe(true);
+  });
+
+  it('counts gateway-only calls even when no tool calls or context exist', async () => {
+    prisma.llmUsageEvent.findMany.mockResolvedValue([
+      {
+        id: 'ev-title',
+        provider: 'ovh',
+        model: 'Meta-Llama-3_3-70B-Instruct',
+        purpose: 'conversation_title',
+        status: 'SUCCESS',
+        tokensIn: 80,
+        tokensOut: 8,
+        latencyMs: 90,
+        estimatedCost: 0.000065,
+        priced: true,
+        conversationId: null,
+        garageId: null,
+        userId: null,
+        toolName: null,
+        createdAt: new Date('2026-06-18T08:00:00.000Z'),
+      },
+    ]);
+    prisma.assistantToolCall.findMany.mockResolvedValue([]);
+    prisma.user.findMany.mockResolvedValue([]);
+    prisma.garage.findMany.mockResolvedValue([]);
+
+    const result = await service.getOvhUsage('garage-1', AiUsageRangeKey.TODAY);
+
+    expect(result.summary.llmCalls).toBe(1);
+    expect(result.summary.toolCalls).toBe(0);
+    expect(result.summary.eventsMissingContext).toBe(1);
+    expect(result.taskUsage[0]).toMatchObject({
+      purpose: 'conversation_title',
+      calls: 1,
+      toolCalls: 0,
+    });
+    expect(result.userUsage).toEqual([]);
+    expect(result.garageUsage).toEqual([]);
   });
 });

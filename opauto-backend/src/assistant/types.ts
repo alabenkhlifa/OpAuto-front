@@ -121,6 +121,7 @@ export interface LlmCompletionRequest {
    * main assistant brain.
    */
   model?: string;
+  usageContext?: LlmUsageContext;
   /**
    * Optional caller-side validator run after each provider's successful
    * response and before it's returned. Lets callers reject results that are
@@ -131,6 +132,16 @@ export interface LlmCompletionRequest {
    * `result`.
    */
   validateResult?: (result: LlmCompletionResult) => LlmValidationOutcome;
+}
+
+export interface LlmUsageContext {
+  conversationId?: string;
+  garageId?: string;
+  userId?: string;
+  assistantMessageId?: string;
+  toolCallId?: string;
+  toolName?: string;
+  metadata?: Record<string, unknown>;
 }
 
 export type LlmValidationOutcome =
@@ -153,6 +164,7 @@ export interface LlmCompletionResult {
   toolCalls: LlmToolCall[];
   tokensIn?: number;
   tokensOut?: number;
+  latencyMs?: number;
 }
 
 export type SseEvent =

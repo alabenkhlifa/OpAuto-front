@@ -23,9 +23,10 @@ describe('AdminAiUsageController', () => {
       label: 'Today',
       start: new Date().toISOString(),
       end: new Date().toISOString(),
-      scope: 'ovh-only',
+      scope: 'gateway-ovh-account',
     },
     summary: {
+      llmCalls: 0,
       assistantMessages: 0,
       ovhMessagesPriced: 0,
       ovhMessagesUnpriced: 0,
@@ -37,8 +38,16 @@ describe('AdminAiUsageController', () => {
       estimatedCost: 0,
       rowsWithMissingPurpose: 0,
       rowsWithMissingModel: 0,
+      failedCalls: 0,
+      rejectedCalls: 0,
+      mockCalls: 0,
+      avgLatencyMs: null,
+      gatewayEvents: 0,
+      eventsMissingContext: 0,
     },
     taskUsage: [],
+    modelUsage: [],
+    timeBuckets: [],
     agentUsage: [],
     skillUsage: [],
     userUsage: [],
@@ -55,18 +64,19 @@ describe('AdminAiUsageController', () => {
     },
     topExpensiveCalls: [],
     sourceCoverage: {
-      dataSource: 'persisted_tables_only',
+      dataSource: 'gateway_usage_events',
       includesGatewayOnlySignals: {
-        classifierCalls: false,
-        conversationTitles: false,
-        rawGatewayLatency: false,
+        classifierCalls: true,
+        conversationTitles: true,
+        rawGatewayLatency: true,
       },
       rowCoverage: {
-        assistantMessagesScanned: 0,
+        gatewayEventsScanned: 0,
         assistantToolCallsScanned: 0,
-        messagesWithoutModel: 0,
-        messagesWithoutPurpose: 0,
-        messagesWithoutTokens: 0,
+        eventsWithoutModel: 0,
+        eventsWithoutPurpose: 0,
+        eventsWithoutTokens: 0,
+        eventsWithoutContext: 0,
       },
     },
   };
@@ -107,11 +117,9 @@ describe('AdminAiUsageController', () => {
 
   it('rejects non-configured owner email', () => {
     expect(() =>
-      controller.getUsage(
-        'not-authorized@example.com',
-        'garage-ctrl-001',
-        { range: AiUsageRangeKey.LAST_WEEK },
-      ),
+      controller.getUsage('not-authorized@example.com', 'garage-ctrl-001', {
+        range: AiUsageRangeKey.LAST_WEEK,
+      }),
     ).toThrow(ForbiddenException);
     expect(service.getOvhUsage).not.toHaveBeenCalled();
   });

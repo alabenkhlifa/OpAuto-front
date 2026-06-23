@@ -5,17 +5,22 @@
         <p class="ai-usage-eyebrow">Owner analytics</p>
         <h1>AI / OVH Usage Analytics</h1>
         <p>
-          Sign in with the configured owner account to monitor OVH model usage,
-          tokens, cost, tools, agents, skills, approvals, users, and garages.
+          Sign in with the configured owner account to monitor gateway-level OVH
+          model usage, tokens, cost, tools, agents, skills, approvals, users,
+          and garages.
         </p>
         <div class="ai-admin-login__facts" aria-label="Dashboard scope">
-          <span>OVH usage only</span>
-          <span>Persisted production logs</span>
+          <span>Gateway usage events</span>
+          <span>OVH account scope</span>
           <span>Owner-only access</span>
         </div>
       </div>
 
-      <form class="ai-admin-login__card" [formGroup]="loginForm" (ngSubmit)="submitLogin()">
+      <form
+        class="ai-admin-login__card"
+        [formGroup]="loginForm"
+        (ngSubmit)="submitLogin()"
+      >
         <div>
           <p class="ai-usage-eyebrow">Standalone login</p>
           <h2>Open dashboard</h2>
@@ -23,16 +28,30 @@
 
         <label class="ai-admin-field">
           <span>Email</span>
-          <input type="email" formControlName="email" autocomplete="username" inputmode="email" />
-          @if (loginForm.controls.email.invalid && loginForm.controls.email.touched) {
+          <input
+            type="email"
+            formControlName="email"
+            autocomplete="username"
+            inputmode="email"
+          />
+          @if (
+            loginForm.controls.email.invalid && loginForm.controls.email.touched
+          ) {
             <small>Enter the configured owner email.</small>
           }
         </label>
 
         <label class="ai-admin-field">
           <span>Password</span>
-          <input type="password" formControlName="password" autocomplete="current-password" />
-          @if (loginForm.controls.password.invalid && loginForm.controls.password.touched) {
+          <input
+            type="password"
+            formControlName="password"
+            autocomplete="current-password"
+          />
+          @if (
+            loginForm.controls.password.invalid &&
+            loginForm.controls.password.touched
+          ) {
             <small>Enter the dashboard password.</small>
           }
         </label>
@@ -41,8 +60,12 @@
           <p class="ai-admin-login__error" role="alert">{{ loginError() }}</p>
         }
 
-        <button class="ai-admin-button ai-admin-button--primary" type="submit" [disabled]="isLoginLoading()">
-          {{ isLoginLoading() ? 'Signing in...' : 'Sign in' }}
+        <button
+          class="ai-admin-button ai-admin-button--primary"
+          type="submit"
+          [disabled]="isLoginLoading()"
+        >
+          {{ isLoginLoading() ? "Signing in..." : "Sign in" }}
         </button>
       </form>
     </section>
@@ -69,11 +92,18 @@
             }
           </select>
           <span class="range-pill">{{ rangeWindow() }}</span>
-          <span class="range-pill">OVH only</span>
-          <button class="refresh-button" type="button" [disabled]="isLoading()" (click)="reloadCurrentRange()">
-            {{ isLoading() ? 'Loading' : 'Refresh' }}
+          <span class="range-pill">Gateway OVH account</span>
+          <button
+            class="refresh-button"
+            type="button"
+            [disabled]="isLoading()"
+            (click)="reloadCurrentRange()"
+          >
+            {{ isLoading() ? "Loading" : "Refresh" }}
           </button>
-          <button class="mock-link-button" type="button" (click)="logout()">Sign out</button>
+          <button class="mock-link-button" type="button" (click)="logout()">
+            Sign out
+          </button>
         </div>
       </header>
 
@@ -97,23 +127,35 @@
         }
       </section>
 
-      <section class="split-grid split-grid--cost">
+      <section class="single-grid">
         <article class="mock-card cost-list-card">
           <div class="card-title-row">
             <h2>Cost by AI Task</h2>
-            <span>{{ selectedRange() === 'today' ? 'Today' : dashboard().range.label }}, {{ formatCost(summary().estimatedCost) }} total</span>
+            <span
+              >{{
+                selectedRange() === "today" ? "Today" : dashboard().range.label
+              }}, {{ formatCost(summary().estimatedCost) }} total</span
+            >
           </div>
 
           <div class="task-cost-list">
-            @for (task of taskUsage().slice(0, 8); track trackTask($index, task)) {
+            @for (
+              task of taskUsage().slice(0, 8);
+              track trackTask($index, task)
+            ) {
               <article class="task-cost-item">
                 <div>
                   <h3>{{ purposeLabel(task.purpose) }}</h3>
                   <p>{{ purposeDescription(task.purpose) }}</p>
                 </div>
-                <span>{{ formatInteger(task.calls) }} calls, {{ formatCost(task.estimatedCost) }}</span>
+                <span
+                  >{{ formatInteger(task.calls) }} calls,
+                  {{ formatCost(task.estimatedCost) }}</span
+                >
                 <div class="mini-bar" aria-hidden="true">
-                  <i [style.width]="rowWidth(task.estimatedCost, maxTaskCost())"></i>
+                  <i
+                    [style.width]="rowWidth(task.estimatedCost, maxTaskCost())"
+                  ></i>
                 </div>
               </article>
             } @empty {
@@ -121,8 +163,10 @@
             }
           </div>
         </article>
+      </section>
 
-        <article class="mock-card share-card">
+      <section class="single-grid">
+        <article class="mock-card share-card share-card--wide">
           <div class="card-title-row">
             <h2>AI Task Cost Share</h2>
             <span>top tasks</span>
@@ -142,6 +186,56 @@
                 <p class="mock-empty">No cost recorded in this range.</p>
               }
             </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="split-grid">
+        <article class="mock-card trend-card">
+          <div class="card-title-row">
+            <h2>OVH Usage Trend</h2>
+            <span>{{ dashboard().range.label }} buckets</span>
+          </div>
+          <div class="usage-bars" aria-label="Spend by time bucket">
+            @for (bucket of timeBuckets(); track trackBucket($index, bucket)) {
+              <article>
+                <div
+                  class="usage-bars__bar"
+                  [style.height]="bucketHeight(bucket)"
+                  aria-hidden="true"
+                ></div>
+                <strong>{{ formatCost(bucket.estimatedCost) }}</strong>
+                <small>{{ bucket.label }}</small>
+                <span>{{ formatInteger(bucket.calls) }} calls</span>
+              </article>
+            } @empty {
+              <p class="mock-empty">No usage trend in this range.</p>
+            }
+          </div>
+        </article>
+
+        <article class="mock-card model-card">
+          <div class="card-title-row">
+            <h2>Model Usage</h2>
+            <span>gateway calls by model</span>
+          </div>
+          <div class="model-list">
+            @for (model of modelUsage(); track trackModel($index, model)) {
+              <article>
+                <div>
+                  <strong>{{ modelLabel(model.model) }}</strong>
+                  <small
+                    >{{ model.provider | uppercase }} ·
+                    {{ formatTokens(model.tokensIn, model.tokensOut) }}</small
+                  >
+                </div>
+                <span>{{ formatInteger(model.calls) }} calls</span>
+                <b>{{ formatCost(model.estimatedCost) }}</b>
+                <small>{{ modelAvgMs(model) }}</small>
+              </article>
+            } @empty {
+              <p class="mock-empty">No model usage in this range.</p>
+            }
           </div>
         </article>
       </section>
@@ -171,7 +265,11 @@
                     <strong>{{ purposeLabel(task.purpose) }}</strong>
                     <small>{{ purposeDescription(task.purpose) }}</small>
                   </td>
-                  <td><span [ngClass]="modelBadgeClass(task.model)">{{ modelLabel(task.model) }}</span></td>
+                  <td>
+                    <span [ngClass]="modelBadgeClass(task.model)">{{
+                      modelLabel(task.model)
+                    }}</span>
+                  </td>
                   <td>{{ formatInteger(task.calls) }}</td>
                   <td>{{ formatInteger(task.tokensIn) }}</td>
                   <td>{{ formatInteger(task.tokensOut) }}</td>
@@ -192,7 +290,7 @@
         <article class="mock-card compact-card">
           <div class="card-title-row">
             <h2>User Usage</h2>
-            <span>messages grouped by user</span>
+            <span>gateway events grouped by user</span>
           </div>
           @for (user of userUsage(); track trackUser($index, user)) {
             <article class="entity-box">
@@ -201,9 +299,16 @@
                 <span>OWNER</span>
               </div>
               <div class="metric-strip">
-                <div><small>Rows</small><b>{{ formatInteger(user.calls) }}</b></div>
-                <div><small>Tokens</small><b>{{ formatCompact(user.tokensIn + user.tokensOut) }}</b></div>
-                <div><small>Cost</small><b>{{ formatCost(user.estimatedCost) }}</b></div>
+                <div>
+                  <small>AI calls</small><b>{{ formatInteger(user.calls) }}</b>
+                </div>
+                <div>
+                  <small>Tokens</small
+                  ><b>{{ formatCompact(user.tokensIn + user.tokensOut) }}</b>
+                </div>
+                <div>
+                  <small>Cost</small><b>{{ formatCost(user.estimatedCost) }}</b>
+                </div>
               </div>
             </article>
           } @empty {
@@ -214,7 +319,7 @@
         <article class="mock-card compact-card">
           <div class="card-title-row">
             <h2>Garage Usage</h2>
-            <span>messages grouped by garage</span>
+            <span>gateway events grouped by garage</span>
           </div>
           @for (garage of garageUsage(); track trackGarage($index, garage)) {
             <article class="entity-box">
@@ -225,9 +330,20 @@
                 <p>{{ garage.garageLocation }}</p>
               }
               <div class="metric-strip">
-                <div><small>Rows</small><b>{{ formatInteger(garage.calls) }}</b></div>
-                <div><small>Tokens</small><b>{{ formatCompact(garage.tokensIn + garage.tokensOut) }}</b></div>
-                <div><small>Cost</small><b>{{ formatCost(garage.estimatedCost) }}</b></div>
+                <div>
+                  <small>AI calls</small
+                  ><b>{{ formatInteger(garage.calls) }}</b>
+                </div>
+                <div>
+                  <small>Tokens</small
+                  ><b>{{
+                    formatCompact(garage.tokensIn + garage.tokensOut)
+                  }}</b>
+                </div>
+                <div>
+                  <small>Cost</small
+                  ><b>{{ formatCost(garage.estimatedCost) }}</b>
+                </div>
               </div>
             </article>
           } @empty {
@@ -237,11 +353,14 @@
 
         <article class="mock-card compact-card">
           <div class="card-title-row">
-            <h2>Tool Usage</h2>
-            <span>assistant actions requested by users</span>
+            <h2>Tool Execution Health</h2>
+            <span>actual tool calls and outcomes</span>
           </div>
           <div class="mini-table-list">
-            @for (tool of toolUsage().slice(0, 8); track trackTool($index, tool)) {
+            @for (
+              tool of toolUsage().slice(0, 8);
+              track trackTool($index, tool)
+            ) {
               <article>
                 <div>
                   <strong>{{ toolLabel(tool.toolName) }}</strong>
@@ -263,7 +382,7 @@
         <article class="mock-card table-card agent-usage-card">
           <div class="card-title-row">
             <h2>Agent Usage</h2>
-            <span>specialized agent calls from OVH logs</span>
+            <span>specialized agent calls from gateway events</span>
           </div>
           <div class="table-scroll">
             <table>
@@ -283,12 +402,14 @@
                   <tr>
                     <td>
                       <strong>{{ agentLabel(agent.agent) }}</strong>
-                      <small>{{ purposeDescription('agent_runner:' + agent.agent) }}</small>
+                      <small>{{
+                        purposeDescription("agent_runner:" + agent.agent)
+                      }}</small>
                     </td>
                     <td>{{ formatInteger(agent.calls) }}</td>
                     <td>{{ formatInteger(agent.tokensIn) }}</td>
                     <td>{{ formatInteger(agent.tokensOut) }}</td>
-                    <td>n/a</td>
+                    <td>{{ formatDuration(null) }}</td>
                     <td>{{ formatCost(agent.estimatedCost) }}</td>
                     <td>n/a</td>
                   </tr>
@@ -304,8 +425,8 @@
 
         <article class="mock-card table-card skill-usage-card">
           <div class="card-title-row">
-            <h2>Skill Usage Coverage</h2>
-            <span>messages grouped by assistant skill</span>
+            <h2>Source Coverage</h2>
+            <span>{{ contextCoverageLabel() }}</span>
           </div>
           <div class="table-scroll">
             <table>
@@ -317,24 +438,62 @@
                 </tr>
               </thead>
               <tbody>
-                @for (skill of skillUsage(); track trackSkill($index, skill)) {
-                  <tr>
-                    <td><strong>{{ skillLabel(skill.skill) }}</strong></td>
-                    <td>{{ formatInteger(skill.calls) }}</td>
-                    <td><span class="tier-chip tier-chip--orange">{{ formatCost(skill.estimatedCost) }}</span></td>
-                  </tr>
-                } @empty {
-                  <tr>
-                    <td>Messages with a recorded skill</td>
-                    <td>0</td>
-                    <td><span class="tier-chip">No skill names stored</span></td>
-                  </tr>
-                  <tr>
-                    <td>Messages without a recorded skill</td>
-                    <td>{{ formatInteger(summary().assistantMessages) }}</td>
-                    <td><span class="tier-chip tier-chip--orange">Measured from stored messages</span></td>
-                  </tr>
-                }
+                <tr>
+                  <td><strong>Gateway events scanned</strong></td>
+                  <td>
+                    {{
+                      formatInteger(
+                        dashboard().sourceCoverage.rowCoverage
+                          .gatewayEventsScanned ?? 0
+                      )
+                    }}
+                  </td>
+                  <td>
+                    <span class="tier-chip tier-chip--orange"
+                      >Primary usage source</span
+                    >
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>Tool calls scanned</strong></td>
+                  <td>
+                    {{
+                      formatInteger(
+                        dashboard().sourceCoverage.rowCoverage
+                          .assistantToolCallsScanned
+                      )
+                    }}
+                  </td>
+                  <td>
+                    <span class="tier-chip">Execution health source</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>Events missing context</strong></td>
+                  <td>
+                    {{
+                      formatInteger(
+                        dashboard().sourceCoverage.rowCoverage
+                          .eventsWithoutContext ?? 0
+                      )
+                    }}
+                  </td>
+                  <td>
+                    <span class="tier-chip">Still counted in OVH totals</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>Events missing tokens</strong></td>
+                  <td>
+                    {{
+                      formatInteger(
+                        dashboard().sourceCoverage.rowCoverage
+                          .eventsWithoutTokens ?? 0
+                      )
+                    }}
+                  </td>
+                  <td><span class="tier-chip">Cost may be incomplete</span></td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -348,10 +507,33 @@
             <span>tool calls grouped by approval outcome</span>
           </div>
           <div class="approval-kpis">
-            <div><strong>{{ formatPercent(approvalRequiredShare()) }}</strong><span>Approval-required share</span></div>
-            <div><strong>{{ formatPercent(dashboard().approvalRefusal.approvedOrExecuted ? 100 : 0) }}</strong><span>Approved/executed writes</span></div>
-            <div><strong>{{ formatInteger(dashboard().approvalRefusal.denied) }}</strong><span>Denied/refused</span></div>
-            <div><strong>{{ formatInteger(dashboard().approvalRefusal.expired + dashboard().approvalRefusal.pending) }}</strong><span>Expired or pending</span></div>
+            <div>
+              <strong>{{ formatPercent(approvalRequiredShare()) }}</strong
+              ><span>Approval-required share</span>
+            </div>
+            <div>
+              <strong>{{
+                formatPercent(
+                  dashboard().approvalRefusal.approvedOrExecuted ? 100 : 0
+                )
+              }}</strong
+              ><span>Approved/executed writes</span>
+            </div>
+            <div>
+              <strong>{{
+                formatInteger(dashboard().approvalRefusal.denied)
+              }}</strong
+              ><span>Denied/refused</span>
+            </div>
+            <div>
+              <strong>{{
+                formatInteger(
+                  dashboard().approvalRefusal.expired +
+                    dashboard().approvalRefusal.pending
+                )
+              }}</strong
+              ><span>Expired or pending</span>
+            </div>
           </div>
           <div class="table-scroll">
             <table>
@@ -365,17 +547,28 @@
                 </tr>
               </thead>
               <tbody>
-                @for (row of dashboard().approvalRefusal.rows; track row.status) {
+                @for (
+                  row of dashboard().approvalRefusal.rows;
+                  track row.status
+                ) {
                   <tr>
-                    <td><span [ngClass]="statusClass(row.status)">{{ statusLabel(row.status) }}</span></td>
+                    <td>
+                      <span [ngClass]="statusClass(row.status)">{{
+                        statusLabel(row.status)
+                      }}</span>
+                    </td>
                     <td>{{ formatInteger(row.calls) }}</td>
                     <td>{{ formatPercent(row.share) }}</td>
-                    <td>{{ row.status === 'PENDING_APPROVAL' ? 'Yes' : 'No' }}</td>
+                    <td>
+                      {{ row.status === "PENDING_APPROVAL" ? "Yes" : "No" }}
+                    </td>
                     <td>{{ formatSeconds(row.avgDecisionSeconds) }}</td>
                   </tr>
                 } @empty {
                   <tr>
-                    <td colspan="5">No approval or refusal activity in this range.</td>
+                    <td colspan="5">
+                      No approval or refusal activity in this range.
+                    </td>
                   </tr>
                 }
               </tbody>
@@ -386,18 +579,22 @@
         <article class="mock-card top-calls-card">
           <div class="card-title-row">
             <h2>Top Expensive AI Calls</h2>
-            <span>individual completion events from logs</span>
+            <span>individual gateway completion events</span>
           </div>
           <div class="top-call-list">
-            @for (call of topExpensiveCalls(); track trackTopCall($index, call)) {
+            @for (
+              call of topExpensiveCalls();
+              track trackTopCall($index, call)
+            ) {
               <article>
                 <time>{{ formatShortDateTime(call.createdAt) }} UTC</time>
                 <strong>{{ purposeLabel(call.purpose) }}</strong>
                 <small>{{ purposeDescription(call.purpose) }}</small>
                 <span>{{ formatCost(call.estimatedCost) }}</span>
                 <div>
-                  <b>Tokens</b> {{ formatTokens(call.tokensIn, call.tokensOut) }}
-                  <b>Latency</b> n/a
+                  <b>Tokens</b>
+                  {{ formatTokens(call.tokensIn, call.tokensOut) }}
+                  <b>Latency</b> {{ formatDuration(call.latencyMs) }}
                 </div>
               </article>
             } @empty {
@@ -406,10 +603,6 @@
           </div>
         </article>
       </section>
-
-      <footer class="mock-footnote">
-        Standalone analytics view. Empty sections reflect retained production logs or database aggregates for the selected range.
-      </footer>
     </section>
   }
 </div>

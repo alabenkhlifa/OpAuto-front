@@ -206,7 +206,12 @@ export class OrchestratorService {
       // composition LLM call which doesn't pick tools.
       const realTools = isResume
         ? allRealTools
-        : await this.filterToolsByIntent(userMessage, ctx.locale, allRealTools);
+        : await this.filterToolsByIntent(
+            userMessage,
+            ctx,
+            conversationId,
+            allRealTools,
+          );
 
       const llmTools: ToolDescriptor[] = this.buildLlmToolList(
         realTools,
@@ -273,6 +278,7 @@ export class OrchestratorService {
       // e.g. list_invoices → send_email). After a write tool the action is
       // complete and we can swap to the cheaper compose-only mode.
       let lastToolTier: AssistantBlastTier | null = null;
+      let lastToolName: string | null = null;
       // Per-turn cap on dispatch_agent (B-23/B-24): without this cap a misbehaving
       // model would re-dispatch the same specialist agent on each iteration,
       // blowing the 90s turn budget and racking up OVH spend before
@@ -367,6 +373,12 @@ export class OrchestratorService {
           purpose: swapToComposeOnly
             ? 'assistant_compose'
             : 'assistant_tool_selection',
+          usageContext: {
+            conversationId,
+            garageId: ctx.garageId,
+            userId: ctx.userId,
+            toolName: lastToolName ?? undefined,
+          },
           validateResult: this.buildLeakValidator(offeredTools),
         });
 
@@ -406,7 +418,7 @@ export class OrchestratorService {
           subject.complete();
           // Fire-and-forget: title summary on first turn, never block the
           // observable on it. Failures are logged inside the service.
-          void this.maybeGenerateTitle(conversationId);
+          void this.maybeGenerateTitle(conversationId, ctx);
           return;
         }
 
@@ -631,6 +643,7 @@ export class OrchestratorService {
           };
           toolHasFired = true;
           lastToolTier = tier;
+          lastToolName = call.name;
           successfulToolResults.push({
             toolName: call.name,
             result: successExec.result,
@@ -1364,7 +1377,8 @@ export class OrchestratorService {
 
   private async filterToolsByIntent(
     userMessage: string,
-    locale: AssistantUserContext['locale'],
+    ctx: AssistantUserContext,
+    conversationId: string,
     allRealTools: ToolDescriptor[],
   ): Promise<ToolDescriptor[]> {
     if (allRealTools.length === 0) return allRealTools;
@@ -1376,8 +1390,13 @@ export class OrchestratorService {
 
     const picked = await this.classifier.classify({
       userMessage,
-      locale,
+      locale: ctx.locale,
       candidates,
+      usageContext: {
+        conversationId,
+        garageId: ctx.garageId,
+        userId: ctx.userId,
+      },
     });
 
     // Classifier failed → keep behavior: send everything (slower but safe).
@@ -2499,7 +2518,10 @@ export class OrchestratorService {
     return { id: row.id };
   }
 
-  private async maybeGenerateTitle(conversationId: string): Promise<void> {
+  private async maybeGenerateTitle(
+    conversationId: string,
+    ctx: AssistantUserContext,
+  ): Promise<void> {
     try {
       await this.conversation.generateTitleFromFirstMessage(
         conversationId,
@@ -2515,6 +2537,11 @@ export class OrchestratorService {
             ],
             maxTokens: 32,
             purpose: 'conversation_title',
+            usageContext: {
+              conversationId,
+              garageId: ctx.garageId,
+              userId: ctx.userId,
+            },
           });
           return (result.content ?? '').trim();
         },

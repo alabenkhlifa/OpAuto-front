@@ -15,6 +15,7 @@ import { ApprovalSchedulerService } from './approval-scheduler.service';
 import { ConversationService } from './conversation.service';
 import { AuditService } from './audit.service';
 import { IntentClassifierService } from './intent-classifier.service';
+import { LlmUsageRecorderService } from './llm-usage-recorder.service';
 
 @Module({
   imports: [PrismaModule, AiModule, SmsModule, EmailModule, ModulesModule],
@@ -30,6 +31,7 @@ import { IntentClassifierService } from './intent-classifier.service';
     ConversationService,
     AuditService,
     IntentClassifierService,
+    LlmUsageRecorderService,
   ],
   exports: [
     OrchestratorService,

@@ -14,10 +14,11 @@ export interface AdminAiUsageRangeWindow {
   label: string;
   start: string;
   end: string;
-  scope: 'ovh-only';
+  scope: 'ovh-only' | 'gateway-ovh-account';
 }
 
 export interface AdminAiUsageSummary {
+  llmCalls: number;
   assistantMessages: number;
   ovhMessagesPriced: number;
   ovhMessagesUnpriced: number;
@@ -29,6 +30,12 @@ export interface AdminAiUsageSummary {
   estimatedCost: number;
   rowsWithMissingPurpose: number;
   rowsWithMissingModel: number;
+  failedCalls: number;
+  rejectedCalls: number;
+  mockCalls: number;
+  avgLatencyMs: number | null;
+  gatewayEvents: number;
+  eventsMissingContext: number;
 }
 
 export interface AdminAiUsageTaskMetric {
@@ -40,6 +47,30 @@ export interface AdminAiUsageTaskMetric {
   tokensOut: number;
   estimatedCost: number;
   unpricedCalls: number;
+  avgLatencyMs: number | null;
+  failedCalls: number;
+}
+
+export interface AdminAiUsageModelMetric {
+  provider: string;
+  model: string | null;
+  calls: number;
+  tokensIn: number;
+  tokensOut: number;
+  estimatedCost: number;
+  avgLatencyMs: number | null;
+  failedCalls: number;
+}
+
+export interface AdminAiUsageTimeBucket {
+  label: string;
+  start: string;
+  end: string;
+  calls: number;
+  tokensIn: number;
+  tokensOut: number;
+  estimatedCost: number;
+  avgLatencyMs: number | null;
 }
 
 export interface AdminAiUsageAgentMetric {
@@ -118,32 +149,42 @@ export interface AdminAiUsageApprovalRefusal {
 }
 
 export interface AdminAiUsageTopCall {
-  messageId: string;
-  conversationId: string;
-  userId: string;
+  eventId: string;
+  conversationId: string | null;
+  userId: string | null;
   userName: string;
+  garageId: string | null;
+  garageName: string | null;
   createdAt: string;
+  provider: string;
   purpose: string;
   model: string | null;
   tokensIn: number;
   tokensOut: number;
   estimatedCost: number;
   priced: boolean;
+  latencyMs: number | null;
+  status: string;
 }
 
 export interface AdminAiUsageSourceCoverage {
-  dataSource: 'persisted_tables_only';
+  dataSource: 'persisted_tables_only' | 'gateway_usage_events';
   includesGatewayOnlySignals: {
     classifierCalls: boolean;
     conversationTitles: boolean;
     rawGatewayLatency: boolean;
   };
   rowCoverage: {
-    assistantMessagesScanned: number;
+    assistantMessagesScanned?: number;
+    gatewayEventsScanned?: number;
     assistantToolCallsScanned: number;
-    messagesWithoutModel: number;
-    messagesWithoutPurpose: number;
-    messagesWithoutTokens: number;
+    messagesWithoutModel?: number;
+    messagesWithoutPurpose?: number;
+    messagesWithoutTokens?: number;
+    eventsWithoutModel?: number;
+    eventsWithoutPurpose?: number;
+    eventsWithoutTokens?: number;
+    eventsWithoutContext?: number;
   };
 }
 
@@ -152,6 +193,8 @@ export interface AdminAiUsageDashboard {
   range: AdminAiUsageRangeWindow;
   summary: AdminAiUsageSummary;
   taskUsage: AdminAiUsageTaskMetric[];
+  modelUsage: AdminAiUsageModelMetric[];
+  timeBuckets: AdminAiUsageTimeBucket[];
   agentUsage: AdminAiUsageAgentMetric[];
   skillUsage: AdminAiUsageSkillMetric[];
   userUsage: AdminAiUsageUserMetric[];

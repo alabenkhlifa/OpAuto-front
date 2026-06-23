@@ -773,6 +773,37 @@ model AssistantToolCall {
   @@map("assistant_tool_calls")
 }
 
+model LlmUsageEvent {
+  id                 String   @id @default(uuid())
+  provider           String
+  model              String?
+  purpose            String?
+  status             String   @default("SUCCESS")
+  tokensIn           Int?
+  tokensOut          Int?
+  latencyMs          Int?
+  estimatedCost      Float    @default(0)
+  priced             Boolean  @default(false)
+  errorCode          String?
+  errorMessage       String?  @db.Text
+  conversationId     String?
+  garageId           String?
+  userId             String?
+  assistantMessageId String?
+  toolCallId         String?
+  toolName           String?
+  metadata           Json?
+  createdAt          DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([provider, createdAt])
+  @@index([garageId, createdAt])
+  @@index([purpose, createdAt])
+  @@index([model, createdAt])
+  @@index([conversationId, createdAt])
+  @@map("llm_usage_events")
+}
+
 // ── Fiscal invoicing models ──────────────────────────────
 
 model Quote {

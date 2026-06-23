@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   LlmCompletionRequest,
@@ -8,6 +8,7 @@ import {
   LlmValidationOutcome,
   ToolDescriptor,
 } from './types';
+import { LlmUsageRecorderService } from './llm-usage-recorder.service';
 
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 // llama-3.1-8b-instant: non-reasoning, fast, supports OpenAI-format
@@ -211,7 +212,10 @@ export class LlmGatewayService {
   private readonly mistralKey: string | undefined;
   private readonly anthropicKey: string | undefined;
 
-  constructor(private readonly config: ConfigService) {
+  constructor(
+    private readonly config: ConfigService,
+    @Optional() private readonly usageRecorder?: LlmUsageRecorderService,
+  ) {
     this.geminiKey = this.config.get<string>('GEMINI_API_KEY');
     this.groqKey = this.config.get<string>('GROQ_API_KEY');
     this.ovhKey = this.config.get<string>('OVH_API_KEY');
@@ -257,11 +261,26 @@ export class LlmGatewayService {
       const ovh = await this.callOvh(request);
       if (ovh.ok) {
         const validated = this.runValidator(ovh.result, request);
-        if (validated.ok) return validated.result;
+        if (validated.ok) {
+          await this.recordProviderUsage(request, validated.result, 'SUCCESS');
+          return validated.result;
+        }
+        await this.recordProviderUsage(
+          request,
+          ovh.result,
+          'REJECTED',
+          (validated as { ok: false; reason: string }).reason,
+        );
         this.logger.warn(
           `OVH result rejected (${(validated as { ok: false; reason: string }).reason}); falling back to Gemini`,
         );
       } else {
+        await this.recordProviderFailure(
+          request,
+          'ovh',
+          this.ovhModel,
+          (ovh as { reason: string }).reason,
+        );
         this.logger.warn(
           `OVH failed (${(ovh as { reason: string }).reason}); falling back to Gemini`,
         );
@@ -272,11 +291,26 @@ export class LlmGatewayService {
       const gem = await this.callGemini(request);
       if (gem.ok) {
         const validated = this.runValidator(gem.result, request);
-        if (validated.ok) return validated.result;
+        if (validated.ok) {
+          await this.recordProviderUsage(request, validated.result, 'SUCCESS');
+          return validated.result;
+        }
+        await this.recordProviderUsage(
+          request,
+          gem.result,
+          'REJECTED',
+          (validated as { ok: false; reason: string }).reason,
+        );
         this.logger.warn(
           `Gemini result rejected (${(validated as { ok: false; reason: string }).reason}); falling back to Mistral`,
         );
       } else {
+        await this.recordProviderFailure(
+          request,
+          'gemini',
+          GEMINI_MODEL,
+          (gem as { reason: string }).reason,
+        );
         this.logger.warn(
           `Gemini failed (${(gem as { reason: string }).reason}); falling back to Mistral`,
         );
@@ -287,11 +321,26 @@ export class LlmGatewayService {
       const mistral = await this.callMistral(request);
       if (mistral.ok) {
         const validated = this.runValidator(mistral.result, request);
-        if (validated.ok) return validated.result;
+        if (validated.ok) {
+          await this.recordProviderUsage(request, validated.result, 'SUCCESS');
+          return validated.result;
+        }
+        await this.recordProviderUsage(
+          request,
+          mistral.result,
+          'REJECTED',
+          (validated as { ok: false; reason: string }).reason,
+        );
         this.logger.warn(
           `Mistral result rejected (${(validated as { ok: false; reason: string }).reason}); falling back to Cerebras`,
         );
       } else {
+        await this.recordProviderFailure(
+          request,
+          'mistral',
+          MISTRAL_MODEL,
+          (mistral as { reason: string }).reason,
+        );
         this.logger.warn(
           `Mistral failed (${(mistral as { reason: string }).reason}); falling back to Cerebras`,
         );
@@ -302,11 +351,26 @@ export class LlmGatewayService {
       const cerebras = await this.callCerebras(request);
       if (cerebras.ok) {
         const validated = this.runValidator(cerebras.result, request);
-        if (validated.ok) return validated.result;
+        if (validated.ok) {
+          await this.recordProviderUsage(request, validated.result, 'SUCCESS');
+          return validated.result;
+        }
+        await this.recordProviderUsage(
+          request,
+          cerebras.result,
+          'REJECTED',
+          (validated as { ok: false; reason: string }).reason,
+        );
         this.logger.warn(
           `Cerebras result rejected (${(validated as { ok: false; reason: string }).reason}); falling back to Claude`,
         );
       } else {
+        await this.recordProviderFailure(
+          request,
+          'cerebras',
+          CEREBRAS_MODEL,
+          (cerebras as { reason: string }).reason,
+        );
         this.logger.warn(
           `Cerebras failed (${(cerebras as { reason: string }).reason}); falling back to Claude`,
         );
@@ -317,18 +381,33 @@ export class LlmGatewayService {
       const claude = await this.callClaude(request);
       if (claude.ok) {
         const validated = this.runValidator(claude.result, request);
-        if (validated.ok) return validated.result;
+        if (validated.ok) {
+          await this.recordProviderUsage(request, validated.result, 'SUCCESS');
+          return validated.result;
+        }
+        await this.recordProviderUsage(
+          request,
+          claude.result,
+          'REJECTED',
+          (validated as { ok: false; reason: string }).reason,
+        );
         this.logger.warn(
           `Claude result rejected (${(validated as { ok: false; reason: string }).reason})`,
         );
       } else {
+        await this.recordProviderFailure(
+          request,
+          'claude',
+          CLAUDE_MODEL,
+          (claude as { reason: string }).reason,
+        );
         this.logger.warn(
           `Claude failed (${(claude as { reason: string }).reason})`,
         );
       }
     }
 
-    return {
+    const mockResult: LlmCompletionResult = {
       provider: 'mock',
       purpose: request.purpose,
       model: 'mock',
@@ -336,6 +415,54 @@ export class LlmGatewayService {
         "I'm sorry — I couldn't reach the AI service. Please try again in a moment.",
       toolCalls: [],
     };
+    await this.recordProviderUsage(request, mockResult, 'MOCK');
+    return mockResult;
+  }
+
+  private async recordProviderUsage(
+    request: LlmCompletionRequest,
+    result: LlmCompletionResult,
+    status: 'SUCCESS' | 'REJECTED' | 'MOCK',
+    errorMessage?: string,
+  ): Promise<void> {
+    if (!this.usageRecorder) return;
+    await this.usageRecorder.record({
+      provider: result.provider,
+      model: result.model,
+      purpose: result.purpose ?? request.purpose,
+      status,
+      tokensIn: result.tokensIn,
+      tokensOut: result.tokensOut,
+      latencyMs: result.latencyMs,
+      errorCode: status === 'REJECTED' ? 'validator_rejected' : undefined,
+      errorMessage,
+      context: {
+        ...request.usageContext,
+        toolName: request.usageContext?.toolName ?? result.toolCalls[0]?.name,
+      },
+      metadata: {
+        toolCalls: result.toolCalls.length,
+        contentLength: result.content?.length ?? 0,
+      },
+    });
+  }
+
+  private async recordProviderFailure(
+    request: LlmCompletionRequest,
+    provider: LlmCompletionResult['provider'],
+    model: string,
+    reason: string,
+  ): Promise<void> {
+    if (!this.usageRecorder) return;
+    await this.usageRecorder.record({
+      provider,
+      model,
+      purpose: request.purpose,
+      status: 'FAILED',
+      errorCode: reason.split(':', 1)[0] || 'provider_failed',
+      errorMessage: reason,
+      context: request.usageContext,
+    });
   }
 
   // ── Groq ─────────────────────────────────────────────────────────────
@@ -455,6 +582,7 @@ export class LlmGatewayService {
         toolCalls,
         tokensIn,
         tokensOut,
+        latencyMs: latency,
       },
     };
   }
@@ -658,6 +786,7 @@ export class LlmGatewayService {
         toolCalls,
         tokensIn,
         tokensOut,
+        latencyMs: latency,
       },
     };
   }
@@ -768,6 +897,7 @@ export class LlmGatewayService {
         toolCalls,
         tokensIn,
         tokensOut,
+        latencyMs: latency,
       },
     };
   }
@@ -887,6 +1017,7 @@ export class LlmGatewayService {
         toolCalls,
         tokensIn,
         tokensOut,
+        latencyMs: latency,
       },
     };
   }

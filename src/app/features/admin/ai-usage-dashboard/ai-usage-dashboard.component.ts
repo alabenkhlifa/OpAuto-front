@@ -20,9 +20,11 @@ import {
   AdminAiUsageAgentMetric,
   AdminAiUsageDashboard,
   AdminAiUsageGarageMetric,
+  AdminAiUsageModelMetric,
   AdminAiUsageRange,
   AdminAiUsageSkillMetric,
   AdminAiUsageTaskMetric,
+  AdminAiUsageTimeBucket,
   AdminAiUsageToolMetric,
   AdminAiUsageTopCall,
   AdminAiUsageUserMetric,
@@ -57,19 +59,19 @@ const ADMIN_OWNER_EMAIL = 'ala.khliifa@gmail.com';
 
 const PURPOSE_COPY: Record<string, PurposeCopy> = {
   assistant_tool_selection: {
-    label: 'No-tool assistant response',
-    description: 'The model answered without a recorded tool call for this completion.',
+    label: 'Tool planning',
+    description: 'The assistant selected the next tool or action.',
   },
   assistant_compose: {
-    label: 'Final assistant reply',
-    description: 'The model wrote the final user-facing answer without a linked tool name.',
+    label: 'Assistant reply writing',
+    description: 'The assistant wrote the final user-facing answer.',
   },
   intent_classifier: {
     label: 'Intent routing',
     description: 'Classifies the user request before the main assistant runs.',
   },
   conversation_title: {
-    label: 'Conversation title',
+    label: 'Conversation title generation',
     description: 'Creates short conversation titles for the chat history.',
   },
   'agent_runner:analytics-agent': {
@@ -102,7 +104,15 @@ const PURPOSE_COPY: Record<string, PurposeCopy> = {
   },
 };
 
-const SHARE_COLORS = ['#ff7a1a', '#2563eb', '#16a34a', '#7c3aed', '#ef4444', '#0f766e', '#64748b'];
+const SHARE_COLORS = [
+  '#ff7a1a',
+  '#2563eb',
+  '#16a34a',
+  '#7c3aed',
+  '#ef4444',
+  '#0f766e',
+  '#64748b',
+];
 
 @Component({
   selector: 'app-ai-usage-dashboard',
@@ -144,50 +154,72 @@ export class AiUsageDashboardComponent implements OnInit {
   readonly loginError = signal<string | null>(null);
   readonly isLoading = signal(false);
   readonly errorMessage = signal<string | null>(null);
-  readonly dashboard = signal<AdminAiUsageDashboard>(this.createEmptyDashboard('today'));
+  readonly dashboard = signal<AdminAiUsageDashboard>(
+    this.createEmptyDashboard('today'),
+  );
 
   readonly summary = computed(() => this.dashboard().summary);
   readonly taskUsage = computed(() =>
-    [...this.dashboard().taskUsage].sort((a, b) => b.estimatedCost - a.estimatedCost),
+    [...this.dashboard().taskUsage].sort(
+      (a, b) => b.estimatedCost - a.estimatedCost,
+    ),
   );
   readonly userUsage = computed(() =>
-    [...this.dashboard().userUsage].sort((a, b) => b.estimatedCost - a.estimatedCost),
+    [...this.dashboard().userUsage].sort(
+      (a, b) => b.estimatedCost - a.estimatedCost,
+    ),
   );
   readonly garageUsage = computed(() =>
-    [...this.dashboard().garageUsage].sort((a, b) => b.estimatedCost - a.estimatedCost),
+    [...this.dashboard().garageUsage].sort(
+      (a, b) => b.estimatedCost - a.estimatedCost,
+    ),
   );
   readonly toolUsage = computed(() =>
     [...this.dashboard().toolUsage].sort((a, b) => b.calls - a.calls),
   );
   readonly agentUsage = computed(() =>
-    [...this.dashboard().agentUsage].sort((a, b) => b.estimatedCost - a.estimatedCost),
+    [...this.dashboard().agentUsage].sort(
+      (a, b) => b.estimatedCost - a.estimatedCost,
+    ),
   );
   readonly skillUsage = computed(() =>
-    [...this.dashboard().skillUsage].sort((a, b) => b.estimatedCost - a.estimatedCost),
+    [...this.dashboard().skillUsage].sort(
+      (a, b) => b.estimatedCost - a.estimatedCost,
+    ),
   );
-  readonly topExpensiveCalls = computed(() => this.dashboard().topExpensiveCalls.slice(0, 8));
+  readonly modelUsage = computed(() =>
+    [...this.dashboard().modelUsage].sort(
+      (a, b) => b.estimatedCost - a.estimatedCost,
+    ),
+  );
+  readonly timeBuckets = computed(() => this.dashboard().timeBuckets ?? []);
+  readonly topExpensiveCalls = computed(() =>
+    this.dashboard().topExpensiveCalls.slice(0, 8),
+  );
 
   readonly hasUsage = computed(
-    () => this.summary().assistantMessages > 0 || this.summary().toolCalls > 0,
+    () => this.summary().llmCalls > 0 || this.summary().toolCalls > 0,
   );
 
   readonly kpiCards = computed<KpiCard[]>(() => {
     const summary = this.summary();
-    const approvalShare = summary.toolCalls > 0
-      ? (this.dashboard().approvalRefusal.approvalRequired / summary.toolCalls) * 100
-      : 0;
+    const failedShare =
+      summary.llmCalls > 0
+        ? ((summary.failedCalls + summary.rejectedCalls) / summary.llmCalls) *
+          100
+        : 0;
     return [
       {
         key: 'calls',
-        label: 'OVH AI calls',
-        value: this.formatInteger(summary.assistantMessages),
-        hint: `${this.formatInteger(summary.toolCalls)} tool-call requests emitted by LLM`,
+        label: 'Gateway AI calls',
+        value: this.formatInteger(summary.llmCalls),
+        hint: `${this.formatInteger(summary.gatewayEvents)} OVH completion events recorded`,
       },
       {
         key: 'spend',
-        label: 'OVH spend from tokens',
+        label: 'Estimated OVH spend',
         value: this.formatCost(summary.estimatedCost),
-        hint: 'Cost = tokens x configured OVH rate card',
+        hint: `${this.formatInteger(summary.ovhMessagesPriced)} priced calls, ${this.formatInteger(summary.ovhMessagesUnpriced)} unpriced`,
       },
       {
         key: 'tokens',
@@ -196,10 +228,10 @@ export class AiUsageDashboardComponent implements OnInit {
         hint: `${this.formatCompact(summary.tokensIn + summary.tokensOut)} total tokens`,
       },
       {
-        key: 'approvals',
-        label: 'Approval-required tool calls',
-        value: this.formatInteger(this.dashboard().approvalRefusal.approvalRequired),
-        hint: `${this.formatPercent(approvalShare)} of ${this.formatInteger(summary.toolCalls)} tool calls`,
+        key: 'latency',
+        label: 'Average completion latency',
+        value: this.formatDuration(summary.avgLatencyMs),
+        hint: `${this.formatPercent(failedShare)} failed or rejected provider attempts`,
       },
     ];
   });
@@ -210,13 +242,15 @@ export class AiUsageDashboardComponent implements OnInit {
       return [];
     }
 
-    const top = this.taskUsage().slice(0, 6).map((row, index) => ({
-      key: `${row.purpose}:${row.model ?? 'unknown'}`,
-      label: this.purposeLabel(row.purpose),
-      cost: row.estimatedCost,
-      share: (row.estimatedCost / total) * 100,
-      color: SHARE_COLORS[index],
-    }));
+    const top = this.taskUsage()
+      .slice(0, 6)
+      .map((row, index) => ({
+        key: `${row.purpose}:${row.model ?? 'unknown'}`,
+        label: this.purposeLabel(row.purpose),
+        cost: row.estimatedCost,
+        share: (row.estimatedCost / total) * 100,
+        color: SHARE_COLORS[index],
+      }));
     const used = top.reduce((sum, item) => sum + item.cost, 0);
     const remaining = Math.max(0, total - used);
     if (remaining > 0.000001) {
@@ -253,19 +287,36 @@ export class AiUsageDashboardComponent implements OnInit {
   readonly maxToolCalls = computed(() =>
     Math.max(0, ...this.toolUsage().map((row) => row.calls)),
   );
-  readonly updatedAt = computed(() => this.formatDateTime(this.dashboard().generatedAt));
+  readonly maxBucketCost = computed(() =>
+    Math.max(0, ...this.timeBuckets().map((row) => row.estimatedCost)),
+  );
+  readonly updatedAt = computed(() =>
+    this.formatDateTime(this.dashboard().generatedAt),
+  );
   readonly generatedSummary = computed(() => {
     const generated = this.formatGeneratedAt(this.dashboard().generatedAt);
-    return `Generated ${generated}, production logs and DB aggregates`;
+    return `Generated ${generated}, gateway-level OVH usage events`;
   });
   readonly rangeWindow = computed(() => this.formatRangeWindow());
-  readonly totalTokenCount = computed(() => this.summary().tokensIn + this.summary().tokensOut);
+  readonly totalTokenCount = computed(
+    () => this.summary().tokensIn + this.summary().tokensOut,
+  );
   readonly approvalRequiredShare = computed(() => {
     const total = this.summary().toolCalls;
     if (total <= 0) {
       return 0;
     }
     return (this.dashboard().approvalRefusal.approvalRequired / total) * 100;
+  });
+  readonly contextCoverageLabel = computed(() => {
+    const events =
+      this.dashboard().sourceCoverage.rowCoverage.gatewayEventsScanned ?? 0;
+    const missing =
+      this.dashboard().sourceCoverage.rowCoverage.eventsWithoutContext ?? 0;
+    if (events <= 0) {
+      return 'No gateway events in range';
+    }
+    return `${this.formatPercent(((events - missing) / events) * 100)} attributed to user and garage`;
   });
 
   ngOnInit(): void {
@@ -299,7 +350,9 @@ export class AiUsageDashboardComponent implements OnInit {
           if (!this.isAllowedOwner(response.user)) {
             this.authService.logout().subscribe();
             this.isAuthenticatedOwner.set(false);
-            this.loginError.set('This dashboard is restricted to the configured owner account.');
+            this.loginError.set(
+              'This dashboard is restricted to the configured owner account.',
+            );
             return;
           }
 
@@ -362,7 +415,10 @@ export class AiUsageDashboardComponent implements OnInit {
         ? `Writes the final user-facing answer after ${tool} finishes.`
         : `Selects ${tool} as the next assistant action.`;
     }
-    return PURPOSE_COPY[purpose]?.description ?? `Stored AI call for ${this.humanizeIdentifier(purpose)}.`;
+    return (
+      PURPOSE_COPY[purpose]?.description ??
+      `Stored AI call for ${this.humanizeIdentifier(purpose)}.`
+    );
   }
 
   modelBadgeClass(model: string | null): string {
@@ -582,7 +638,15 @@ export class AiUsageDashboardComponent implements OnInit {
   }
 
   taskAvgMs(_task: AdminAiUsageTaskMetric): string {
-    return 'n/a';
+    return this.formatDuration(_task.avgLatencyMs);
+  }
+
+  modelAvgMs(model: AdminAiUsageModelMetric): string {
+    return this.formatDuration(model.avgLatencyMs);
+  }
+
+  bucketHeight(bucket: AdminAiUsageTimeBucket): string {
+    return this.rowWidth(bucket.estimatedCost, this.maxBucketCost());
   }
 
   private formatRangeWindow(): string {
@@ -600,7 +664,10 @@ export class AiUsageDashboardComponent implements OnInit {
   trackTool = (_: number, row: AdminAiUsageToolMetric) => row.toolName;
   trackAgent = (_: number, row: AdminAiUsageAgentMetric) => row.agent;
   trackSkill = (_: number, row: AdminAiUsageSkillMetric) => row.skill;
-  trackTopCall = (_: number, row: AdminAiUsageTopCall) => row.messageId;
+  trackTopCall = (_: number, row: AdminAiUsageTopCall) => row.eventId;
+  trackModel = (_: number, row: AdminAiUsageModelMetric) =>
+    `${row.provider}:${row.model ?? 'unknown'}`;
+  trackBucket = (_: number, row: AdminAiUsageTimeBucket) => row.start;
   trackShare = (_: number, row: CostShareSegment) => row.key;
   trackKpi = (_: number, row: KpiCard) => row.key;
   trackRange = (_: number, row: RangeOption) => row.value;
@@ -632,14 +699,23 @@ export class AiUsageDashboardComponent implements OnInit {
     return this.usageService.getUsage(range).pipe(
       map((data) => data || this.createEmptyDashboard(range)),
       catchError((error: unknown) => {
-        if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
+        if (
+          error instanceof HttpErrorResponse &&
+          (error.status === 401 || error.status === 403)
+        ) {
           this.authService.forceLogout();
           this.isAuthenticatedOwner.set(false);
-          this.loginError.set('Your admin session expired or is not allowed for this dashboard.');
+          this.loginError.set(
+            'Your admin session expired or is not allowed for this dashboard.',
+          );
         } else if (error instanceof HttpErrorResponse && error.status === 404) {
-          this.errorMessage.set('The admin AI usage endpoint is not available on this server.');
+          this.errorMessage.set(
+            'The admin AI usage endpoint is not available on this server.',
+          );
         } else {
-          this.errorMessage.set('Could not load AI usage analytics. Try refreshing.');
+          this.errorMessage.set(
+            'Could not load AI usage analytics. Try refreshing.',
+          );
         }
         return of(this.createEmptyDashboard(range));
       }),
@@ -665,8 +741,12 @@ export class AiUsageDashboardComponent implements OnInit {
     return cleaned.replace(/\b\w/g, (match) => match.toUpperCase());
   }
 
-  private scopedToolPurpose(purpose: string): { basePurpose: string; toolName: string } | null {
-    const match = /^(assistant_tool_selection|assistant_compose):(.+)$/.exec(purpose);
+  private scopedToolPurpose(
+    purpose: string,
+  ): { basePurpose: string; toolName: string } | null {
+    const match = /^(assistant_tool_selection|assistant_compose):(.+)$/.exec(
+      purpose,
+    );
     if (!match?.[2]?.trim()) {
       return null;
     }
@@ -676,7 +756,9 @@ export class AiUsageDashboardComponent implements OnInit {
     };
   }
 
-  private createEmptyDashboard(range: AdminAiUsageRange): AdminAiUsageDashboard {
+  private createEmptyDashboard(
+    range: AdminAiUsageRange,
+  ): AdminAiUsageDashboard {
     return {
       generatedAt: '',
       range: {
@@ -684,9 +766,10 @@ export class AiUsageDashboardComponent implements OnInit {
         label: '',
         start: '',
         end: '',
-        scope: 'ovh-only',
+        scope: 'gateway-ovh-account',
       },
       summary: {
+        llmCalls: 0,
         assistantMessages: 0,
         ovhMessagesPriced: 0,
         ovhMessagesUnpriced: 0,
@@ -698,8 +781,16 @@ export class AiUsageDashboardComponent implements OnInit {
         estimatedCost: 0,
         rowsWithMissingPurpose: 0,
         rowsWithMissingModel: 0,
+        failedCalls: 0,
+        rejectedCalls: 0,
+        mockCalls: 0,
+        avgLatencyMs: null,
+        gatewayEvents: 0,
+        eventsMissingContext: 0,
       },
       taskUsage: [],
+      modelUsage: [],
+      timeBuckets: [],
       agentUsage: [],
       skillUsage: [],
       userUsage: [],
@@ -716,18 +807,19 @@ export class AiUsageDashboardComponent implements OnInit {
       },
       topExpensiveCalls: [],
       sourceCoverage: {
-        dataSource: 'persisted_tables_only',
+        dataSource: 'gateway_usage_events',
         includesGatewayOnlySignals: {
-          classifierCalls: false,
-          conversationTitles: false,
-          rawGatewayLatency: false,
+          classifierCalls: true,
+          conversationTitles: true,
+          rawGatewayLatency: true,
         },
         rowCoverage: {
-          assistantMessagesScanned: 0,
+          gatewayEventsScanned: 0,
           assistantToolCallsScanned: 0,
-          messagesWithoutModel: 0,
-          messagesWithoutPurpose: 0,
-          messagesWithoutTokens: 0,
+          eventsWithoutModel: 0,
+          eventsWithoutPurpose: 0,
+          eventsWithoutTokens: 0,
+          eventsWithoutContext: 0,
         },
       },
     };

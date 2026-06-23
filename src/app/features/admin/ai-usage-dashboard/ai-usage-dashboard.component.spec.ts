@@ -5,7 +5,10 @@ import { AiUsageDashboardComponent } from './ai-usage-dashboard.component';
 import { AdminAiUsageService } from '../../../core/services/admin-ai-usage.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { User, UserRole } from '../../../core/models/auth.model';
-import { AdminAiUsageDashboard, AdminAiUsageRange } from '../../../core/models/admin-ai-usage.model';
+import {
+  AdminAiUsageDashboard,
+  AdminAiUsageRange,
+} from '../../../core/models/admin-ai-usage.model';
 
 interface SetupOptions {
   serviceError?: boolean;
@@ -37,9 +40,10 @@ function makePayload(range: AdminAiUsageRange): AdminAiUsageDashboard {
       label: 'Today',
       start: '2026-01-01T00:00:00.000Z',
       end: '2026-01-02T00:00:00.000Z',
-      scope: 'ovh-only',
+      scope: 'gateway-ovh-account',
     },
     summary: {
+      llmCalls: 14,
       assistantMessages: 14,
       ovhMessagesPriced: 14,
       ovhMessagesUnpriced: 0,
@@ -51,6 +55,12 @@ function makePayload(range: AdminAiUsageRange): AdminAiUsageDashboard {
       estimatedCost: 0.002664,
       rowsWithMissingPurpose: 0,
       rowsWithMissingModel: 0,
+      failedCalls: 0,
+      rejectedCalls: 0,
+      mockCalls: 0,
+      avgLatencyMs: 180,
+      gatewayEvents: 14,
+      eventsMissingContext: 0,
     },
     taskUsage: [
       {
@@ -62,6 +72,8 @@ function makePayload(range: AdminAiUsageRange): AdminAiUsageDashboard {
         tokensOut: 1200,
         estimatedCost: 0.002368,
         unpricedCalls: 0,
+        avgLatencyMs: 180,
+        failedCalls: 0,
       },
       {
         purpose: 'unknown-task',
@@ -72,6 +84,32 @@ function makePayload(range: AdminAiUsageRange): AdminAiUsageDashboard {
         tokensOut: 280,
         estimatedCost: 0.000012,
         unpricedCalls: 0,
+        avgLatencyMs: 120,
+        failedCalls: 0,
+      },
+    ],
+    modelUsage: [
+      {
+        provider: 'ovh',
+        model: 'Meta-Llama-3_3-70B-Instruct',
+        calls: 10,
+        tokensIn: 2000,
+        tokensOut: 1200,
+        estimatedCost: 0.002368,
+        avgLatencyMs: 180,
+        failedCalls: 0,
+      },
+    ],
+    timeBuckets: [
+      {
+        label: '12:00',
+        start: '2026-01-01T12:00:00.000Z',
+        end: '2026-01-01T13:00:00.000Z',
+        calls: 10,
+        tokensIn: 2000,
+        tokensOut: 1200,
+        estimatedCost: 0.002368,
+        avgLatencyMs: 180,
       },
     ],
     agentUsage: [
@@ -155,49 +193,61 @@ function makePayload(range: AdminAiUsageRange): AdminAiUsageDashboard {
     },
     topExpensiveCalls: [
       {
-        messageId: 'msg-1',
+        eventId: 'ev-1',
         conversationId: 'conv-1',
         userId: 'user-1',
         userName: 'Ala Khliifa',
+        garageId: 'garage-1',
+        garageName: 'AutoTech Tunisia',
         createdAt: '2026-01-01T12:00:00.000Z',
+        provider: 'ovh',
         purpose: 'assistant_tool_selection:find_customer',
         model: 'Meta-Llama-3_3-70B-Instruct',
         tokensIn: 2000,
         tokensOut: 1200,
         estimatedCost: 0.002368,
         priced: true,
+        latencyMs: 180,
+        status: 'SUCCESS',
       },
     ],
     sourceCoverage: {
-      dataSource: 'persisted_tables_only',
+      dataSource: 'gateway_usage_events',
       includesGatewayOnlySignals: {
-        classifierCalls: false,
-        conversationTitles: false,
-        rawGatewayLatency: false,
+        classifierCalls: true,
+        conversationTitles: true,
+        rawGatewayLatency: true,
       },
       rowCoverage: {
-        assistantMessagesScanned: 14,
+        gatewayEventsScanned: 14,
         assistantToolCallsScanned: 5,
-        messagesWithoutModel: 0,
-        messagesWithoutPurpose: 0,
-        messagesWithoutTokens: 0,
+        eventsWithoutModel: 0,
+        eventsWithoutPurpose: 0,
+        eventsWithoutTokens: 0,
+        eventsWithoutContext: 0,
       },
     },
   };
 }
 
 describe('AiUsageDashboardComponent', () => {
-  function setup(opts: SetupOptions = {}): ComponentFixture<AiUsageDashboardComponent> {
+  function setup(
+    opts: SetupOptions = {},
+  ): ComponentFixture<AiUsageDashboardComponent> {
     const dashboardService = {
-      getUsage: jasmine.createSpy('getUsage').and.callFake((range: AdminAiUsageRange) => {
-        if (opts.serviceError) {
-          return throwError(() => new Error('backend down'));
-        }
-        return of(makePayload(range));
-      }),
+      getUsage: jasmine
+        .createSpy('getUsage')
+        .and.callFake((range: AdminAiUsageRange) => {
+          if (opts.serviceError) {
+            return throwError(() => new Error('backend down'));
+          }
+          return of(makePayload(range));
+        }),
     };
     const authService = {
-      getCurrentUser: jasmine.createSpy('getCurrentUser').and.returnValue(opts.currentUser ?? null),
+      getCurrentUser: jasmine
+        .createSpy('getCurrentUser')
+        .and.returnValue(opts.currentUser ?? null),
       login: jasmine.createSpy('login').and.returnValue(
         of({
           user: ownerUser,
@@ -253,7 +303,9 @@ describe('AiUsageDashboardComponent', () => {
     });
     expect(component.isAuthenticatedOwner()).toBeTrue();
     expect(svc.getUsage).toHaveBeenCalledWith('today');
-    expect(component.summary().tokensIn + component.summary().tokensOut).toBe(3600);
+    expect(component.summary().tokensIn + component.summary().tokensOut).toBe(
+      3600,
+    );
     expect(fixture.nativeElement.textContent).toContain('AI Task Usage');
   });
 
@@ -278,7 +330,9 @@ describe('AiUsageDashboardComponent', () => {
     component.submitLogin();
 
     expect(component.isAuthenticatedOwner()).toBeFalse();
-    expect(component.loginError()).toBe('This dashboard is restricted to the configured owner account.');
+    expect(component.loginError()).toBe(
+      'This dashboard is restricted to the configured owner account.',
+    );
     expect(auth.logout).toHaveBeenCalled();
     expect(svc.getUsage).not.toHaveBeenCalled();
   });
@@ -307,13 +361,15 @@ describe('AiUsageDashboardComponent', () => {
     const fixture = setup({ currentUser: ownerUser });
     const component = fixture.componentInstance;
 
-    expect(component.purposeLabel('assistant_tool_selection:find_customer')).toBe(
-      'Find Customer tool planning',
+    expect(
+      component.purposeLabel('assistant_tool_selection:find_customer'),
+    ).toBe('Find Customer tool planning');
+    expect(
+      component.purposeDescription('assistant_tool_selection:find_customer'),
+    ).toContain('Selects Find Customer');
+    expect(component.purposeLabel('assistant_compose:send_email')).toBe(
+      'Send Email reply writing',
     );
-    expect(component.purposeDescription('assistant_tool_selection:find_customer')).toContain(
-      'Selects Find Customer',
-    );
-    expect(component.purposeLabel('assistant_compose:send_email')).toBe('Send Email reply writing');
     expect(component.purposeLabel('unknown-task')).toBe('Unknown Task');
   });
 
@@ -333,7 +389,9 @@ describe('AiUsageDashboardComponent', () => {
     const component = fixture.componentInstance;
 
     expect(component.isLoading()).toBeFalse();
-    expect(component.errorMessage()).toBe('Could not load AI usage analytics. Try refreshing.');
+    expect(component.errorMessage()).toBe(
+      'Could not load AI usage analytics. Try refreshing.',
+    );
     expect(component.taskUsage().length).toBe(0);
     expect(component.userUsage().length).toBe(0);
   });
