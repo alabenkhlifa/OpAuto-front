@@ -553,6 +553,7 @@ export class OrchestratorService {
         parsedArgs.value = this.normaliseCreateInvoiceArgs(
           call.name,
           parsedArgs.value,
+          ctx.turnState?.userMessage,
         );
         const validation = this.tools.validateArgs(call.name, parsedArgs.value);
         if (!validation.valid) {
@@ -1012,16 +1013,28 @@ export class OrchestratorService {
     return out.trim();
   }
 
-  private normaliseCreateInvoiceArgs(toolName: string, args: unknown): unknown {
+  private normaliseCreateInvoiceArgs(
+    toolName: string,
+    args: unknown,
+    userMessage?: string,
+  ): unknown {
     if (toolName !== 'create_invoice') return args;
     if (!args || typeof args !== 'object' || Array.isArray(args)) return args;
     const a = args as Record<string, unknown>;
     if (!Array.isArray(a.lineItems)) return args;
-    if (!a.lineItems.some((item) => typeof item === 'string')) return args;
+    const rawLineItems = a.lineItems;
+    if (!rawLineItems.some((item) => typeof item === 'string')) return args;
 
-    const lineItems = a.lineItems.map((item) => {
+    const userMessageLines = this.parseInvoiceLineItemsFromText(userMessage);
+    const lineItems = rawLineItems.map((item, index) => {
       if (typeof item !== 'string') return item;
-      return this.parseInvoiceLineItemString(item);
+      return (
+        this.parseInvoiceLineItemString(item) ??
+        this.matchInvoiceLineFromUserMessage(item, userMessageLines) ??
+        (userMessageLines.length === rawLineItems.length
+          ? userMessageLines[index]
+          : null)
+      );
     });
     if (lineItems.some((item) => item === null)) return args;
 
@@ -1057,12 +1070,20 @@ export class OrchestratorService {
       /^\s*(\d+(?:[.,]\d+)?)\s+(.+?)\s+(?:at|@|for)\s+(\d+(?:[.,]\d+)?)\s*(?:tnd|dt)\b/i,
     );
     if (!match) return null;
-    const quantity = Number(match[1].replace(',', '.'));
-    const description = match[2]
+    return this.buildParsedInvoiceLine(match[1], match[2], match[3]);
+  }
+
+  private buildParsedInvoiceLine(
+    rawQuantity: string,
+    rawDescription: string,
+    rawUnitPrice: string,
+  ): { description: string; quantity: number; unitPrice: number } | null {
+    const quantity = Number(rawQuantity.replace(',', '.'));
+    const description = rawDescription
       .replace(/\bHT\b/gi, '')
       .replace(/\s+/g, ' ')
       .trim();
-    const unitPrice = Number(match[3].replace(',', '.'));
+    const unitPrice = Number(rawUnitPrice.replace(',', '.'));
     if (
       !Number.isFinite(quantity) ||
       quantity <= 0 ||
@@ -1073,6 +1094,45 @@ export class OrchestratorService {
       return null;
     }
     return { description, quantity, unitPrice };
+  }
+
+  private parseInvoiceLineItemsFromText(
+    text: string | undefined,
+  ): { description: string; quantity: number; unitPrice: number }[] {
+    if (!text) return [];
+    const lines: { description: string; quantity: number; unitPrice: number }[] =
+      [];
+    const pattern =
+      /(?:^|[.,;]|\bwith\b|\band\b)\s*(\d+(?:[.,]\d+)?)\s+(.+?)\s+(?:at|@|for)\s+(\d+(?:[.,]\d+)?)\s*(?:tnd|dt)\b/gi;
+    for (const match of text.matchAll(pattern)) {
+      const parsed = this.buildParsedInvoiceLine(match[1], match[2], match[3]);
+      if (parsed) lines.push(parsed);
+    }
+    return lines;
+  }
+
+  private matchInvoiceLineFromUserMessage(
+    rawLineItem: string,
+    userMessageLines: { description: string; quantity: number; unitPrice: number }[],
+  ): { description: string; quantity: number; unitPrice: number } | null {
+    const wanted = this.normaliseInvoiceDescription(rawLineItem);
+    if (!wanted) return null;
+    return (
+      userMessageLines.find((line) => {
+        const candidate = this.normaliseInvoiceDescription(line.description);
+        return candidate.includes(wanted) || wanted.includes(candidate);
+      }) ?? null
+    );
+  }
+
+  private normaliseInvoiceDescription(raw: string): string {
+    return raw
+      .replace(/^\s*\d+(?:[.,]\d+)?\s+/, '')
+      .replace(/\s+(?:at|@|for)\s+\d+(?:[.,]\d+)?\s*(?:tnd|dt)\b.*$/i, '')
+      .replace(/\bHT\b/gi, '')
+      .replace(/[^a-z0-9]+/gi, ' ')
+      .trim()
+      .toLowerCase();
   }
 
   private correctSlotContradiction(
