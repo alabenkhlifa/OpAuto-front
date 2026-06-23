@@ -1804,7 +1804,7 @@ describe('OrchestratorService', () => {
             id: 'tc-good-invoice',
             name: 'create_invoice',
             argsJson:
-              `{"customerId":"${customerId}","carId":"${carId}","dueDate":"2026-07-23","lineItems":[{"description":"Oil change labor","quantity":1,"unitPrice":80},{"description":"Oil filter","quantity":1,"unitPrice":25}],"_expectedConfirmation":"105.00 TND"}`,
+              `{"customerId":"${customerId}","carId":"${carId}","dueDate":"2026-07-23","lineItems":["1 oil change labor at 80 TND HT","1 oil filter at 25 TND HT"],"_expectedConfirmation":"105.00 TND"}`,
           },
         ],
       },
@@ -1843,12 +1843,12 @@ describe('OrchestratorService', () => {
         carId,
         lineItems: expect.arrayContaining([
           expect.objectContaining({
-            description: 'Oil change labor',
+            description: 'oil change labor',
             quantity: 1,
             unitPrice: 80,
           }),
           expect.objectContaining({
-            description: 'Oil filter',
+            description: 'oil filter',
             quantity: 1,
             unitPrice: 25,
           }),
@@ -1857,6 +1857,23 @@ describe('OrchestratorService', () => {
     });
     expect(approvals.createPending).toHaveBeenCalledWith(
       expect.objectContaining({ toolName: 'create_invoice' }),
+    );
+    expect(tools.validateArgs).toHaveBeenCalledWith(
+      'create_invoice',
+      expect.objectContaining({
+        lineItems: expect.arrayContaining([
+          expect.objectContaining({
+            description: 'oil change labor',
+            quantity: 1,
+            unitPrice: 80,
+          }),
+          expect.objectContaining({
+            description: 'oil filter',
+            quantity: 1,
+            unitPrice: 25,
+          }),
+        ]),
+      }),
     );
     const secondLlmCall = (llm.complete as jest.Mock).mock.calls[1][0];
     expect(
@@ -1907,6 +1924,36 @@ describe('OrchestratorService', () => {
     });
     expect(text).not.toMatchObject({
       delta: expect.stringMatching(/Step 1|Locked By|Invoice ID|691cb0d2|75ce90a7/i),
+    });
+  });
+
+  it('strips internal agent names from final assistant text', async () => {
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content:
+          "Hi Mehdi, we've missed you at the garage.\n\n" +
+          'Best, CommunicationsAgent',
+        toolCalls: [],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({ llm });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-agent-name',
+        'Write a friendly outreach campaign.',
+        undefined,
+      ),
+    );
+
+    const text = events.find((e) => e.type === 'text');
+    expect(text).toMatchObject({
+      delta: expect.stringContaining('Best, the garage team'),
+    });
+    expect(text).not.toMatchObject({
+      delta: expect.stringMatching(/CommunicationsAgent/),
     });
   });
 

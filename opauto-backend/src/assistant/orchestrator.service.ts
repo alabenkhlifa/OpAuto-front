@@ -550,6 +550,10 @@ export class OrchestratorService {
           continue;
         }
 
+        parsedArgs.value = this.normaliseCreateInvoiceArgs(
+          call.name,
+          parsedArgs.value,
+        );
         const validation = this.tools.validateArgs(call.name, parsedArgs.value);
         if (!validation.valid) {
           subject.next({
@@ -1002,9 +1006,73 @@ export class OrchestratorService {
     out = this.ensureDraftOnlyNoSendNotice(out, ctx.turnState?.userMessage);
     out = this.stripReasoningScaffold(out);
     out = this.stripInternalControlMessages(out);
+    out = this.stripInternalAgentNames(out);
     out = this.stripWarningSymbols(out);
     out = this.scrubInternalIds(out, ctx.turnState?.userMessage);
     return out.trim();
+  }
+
+  private normaliseCreateInvoiceArgs(toolName: string, args: unknown): unknown {
+    if (toolName !== 'create_invoice') return args;
+    if (!args || typeof args !== 'object' || Array.isArray(args)) return args;
+    const a = args as Record<string, unknown>;
+    if (!Array.isArray(a.lineItems)) return args;
+    if (!a.lineItems.some((item) => typeof item === 'string')) return args;
+
+    const lineItems = a.lineItems.map((item) => {
+      if (typeof item !== 'string') return item;
+      return this.parseInvoiceLineItemString(item);
+    });
+    if (lineItems.some((item) => item === null)) return args;
+
+    const normalised: Record<string, unknown> = { ...a, lineItems };
+    if (
+      typeof normalised._expectedConfirmation !== 'string' ||
+      normalised._expectedConfirmation.trim().length === 0
+    ) {
+      const hasPrices = lineItems.every((item) => {
+        const line = item as { quantity?: unknown; unitPrice?: unknown };
+        return (
+          typeof line.quantity === 'number' &&
+          Number.isFinite(line.quantity) &&
+          typeof line.unitPrice === 'number' &&
+          Number.isFinite(line.unitPrice)
+        );
+      });
+      if (!hasPrices) return normalised;
+      const total = lineItems.reduce((sum, item) => {
+        const line = item as { quantity: number; unitPrice: number };
+        return sum + line.quantity * line.unitPrice;
+      }, 0);
+      normalised._expectedConfirmation = `${total.toFixed(2)} TND`;
+    }
+    return normalised;
+  }
+
+  private parseInvoiceLineItemString(
+    raw: string,
+  ): { description: string; quantity: number; unitPrice: number } | null {
+    const trimmed = raw.trim();
+    const match = trimmed.match(
+      /^\s*(\d+(?:[.,]\d+)?)\s+(.+?)\s+(?:at|@|for)\s+(\d+(?:[.,]\d+)?)\s*(?:tnd|dt)\b/i,
+    );
+    if (!match) return null;
+    const quantity = Number(match[1].replace(',', '.'));
+    const description = match[2]
+      .replace(/\bHT\b/gi, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const unitPrice = Number(match[3].replace(',', '.'));
+    if (
+      !Number.isFinite(quantity) ||
+      quantity <= 0 ||
+      !description ||
+      !Number.isFinite(unitPrice) ||
+      unitPrice < 0
+    ) {
+      return null;
+    }
+    return { description, quantity, unitPrice };
   }
 
   private correctSlotContradiction(
@@ -1307,6 +1375,15 @@ export class OrchestratorService {
       /(^|\n)\s*(?:[^\w\s"']+(?:\s+|$))*Error:\s*agent_dispatch_capped\.?\s*/gi,
       '$1',
     );
+  }
+
+  private stripInternalAgentNames(text: string): string {
+    return text
+      .replace(/\bBest,\s*[A-Z][A-Za-z]+Agent\b/g, 'Best, the garage team')
+      .replace(
+        /\b(?:Analytics|Communications|Finance|Growth|Inventory|Scheduling)Agent\b/g,
+        'assistant',
+      );
   }
 
   private scrubInternalIds(
