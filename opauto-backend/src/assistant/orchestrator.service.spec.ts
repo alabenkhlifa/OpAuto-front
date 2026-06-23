@@ -1233,6 +1233,238 @@ describe('OrchestratorService', () => {
     );
   });
 
+  const makeMonthlyFinancialReportSkills = () => ({
+    list: jest.fn().mockReturnValue([
+      {
+        name: 'monthly-financial-report',
+        description: 'monthly P&L-style financial report',
+      },
+    ]),
+    load: jest
+      .fn()
+      .mockReturnValue('Use the monthly financial report playbook.'),
+  });
+
+  it('routes monthly financial report finance-agent dispatch through the report skill first', async () => {
+    const skills = makeMonthlyFinancialReportSkills();
+    const agents = {
+      list: jest.fn().mockReturnValue([
+        {
+          name: 'finance-agent',
+          description: 'invoicing and revenue specialist',
+        },
+      ]),
+      run: jest.fn().mockResolvedValue({
+        result: 'Finance agent should not run before the report skill loads.',
+      }),
+    };
+    const tools = makeTools(['get_revenue_summary']);
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-finance-agent-report',
+            name: 'dispatch_agent',
+            argsJson: JSON.stringify({
+              name: 'finance-agent',
+              input: "Walk me through last month's financial report.",
+              reason: 'financial report',
+            }),
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-report-revenue-after-skill',
+            name: 'get_revenue_summary',
+            argsJson: JSON.stringify({
+              from: '2026-05-01',
+              to: '2026-06-01',
+            }),
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: 'Monthly financial report is ready.',
+        toolCalls: [],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({
+      skills,
+      agents,
+      tools,
+      llm,
+    });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-t24-agent-route',
+        "Walk me through last month's financial report.",
+        undefined,
+      ),
+    );
+
+    expect(skills.load).toHaveBeenCalledWith('monthly-financial-report', 'en');
+    expect(skills.load).toHaveBeenCalledTimes(1);
+    expect(events.find((e) => e.type === 'skill_loaded')).toMatchObject({
+      skillName: 'monthly-financial-report',
+    });
+    expect(agents.run).not.toHaveBeenCalled();
+    expect(tools.execute).toHaveBeenCalledWith(
+      'get_revenue_summary',
+      {
+        from: '2026-05-01',
+        to: '2026-06-01',
+      },
+      expect.objectContaining({ garageId: 'garage-1' }),
+    );
+    expect(events.find((e) => e.type === 'agent_dispatch')).toBeUndefined();
+    expect(
+      events.some(
+        (e) => e.type === 'tool_call' && e.name === 'get_revenue_summary',
+      ),
+    ).toBe(true);
+  });
+
+  it.each(['get_revenue_summary', 'get_invoices_summary'])(
+    'routes monthly financial report direct %s call through the report skill first',
+    async (toolName) => {
+      const skills = makeMonthlyFinancialReportSkills();
+      const agents = {
+        list: jest.fn().mockReturnValue([
+          {
+            name: 'finance-agent',
+            description: 'invoicing and revenue specialist',
+          },
+        ]),
+        run: jest.fn().mockResolvedValue({
+          result: 'Finance agent should not run for direct report tools.',
+        }),
+      };
+      const tools = makeTools(['get_revenue_summary', 'get_invoices_summary']);
+      const llm = makeLlm([
+        {
+          provider: 'groq',
+          content: null,
+          toolCalls: [
+            {
+              id: `tc-${toolName}`,
+              name: toolName,
+              argsJson: JSON.stringify({
+                from: '2026-05-01',
+                to: '2026-06-01',
+              }),
+            },
+          ],
+        },
+        {
+          provider: 'groq',
+          content: 'Monthly financial report skill loaded.',
+          toolCalls: [],
+        },
+      ]);
+      const orchestrator = await makeOrchestrator({
+        skills,
+        agents,
+        tools,
+        llm,
+      });
+
+      const events = await collectEvents(
+        orchestrator.run(
+          ctx,
+          `conv-t24-direct-${toolName}`,
+          "Walk me through last month's financial report.",
+          undefined,
+        ),
+      );
+
+      expect(skills.load).toHaveBeenCalledWith(
+        'monthly-financial-report',
+        'en',
+      );
+      expect(events.find((e) => e.type === 'skill_loaded')).toMatchObject({
+        skillName: 'monthly-financial-report',
+      });
+      expect(tools.execute).not.toHaveBeenCalled();
+      expect(agents.run).not.toHaveBeenCalled();
+      expect(
+        events.some((e) => e.type === 'tool_call' && e.name === toolName),
+      ).toBe(false);
+      expect(events.find((e) => e.type === 'agent_dispatch')).toBeUndefined();
+    },
+  );
+
+  it('allows non-report finance prompts to dispatch finance-agent normally', async () => {
+    const skills = makeMonthlyFinancialReportSkills();
+    const agents = {
+      list: jest.fn().mockReturnValue([
+        {
+          name: 'finance-agent',
+          description: 'invoicing and revenue specialist',
+        },
+      ]),
+      run: jest.fn().mockResolvedValue({
+        result: 'Prioritize the oldest overdue invoices first.',
+      }),
+    };
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-finance-agent-collections',
+            name: 'dispatch_agent',
+            argsJson: JSON.stringify({
+              name: 'finance-agent',
+              input: 'Prioritize overdue invoice collection.',
+              reason: 'collections triage',
+            }),
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: 'Prioritize the oldest overdue invoices first.',
+        toolCalls: [],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({ skills, agents, llm });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-finance-agent-collections',
+        'Prioritize overdue invoice collection.',
+        undefined,
+      ),
+    );
+
+    expect(skills.load).not.toHaveBeenCalled();
+    expect(events.find((e) => e.type === 'skill_loaded')).toBeUndefined();
+    expect(events.find((e) => e.type === 'agent_dispatch')).toMatchObject({
+      agentName: 'finance-agent',
+      reason: 'collections triage',
+    });
+    expect(events.find((e) => e.type === 'agent_result')).toMatchObject({
+      agentName: 'finance-agent',
+      result: 'Prioritize the oldest overdue invoices first.',
+    });
+    expect(agents.run).toHaveBeenCalledWith(
+      'finance-agent',
+      'Prioritize overdue invoice collection.',
+      expect.objectContaining({ garageId: 'garage-1' }),
+    );
+  });
+
   it('maps retention-suggestions dispatches to growth-agent', async () => {
     const agents = {
       list: jest.fn().mockReturnValue([

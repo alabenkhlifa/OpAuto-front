@@ -42,6 +42,8 @@ const RESUME_PREFIX = '__resume__:';
 
 const RESERVED_LOAD_SKILL = 'load_skill';
 const RESERVED_DISPATCH_AGENT = 'dispatch_agent';
+const MONTHLY_FINANCIAL_REPORT_SKILL = 'monthly-financial-report';
+const FINANCE_AGENT_NAME = 'finance-agent';
 const AGENT_DISPATCH_ALIASES: Record<string, string> = {
   'retention-suggestions': 'growth-agent',
 };
@@ -228,6 +230,9 @@ export class OrchestratorService {
         (agent) => agent.name === RETENTION_REVIEW_AGENT_NAME,
       );
       const shouldRouteRetentionReview = this.userAskedForRetentionReview(userMessage);
+      const monthlyFinancialReportSkillAvailable = skillDescriptors.some(
+        (skill) => skill.name === MONTHLY_FINANCIAL_REPORT_SKILL,
+      );
 
       // --- Build initial system + history messages. ------------------------
       const systemPrompt = this.buildSystemPrompt(
@@ -310,6 +315,7 @@ export class OrchestratorService {
       let forceComposeOnly = false;
       const requiredActionRetriesIssued = new Set<string>();
       const successfulToolResults: { toolName: string; result: unknown }[] = [];
+      let monthlyFinancialReportSkillLoadedThisTurn = false;
       const recordFailedToolAttempt = (
         toolName: string,
         reason: string,
@@ -535,6 +541,9 @@ export class OrchestratorService {
             llmMessages,
             subject,
           );
+          if (handled && parsedSkill === MONTHLY_FINANCIAL_REPORT_SKILL) {
+            monthlyFinancialReportSkillLoadedThisTurn = true;
+          }
           if (!handled) {
             // Treat as failure result and let the LLM recover.
             this.appendToolMessage(llmMessages, call.id, {
@@ -544,6 +553,39 @@ export class OrchestratorService {
           continue;
         }
         if (call.name === RESERVED_DISPATCH_AGENT) {
+          const parsedDispatchArgs = this.safeParseArgs(call.argsJson);
+          const parsedDispatch = parsedDispatchArgs.error
+            ? null
+            : (parsedDispatchArgs.value as { name?: unknown });
+          const requestedAgent = this.resolveAgentDispatchName(
+            typeof parsedDispatch?.name === 'string' ? parsedDispatch.name : '',
+          );
+          if (
+            !monthlyFinancialReportSkillLoadedThisTurn &&
+            monthlyFinancialReportSkillAvailable &&
+            this.shouldPreferMonthlyFinancialReportSkill(
+              ctx.turnState?.userMessage,
+              requestedAgent,
+              call.name,
+            )
+          ) {
+            const loaded = await this.handleLoadSkill(
+              {
+                ...call,
+                name: RESERVED_LOAD_SKILL,
+                argsJson: JSON.stringify({
+                  name: MONTHLY_FINANCIAL_REPORT_SKILL,
+                }),
+              },
+              ctx.locale,
+              llmMessages,
+              subject,
+            );
+            if (loaded) {
+              monthlyFinancialReportSkillLoadedThisTurn = true;
+              continue;
+            }
+          }
           if (agentDispatchesThisTurn >= MAX_AGENT_DISPATCHES_PER_TURN) {
             // Refuse further dispatches in this turn but keep the conversation
             // alive — surface a tool message so the LLM can compose a final
@@ -572,6 +614,32 @@ export class OrchestratorService {
         }
 
         // Real tool path.
+        if (
+          !monthlyFinancialReportSkillLoadedThisTurn &&
+          monthlyFinancialReportSkillAvailable &&
+          this.shouldPreferMonthlyFinancialReportSkill(
+            ctx.turnState?.userMessage,
+            null,
+            call.name,
+          )
+        ) {
+          const loaded = await this.handleLoadSkill(
+            {
+              ...call,
+              name: RESERVED_LOAD_SKILL,
+              argsJson: JSON.stringify({
+                name: MONTHLY_FINANCIAL_REPORT_SKILL,
+              }),
+            },
+            ctx.locale,
+            llmMessages,
+            subject,
+          );
+          if (loaded) {
+            monthlyFinancialReportSkillLoadedThisTurn = true;
+            continue;
+          }
+        }
         if (
           shouldRouteRetentionReview &&
           growthAgentAvailable &&
@@ -3366,6 +3434,54 @@ export class OrchestratorService {
       ) ||
       /\b(?:pdf|csv)\b[\s\S]{0,80}\breport\b/i.test(msg) ||
       /\breport\b[\s\S]{0,80}\b(?:pdf|csv|download|export)\b/i.test(msg)
+    );
+  }
+
+  private userAskedForMonthlyFinancialReport(userMessage: string | undefined): boolean {
+    const msg = (userMessage ?? '').toLowerCase();
+    const monthReference = /\b(?:last|this|previous|prior|past|current)\s+month\b/i.test(
+      msg,
+    ) ||
+      /\bmonth[-\s]?end\b/i.test(msg) ||
+      /\b(?:january|february|march|april|may|june|july|august|september|october|november|december)\b/i.test(
+        msg,
+      );
+    const financialReportIntent =
+      /\b(?:financial|finance|revenue|p&l|profit|loss|cash\s*flow)\b[\s\S]{0,80}\b(?:report|summary|statement|overview)\b/i.test(
+        msg,
+      ) ||
+      /\b(?:report|summary|statement|overview)\b[\s\S]{0,80}\b(?:financial|finance|revenue)\b/i.test(
+        msg,
+      ) ||
+      /\bmonthly(?:ly)?\s+(?:report|summary)\b/i.test(msg) ||
+      /\bmonth[-\s]?end\s+(?:report|summary)\b/i.test(msg);
+    if (!monthReference || !financialReportIntent) {
+      return false;
+    }
+    return !/\b(?:create|make|issue|prepare)\b[\s\S]{0,100}\binvoice\b/i.test(
+      msg,
+    );
+  }
+
+  private shouldPreferMonthlyFinancialReportSkill(
+    userMessage: string | undefined,
+    agentName: string | null,
+    toolName: string,
+  ): boolean {
+    if (!this.userAskedForMonthlyFinancialReport(userMessage)) {
+      return false;
+    }
+    if (
+      agentName &&
+      agentName.toLowerCase() === FINANCE_AGENT_NAME &&
+      toolName === RESERVED_DISPATCH_AGENT
+    ) {
+      return true;
+    }
+    return (
+      toolName === RESERVED_DISPATCH_AGENT
+        ? false
+        : toolName === 'get_revenue_summary' || toolName === 'get_invoices_summary'
     );
   }
 
