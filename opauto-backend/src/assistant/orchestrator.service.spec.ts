@@ -1707,6 +1707,167 @@ describe('OrchestratorService', () => {
     });
   });
 
+  it('retries create_invoice toward approval when the user already provided line item prices', async () => {
+    const customerId = '0a19350b-7648-4d82-866d-a86508775194';
+    const carId = 'c3d3cd7a-ee09-44e8-8dc6-6953aae4da7c';
+    const tools = makeTools(
+      ['find_customer', 'find_car', 'create_invoice'],
+      (name) => {
+        if (name === 'find_customer') {
+          return {
+            ok: true,
+            result: [{ id: customerId, displayName: 'Khaoula Khelifi' }],
+            durationMs: 1,
+          };
+        }
+        if (name === 'find_car') {
+          return {
+            ok: true,
+            result: [
+              {
+                id: carId,
+                customerId,
+                label: 'Skoda Octavia · 8580 TUN 289',
+              },
+            ],
+            durationMs: 1,
+          };
+        }
+        return { ok: true, result: {}, durationMs: 1 };
+      },
+    );
+    tools.validateArgs.mockImplementation((name: string, args: any) => {
+      if (name === 'create_invoice' && args.customerId === 'Khaoula Khelifi') {
+        return {
+          valid: false,
+          errors: [
+            '/customerId must match format "uuid"',
+            '/carId must match format "uuid"',
+            '/lineItems/0 must be object',
+          ],
+        };
+      }
+      return { valid: true };
+    });
+    tools.resolveBlastTier.mockImplementation((tool: any) =>
+      tool.name === 'create_invoice'
+        ? AssistantBlastTier.TYPED_CONFIRM_WRITE
+        : AssistantBlastTier.READ,
+    );
+    const approvals = makeApprovals();
+    const prisma = {
+      ...makePrisma(),
+      customer: {
+        findFirst: jest.fn().mockResolvedValue({ id: customerId }),
+      },
+    };
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-bad-invoice',
+            name: 'create_invoice',
+            argsJson:
+              '{"customerId":"Khaoula Khelifi","carId":"8580 TUN 289","dueDate":"2026-07-23","lineItems":["1 oil change labor at 80 TND HT","1 oil filter at 25 TND HT"],"_expectedConfirmation":"105.00 TND"}',
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-customer',
+            name: 'find_customer',
+            argsJson: '{"query":"Khaoula Khelifi"}',
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-car',
+            name: 'find_car',
+            argsJson: '{"query":"8580 TUN 289"}',
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-good-invoice',
+            name: 'create_invoice',
+            argsJson:
+              `{"customerId":"${customerId}","carId":"${carId}","dueDate":"2026-07-23","lineItems":[{"description":"Oil change labor","quantity":1,"unitPrice":80},{"description":"Oil filter","quantity":1,"unitPrice":25}],"_expectedConfirmation":"105.00 TND"}`,
+          },
+        ],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({
+      tools,
+      llm,
+      approvals,
+      prisma,
+    });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-invoice-priced',
+        'Make an invoice for Khaoula Khelifi and the Skoda Octavia plate 8580 TUN 289 with 1 oil change labor at 80 TND HT and 1 oil filter at 25 TND HT. Do not create it unless I approve the approval request.',
+        undefined,
+      ),
+    );
+
+    expect(tools.execute).toHaveBeenCalledWith(
+      'find_customer',
+      { query: 'Khaoula Khelifi' },
+      expect.objectContaining({ garageId: 'garage-1' }),
+    );
+    expect(tools.execute).toHaveBeenCalledWith(
+      'find_car',
+      { query: '8580 TUN 289' },
+      expect.objectContaining({ garageId: 'garage-1' }),
+    );
+    expect(events.find((e) => e.type === 'approval_request')).toMatchObject({
+      toolName: 'create_invoice',
+      blastTier: AssistantBlastTier.TYPED_CONFIRM_WRITE,
+      args: expect.objectContaining({
+        customerId,
+        carId,
+        lineItems: expect.arrayContaining([
+          expect.objectContaining({
+            description: 'Oil change labor',
+            quantity: 1,
+            unitPrice: 80,
+          }),
+          expect.objectContaining({
+            description: 'Oil filter',
+            quantity: 1,
+            unitPrice: 25,
+          }),
+        ]),
+      }),
+    });
+    expect(approvals.createPending).toHaveBeenCalledWith(
+      expect.objectContaining({ toolName: 'create_invoice' }),
+    );
+    const secondLlmCall = (llm.complete as jest.Mock).mock.calls[1][0];
+    expect(
+      secondLlmCall.messages.some((m: any) =>
+        String(m.content).includes(
+          'Do not ask for prices that are already in the user message',
+        ),
+      ),
+    ).toBe(true);
+  });
+
   it('strips reasoning scaffolds and internal ids from final assistant text', async () => {
     const llm = makeLlm([
       {

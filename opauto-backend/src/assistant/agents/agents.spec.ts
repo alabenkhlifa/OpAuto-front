@@ -61,6 +61,14 @@ describe('assistant agents', () => {
       expect(agent.toolWhitelist).not.toContain('send_sms');
       expect(agent.toolWhitelist).not.toContain('send_email');
     });
+
+    it('bounds broad outreach campaigns to a small draft set', () => {
+      const agent = createCommunicationsAgent();
+      expect(agent.systemPrompt).toContain('pick at most the top 3 customers');
+      expect(agent.systemPrompt).toContain(
+        'Do not call propose_retention_action for every customer',
+      );
+    });
   });
 
   describe('createGrowthAgent', () => {

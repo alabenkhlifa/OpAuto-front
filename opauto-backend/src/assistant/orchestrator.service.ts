@@ -556,8 +556,11 @@ export class OrchestratorService {
             ctx.turnState?.userMessage,
           );
           if (invalidWriteGuidance) {
-            forceComposeOnly = true;
-            llmMessages.push({ role: 'system', content: invalidWriteGuidance });
+            forceComposeOnly = invalidWriteGuidance.forceComposeOnly;
+            llmMessages.push({
+              role: 'system',
+              content: invalidWriteGuidance.content,
+            });
           }
           recordFailedToolAttempt(call.name, 'invalid arguments');
           continue;
@@ -2170,30 +2173,49 @@ export class OrchestratorService {
     toolName: string,
     errors: string[],
     userMessage: string | undefined,
-  ): string | null {
+  ): { content: string; forceComposeOnly: boolean } | null {
     if (
       toolName === 'create_invoice' &&
-      (errors.some((error) => /lineItems/i.test(error)) ||
-        this.userMessageLacksInvoicePrices(userMessage))
+      this.userMessageLacksInvoicePrices(userMessage)
     ) {
-      return (
-        `create_invoice arguments are incomplete. Stop retrying tools. ` +
-        `Tell the user no invoice was created. Ask for quantity and HT unitPrice ` +
-        `for each line item. Do not invent prices, totals, discounts, or taxes. ` +
-        `Do not mention schemas, validation, tool names, or internal IDs.`
-      );
+      return {
+        forceComposeOnly: true,
+        content:
+          `create_invoice arguments are incomplete. Stop retrying tools. ` +
+          `Tell the user no invoice was created. Ask for quantity and HT unitPrice ` +
+          `for each line item. Do not invent prices, totals, discounts, or taxes. ` +
+          `Do not mention schemas, validation, tool names, or internal IDs.`,
+      };
+    }
+
+    if (
+      toolName === 'create_invoice' &&
+      errors.some((error) => /customerId|carId|lineItems|uuid/i.test(error))
+    ) {
+      return {
+        forceComposeOnly: false,
+        content:
+          `create_invoice arguments were invalid, but the user already provided invoice details. ` +
+          `Do not ask for prices that are already in the user message. Retry by resolving real records first: ` +
+          `call find_customer/get_customer for the customer and find_car/get_car for the vehicle when one is mentioned. ` +
+          `Then call create_invoice with UUID customerId/carId values, a dueDate, and lineItems as objects like ` +
+          `{"description":"Oil change labor","quantity":1,"unitPrice":80}. ` +
+          `Set _expectedConfirmation to the formatted total in TND. Do not call send_email unless the user asked to email an already-created invoice.`,
+      };
     }
 
     if (
       toolName === 'create_appointment' &&
       errors.some((error) => /customerId|carId|mechanicId|uuid/i.test(error))
     ) {
-      return (
-        `create_appointment arguments are incomplete. Stop retrying tools and do not dispatch an agent. ` +
-        `Tell the user no appointment was created. If available slots are already in the conversation, ` +
-        `show the best slots and ask the user to confirm the customer and vehicle before approval. ` +
-        `Do not mention the orchestrator, schemas, validation, tool names, or internal IDs.`
-      );
+      return {
+        forceComposeOnly: true,
+        content:
+          `create_appointment arguments are incomplete. Stop retrying tools and do not dispatch an agent. ` +
+          `Tell the user no appointment was created. If available slots are already in the conversation, ` +
+          `show the best slots and ask the user to confirm the customer and vehicle before approval. ` +
+          `Do not mention the orchestrator, schemas, validation, tool names, or internal IDs.`,
+      };
     }
 
     return null;
