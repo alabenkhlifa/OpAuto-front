@@ -188,7 +188,7 @@ This batch exercised all 30 registry tools, all 9 production skills, and all 6 a
 | Invoice creation | Fail | Create-invoice prompt looped through invalid arguments and ended with generic timeout instead of asking for missing price/car details |
 | Invoice summary formatting | Fail | Collections response leaked a customer UUID fragment because `list_overdue_invoices` exposed only `customerId` |
 
-## Current Production Loop: `f17c276` to `c871bc6`
+## Current Production Loop: `f17c276` to `f0bc808`
 
 Loop rule: every production AI-assistant run must be recorded here before the next fix or deploy cycle starts.
 
@@ -198,8 +198,12 @@ Loop rule: every production AI-assistant run must be recorded here before the ne
 | `25f9b8e` | Focused production retest after invoice placeholder recovery deploy | `/tmp/opauto_ai_focused_retest_25f9b8e.json` | `T31-COMMS-AGENT` passed; `T13-NOAPPROVE` still failed with missing `create_invoice` tool/approval | Batch remaining invoice fix with other domains before next push |
 | `25f9b8e` | Full production matrix, no approvals submitted | `/tmp/opauto_ai_full_retest_25f9b8e.json` | 48 cases run; all 9 skills observed; failures: `T06-NOAPPROVE`, `T13-NOAPPROVE`, `T30-GROWTH-AGENT` | Prepare one focused local commit per domain: scheduling approval recovery, invoice approval recovery, growth-agent routing; deploy once after local tests pass |
 | `c871bc6` | Focused production retest after grouped deployment | `/tmp/opauto_ai_focused_retest_c871bc6.json` | `T30-GROWTH-AGENT` passed and observed `growth-agent`; `T06-NOAPPROVE` still missed `find_available_slot`/`create_appointment` approval; `T13-NOAPPROVE` still missed `create_invoice` approval | Inspect live traces; prepare next grouped scheduling and invoice fixes before another deploy |
+| `f0bc808` | Focused production retest after scheduling and invoice recovery deployment | `/tmp/opauto_ai_focused_retest_f0bc808.json` | `T06-NOAPPROVE` passed with one `create_appointment` approval and no mutation; `T13-NOAPPROVE` passed with one `create_invoice` approval and no mutation | Run the full production matrix and record it here before any next fix/deploy cycle |
+| `f0bc808` | Full production matrix, no approvals submitted | `/tmp/opauto_ai_full_retest_f0bc808.json` | 48 cases run; all 30 tools, 9 skills, and 6 agents observed; `failedCases` was empty | No current production AI-assistant failures from this matrix |
 
 Current failure details:
+
+No current failures from the `f0bc808` full production matrix. Previous focused failures are kept below as historical context for the fixes in this loop.
 
 | ID | Production symptom | Real data fetched | Planned fix domain |
 |---|---|---|---|
@@ -231,6 +235,9 @@ Current failure details:
 | Draft-only email guard | `8aea665`, `ee4cfc6` | "Draft an email ... do not send" still attempted `send_email` and exposed internal guard text or empty final text. | Deployed guard blocks the send before execution, adds an explicit "No email was sent" notice, and falls back to a deterministic overdue-invoice draft if the model returns empty text. | Added pre-send and post-processing regressions; production retest T17 had no approval and no email send. |
 | Overdue invoice customer labels | `6478a5f` | Invoice collections tables could leak customer UUIDs because `list_overdue_invoices` returned only `customerId`. | Deployed tool result includes `customerName` and `customerPhone`, the collections skill displays those labels, and final-answer scrubbing removes UUID fragments unless technical IDs are requested. | Expanded overdue invoice projection and response scrubber coverage. |
 | Invoice creation missing details | `6d8f093`, `6478a5f` | "Make an invoice for Khaoula for an oil change and filter" could call malformed `create_invoice` payloads with missing prices or string-only line items. | Deployed prompt/tool guidance asks for quantities and HT unit prices before calling `create_invoice`; invalid create attempts are rewritten without invented totals. | Strengthened the main prompt, finance-agent prompt, and create-invoice schema description, with a pinned orchestrator assertion. |
+| Growth-agent routing | `a75db59` | "Run a retention review" could try `retention-suggestions` as an agent before using the real growth agent. | Retention review prompts now route to `growth-agent`; production `T30-GROWTH-AGENT` passed on `c871bc6` and stayed covered in the `f0bc808` matrix. | Added routing guard coverage and kept the fix in the grouped deployment. |
+| Appointment approval recovery | `c871bc6`, `1bfc20b` | Booking prompts could return slot/date text without continuing to `find_available_slot` and `create_appointment` approval. | The orchestrator now retries required booking tool flow before final text, then surfaces a typed `create_appointment` approval without executing it in no-approve tests. | Added orchestrator regressions for date-calculation final-text fallback and verified `T06-NOAPPROVE` in production. |
+| Invoice approval recovery | `50d6e1d`, `f0bc808` | Create-invoice prompts could fetch customer/car records but keep malformed primitive `lineItems`, preventing approval. | The orchestrator recovers customer, car, and parsed priced line items from successful tool results and the original prompt before validating `create_invoice`. | Added deterministic recovery coverage and verified `T13-NOAPPROVE` in production. |
 
 ## Response Quality Notes
 
