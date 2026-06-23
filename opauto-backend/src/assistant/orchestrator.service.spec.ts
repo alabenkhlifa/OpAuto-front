@@ -1847,7 +1847,7 @@ describe('OrchestratorService', () => {
             id: 'tc-good-invoice',
             name: 'create_invoice',
             argsJson:
-              `{"customerId":"${customerId}","carId":"${carId}","dueDate":"2026-07-23","lineItems":[80,25],"_expectedConfirmation":"105.00 TND"}`,
+              `{"customerId":"${customerId}","carId":"${carId}","dueDate":"2026-07-23","lineItems":["oil change labor","oil filter",80,25],"_expectedConfirmation":"105.00 TND"}`,
           },
         ],
       },

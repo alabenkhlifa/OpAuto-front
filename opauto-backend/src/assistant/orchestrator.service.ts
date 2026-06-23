@@ -1037,7 +1037,7 @@ export class OrchestratorService {
     const userMessageLines = this.parseInvoiceLineItemsFromText(userMessage);
     const canUsePositionalFallback =
       userMessageLines.length === rawLineItems.length;
-    const lineItems = rawLineItems.map((item, index) => {
+    let lineItems = rawLineItems.map((item, index) => {
       const positionalFallback = canUsePositionalFallback
         ? userMessageLines[index]
         : null;
@@ -1047,7 +1047,23 @@ export class OrchestratorService {
         positionalFallback,
       );
     });
-    if (lineItems.some((item) => item === null)) return args;
+    if (lineItems.some((item) => item === null)) {
+      if (userMessageLines.length === 0) return args;
+      const recovered = [...userMessageLines];
+      const recoveredDescriptions = new Set(
+        recovered.map((item) =>
+          this.normaliseInvoiceDescription(item.description),
+        ),
+      );
+      for (const item of lineItems) {
+        if (!this.isNormalisedInvoiceLineItem(item)) continue;
+        const description = this.normaliseInvoiceDescription(item.description);
+        if (recoveredDescriptions.has(description)) continue;
+        recovered.push(item);
+        recoveredDescriptions.add(description);
+      }
+      lineItems = recovered;
+    }
 
     const normalised: Record<string, unknown> = { ...a, lineItems };
     if (
@@ -1106,6 +1122,25 @@ export class OrchestratorService {
     }
 
     return positionalFallback;
+  }
+
+  private isNormalisedInvoiceLineItem(raw: unknown): raw is {
+    description: string;
+    quantity: number;
+    unitPrice: number;
+  } {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return false;
+    const item = raw as Record<string, unknown>;
+    return (
+      typeof item.description === 'string' &&
+      item.description.trim().length > 0 &&
+      typeof item.quantity === 'number' &&
+      Number.isFinite(item.quantity) &&
+      item.quantity > 0 &&
+      typeof item.unitPrice === 'number' &&
+      Number.isFinite(item.unitPrice) &&
+      item.unitPrice >= 0
+    );
   }
 
   private normaliseInvoiceLineItemObject(raw: object): unknown {
