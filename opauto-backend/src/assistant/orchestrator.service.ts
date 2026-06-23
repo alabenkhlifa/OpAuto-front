@@ -1034,7 +1034,11 @@ export class OrchestratorService {
       period?: string;
       format?: string;
     };
-    if (text.includes(result.url)) return text;
+    const misleadingReportFailure =
+      /\b(?:no data available|report (?:is )?unavailable|not able to generate|unable to generate|cannot generate|could not generate)\b/i.test(
+        text,
+      );
+    if (!misleadingReportFailure && text.includes(result.url)) return text;
     const noun =
       report.toolName === 'generate_invoices_pdf'
         ? `invoice PDF${result.invoiceCount ? ` for ${result.invoiceCount} invoice(s)` : ''}`
@@ -1042,7 +1046,7 @@ export class OrchestratorService {
     const expiry = result.expiresAt
       ? ` It expires at ${result.expiresAt}.`
       : '';
-    if (text.trim().length === 0) {
+    if (text.trim().length === 0 || misleadingReportFailure) {
       return `Done. Download the ${noun} here: ${result.url}.${expiry}`;
     }
     return `${text.trim()} Download it here: ${result.url}.${expiry}`;

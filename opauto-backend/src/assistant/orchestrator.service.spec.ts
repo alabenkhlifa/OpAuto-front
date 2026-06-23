@@ -1413,6 +1413,58 @@ describe('OrchestratorService', () => {
     });
   });
 
+  it('replaces no-data report text when the report tool returned a download url', async () => {
+    const tools = makeTools(['generate_period_report'], () => ({
+      ok: true,
+      result: {
+        url: '/api/assistant/downloads/22222222-3333-4444-8555-666666666666.csv',
+        expiresAt: '2026-06-23T16:05:12.300Z',
+        period: 'custom',
+        format: 'csv',
+      },
+      durationMs: 1,
+    }));
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-1',
+            name: 'generate_period_report',
+            argsJson:
+              '{"period":"custom","format":"csv","from":"2026-06-01","to":"2026-06-24"}',
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: 'There is no data available for the CSV report.',
+        toolCalls: [],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({ tools, llm });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-report-no-data',
+        'Generate a CSV report from June 1 to June 23.',
+        undefined,
+      ),
+    );
+
+    const text = events.find((e) => e.type === 'text');
+    expect(text).toMatchObject({
+      delta: expect.stringContaining(
+        '/api/assistant/downloads/22222222-3333-4444-8555-666666666666.csv',
+      ),
+    });
+    expect(text).not.toMatchObject({
+      delta: expect.stringMatching(/no data available/i),
+    });
+  });
+
   it('rewrites invalid appointment creation into slots plus a confirmation request', async () => {
     const tools = makeTools(['find_available_slot', 'create_appointment'], (name) => {
       if (name === 'find_available_slot') {
