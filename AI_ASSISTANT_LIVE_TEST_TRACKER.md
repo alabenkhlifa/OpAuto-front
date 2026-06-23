@@ -188,7 +188,7 @@ This batch exercised all 30 registry tools, all 9 production skills, and all 6 a
 | Invoice creation | Fail | Create-invoice prompt looped through invalid arguments and ended with generic timeout instead of asking for missing price/car details |
 | Invoice summary formatting | Fail | Collections response leaked a customer UUID fragment because `list_overdue_invoices` exposed only `customerId` |
 
-## Current Production Loop: `f17c276` to `25f9b8e`
+## Current Production Loop: `f17c276` to `c871bc6`
 
 Loop rule: every production AI-assistant run must be recorded here before the next fix or deploy cycle starts.
 
@@ -197,6 +197,7 @@ Loop rule: every production AI-assistant run must be recorded here before the ne
 | `f17c276` | Focused production retest for invoice approval and communications-agent name leak | `/tmp/opauto_ai_focused_retest_f17c276.json` | `T31-COMMS-AGENT` passed; `T13-NOAPPROVE` failed with missing `create_invoice` tool/approval | Keep communications fix; continue invoice approval recovery |
 | `25f9b8e` | Focused production retest after invoice placeholder recovery deploy | `/tmp/opauto_ai_focused_retest_25f9b8e.json` | `T31-COMMS-AGENT` passed; `T13-NOAPPROVE` still failed with missing `create_invoice` tool/approval | Batch remaining invoice fix with other domains before next push |
 | `25f9b8e` | Full production matrix, no approvals submitted | `/tmp/opauto_ai_full_retest_25f9b8e.json` | 48 cases run; all 9 skills observed; failures: `T06-NOAPPROVE`, `T13-NOAPPROVE`, `T30-GROWTH-AGENT` | Prepare one focused local commit per domain: scheduling approval recovery, invoice approval recovery, growth-agent routing; deploy once after local tests pass |
+| `c871bc6` | Focused production retest after grouped deployment | `/tmp/opauto_ai_focused_retest_c871bc6.json` | `T30-GROWTH-AGENT` passed and observed `growth-agent`; `T06-NOAPPROVE` still missed `find_available_slot`/`create_appointment` approval; `T13-NOAPPROVE` still missed `create_invoice` approval | Inspect live traces; prepare next grouped scheduling and invoice fixes before another deploy |
 
 Current failure details:
 
