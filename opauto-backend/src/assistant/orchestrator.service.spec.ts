@@ -298,7 +298,7 @@ describe('OrchestratorService', () => {
         provider: 'groq',
         content: null,
         toolCalls: [
-          { id: 'tc-1', name: 'send_sms', argsJson: '{"to":"+216..."}' },
+          { id: 'tc-1', name: 'send_sms', argsJson: '{"to":"+21612345678"}' },
         ],
       },
     ]);
@@ -306,7 +306,7 @@ describe('OrchestratorService', () => {
     const orchestrator = await makeOrchestrator({ tools, llm, approvals });
 
     const events = await collectEvents(
-      orchestrator.run(ctx, 'conv-1', 'send sms', undefined),
+      orchestrator.run(ctx, 'conv-1', 'send sms to +21612345678', undefined),
     );
 
     const approval = events.find((e) => e.type === 'approval_request');
@@ -322,6 +322,172 @@ describe('OrchestratorService', () => {
     );
     expect(tools.execute).not.toHaveBeenCalled();
     expect(events.find((e) => e.type === 'done')).toBeDefined();
+  });
+
+  it('rejects cancellation approval when the user explicitly provided an invalid appointment id', async () => {
+    const tools = makeTools(['cancel_appointment']);
+    tools.resolveBlastTier.mockReturnValue(AssistantBlastTier.CONFIRM_WRITE);
+    const validButWrongId = '21a3766b-2728-4f87-9522-b1517bb5ebf7';
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-1',
+            name: 'cancel_appointment',
+            argsJson: JSON.stringify({ appointmentId: validButWrongId }),
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: 'That appointment id is not valid.',
+        toolCalls: [],
+      },
+    ]);
+    const approvals = makeApprovals();
+    const prisma = {
+      ...makePrisma(),
+      appointment: { findFirst: jest.fn() },
+    };
+    const orchestrator = await makeOrchestrator({
+      tools,
+      llm,
+      approvals,
+      prisma,
+    });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-1',
+        'Cancel the appointment with id banana.',
+        undefined,
+      ),
+    );
+
+    expect(events.find((e) => e.type === 'approval_request')).toBeUndefined();
+    expect(approvals.createPending).not.toHaveBeenCalled();
+    expect(prisma.appointment.findFirst).not.toHaveBeenCalled();
+    expect(events.find((e) => e.type === 'tool_result')).toMatchObject({
+      status: 'failed',
+      result: expect.objectContaining({
+        error: 'invalid_appointment_identifier',
+      }),
+    });
+    expect(events.find((e) => e.type === 'text')).toMatchObject({
+      delta: 'That appointment id is not valid.',
+    });
+  });
+
+  it('rejects SMS approval when the recipient customer id is a placeholder', async () => {
+    const tools = makeTools(['send_sms']);
+    tools.resolveBlastTier.mockReturnValue(AssistantBlastTier.CONFIRM_WRITE);
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-1',
+            name: 'send_sms',
+            argsJson: JSON.stringify({
+              to: '+21612345678',
+              body: 'Your car is ready.',
+              customerId: 'customer-id-12345',
+            }),
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: 'I need the real customer first.',
+        toolCalls: [],
+      },
+    ]);
+    const approvals = makeApprovals();
+    const prisma = {
+      ...makePrisma(),
+      customer: { findFirst: jest.fn().mockResolvedValue(null) },
+    };
+    const orchestrator = await makeOrchestrator({
+      tools,
+      llm,
+      approvals,
+      prisma,
+    });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-1',
+        'Text Khaoula Khelifi that her car is ready.',
+        undefined,
+      ),
+    );
+
+    expect(events.find((e) => e.type === 'approval_request')).toBeUndefined();
+    expect(approvals.createPending).not.toHaveBeenCalled();
+    expect(events.find((e) => e.type === 'tool_result')).toMatchObject({
+      status: 'failed',
+      result: expect.objectContaining({ error: 'customer_not_found' }),
+    });
+    expect(events.find((e) => e.type === 'text')).toMatchObject({
+      delta: 'I need the real customer first.',
+    });
+  });
+
+  it('rejects empty send_email auto-write calls before executing the handler', async () => {
+    const tools = makeTools(['send_email']);
+    tools.get.mockImplementation((name: string) => ({
+      name,
+      description: 'desc',
+      parameters: { type: 'object', properties: {} },
+      blastTier: AssistantBlastTier.AUTO_WRITE,
+      handler: async () => ({}),
+    }));
+    tools.resolveBlastTier.mockReturnValue(AssistantBlastTier.AUTO_WRITE);
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-1',
+            name: 'send_email',
+            argsJson: JSON.stringify({
+              subject: 'Invoice for Khaoula Khelifi',
+              attachInvoiceIds: ['[insert invoice id here]'],
+            }),
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: 'I need the invoice content first.',
+        toolCalls: [],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({ tools, llm });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-1',
+        'Make an invoice for Khaoula.',
+        undefined,
+      ),
+    );
+
+    expect(tools.execute).not.toHaveBeenCalled();
+    expect(events.find((e) => e.type === 'tool_result')).toMatchObject({
+      status: 'failed',
+      result: expect.objectContaining({ error: 'empty_email_payload' }),
+    });
+    expect(events.find((e) => e.type === 'text')).toMatchObject({
+      delta: 'I need the invoice content first.',
+    });
   });
 
   it('emits an apology when iteration cap is exceeded', async () => {
@@ -787,7 +953,8 @@ describe('OrchestratorService', () => {
       },
       {
         provider: 'groq',
-        content: "I couldn't finish the task in time - let's try a smaller question.",
+        content:
+          "I couldn't finish the task in time - let's try a smaller question.",
         toolCalls: [],
       },
     ]);
@@ -1029,6 +1196,40 @@ describe('OrchestratorService', () => {
       );
     });
 
+    it('adds create_invoice and customer lookup for invoice creation requests', async () => {
+      const tools = makeTools([
+        'list_invoices',
+        'create_invoice',
+        'find_customer',
+        'get_customer',
+        'find_car',
+        'send_email',
+      ]);
+      const llm = makeLlm([{ provider: 'groq', content: 'ok', toolCalls: [] }]);
+      const classifier = makeClassifier(['list_invoices']);
+      const orchestrator = await makeOrchestrator({ tools, llm, classifier });
+
+      await collectEvents(
+        orchestrator.run(
+          ctx,
+          'conv-1',
+          'Make an invoice for Khaoula Khelifi for an oil change and filter.',
+          undefined,
+        ),
+      );
+
+      const names = toolNamesFromFirstCall(llm);
+      expect(names).toEqual(
+        expect.arrayContaining([
+          'list_invoices',
+          'create_invoice',
+          'find_customer',
+          'get_customer',
+          'find_car',
+        ]),
+      );
+    });
+
     it('augments French "envoie-moi un email" → send_email', async () => {
       const tools = makeTools(['get_revenue_summary', 'send_email']);
       const llm = makeLlm([{ provider: 'groq', content: 'ok', toolCalls: [] }]);
@@ -1127,7 +1328,9 @@ describe('OrchestratorService', () => {
       expect(prompt).toMatch(/garage owner/);
       expect(prompt).toMatch(/SELF-SEND/);
       expect(prompt).toMatch(/Do NOT include internal database IDs/);
-      expect(prompt).toMatch(/Use names, phone numbers, invoice numbers, license plates/);
+      expect(prompt).toMatch(
+        /Use names, phone numbers, invoice numbers, license plates/,
+      );
       expect(prompt).toMatch(/Do NOT narrate hidden reasoning/);
     });
 
@@ -1154,7 +1357,9 @@ describe('OrchestratorService', () => {
       );
 
       const prompt = getSystemPrompt(llm);
-      expect(prompt).toMatch(/Never refuse by saying .*requires a conversation/i);
+      expect(prompt).toMatch(
+        /Never refuse by saying .*requires a conversation/i,
+      );
       expect(prompt).toMatch(/call dispatch_agent/i);
     });
 

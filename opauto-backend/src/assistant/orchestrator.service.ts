@@ -42,6 +42,8 @@ const RESUME_PREFIX = '__resume__:';
 
 const RESERVED_LOAD_SKILL = 'load_skill';
 const RESERVED_DISPATCH_AGENT = 'dispatch_agent';
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 // Extracted to ./page-context-resolver for direct unit testing.
 import { deriveSelectedEntityFromRoute } from './page-context-resolver';
@@ -360,10 +362,7 @@ export class OrchestratorService {
 
         if (toolCalls.length === 0) {
           let text = completion.content ?? '';
-          if (
-            lastAgentResult &&
-            this.shouldFallbackToAgentResult(text)
-          ) {
+          if (lastAgentResult && this.shouldFallbackToAgentResult(text)) {
             text = lastAgentResult.result;
           }
           const persisted = await this.persistAssistant(
@@ -1014,6 +1013,17 @@ export class OrchestratorService {
       out.push('find_customer');
       out.push('get_customer');
     }
+    if (
+      /\b(?:create|make|issue|generate|prepare)\b[\s\S]{0,60}\binvoice\b/i.test(
+        message,
+      ) ||
+      /\binvoice\b[\s\S]{0,60}\b(?:for|to)\b/i.test(message)
+    ) {
+      out.push('create_invoice');
+      out.push('find_customer');
+      out.push('get_customer');
+      out.push('find_car');
+    }
     return out;
   }
 
@@ -1303,6 +1313,8 @@ export class OrchestratorService {
     parts.push(
       `Action chaining rules:\n` +
         `- When the user asks you to email/send a report or summary, FIRST call the relevant read tool to fetch real data (e.g. list_invoices, get_revenue_summary, list_at_risk_customers), THEN call send_email with a body that includes those concrete numbers. Do NOT write placeholder bodies like "please find the data below" without the data inline.\n` +
+        `- When the user asks to create, make, issue, generate, or prepare an invoice, resolve the real customer (and car if mentioned), ask for missing price/line details if needed, then call create_invoice. Do NOT call send_email unless the user explicitly asks to email an already-created invoice or report.\n` +
+        `- For customer SMS actions, resolve the real customer first and pass that real customerId plus their actual phone number to send_sms. Do NOT invent phone numbers or placeholder ids.\n` +
         `- NEVER claim "no data is available" / "data could not be retrieved" / "the report is unavailable" without having actually invoked the relevant read tool this turn. If you have not called a read tool yet, call it. If the tool returns empty, report the specific empty result ("0 overdue invoices", "no at-risk customers this period") — do NOT generalise to "no data".\n` +
         `- NEVER reference an attachment ("see attached", "please find the PDF attached", "ci-joint", "pièce jointe") in the email body unless you populate attachInvoiceIds with real invoice ids. The backend rejects emails that promise an attachment without one.\n` +
         `- When the user wants invoices attached to an email, call list_invoices first to get the invoice IDs, then pass them as attachInvoiceIds in send_email — the backend converts them to a CSV attachment automatically.\n` +
@@ -1461,11 +1473,11 @@ export class OrchestratorService {
       const html = typeof a.html === 'string' ? a.html.trim() : '';
       const text = typeof a.text === 'string' ? a.text.trim() : '';
       const ids = Array.isArray(a.attachInvoiceIds) ? a.attachInvoiceIds : [];
-      if (html.length === 0 && text.length === 0 && ids.length === 0) {
+      if (html.length === 0 && text.length === 0) {
         return {
           error: 'empty_email_payload',
           message:
-            'send_email was called with an empty body and no attachInvoiceIds. ' +
+            'send_email was called with an empty body. ' +
             'You must populate `text` (or `html`) with the actual content first. ' +
             'If the user asked for invoices/data attached, call list_invoices ' +
             '(or the relevant read tool) first to get real data, then call ' +
@@ -1473,7 +1485,56 @@ export class OrchestratorService {
             'attachInvoiceIds.',
         };
       }
+      const placeholderId = ids.find(
+        (id) => typeof id === 'string' && this.looksLikePlaceholder(id),
+      );
+      if (placeholderId) {
+        return {
+          error: 'unresolved_placeholder',
+          message:
+            `send_email received placeholder attachInvoiceIds value "${placeholderId}". ` +
+            'Call the invoice read tool first and pass real invoice ids, or omit attachments.',
+        };
+      }
       return null;
+    }
+
+    if (toolName === 'send_sms') {
+      const to = typeof a.to === 'string' ? a.to : '';
+      const customerId =
+        typeof a.customerId === 'string' ? a.customerId.trim() : '';
+      if (customerId) {
+        const customer = await this.prisma.customer.findFirst({
+          where: { id: customerId, garageId: ctx.garageId },
+          select: { id: true, phone: true },
+        });
+        if (!customer) {
+          return {
+            error: 'customer_not_found',
+            message:
+              `send_sms received customerId="${customerId}", but no customer ` +
+              'with that id exists in this garage. Use find_customer or ' +
+              'get_customer to resolve the real recipient before asking for approval.',
+          };
+        }
+        if (this.normalisePhone(customer.phone) !== this.normalisePhone(to)) {
+          return {
+            error: 'phone_mismatch',
+            message:
+              'send_sms recipient phone does not match the resolved customer. ' +
+              'Use the phone from get_customer/find_customer before asking for approval.',
+          };
+        }
+      } else if (
+        !this.userMessageContainsPhone(ctx.turnState?.userMessage, to)
+      ) {
+        return {
+          error: 'unresolved_recipient',
+          message:
+            'send_sms was called with a phone number that the user did not provide and no customerId binding. ' +
+            'Resolve the recipient with find_customer/get_customer first, then retry with the real customerId and phone.',
+        };
+      }
     }
 
     // UI Bug 6 — verify id args refer to a real, garage-owned row BEFORE
@@ -1485,6 +1546,13 @@ export class OrchestratorService {
       toolName === 'cancel_appointment' &&
       typeof a.appointmentId === 'string'
     ) {
+      const explicitIdError = this.explicitAppointmentIdError(
+        ctx.turnState?.userMessage,
+        a.appointmentId,
+      );
+      if (explicitIdError) {
+        return explicitIdError;
+      }
       const exists = await this.prisma.appointment.findFirst({
         where: { id: a.appointmentId, garageId: ctx.garageId },
         select: { id: true },
@@ -1497,6 +1565,22 @@ export class OrchestratorService {
             `but no appointment with that id exists in this garage. Did you ` +
             `pass a customer id by mistake? Call list_appointments first to ` +
             `find the correct appointment id, then retry.`,
+        };
+      }
+    }
+
+    if (toolName === 'create_invoice' && typeof a.customerId === 'string') {
+      const customer = await this.prisma.customer.findFirst({
+        where: { id: a.customerId, garageId: ctx.garageId },
+        select: { id: true },
+      });
+      if (!customer) {
+        return {
+          error: 'customer_not_found',
+          message:
+            `create_invoice received customerId="${a.customerId}", but no ` +
+            'customer with that id exists in this garage. Use find_customer ' +
+            'or get_customer to resolve the customer before asking for approval.',
         };
       }
     }
@@ -1556,6 +1640,62 @@ export class OrchestratorService {
     }
 
     return null;
+  }
+
+  private explicitAppointmentIdError(
+    userMessage: string | undefined,
+    appointmentId: string,
+  ): { error: string; message: string } | null {
+    if (!userMessage) return null;
+
+    const explicitUuid = userMessage.match(UUID_PATTERN)?.[0];
+    if (
+      explicitUuid &&
+      explicitUuid.toLowerCase() !== appointmentId.toLowerCase()
+    ) {
+      return {
+        error: 'appointment_id_mismatch',
+        message:
+          `The user explicitly gave appointment id "${explicitUuid}", but ` +
+          `cancel_appointment was called with "${appointmentId}". Do not substitute ` +
+          'a different appointment. Use the exact user-provided id or explain that it is invalid.',
+      };
+    }
+
+    const explicitId = userMessage.match(
+      /\b(?:appointment\s+)?id\s*(?:is|=|:|with)?\s*["'`]?([A-Za-z0-9_-]{2,80})["'`]?/i,
+    )?.[1];
+    if (explicitId && !UUID_PATTERN.test(explicitId)) {
+      return {
+        error: 'invalid_appointment_identifier',
+        message:
+          `The user explicitly gave appointment id "${explicitId}", which is not a valid UUID. ` +
+          'Do not choose a different appointment. Ask for a valid appointment id or use list_appointments only if the user asks to search by date/customer.',
+      };
+    }
+
+    return null;
+  }
+
+  private looksLikePlaceholder(value: string): boolean {
+    return (
+      /\[(?:[^\]]*(?:insert|placeholder|id|todo|tbd)[^\]]*)\]/i.test(value) ||
+      /<(?:[^>]*(?:insert|placeholder|id|todo|tbd)[^>]*)>/i.test(value) ||
+      /\b(?:insert|placeholder|todo|tbd)\b/i.test(value)
+    );
+  }
+
+  private normalisePhone(value: string | null | undefined): string {
+    return (value ?? '').replace(/[\s\-()]/g, '');
+  }
+
+  private userMessageContainsPhone(
+    userMessage: string | undefined,
+    phone: string,
+  ): boolean {
+    const normalizedPhone = this.normalisePhone(phone);
+    if (!userMessage || normalizedPhone.length === 0) return false;
+    return this.normalisePhone(userMessage).includes(normalizedPhone);
   }
 
   /**
