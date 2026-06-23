@@ -200,10 +200,11 @@ Loop rule: every production AI-assistant run must be recorded here before the ne
 | `c871bc6` | Focused production retest after grouped deployment | `/tmp/opauto_ai_focused_retest_c871bc6.json` | `T30-GROWTH-AGENT` passed and observed `growth-agent`; `T06-NOAPPROVE` still missed `find_available_slot`/`create_appointment` approval; `T13-NOAPPROVE` still missed `create_invoice` approval | Inspect live traces; prepare next grouped scheduling and invoice fixes before another deploy |
 | `f0bc808` | Focused production retest after scheduling and invoice recovery deployment | `/tmp/opauto_ai_focused_retest_f0bc808.json` | `T06-NOAPPROVE` passed with one `create_appointment` approval and no mutation; `T13-NOAPPROVE` passed with one `create_invoice` approval and no mutation | Run the full production matrix and record it here before any next fix/deploy cycle |
 | `f0bc808` | Full production matrix, no approvals submitted | `/tmp/opauto_ai_full_retest_f0bc808.json` | 48 cases run; all 30 tools, 9 skills, and 6 agents observed; `failedCases` was empty | No current production AI-assistant failures from this matrix |
+| `54685e6` | Full production matrix, denied approval writes and one self-email auto-write | `/tmp/opauto_ai_full_retest_54685e6.json` | 48 cases run; all 30 tools, 9 skills, and 6 agents observed; failed case: `T30-GROWTH-AGENT` missing `growth-agent`. The trace loaded `retention-suggestions` and called `list_at_risk_customers`, then answered from tool data without dispatching `growth-agent`. | Fix growth-agent routing for retention-review prompts, then rerun a focused `T30` check before the full matrix |
 
 Current failure details:
 
-No current failures from the `f0bc808` full production matrix. Previous focused failures are kept below as historical context for the fixes in this loop.
+Current failure from the `54685e6` full production matrix: `T30-GROWTH-AGENT` missed `growth-agent` dispatch. Previous focused failures are kept below as historical context for the fixes in this loop.
 
 | ID | Production symptom | Real data fetched | Planned fix domain |
 |---|---|---|---|
