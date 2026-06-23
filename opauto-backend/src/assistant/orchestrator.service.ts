@@ -932,6 +932,7 @@ export class OrchestratorService {
   ): string {
     let out = this.correctSlotContradiction(text, successfulToolResults);
     out = this.stripReasoningScaffold(out);
+    out = this.stripInternalControlMessages(out);
     out = this.scrubInternalIds(out, ctx.turnState?.userMessage);
     return out.trim();
   }
@@ -985,6 +986,13 @@ export class OrchestratorService {
     out = out.replace(/^(#+\s*)Step\s+\d+\s*:\s*/gim, '$1');
     out = out.replace(/^Step\s+\d+\s*:\s*/gim, '');
     return out;
+  }
+
+  private stripInternalControlMessages(text: string): string {
+    return text.replace(
+      /(^|\n)\s*(?:[^\w\s"']+(?:\s+|$))*["'\u201c]?Refusing to dispatch another agent\s*[-\u2013\u2014]\s*already invoked\s+\d+\s+time\(s\)\s+this turn\.\s+Compose your final reply from the agent results above\.["'\u201d]?\s*/gi,
+      '$1',
+    );
   }
 
   private scrubInternalIds(

@@ -1158,6 +1158,38 @@ describe('OrchestratorService', () => {
     });
   });
 
+  it('strips internal agent dispatch cap text while preserving the answer', async () => {
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content:
+          '\u26a0\ufe0f "Refusing to dispatch another agent \u2014 already invoked 2 time(s) this turn. Compose your final reply from the agent results above." ' +
+          'This quarter, revenue is 7,808.21 TND. Last quarter, revenue was 28,528.62 TND.',
+        toolCalls: [],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({ llm });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-1',
+        'Compare this quarter with last quarter.',
+        undefined,
+      ),
+    );
+
+    const text = events.find((e) => e.type === 'text');
+    expect(text).toMatchObject({
+      delta: expect.stringContaining('This quarter, revenue is 7,808.21 TND'),
+    });
+    expect(text).not.toMatchObject({
+      delta: expect.stringMatching(
+        /Refusing to dispatch|dispatch another agent|Compose your final reply/i,
+      ),
+    });
+  });
+
   it('emits budget_exceeded + done and skips the LLM when the conversation is over budget', async () => {
     const conversation = makeConversation([], 250_000);
     const llm = makeLlm([
