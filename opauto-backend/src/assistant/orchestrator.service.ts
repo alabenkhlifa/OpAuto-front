@@ -1023,34 +1023,19 @@ export class OrchestratorService {
     const a = args as Record<string, unknown>;
     if (!Array.isArray(a.lineItems)) return args;
     const rawLineItems = a.lineItems;
-    if (
-      !rawLineItems.some(
-        (item) => typeof item === 'string' || Array.isArray(item),
-      )
-    ) {
-      return args;
-    }
 
     const userMessageLines = this.parseInvoiceLineItemsFromText(userMessage);
+    const canUsePositionalFallback =
+      userMessageLines.length === rawLineItems.length;
     const lineItems = rawLineItems.map((item, index) => {
-      if (typeof item === 'string') {
-        return (
-          this.parseInvoiceLineItemString(item) ??
-          this.matchInvoiceLineFromUserMessage(item, userMessageLines) ??
-          (userMessageLines.length === rawLineItems.length
-            ? userMessageLines[index]
-            : null)
-        );
-      }
-      if (Array.isArray(item)) {
-        return (
-          this.parseInvoiceLineItemTuple(item, userMessageLines) ??
-          (userMessageLines.length === rawLineItems.length
-            ? userMessageLines[index]
-            : null)
-        );
-      }
-      return item;
+      const positionalFallback = canUsePositionalFallback
+        ? userMessageLines[index]
+        : null;
+      return this.normaliseInvoiceLineItem(
+        item,
+        userMessageLines,
+        positionalFallback,
+      );
     });
     if (lineItems.some((item) => item === null)) return args;
 
@@ -1069,13 +1054,85 @@ export class OrchestratorService {
         );
       });
       if (!hasPrices) return normalised;
-      const total = lineItems.reduce((sum, item) => {
+      const total = lineItems.reduce<number>((sum, item) => {
         const line = item as { quantity: number; unitPrice: number };
         return sum + line.quantity * line.unitPrice;
       }, 0);
       normalised._expectedConfirmation = `${total.toFixed(2)} TND`;
     }
     return normalised;
+  }
+
+  private normaliseInvoiceLineItem(
+    raw: unknown,
+    userMessageLines: {
+      description: string;
+      quantity: number;
+      unitPrice: number;
+    }[],
+    positionalFallback: {
+      description: string;
+      quantity: number;
+      unitPrice: number;
+    } | null,
+  ): unknown {
+    if (typeof raw === 'string') {
+      return (
+        this.parseInvoiceLineItemString(raw) ??
+        this.matchInvoiceLineFromUserMessage(raw, userMessageLines) ??
+        positionalFallback
+      );
+    }
+
+    if (Array.isArray(raw)) {
+      return (
+        this.parseInvoiceLineItemTuple(raw, userMessageLines) ??
+        positionalFallback
+      );
+    }
+
+    if (raw && typeof raw === 'object') {
+      return this.normaliseInvoiceLineItemObject(raw) ?? positionalFallback;
+    }
+
+    return positionalFallback;
+  }
+
+  private normaliseInvoiceLineItemObject(raw: object): unknown {
+    const item = raw as Record<string, unknown>;
+    const description =
+      typeof item.description === 'string'
+        ? item.description.replace(/\s+/g, ' ').trim()
+        : '';
+    const quantity = this.parseInvoiceNumber(item.quantity);
+    const unitPrice = this.parseInvoiceNumber(item.unitPrice);
+    if (
+      !description ||
+      quantity === null ||
+      quantity <= 0 ||
+      unitPrice === null ||
+      unitPrice < 0
+    ) {
+      return null;
+    }
+
+    return {
+      ...item,
+      description,
+      quantity,
+      unitPrice,
+    };
+  }
+
+  private parseInvoiceNumber(raw: unknown): number | null {
+    if (typeof raw === 'number') {
+      return Number.isFinite(raw) ? raw : null;
+    }
+    if (typeof raw !== 'string') return null;
+    const trimmed = raw.trim();
+    if (!/^\d+(?:[.,]\d+)?$/.test(trimmed)) return null;
+    const parsed = Number(trimmed.replace(',', '.'));
+    return Number.isFinite(parsed) ? parsed : null;
   }
 
   private parseInvoiceLineItemString(
@@ -1114,7 +1171,11 @@ export class OrchestratorService {
 
   private parseInvoiceLineItemTuple(
     raw: unknown[],
-    userMessageLines: { description: string; quantity: number; unitPrice: number }[],
+    userMessageLines: {
+      description: string;
+      quantity: number;
+      unitPrice: number;
+    }[],
   ): { description: string; quantity: number; unitPrice: number } | null {
     const textParts = raw
       .filter((value) => typeof value === 'string')
@@ -1146,7 +1207,10 @@ export class OrchestratorService {
     }
 
     if (description) {
-      return this.matchInvoiceLineFromUserMessage(description, userMessageLines);
+      return this.matchInvoiceLineFromUserMessage(
+        description,
+        userMessageLines,
+      );
     }
     return null;
   }
@@ -1155,8 +1219,11 @@ export class OrchestratorService {
     text: string | undefined,
   ): { description: string; quantity: number; unitPrice: number }[] {
     if (!text) return [];
-    const lines: { description: string; quantity: number; unitPrice: number }[] =
-      [];
+    const lines: {
+      description: string;
+      quantity: number;
+      unitPrice: number;
+    }[] = [];
     const pattern =
       /(?:^|[.,;]|\bwith\b|\band\b)\s*(\d+(?:[.,]\d+)?)\s+(.+?)\s+(?:at|@|for)\s+(\d+(?:[.,]\d+)?)\s*(?:tnd|dt)\b/gi;
     for (const match of text.matchAll(pattern)) {
@@ -1168,7 +1235,11 @@ export class OrchestratorService {
 
   private matchInvoiceLineFromUserMessage(
     rawLineItem: string,
-    userMessageLines: { description: string; quantity: number; unitPrice: number }[],
+    userMessageLines: {
+      description: string;
+      quantity: number;
+      unitPrice: number;
+    }[],
   ): { description: string; quantity: number; unitPrice: number } | null {
     const wanted = this.normaliseInvoiceDescription(rawLineItem);
     if (!wanted) return null;
