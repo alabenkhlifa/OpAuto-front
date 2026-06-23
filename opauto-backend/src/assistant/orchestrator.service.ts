@@ -45,6 +45,9 @@ const RESERVED_DISPATCH_AGENT = 'dispatch_agent';
 const AGENT_DISPATCH_ALIASES: Record<string, string> = {
   'retention-suggestions': 'growth-agent',
 };
+const RETENTION_REVIEW_AGENT_NAME = 'growth-agent';
+const RETENTION_REVIEW_SOURCE_SKILL = 'retention-suggestions';
+const RETENTION_REVIEW_TOOL_NAME = 'list_at_risk_customers';
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const UUID_IN_TEXT_PATTERN =
@@ -221,6 +224,10 @@ export class OrchestratorService {
         skillDescriptors,
         agentDescriptors,
       );
+      const growthAgentAvailable = agentDescriptors.some(
+        (agent) => agent.name === RETENTION_REVIEW_AGENT_NAME,
+      );
+      const shouldRouteRetentionReview = this.userAskedForRetentionReview(userMessage);
 
       // --- Build initial system + history messages. ------------------------
       const systemPrompt = this.buildSystemPrompt(
@@ -322,6 +329,43 @@ export class OrchestratorService {
           });
         }
       };
+      const dispatchGrowthAgentForRetentionReview = async (
+        sourceCallId: string,
+      ): Promise<boolean> => {
+        if (agentDispatchesThisTurn >= MAX_AGENT_DISPATCHES_PER_TURN) {
+          this.appendToolMessage(llmMessages, sourceCallId, {
+            error: 'agent_dispatch_capped',
+            message:
+              `Refusing to dispatch another agent — already invoked ` +
+              `${agentDispatchesThisTurn} time(s) this turn. Compose your ` +
+              `final reply from the agent results above.`,
+          });
+          return false;
+        }
+
+        agentDispatchesThisTurn++;
+        const dispatchCall: LlmToolCall = {
+          id: `${sourceCallId}-growth-agent`,
+          name: RESERVED_DISPATCH_AGENT,
+          argsJson: JSON.stringify({
+            name: RETENTION_REVIEW_AGENT_NAME,
+            input: (ctx.turnState?.userMessage ?? '').trim() || userMessage,
+            reason: 'retention review',
+          }),
+        };
+        const agentResult = await this.handleDispatchAgent(
+          dispatchCall,
+          ctx,
+          llmMessages,
+          subject,
+        );
+        if (agentResult) {
+          lastAgentResult = agentResult;
+          return true;
+        }
+        return false;
+      };
+
       for (let step = 0; step < iterationCap; step++) {
         // Cost cap: stop the conversation cold once the per-conversation
         // token budget is exhausted. Checked before every LLM call so a
@@ -467,6 +511,24 @@ export class OrchestratorService {
 
         // Reserved pseudo-tools.
         if (call.name === RESERVED_LOAD_SKILL) {
+          const parsed = this.safeParseArgs(call.argsJson);
+          const parsedSkill = typeof parsed.value === 'object' &&
+            parsed.value !== null &&
+            !Array.isArray(parsed.value) &&
+            typeof (parsed.value as { name?: unknown }).name === 'string'
+            ? ((parsed.value as { name?: unknown }).name as string)
+            : '';
+          if (
+            shouldRouteRetentionReview &&
+            growthAgentAvailable &&
+            !parsed.error &&
+            parsedSkill === RETENTION_REVIEW_SOURCE_SKILL
+          ) {
+            const dispatched = await dispatchGrowthAgentForRetentionReview(call.id);
+            if (dispatched) {
+              continue;
+            }
+          }
           const handled = await this.handleLoadSkill(
             call,
             ctx.locale,
@@ -510,6 +572,16 @@ export class OrchestratorService {
         }
 
         // Real tool path.
+        if (
+          shouldRouteRetentionReview &&
+          growthAgentAvailable &&
+          call.name === RETENTION_REVIEW_TOOL_NAME
+        ) {
+          const dispatched = await dispatchGrowthAgentForRetentionReview(call.id);
+          if (dispatched) {
+            continue;
+          }
+        }
         const tool = this.tools.get(call.name);
         if (!tool) {
           subject.next({
@@ -2728,14 +2800,14 @@ export class OrchestratorService {
     if (agentDescriptors.length > 0) {
       parts.push(
         `Specialist agents you can dispatch via the dispatch_agent tool:\n` +
-          agentDescriptors
-            .map((a) => `- ${a.name}: ${a.description}`)
-            .join('\n') +
+          agentDescriptors.map((a) => `- ${a.name}: ${a.description}`).join('\n') +
           `\n\nWhen to dispatch an agent vs. call a tool directly (I-015):\n` +
           `- For an atomic single-fact question ("how many X", "total Y", "list latest Z", ` +
           `"what is my <kpi>"), prefer a DIRECT tool call. ` +
           `e.g. "Inventory total value" → get_inventory_value, NOT dispatch_agent. ` +
           `Each agent dispatch costs 3-5× the tokens of a direct call.\n` +
+          `- For explicit retention-review requests like "Run a retention review", ` +
+          `dispatch growth-agent first.\n` +
           `- Reserve dispatch_agent for multi-step analyses that genuinely benefit from ` +
           `a private scratchpad (retention reviews, cash-flow forecasts, audits). ` +
           `If a single tool can answer the question, do not dispatch.\n` +
@@ -3199,6 +3271,19 @@ export class OrchestratorService {
     }
 
     return null;
+  }
+
+  private userAskedForRetentionReview(userMessage: string | undefined): boolean {
+    const msg = (userMessage ?? '').toLowerCase();
+    return (
+      /\bretention review\b/.test(msg) ||
+      (/\bretention\b/.test(msg) &&
+        /\b(review|audit|forecast|analysis|report|overview)\b/.test(msg)) ||
+      (/\bchurn\b/.test(msg) &&
+        /\b(review|audit|forecast|analysis|report|overview)\b/.test(msg)) ||
+      (/\bat[-\s]?risk customers?\b/.test(msg) &&
+        /\b(review|audit|forecast|analysis|report|overview)\b/.test(msg))
+    );
   }
 
   private userAskedForInvoiceCreation(

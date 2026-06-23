@@ -1276,6 +1276,161 @@ describe('OrchestratorService', () => {
     );
   });
 
+  it.each([
+    {
+      attemptedRoute: 'loading retention-suggestions',
+      firstCall: {
+        id: 'tc-load-retention',
+        name: 'load_skill',
+        argsJson: '{"name":"retention-suggestions"}',
+      },
+    },
+    {
+      attemptedRoute: 'calling list_at_risk_customers',
+      firstCall: {
+        id: 'tc-list-at-risk',
+        name: 'list_at_risk_customers',
+        argsJson: '{"limit":10}',
+      },
+    },
+  ])(
+    'routes plain-English retention reviews to growth-agent instead of $attemptedRoute',
+    async ({ firstCall }) => {
+      const tools = makeTools(['list_at_risk_customers'], () => ({
+        ok: true,
+        result: [{ customerName: 'Mehdi Gharbi', churnRisk: 0.9 }],
+        durationMs: 1,
+      }));
+      const skills = {
+        list: jest.fn().mockReturnValue([
+          {
+            name: 'retention-suggestions',
+            description: 'customer retention playbook',
+          },
+        ]),
+        load: jest
+          .fn()
+          .mockReturnValue('Use list_at_risk_customers for retention.'),
+      };
+      const agents = {
+        list: jest.fn().mockReturnValue([
+          { name: 'growth-agent', description: 'growth and retention reviews' },
+        ]),
+        run: jest.fn().mockResolvedValue({
+          result: 'Growth agent retention review is ready.',
+        }),
+      };
+      const llm = makeLlm([
+        {
+          provider: 'groq',
+          content: null,
+          toolCalls: [firstCall],
+        },
+        {
+          provider: 'groq',
+          content: 'Growth agent retention review is ready.',
+          toolCalls: [],
+        },
+      ]);
+      const orchestrator = await makeOrchestrator({
+        tools,
+        skills,
+        agents,
+        llm,
+      });
+
+      const events = await collectEvents(
+        orchestrator.run(
+          ctx,
+          'conv-growth-plain',
+          'Run a retention review.',
+          undefined,
+        ),
+      );
+
+      expect(events.find((e) => e.type === 'agent_dispatch')).toMatchObject({
+        agentName: 'growth-agent',
+        reason: 'retention review',
+      });
+      expect(events.find((e) => e.type === 'agent_result')).toMatchObject({
+        agentName: 'growth-agent',
+        result: 'Growth agent retention review is ready.',
+      });
+      expect(agents.run).toHaveBeenCalledWith(
+        'growth-agent',
+        'Run a retention review.',
+        expect.objectContaining({ garageId: 'garage-1' }),
+      );
+      expect(skills.load).not.toHaveBeenCalled();
+      expect(tools.execute).not.toHaveBeenCalled();
+      expect(events.find((e) => e.type === 'skill_loaded')).toBeUndefined();
+      expect(
+        events.some(
+          (e) => e.type === 'tool_call' && e.name === 'list_at_risk_customers',
+        ),
+      ).toBe(false);
+    },
+  );
+
+  it('keeps single-customer retention requests on the retention skill path', async () => {
+    const skills = {
+      list: jest.fn().mockReturnValue([
+        {
+          name: 'retention-suggestions',
+          description: 'customer retention playbook',
+        },
+      ]),
+      load: jest.fn().mockReturnValue('Use customer-specific retention tactics.'),
+    };
+    const agents = {
+      list: jest.fn().mockReturnValue([
+        { name: 'growth-agent', description: 'growth and retention reviews' },
+      ]),
+      run: jest.fn().mockResolvedValue({
+        result: 'Growth agent should not run.',
+      }),
+    };
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-specific-retention',
+            name: 'load_skill',
+            argsJson: '{"name":"retention-suggestions"}',
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: 'Drafted a specific win-back message for Mehdi Gharbi.',
+        toolCalls: [],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({
+      skills,
+      agents,
+      llm,
+    });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-retention-specific',
+        'Prepare the exact win-back message for Mehdi Gharbi before I decide whether to send it.',
+        undefined,
+      ),
+    );
+
+    expect(skills.load).toHaveBeenCalledWith('retention-suggestions', 'en');
+    expect(agents.run).not.toHaveBeenCalled();
+    expect(events.find((e) => e.type === 'skill_loaded')).toMatchObject({
+      skillName: 'retention-suggestions',
+    });
+    expect(events.find((e) => e.type === 'agent_dispatch')).toBeUndefined();
+  });
+
   it('uses the latest agent result when the final LLM response is a generic timeout', async () => {
     const agents = {
       list: jest
