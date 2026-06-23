@@ -968,7 +968,17 @@ export class OrchestratorService {
     let out = this.fillEmptyReportDownloadText(text, successfulToolResults);
     out = this.correctSlotContradiction(out, successfulToolResults);
     out = this.rewriteInternalAgentRefusal(out, successfulToolResults);
+    out = this.ensureAppointmentSlotNeedsConfirmation(
+      out,
+      ctx.turnState?.userMessage,
+      successfulToolResults,
+    );
     out = this.rewriteMissingInvoiceDetailsResponse(
+      out,
+      ctx.turnState?.userMessage,
+      successfulToolResults,
+    );
+    out = this.fillEmptyDraftEmailText(
       out,
       ctx.turnState?.userMessage,
       successfulToolResults,
@@ -1007,7 +1017,6 @@ export class OrchestratorService {
     text: string,
     successfulToolResults: { toolName: string; result: unknown }[],
   ): string {
-    if (text.trim().length > 0) return text;
     const report = [...successfulToolResults]
       .reverse()
       .find(
@@ -1024,6 +1033,7 @@ export class OrchestratorService {
       period?: string;
       format?: string;
     };
+    if (text.includes(result.url)) return text;
     const noun =
       report.toolName === 'generate_invoices_pdf'
         ? `invoice PDF${result.invoiceCount ? ` for ${result.invoiceCount} invoice(s)` : ''}`
@@ -1031,7 +1041,121 @@ export class OrchestratorService {
     const expiry = result.expiresAt
       ? ` It expires at ${result.expiresAt}.`
       : '';
-    return `Done. Download the ${noun} here: ${result.url}.${expiry}`;
+    if (text.trim().length === 0) {
+      return `Done. Download the ${noun} here: ${result.url}.${expiry}`;
+    }
+    return `${text.trim()} Download it here: ${result.url}.${expiry}`;
+  }
+
+  private ensureAppointmentSlotNeedsConfirmation(
+    text: string,
+    userMessage: string | undefined,
+    successfulToolResults: { toolName: string; result: unknown }[],
+  ): string {
+    if (!this.userAskedForAppointmentCreation(userMessage)) return text;
+    if (
+      successfulToolResults.some(
+        (entry) => entry.toolName === 'create_appointment',
+      )
+    ) {
+      return text;
+    }
+    const hasSlots = successfulToolResults.some(
+      (entry) =>
+        entry.toolName === 'find_available_slot' &&
+        Array.isArray((entry.result as { slots?: unknown[] }).slots) &&
+        ((entry.result as { slots?: unknown[] }).slots?.length ?? 0) > 0,
+    );
+    if (!hasSlots || !/\bI found available slots\b/i.test(text)) return text;
+    if (/\bdid not create an appointment\b/i.test(text)) return text;
+    return (
+      `${text.trim()}\n\n` +
+      `I did not create an appointment yet. Please confirm the customer and vehicle, then I can show the approval request.`
+    );
+  }
+
+  private fillEmptyDraftEmailText(
+    text: string,
+    userMessage: string | undefined,
+    successfulToolResults: { toolName: string; result: unknown }[],
+  ): string {
+    if (text.trim().length > 0) return text;
+    if (!this.userAskedForDraftOnly(userMessage)) return text;
+    const overdue = [...successfulToolResults]
+      .reverse()
+      .find(
+        (entry) =>
+          entry.toolName === 'list_overdue_invoices' &&
+          Array.isArray((entry.result as { invoices?: unknown[] }).invoices),
+      );
+    if (!overdue) return text;
+    const result = overdue.result as {
+      invoices?: {
+        invoiceNumber?: string;
+        customerName?: string;
+        customerPhone?: string | null;
+        total?: number;
+        daysOverdue?: number;
+      }[];
+      count?: number;
+      totalOutstanding?: number;
+    };
+    const invoices = result.invoices ?? [];
+    const count =
+      typeof result.count === 'number' ? result.count : invoices.length;
+    const total =
+      typeof result.totalOutstanding === 'number'
+        ? result.totalOutstanding
+        : invoices.reduce(
+            (sum, invoice) =>
+              sum + (typeof invoice.total === 'number' ? invoice.total : 0),
+            0,
+          );
+
+    if (count === 0) {
+      return (
+        `No email was sent.\n\n` +
+        `Subject: Overdue invoices\n\n` +
+        `Body:\n` +
+        `Hi,\n\n` +
+        `There are currently no overdue invoices.\n\n` +
+        `Regards,`
+      );
+    }
+
+    const examples = invoices
+      .slice(0, 3)
+      .map((invoice) => {
+        const number = invoice.invoiceNumber ?? 'Invoice';
+        const customer = invoice.customerName ?? 'Unknown customer';
+        const phone = invoice.customerPhone ? `, ${invoice.customerPhone}` : '';
+        const amount =
+          typeof invoice.total === 'number'
+            ? `, ${this.formatTndAmount(invoice.total)}`
+            : '';
+        const days =
+          typeof invoice.daysOverdue === 'number'
+            ? `, ${invoice.daysOverdue} day(s) overdue`
+            : '';
+        return `- ${number} - ${customer}${phone}${amount}${days}`;
+      })
+      .join('\n');
+    const examplesSection = examples
+      ? `\n\nOldest overdue invoices:\n${examples}`
+      : '';
+
+    return (
+      `No email was sent.\n\n` +
+      `Subject: Overdue invoices\n\n` +
+      `Body:\n` +
+      `Hi,\n\n` +
+      `Here is the current overdue invoice summary:\n` +
+      `- ${count} overdue invoice(s)\n` +
+      `- Total outstanding: ${this.formatTndAmount(total)}` +
+      `${examplesSection}\n\n` +
+      `Please review these invoices and follow up with the customers.\n\n` +
+      `Regards,`
+    );
   }
 
   private stripReasoningScaffold(text: string): string {
@@ -1151,11 +1275,19 @@ export class OrchestratorService {
     return text
       .split('\n')
       .filter(
-        (line) =>
-          !technicalLabelLine.test(line) &&
-          !UUID_PATTERN.test(line.trim()) &&
-          !UUID_IN_TEXT_PATTERN.test(line) &&
-          !UUID_FRAGMENT_IN_TEXT_PATTERN.test(line),
+        (line) => {
+          const assistantDownloadUrl =
+            /\/api\/assistant\/downloads\/[0-9a-f-]+\.(?:pdf|csv)\b/i.test(
+              line,
+            );
+          return (
+            assistantDownloadUrl ||
+            (!technicalLabelLine.test(line) &&
+              !UUID_PATTERN.test(line.trim()) &&
+              !UUID_IN_TEXT_PATTERN.test(line) &&
+              !UUID_FRAGMENT_IN_TEXT_PATTERN.test(line))
+          );
+        },
       )
       .join('\n');
   }
@@ -1189,6 +1321,13 @@ export class OrchestratorService {
       hour: 'numeric',
       minute: '2-digit',
     }).format(date);
+  }
+
+  private formatTndAmount(value: number): string {
+    return `${value.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })} TND`;
   }
 
   private async filterToolsByIntent(
@@ -2044,7 +2183,7 @@ export class OrchestratorService {
     userMessage: string | undefined,
   ): string | null {
     const msg = (userMessage ?? '').replace(/\s+/g, ' ').trim();
-    const matches = [...msg.matchAll(/\bfor\s+([^.!?]+?)(?=\.|$)/gi)];
+    const matches = [...msg.matchAll(/\bfor\s+([^.!?]+?)(?=\s+for\b|\.|$)/gi)];
     const candidate = matches[matches.length - 1]?.[1]?.trim();
     if (!candidate) return null;
     if (
@@ -2055,6 +2194,20 @@ export class OrchestratorService {
       return null;
     }
     return candidate.replace(/\bdo not create.*$/i, '').trim();
+  }
+
+  private userAskedForAppointmentCreation(
+    userMessage: string | undefined,
+  ): boolean {
+    const msg = userMessage ?? '';
+    return (
+      /\b(?:book|schedule|create|make|set\s*up|reserve)\b[\s\S]{0,100}\b(?:appointment|checkup|service|slot|rdv|rendez-?vous)\b/i.test(
+        msg,
+      ) ||
+      /\b(?:appointment|checkup|service|slot|rdv|rendez-?vous)\b[\s\S]{0,100}\b(?:book|schedule|create|make|set\s*up|reserve)\b/i.test(
+        msg,
+      )
+    );
   }
 
   private normalisePhone(value: string | null | undefined): string {

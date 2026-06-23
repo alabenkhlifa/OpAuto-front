@@ -544,6 +544,78 @@ describe('OrchestratorService', () => {
     });
   });
 
+  it('drafts overdue invoice email text when the model returns empty after fetching data', async () => {
+    const tools = makeTools(['list_overdue_invoices'], () => ({
+      ok: true,
+      result: {
+        invoices: [
+          {
+            invoiceNumber: 'INV-202509-0001',
+            customerName: 'Ali Hassine',
+            customerPhone: '+216 20 111 222',
+            total: 49.98,
+            daysOverdue: 273,
+          },
+          {
+            invoiceNumber: 'INV-202510-0004',
+            customerName: 'Mouna Trabelsi',
+            customerPhone: '+216 20 333 444',
+            total: 150,
+            daysOverdue: 210,
+          },
+        ],
+        count: 2,
+        totalOutstanding: 199.98,
+      },
+      durationMs: 1,
+    }));
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-1',
+            name: 'list_overdue_invoices',
+            argsJson: '{}',
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: '',
+        toolCalls: [],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({ tools, llm });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-draft-overdue-empty',
+        'Draft an email to myself with the overdue invoices list, but do not send it.',
+        undefined,
+      ),
+    );
+
+    const text = events.find((e) => e.type === 'text');
+    expect(text).toMatchObject({
+      delta: expect.stringContaining('No email was sent.'),
+    });
+    expect(text).toMatchObject({
+      delta: expect.stringContaining('Subject: Overdue invoices'),
+    });
+    expect(text).toMatchObject({
+      delta: expect.stringContaining('Total outstanding: 199.98 TND'),
+    });
+    expect(text).toMatchObject({
+      delta: expect.stringContaining('INV-202509-0001 - Ali Hassine'),
+    });
+    expect(text).not.toMatchObject({
+      delta: expect.stringMatching(/customerId|invoice id|uuid/i),
+    });
+  });
+
   it('emits an apology when iteration cap is exceeded', async () => {
     const tools = makeTools(['noop']);
     // Always emit a tool call, never a text reply.
@@ -1221,7 +1293,7 @@ describe('OrchestratorService', () => {
     const tools = makeTools(['generate_period_report'], () => ({
       ok: true,
       result: {
-        url: '/api/assistant/downloads/report.csv',
+        url: '/api/assistant/downloads/39ef9d42-4b25-4874-a860-891855858fa3.csv',
         expiresAt: '2026-06-23T16:05:12.300Z',
         period: 'month',
         format: 'csv',
@@ -1258,7 +1330,61 @@ describe('OrchestratorService', () => {
     );
 
     expect(events.find((e) => e.type === 'text')).toMatchObject({
-      delta: expect.stringContaining('/api/assistant/downloads/report.csv'),
+      delta: expect.stringContaining(
+        '/api/assistant/downloads/39ef9d42-4b25-4874-a860-891855858fa3.csv',
+      ),
+    });
+  });
+
+  it('adds the download link when a report tool succeeds but the model omits the url', async () => {
+    const tools = makeTools(['generate_period_report'], () => ({
+      ok: true,
+      result: {
+        url: '/api/assistant/downloads/11111111-2222-4333-8444-555555555555.pdf',
+        expiresAt: '2026-06-23T16:05:12.300Z',
+        period: 'custom',
+        format: 'pdf',
+      },
+      durationMs: 1,
+    }));
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-1',
+            name: 'generate_period_report',
+            argsJson:
+              '{"period":"custom","format":"pdf","from":"2026-06-01","to":"2026-06-24"}',
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: 'The PDF report is available at the provided URL.',
+        toolCalls: [],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({ tools, llm });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-report-url',
+        'Generate a PDF report from June 1 to June 23.',
+        undefined,
+      ),
+    );
+
+    const text = events.find((e) => e.type === 'text');
+    expect(text).toMatchObject({
+      delta: expect.stringContaining('The PDF report is available'),
+    });
+    expect(text).toMatchObject({
+      delta: expect.stringContaining(
+        '/api/assistant/downloads/11111111-2222-4333-8444-555555555555.pdf',
+      ),
     });
   });
 
@@ -1348,6 +1474,80 @@ describe('OrchestratorService', () => {
     });
   });
 
+  it('adds the no-appointment-created sentence when booking text only lists slots', async () => {
+    const tools = makeTools(['find_available_slot', 'create_appointment'], (name) => {
+      if (name === 'find_available_slot') {
+        return {
+          ok: true,
+          result: {
+            slots: [
+              {
+                start: '2026-06-30T08:00:00.000Z',
+                end: '2026-06-30T08:30:00.000Z',
+                mechanicName: 'Hichem Sassi',
+              },
+            ],
+          },
+          durationMs: 1,
+        };
+      }
+      return { ok: true, result: {}, durationMs: 1 };
+    });
+    tools.validateArgs.mockImplementation((name: string) =>
+      name === 'create_appointment'
+        ? {
+            valid: false,
+            errors: ['/customerId must match format "uuid"'],
+          }
+        : { valid: true },
+    );
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-slot',
+            name: 'find_available_slot',
+            argsJson: '{"date":"2026-06-30","durationMinutes":30}',
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-create',
+            name: 'create_appointment',
+            argsJson: '{"customerId":"Khaoula","carId":"car-1"}',
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content:
+          'I found available slots:\n- Tuesday, June 30 at 8:00 AM-8:30 AM with Hichem Sassi',
+        toolCalls: [],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({ tools, llm });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-appointment-slots-only',
+        'Book a checkup for Khaoula Khelifi next Tuesday morning.',
+        undefined,
+      ),
+    );
+
+    const text = events.find((e) => e.type === 'text');
+    expect(text).toMatchObject({
+      delta: expect.stringContaining('I did not create an appointment yet'),
+    });
+  });
+
   it('asks for line item prices instead of inventing invoice totals after invalid create_invoice args', async () => {
     const tools = makeTools(['find_customer', 'create_invoice'], (name) => {
       if (name === 'find_customer') {
@@ -1413,8 +1613,11 @@ describe('OrchestratorService', () => {
     expect(text).toMatchObject({
       delta: expect.stringContaining('quantity and HT unit price'),
     });
+    expect(text).toMatchObject({
+      delta: expect.stringContaining('for oil change and filter'),
+    });
     expect(text).not.toMatchObject({
-      delta: expect.stringMatching(/67\.83|\u26a0|uuid|schema/i),
+      delta: expect.stringMatching(/67\.83|\u26a0|uuid|schema|for Khaoula Khelifi for/i),
     });
   });
 
