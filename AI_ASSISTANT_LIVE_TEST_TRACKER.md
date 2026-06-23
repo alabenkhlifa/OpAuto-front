@@ -231,6 +231,8 @@ Current mutation-run status:
 | Date | Commit | Evidence file | Status | Next action |
 |---|---|---|---|---|
 | `2026-06-23` | `b827ea0` | Planned `/tmp/opauto_ai_mutating_retest_b827ea0.json` | Blocked by execution approval review; no production mutation was run | Need explicit user approval for the exact production mutations before running the prepared runner |
+| `2026-06-23` | `f3ebd7f` | No JSON written; runner failed before case execution | `refresh failed 502: Bad Gateway` during token refresh; no production mutation was run | Check live deploy/runtime health, then rerun the approved mutation runner when the API is healthy |
+| `2026-06-23` | `f3ebd7f` | `/tmp/opauto_ai_mutating_retest_f3ebd7f.json` | Approved run executed; failed cases: `M01`, `M02`, `M03`, `M04`, `M05`, `M06`. `M01` actually created appointment `ba32b109-8be8-40ef-9bc7-136aa7fab3cc`; cleanup marked it `CANCELLED`. `M05` actually queued self-email. `M06` reached `send_sms` but Twilio rejected the unverified customer number. | Separate test-harness parsing failures from product failures, fix invoice/payment approval recovery, then rerun the approved mutation matrix |
 
 ## Fix Log
 
