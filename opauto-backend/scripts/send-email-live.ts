@@ -1,5 +1,5 @@
 /**
- * Live send via Resend to prove the send_email tool delivers an email
+ * Live send via the configured email provider to prove the send_email tool delivers an email
  * with the CSV invoice attachment.
  *
  * The recipient is *not* passed in — the tool always sends to the
@@ -11,7 +11,7 @@
  *   - With no arg, uses owner@autotech.tn (the seeded owner).
  *   - With an arg, runs the tool *as if* that address were the
  *     authenticated user — useful for testing against your real inbox
- *     in Resend's sandbox.
+ *     in provider sandboxes with recipient restrictions.
  */
 
 import 'dotenv/config';
@@ -20,7 +20,8 @@ import { PrismaClient } from '@prisma/client';
 import type { PrismaService } from '../src/prisma/prisma.service';
 import type { AssistantUserContext } from '../src/assistant/types';
 import { EmailService } from '../src/email/email.service';
-import { ResendEmailDriver } from '../src/email/providers/resend-email.driver';
+import { createEmailProvider } from '../src/email/email.module';
+import { MockEmailDriver } from '../src/email/providers/mock-email.driver';
 import { createSendEmailTool } from '../src/assistant/tools/communications/send-email.tool';
 
 const overrideEmail = process.argv[2];
@@ -52,20 +53,35 @@ const prisma = prismaClient as unknown as PrismaService;
   });
   const ids = sample.map((i) => i.id);
 
-  console.log(`from:        onboarding@resend.dev  (Resend sandbox)`);
+  const config = new ConfigService();
+  const provider = buildEmailProvider(config);
+
+  console.log(`provider:    ${providerLabel()}`);
+  console.log(
+    `from:        ${process.env.MAILTRAP_FROM || process.env.RESEND_FROM || '(configured provider default)'}`,
+  );
   console.log(`to:          ${ctx.email}  (server-resolved from session)`);
   console.log(`format:      ${format}`);
-  console.log(`attachments: invoices.${format} (${sample.length} ${format === 'pdf' ? 'pages' : 'rows'})`);
-  console.log(`first item:  ${sample[0].invoiceNumber} · ${sample[0].customer.firstName} ${sample[0].customer.lastName} · ${sample[0].total} TND\n`);
+  console.log(
+    `attachments: invoices.${format} (${sample.length} ${format === 'pdf' ? 'pages' : 'rows'})`,
+  );
+  console.log(
+    `first item:  ${sample[0].invoiceNumber} · ${sample[0].customer.firstName} ${sample[0].customer.lastName} · ${sample[0].total} TND\n`,
+  );
 
-  const driver = new ResendEmailDriver(new ConfigService());
-  const tool = createSendEmailTool({ emailService: new EmailService(driver), prisma });
+  const tool = createSendEmailTool({
+    emailService: new EmailService(provider),
+    prisma,
+  });
 
   const subject = `OpAuto demo · 5 recent invoices (${format}) · ${new Date().toISOString().slice(0, 16).replace('T', ' ')}`;
   const text =
     `Hi,\n\nAttached is a ${format.toUpperCase()} of the 5 most recent invoices from the OpAuto demo.\n\n` +
     sample
-      .map((i, idx) => `${idx + 1}. ${i.invoiceNumber} — ${i.customer.firstName} ${i.customer.lastName} — ${i.status} — ${i.total.toFixed(2)} TND`)
+      .map(
+        (i, idx) =>
+          `${idx + 1}. ${i.invoiceNumber} — ${i.customer.firstName} ${i.customer.lastName} — ${i.status} — ${i.total.toFixed(2)} TND`,
+      )
       .join('\n') +
     `\n\n— sent by send_email tool, recipient resolved from ctx.email server-side.`;
 
@@ -80,3 +96,27 @@ const prisma = prismaClient as unknown as PrismaService;
   await prismaClient.$disconnect();
   if (result && 'error' in (result as any)) process.exit(1);
 })();
+
+function buildEmailProvider(config: ConfigService) {
+  const provider = createEmailProvider(config);
+  if (provider instanceof MockEmailDriver) {
+    throw new Error(
+      'No real email provider configured. Set MAILTRAP_* or RESEND_*, or do not use send-email-live.ts.',
+    );
+  }
+  return provider;
+}
+
+function providerLabel(): string {
+  const driver = (process.env.EMAIL_PROVIDER || 'mailtrap').toLowerCase();
+  const mailtrapReady =
+    !!process.env.MAILTRAP_API_KEY && !!process.env.MAILTRAP_FROM;
+  const resendReady = !!process.env.RESEND_API_KEY && !!process.env.RESEND_FROM;
+  if (driver === 'mailtrap' && mailtrapReady && resendReady) {
+    return 'mailtrap -> resend';
+  }
+  if (driver === 'mailtrap' && !mailtrapReady && resendReady) {
+    return 'resend (Mailtrap not configured)';
+  }
+  return driver;
+}

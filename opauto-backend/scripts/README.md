@@ -7,8 +7,8 @@ One-off scripts for validation, integration testing, and performance measurement
 | Script | What it does |
 |---|---|
 | `validate-tools.ts` | Direct-call validator for every READ-tier assistant tool. Bypasses the LLM, runs each tool's handler with sensible args, and compares against an independent ground-truth Prisma query. |
-| `validate-send-email.ts` | End-to-end check of the `send_email` tool with a stubbed Resend driver — captures and asserts the recipient / subject / body / attachment payload. |
-| `send-email-live.ts` | Live send via Resend. Sandbox mode delivers only to `ala.khliifa@gmail.com` (double-i). Useful for manual smoke checks. |
+| `validate-send-email.ts` | End-to-end check of the `send_email` tool with a stubbed email driver — captures and asserts the recipient / subject / body / attachment payload. |
+| `send-email-live.ts` | Live send via the configured email provider. Useful for manual Mailtrap checks and Resend fallback smoke checks. |
 | `test-sms.ts` | Sends a test SMS via the configured provider. |
 | `seed-churn-test-customer.ts` | Inserts a deterministic high-risk customer for AI churn-model regressions. |
 

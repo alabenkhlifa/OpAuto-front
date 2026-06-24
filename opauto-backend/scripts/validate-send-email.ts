@@ -1,5 +1,5 @@
 /**
- * Validate the send_email tool end-to-end without hitting Resend.
+ * Validate the send_email tool end-to-end without hitting a real provider.
  *
  * Stubs in a capturing email driver, runs the tool with attachInvoiceIds,
  * and asserts the captured payload (recipient, subject, body, attachment
@@ -12,7 +12,11 @@ import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import type { PrismaService } from '../src/prisma/prisma.service';
 import type { AssistantUserContext } from '../src/assistant/types';
-import type { EmailProvider, EmailSendInput, EmailSendResult } from '../src/email/providers/email-provider.interface';
+import type {
+  EmailProvider,
+  EmailSendInput,
+  EmailSendResult,
+} from '../src/email/providers/email-provider.interface';
 import { EmailService } from '../src/email/email.service';
 import { createSendEmailTool } from '../src/assistant/tools/communications/send-email.tool';
 
@@ -59,8 +63,11 @@ class CapturingDriver implements EmailProvider {
   const tool = createSendEmailTool({ emailService, prisma });
 
   // ── 1. Tier is AUTO_WRITE (no resolver — always self-send) ───────────
-  const tierOk = tool.blastTier === 'AUTO_WRITE' && tool.resolveBlastTier === undefined;
-  console.log(`tier:            ${tool.blastTier}  ${tierOk ? '✓ (always self-send, no approval)' : '✗ expected AUTO_WRITE w/o resolver'}`);
+  const tierOk =
+    tool.blastTier === 'AUTO_WRITE' && tool.resolveBlastTier === undefined;
+  console.log(
+    `tier:            ${tool.blastTier}  ${tierOk ? '✓ (always self-send, no approval)' : '✗ expected AUTO_WRITE w/o resolver'}`,
+  );
 
   // ── 2. Empty body → friendly error, no driver call ───────────────────
   const empty = await tool.handler(
@@ -68,8 +75,13 @@ class CapturingDriver implements EmailProvider {
     ctx,
   );
   const emptyOk =
-    empty && 'error' in (empty as any) && (empty as any).error === 'missing_body' && driver.lastInput === null;
-  console.log(`empty body guard: ${emptyOk ? '✓ rejected before send' : '✗ ' + JSON.stringify(empty)}`);
+    empty &&
+    'error' in (empty as any) &&
+    (empty as any).error === 'missing_body' &&
+    driver.lastInput === null;
+  console.log(
+    `empty body guard: ${emptyOk ? '✓ rejected before send' : '✗ ' + JSON.stringify(empty)}`,
+  );
 
   // ── 2b. Missing recipient (ctx.email null) → error, no driver call ───
   driver.lastInput = null;
@@ -78,8 +90,13 @@ class CapturingDriver implements EmailProvider {
     { ...ctx, email: null },
   );
   const noEmailOk =
-    noEmail && 'error' in (noEmail as any) && (noEmail as any).error === 'missing_recipient' && driver.lastInput === null;
-  console.log(`no-recipient guard: ${noEmailOk ? '✓ rejected before send' : '✗ ' + JSON.stringify(noEmail)}`);
+    noEmail &&
+    'error' in (noEmail as any) &&
+    (noEmail as any).error === 'missing_recipient' &&
+    driver.lastInput === null;
+  console.log(
+    `no-recipient guard: ${noEmailOk ? '✓ rejected before send' : '✗ ' + JSON.stringify(noEmail)}`,
+  );
 
   // ── 3. With CSV attachment, recipient implicit ──────────────────────
   driver.lastInput = null;
@@ -99,7 +116,9 @@ class CapturingDriver implements EmailProvider {
 
   const sent = driver.lastInput!;
   console.log('\n--- captured email ---');
-  console.log(`  to:          ${sent.to}  (server-resolved from ctx.email, not LLM-supplied)`);
+  console.log(
+    `  to:          ${sent.to}  (server-resolved from ctx.email, not LLM-supplied)`,
+  );
   console.log(`  subject:     ${sent.subject}`);
   console.log(`  text:        ${sent.text?.slice(0, 80)}…`);
   console.log(`  attachments: ${sent.attachments?.length ?? 0}`);
@@ -110,7 +129,10 @@ class CapturingDriver implements EmailProvider {
     process.exit(1);
   }
 
-  const csv = Buffer.from(typeof att.content === 'string' ? att.content : '', 'base64').toString('utf8');
+  const csv = Buffer.from(
+    typeof att.content === 'string' ? att.content : '',
+    'base64',
+  ).toString('utf8');
   const lines = csv.trim().split('\n');
   console.log(`  attachment.filename:    ${att.filename}`);
   console.log(`  attachment.contentType: ${att.contentType}`);
@@ -120,11 +142,28 @@ class CapturingDriver implements EmailProvider {
   // ── 4. Cross-check CSV body against DB ───────────────────────────────
   const checks: { name: string; ok: boolean; detail: string }[] = [];
 
-  const expectedHeader = '"Invoice #","Status","Customer","Total (TND)","Paid (TND)","Outstanding (TND)","Due Date","Created"';
-  checks.push({ name: 'CSV header matches contract', ok: lines[0] === expectedHeader, detail: lines[0] });
-  checks.push({ name: 'row count matches invoice ids', ok: lines.length - 1 === sampleInvoices.length, detail: `${lines.length - 1} body rows / ${sampleInvoices.length} ids` });
-  checks.push({ name: 'every invoiceNumber appears in CSV', ok: sampleInvoices.every(i => csv.includes(`"${i.invoiceNumber}"`)), detail: '' });
-  checks.push({ name: 'attachInvoiceCount echo matches', ok: (result as any).attachedInvoiceCount === sampleInvoices.length, detail: `tool returned ${(result as any).attachedInvoiceCount}` });
+  const expectedHeader =
+    '"Invoice #","Status","Customer","Total (TND)","Paid (TND)","Outstanding (TND)","Due Date","Created"';
+  checks.push({
+    name: 'CSV header matches contract',
+    ok: lines[0] === expectedHeader,
+    detail: lines[0],
+  });
+  checks.push({
+    name: 'row count matches invoice ids',
+    ok: lines.length - 1 === sampleInvoices.length,
+    detail: `${lines.length - 1} body rows / ${sampleInvoices.length} ids`,
+  });
+  checks.push({
+    name: 'every invoiceNumber appears in CSV',
+    ok: sampleInvoices.every((i) => csv.includes(`"${i.invoiceNumber}"`)),
+    detail: '',
+  });
+  checks.push({
+    name: 'attachInvoiceCount echo matches',
+    ok: (result as any).attachedInvoiceCount === sampleInvoices.length,
+    detail: `tool returned ${(result as any).attachedInvoiceCount}`,
+  });
 
   // Pick one invoice and verify its row in the CSV is correct
   const sample = sampleInvoices[0];
@@ -138,9 +177,15 @@ class CapturingDriver implements EmailProvider {
     paid.toFixed(2),
     outstanding.toFixed(2),
   ];
-  const sampleLine = lines.find(l => l.includes(`"${sample.invoiceNumber}"`));
-  const allCellsPresent = expectedCells.every(cell => sampleLine?.includes(`"${cell}"`));
-  checks.push({ name: 'numeric cells match DB for sample invoice', ok: allCellsPresent, detail: `${sample.invoiceNumber}: total=${sample.total} paid=${paid} outstanding=${outstanding}` });
+  const sampleLine = lines.find((l) => l.includes(`"${sample.invoiceNumber}"`));
+  const allCellsPresent = expectedCells.every((cell) =>
+    sampleLine?.includes(`"${cell}"`),
+  );
+  checks.push({
+    name: 'numeric cells match DB for sample invoice',
+    ok: allCellsPresent,
+    detail: `${sample.invoiceNumber}: total=${sample.total} paid=${paid} outstanding=${outstanding}`,
+  });
 
   // ── 5. Foreign-garage invoice ids are silently filtered ──────────────
   driver.lastInput = null;
@@ -148,27 +193,37 @@ class CapturingDriver implements EmailProvider {
     {
       subject: 'Cross-garage probe',
       text: 'should drop fake ids',
-      attachInvoiceIds: ['00000000-0000-0000-0000-000000000000', sampleInvoices[0].id],
+      attachInvoiceIds: [
+        '00000000-0000-0000-0000-000000000000',
+        sampleInvoices[0].id,
+      ],
     },
     ctx,
   );
   const crossSent = driver.lastInput;
   const crossCsv = crossSent?.attachments?.[0]?.content
-    ? Buffer.from(crossSent.attachments[0].content as string, 'base64').toString('utf8')
+    ? Buffer.from(
+        crossSent.attachments[0].content as string,
+        'base64',
+      ).toString('utf8')
     : '';
   const crossLines = crossCsv.trim().split('\n');
   checks.push({
     name: 'foreign/missing ids dropped, real id retained',
-    ok: crossLines.length - 1 === 1 && crossCsv.includes(sampleInvoices[0].invoiceNumber),
+    ok:
+      crossLines.length - 1 === 1 &&
+      crossCsv.includes(sampleInvoices[0].invoiceNumber),
     detail: `${crossLines.length - 1} rows · echo=${(cross as any).attachedInvoiceCount}`,
   });
 
   // ── Report ───────────────────────────────────────────────────────────
   console.log('\n--- assertions ---');
   for (const c of checks) {
-    console.log(`${c.ok ? '✓' : '✗'} ${c.name}${c.detail ? ' — ' + c.detail : ''}`);
+    console.log(
+      `${c.ok ? '✓' : '✗'} ${c.name}${c.detail ? ' — ' + c.detail : ''}`,
+    );
   }
-  const failed = checks.filter(c => !c.ok).length;
+  const failed = checks.filter((c) => !c.ok).length;
   console.log(`\n${checks.length - failed} pass · ${failed} fail`);
   await prismaClient.$disconnect();
   process.exit(failed > 0 ? 1 : 0);

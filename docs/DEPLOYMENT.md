@@ -131,8 +131,12 @@ GEMINI_API_KEY=
 GROQ_API_KEY=
 CEREBRAS_API_KEY=
 MISTRAL_API_KEY=
-# Email delivery (used by Assistant + Invoicing delivery service). Leave RESEND_API_KEY blank to fall back to mock driver.
-EMAIL_PROVIDER=resend
+# Email delivery (used by Assistant + Invoicing delivery service).
+# Mailtrap is the default real provider; Resend is kept as fallback.
+EMAIL_PROVIDER=mailtrap
+MAILTRAP_API_KEY=
+MAILTRAP_FROM=
+MAILTRAP_FROM_NAME=OpAuto
 RESEND_API_KEY=
 RESEND_FROM=
 CORS_ORIGIN=*
