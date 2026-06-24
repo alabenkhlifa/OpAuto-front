@@ -812,6 +812,9 @@ export class OrchestratorService {
           call.name,
           parsedArgs.value,
           ctx,
+          conversationId,
+          pageContext,
+          successfulToolResults,
         );
         if (preCheck) {
           subject.next({
@@ -3039,7 +3042,8 @@ export class OrchestratorService {
         parts.push(
           `Page context: ${pieces.join(' | ')}\n` +
             `When the user says "this customer", "this car", "this invoice", ` +
-            `"this appointment", etc., they mean the entity in the "selected" ` +
+            `"this appointment", "this job", "that job", etc., they mean ` +
+            `the entity in the "selected" ` +
             `field above. Pass that exact id to tools like get_customer / ` +
             `get_car / get_invoice — do NOT call find_* with the id as a query ` +
             `string, and do NOT ask the user for an id you already have.\n` +
@@ -3130,6 +3134,9 @@ export class OrchestratorService {
     toolName: string,
     args: unknown,
     ctx: AssistantUserContext,
+    conversationId?: string,
+    pageContext?: PageContext,
+    successfulToolResults: { toolName: string; result: unknown }[] = [],
   ): Promise<{ error: string; message: string } | null> {
     if (typeof args !== 'object' || args === null) return null;
     const a = args as Record<string, unknown>;
@@ -3258,6 +3265,29 @@ export class OrchestratorService {
       }
     }
 
+    if (toolName === 'create_invoice_from_job' && typeof a.jobId === 'string') {
+      const requestedJobId = a.jobId.trim();
+      const recoveredJobId = await this.resolveMaintenanceJobIdForInvoiceFromJob(
+        requestedJobId,
+        ctx,
+        conversationId,
+        pageContext,
+        successfulToolResults,
+      );
+      if (!recoveredJobId) {
+        return {
+          error: 'maintenance_job_not_found',
+          message:
+            `create_invoice_from_job received jobId="${requestedJobId}", but no ` +
+            'maintenance job with that id exists in this garage. If you used ' +
+            'a customer or car id by mistake, call get_job for the selected ' +
+            'maintenance job or use the latest maintenance job id from the ' +
+            'conversation before retrying.',
+        };
+      }
+      a.jobId = recoveredJobId;
+    }
+
     if (toolName === 'record_payment' && typeof a.invoiceId === 'string') {
       const invoiceLookup = a.invoiceId.trim();
       if (!invoiceLookup) {
@@ -3342,6 +3372,209 @@ export class OrchestratorService {
     }
 
     return null;
+  }
+
+  private async resolveMaintenanceJobIdForInvoiceFromJob(
+    requestedJobId: string,
+    ctx: AssistantUserContext,
+    conversationId?: string,
+    pageContext?: PageContext,
+    successfulToolResults: { toolName: string; result: unknown }[] = [],
+  ): Promise<string | null> {
+    if (!UUID_PATTERN.test(requestedJobId)) return null;
+
+    const direct = await this.findGarageMaintenanceJobId(
+      requestedJobId,
+      ctx.garageId,
+    );
+    if (direct) return direct;
+
+    const pageJobId = this.findMaintenanceJobIdFromPageContext(pageContext);
+    if (pageJobId) {
+      const fromPage = await this.findGarageMaintenanceJobId(
+        pageJobId,
+        ctx.garageId,
+      );
+      if (fromPage) return fromPage;
+    }
+
+    const turnResultJobId =
+      this.findMaintenanceJobIdFromSuccessfulResults(successfulToolResults);
+    if (turnResultJobId) {
+      const fromTurn = await this.findGarageMaintenanceJobId(
+        turnResultJobId,
+        ctx.garageId,
+      );
+      if (fromTurn) return fromTurn;
+    }
+
+    const conversationJobId =
+      await this.findRecentMaintenanceJobIdFromConversation(
+        conversationId,
+        ctx.garageId,
+      );
+    if (conversationJobId) return conversationJobId;
+
+    const fromEntity = await this.findLatestMaintenanceJobForEntityId(
+      requestedJobId,
+      ctx.garageId,
+    );
+    return fromEntity;
+  }
+
+  private async findGarageMaintenanceJobId(
+    jobId: string,
+    garageId: string,
+  ): Promise<string | null> {
+    const job = await this.prisma.maintenanceJob.findFirst({
+      where: { id: jobId, garageId },
+      select: { id: true },
+    });
+    return job?.id ?? null;
+  }
+
+  private findMaintenanceJobIdFromPageContext(
+    pageContext: PageContext | undefined,
+  ): string | null {
+    const selected =
+      pageContext?.selectedEntity ??
+      deriveSelectedEntityFromRoute(pageContext?.route, pageContext?.params);
+    if (!selected) return null;
+    const type = selected.type.toLowerCase();
+    if (
+      type !== 'maintenance' &&
+      type !== 'maintenancejob' &&
+      type !== 'maintenance_job'
+    ) {
+      return null;
+    }
+    return UUID_PATTERN.test(selected.id) ? selected.id : null;
+  }
+
+  private findMaintenanceJobIdFromSuccessfulResults(
+    successfulToolResults: { toolName: string; result: unknown }[],
+  ): string | null {
+    for (const entry of [...successfulToolResults].reverse()) {
+      const found = this.extractMaintenanceJobIdFromUnknown(entry.result);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  private async findRecentMaintenanceJobIdFromConversation(
+    conversationId: string | undefined,
+    garageId: string,
+  ): Promise<string | null> {
+    if (!conversationId) return null;
+    const rows = await this.prisma.assistantToolCall.findMany({
+      where: {
+        conversationId,
+        toolName: { in: ['get_job', 'get_car', 'get_customer'] },
+        status: AssistantToolCallStatus.EXECUTED,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+      select: { resultJson: true },
+    });
+
+    for (const row of rows) {
+      const jobId = this.extractMaintenanceJobIdFromUnknown(row.resultJson);
+      if (!jobId) continue;
+      const existing = await this.findGarageMaintenanceJobId(jobId, garageId);
+      if (existing) return existing;
+    }
+    return null;
+  }
+
+  private extractMaintenanceJobIdFromUnknown(value: unknown): string | null {
+    if (!value || typeof value !== 'object') return null;
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        const found = this.extractMaintenanceJobIdFromUnknown(item);
+        if (found) return found;
+      }
+      return null;
+    }
+
+    const record = value as Record<string, unknown>;
+    const directId =
+      typeof record.jobId === 'string'
+        ? record.jobId
+        : typeof record.maintenanceJobId === 'string'
+          ? record.maintenanceJobId
+          : null;
+    if (directId && UUID_PATTERN.test(directId)) return directId;
+
+    if (
+      typeof record.id === 'string' &&
+      UUID_PATTERN.test(record.id) &&
+      (Array.isArray(record.parts) ||
+        Array.isArray(record.timelineEvents) ||
+        Array.isArray(record.approvalRequests))
+    ) {
+      return record.id;
+    }
+
+    const recentJobs = record.recentMaintenanceJobs;
+    if (Array.isArray(recentJobs)) {
+      for (const item of recentJobs) {
+        const itemRecord = item as Record<string, unknown>;
+        if (
+          typeof itemRecord.id === 'string' &&
+          UUID_PATTERN.test(itemRecord.id)
+        ) {
+          return itemRecord.id;
+        }
+      }
+    }
+
+    const serviceHistory = record.serviceHistory;
+    if (Array.isArray(serviceHistory)) {
+      for (const item of serviceHistory) {
+        const itemRecord = item as Record<string, unknown>;
+        if (
+          itemRecord.source === 'maintenance_job' &&
+          typeof itemRecord.id === 'string' &&
+          UUID_PATTERN.test(itemRecord.id)
+        ) {
+          return itemRecord.id;
+        }
+      }
+    }
+
+    const car = record.car;
+    if (car && typeof car === 'object') {
+      const found = this.extractMaintenanceJobIdFromUnknown(car);
+      if (found) return found;
+    }
+
+    return null;
+  }
+
+  private async findLatestMaintenanceJobForEntityId(
+    entityId: string,
+    garageId: string,
+  ): Promise<string | null> {
+    const byCustomer = await this.prisma.maintenanceJob.findFirst({
+      where: {
+        garageId,
+        car: { customerId: entityId },
+      },
+      orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
+      select: { id: true },
+    });
+    if (byCustomer?.id) return byCustomer.id;
+
+    const byCar = await this.prisma.maintenanceJob.findFirst({
+      where: {
+        garageId,
+        carId: entityId,
+      },
+      orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
+      select: { id: true },
+    });
+    return byCar?.id ?? null;
   }
 
   private explicitAppointmentIdError(

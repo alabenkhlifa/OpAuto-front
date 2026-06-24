@@ -962,6 +962,82 @@ describe('OrchestratorService', () => {
     });
   });
 
+  it('recovers create_invoice_from_job when the model passes the customer id instead of the recent job id', async () => {
+    const customerId = '11111111-1111-4111-8111-111111111111';
+    const jobId = '22222222-2222-4222-8222-222222222222';
+    const tools = makeTools(['create_invoice_from_job']);
+    tools.get.mockImplementation((name: string) =>
+      name === 'create_invoice_from_job'
+        ? {
+            name,
+            description: 'desc',
+            parameters: { type: 'object', properties: {} },
+            blastTier: AssistantBlastTier.CONFIRM_WRITE,
+            handler: async () => ({}),
+          }
+        : undefined,
+    );
+    const approvals = makeApprovals();
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-create-from-job',
+            name: 'create_invoice_from_job',
+            argsJson: JSON.stringify({ jobId: customerId }),
+          },
+        ],
+      },
+    ]);
+    const prisma = {
+      assistantToolCall: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            resultJson: {
+              jobId,
+              title: 'Recent maintenance job',
+            },
+          },
+        ]),
+      },
+      maintenanceJob: {
+        findFirst: jest
+          .fn()
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce({ id: jobId }),
+      },
+    };
+    const orchestrator = await makeOrchestrator({
+      tools,
+      llm,
+      prisma,
+      approvals,
+    });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-1',
+        'create an invoice for that job',
+        undefined,
+      ),
+    );
+
+    expect(approvals.createPending).toHaveBeenCalledWith(
+      expect.objectContaining({
+        toolName: 'create_invoice_from_job',
+        args: { jobId },
+      }),
+    );
+    expect(events.find((e) => e.type === 'approval_request')).toMatchObject({
+      toolName: 'create_invoice_from_job',
+      args: { jobId },
+    });
+    expect(events.find((e) => e.type === 'tool_result')).toBeUndefined();
+  });
+
   it('records DENIED resumption without executing the tool, emits deterministic ack, and skips the LLM (UI Bug 3 + behavior finding "DENY does not stick")', async () => {
     const tools = makeTools(['send_sms']);
     const cleanupApprovalArgs = jest.fn().mockResolvedValue(undefined);
