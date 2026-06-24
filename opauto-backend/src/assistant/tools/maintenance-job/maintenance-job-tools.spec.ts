@@ -363,6 +363,56 @@ describe('Maintenance job tools', () => {
         'https://opauto.test/public/job-approvals/existing-token',
       );
     });
+
+    it('returns the public approval URL when the email provider rejects delivery', async () => {
+      const maintenance = maintenanceMock({
+        findOne: jest.fn().mockResolvedValue({
+          id: 'job-1',
+          car: {
+            make: 'TestMake',
+            model: 'WorkflowCar',
+            licensePlate: 'AI-MNT-034633',
+            customer: {
+              firstName: 'AI',
+              lastName: 'Maintenance',
+              email: 'ala.khllifa+Job1@gmail.com',
+            },
+          },
+          parts: [],
+          approvalRequests: [],
+        }),
+        createApprovalRequest: jest.fn().mockResolvedValue({
+          id: 'apr-1',
+          maintenanceJobId: 'job-1',
+          status: 'PENDING',
+        }),
+      });
+      const email = emailMock({
+        send: jest
+          .fn()
+          .mockRejectedValue(new Error('Resend test-mode recipient rejected')),
+      });
+      const tokens = { sign: jest.fn().mockReturnValue('signed-token') };
+      const tool = buildSendJobCustomerApprovalEmailTool(
+        maintenance as never,
+        email as never,
+        tokens as never,
+        'https://opauto.test',
+      );
+
+      const out = await tool.handler({ jobId: 'job-1' }, ownerCtx);
+
+      expect(out).toEqual(
+        expect.objectContaining({
+          error: 'send_failed',
+          message: 'Resend test-mode recipient rejected',
+          status: 'failed',
+          to: 'ala.khllifa+Job1@gmail.com',
+          approvalRequestId: 'apr-1',
+          publicUrl: 'https://opauto.test/public/job-approvals/signed-token',
+        }),
+      );
+    });
   });
 
   describe('record_job_customer_acceptance', () => {

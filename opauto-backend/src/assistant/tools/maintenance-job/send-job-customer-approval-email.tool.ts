@@ -14,13 +14,15 @@ export interface SendJobCustomerApprovalEmailArgs {
 }
 
 export interface SendJobCustomerApprovalEmailResult {
-  providerMessageId: string;
+  providerMessageId?: string;
   status: string;
   to: string;
   approvalRequestId: string;
   publicUrl: string;
   subject: string;
   requestedAmount?: number | null;
+  error?: 'send_failed';
+  message?: string;
 }
 
 function toNum(v: unknown): number {
@@ -318,23 +320,37 @@ export function buildSendJobCustomerApprovalEmailTool(
         message: args.message,
       });
 
-      const result = await emailService.send({
-        to,
-        subject,
-        html,
-        text,
-        replyTo: ctx.email ?? undefined,
-      });
+      try {
+        const result = await emailService.send({
+          to,
+          subject,
+          html,
+          text,
+          replyTo: ctx.email ?? undefined,
+        });
 
-      return {
-        providerMessageId: result.providerMessageId,
-        status: result.status,
-        to,
-        approvalRequestId: approval.id,
-        publicUrl,
-        subject,
-        requestedAmount: amount,
-      };
+        return {
+          providerMessageId: result.providerMessageId,
+          status: result.status,
+          to,
+          approvalRequestId: approval.id,
+          publicUrl,
+          subject,
+          requestedAmount: amount,
+        };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return {
+          error: 'send_failed',
+          message,
+          status: 'failed',
+          to,
+          approvalRequestId: approval.id,
+          publicUrl,
+          subject,
+          requestedAmount: amount,
+        };
+      }
     },
   };
 }
