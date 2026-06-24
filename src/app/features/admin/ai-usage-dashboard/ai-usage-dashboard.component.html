@@ -130,7 +130,10 @@
 
       <section class="kpi-grid">
         @for (card of kpiCards(); track trackKpi($index, card)) {
-          <article class="dashboard-card kpi-card">
+          <article
+            class="dashboard-card kpi-card"
+            [ngClass]="'kpi-card--' + card.key"
+          >
             <div class="kpi-card__icon" aria-hidden="true"></div>
             <div>
               <strong>{{ card.value }}</strong>
