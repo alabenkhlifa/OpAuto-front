@@ -43,6 +43,7 @@ services:
       OVH_BASE_URL: ${OVH_BASE_URL:-}
       OVH_MODEL: ${OVH_MODEL:-}
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:4200}
       NODE_ENV: production
       PORT: 3000
       # Churn AI executable-actions SMS delivery. Default 'mock' logs to the
