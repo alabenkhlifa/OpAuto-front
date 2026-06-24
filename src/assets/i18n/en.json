@@ -535,7 +535,7 @@
     "serviceRecord": "Service Record",
     "workOrderHistory": "Work Order History",
     "avgCompletionTime": "Avg Completion Time",
-    "revenueToday": "Revenue Today", 
+    "revenueToday": "Revenue Today",
     "weeklyEfficiency": "Weekly Efficiency",
     "mechanic": "Mechanic",
     "progress": "Progress",
@@ -929,7 +929,7 @@
     "noCustomers": "No customers found",
     "navigation": {
       "dashboard": "Dashboard",
-      "allCustomers": "All Customers", 
+      "allCustomers": "All Customers",
       "list": "Customer List",
       "analytics": "Analytics",
       "addCustomer": "Add Customer",
@@ -957,7 +957,7 @@
       "all": "All",
       "name": "Name",
       "phone": "Phone",
-      "email": "Email", 
+      "email": "Email",
       "cars": "cars",
       "carsCount": {
         "one": "{{count}} car",
@@ -981,7 +981,7 @@
     },
     "actions": {
       "view": "View",
-      "edit": "Edit", 
+      "edit": "Edit",
       "delete": "Delete",
       "clear": "Clear",
       "addCar": "Add Car",
@@ -2747,7 +2747,7 @@
     "benefit5": "Maintain quality assurance records",
     "categories": {
       "before": "Before",
-      "during": "In Progress", 
+      "during": "In Progress",
       "after": "Completed",
       "diagnostic": "Diagnostic",
       "damage": "Damage",
@@ -2874,7 +2874,7 @@
   },
   "features": {
     "single_user": "Single User Access",
-    "basic_appointments": "Basic Appointment Management", 
+    "basic_appointments": "Basic Appointment Management",
     "cash_invoicing": "Cash Invoicing",
     "basic_reports": "Basic Reports",
     "browser_notifications": "Browser Notifications",
@@ -3367,6 +3367,11 @@
           "description": "Create a customer approval request for a job and optionally prepare communication metadata.",
           "example": "Request customer approval for job 00000000-0000-0000-0000-000000000001"
         },
+        "send_job_customer_approval_email": {
+          "name": "Email job approval link",
+          "description": "Send the job customer a formatted approval email with the public approval link.",
+          "example": "Email the customer the approval link for this job"
+        },
         "record_job_customer_acceptance": {
           "name": "Record customer acceptance",
           "description": "Mark a maintenance approval request as owner-recorded accepted after customer confirmation.",
@@ -3694,6 +3699,12 @@
         "success": "Approval request {{requestId}} created",
         "failure": "Couldn't create approval request",
         "approveVerb": "Yes, request approval"
+      },
+      "send_job_customer_approval_email": {
+        "running": "Sending job approval email…",
+        "success": "Approval email sent to {{to}}",
+        "failure": "Couldn't send approval email",
+        "approveVerb": "Yes, send approval email"
       },
       "record_job_customer_acceptance": {
         "running": "Recording owner-side acceptance…",

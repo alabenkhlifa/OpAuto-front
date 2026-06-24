@@ -46,6 +46,7 @@ const TOOL_KEYS: string[] = [
   'get_job',
   'add_job_part',
   'request_job_customer_approval',
+  'send_job_customer_approval_email',
   'record_job_customer_acceptance',
   'create_invoice_from_job',
   'list_invoices',

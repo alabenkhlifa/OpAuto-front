@@ -3462,6 +3462,11 @@
           "description": "Créer une demande d'approbation client pour un travail et préparer l'envoi si besoin.",
           "example": "Demande l'approbation client pour le travail 00000000-0000-0000-0000-000000000001"
         },
+        "send_job_customer_approval_email": {
+          "name": "Envoyer le lien d'approbation",
+          "description": "Envoyer au client du travail un e-mail formaté avec le lien public d'approbation.",
+          "example": "Envoie au client le lien d'approbation pour ce travail"
+        },
         "record_job_customer_acceptance": {
           "name": "Enregistrer l'acceptation du client",
           "description": "Marquer une demande d'approbation comme acceptée côté propriétaire après confirmation client.",
@@ -3789,6 +3794,12 @@
         "success": "Demande {{requestId}} créée",
         "failure": "Impossible de créer la demande d'approbation",
         "approveVerb": "Oui, demander l'approbation"
+      },
+      "send_job_customer_approval_email": {
+        "running": "J'envoie l'e-mail d'approbation…",
+        "success": "E-mail d'approbation envoyé à {{to}}",
+        "failure": "Impossible d'envoyer l'e-mail d'approbation",
+        "approveVerb": "Oui, envoyer l'e-mail"
       },
       "record_job_customer_acceptance": {
         "running": "J'enregistre l'acceptation propriétaire…",

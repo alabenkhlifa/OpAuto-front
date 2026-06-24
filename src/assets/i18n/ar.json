@@ -544,7 +544,7 @@
     "pastMaintenanceJobs": "أعمال الصيانة السابقة",
     "completedMaintenanceJobs": "أعمال الصيانة المكتملة",
     "serviceRecord": "سجل الخدمة",
-    "workOrderHistory": "تاريخ أوامر العمل", 
+    "workOrderHistory": "تاريخ أوامر العمل",
     "avgCompletionTime": "متوسط وقت الإنجاز",
     "revenueToday": "إيرادات اليوم",
     "weeklyEfficiency": "الكفاءة الأسبوعية",
@@ -2719,7 +2719,7 @@
       "categories": {
         "all": "جميع الصور",
         "before": "قبل",
-        "during": "أثناء العمل", 
+        "during": "أثناء العمل",
         "after": "بعد",
         "damage": "الضرر",
         "parts": "القطع",
@@ -2775,7 +2775,7 @@
   },
   "tier": {
     "solo": "أساسي",
-    "starter": "مبتدئ", 
+    "starter": "مبتدئ",
     "professional": "محترف",
     "current": "الباقة الحالية",
     "upgrade": {
@@ -2783,7 +2783,7 @@
       "description": "احصل على ميزات أكثر مع الباقة المحترفة",
       "benefits": {
         "photos": "رفع وإدارة صور غير محدودة",
-        "documentation": "توثيق كامل للأعمال", 
+        "documentation": "توثيق كامل للأعمال",
         "reports": "تقارير مفصلة مع الصور",
         "storage": "مساحة تخزين أكبر",
         "support": "دعم فني مميز"
@@ -3500,6 +3500,11 @@
           "description": "إنشاء طلب موافقة عميل لعمل صيانة مع إعداد خيارات الإرسال إن لزم.",
           "example": "اطلب موافقة العميل على العمل 00000000-0000-0000-0000-000000000001"
         },
+        "send_job_customer_approval_email": {
+          "name": "إرسال رابط موافقة العمل",
+          "description": "إرسال بريد منسق إلى عميل العمل يحتوي على رابط الموافقة العام.",
+          "example": "أرسل للعميل رابط الموافقة لهذا العمل"
+        },
         "record_job_customer_acceptance": {
           "name": "تسجيل موافقة العميل",
           "description": "تسجيل الطلب كمعتمد من قبل المالك بعد تأكيد العميل.",
@@ -3827,6 +3832,12 @@
         "success": "تم إنشاء طلب {{requestId}}",
         "failure": "تعذّر إنشاء طلب الموافقة",
         "approveVerb": "نعم، اطلب الموافقة"
+      },
+      "send_job_customer_approval_email": {
+        "running": "جارٍ إرسال بريد الموافقة…",
+        "success": "تم إرسال بريد الموافقة إلى {{to}}",
+        "failure": "تعذّر إرسال بريد الموافقة",
+        "approveVerb": "نعم، أرسل البريد"
       },
       "record_job_customer_acceptance": {
         "running": "جارٍ تسجيل موافقة المالك…",

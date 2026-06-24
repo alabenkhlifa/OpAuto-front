@@ -760,7 +760,9 @@ describe('OrchestratorService', () => {
     );
 
     expect(events.find((e) => e.type === 'text')).toMatchObject({
-      delta: expect.stringMatching(/^No email was sent\.\n\nHere is a draft email:/),
+      delta: expect.stringMatching(
+        /^No email was sent\.\n\nHere is a draft email:/,
+      ),
     });
   });
 
@@ -1332,7 +1334,8 @@ describe('OrchestratorService', () => {
       cancelCall('tc-3'),
       {
         provider: 'groq',
-        content: 'That appointment id is not valid. Please send the real appointment id.',
+        content:
+          'That appointment id is not valid. Please send the real appointment id.',
         toolCalls: [],
       },
       cancelCall('tc-99'),
@@ -1353,7 +1356,8 @@ describe('OrchestratorService', () => {
       events.filter((e) => e.type === 'tool_result' && e.status === 'failed'),
     ).toHaveLength(3);
     expect(events.find((e) => e.type === 'text')).toMatchObject({
-      delta: 'That appointment id is not valid. Please send the real appointment id.',
+      delta:
+        'That appointment id is not valid. Please send the real appointment id.',
     });
   });
 
@@ -1678,9 +1682,11 @@ describe('OrchestratorService', () => {
 
   it('maps retention-suggestions dispatches to growth-agent', async () => {
     const agents = {
-      list: jest.fn().mockReturnValue([
-        { name: 'growth-agent', description: 'growth and retention reviews' },
-      ]),
+      list: jest
+        .fn()
+        .mockReturnValue([
+          { name: 'growth-agent', description: 'growth and retention reviews' },
+        ]),
       run: jest.fn().mockResolvedValue({ result: 'Retention review ready.' }),
     };
     const llm = makeLlm([
@@ -1701,7 +1707,12 @@ describe('OrchestratorService', () => {
     const orchestrator = await makeOrchestrator({ llm, agents });
 
     const events = await collectEvents(
-      orchestrator.run(ctx, 'conv-growth', 'Run a retention review.', undefined),
+      orchestrator.run(
+        ctx,
+        'conv-growth',
+        'Run a retention review.',
+        undefined,
+      ),
     );
 
     expect(events.find((e) => e.type === 'agent_dispatch')).toMatchObject({
@@ -1756,9 +1767,14 @@ describe('OrchestratorService', () => {
           .mockReturnValue('Use list_at_risk_customers for retention.'),
       };
       const agents = {
-        list: jest.fn().mockReturnValue([
-          { name: 'growth-agent', description: 'growth and retention reviews' },
-        ]),
+        list: jest
+          .fn()
+          .mockReturnValue([
+            {
+              name: 'growth-agent',
+              description: 'growth and retention reviews',
+            },
+          ]),
         run: jest.fn().mockResolvedValue({
           result: 'Growth agent retention review is ready.',
         }),
@@ -1823,12 +1839,16 @@ describe('OrchestratorService', () => {
           description: 'customer retention playbook',
         },
       ]),
-      load: jest.fn().mockReturnValue('Use customer-specific retention tactics.'),
+      load: jest
+        .fn()
+        .mockReturnValue('Use customer-specific retention tactics.'),
     };
     const agents = {
-      list: jest.fn().mockReturnValue([
-        { name: 'growth-agent', description: 'growth and retention reviews' },
-      ]),
+      list: jest
+        .fn()
+        .mockReturnValue([
+          { name: 'growth-agent', description: 'growth and retention reviews' },
+        ]),
       run: jest.fn().mockResolvedValue({
         result: 'Growth agent should not run.',
       }),
@@ -2173,24 +2193,27 @@ describe('OrchestratorService', () => {
   });
 
   it('rewrites invalid appointment creation into slots plus a confirmation request', async () => {
-    const tools = makeTools(['find_available_slot', 'create_appointment'], (name) => {
-      if (name === 'find_available_slot') {
-        return {
-          ok: true,
-          result: {
-            slots: [
-              {
-                start: '2026-06-30T08:00:00.000Z',
-                end: '2026-06-30T08:30:00.000Z',
-                mechanicName: 'Hichem Sassi',
-              },
-            ],
-          },
-          durationMs: 1,
-        };
-      }
-      return { ok: true, result: {}, durationMs: 1 };
-    });
+    const tools = makeTools(
+      ['find_available_slot', 'create_appointment'],
+      (name) => {
+        if (name === 'find_available_slot') {
+          return {
+            ok: true,
+            result: {
+              slots: [
+                {
+                  start: '2026-06-30T08:00:00.000Z',
+                  end: '2026-06-30T08:30:00.000Z',
+                  mechanicName: 'Hichem Sassi',
+                },
+              ],
+            },
+            durationMs: 1,
+          };
+        }
+        return { ok: true, result: {}, durationMs: 1 };
+      },
+    );
     tools.validateArgs.mockImplementation((name: string) =>
       name === 'create_appointment'
         ? {
@@ -2263,7 +2286,12 @@ describe('OrchestratorService', () => {
     const carId = 'c3d3cd7a-ee09-44e8-8dc6-6953aae4da7c';
     const mechanicId = '29b30e71-420b-48dd-ad56-381dfe852f7d';
     const tools = makeTools(
-      ['find_available_slot', 'find_customer', 'find_car', 'create_appointment'],
+      [
+        'find_available_slot',
+        'find_customer',
+        'find_car',
+        'create_appointment',
+      ],
       (name) => {
         if (name === 'find_available_slot') {
           return {
@@ -2387,8 +2415,7 @@ describe('OrchestratorService', () => {
           {
             id: 'tc-good-create',
             name: 'create_appointment',
-            argsJson:
-              `{"customerId":"${customerId}","carId":"${carId}","scheduledAt":"2026-06-30T08:00:00.000Z","durationMinutes":30,"mechanicId":"${mechanicId}","reason":"checkup"}`,
+            argsJson: `{"customerId":"${customerId}","carId":"${carId}","scheduledAt":"2026-06-30T08:00:00.000Z","durationMinutes":30,"mechanicId":"${mechanicId}","reason":"checkup"}`,
           },
         ],
       },
@@ -2441,7 +2468,12 @@ describe('OrchestratorService', () => {
     const carId = 'c3d3cd7a-ee09-44e8-8dc6-6953aae4da7c';
     const mechanicId = '29b30e71-420b-48dd-ad56-381dfe852f7d';
     const tools = makeTools(
-      ['find_customer', 'find_available_slot', 'find_car', 'create_appointment'],
+      [
+        'find_customer',
+        'find_available_slot',
+        'find_car',
+        'create_appointment',
+      ],
       (name) => {
         if (name === 'find_customer') {
           return {
@@ -2534,8 +2566,7 @@ describe('OrchestratorService', () => {
           {
             id: 'tc-create',
             name: 'create_appointment',
-            argsJson:
-              `{"customerId":"${customerId}","carId":"${carId}","scheduledAt":"2026-06-30T08:00:00.000Z","durationMinutes":30,"mechanicId":"${mechanicId}"}`,
+            argsJson: `{"customerId":"${customerId}","carId":"${carId}","scheduledAt":"2026-06-30T08:00:00.000Z","durationMinutes":30,"mechanicId":"${mechanicId}"}`,
           },
         ],
       },
@@ -2583,24 +2614,27 @@ describe('OrchestratorService', () => {
   });
 
   it('adds the no-appointment-created sentence when booking text only lists slots', async () => {
-    const tools = makeTools(['find_available_slot', 'create_appointment'], (name) => {
-      if (name === 'find_available_slot') {
-        return {
-          ok: true,
-          result: {
-            slots: [
-              {
-                start: '2026-06-30T08:00:00.000Z',
-                end: '2026-06-30T08:30:00.000Z',
-                mechanicName: 'Hichem Sassi',
-              },
-            ],
-          },
-          durationMs: 1,
-        };
-      }
-      return { ok: true, result: {}, durationMs: 1 };
-    });
+    const tools = makeTools(
+      ['find_available_slot', 'create_appointment'],
+      (name) => {
+        if (name === 'find_available_slot') {
+          return {
+            ok: true,
+            result: {
+              slots: [
+                {
+                  start: '2026-06-30T08:00:00.000Z',
+                  end: '2026-06-30T08:30:00.000Z',
+                  mechanicName: 'Hichem Sassi',
+                },
+              ],
+            },
+            durationMs: 1,
+          };
+        }
+        return { ok: true, result: {}, durationMs: 1 };
+      },
+    );
     tools.validateArgs.mockImplementation((name: string) =>
       name === 'create_appointment'
         ? {
@@ -2670,7 +2704,9 @@ describe('OrchestratorService', () => {
       if (name === 'find_customer') {
         return {
           ok: true,
-          result: [{ displayName: 'Khaoula Khelifi', phone: '+216 99 783 989' }],
+          result: [
+            { displayName: 'Khaoula Khelifi', phone: '+216 99 783 989' },
+          ],
           durationMs: 1,
         };
       }
@@ -2725,7 +2761,9 @@ describe('OrchestratorService', () => {
 
     const text = events.find((e) => e.type === 'text');
     expect(text).toMatchObject({
-      delta: expect.stringContaining('I found the customer, but I did not create the invoice'),
+      delta: expect.stringContaining(
+        'I found the customer, but I did not create the invoice',
+      ),
     });
     expect(text).toMatchObject({
       delta: expect.stringContaining('quantity and HT unit price'),
@@ -2734,7 +2772,9 @@ describe('OrchestratorService', () => {
       delta: expect.stringContaining('for oil change and filter'),
     });
     expect(text).not.toMatchObject({
-      delta: expect.stringMatching(/67\.83|\u26a0|uuid|schema|for Khaoula Khelifi for/i),
+      delta: expect.stringMatching(
+        /67\.83|\u26a0|uuid|schema|for Khaoula Khelifi for/i,
+      ),
     });
   });
 
@@ -2879,8 +2919,7 @@ describe('OrchestratorService', () => {
           {
             id: 'tc-primitive-invoice',
             name: 'create_invoice',
-            argsJson:
-              `{"customerId":"${customerId}","carId":"${carId}","dueDate":"2026-07-23","lineItems":["oil change labor","oil filter"],"_expectedConfirmation":"105.00 TND"}`,
+            argsJson: `{"customerId":"${customerId}","carId":"${carId}","dueDate":"2026-07-23","lineItems":["oil change labor","oil filter"],"_expectedConfirmation":"105.00 TND"}`,
           },
         ],
       },
@@ -3086,8 +3125,7 @@ describe('OrchestratorService', () => {
           {
             id: 'tc-bad-invoice',
             name: 'create_invoice',
-            argsJson:
-              `{"customerId":"Khaoula Khelifi","carId":"8580 TUN 289","dueDate":"2026-07-31","lineItems":["AI mutation test labor ${mutationLabel}"],"_expectedConfirmation":"10.00 TND"}`,
+            argsJson: `{"customerId":"Khaoula Khelifi","carId":"8580 TUN 289","dueDate":"2026-07-31","lineItems":["AI mutation test labor ${mutationLabel}"],"_expectedConfirmation":"10.00 TND"}`,
           },
         ],
       },
@@ -3120,8 +3158,7 @@ describe('OrchestratorService', () => {
           {
             id: 'tc-still-malformed-invoice',
             name: 'create_invoice',
-            argsJson:
-              `{"customerId":"${customerId}","carId":"${carId}","dueDate":"2026-07-31","lineItems":["AI mutation test labor ${mutationLabel}"],"_expectedConfirmation":"10.00 TND"}`,
+            argsJson: `{"customerId":"${customerId}","carId":"${carId}","dueDate":"2026-07-31","lineItems":["AI mutation test labor ${mutationLabel}"],"_expectedConfirmation":"10.00 TND"}`,
           },
         ],
       },
@@ -3262,8 +3299,7 @@ describe('OrchestratorService', () => {
           {
             id: 'tc-bad-payment',
             name: 'record_payment',
-            argsJson:
-              `{"invoiceId":"${invoiceNumber}","amount":"10","method":"CASH","_expectedConfirmation":"${invoiceNumber}"}`,
+            argsJson: `{"invoiceId":"${invoiceNumber}","amount":"10","method":"CASH","_expectedConfirmation":"${invoiceNumber}"}`,
           },
         ],
       },
@@ -3285,8 +3321,7 @@ describe('OrchestratorService', () => {
           {
             id: 'tc-good-payment',
             name: 'record_payment',
-            argsJson:
-              `{"invoiceId":"${invoiceId}","amount":10,"method":"CASH","_expectedConfirmation":"${invoiceNumber}","notes":"live AI mutation test payment mut-20260623213623"}`,
+            argsJson: `{"invoiceId":"${invoiceId}","amount":10,"method":"CASH","_expectedConfirmation":"${invoiceNumber}","notes":"live AI mutation test payment mut-20260623213623"}`,
           },
         ],
       },
@@ -3312,9 +3347,7 @@ describe('OrchestratorService', () => {
       status: 'failed',
       result: expect.objectContaining({
         error: 'invalid_arguments',
-        detail: expect.arrayContaining([
-          '/invoiceId must match format "uuid"',
-        ]),
+        detail: expect.arrayContaining(['/invoiceId must match format "uuid"']),
       }),
     });
     expect(tools.execute).toHaveBeenCalledWith(
@@ -3403,7 +3436,9 @@ describe('OrchestratorService', () => {
       delta: expect.stringContaining('Total: 1,310.00 TND'),
     });
     expect(text).not.toMatchObject({
-      delta: expect.stringMatching(/Step 1|Locked By|Invoice ID|691cb0d2|75ce90a7/i),
+      delta: expect.stringMatching(
+        /Step 1|Locked By|Invoice ID|691cb0d2|75ce90a7/i,
+      ),
     });
   });
 
@@ -3819,6 +3854,34 @@ describe('OrchestratorService', () => {
       );
     });
 
+    it('routes selected maintenance-job customer emails away from owner self-send', async () => {
+      const tools = makeTools([
+        'send_email',
+        'send_job_customer_approval_email',
+        'get_job',
+      ]);
+      const llm = makeLlm([{ provider: 'groq', content: 'ok', toolCalls: [] }]);
+      const classifier = makeClassifier(['send_email']);
+      const orchestrator = await makeOrchestrator({ tools, llm, classifier });
+
+      await collectEvents(
+        orchestrator.run(ctx, 'conv-1', 'send an email to that customer', {
+          route: '/maintenance/00000000-0000-0000-0000-000000000001',
+          selectedEntity: {
+            type: 'maintenance',
+            id: '00000000-0000-0000-0000-000000000001',
+            displayName: 'Approval job',
+          },
+        }),
+      );
+
+      const names = toolNamesFromFirstCall(llm);
+      expect(names).toEqual(
+        expect.arrayContaining(['send_job_customer_approval_email', 'get_job']),
+      );
+      expect(names).not.toContain('send_email');
+    });
+
     it('pairs find_customer with send_email for "email <name> a reminder" requests', async () => {
       const tools = makeTools(['send_email', 'find_customer']);
       const llm = makeLlm([{ provider: 'groq', content: 'ok', toolCalls: [] }]);
@@ -4201,33 +4264,30 @@ describe('OrchestratorService', () => {
     });
 
     it('retries with read tools when send_email rejects a data summary without supporting reads', async () => {
-      const tools = makeTools(
-        ['get_dashboard_kpis', 'send_email'],
-        (name) => {
-          if (name === 'send_email') {
-            return {
-              ok: true,
-              result: {
-                error: 'no_supporting_reads',
-                message:
-                  'send_email body summarises data but no read tool ran this turn.',
-              },
-              durationMs: 1,
-            };
-          }
+      const tools = makeTools(['get_dashboard_kpis', 'send_email'], (name) => {
+        if (name === 'send_email') {
           return {
             ok: true,
             result: {
-              totalAppointments: 12,
-              activeJobs: 1,
-              totalRevenue: 345,
-              paidInvoices: 4,
-              totalCustomers: 9,
+              error: 'no_supporting_reads',
+              message:
+                'send_email body summarises data but no read tool ran this turn.',
             },
             durationMs: 1,
           };
-        },
-      );
+        }
+        return {
+          ok: true,
+          result: {
+            totalAppointments: 12,
+            activeJobs: 1,
+            totalRevenue: 345,
+            paidInvoices: 4,
+            totalCustomers: 9,
+          },
+          durationMs: 1,
+        };
+      });
       tools.resolveBlastTier.mockImplementation((tool: any) => tool.blastTier);
       tools.get.mockImplementation((name: string) => {
         if (name === 'get_dashboard_kpis') {

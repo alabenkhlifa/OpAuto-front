@@ -43,7 +43,10 @@ describe('AssistantToolPresenterService', () => {
   // ─── format() ───────────────────────────────────────────────────────────
 
   it('returns null for messages with no toolCall', () => {
-    const msg = { ...toolMsg('list_invoices', 'EXECUTED'), toolCall: undefined };
+    const msg = {
+      ...toolMsg('list_invoices', 'EXECUTED'),
+      toolCall: undefined,
+    };
     expect(svc.format(msg)).toBeNull();
   });
 
@@ -53,7 +56,12 @@ describe('AssistantToolPresenterService', () => {
   });
 
   it('formats a known read-tool success with count from result array', () => {
-    const msg = toolMsg('list_invoices', 'EXECUTED', { limit: 10 }, { invoices: [1, 2, 3, 4, 5] });
+    const msg = toolMsg(
+      'list_invoices',
+      'EXECUTED',
+      { limit: 10 },
+      { invoices: [1, 2, 3, 4, 5] },
+    );
     const p = svc.format(msg)!;
     expect(p.state).toBe('success');
     expect(p.statusKey).toBe('assistant.tools.list_invoices.success');
@@ -63,7 +71,9 @@ describe('AssistantToolPresenterService', () => {
 
   it('formats raw-array read-tool results without showing zero', () => {
     const p = svc.format(
-      toolMsg('find_customer', 'EXECUTED', { query: 'hayfa' }, [{ id: 'cust-1' }]),
+      toolMsg('find_customer', 'EXECUTED', { query: 'hayfa' }, [
+        { id: 'cust-1' },
+      ]),
     )!;
     expect(p.state).toBe('success');
     expect(p.statusKey).toBe('assistant.tools.find_customer.success');
@@ -103,14 +113,19 @@ describe('AssistantToolPresenterService', () => {
   });
 
   it('does not throw when result is malformed', () => {
-    const p = svc.format(toolMsg('list_invoices', 'EXECUTED', {}, 'not-an-object'))!;
+    const p = svc.format(
+      toolMsg('list_invoices', 'EXECUTED', {}, 'not-an-object'),
+    )!;
     expect(p.state).toBe('success');
     expect(p.statusParams['count']).toBe(0);
   });
 
   // ─── approvalSummary() ──────────────────────────────────────────────────
 
-  const pending = (toolName: string, args: unknown): AssistantPendingApproval => ({
+  const pending = (
+    toolName: string,
+    args: unknown,
+  ): AssistantPendingApproval => ({
     toolCallId: 'tc-1',
     toolName,
     args,
@@ -120,7 +135,9 @@ describe('AssistantToolPresenterService', () => {
   });
 
   it('returns the SMS preview component for send_sms', () => {
-    const s = svc.approvalSummary(pending('send_sms', { to: '+216123', body: 'hi' }));
+    const s = svc.approvalSummary(
+      pending('send_sms', { to: '+216123', body: 'hi' }),
+    );
     expect(s.previewComponent).toBe(SmsPreviewComponent);
     expect(s.previewInputs?.['to']).toBe('+216123');
     expect(s.previewInputs?.['body']).toBe('hi');
@@ -191,17 +208,42 @@ describe('AssistantToolPresenterService', () => {
 
   it('has presenters for every backend-registered tool name', () => {
     const expectedTools = [
-      'list_appointments', 'find_available_slot', 'create_appointment', 'cancel_appointment',
-      'find_customer', 'get_customer', 'find_car', 'get_car',
-      'list_top_customers', 'list_at_risk_customers', 'list_returning_customers', 'list_maintenance_due',
-      'list_invoices', 'get_invoice', 'list_overdue_invoices', 'list_low_stock_parts',
-      'get_inventory_value', 'record_payment', 'create_invoice',
-      'get_job', 'add_job_part', 'request_job_customer_approval',
-      'record_job_customer_acceptance', 'create_invoice_from_job',
-      'send_sms', 'send_email', 'propose_retention_action',
-      'list_active_jobs', 'get_dashboard_kpis', 'get_invoices_summary',
-      'get_customer_count', 'get_revenue_summary', 'get_revenue_breakdown_by_service',
-      'generate_invoices_pdf', 'generate_period_report',
+      'list_appointments',
+      'find_available_slot',
+      'create_appointment',
+      'cancel_appointment',
+      'find_customer',
+      'get_customer',
+      'find_car',
+      'get_car',
+      'list_top_customers',
+      'list_at_risk_customers',
+      'list_returning_customers',
+      'list_maintenance_due',
+      'list_invoices',
+      'get_invoice',
+      'list_overdue_invoices',
+      'list_low_stock_parts',
+      'get_inventory_value',
+      'record_payment',
+      'create_invoice',
+      'get_job',
+      'add_job_part',
+      'request_job_customer_approval',
+      'send_job_customer_approval_email',
+      'record_job_customer_acceptance',
+      'create_invoice_from_job',
+      'send_sms',
+      'send_email',
+      'propose_retention_action',
+      'list_active_jobs',
+      'get_dashboard_kpis',
+      'get_invoices_summary',
+      'get_customer_count',
+      'get_revenue_summary',
+      'get_revenue_breakdown_by_service',
+      'generate_invoices_pdf',
+      'generate_period_report',
     ];
     for (const t of expectedTools) {
       expect(svc.hasPresenter(t)).withContext(t).toBe(true);

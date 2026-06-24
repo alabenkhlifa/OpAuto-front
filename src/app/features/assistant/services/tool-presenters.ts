@@ -7,7 +7,9 @@ import { RecordPaymentPreviewComponent } from '../components/assistant-action-pr
 import { CreateInvoicePreviewComponent } from '../components/assistant-action-preview/create-invoice-preview.component';
 
 const obj = (v: unknown): Record<string, unknown> | null =>
-  v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : null;
+  v && typeof v === 'object' && !Array.isArray(v)
+    ? (v as Record<string, unknown>)
+    : null;
 
 const str = (v: unknown, key: string): string | undefined => {
   const o = obj(v);
@@ -62,7 +64,7 @@ const arr = (v: unknown, key: string): unknown[] | undefined => {
 };
 
 const arrLen = (v: unknown, key: string): number =>
-  Array.isArray(v) ? v.length : arr(v, key)?.length ?? 0;
+  Array.isArray(v) ? v.length : (arr(v, key)?.length ?? 0);
 
 const deepNum = (v: unknown, path: string[]): number => {
   let cur = v as Record<string, unknown>;
@@ -132,7 +134,9 @@ export const TOOL_PRESENTERS: ToolPresenter[] = [
     successParams: (_a, r) => ({ count: arrLen(r, 'customers') }),
   }),
   present('get_customer', {
-    successParams: (_a, r) => ({ name: str(r, 'firstName') ?? str(r, 'name') ?? '' }),
+    successParams: (_a, r) => ({
+      name: str(r, 'firstName') ?? str(r, 'name') ?? '',
+    }),
   }),
   present('find_car', {
     successParams: (_a, r) => ({ count: arrLen(r, 'cars') }),
@@ -223,6 +227,16 @@ export const TOOL_PRESENTERS: ToolPresenter[] = [
     successParams: (_a, r) => ({ requestId: str(r, 'id') ?? '' }),
     approveVerbKey: k('request_job_customer_approval', 'approveVerb'),
   }),
+  present('send_job_customer_approval_email', {
+    runningParams: (a) => ({ subject: str(a, 'subject') ?? '' }),
+    successParams: (_a, r) => ({ to: str(r, 'to') ?? '' }),
+    previewComponent: EmailPreviewComponent,
+    previewInputs: (a) => ({
+      subject: str(a, 'subject'),
+      text: str(a, 'message'),
+    }),
+    approveVerbKey: k('send_job_customer_approval_email', 'approveVerb'),
+  }),
   present('record_job_customer_acceptance', {
     runningParams: (_a) => ({ jobId: str(_a, 'jobId') ?? '' }),
     successParams: (_a, r) => ({ status: str(r, 'status') ?? '' }),
@@ -257,7 +271,10 @@ export const TOOL_PRESENTERS: ToolPresenter[] = [
       text: str(a, 'text'),
       html: str(a, 'html'),
       attachInvoiceCount: arrLen(a, 'attachInvoiceIds'),
-      attachInvoiceFormat: str(a, 'attachInvoiceFormat') as 'csv' | 'pdf' | undefined,
+      attachInvoiceFormat: str(a, 'attachInvoiceFormat') as
+        | 'csv'
+        | 'pdf'
+        | undefined,
     }),
     approveVerbKey: k('send_email', 'approveVerb'),
   }),

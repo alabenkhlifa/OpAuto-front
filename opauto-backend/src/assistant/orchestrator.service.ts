@@ -226,6 +226,7 @@ export class OrchestratorService {
             userMessage,
             ctx,
             conversationId,
+            pageContext,
             allRealTools,
           );
 
@@ -237,7 +238,8 @@ export class OrchestratorService {
       const growthAgentAvailable = agentDescriptors.some(
         (agent) => agent.name === RETENTION_REVIEW_AGENT_NAME,
       );
-      const shouldRouteRetentionReview = this.userAskedForRetentionReview(userMessage);
+      const shouldRouteRetentionReview =
+        this.userAskedForRetentionReview(userMessage);
       const monthlyFinancialReportSkillAvailable = skillDescriptors.some(
         (skill) => skill.name === MONTHLY_FINANCIAL_REPORT_SKILL,
       );
@@ -339,10 +341,7 @@ export class OrchestratorService {
       let forceComposeOnly = false;
       const requiredActionRetriesIssued = new Set<string>();
       let monthlyFinancialReportSkillLoadedThisTurn = false;
-      const recordFailedToolAttempt = (
-        toolName: string,
-        reason: string,
-      ) => {
+      const recordFailedToolAttempt = (toolName: string, reason: string) => {
         const prevCount = toolCallCounts.get(toolName) ?? 0;
         const nextCount = prevCount + 1;
         toolCallCounts.set(toolName, nextCount);
@@ -541,19 +540,22 @@ export class OrchestratorService {
         // Reserved pseudo-tools.
         if (call.name === RESERVED_LOAD_SKILL) {
           const parsed = this.safeParseArgs(call.argsJson);
-          const parsedSkill = typeof parsed.value === 'object' &&
+          const parsedSkill =
+            typeof parsed.value === 'object' &&
             parsed.value !== null &&
             !Array.isArray(parsed.value) &&
             typeof (parsed.value as { name?: unknown }).name === 'string'
-            ? ((parsed.value as { name?: unknown }).name as string)
-            : '';
+              ? ((parsed.value as { name?: unknown }).name as string)
+              : '';
           if (
             shouldRouteRetentionReview &&
             growthAgentAvailable &&
             !parsed.error &&
             parsedSkill === RETENTION_REVIEW_SOURCE_SKILL
           ) {
-            const dispatched = await dispatchGrowthAgentForRetentionReview(call.id);
+            const dispatched = await dispatchGrowthAgentForRetentionReview(
+              call.id,
+            );
             if (dispatched) {
               continue;
             }
@@ -668,7 +670,9 @@ export class OrchestratorService {
           growthAgentAvailable &&
           call.name === RETENTION_REVIEW_TOOL_NAME
         ) {
-          const dispatched = await dispatchGrowthAgentForRetentionReview(call.id);
+          const dispatched = await dispatchGrowthAgentForRetentionReview(
+            call.id,
+          );
           if (dispatched) {
             continue;
           }
@@ -1016,7 +1020,11 @@ export class OrchestratorService {
     result: unknown,
   ): { reason: string; content: string } | null {
     if (toolName !== 'send_email') return null;
-    if (typeof result !== 'object' || result === null || Array.isArray(result)) {
+    if (
+      typeof result !== 'object' ||
+      result === null ||
+      Array.isArray(result)
+    ) {
       return null;
     }
     const error = (result as { error?: unknown }).error;
@@ -1536,7 +1544,8 @@ export class OrchestratorService {
 
     if (
       hasAmountError &&
-      (typeof recovered.amount !== 'number' || !Number.isFinite(recovered.amount))
+      (typeof recovered.amount !== 'number' ||
+        !Number.isFinite(recovered.amount))
     ) {
       const amountFromMessage = this.parsePaymentAmount(userMessage);
       if (amountFromMessage !== null) {
@@ -1586,7 +1595,9 @@ export class OrchestratorService {
   ): unknown | null {
     if (toolName !== 'create_invoice') return null;
     if (!args || typeof args !== 'object' || Array.isArray(args)) return null;
-    if (!errors.some((error) => /customerId|carId|lineItems|uuid/i.test(error))) {
+    if (
+      !errors.some((error) => /customerId|carId|lineItems|uuid/i.test(error))
+    ) {
       return null;
     }
 
@@ -1856,7 +1867,9 @@ export class OrchestratorService {
 
     const withCurrency =
       trimmed.match(/(\d+(?:[.,]\d+)?)\s*(?:tnd|dt)\b/i)?.[1] ??
-      trimmed.match(/(?:amount|total|pay|paid|for)\s*(?:of|=|:)?\s*(\d+(?:[.,]\d+)?)\s*(?:tnd|dt)\b/i)?.[1];
+      trimmed.match(
+        /(?:amount|total|pay|paid|for)\s*(?:of|=|:)?\s*(\d+(?:[.,]\d+)?)\s*(?:tnd|dt)\b/i,
+      )?.[1];
     if (withCurrency) {
       const parsed = Number(withCurrency.replace(',', '.'));
       return Number.isFinite(parsed) ? parsed : null;
@@ -1899,7 +1912,9 @@ export class OrchestratorService {
       return 'MOBILE_PAYMENT';
     }
     if (
-      ['cash', 'card', 'bank transfer', 'check', 'mobile payment'].includes(value)
+      ['cash', 'card', 'bank transfer', 'check', 'mobile payment'].includes(
+        value,
+      )
     ) {
       return value.toUpperCase().replace(' ', '_');
     }
@@ -1909,7 +1924,9 @@ export class OrchestratorService {
     return null;
   }
 
-  private extractPaymentMethodFromText(text: string | undefined): string | null {
+  private extractPaymentMethodFromText(
+    text: string | undefined,
+  ): string | null {
     if (!text) return null;
     const lowered = text.toLowerCase();
     const matches = [
@@ -1932,13 +1949,9 @@ export class OrchestratorService {
     return null;
   }
 
-  private parseInvoiceIdentifier(
-    text: string | undefined,
-  ): string | null {
+  private parseInvoiceIdentifier(text: string | undefined): string | null {
     if (!text) return null;
-    const match = text.match(
-      /\bINV-[A-Z0-9][A-Z0-9-]*[0-9]\b/gi,
-    );
+    const match = text.match(/\bINV-[A-Z0-9][A-Z0-9-]*[0-9]\b/gi);
     return match?.[0]?.trim() ?? null;
   }
 
@@ -1954,7 +1967,11 @@ export class OrchestratorService {
       /^\s*(\d+(?:[.,]\d+)?)\s+(.+?)\s+(?:at|@|for)\s+(\d+(?:[.,]\d+)?)\s*(?:tnd|dt)\b/i,
     );
     if (atForMatch) {
-      return this.buildParsedInvoiceLine(atForMatch[1], atForMatch[2], atForMatch[3]);
+      return this.buildParsedInvoiceLine(
+        atForMatch[1],
+        atForMatch[2],
+        atForMatch[3],
+      );
     }
 
     const quantityLabelMatch = trimmed.match(
@@ -1997,7 +2014,9 @@ export class OrchestratorService {
       unitPrice: number;
       tvaRate?: number;
     } = { description, quantity, unitPrice };
-    const tvaMatch = rawDescription.match(/\b(?:TVA|VAT)\s*(\d+(?:[.,]\d+)?)\s*%/i);
+    const tvaMatch = rawDescription.match(
+      /\b(?:TVA|VAT)\s*(\d+(?:[.,]\d+)?)\s*%/i,
+    );
     if (tvaMatch) {
       const tvaRate = Number(tvaMatch[1].replace(',', '.'));
       if (Number.isFinite(tvaRate)) parsed.tvaRate = tvaRate;
@@ -2402,13 +2421,15 @@ export class OrchestratorService {
   }
 
   private stripInternalControlMessages(text: string): string {
-    return text.replace(
-      /(^|\n)\s*(?:[^\w\s"']+(?:\s+|$))*["'\u201c]?Refusing to dispatch another agent\s*[-\u2013\u2014]\s*already invoked\s+\d+\s+time\(s\)\s+this turn\.\s+Compose your final reply from the agent results above\.["'\u201d]?\s*/gi,
-      '$1',
-    ).replace(
-      /(^|\n)\s*(?:[^\w\s"']+(?:\s+|$))*Error:\s*agent_dispatch_capped\.?\s*/gi,
-      '$1',
-    );
+    return text
+      .replace(
+        /(^|\n)\s*(?:[^\w\s"']+(?:\s+|$))*["'\u201c]?Refusing to dispatch another agent\s*[-\u2013\u2014]\s*already invoked\s+\d+\s+time\(s\)\s+this turn\.\s+Compose your final reply from the agent results above\.["'\u201d]?\s*/gi,
+        '$1',
+      )
+      .replace(
+        /(^|\n)\s*(?:[^\w\s"']+(?:\s+|$))*Error:\s*agent_dispatch_capped\.?\s*/gi,
+        '$1',
+      );
   }
 
   private stripInternalAgentNames(text: string): string {
@@ -2430,21 +2451,17 @@ export class OrchestratorService {
       /^\s*[-*]?\s*(locked by|locked at|created at|updated at|issued number|customer id|car id|invoice id|appointment id|toolcallid|tool call id)\s*:/i;
     return text
       .split('\n')
-      .filter(
-        (line) => {
-          const assistantDownloadUrl =
-            /\/api\/assistant\/downloads\/[0-9a-f-]+\.(?:pdf|csv)\b/i.test(
-              line,
-            );
-          return (
-            assistantDownloadUrl ||
-            (!technicalLabelLine.test(line) &&
-              !UUID_PATTERN.test(line.trim()) &&
-              !UUID_IN_TEXT_PATTERN.test(line) &&
-              !UUID_FRAGMENT_IN_TEXT_PATTERN.test(line))
-          );
-        },
-      )
+      .filter((line) => {
+        const assistantDownloadUrl =
+          /\/api\/assistant\/downloads\/[0-9a-f-]+\.(?:pdf|csv)\b/i.test(line);
+        return (
+          assistantDownloadUrl ||
+          (!technicalLabelLine.test(line) &&
+            !UUID_PATTERN.test(line.trim()) &&
+            !UUID_IN_TEXT_PATTERN.test(line) &&
+            !UUID_FRAGMENT_IN_TEXT_PATTERN.test(line))
+        );
+      })
       .join('\n');
   }
 
@@ -2490,6 +2507,7 @@ export class OrchestratorService {
     userMessage: string,
     ctx: AssistantUserContext,
     conversationId: string,
+    pageContext: PageContext | undefined,
     allRealTools: ToolDescriptor[],
   ): Promise<ToolDescriptor[]> {
     if (allRealTools.length === 0) return allRealTools;
@@ -2524,6 +2542,11 @@ export class OrchestratorService {
     const augmented = new Set<string>(picked);
     for (const name of this.actionAugmentation(userMessage)) {
       augmented.add(name);
+    }
+    if (this.userAskedForJobCustomerApprovalEmail(userMessage, pageContext)) {
+      augmented.add('send_job_customer_approval_email');
+      augmented.add('get_job');
+      augmented.delete('send_email');
     }
     if (
       this.userAskedForServiceHistory(userMessage) &&
@@ -2646,6 +2669,34 @@ export class OrchestratorService {
       out.push('list_appointments');
     }
     return out;
+  }
+
+  private userAskedForJobCustomerApprovalEmail(
+    message: string,
+    pageContext: PageContext | undefined,
+  ): boolean {
+    const asksToEmail =
+      /\bemail\s+(?!(?:address|account|settings)\b)\w+/i.test(message) ||
+      /\bsend\s+(?:\w+\s+)*(?:an?\s+)?e-?mails?\b/i.test(message) ||
+      /\b(via|by)\s+e-?mail\b/i.test(message);
+    if (!asksToEmail) return false;
+
+    const mentionsCustomer = /\b(customer|client)\b/i.test(message);
+    const mentionsJob =
+      /\b(job|maintenance|approval|approve|parts?|labor|estimate|quote|quotation|devis)\b/i.test(
+        message,
+      );
+    if (mentionsCustomer && mentionsJob) return true;
+
+    const selected =
+      pageContext?.selectedEntity ??
+      deriveSelectedEntityFromRoute(pageContext?.route, pageContext?.params);
+    const selectedType = selected?.type.toLowerCase();
+    const selectedMaintenanceJob =
+      selectedType === 'maintenance' ||
+      selectedType === 'maintenancejob' ||
+      selectedType === 'maintenance_job';
+    return selectedMaintenanceJob && mentionsCustomer;
   }
 
   private userAskedForCarDetails(message: string): boolean {
@@ -2980,6 +3031,7 @@ export class OrchestratorService {
     parts.push(
       `Action chaining rules:\n` +
         `- When the user asks you to email/send a report or summary, FIRST call the relevant read tool to fetch real data (e.g. list_invoices, get_revenue_summary, list_at_risk_customers), THEN call send_email with a body that includes those concrete numbers. Do NOT write placeholder bodies like "please find the data below" without the data inline.\n` +
+        `- When the user asks to email a maintenance-job customer, send a parts/labor approval, or send an approval link for "this job", use send_job_customer_approval_email. That tool resolves the customer from the job, creates or reuses the public approval link, and sends to the customer's stored email. Do NOT use send_email for customer job emails; send_email is only for emailing the authenticated owner.\n` +
         `- When the user asks to create, make, issue, generate, or prepare an invoice, resolve the real customer (and car if mentioned), then verify you have complete line-item data before calling create_invoice. Each line item must be an object with description, quantity, and HT unitPrice. If the user only gives service names like "oil change and filter" without prices, ask for the missing prices instead of guessing or calling create_invoice with placeholders. Do NOT call send_email unless the user explicitly asks to email an already-created invoice or report.\n` +
         `- For customer SMS actions, resolve the real customer first and pass that real customerId plus their actual phone number to send_sms. Do NOT invent phone numbers or placeholder ids.\n` +
         `- NEVER claim "no data is available" / "data could not be retrieved" / "the report is unavailable" without having actually invoked the relevant read tool this turn. If you have not called a read tool yet, call it. If the tool returns empty, report the specific empty result ("0 overdue invoices", "no at-risk customers this period") — do NOT generalise to "no data".\n` +
@@ -2998,7 +3050,9 @@ export class OrchestratorService {
     if (agentDescriptors.length > 0) {
       parts.push(
         `Specialist agents you can dispatch via the dispatch_agent tool:\n` +
-          agentDescriptors.map((a) => `- ${a.name}: ${a.description}`).join('\n') +
+          agentDescriptors
+            .map((a) => `- ${a.name}: ${a.description}`)
+            .join('\n') +
           `\n\nWhen to dispatch an agent vs. call a tool directly (I-015):\n` +
           `- For an atomic single-fact question ("how many X", "total Y", "list latest Z", ` +
           `"what is my <kpi>"), prefer a DIRECT tool call. ` +
@@ -3267,13 +3321,14 @@ export class OrchestratorService {
 
     if (toolName === 'create_invoice_from_job' && typeof a.jobId === 'string') {
       const requestedJobId = a.jobId.trim();
-      const recoveredJobId = await this.resolveMaintenanceJobIdForInvoiceFromJob(
-        requestedJobId,
-        ctx,
-        conversationId,
-        pageContext,
-        successfulToolResults,
-      );
+      const recoveredJobId =
+        await this.resolveMaintenanceJobIdForInvoiceFromJob(
+          requestedJobId,
+          ctx,
+          conversationId,
+          pageContext,
+          successfulToolResults,
+        );
       if (!recoveredJobId) {
         return {
           error: 'maintenance_job_not_found',
@@ -3398,8 +3453,9 @@ export class OrchestratorService {
       if (fromPage) return fromPage;
     }
 
-    const turnResultJobId =
-      this.findMaintenanceJobIdFromSuccessfulResults(successfulToolResults);
+    const turnResultJobId = this.findMaintenanceJobIdFromSuccessfulResults(
+      successfulToolResults,
+    );
     if (turnResultJobId) {
       const fromTurn = await this.findGarageMaintenanceJobId(
         turnResultJobId,
@@ -3683,7 +3739,9 @@ export class OrchestratorService {
 
     if (
       toolName === 'record_payment' &&
-      errors.some((error) => /invoiceId|amount|method|uuid|_expectedConfirmation/i.test(error))
+      errors.some((error) =>
+        /invoiceId|amount|method|uuid|_expectedConfirmation/i.test(error),
+      )
     ) {
       return {
         forceComposeOnly: false,
@@ -3701,7 +3759,9 @@ export class OrchestratorService {
     return null;
   }
 
-  private userAskedForRetentionReview(userMessage: string | undefined): boolean {
+  private userAskedForRetentionReview(
+    userMessage: string | undefined,
+  ): boolean {
     const msg = (userMessage ?? '').toLowerCase();
     return (
       /\bretention review\b/.test(msg) ||
@@ -3731,9 +3791,8 @@ export class OrchestratorService {
       /\b(?:plate|license|car|vehicle|skoda|renault|peugeot|dacia|toyota|bmw|mercedes|audi|volkswagen|hyundai|kia)\b/i.test(
         msg,
       ) || /\b\d{2,5}\s*TUN\s*\d{2,5}\b/i.test(msg);
-    const hasCustomerHint = /\bfor\s+[A-Z][A-Za-z'’-]+(?:\s+[A-Z][A-Za-z'’-]+)+\b/.test(
-      msg,
-    );
+    const hasCustomerHint =
+      /\bfor\s+[A-Z][A-Za-z'’-]+(?:\s+[A-Z][A-Za-z'’-]+)+\b/.test(msg);
     return hasVehicleHint && hasCustomerHint;
   }
 
@@ -3797,11 +3856,12 @@ export class OrchestratorService {
     );
   }
 
-  private userAskedForMonthlyFinancialReport(userMessage: string | undefined): boolean {
+  private userAskedForMonthlyFinancialReport(
+    userMessage: string | undefined,
+  ): boolean {
     const msg = (userMessage ?? '').toLowerCase();
-    const monthReference = /\b(?:last|this|previous|prior|past|current)\s+month\b/i.test(
-      msg,
-    ) ||
+    const monthReference =
+      /\b(?:last|this|previous|prior|past|current)\s+month\b/i.test(msg) ||
       /\bmonth[-\s]?end\b/i.test(msg) ||
       /\b(?:january|february|march|april|may|june|july|august|september|october|november|december)\b/i.test(
         msg,
@@ -3838,11 +3898,10 @@ export class OrchestratorService {
     ) {
       return true;
     }
-    return (
-      toolName === RESERVED_DISPATCH_AGENT
-        ? false
-        : toolName === 'get_revenue_summary' || toolName === 'get_invoices_summary'
-    );
+    return toolName === RESERVED_DISPATCH_AGENT
+      ? false
+      : toolName === 'get_revenue_summary' ||
+          toolName === 'get_invoices_summary';
   }
 
   private normalisePhone(value: string | null | undefined): string {

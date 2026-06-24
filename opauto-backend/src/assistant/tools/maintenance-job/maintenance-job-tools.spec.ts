@@ -6,6 +6,7 @@ import { buildRecordJobCustomerAcceptanceTool } from './record-job-customer-acce
 import { buildRequestJobCustomerApprovalTool } from './request-job-customer-approval.tool';
 import { buildGetJobTool } from './get-job.tool';
 import { buildAddJobPartTool } from './add-job-part.tool';
+import { buildSendJobCustomerApprovalEmailTool } from './send-job-customer-approval-email.tool';
 
 const ownerCtx: AssistantUserContext = {
   userId: 'owner-1',
@@ -34,6 +35,15 @@ function fromJobMock(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function emailMock(overrides: Record<string, unknown> = {}) {
+  return {
+    send: jest
+      .fn()
+      .mockResolvedValue({ providerMessageId: 'msg-1', status: 'queued' }),
+    ...overrides,
+  };
+}
+
 describe('Maintenance job tools', () => {
   describe('get_job', () => {
     it('loads job details scoped to the garage and maps output', async () => {
@@ -42,9 +52,21 @@ describe('Maintenance job tools', () => {
           id: 'job-1',
           title: 'Brake replacement',
           status: 'COMPLETED',
-          car: { id: 'car-1', make: 'Peugeot', model: '208', year: 2024, licensePlate: 'TUN 123', customer: { id: 'cust-1', firstName: 'Aya', lastName: 'Ben' } },
+          car: {
+            id: 'car-1',
+            make: 'Peugeot',
+            model: '208',
+            year: 2024,
+            licensePlate: 'TUN 123',
+            customer: { id: 'cust-1', firstName: 'Aya', lastName: 'Ben' },
+          },
           employee: { id: 'emp-1', firstName: 'Ari', lastName: 'M' },
-          appointment: { id: 'apt-1', title: 'Routine', startTime: new Date('2026-06-22T08:00:00.000Z'), endTime: new Date('2026-06-22T10:00:00.000Z') },
+          appointment: {
+            id: 'apt-1',
+            title: 'Routine',
+            startTime: new Date('2026-06-22T08:00:00.000Z'),
+            endTime: new Date('2026-06-22T10:00:00.000Z'),
+          },
           tasks: [{ id: 't1' }, { id: 't2' }],
           photos: [{ id: 'p1' }],
           parts: [],
@@ -150,8 +172,13 @@ describe('Maintenance job tools', () => {
           updatedAt: new Date('2026-06-21T08:00:00.000Z'),
         }),
       });
-      const tokens = { sign: jest.fn().mockReturnValue('signed-job-approval-token') };
-      const tool = buildRequestJobCustomerApprovalTool(maintenance as never, tokens as never);
+      const tokens = {
+        sign: jest.fn().mockReturnValue('signed-job-approval-token'),
+      };
+      const tool = buildRequestJobCustomerApprovalTool(
+        maintenance as never,
+        tokens as never,
+      );
       const out = await tool.handler(
         {
           jobId: 'job-1',
@@ -163,20 +190,178 @@ describe('Maintenance job tools', () => {
         ownerCtx,
       );
 
-      expect(maintenance.createApprovalRequest).toHaveBeenCalledWith('job-1', 'garage-1', 'owner-1', {
-        requestedAmount: 420,
-        summary: 'Brake work',
-        customerName: undefined,
-        customerEmail: 'aya@example.com',
-        customerPhone: undefined,
-        sendVia: 'email',
-        note: undefined,
-      });
+      expect(maintenance.createApprovalRequest).toHaveBeenCalledWith(
+        'job-1',
+        'garage-1',
+        'owner-1',
+        {
+          requestedAmount: 420,
+          summary: 'Brake work',
+          customerName: undefined,
+          customerEmail: 'aya@example.com',
+          customerPhone: undefined,
+          sendVia: 'email',
+          note: undefined,
+        },
+      );
       expect(tool.blastTier).toBe(AssistantBlastTier.CONFIRM_WRITE);
       expect(tokens.sign).toHaveBeenCalledWith('apr-1', 'jobApproval');
       expect(out.id).toBe('apr-1');
       expect(out.status).toBe('PENDING');
-      expect(out.publicUrl).toBe('/public/job-approvals/signed-job-approval-token');
+      expect(out.publicUrl).toBe(
+        '/public/job-approvals/signed-job-approval-token',
+      );
+    });
+  });
+
+  describe('send_job_customer_approval_email', () => {
+    it('creates an approval request and sends a formatted public-link email to the job customer', async () => {
+      const maintenance = maintenanceMock({
+        findOne: jest.fn().mockResolvedValue({
+          id: 'job-1',
+          title: 'Approval job',
+          car: {
+            make: 'TestMake',
+            model: 'WorkflowCar',
+            licensePlate: 'AI-MNT-034633',
+            customer: {
+              firstName: 'AI',
+              lastName: 'Maintenance',
+              email: 'ala.khllifa+Job1@gmail.com',
+              phone: '+21600000000',
+            },
+          },
+          parts: [
+            {
+              description: 'Cabin air filter',
+              quantity: 1,
+              unitPrice: 18,
+              tvaRate: 19,
+              discountPct: 0,
+            },
+            {
+              description: 'Oil',
+              quantity: 1,
+              unitPrice: 85,
+              tvaRate: 19,
+              discountPct: 0,
+            },
+          ],
+          approvalRequests: [],
+        }),
+        createApprovalRequest: jest.fn().mockResolvedValue({
+          id: 'apr-1',
+          maintenanceJobId: 'job-1',
+          status: 'PENDING',
+        }),
+      });
+      const email = emailMock();
+      const tokens = { sign: jest.fn().mockReturnValue('signed-token') };
+      const tool = buildSendJobCustomerApprovalEmailTool(
+        maintenance as never,
+        email as never,
+        tokens as never,
+        'https://opauto.test',
+      );
+
+      const out = await tool.handler({ jobId: 'job-1' }, ownerCtx);
+
+      expect(tool.blastTier).toBe(AssistantBlastTier.CONFIRM_WRITE);
+      expect(maintenance.findOne).toHaveBeenCalledWith('job-1', 'garage-1');
+      expect(maintenance.createApprovalRequest).toHaveBeenCalledWith(
+        'job-1',
+        'garage-1',
+        'owner-1',
+        expect.objectContaining({
+          customerName: 'AI Maintenance',
+          customerEmail: 'ala.khllifa+Job1@gmail.com',
+          customerPhone: '+21600000000',
+          sendVia: 'email',
+        }),
+      );
+      const approvalDto = (maintenance.createApprovalRequest as jest.Mock).mock
+        .calls[0][3];
+      expect(approvalDto.requestedAmount).toBeCloseTo(122.57);
+      expect(tokens.sign).toHaveBeenCalledWith('apr-1', 'jobApproval');
+      expect(email.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: 'ala.khllifa+Job1@gmail.com',
+          replyTo: 'owner@example.com',
+          subject:
+            'Maintenance approval request for TestMake WorkflowCar (AI-MNT-034633)',
+          html: expect.stringContaining(
+            'https://opauto.test/public/job-approvals/signed-token',
+          ),
+          text: expect.stringContaining(
+            'https://opauto.test/public/job-approvals/signed-token',
+          ),
+        }),
+      );
+      const sent = (email.send as jest.Mock).mock.calls[0][0];
+      expect(sent.html).toContain('Review and approve');
+      expect(sent.html).toContain('Cabin air filter');
+      expect(sent.html).toContain('Oil');
+      expect(out).toEqual(
+        expect.objectContaining({
+          providerMessageId: 'msg-1',
+          status: 'queued',
+          to: 'ala.khllifa+Job1@gmail.com',
+          approvalRequestId: 'apr-1',
+          publicUrl: 'https://opauto.test/public/job-approvals/signed-token',
+        }),
+      );
+    });
+
+    it('reuses an existing pending approval request for the same customer email', async () => {
+      const maintenance = maintenanceMock({
+        findOne: jest.fn().mockResolvedValue({
+          id: 'job-1',
+          car: {
+            make: 'TestMake',
+            model: 'WorkflowCar',
+            licensePlate: 'AI-MNT-034633',
+            customer: {
+              firstName: 'AI',
+              lastName: 'Maintenance',
+              email: 'ala.khllifa+Job1@gmail.com',
+            },
+          },
+          parts: [],
+          approvalRequests: [
+            {
+              id: 'apr-existing',
+              status: 'PENDING',
+              customerEmail: 'ala.khllifa+Job1@gmail.com',
+            },
+          ],
+        }),
+        createApprovalRequest: jest.fn(),
+      });
+      const email = emailMock();
+      const tokens = { sign: jest.fn().mockReturnValue('existing-token') };
+      const tool = buildSendJobCustomerApprovalEmailTool(
+        maintenance as never,
+        email as never,
+        tokens as never,
+        'https://opauto.test/',
+      );
+
+      const out = await tool.handler({ jobId: 'job-1' }, ownerCtx);
+
+      expect(maintenance.createApprovalRequest).not.toHaveBeenCalled();
+      expect(tokens.sign).toHaveBeenCalledWith('apr-existing', 'jobApproval');
+      expect(email.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: 'ala.khllifa+Job1@gmail.com',
+          html: expect.stringContaining(
+            'https://opauto.test/public/job-approvals/existing-token',
+          ),
+        }),
+      );
+      expect(out.approvalRequestId).toBe('apr-existing');
+      expect(out.publicUrl).toBe(
+        'https://opauto.test/public/job-approvals/existing-token',
+      );
     });
   });
 
@@ -244,14 +429,10 @@ describe('Maintenance job tools', () => {
         ownerCtx,
       );
 
-      expect(fromJob.createFromJob).toHaveBeenCalledWith(
-        'job-1',
-        'garage-1',
-        {
-          dueDate: '2026-07-05',
-          notes: 'First draft',
-        },
-      );
+      expect(fromJob.createFromJob).toHaveBeenCalledWith('job-1', 'garage-1', {
+        dueDate: '2026-07-05',
+        notes: 'First draft',
+      });
       expect(tool.blastTier).toBe(AssistantBlastTier.CONFIRM_WRITE);
       expect(out).toEqual({
         invoiceId: 'inv-1',
@@ -272,24 +453,46 @@ describe('Maintenance job tools', () => {
     const fromJob = fromJobMock();
     const getJob = buildGetJobTool(maintenance as never);
     const addPart = buildAddJobPartTool(maintenance as never);
-    const requestApproval = buildRequestJobCustomerApprovalTool(maintenance as never);
-    const recordAcceptance = buildRecordJobCustomerAcceptanceTool(maintenance as never);
-    const createInvoiceFromJob = buildCreateInvoiceFromJobTool(fromJob as never);
+    const requestApproval = buildRequestJobCustomerApprovalTool(
+      maintenance as never,
+    );
+    const recordAcceptance = buildRecordJobCustomerAcceptanceTool(
+      maintenance as never,
+    );
+    const createInvoiceFromJob = buildCreateInvoiceFromJobTool(
+      fromJob as never,
+    );
+    const sendJobCustomerApprovalEmail = buildSendJobCustomerApprovalEmailTool(
+      maintenance as never,
+      emailMock() as never,
+      { sign: jest.fn().mockReturnValue('token') } as never,
+      'https://opauto.test',
+    );
 
     registry.register(getJob);
     registry.register(addPart);
     registry.register(requestApproval);
     registry.register(recordAcceptance);
     registry.register(createInvoiceFromJob);
+    registry.register(sendJobCustomerApprovalEmail);
 
     it('validates uuid required fields for read tool', () => {
-      expect(registry.validateArgs('get_job', { jobId: 'not-a-uuid' }).valid).toBe(false);
-      expect(registry.validateArgs('get_job', { jobId: '00000000-0000-0000-0000-000000000000' }).valid).toBe(true);
+      expect(
+        registry.validateArgs('get_job', { jobId: 'not-a-uuid' }).valid,
+      ).toBe(false);
+      expect(
+        registry.validateArgs('get_job', {
+          jobId: '00000000-0000-0000-0000-000000000000',
+        }).valid,
+      ).toBe(true);
     });
 
     it('validates add_job_part request body shape', () => {
       expect(
-        registry.validateArgs('add_job_part', { jobId: '00000000-0000-0000-0000-000000000000', type: 'invalid' }).valid,
+        registry.validateArgs('add_job_part', {
+          jobId: '00000000-0000-0000-0000-000000000000',
+          type: 'invalid',
+        }).valid,
       ).toBe(false);
       expect(
         registry.validateArgs('add_job_part', {
@@ -301,7 +504,11 @@ describe('Maintenance job tools', () => {
     });
 
     it('requires IDs for approval workflows', () => {
-      expect(registry.validateArgs('record_job_customer_acceptance', { jobId: '00000000-0000-0000-0000-000000000000' }).valid).toBe(false);
+      expect(
+        registry.validateArgs('record_job_customer_acceptance', {
+          jobId: '00000000-0000-0000-0000-000000000000',
+        }).valid,
+      ).toBe(false);
       expect(
         registry.validateArgs('record_job_customer_acceptance', {
           jobId: '00000000-0000-0000-0000-000000000000',
@@ -313,7 +520,12 @@ describe('Maintenance job tools', () => {
     it('marks write tools as CONFIRM_WRITE', () => {
       expect(requestApproval.blastTier).toBe(AssistantBlastTier.CONFIRM_WRITE);
       expect(recordAcceptance.blastTier).toBe(AssistantBlastTier.CONFIRM_WRITE);
-      expect(createInvoiceFromJob.blastTier).toBe(AssistantBlastTier.CONFIRM_WRITE);
+      expect(createInvoiceFromJob.blastTier).toBe(
+        AssistantBlastTier.CONFIRM_WRITE,
+      );
+      expect(sendJobCustomerApprovalEmail.blastTier).toBe(
+        AssistantBlastTier.CONFIRM_WRITE,
+      );
     });
   });
 });
