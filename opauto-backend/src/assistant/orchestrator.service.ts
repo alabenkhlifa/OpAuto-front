@@ -869,13 +869,6 @@ export class OrchestratorService {
             result: unknown;
             durationMs: number;
           };
-          toolHasFired = true;
-          lastToolTier = tier;
-          lastToolName = call.name;
-          successfulToolResults.push({
-            toolName: call.name,
-            result: successExec.result,
-          });
           subject.next({
             type: 'tool_result',
             toolCallId: call.id,
@@ -892,6 +885,27 @@ export class OrchestratorService {
             durationMs: successExec.durationMs,
           });
           this.appendToolMessage(llmMessages, call.id, successExec.result);
+
+          const retryGuidance = this.retryGuidanceForToolResult(
+            call.name,
+            successExec.result,
+          );
+          if (retryGuidance) {
+            recordFailedToolAttempt(call.name, retryGuidance.reason);
+            llmMessages.push({
+              role: 'system',
+              content: retryGuidance.content,
+            });
+            continue;
+          }
+
+          toolHasFired = true;
+          lastToolTier = tier;
+          lastToolName = call.name;
+          successfulToolResults.push({
+            toolName: call.name,
+            result: successExec.result,
+          });
 
           // I-016 — hard cap on per-tool calls per turn. Stops the model from
           // looping on the same tool whether the result is empty (B-06 raw
@@ -969,6 +983,27 @@ export class OrchestratorService {
       subject.next({ type: 'done' });
       subject.complete();
     }
+  }
+
+  private retryGuidanceForToolResult(
+    toolName: string,
+    result: unknown,
+  ): { reason: string; content: string } | null {
+    if (toolName !== 'send_email') return null;
+    if (typeof result !== 'object' || result === null || Array.isArray(result)) {
+      return null;
+    }
+    const error = (result as { error?: unknown }).error;
+    if (error !== 'no_supporting_reads') return null;
+
+    return {
+      reason: 'no supporting reads',
+      content:
+        'send_email was rejected because its body summarised live data but no read tool ran this turn. ' +
+        'Retry by calling the relevant READ tool(s) first, then call send_email again with concrete values inlined. ' +
+        'For dashboard totals, call get_dashboard_kpis. For overdue invoice status, call list_overdue_invoices. ' +
+        'Do not call send_email again with placeholders or guessed values.',
+    };
   }
 
   // ── Resume flow ───────────────────────────────────────────────────────

@@ -4063,6 +4063,117 @@ describe('OrchestratorService', () => {
       );
     });
 
+    it('retries with read tools when send_email rejects a data summary without supporting reads', async () => {
+      const tools = makeTools(
+        ['get_dashboard_kpis', 'send_email'],
+        (name) => {
+          if (name === 'send_email') {
+            return {
+              ok: true,
+              result: {
+                error: 'no_supporting_reads',
+                message:
+                  'send_email body summarises data but no read tool ran this turn.',
+              },
+              durationMs: 1,
+            };
+          }
+          return {
+            ok: true,
+            result: {
+              totalAppointments: 12,
+              activeJobs: 1,
+              totalRevenue: 345,
+              paidInvoices: 4,
+              totalCustomers: 9,
+            },
+            durationMs: 1,
+          };
+        },
+      );
+      tools.resolveBlastTier.mockImplementation((tool: any) => tool.blastTier);
+      tools.get.mockImplementation((name: string) => {
+        if (name === 'get_dashboard_kpis') {
+          return {
+            name,
+            description: 'd',
+            parameters: {},
+            blastTier: AssistantBlastTier.READ,
+            handler: async () => ({}),
+          };
+        }
+        if (name === 'send_email') {
+          return {
+            name,
+            description: 'd',
+            parameters: {},
+            blastTier: AssistantBlastTier.AUTO_WRITE,
+            handler: async () => ({}),
+          };
+        }
+        return undefined;
+      });
+
+      const llm = makeLlm([
+        {
+          provider: 'mistral',
+          content: null,
+          toolCalls: [
+            {
+              id: 'tc-email-1',
+              name: 'send_email',
+              argsJson:
+                '{"subject":"KPI summary","text":"Total revenue: $total_revenue TND"}',
+            },
+          ],
+        },
+        {
+          provider: 'mistral',
+          content: null,
+          toolCalls: [
+            { id: 'tc-kpis', name: 'get_dashboard_kpis', argsJson: '{}' },
+          ],
+        },
+        {
+          provider: 'mistral',
+          content: 'Now I have the data.',
+          toolCalls: [],
+        },
+      ]);
+      const orchestrator = await makeOrchestrator({ tools, llm });
+
+      const events = await collectEvents(
+        orchestrator.run(
+          ctx,
+          'conv-retry-send-email',
+          'Email me a live dashboard summary.',
+          undefined,
+        ),
+      );
+
+      const calls = (llm.complete as jest.Mock).mock.calls;
+      expect(calls).toHaveLength(3);
+      expect(calls[1][0].tools).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ name: 'get_dashboard_kpis' }),
+          expect.objectContaining({ name: 'send_email' }),
+        ]),
+      );
+      expect(tools.execute).toHaveBeenCalledWith(
+        'send_email',
+        expect.anything(),
+        expect.anything(),
+      );
+      expect(tools.execute).toHaveBeenCalledWith(
+        'get_dashboard_kpis',
+        {},
+        expect.objectContaining({ garageId: 'garage-1' }),
+      );
+      expect(events.find((e) => e.type === 'text')).toMatchObject({
+        delta: 'Now I have the data.',
+      });
+    });
+
     it('switches to compose-only immediately after a write-tier tool (no READ before)', async () => {
       // Direct write tool — no READ chain. Should swap to compose-only
       // on iter 2 just like before the fix (no regression).
