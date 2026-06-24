@@ -367,23 +367,26 @@ import { TranslationService } from '../../../core/services/translation.service';
           <div class="space-y-6">
             <div class="glass-card">
               <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ 'maintenance.details.timeline' | translate }}</h3>
-              <div class="space-y-4">
+              <ol class="maintenance-timeline">
                 @for (event of timelineEvents(); track event.id) {
-                  <div class="flex items-center space-x-3">
-                    <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
-                    <div>
-                      <p class="text-sm font-medium text-gray-900">{{ event.label || event.type }}</p>
+                  <li class="maintenance-timeline__item" [ngClass]="timelineItemClass(event)">
+                    <span class="maintenance-timeline__marker" aria-hidden="true"></span>
+                    <div class="maintenance-timeline__body">
+                      <div class="maintenance-timeline__header">
+                        <p class="maintenance-timeline__title">{{ formatTimelineLabel(event) }}</p>
+                        <span class="maintenance-timeline__badge">{{ timelineBadgeLabel(event) }}</span>
+                      </div>
                       @if (event.actorName) {
-                        <p class="text-xs text-gray-500">{{ event.actorName }}</p>
+                        <p class="maintenance-timeline__actor">{{ event.actorName }}</p>
                       }
                       @if (event.description) {
-                        <p class="text-sm text-gray-500">{{ event.description }}</p>
+                        <p class="maintenance-timeline__description">{{ event.description }}</p>
                       }
-                      <p class="text-xs text-gray-500">{{ event.occurredAt | date:'short' }}</p>
+                      <p class="maintenance-timeline__time">{{ event.occurredAt | date:'short' }}</p>
                     </div>
-                  </div>
+                  </li>
                 }
-              </div>
+              </ol>
             </div>
 
             <div class="glass-card">
@@ -545,6 +548,142 @@ import { TranslationService } from '../../../core/services/translation.service';
       color: #ffffff !important;
       border: 1px solid rgba(239, 68, 68, 0.6);
       box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+    }
+
+    .maintenance-timeline {
+      display: grid;
+      gap: 0;
+      margin: 0;
+      padding: 2px 0 0;
+      list-style: none;
+    }
+
+    .maintenance-timeline__item {
+      --timeline-accent: #64748b;
+      --timeline-border: #cbd5e1;
+      --timeline-bg: #f8fafc;
+      --timeline-text: #334155;
+      position: relative;
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr);
+      gap: 12px;
+      padding: 0 0 14px;
+    }
+
+    .maintenance-timeline__item:not(:last-child)::before {
+      content: '';
+      position: absolute;
+      top: 28px;
+      bottom: 0;
+      left: 11px;
+      width: 2px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, var(--timeline-accent), #e2e8f0);
+      opacity: 0.55;
+    }
+
+    .maintenance-timeline__marker {
+      z-index: 1;
+      width: 20px;
+      height: 20px;
+      margin-top: 12px;
+      border: 4px solid #ffffff;
+      border-radius: 999px;
+      background: var(--timeline-accent);
+      box-shadow: 0 0 0 2px var(--timeline-border), 0 8px 18px rgba(15, 23, 42, 0.12);
+    }
+
+    .maintenance-timeline__body {
+      min-width: 0;
+      border: 1px solid var(--timeline-border);
+      border-radius: 8px;
+      padding: 12px;
+      background: linear-gradient(135deg, var(--timeline-bg), #ffffff);
+    }
+
+    .maintenance-timeline__header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .maintenance-timeline__title {
+      margin: 0;
+      color: #111827;
+      font-size: 0.95rem;
+      font-weight: 800;
+      line-height: 1.3;
+    }
+
+    .maintenance-timeline__badge {
+      flex: 0 0 auto;
+      max-width: 120px;
+      border: 1px solid var(--timeline-border);
+      border-radius: 999px;
+      padding: 3px 9px;
+      background: #ffffff;
+      color: var(--timeline-text);
+      font-size: 0.72rem;
+      font-weight: 800;
+      line-height: 1.2;
+      text-align: center;
+      white-space: normal;
+    }
+
+    .maintenance-timeline__actor,
+    .maintenance-timeline__description,
+    .maintenance-timeline__time {
+      margin: 5px 0 0;
+      color: #64748b;
+      font-size: 0.8rem;
+      line-height: 1.35;
+    }
+
+    .maintenance-timeline__description {
+      color: #475569;
+    }
+
+    .timeline--approved {
+      --timeline-accent: #16a34a;
+      --timeline-border: #86efac;
+      --timeline-bg: #f0fdf4;
+      --timeline-text: #166534;
+    }
+
+    .timeline--rejected {
+      --timeline-accent: #dc2626;
+      --timeline-border: #fca5a5;
+      --timeline-bg: #fef2f2;
+      --timeline-text: #991b1b;
+    }
+
+    .timeline--requested {
+      --timeline-accent: #f97316;
+      --timeline-border: #fdba74;
+      --timeline-bg: #fff7ed;
+      --timeline-text: #9a3412;
+    }
+
+    .timeline--part {
+      --timeline-accent: #0891b2;
+      --timeline-border: #67e8f9;
+      --timeline-bg: #ecfeff;
+      --timeline-text: #155e75;
+    }
+
+    .timeline--created {
+      --timeline-accent: #2563eb;
+      --timeline-border: #93c5fd;
+      --timeline-bg: #eff6ff;
+      --timeline-text: #1d4ed8;
+    }
+
+    .timeline--status {
+      --timeline-accent: #7c3aed;
+      --timeline-border: #c4b5fd;
+      --timeline-bg: #f5f3ff;
+      --timeline-text: #5b21b6;
     }
   `]
 })
@@ -949,6 +1088,84 @@ export class MaintenanceDetailsComponent implements OnInit {
       description: this.translationService.instant('maintenance.details.jobCreated'),
       occurredAt: j.createdAt
     }];
+  }
+
+  timelineItemClass(event: MaintenanceTimelineEvent): string {
+    return `timeline--${this.timelineTone(event)}`;
+  }
+
+  timelineBadgeLabel(event: MaintenanceTimelineEvent): string {
+    const tone = this.timelineTone(event);
+    const labels: Record<string, string> = {
+      approved: this.translationService.instant('maintenance.details.approved'),
+      rejected: this.translationService.instant('maintenance.details.rejected'),
+      requested: 'Requested',
+      part: 'Part',
+      created: 'Created',
+      status: 'Status',
+      neutral: 'Update'
+    };
+    return labels[tone] || labels['neutral'];
+  }
+
+  formatTimelineLabel(event: MaintenanceTimelineEvent): string {
+    const type = this.normalizedTimelineType(event);
+    const tone = this.timelineTone(event);
+
+    if (type.includes('approval_responded')) {
+      if (tone === 'approved') return 'Customer approved';
+      if (tone === 'rejected') return 'Customer rejected';
+      return 'Customer responded';
+    }
+
+    if (type.includes('approval_owner_recorded')) {
+      if (tone === 'approved') return 'Owner recorded approval';
+      if (tone === 'rejected') return 'Owner recorded rejection';
+      return 'Owner recorded response';
+    }
+
+    if (type.includes('approval_requested')) return 'Approval requested';
+    if (type.includes('part_added')) return 'Part added';
+    if (type.includes('part_updated')) return 'Part updated';
+    if (type.includes('part_removed')) return 'Part removed';
+    if (type.includes('job_created')) return this.translationService.instant('maintenance.details.jobCreated');
+
+    const raw = event.label || event.type || 'job-event';
+    return raw
+      .replace(/[_-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+  }
+
+  private timelineTone(event: MaintenanceTimelineEvent): string {
+    const type = this.normalizedTimelineType(event);
+    const status = this.timelineMetadataValue(event, ['status', 'decision', 'customerResponse', 'response']);
+    const approved = event.metadata?.['approved'];
+
+    if (approved === true || status.includes('approved') || status.includes('approve')) return 'approved';
+    if (approved === false || status.includes('rejected') || status.includes('reject')) return 'rejected';
+    if (type.includes('approval_requested')) return 'requested';
+    if (type.includes('approval_responded') || type.includes('approval_owner_recorded')) return 'status';
+    if (type.includes('part_')) return 'part';
+    if (type.includes('job_created')) return 'created';
+    if (type.startsWith('status_')) return 'status';
+    return 'neutral';
+  }
+
+  private normalizedTimelineType(event: MaintenanceTimelineEvent): string {
+    return (event.type || event.label || '').replace(/-/g, '_').toLowerCase();
+  }
+
+  private timelineMetadataValue(event: MaintenanceTimelineEvent, keys: string[]): string {
+    const metadata = event.metadata || {};
+    for (const key of keys) {
+      const value = metadata[key];
+      if (value !== undefined && value !== null && `${value}`.trim()) {
+        return `${value}`.toLowerCase();
+      }
+    }
+    return '';
   }
 
   getTaskProgress(): number {

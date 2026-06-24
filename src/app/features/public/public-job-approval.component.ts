@@ -3,7 +3,7 @@ import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MaintenanceService } from '../../core/services/maintenance.service';
-import { PublicJobApprovalSummary } from '../../core/models/maintenance.model';
+import { MaintenanceTimelineEvent, PublicJobApprovalSummary } from '../../core/models/maintenance.model';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { TranslationService } from '../../core/services/translation.service';
 
@@ -125,10 +125,13 @@ import { TranslationService } from '../../core/services/translation.service';
               </div>
               <ol class="approval-timeline">
                 @for (event of summary()!.timeline; track event.id) {
-                  <li>
+                  <li [ngClass]="timelineItemClass(event)">
                     <span class="timeline-dot" aria-hidden="true"></span>
                     <div>
-                      <p>{{ formatTimelineLabel(event.type, event.label) }}</p>
+                      <div class="timeline-title-row">
+                        <p>{{ formatTimelineLabel(event) }}</p>
+                        <span class="timeline-badge">{{ timelineBadgeLabel(event) }}</span>
+                      </div>
                       @if (event.description) {
                         <small>{{ event.description }}</small>
                       }
@@ -428,9 +431,13 @@ import { TranslationService } from '../../core/services/translation.service';
     }
 
     .approval-timeline li {
+      --timeline-accent: #64748b;
+      --timeline-border: #cbd5e1;
+      --timeline-bg: #f8fafc;
+      --timeline-text: #334155;
       position: relative;
       display: grid;
-      grid-template-columns: 18px minmax(0, 1fr);
+      grid-template-columns: 24px minmax(0, 1fr);
       gap: 12px;
       padding: 0 0 18px;
     }
@@ -438,22 +445,39 @@ import { TranslationService } from '../../core/services/translation.service';
     .approval-timeline li:not(:last-child)::before {
       content: '';
       position: absolute;
-      top: 18px;
+      top: 30px;
       bottom: 0;
-      left: 6px;
+      left: 11px;
       width: 2px;
-      background: #e2e8f0;
+      border-radius: 999px;
+      background: linear-gradient(180deg, var(--timeline-accent), #e2e8f0);
+      opacity: 0.58;
     }
 
     .timeline-dot {
       z-index: 1;
-      width: 14px;
-      height: 14px;
-      margin-top: 4px;
-      border: 3px solid #ffffff;
+      width: 20px;
+      height: 20px;
+      margin-top: 12px;
+      border: 4px solid #ffffff;
       border-radius: 50%;
-      background: #f97316;
-      box-shadow: 0 0 0 1px #fdba74;
+      background: var(--timeline-accent);
+      box-shadow: 0 0 0 2px var(--timeline-border), 0 8px 18px rgba(15, 23, 42, 0.14);
+    }
+
+    .approval-timeline li > div {
+      min-width: 0;
+      border: 1px solid var(--timeline-border);
+      border-radius: 8px;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--timeline-bg), #ffffff);
+    }
+
+    .timeline-title-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
     }
 
     .approval-timeline p {
@@ -463,6 +487,20 @@ import { TranslationService } from '../../core/services/translation.service';
       line-height: 1.35;
     }
 
+    .timeline-badge {
+      flex: 0 0 auto;
+      max-width: 130px;
+      border: 1px solid var(--timeline-border);
+      border-radius: 999px;
+      padding: 4px 10px;
+      background: #ffffff;
+      color: var(--timeline-text);
+      font-size: 0.76rem;
+      font-weight: 800;
+      line-height: 1.2;
+      text-align: center;
+    }
+
     .approval-timeline small,
     .approval-timeline time {
       display: block;
@@ -470,6 +508,48 @@ import { TranslationService } from '../../core/services/translation.service';
       color: #64748b;
       font-size: 0.9rem;
       line-height: 1.4;
+    }
+
+    .timeline--approved {
+      --timeline-accent: #16a34a;
+      --timeline-border: #86efac;
+      --timeline-bg: #f0fdf4;
+      --timeline-text: #166534;
+    }
+
+    .timeline--rejected {
+      --timeline-accent: #dc2626;
+      --timeline-border: #fca5a5;
+      --timeline-bg: #fef2f2;
+      --timeline-text: #991b1b;
+    }
+
+    .timeline--requested {
+      --timeline-accent: #f97316;
+      --timeline-border: #fdba74;
+      --timeline-bg: #fff7ed;
+      --timeline-text: #9a3412;
+    }
+
+    .timeline--part {
+      --timeline-accent: #0891b2;
+      --timeline-border: #67e8f9;
+      --timeline-bg: #ecfeff;
+      --timeline-text: #155e75;
+    }
+
+    .timeline--created {
+      --timeline-accent: #2563eb;
+      --timeline-border: #93c5fd;
+      --timeline-bg: #eff6ff;
+      --timeline-text: #1d4ed8;
+    }
+
+    .timeline--status {
+      --timeline-accent: #7c3aed;
+      --timeline-border: #c4b5fd;
+      --timeline-bg: #f5f3ff;
+      --timeline-text: #5b21b6;
     }
 
     @keyframes approval-spin {
@@ -617,13 +697,82 @@ export class PublicJobApprovalComponent implements OnInit {
     return [s.licensePlate, s.carDetails].filter(Boolean).join(' - ') || '-';
   }
 
-  formatTimelineLabel(type: string, label?: string): string {
-    const raw = label || type || 'job-event';
+  timelineItemClass(event: MaintenanceTimelineEvent): string {
+    return `timeline--${this.timelineTone(event)}`;
+  }
+
+  timelineBadgeLabel(event: MaintenanceTimelineEvent): string {
+    const tone = this.timelineTone(event);
+    const labels: Record<string, string> = {
+      approved: this.translationService.instant('maintenance.details.approved'),
+      rejected: this.translationService.instant('maintenance.details.rejected'),
+      requested: 'Requested',
+      part: 'Part',
+      created: 'Created',
+      status: 'Status',
+      neutral: 'Update',
+    };
+    return labels[tone] || labels['neutral'];
+  }
+
+  formatTimelineLabel(event: MaintenanceTimelineEvent): string {
+    const type = this.normalizedTimelineType(event);
+    const tone = this.timelineTone(event);
+
+    if (type.includes('approval_responded')) {
+      if (tone === 'approved') return 'Customer approved';
+      if (tone === 'rejected') return 'Customer rejected';
+      return 'Customer responded';
+    }
+
+    if (type.includes('approval_owner_recorded')) {
+      if (tone === 'approved') return 'Owner recorded approval';
+      if (tone === 'rejected') return 'Owner recorded rejection';
+      return 'Owner recorded response';
+    }
+
+    if (type.includes('approval_requested')) return 'Approval requested';
+    if (type.includes('part_added')) return 'Part added';
+    if (type.includes('part_updated')) return 'Part updated';
+    if (type.includes('part_removed')) return 'Part removed';
+    if (type.includes('job_created')) return this.translationService.instant('maintenance.details.jobCreated');
+
+    const raw = event.label || event.type || 'job-event';
     return raw
       .replace(/[_-]+/g, ' ')
       .replace(/\s+/g, ' ')
       .trim()
       .replace(/\b\w/g, (char) => char.toUpperCase());
+  }
+
+  private timelineTone(event: MaintenanceTimelineEvent): string {
+    const type = this.normalizedTimelineType(event);
+    const status = this.timelineMetadataValue(event, ['status', 'decision', 'customerResponse', 'response']);
+    const approved = event.metadata?.['approved'];
+
+    if (approved === true || status.includes('approved') || status.includes('approve')) return 'approved';
+    if (approved === false || status.includes('rejected') || status.includes('reject')) return 'rejected';
+    if (type.includes('approval_requested')) return 'requested';
+    if (type.includes('approval_responded') || type.includes('approval_owner_recorded')) return 'status';
+    if (type.includes('part_')) return 'part';
+    if (type.includes('job_created')) return 'created';
+    if (type.startsWith('status_')) return 'status';
+    return 'neutral';
+  }
+
+  private normalizedTimelineType(event: MaintenanceTimelineEvent): string {
+    return (event.type || event.label || '').replace(/-/g, '_').toLowerCase();
+  }
+
+  private timelineMetadataValue(event: MaintenanceTimelineEvent, keys: string[]): string {
+    const metadata = event.metadata || {};
+    for (const key of keys) {
+      const value = metadata[key];
+      if (value !== undefined && value !== null && `${value}`.trim()) {
+        return `${value}`.toLowerCase();
+      }
+    }
+    return '';
   }
 
   getRequestTypeLabel(type: PublicJobApprovalSummary['request']['type']): string {
