@@ -96,6 +96,14 @@ describe('InvoicePublicController', () => {
       },
       quote: { findUnique: jest.fn() },
       creditNote: { findUnique: jest.fn() },
+      maintenanceJobApprovalRequest: {
+        findUnique: jest.fn(),
+        update: jest.fn(),
+      },
+      maintenanceJobTimelineEvent: {
+        findMany: jest.fn(),
+        create: jest.fn(),
+      },
     };
     pdf = {
       renderInvoice: jest.fn(async () => Buffer.from('%PDF-1.4 fake-inv')),
@@ -231,6 +239,248 @@ describe('InvoicePublicController', () => {
       tokens.verify.mockReturnValueOnce({ id: 'gone', type: 'creditNote' });
       prisma.creditNote.findUnique.mockResolvedValueOnce(null);
       await expect(controller.getCreditNotePdf('t', res)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('job approvals', () => {
+    it('returns summary payload including request, job and timeline', async () => {
+      tokens.verify.mockReturnValueOnce({ id: 'approval-1', type: 'jobApproval' });
+      prisma.maintenanceJobApprovalRequest.findUnique.mockResolvedValueOnce({
+        id: 'approval-1',
+        status: 'PENDING',
+        maintenanceJobId: 'job-1',
+        requestedAmount: 120,
+        summary: 'Brake overhaul',
+        maintenanceJob: {
+          id: 'job-1',
+          title: 'Brake overhaul',
+          status: 'COMPLETED',
+          car: {
+            id: 'car-1',
+            make: 'Renault',
+            model: 'Clio',
+            licensePlate: 'TN-100-TN',
+            customer: { id: 'cus-1', firstName: 'John', lastName: 'Doe', phone: '+216 99 000 000' },
+          },
+        },
+      });
+      prisma.maintenanceJobTimelineEvent.findMany.mockResolvedValueOnce([
+        {
+          id: 'te-1',
+          eventType: 'part_added',
+          details: { lineId: 'l1' },
+          createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        },
+      ]);
+
+      const res = await controller.getJobApprovalSummary('job-token');
+
+      expect(tokens.verify).toHaveBeenCalledWith('job-token', 'jobApproval');
+      expect(prisma.maintenanceJobApprovalRequest.findUnique).toHaveBeenCalledWith({
+        where: { id: 'approval-1' },
+        include: expect.objectContaining({
+          maintenanceJob: expect.any(Object),
+        }),
+      });
+      expect(prisma.maintenanceJobTimelineEvent.findMany).toHaveBeenCalledWith({
+        where: { maintenanceJobId: 'job-1' },
+        orderBy: { createdAt: 'asc' },
+      });
+      expect(res.request).toHaveProperty('id', 'approval-1');
+      expect(res.job).toHaveProperty('title', 'Brake overhaul');
+      expect(res.timeline).toHaveLength(1);
+      expect(res.timeline[0]).toEqual({
+        id: 'te-1',
+        eventType: 'part_added',
+        details: { lineId: 'l1' },
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      });
+    });
+
+    it('recording approval through public approve endpoint updates status and timeline', async () => {
+      tokens.verify.mockReturnValueOnce({ id: 'approval-2', type: 'jobApproval' });
+      prisma.maintenanceJobApprovalRequest.findUnique
+        .mockResolvedValueOnce({
+          id: 'approval-2',
+          status: 'PENDING',
+          maintenanceJobId: 'job-2',
+        })
+        .mockResolvedValueOnce({
+          id: 'approval-2',
+          status: 'APPROVED',
+          maintenanceJobId: 'job-2',
+          requestedAmount: 120,
+          summary: 'Brake pads',
+          customerName: null,
+          customerEmail: null,
+          customerPhone: null,
+          respondedAt: new Date('2026-01-01T01:00:00.000Z'),
+          respondedBy: null,
+          responseChannel: 'public',
+          createdAt: new Date('2026-01-01T00:00:00.000Z'),
+          maintenanceJob: {
+            id: 'job-2',
+            title: 'Brake service',
+            status: 'IN_PROGRESS',
+            car: {
+              id: 'car-2',
+              year: 2020,
+              make: 'Renault',
+              model: 'Clio',
+              licensePlate: 'TN-200-TN',
+              customer: { id: 'cus-2', firstName: 'Jane', lastName: 'Doe', phone: '+216 22 000 000', email: 'jane@example.com' },
+            },
+          },
+        });
+      prisma.maintenanceJobApprovalRequest.update.mockResolvedValueOnce({
+        id: 'approval-2',
+        status: 'APPROVED',
+      });
+      prisma.maintenanceJobTimelineEvent.create.mockResolvedValueOnce({ id: 'e2' });
+      prisma.maintenanceJobTimelineEvent.findMany.mockResolvedValueOnce([]);
+
+      const res = await controller.approveJobByPublicLink(
+        'job-token',
+        { responseNote: 'Customer accepts' },
+      );
+
+      expect(prisma.maintenanceJobApprovalRequest.update).toHaveBeenCalledWith({
+        where: { id: 'approval-2' },
+        data: {
+          status: 'APPROVED',
+          responseNote: 'Customer accepts',
+          responseChannel: 'public',
+          respondedAt: expect.any(Date),
+        },
+      });
+      expect(prisma.maintenanceJobTimelineEvent.create).toHaveBeenCalledWith({
+        data: {
+          maintenanceJobId: 'job-2',
+          eventType: 'approval_responded',
+          details: {
+            approvalId: 'approval-2',
+            status: 'APPROVED',
+            responseChannel: 'public',
+          },
+        },
+      });
+      expect(res.status).toBe('approved');
+      expect(res.request.description).toBe('Brake pads');
+      expect(res.jobTitle).toBe('Brake service');
+    });
+
+    it('recording rejection through public reject endpoint updates status and timeline', async () => {
+      tokens.verify.mockReturnValueOnce({ id: 'approval-3', type: 'jobApproval' });
+      prisma.maintenanceJobApprovalRequest.findUnique
+        .mockResolvedValueOnce({
+          id: 'approval-3',
+          status: 'PENDING',
+          maintenanceJobId: 'job-3',
+        })
+        .mockResolvedValueOnce({
+          id: 'approval-3',
+          status: 'REJECTED',
+          maintenanceJobId: 'job-3',
+          requestedAmount: 95,
+          summary: 'Brake sensor',
+          customerName: null,
+          customerEmail: null,
+          customerPhone: null,
+          respondedAt: new Date('2026-01-01T01:00:00.000Z'),
+          respondedBy: null,
+          responseChannel: 'public',
+          createdAt: new Date('2026-01-01T00:00:00.000Z'),
+          maintenanceJob: {
+            id: 'job-3',
+            title: 'Sensor service',
+            status: 'IN_PROGRESS',
+            car: {
+              id: 'car-3',
+              year: 2021,
+              make: 'Peugeot',
+              model: '208',
+              licensePlate: 'TN-300-TN',
+              customer: { id: 'cus-3', firstName: 'Sam', lastName: 'Ray', phone: '+216 33 000 000', email: 'sam@example.com' },
+            },
+          },
+        });
+      prisma.maintenanceJobApprovalRequest.update.mockResolvedValueOnce({
+        id: 'approval-3',
+        status: 'REJECTED',
+      });
+      prisma.maintenanceJobTimelineEvent.create.mockResolvedValueOnce({ id: 'e3' });
+      prisma.maintenanceJobTimelineEvent.findMany.mockResolvedValueOnce([]);
+
+      const res = await controller.rejectJobByPublicLink(
+        'job-token',
+        { responseNote: 'Customer rejects' },
+      );
+
+      expect(prisma.maintenanceJobApprovalRequest.update).toHaveBeenCalledWith({
+        where: { id: 'approval-3' },
+        data: {
+          status: 'REJECTED',
+          responseNote: 'Customer rejects',
+          responseChannel: 'public',
+          respondedAt: expect.any(Date),
+        },
+      });
+      expect(res.status).toBe('rejected');
+      expect(res.request.description).toBe('Brake sensor');
+    });
+
+    it('returns the public summary when public response is already closed', async () => {
+      tokens.verify.mockReturnValueOnce({ id: 'approval-4', type: 'jobApproval' });
+      prisma.maintenanceJobApprovalRequest.findUnique
+        .mockResolvedValueOnce({
+          id: 'approval-4',
+          status: 'APPROVED',
+          maintenanceJobId: 'job-4',
+        })
+        .mockResolvedValueOnce({
+          id: 'approval-4',
+          status: 'APPROVED',
+          maintenanceJobId: 'job-4',
+          requestedAmount: 75,
+          summary: 'Oil filter',
+          customerName: null,
+          customerEmail: null,
+          customerPhone: null,
+          respondedAt: new Date('2026-01-01T01:00:00.000Z'),
+          respondedBy: null,
+          responseChannel: 'public',
+          createdAt: new Date('2026-01-01T00:00:00.000Z'),
+          maintenanceJob: {
+            id: 'job-4',
+            title: 'Oil service',
+            status: 'IN_PROGRESS',
+            car: {
+              id: 'car-4',
+              year: 2022,
+              make: 'Toyota',
+              model: 'Yaris',
+              licensePlate: 'TN-400-TN',
+              customer: { id: 'cus-4', firstName: 'Ali', lastName: 'Ben', phone: '+216 44 000 000', email: 'ali@example.com' },
+            },
+          },
+        });
+      prisma.maintenanceJobTimelineEvent.findMany.mockResolvedValueOnce([]);
+
+      const res = await controller.approveJobByPublicLink('job-token', {});
+
+      expect(res.status).toBe('approved');
+      expect(res.alreadyResponded).toBe(true);
+      expect(res.request.description).toBe('Oil filter');
+      expect(prisma.maintenanceJobApprovalRequest.update).not.toHaveBeenCalled();
+      expect(prisma.maintenanceJobTimelineEvent.create).not.toHaveBeenCalled();
+    });
+
+    it('throws NotFound when job approval request token maps to nothing', async () => {
+      tokens.verify.mockReturnValueOnce({ id: 'approval-missing', type: 'jobApproval' });
+      prisma.maintenanceJobApprovalRequest.findUnique.mockResolvedValueOnce(null);
+      await expect(controller.getJobApprovalSummary('bad-job-token')).rejects.toThrow(
         NotFoundException,
       );
     });

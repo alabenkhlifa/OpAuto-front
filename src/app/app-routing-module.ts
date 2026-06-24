@@ -18,6 +18,10 @@ export const routes: Routes = [
     canActivate: [guestGuard]
   },
   {
+    path: 'public/job-approvals/:token',
+    loadComponent: () => import('./features/public/public-job-approval.component').then(m => m.PublicJobApprovalComponent)
+  },
+  {
     path: 'dashboard',
     loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),
     canActivate: [authGuard]

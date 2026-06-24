@@ -9,6 +9,13 @@ import {
   MaintenanceHistory,
   ServiceType,
   ApprovalRequest,
+  MaintenancePart,
+  MaintenanceTimelineEvent,
+  ApprovalChannel,
+  JobApprovalCreatePayload,
+  JobApprovalResponsePayload,
+  PublicJobApprovalSummary,
+  ApprovalStatus,
   MaintenanceStatus,
   TaskStatus
 } from '../models/maintenance.model';
@@ -47,13 +54,12 @@ export class MaintenanceService {
     delete payload.status;
     delete payload.tasks;
     delete payload.approvals;
+    delete payload.parts;
+    delete payload.timelineEvents;
     delete payload.mileage;
     return this.http.post<any>('/maintenance', payload).pipe(
       map(j => this.mapFromBackend(j)),
-      tap(newJob => {
-        const current = this.maintenanceJobsSubject.value;
-        this.maintenanceJobsSubject.next([...current, newJob]);
-      })
+      tap(newJob => this.syncJobIntoStore(newJob))
     );
   }
 
@@ -65,15 +71,7 @@ export class MaintenanceService {
     delete payload.mileage;
     return this.http.put<any>(`/maintenance/${id}`, payload).pipe(
       map(j => this.mapFromBackend(j)),
-      tap(updated => {
-        const current = this.maintenanceJobsSubject.value;
-        const index = current.findIndex(j => j.id === id);
-        if (index !== -1) {
-          const updatedJobs = [...current];
-          updatedJobs[index] = updated;
-          this.maintenanceJobsSubject.next(updatedJobs);
-        }
-      })
+      tap(updated => this.syncJobIntoStore(updated))
     );
   }
 
@@ -97,15 +95,7 @@ export class MaintenanceService {
     }
     return this.http.put<any>(`/maintenance/${id}`, updates).pipe(
       map(j => this.mapFromBackend(j)),
-      tap(updated => {
-        const current = this.maintenanceJobsSubject.value;
-        const index = current.findIndex(j => j.id === id);
-        if (index !== -1) {
-          const updatedJobs = [...current];
-          updatedJobs[index] = updated;
-          this.maintenanceJobsSubject.next(updatedJobs);
-        }
-      })
+      tap(updated => this.syncJobIntoStore(updated))
     );
   }
 
@@ -115,74 +105,110 @@ export class MaintenanceService {
     }).pipe(
       switchMap(() => this.http.get<any>(`/maintenance/${jobId}`)),
       map(j => this.mapFromBackend(j)),
-      tap(updated => {
-        const current = this.maintenanceJobsSubject.value;
-        const index = current.findIndex(j => j.id === jobId);
-        if (index !== -1) {
-          const copy = [...current];
-          copy[index] = updated;
-          this.maintenanceJobsSubject.next(copy);
-        }
-      })
+      tap(updated => this.syncJobIntoStore(updated))
     );
   }
 
   addApprovalRequest(jobId: string, request: Omit<ApprovalRequest, 'id' | 'requestedAt' | 'status'>): Observable<MaintenanceJob> {
-    const job = this.maintenanceJobsSubject.value.find(j => j.id === jobId);
-    if (!job) {
-      throw new Error(`Job with id ${jobId} not found`);
-    }
-
-    const newRequest: ApprovalRequest = {
+    return this.createApprovalRequest(jobId, {
       ...request,
-      id: `approval-${Date.now()}`,
-      requestedAt: new Date(),
-      status: 'pending'
+      requestedBy: request.requestedBy || 'owner',
+    }).pipe(
+      switchMap(() => this.getMaintenanceJob(jobId)),
+      map(job => {
+        if (!job) throw new Error(`Job with id ${jobId} not found`);
+        return job;
+      }),
+      tap(updated => this.syncJobIntoStore(updated))
+    );
+  }
+
+  createApprovalRequest(jobId: string, request: JobApprovalCreatePayload): Observable<ApprovalRequest> {
+    const payload = {
+      ...request,
+      requestedAt: new Date().toISOString()
     };
+    return this.http.post<any>(`/maintenance/${jobId}/approvals`, payload).pipe(
+      map(r => this.mapApprovalFromBackend(r))
+    );
+  }
 
-    const updatedApprovalRequests = [...job.approvalRequests, newRequest];
-    return this.updateMaintenanceJob(jobId, {
-      approvalRequests: updatedApprovalRequests,
-      status: 'waiting-approval'
+  approveRequest(jobId: string, requestId: string, approvedBy: string, channel?: ApprovalChannel): Observable<MaintenanceJob> {
+    return this.recordOwnerApprovalDecision(jobId, requestId, {
+      decision: 'approved',
+      reviewer: approvedBy,
+      channel
     });
   }
 
-  approveRequest(jobId: string, requestId: string, approvedBy: string): Observable<MaintenanceJob> {
-    const job = this.maintenanceJobsSubject.value.find(j => j.id === jobId);
-    if (!job) {
-      throw new Error(`Job with id ${jobId} not found`);
-    }
-
-    const updatedRequests = job.approvalRequests.map(req => {
-      if (req.id === requestId) {
-        return { ...req, status: 'approved' as const, approvedBy, approvedAt: new Date() };
-      }
-      return req;
-    });
-
-    const hasApprovals = updatedRequests.some(req => req.status === 'pending');
-    const newStatus = hasApprovals ? 'waiting-approval' : 'in-progress';
-
-    return this.updateMaintenanceJob(jobId, {
-      approvalRequests: updatedRequests,
-      status: newStatus
+  rejectRequest(jobId: string, requestId: string, rejectionReason: string, channel?: ApprovalChannel): Observable<MaintenanceJob> {
+    return this.recordOwnerApprovalDecision(jobId, requestId, {
+      decision: 'rejected',
+      reason: rejectionReason,
+      channel
     });
   }
 
-  rejectRequest(jobId: string, requestId: string, rejectionReason: string): Observable<MaintenanceJob> {
-    const job = this.maintenanceJobsSubject.value.find(j => j.id === jobId);
-    if (!job) {
-      throw new Error(`Job with id ${jobId} not found`);
-    }
+  recordOwnerApprovalDecision(
+    jobId: string,
+    requestId: string,
+    payload: JobApprovalResponsePayload
+  ): Observable<MaintenanceJob> {
+    return this.http.post<any>(`/maintenance/${jobId}/approvals/${requestId}/response`, payload).pipe(
+      switchMap(() => this.getMaintenanceJob(jobId)),
+      map(job => {
+        if (!job) throw new Error(`Job with id ${jobId} not found`);
+        return job;
+      }),
+      tap(updated => this.syncJobIntoStore(updated))
+    );
+  }
 
-    const updatedRequests = job.approvalRequests.map(req => {
-      if (req.id === requestId) {
-        return { ...req, status: 'rejected' as const, rejectionReason };
-      }
-      return req;
-    });
+  addJobPart(jobId: string, part: Omit<MaintenancePart, 'id' | 'createdAt' | 'updatedAt' | 'totalPrice'>): Observable<MaintenancePart> {
+    return this.http.post<any>(`/maintenance/${jobId}/parts`, this.mapPartToBackend(part)).pipe(
+      map(p => this.mapPartFromBackend(p))
+    );
+  }
 
-    return this.updateMaintenanceJob(jobId, { approvalRequests: updatedRequests });
+  updateJobPart(jobId: string, partId: string, part: Partial<MaintenancePart>): Observable<MaintenancePart> {
+    return this.http.put<any>(`/maintenance/${jobId}/parts/${partId}`, this.mapPartToBackend(part)).pipe(
+      map(p => this.mapPartFromBackend(p))
+    );
+  }
+
+  removeJobPart(jobId: string, partId: string): Observable<void> {
+    return this.http.delete<void>(`/maintenance/${jobId}/parts/${partId}`).pipe(
+      map(() => undefined),
+      tap(() => {
+        const current = this.maintenanceJobsSubject.value;
+        const job = current.find(j => j.id === jobId);
+        if (!job) return;
+        const updatedJob = this.syncJobAfterPartRemoval(job, partId);
+        this.syncJobIntoStore(updatedJob);
+      })
+    );
+  }
+
+  refreshJobWithParts(jobId: string): Observable<MaintenanceJob | null> {
+    return this.getMaintenanceJob(jobId).pipe(
+      tap(job => {
+        if (!job) return;
+        this.syncJobIntoStore(job);
+      }),
+      switchMap(job => of(job || this.maintenanceJobsSubject.value.find(j => j.id === jobId) || null))
+    );
+  }
+
+  getPublicApprovalSummary(token: string): Observable<PublicJobApprovalSummary> {
+    return this.http.get<any>(`/public/job-approvals/${token}`).pipe(
+      map(payload => this.mapPublicApprovalSummary(payload))
+    );
+  }
+
+  respondToPublicApproval(token: string, response: JobApprovalResponsePayload): Observable<PublicJobApprovalSummary> {
+    return this.http.post<any>(`/public/job-approvals/${token}/response`, response).pipe(
+      map(payload => this.mapPublicApprovalSummary(payload))
+    );
   }
 
   getMaintenanceStats(): Observable<MaintenanceStats> {
@@ -312,7 +338,9 @@ export class MaintenanceService {
       actualDuration: b.actualDuration,
       startDate: b.startDate ? new Date(b.startDate) : undefined,
       completionDate: b.completionDate ? new Date(b.completionDate) : undefined,
-      approvalRequests: b.approvals || b.approvalRequests || [],
+      approvalRequests: (b.approvals || b.approvalRequests || []).map((a: any) => this.mapApprovalFromBackend(a)),
+      parts: (b.parts || b.jobParts || []).map((p: any) => this.mapPartFromBackend(p)),
+      timelineEvents: (b.timelineEvents || b.timeline || []).map((e: any) => this.mapTimelineFromBackend(e)),
       notes: b.notes || '',
       createdAt: new Date(b.createdAt),
       updatedAt: new Date(b.updatedAt)
@@ -334,9 +362,138 @@ export class MaintenanceService {
     if (f.notes !== undefined) result.notes = f.notes;
     if (f.tasks !== undefined) result.tasks = f.tasks;
     if (f.approvalRequests !== undefined) result.approvals = f.approvalRequests;
+    if (f.parts !== undefined) result.parts = f.parts;
+    if (f.timelineEvents !== undefined) result.timelineEvents = f.timelineEvents;
     if (f.completionDate !== undefined) result.completionDate = f.completionDate;
     if (f.currentMileage !== undefined) result.mileage = f.currentMileage;
     return result;
+  }
+
+  private mapApprovalFromBackend(a: any): ApprovalRequest {
+    const status = (fromBackendEnum(a.status) || a.status || 'pending') as ApprovalStatus;
+    const customerResponse = a.customerResponse
+      || (status === 'approved' || status === 'rejected' ? status : undefined);
+    const sentVia = a.sentVia
+      || (a.sendVia && a.sendVia !== 'none'
+        ? (a.sendVia === 'both' ? ['sms', 'email'] : [a.sendVia])
+        : undefined);
+    return {
+      id: a.id,
+      type: a.type || 'cost-estimate',
+      description: a.description || a.summary || '',
+      partName: a.partName,
+      estimatedPrice: a.estimatedPrice ?? a.requestedAmount ?? a.price ?? 0,
+      urgency: a.urgency || 'medium',
+      requestedBy: typeof a.requestedBy === 'string' ? a.requestedBy : 'Owner',
+      requestedAt: new Date(a.requestedAt || a.createdAt || Date.now()),
+      status,
+      approvedBy: a.approvedBy,
+      approvedAt: a.approvedAt ? new Date(a.approvedAt) : undefined,
+      rejectionReason: a.rejectionReason || a.reason || (status === 'rejected' ? a.responseNote : undefined),
+      customerResponse,
+      customerRespondedAt: (a.customerRespondedAt || a.respondedAt)
+        ? new Date(a.customerRespondedAt || a.respondedAt)
+        : undefined,
+      respondedVia: a.respondedVia || a.responseChannel,
+      sentVia,
+      sentTo: a.sentTo,
+      token: a.token || a.publicToken,
+      comments: a.comments || a.note || a.responseNote
+    };
+  }
+
+  private mapPartFromBackend(part: any): MaintenancePart {
+    const nestedPart = part.part || {};
+    return {
+      id: part.id,
+      name: part.name || part.partName || nestedPart.name || part.description || 'Part',
+      partNumber: part.partNumber || nestedPart.partNumber,
+      quantity: part.quantity ?? 1,
+      unitPrice: part.unitPrice || part.price || 0,
+      totalPrice: part.totalPrice || (part.quantity ? part.unitPrice * part.quantity : undefined),
+      supplier: part.supplier || part.vendor,
+      notes: part.notes || part.description,
+      createdAt: part.createdAt ? new Date(part.createdAt) : undefined,
+      updatedAt: part.updatedAt ? new Date(part.updatedAt) : undefined
+    };
+  }
+
+  private mapPartToBackend(part: Partial<MaintenancePart>): any {
+    return {
+      ...(part.name !== undefined ? { name: part.name } : {}),
+      ...(part.partNumber !== undefined ? { partNumber: part.partNumber } : {}),
+      ...(part.quantity !== undefined ? { quantity: part.quantity } : {}),
+      ...(part.unitPrice !== undefined ? { unitPrice: part.unitPrice } : {}),
+      ...(part.notes !== undefined ? { notes: part.notes } : {}),
+      ...(part.supplier !== undefined ? { supplier: part.supplier } : {})
+    };
+  }
+
+  private mapTimelineFromBackend(event: any): MaintenanceTimelineEvent {
+    const occurredAt = event.occurredAt || event.createdAt || event.timestamp;
+    return {
+      id: event.id,
+      type: event.type || event.eventType || 'job-event',
+      label: event.label || event.title,
+      description: event.description || event.message,
+      actorName: event.actorName || event.actor || event.performedBy,
+      actorId: event.actorId,
+      occurredAt: occurredAt ? new Date(occurredAt) : new Date(),
+      metadata: event.metadata || event.data || event.details
+    };
+  }
+
+  private mapPublicApprovalSummary(payload: any): PublicJobApprovalSummary {
+    const request = payload.request || {};
+    const job = payload.job || request.maintenanceJob || {};
+    const car = job.car || {};
+    const customer = car.customer || {};
+    const requestStatus = fromBackendEnum(request.status) || request.status || 'pending';
+    const responded = requestStatus === 'approved' || requestStatus === 'rejected';
+    const mappedRequest: ApprovalRequest = this.mapApprovalFromBackend(request);
+    const customerName = payload.customerName
+      || payload.name
+      || [customer.firstName, customer.lastName].filter(Boolean).join(' ');
+    const carDetails = payload.carDetails
+      || payload.car
+      || [car.year, car.make, car.model].filter(Boolean).join(' ');
+    return {
+      token: payload.token || payload.approvalToken || request.token || request.publicToken || '',
+      jobId: payload.jobId || request.jobId || request.maintenanceJobId || job.id || '',
+      jobTitle: payload.jobTitle || payload.title || request.jobTitle || job.title || '',
+      customerName,
+      carDetails,
+      licensePlate: payload.licensePlate || car.licensePlate || '',
+      status: requestStatus as 'pending' | 'approved' | 'rejected',
+      request: mappedRequest,
+      alreadyResponded: !!responded || !!payload.alreadyResponded,
+      respondedAt: payload.respondedAt ? new Date(payload.respondedAt) : undefined,
+      respondedBy: payload.respondedBy || request.respondedBy,
+      respondedVia: payload.respondedVia || request.respondedVia || request.responseChannel,
+      timeline: (payload.timeline || []).map((event: any) => this.mapTimelineFromBackend(event))
+    };
+  }
+
+  private syncJobIntoStore(job: MaintenanceJob): void {
+    const current = this.maintenanceJobsSubject.value;
+    const index = current.findIndex(j => j.id === job.id);
+    if (index !== -1) {
+      const updatedJobs = [...current];
+      updatedJobs[index] = job;
+      this.maintenanceJobsSubject.next(updatedJobs);
+    } else {
+      this.maintenanceJobsSubject.next([...current, job]);
+    }
+    if (this.selectedJob()?.id === job.id) {
+      this.selectedJob.set(job);
+    }
+  }
+
+  private syncJobAfterPartRemoval(job: MaintenanceJob, partId: string): MaintenanceJob {
+    return {
+      ...job,
+      parts: job.parts.filter(p => p.id !== partId)
+    };
   }
 
   private applyFilters(jobs: MaintenanceJob[], filters?: MaintenanceFilters): MaintenanceJob[] {

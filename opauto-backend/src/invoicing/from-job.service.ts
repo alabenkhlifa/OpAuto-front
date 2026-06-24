@@ -6,34 +6,20 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { InvoicingService } from './invoicing.service';
-import { CreateInvoiceDto, CreateLineItemDto } from './dto/create-invoice.dto';
+import { CreateInvoiceDto } from './dto/create-invoice.dto';
 
 /**
  * FromJobService — converts a completed `MaintenanceJob` into a DRAFT
- * invoice with one line per part used and one line per mechanic.
+ * invoice.
  *
- * The schema as of Phase 2 does NOT carry a `MaintenanceJobPart[]`
- * pivot — parts are tracked indirectly via the `InvoiceLineItem.partId`
- * column once an invoice is created. To bridge the gap until the
- * pivot model lands, this service builds the line items from:
- *   - the job's previously created InvoiceLineItem rows that already
- *     reference `maintenanceJobId` (parts and labor a previous draft
- *     captured), OR
- *   - the job's `actualHours` + assigned `employee` (single labor line).
+ * Line-source priority:
+ * 1) durable `MaintenanceJobLineItem` rows when they exist.
+ * 2) fallback to legacy job stock-outs (`reason='job:<id>'`) for older
+ *    jobs created before durable line persistence landed.
  *
- * In practice the v1 flow will be: a maintenance job persists its
- * "parts used" list as a transient set that the front-end ships in the
- * conversion request — but Phase 2 keeps the surface small. We expose a
- * route that:
- *   1. Looks for a previous DRAFT invoice tied to the job → returns 409
- *      if any non-cancelled invoice already references the job.
- *   2. Inspects the job's `employee` + `actualHours` (or `estimatedHours`)
- *      to derive a labor line, and pulls `recentParts` from the most
- *      recent `StockMovement(type='out', reason like 'job:<id>')` rows
- *      so part usage logged via inventory adjustments still flows in.
- *
- * If neither parts nor labor can be derived, we throw a 400 — the
- * caller is told their job has nothing billable yet.
+ * Labor is pulled from:
+ * - durable labor lines when present, otherwise
+ * - job `actualHours` or `estimatedHours` + assigned employee.
  */
 @Injectable()
 export class FromJobService {
@@ -47,8 +33,8 @@ export class FromJobService {
     garageId: string,
     body: { dueDate?: string; notes?: string } = {},
   ) {
-    // ── 1. Load + tenant scope ─────────────────────────────────
-    const job = await this.prisma.maintenanceJob.findUnique({
+    // ── 1. Load + tenant scope ────────────────────────────────
+    const job = (await this.prisma.maintenanceJob.findUnique({
       where: { id: jobId },
       include: {
         employee: {
@@ -68,14 +54,26 @@ export class FromJobService {
             licensePlate: true,
           },
         },
+        parts: {
+          include: {
+            part: {
+              select: {
+                id: true,
+                name: true,
+                unitPrice: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
       },
-    });
+    })) as any;
     // Don't leak existence — return 404 for both not-found and cross-tenant.
     if (!job || job.garageId !== garageId) {
       throw new NotFoundException('Maintenance job not found');
     }
 
-    // ── 2. Reject if any invoice already references this job ───
+    // ── 2. Reject if any invoice already references this job ──
     const existing = await this.prisma.invoice.findFirst({
       where: { maintenanceJobId: jobId, garageId },
       select: { id: true, invoiceNumber: true, status: true },
@@ -86,75 +84,109 @@ export class FromJobService {
       );
     }
 
-    // ── 3. Derive part usage from StockMovement rows tagged with
-    //       `reason='job:<jobId>'` and type='out'. This is the
-    //       convention used by inventory adjustments made during a
-    //       maintenance job — see InventoryService.adjustStock + the
-    //       `reason` free-text column on StockMovement.
-    const partOuts = await this.prisma.stockMovement.findMany({
-      where: { reason: `job:${jobId}`, type: 'out' },
-      select: {
-        partId: true,
-        quantity: true,
-        part: {
-          select: { id: true, name: true, unitPrice: true, garageId: true },
-        },
-      },
-    });
+    const lines = (job as any).parts ?? [];
+    const durablePartLines = lines.filter((line: any) => line.type === 'part');
+    const durableLaborLines = lines.filter((line: any) => line.type === 'labor');
 
-    // Aggregate by partId — multiple stock-out events for the same part
-    // collapse into a single invoice line.
-    const partLines = new Map<
-      string,
-      { name: string; unitPrice: number; quantity: number }
-    >();
-    for (const mv of partOuts) {
-      // Defensive cross-garage filter even though the job is already
-      // garage-scoped (parts can in principle be moved across garages).
-      if (!mv.part || mv.part.garageId !== garageId) continue;
-      const acc = partLines.get(mv.partId);
-      if (acc) {
-        acc.quantity += mv.quantity;
-      } else {
-        partLines.set(mv.partId, {
-          name: mv.part.name,
+    // ── 3. Derive part usage from durable lines or stock movements.
+    const lineItems = [] as CreateInvoiceDto['lineItems'];
+
+    if (durablePartLines.length > 0) {
+      for (const line of durablePartLines) {
+        lineItems.push({
+          description: line.description || (line.part?.name ?? 'Part'),
+          quantity: line.quantity,
+          unitPrice: line.unitPrice,
+          type: 'part',
+          partId: line.partId ?? undefined,
+          serviceCode: line.serviceCode ?? undefined,
+          mechanicId: line.mechanicId ?? undefined,
+          laborHours: line.laborHours ?? undefined,
+          tvaRate: line.tvaRate ?? undefined,
+          discountPct: line.discountPct ?? undefined,
+        });
+      }
+    } else {
+      const stockBasedPartLines = await this.prisma.stockMovement.findMany({
+        where: { reason: `job:${jobId}`, type: 'out' },
+        select: {
+          partId: true,
+          quantity: true,
+          part: {
+            select: { id: true, name: true, unitPrice: true, garageId: true },
+          },
+        },
+      });
+
+      const partLines = new Map<string, {
+        description: string;
+        quantity: number;
+        unitPrice: number;
+        partId?: string;
+      }>();
+
+      for (const mv of stockBasedPartLines) {
+        if (!mv.part || mv.part.garageId !== garageId) continue;
+
+        const key = mv.partId;
+        const existingLine = partLines.get(key);
+        if (existingLine) {
+          existingLine.quantity += mv.quantity;
+          continue;
+        }
+
+        partLines.set(key, {
+          description: mv.part.name,
+          partId: mv.partId,
           unitPrice: mv.part.unitPrice ?? 0,
           quantity: mv.quantity,
         });
       }
+
+      for (const p of partLines.values()) {
+        lineItems.push({
+          description: p.description,
+          quantity: p.quantity,
+          unitPrice: p.unitPrice,
+          type: 'part',
+          partId: p.partId,
+        });
+      }
     }
 
-    // ── 4. Derive labor line from the assigned mechanic + actualHours
-    //       (fallback to estimatedHours if actual not yet logged).
-    const laborHours = job.actualHours ?? job.estimatedHours ?? 0;
-    const hourlyRate = job.employee?.hourlyRate ?? 0;
-    const hasLabor = laborHours > 0 && job.employee != null;
+    // ── 4. Derive labor lines from durable labor lines or fallback.
+    if (durableLaborLines.length > 0) {
+      for (const line of durableLaborLines) {
+        const fallbackName = job.employee
+          ? `${job.employee.firstName} ${job.employee.lastName}`
+          : 'Mechanic';
 
-    const lineItems: CreateLineItemDto[] = [];
-    for (const [partId, line] of partLines.entries()) {
-      lineItems.push({
-        description: line.name,
-        quantity: line.quantity,
-        unitPrice: line.unitPrice,
-        type: 'part',
-      });
-      // partId is plumbed via the post-create patch below since
-      // CreateLineItemDto does not yet expose it — keep the public
-      // DTO stable and write the partId straight on the saved row.
-      (line as any).partId = partId;
-    }
-
-    if (hasLabor) {
-      lineItems.push({
-        description: `Labor — ${job.employee!.firstName} ${job.employee!.lastName}`,
-        quantity: laborHours,
-        // TODO: when Employee.hourlyRate is missing, fall back to a
-        // garage-level default hourly rate (Phase 3). For now an
-        // unset hourlyRate yields a 0 unit-price line which the
-        // owner can edit before issuing.
-        unitPrice: hourlyRate,
-        type: 'labor',
-      });
+        lineItems.push({
+          description:
+            line.description || `Labor — ${fallbackName}`,
+          quantity: line.quantity,
+          unitPrice: line.unitPrice,
+          type: 'labor',
+          serviceCode: line.serviceCode ?? undefined,
+          mechanicId: line.mechanicId ?? (job as any).employee?.id,
+          laborHours: line.laborHours ?? line.quantity,
+          tvaRate: line.tvaRate ?? undefined,
+          discountPct: line.discountPct ?? undefined,
+        });
+      }
+    } else {
+      const laborHours = job.actualHours ?? job.estimatedHours ?? 0;
+      const employee = (job as any).employee;
+      if (laborHours > 0 && employee != null) {
+        lineItems.push({
+          description: `Labor — ${employee.firstName} ${employee.lastName}`,
+          quantity: laborHours,
+          unitPrice: employee?.hourlyRate ?? 0,
+          type: 'labor',
+          mechanicId: employee?.id,
+          laborHours,
+        });
+      }
     }
 
     if (lineItems.length === 0) {
@@ -163,56 +195,22 @@ export class FromJobService {
       );
     }
 
-    // ── 5. Hand off to InvoicingService.create() so totals + TVA
-    //       computation stay in one place. We patch maintenanceJobId,
-    //       partId, and mechanicId on the persisted rows afterwards.
-    const dto: CreateInvoiceDto = {
+    const invoice = await this.invoicing.create(garageId, {
       customerId: job.car.customerId,
       carId: job.carId,
       lineItems,
       notes: body.notes,
       dueDate: body.dueDate,
-    };
-    const invoice = await this.invoicing.create(garageId, dto);
+    });
 
-    // Patch maintenanceJobId, partId on parts lines, mechanicId on labor.
     await this.prisma.invoice.update({
       where: { id: invoice.id },
-      data: { maintenanceJobId: jobId },
+      data: {
+        maintenanceJobId: jobId,
+      },
     });
 
-    // Persisted line ids aren't guaranteed to be ordered (UUIDs), so
-    // match each persisted row to a source DTO entry by content key
-    // (description + type + qty + unitPrice). This is unique enough
-    // within an invoice for our derivation paths.
-    const persistedLines = await this.prisma.invoiceLineItem.findMany({
-      where: { invoiceId: invoice.id },
-    });
-    const partIdsByLineKey = new Map<string, string>();
-    for (const [partId, line] of partLines.entries()) {
-      const key = `part|${line.name}|${line.quantity}|${line.unitPrice}`;
-      partIdsByLineKey.set(key, partId);
-    }
-    for (const li of persistedLines) {
-      const key = `${li.type ?? ''}|${li.description}|${li.quantity}|${li.unitPrice}`;
-      const partId = partIdsByLineKey.get(key);
-      if (li.type === 'part' && partId) {
-        await this.prisma.invoiceLineItem.update({
-          where: { id: li.id },
-          data: { partId },
-        });
-      } else if (li.type === 'labor' && hasLabor) {
-        await this.prisma.invoiceLineItem.update({
-          where: { id: li.id },
-          data: {
-            mechanicId: job.employee!.id,
-            laborHours,
-          },
-        });
-      }
-    }
-
-    // Return a fresh fetch so the caller sees the patched fields.
+    // Return fresh fetch so callers see all metadata.
     return this.invoicing.findOne(invoice.id, garageId);
   }
 }

@@ -109,4 +109,120 @@ describe('MaintenanceService — mapFromBackend', () => {
 
     expect(received.customerId).toBe('top-level-customer');
   });
+
+  it('maps job parts and timeline from /maintenance/:id response', () => {
+    let received: any;
+    service.getMaintenanceJob('job-1').subscribe((job) => (received = job));
+
+    httpMock.expectOne('/maintenance/job-1').flush(
+      backendJob({
+        parts: [
+          { id: 'part-1', name: 'Brake pad', partNumber: 'BP-001', quantity: 2, unitPrice: 15, supplier: 'AutoParts' },
+          { id: 'part-2', name: 'Disc', partNumber: 'DS-002', quantity: 1, unitPrice: 55, totalPrice: 55 },
+        ],
+        timelineEvents: [
+          { id: 'event-1', type: 'job-created', label: 'Created', occurredAt: '2026-06-01T10:00:00Z' },
+          { id: 'event-2', type: 'approval', message: 'Owner sent request', occurredAt: '2026-06-01T11:00:00Z' },
+        ],
+      }),
+    );
+
+    expect(received.parts?.length).toBe(2);
+    expect(received.parts[0].name).toBe('Brake pad');
+    expect(received.parts[1].totalPrice).toBe(55);
+    expect(received.timelineEvents[0].type).toBe('job-created');
+    expect(received.timelineEvents[1].description).toBe('Owner sent request');
+  });
+
+  it('posts part creation to /maintenance/:id/parts', () => {
+    let created: any;
+    service.addJobPart('job-1', {
+      name: 'Brake pad',
+      quantity: 2,
+      unitPrice: 15,
+      partNumber: 'BP-001',
+      supplier: 'AutoParts',
+      notes: '',
+    }).subscribe((part) => (created = part));
+
+    const req = httpMock.expectOne('/maintenance/job-1/parts');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual(
+      jasmine.objectContaining({
+        name: 'Brake pad',
+        quantity: 2,
+        unitPrice: 15,
+        partNumber: 'BP-001',
+        supplier: 'AutoParts',
+      }),
+    );
+
+    req.flush({ id: 'part-1', name: 'Brake pad', quantity: 2, unitPrice: 15 });
+
+    expect(created.id).toBe('part-1');
+    expect(created.name).toBe('Brake pad');
+  });
+
+  it('posts part updates to /maintenance/:id/parts/:partId', () => {
+    let updated: any;
+    service.updateJobPart('job-1', 'part-1', {
+      name: 'Brake pad',
+      quantity: 3,
+      unitPrice: 16,
+      partNumber: 'BP-001',
+      supplier: 'AutoParts',
+      notes: 'Adjusted',
+    }).subscribe((part) => (updated = part));
+
+    const req = httpMock.expectOne('/maintenance/job-1/parts/part-1');
+    expect(req.request.method).toBe('PUT');
+    req.flush({ id: 'part-1', name: 'Brake pad', quantity: 3, unitPrice: 16, notes: 'Adjusted' });
+
+    expect(updated.quantity).toBe(3);
+    expect(updated.unitPrice).toBe(16);
+    expect(updated.notes).toBe('Adjusted');
+  });
+
+  it('posts owner response to public approval token endpoint', () => {
+    let summary: any;
+    service.respondToPublicApproval('public-token', {
+      decision: 'approved',
+      channel: 'email',
+    }).subscribe((nextSummary) => (summary = nextSummary));
+
+    const req = httpMock.expectOne('/public/job-approvals/public-token/response');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ decision: 'approved', channel: 'email' });
+
+    req.flush({
+      token: 'public-token',
+      jobId: 'job-1',
+      request: {
+        id: 'approval-1',
+        status: 'approved',
+        description: 'Replace brake pad',
+      },
+      status: 'approved',
+    });
+
+    expect(summary.status).toBe('approved');
+    expect(summary.request.status).toBe('approved');
+  });
+
+  it('loads public approval summary from /public/job-approvals/:token', () => {
+    let summary: any;
+    service.getPublicApprovalSummary('public-token').subscribe((nextSummary) => (summary = nextSummary));
+
+    const req = httpMock.expectOne('/public/job-approvals/public-token');
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      token: 'public-token',
+      jobId: 'job-1',
+      request: { id: 'approval-1', status: 'pending', description: 'Replace brake pad' },
+    });
+
+    expect(summary.token).toBe('public-token');
+    expect(summary.request.status).toBe('pending');
+    expect(summary.status).toBe('pending');
+  });
 });

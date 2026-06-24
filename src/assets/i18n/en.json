@@ -571,7 +571,9 @@
       "reopen": "Reopen",
       "startJob": "Start Job",
       "completeJob": "Complete Job",
-      "changeStatus": "Change Status"
+      "changeStatus": "Change Status",
+      "loading": "Loading…",
+      "createInvoiceDraft": "Create invoice draft"
     },
     "details": {
       "jobInformation": "Job Information",
@@ -584,6 +586,42 @@
       "tasks": "Tasks",
       "tasksProgress": "{{completed}} of {{total}} completed",
       "noTasks": "No tasks defined for this job.",
+      "noParts": "No parts added yet.",
+      "parts": "Parts",
+      "partName": "Part name",
+      "partNumber": "Part number",
+      "quantity": "Quantity",
+      "unitPrice": "Unit price",
+      "supplier": "Supplier",
+      "comments": "Comments",
+      "addPart": "Add part",
+      "cancel": "Cancel",
+      "newApprovalRequest": "New approval request",
+      "lowUrgency": "Low urgency",
+      "mediumUrgency": "Medium urgency",
+      "highUrgency": "High urgency",
+      "approvalDescriptionPlaceholder": "Describe why approval is required and what was done.",
+      "sendVia": "Send via",
+      "createApprovalRequest": "Create approval request",
+      "noApprovalRequests": "No approval requests yet.",
+      "sendByCall": "Call",
+      "sendBySms": "SMS",
+      "sendByEmail": "Email",
+      "channel": {
+        "call": "Call",
+        "sms": "SMS",
+        "email": "Email"
+      },
+      "customerApproved": "Customer approved",
+      "customerRejected": "Customer rejected",
+      "sentVia": "Sent via",
+      "sentTo": "Sent to",
+      "recordApprove": "Record approval",
+      "alreadyResponded": "Already responded",
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+
       "estimatedShort": "Est",
       "actualShort": "Actual",
       "completedAt": "Completed",
@@ -617,8 +655,30 @@
       "requestType": {
         "partPurchase": "Part Purchase",
         "additionalWork": "Additional Work",
-        "costEstimate": "Cost Estimate Update"
+        "costEstimate": "Cost Estimate Update",
+        "priceChange": "Price Change",
+        "partsRequest": "Parts Request"
       }
+    },
+    "publicApproval": {
+      "title": "Customer Approval",
+      "loading": "Loading approval request…",
+      "invalidToken": "Invalid or expired approval link.",
+      "notFound": "Unable to load this approval request.",
+      "alreadyResponded": "This request has already been responded to.",
+      "pending": "Pending customer response",
+      "approve": "Approve",
+      "reject": "Reject",
+      "approveButton": "Approve Request",
+      "rejectButton": "Reject Request",
+      "reasonLabel": "Reason (required for reject)",
+      "requestSummary": "Request summary",
+      "jobTitle": "Job title",
+      "car": "Vehicle",
+      "type": "Request type",
+      "status": "Status",
+      "responseLabel": "Your response",
+      "description": "Request description"
     },
     "filters": {
       "title": "Filters",
@@ -3292,6 +3352,31 @@
           "description": "Cars that should be coming in soon for maintenance.",
           "example": "Which cars are due for maintenance?"
         },
+        "get_job": {
+          "name": "Load maintenance job details",
+          "description": "Load one job with durable parts/lines, approvals, and timeline history.",
+          "example": "Show me details for job 00000000-0000-0000-0000-000000000001"
+        },
+        "add_job_part": {
+          "name": "Add a part or labor line",
+          "description": "Add one durable line item (part or labor) to a maintenance job.",
+          "example": "Add a brake pad part line to job 00000000-0000-0000-0000-000000000001"
+        },
+        "request_job_customer_approval": {
+          "name": "Request customer approval",
+          "description": "Create a customer approval request for a job and optionally prepare communication metadata.",
+          "example": "Request customer approval for job 00000000-0000-0000-0000-000000000001"
+        },
+        "record_job_customer_acceptance": {
+          "name": "Record customer acceptance",
+          "description": "Mark a maintenance approval request as owner-recorded accepted after customer confirmation.",
+          "example": "Record customer acceptance for job 00000000-0000-0000-0000-000000000001 request 00000000-0000-0000-0000-000000000002"
+        },
+        "create_invoice_from_job": {
+          "name": "Create draft invoice from job",
+          "description": "Create an editable DRAFT invoice from durable job lines and return the draft.",
+          "example": "Create a draft invoice for job 00000000-0000-0000-0000-000000000001"
+        },
         "list_invoices": {
           "name": "List invoices",
           "description": "Browse invoices in any time window.",
@@ -3592,6 +3677,35 @@
         "running": "Checking which cars are due for service…",
         "success": "{{count}} car(s) due for service",
         "failure": "Couldn't check maintenance due"
+      },
+      "get_job": {
+        "running": "Loading maintenance job details…",
+        "success": "Loaded job {{jobId}} ({{partCount}} part lines)",
+        "failure": "Couldn't load that job"
+      },
+      "add_job_part": {
+        "running": "Adding a line to the job…",
+        "success": "Added {{type}} line",
+        "failure": "Couldn't add that line",
+        "approveVerb": "Yes, add line"
+      },
+      "request_job_customer_approval": {
+        "running": "Requesting customer approval…",
+        "success": "Approval request {{requestId}} created",
+        "failure": "Couldn't create approval request",
+        "approveVerb": "Yes, request approval"
+      },
+      "record_job_customer_acceptance": {
+        "running": "Recording owner-side acceptance…",
+        "success": "Approval recorded as {{status}}",
+        "failure": "Couldn't record acceptance",
+        "approveVerb": "Yes, record acceptance"
+      },
+      "create_invoice_from_job": {
+        "running": "Creating a draft invoice from the job…",
+        "success": "Draft invoice {{invoiceNumber}} created — {{total}} TND",
+        "failure": "Couldn't create draft invoice",
+        "approveVerb": "Yes, create draft invoice"
       },
       "list_invoices": {
         "running": "Loading invoices…",

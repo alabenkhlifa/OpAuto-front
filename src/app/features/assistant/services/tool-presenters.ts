@@ -64,6 +64,17 @@ const arr = (v: unknown, key: string): unknown[] | undefined => {
 const arrLen = (v: unknown, key: string): number =>
   Array.isArray(v) ? v.length : arr(v, key)?.length ?? 0;
 
+const deepNum = (v: unknown, path: string[]): number => {
+  let cur = v as Record<string, unknown>;
+  for (const key of path) {
+    if (!cur || typeof cur !== 'object' || !(key in cur)) {
+      return 0;
+    }
+    cur = (cur as Record<string, unknown>)[key] as Record<string, unknown>;
+  }
+  return typeof cur === 'number' ? cur : 0;
+};
+
 const formatDateTime = (iso?: string): string => {
   if (!iso) return '';
   const d = new Date(iso);
@@ -189,6 +200,41 @@ export const TOOL_PRESENTERS: ToolPresenter[] = [
       downloadUrl: previewUrl(a),
     }),
     approveVerbKey: k('create_invoice', 'approveVerb'),
+  }),
+
+  // ── Maintenance / Jobs ────────────────────────────────────────────────
+  present('get_job', {
+    runningParams: (a) => ({ jobId: str(a, 'jobId') ?? '' }),
+    successParams: (_a, r) => ({
+      status: str(r, 'status') ?? '',
+      partCount: deepNum(r, ['counts', 'partCount']),
+    }),
+  }),
+  present('add_job_part', {
+    runningParams: (_a) => ({ lineType: str(_a, 'type') ?? 'part' }),
+    successParams: (a, r) => ({
+      description: str(r, 'description') ?? str(a, 'description') ?? '',
+      type: str(r, 'type') ?? '',
+    }),
+    approveVerbKey: k('add_job_part', 'approveVerb'),
+  }),
+  present('request_job_customer_approval', {
+    runningParams: (_a) => ({ jobId: str(_a, 'jobId') ?? '' }),
+    successParams: (_a, r) => ({ requestId: str(r, 'id') ?? '' }),
+    approveVerbKey: k('request_job_customer_approval', 'approveVerb'),
+  }),
+  present('record_job_customer_acceptance', {
+    runningParams: (_a) => ({ jobId: str(_a, 'jobId') ?? '' }),
+    successParams: (_a, r) => ({ status: str(r, 'status') ?? '' }),
+    approveVerbKey: k('record_job_customer_acceptance', 'approveVerb'),
+  }),
+  present('create_invoice_from_job', {
+    runningParams: (a) => ({ jobId: str(a, 'jobId') ?? '' }),
+    successParams: (_a, r) => ({
+      invoiceNumber: str(r, 'invoiceNumber') ?? '',
+      total: num(r, 'total') ?? 0,
+    }),
+    approveVerbKey: k('create_invoice_from_job', 'approveVerb'),
   }),
 
   // ── Communications ──────────────────────────────────────────────────────

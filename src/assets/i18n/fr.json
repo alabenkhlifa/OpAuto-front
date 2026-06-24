@@ -582,7 +582,9 @@
       "reopen": "Rouvrir",
       "startJob": "Démarrer",
       "completeJob": "Terminer le travail",
-      "changeStatus": "Changer le statut"
+      "changeStatus": "Changer le statut",
+      "loading": "Chargement…",
+      "createInvoiceDraft": "Créer un brouillon de facture"
     },
     "details": {
       "jobInformation": "Informations sur le travail",
@@ -595,6 +597,42 @@
       "tasks": "Tâches",
       "tasksProgress": "{{completed}} sur {{total}} terminées",
       "noTasks": "Aucune tâche définie pour ce travail.",
+      "noParts": "Aucune pièce ajoutée pour le moment.",
+      "parts": "Pièces",
+      "partName": "Nom de la pièce",
+      "partNumber": "Numéro de pièce",
+      "quantity": "Quantité",
+      "unitPrice": "Prix unitaire",
+      "supplier": "Fournisseur",
+      "comments": "Commentaires",
+      "addPart": "Ajouter une pièce",
+      "cancel": "Annuler",
+      "newApprovalRequest": "Nouvelle demande d'approbation",
+      "lowUrgency": "Faible urgence",
+      "mediumUrgency": "Urgence moyenne",
+      "highUrgency": "Forte urgence",
+      "approvalDescriptionPlaceholder": "Expliquez pourquoi une approbation est requise et ce qui a été fait.",
+      "sendVia": "Envoyer via",
+      "createApprovalRequest": "Créer une demande d'approbation",
+      "noApprovalRequests": "Aucune demande d'approbation pour le moment.",
+      "sendByCall": "Appel",
+      "sendBySms": "SMS",
+      "sendByEmail": "Email",
+      "channel": {
+        "call": "Appel",
+        "sms": "SMS",
+        "email": "Email"
+      },
+      "customerApproved": "Client approuvé",
+      "customerRejected": "Client refusé",
+      "sentVia": "Envoyé via",
+      "sentTo": "Envoyé à",
+      "recordApprove": "Enregistrer l'approbation",
+      "alreadyResponded": "Déjà répondu",
+      "pending": "En attente",
+      "approved": "Approuvé",
+      "rejected": "Refusé",
+
       "estimatedShort": "Est",
       "actualShort": "Réel",
       "completedAt": "Terminée",
@@ -628,8 +666,30 @@
       "requestType": {
         "partPurchase": "Achat de pièces",
         "additionalWork": "Travail supplémentaire",
-        "costEstimate": "Mise à jour de l'estimation"
+        "costEstimate": "Mise à jour de l'estimation",
+        "priceChange": "Changement de prix",
+        "partsRequest": "Demande de pièces"
       }
+    },
+    "publicApproval": {
+      "title": "Approbation du client",
+      "loading": "Chargement de la demande d'approbation…",
+      "invalidToken": "Lien d'approbation invalide ou expiré.",
+      "notFound": "Impossible de charger cette demande d'approbation.",
+      "alreadyResponded": "Cette demande a déjà reçu une réponse.",
+      "pending": "En attente de réponse du client",
+      "approve": "Approuver",
+      "reject": "Refuser",
+      "approveButton": "Approuver la demande",
+      "rejectButton": "Refuser la demande",
+      "reasonLabel": "Motif (requis pour un refus)",
+      "requestSummary": "Résumé de la demande",
+      "jobTitle": "Intitulé du travail",
+      "car": "Véhicule",
+      "type": "Type de demande",
+      "status": "Statut",
+      "responseLabel": "Votre réponse",
+      "description": "Description de la demande"
     },
     "filters": {
       "title": "Filtres",
@@ -3387,6 +3447,31 @@
           "description": "Voitures qui devraient bientôt revenir pour un entretien.",
           "example": "Quelles voitures ont besoin d'un entretien ?"
         },
+        "get_job": {
+          "name": "Voir les détails d'un travail",
+          "description": "Charger un travail avec ses lignes, demandes d'approbation et historique.",
+          "example": "Montre-moi les détails du travail 00000000-0000-0000-0000-000000000001"
+        },
+        "add_job_part": {
+          "name": "Ajouter une ligne pièce ou main d'œuvre",
+          "description": "Ajouter une ligne durable (pièce ou main d'œuvre) au travail de maintenance.",
+          "example": "Ajoute une ligne pièce frein sur le travail 00000000-0000-0000-0000-000000000001"
+        },
+        "request_job_customer_approval": {
+          "name": "Demander l'approbation du client",
+          "description": "Créer une demande d'approbation client pour un travail et préparer l'envoi si besoin.",
+          "example": "Demande l'approbation client pour le travail 00000000-0000-0000-0000-000000000001"
+        },
+        "record_job_customer_acceptance": {
+          "name": "Enregistrer l'acceptation du client",
+          "description": "Marquer une demande d'approbation comme acceptée côté propriétaire après confirmation client.",
+          "example": "Enregistrer l'acceptation client pour la demande 00000000-0000-0000-0000-000000000002 du travail 00000000-0000-0000-0000-000000000001"
+        },
+        "create_invoice_from_job": {
+          "name": "Créer une facture brouillon depuis le travail",
+          "description": "Créer une facture DRAFT éditable depuis les lignes durables du travail.",
+          "example": "Créer une facture brouillon pour le travail 00000000-0000-0000-0000-000000000001"
+        },
         "list_invoices": {
           "name": "Liste des factures",
           "description": "Parcourir les factures sur une période.",
@@ -3687,6 +3772,35 @@
         "running": "Je vérifie les voitures dues pour entretien…",
         "success": "{{count}} voiture(s) dues pour entretien",
         "failure": "Impossible de vérifier l'entretien"
+      },
+      "get_job": {
+        "running": "Je charge les détails du travail…",
+        "success": "Travail chargé : {{jobId}} ({{partCount}} lignes)",
+        "failure": "Impossible de charger ce travail"
+      },
+      "add_job_part": {
+        "running": "J'ajoute une ligne au travail…",
+        "success": "Ligne {{type}} ajoutée",
+        "failure": "Impossible d'ajouter la ligne",
+        "approveVerb": "Oui, ajouter la ligne"
+      },
+      "request_job_customer_approval": {
+        "running": "Je crée la demande d'approbation…",
+        "success": "Demande {{requestId}} créée",
+        "failure": "Impossible de créer la demande d'approbation",
+        "approveVerb": "Oui, demander l'approbation"
+      },
+      "record_job_customer_acceptance": {
+        "running": "J'enregistre l'acceptation propriétaire…",
+        "success": "Demande enregistrée comme {{status}}",
+        "failure": "Impossible d'enregistrer l'acceptation",
+        "approveVerb": "Oui, enregistrer l'acceptation"
+      },
+      "create_invoice_from_job": {
+        "running": "Je crée un brouillon de facture à partir du travail…",
+        "success": "Brouillon de facture {{invoiceNumber}} créé — {{total}} TND",
+        "failure": "Impossible de créer le brouillon de facture",
+        "approveVerb": "Oui, créer le brouillon"
       },
       "list_invoices": {
         "running": "Je charge les factures…",

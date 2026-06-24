@@ -710,3 +710,119 @@ describe('InvoicingService – create() / update() per-line fields', () => {
     );
   });
 });
+
+// ─────────────────────────────────────────────────────────────────
+// Issue flow — stock decrement and maintenance-job stock-out idempotence.
+// ─────────────────────────────────────────────────────────────────
+
+describe('InvoicingService – issue() maintenance-job stock movement de-dup', () => {
+  let service: InvoicingService;
+  let prisma: any;
+
+  beforeEach(async () => {
+    prisma = {
+      invoice: {
+        findFirst: jest.fn(),
+        findUnique: jest.fn(),
+        update: jest.fn(),
+      },
+      part: {
+        findMany: jest.fn(),
+      },
+      stockMovement: {
+        groupBy: jest.fn(),
+        create: jest.fn(),
+      },
+      $transaction: jest.fn(async (cb: any) => cb({
+        invoice: {
+          update: jest.fn().mockImplementation((args: any) =>
+            Promise.resolve({ id: args.where.id, ...args.data, lineItems: args.data.lineItems?.create ?? [] }),
+          ),
+        },
+        stockMovement: {
+          create: jest.fn().mockResolvedValue({ id: 'mv-1' }),
+        },
+        part: {
+          update: jest.fn().mockResolvedValue({}),
+        },
+      })),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        InvoicingService,
+        { provide: PrismaService, useValue: prisma },
+        { provide: NumberingService, useValue: { next: jest.fn().mockResolvedValue('INV-2026-0001') } },
+        TaxCalculatorService,
+      ],
+    }).compile();
+
+    service = module.get(InvoicingService);
+  });
+
+  it('decrements only remaining quantity when maintenance job stock-outs already consumed part stock', async () => {
+    prisma.invoice.findFirst.mockResolvedValue({
+      id: 'inv-1',
+      garageId: GARAGE_ID,
+      customerId: CUSTOMER_ID,
+      maintenanceJobId: 'job-1',
+      lineItems: [
+        { partId: 'part-1', quantity: 5 },
+        { partId: 'part-1', quantity: 2 },
+      ],
+      status: 'DRAFT',
+      customer: { firstName: 'Ahmed', lastName: 'Ben Ali' },
+      car: null,
+      dueDate: new Date('2026-06-01'),
+    });
+    prisma.stockMovement.groupBy.mockResolvedValue([
+      { partId: 'part-1', _sum: { quantity: 4 } },
+    ]);
+    prisma.part.findMany.mockResolvedValue([{ id: 'part-1', name: 'Brake disc', quantity: 99 }]);
+
+    const txInvoiceUpdate = jest.fn().mockResolvedValue({ id: 'inv-1', status: 'SENT' });
+    const txStockMovementCreate = jest.fn().mockResolvedValue({ id: 'sm-1' });
+    const txPartUpdate = jest.fn().mockResolvedValue({});
+    prisma.$transaction.mockImplementationOnce(async (cb: any) =>
+      cb({
+        invoice: { update: txInvoiceUpdate },
+        stockMovement: { create: txStockMovementCreate },
+        part: { update: txPartUpdate },
+      }),
+    );
+
+    const result = await service.issue('inv-1', GARAGE_ID, 'owner-1');
+
+    expect(result.id).toBe('inv-1');
+    expect(txStockMovementCreate).toHaveBeenCalledWith({
+      data: {
+        partId: 'part-1',
+        type: 'out',
+        quantity: 3,
+        reason: 'invoice:INV-2026-0001',
+        reference: 'inv-1',
+      },
+    });
+    expect(txPartUpdate).toHaveBeenCalledWith({
+      where: { id: 'part-1' },
+      data: { quantity: { decrement: 3 } },
+    });
+    expect(txInvoiceUpdate).toHaveBeenCalledWith({
+      where: { id: 'inv-1' },
+      data: expect.objectContaining({
+        status: 'SENT',
+        invoiceNumber: 'INV-2026-0001',
+      }),
+      include: expect.any(Object),
+    });
+    expect(prisma.stockMovement.groupBy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          reason: 'job:job-1',
+          type: 'out',
+          partId: { in: ['part-1'] },
+        },
+      }),
+    );
+  });
+});

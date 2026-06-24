@@ -47,6 +47,7 @@ export class App implements OnInit {
 
   public isShelllessRoute(): boolean {
     const path = this.router.url.split('?')[0].split('#')[0];
-    return path === '/auth' || path === '/' || path === '/admin/dashboard' || path === '/admin/dashoard';
+    return path === '/auth' || path === '/' || path === '/admin/dashboard' || path === '/admin/dashoard'
+      || path.startsWith('/public/job-approvals/');
   }
 }

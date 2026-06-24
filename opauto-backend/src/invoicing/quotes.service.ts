@@ -282,6 +282,12 @@ export class QuotesService {
         quantity: li.quantity,
         unitPrice: li.unitPrice,
         type: li.type ?? undefined,
+        partId: li.partId ?? undefined,
+        serviceCode: li.serviceCode ?? undefined,
+        mechanicId: li.mechanicId ?? undefined,
+        laborHours: li.laborHours ?? undefined,
+        tvaRate: li.tvaRate,
+        discountPct: li.discountPct ?? undefined,
       })),
     });
 

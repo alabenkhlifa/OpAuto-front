@@ -31,6 +31,7 @@ import { AppointmentsToolsModule } from './assistant/tools/appointments/appointm
 import { InvoicingInventoryToolsModule } from './assistant/tools/invoicing-inventory/invoicing-inventory-tools.module';
 import { CommunicationsToolsModule } from './assistant/tools/communications/communications-tools.module';
 import { ReportsToolsModule } from './assistant/tools/reports/reports-tools.module';
+import { MaintenanceJobToolsModule } from './assistant/tools/maintenance-job/maintenance-job-tools.module';
 import { AgentsModule } from './assistant/agents/agents.module';
 import { PublicModule } from './public/public.module';
 import { AdminAiUsageModule } from './admin-ai-usage/admin-ai-usage.module';
@@ -105,6 +106,7 @@ const garageIdTracker = (req: Record<string, any>): string => {
     CustomersCarsToolsModule,
     AppointmentsToolsModule,
     InvoicingInventoryToolsModule,
+    MaintenanceJobToolsModule,
     CommunicationsToolsModule,
     ReportsToolsModule,
     AgentsModule,

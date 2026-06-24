@@ -196,6 +196,8 @@ describe('AssistantToolPresenterService', () => {
       'list_top_customers', 'list_at_risk_customers', 'list_returning_customers', 'list_maintenance_due',
       'list_invoices', 'get_invoice', 'list_overdue_invoices', 'list_low_stock_parts',
       'get_inventory_value', 'record_payment', 'create_invoice',
+      'get_job', 'add_job_part', 'request_job_customer_approval',
+      'record_job_customer_acceptance', 'create_invoice_from_job',
       'send_sms', 'send_email', 'propose_retention_action',
       'list_active_jobs', 'get_dashboard_kpis', 'get_invoices_summary',
       'get_customer_count', 'get_revenue_summary', 'get_revenue_breakdown_by_service',

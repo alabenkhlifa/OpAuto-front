@@ -1,6 +1,9 @@
 import {
   Controller,
   Get,
+  Body,
+  Post,
+  BadRequestException,
   Logger,
   NotFoundException,
   Param,
@@ -8,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
-import { InvoiceStatus } from '@prisma/client';
+import { ApprovalStatus, InvoiceStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { PdfRendererService } from '../invoicing/pdf-renderer.service';
 import { InvoiceTokenService } from './invoice-token.service';
@@ -100,6 +103,54 @@ export class InvoicePublicController {
     this.sendPdf(res, `quote-${quote.quoteNumber}.pdf`, buf);
   }
 
+  @Get('job-approvals/:token')
+  async getJobApprovalSummary(@Param('token') token: string): Promise<any> {
+    const payload = this.tokens.verify(token, 'jobApproval');
+    return this.buildJobApprovalSummary(payload.id, token);
+  }
+
+  @Post('job-approvals/:token/approve')
+  async approveJobByPublicLink(
+    @Param('token') token: string,
+    @Body() body: { responseNote?: string; reason?: string } = {},
+  ) {
+    return this.respondPublicJobApproval(token, ApprovalStatus.APPROVED, {
+      responseNote: body?.responseNote ?? body?.reason,
+      responseChannel: 'public',
+    });
+  }
+
+  @Post('job-approvals/:token/reject')
+  async rejectJobByPublicLink(
+    @Param('token') token: string,
+    @Body() body: { responseNote?: string; reason?: string } = {},
+  ) {
+    return this.respondPublicJobApproval(token, ApprovalStatus.REJECTED, {
+      responseNote: body?.responseNote ?? body?.reason,
+      responseChannel: 'public',
+    });
+  }
+
+  @Post('job-approvals/:token/response')
+  async respondJobByPublicLink(
+    @Param('token') token: string,
+    @Body()
+    body: {
+      decision?: 'approved' | 'rejected';
+      status?: ApprovalStatus | 'approved' | 'rejected';
+      responseNote?: string;
+      reason?: string;
+      responseChannel?: string;
+      channel?: string;
+    } = {},
+  ) {
+    const status = this.normalizeApprovalStatus(body?.status ?? body?.decision);
+    return this.respondPublicJobApproval(token, status, {
+      responseNote: body?.responseNote ?? body?.reason,
+      responseChannel: body?.responseChannel ?? body?.channel ?? 'public',
+    });
+  }
+
   @Get('credit-notes/:token')
   async getCreditNotePdf(
     @Param('token') token: string,
@@ -130,5 +181,139 @@ export class InvoicePublicController {
     );
     res.setHeader('Content-Length', String(buf.length));
     res.end(buf);
+  }
+
+  private async respondPublicJobApproval(
+    token: string,
+    status: ApprovalStatus,
+    opts: { responseNote?: string; responseChannel?: string },
+  ) {
+    const payload = this.tokens.verify(token, 'jobApproval');
+    const request = await this.prisma.maintenanceJobApprovalRequest.findUnique({
+      where: { id: payload.id },
+    });
+    if (!request) throw new NotFoundException('Approval request not found');
+
+    if (request.status !== ApprovalStatus.PENDING) {
+      return this.buildJobApprovalSummary(request.id, token);
+    }
+
+    await this.prisma.maintenanceJobApprovalRequest.update({
+      where: { id: request.id },
+      data: {
+        status,
+        responseNote: opts.responseNote ?? null,
+        responseChannel: opts.responseChannel ?? 'public',
+        respondedAt: new Date(),
+      },
+    });
+
+    await this.prisma.maintenanceJobTimelineEvent.create({
+      data: {
+        maintenanceJobId: request.maintenanceJobId,
+        eventType: 'approval_responded',
+        details: {
+          approvalId: request.id,
+          status,
+          responseChannel: opts.responseChannel ?? 'public',
+        },
+      },
+    });
+
+    return this.buildJobApprovalSummary(request.id, token);
+  }
+
+  private async buildJobApprovalSummary(requestId: string, token: string): Promise<any> {
+    const request = await this.prisma.maintenanceJobApprovalRequest.findUnique({
+      where: { id: requestId },
+      include: {
+        maintenanceJob: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            car: {
+              select: {
+                id: true,
+                make: true,
+                model: true,
+                year: true,
+                licensePlate: true,
+                customer: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    phone: true,
+                    email: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!request || !request.maintenanceJob) {
+      throw new NotFoundException('Approval request not found');
+    }
+
+    const timeline = await this.prisma.maintenanceJobTimelineEvent.findMany({
+      where: { maintenanceJobId: request.maintenanceJobId },
+      orderBy: { createdAt: 'asc' },
+    });
+    const job = request.maintenanceJob;
+    const customer = job.car?.customer;
+    const customerName = request.customerName
+      || [customer?.firstName, customer?.lastName].filter(Boolean).join(' ');
+    const status = this.toPublicStatus(request.status);
+
+    return {
+      token,
+      jobId: job.id,
+      jobTitle: job.title,
+      customerName,
+      carDetails: [job.car?.year, job.car?.make, job.car?.model].filter(Boolean).join(' '),
+      licensePlate: job.car?.licensePlate ?? '',
+      status,
+      alreadyResponded: status === 'approved' || status === 'rejected',
+      respondedAt: request.respondedAt,
+      respondedBy: request.respondedBy,
+      respondedVia: request.responseChannel,
+      request: {
+        ...request,
+        token,
+        description: request.summary ?? '',
+        estimatedPrice: request.requestedAmount ?? 0,
+        requestedAt: request.createdAt,
+        customerResponse: status === 'pending' ? undefined : status,
+        customerRespondedAt: request.respondedAt,
+        respondedVia: request.responseChannel,
+        sentTo: request.customerEmail ?? request.customerPhone ?? customer?.email ?? customer?.phone,
+      },
+      job,
+      timeline: timeline.map((event) => ({
+        id: event.id,
+        eventType: event.eventType,
+        details: event.details,
+        createdAt: event.createdAt,
+      })),
+    };
+  }
+
+  private normalizeApprovalStatus(status: ApprovalStatus | 'approved' | 'rejected' | undefined): ApprovalStatus {
+    if (status === ApprovalStatus.APPROVED || status === 'approved') {
+      return ApprovalStatus.APPROVED;
+    }
+    if (status === ApprovalStatus.REJECTED || status === 'rejected') {
+      return ApprovalStatus.REJECTED;
+    }
+    throw new BadRequestException('Approval response must be approved or rejected');
+  }
+
+  private toPublicStatus(status: ApprovalStatus): 'pending' | 'approved' | 'rejected' {
+    if (status === ApprovalStatus.APPROVED) return 'approved';
+    if (status === ApprovalStatus.REJECTED) return 'rejected';
+    return 'pending';
   }
 }

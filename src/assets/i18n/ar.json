@@ -582,7 +582,9 @@
       "reopen": "إعادة فتح",
       "startJob": "بدء العمل",
       "completeJob": "إكمال العمل",
-      "changeStatus": "تغيير الحالة"
+      "changeStatus": "تغيير الحالة",
+      "loading": "جاري التحميل…",
+      "createInvoiceDraft": "إنشاء فاتورة تجريبية"
     },
     "details": {
       "jobInformation": "معلومات العمل",
@@ -595,6 +597,42 @@
       "tasks": "المهام",
       "tasksProgress": "{{completed}} من {{total}} مكتملة",
       "noTasks": "لا توجد مهام محددة لهذا العمل.",
+      "noParts": "لا توجد قطع مضافة بعد.",
+      "parts": "القطع",
+      "partName": "اسم القطعة",
+      "partNumber": "رقم القطعة",
+      "quantity": "الكمية",
+      "unitPrice": "سعر الوحدة",
+      "supplier": "المورد",
+      "comments": "ملاحظات",
+      "addPart": "إضافة قطعة",
+      "cancel": "إلغاء",
+      "newApprovalRequest": "طلب موافقة جديد",
+      "lowUrgency": "أولوية منخفضة",
+      "mediumUrgency": "أولوية متوسطة",
+      "highUrgency": "أولوية عالية",
+      "approvalDescriptionPlaceholder": "اشرح سبب الحاجة إلى الموافقة وما تم إنجازه.",
+      "sendVia": "إرسال عبر",
+      "createApprovalRequest": "إنشاء طلب موافقة",
+      "noApprovalRequests": "لا توجد طلبات موافقة حتى الآن.",
+      "sendByCall": "اتصال",
+      "sendBySms": "رسالة نصية",
+      "sendByEmail": "البريد الإلكتروني",
+      "channel": {
+        "call": "اتصال",
+        "sms": "رسالة نصية",
+        "email": "البريد الإلكتروني"
+      },
+      "customerApproved": "وافق العميل",
+      "customerRejected": "رفض العميل",
+      "sentVia": "أُرسل عبر",
+      "sentTo": "أُرسل إلى",
+      "recordApprove": "تسجيل الموافقة",
+      "alreadyResponded": "تم الرد بالفعل",
+      "pending": "معلق",
+      "approved": "موافق",
+      "rejected": "مرفوض",
+
       "estimatedShort": "متوقع",
       "actualShort": "فعلي",
       "completedAt": "اكتمل",
@@ -628,8 +666,30 @@
       "requestType": {
         "partPurchase": "شراء قطعة",
         "additionalWork": "عمل إضافي",
-        "costEstimate": "تحديث تقدير التكلفة"
+        "costEstimate": "تحديث تقدير التكلفة",
+        "priceChange": "تغيير السعر",
+        "partsRequest": "طلب قطع"
       }
+    },
+    "publicApproval": {
+      "title": "موافقة العميل",
+      "loading": "جاري تحميل طلب الموافقة…",
+      "invalidToken": "رابط الموافقة غير صالح أو منتهي.",
+      "notFound": "تعذر تحميل طلب الموافقة هذا.",
+      "alreadyResponded": "تم الرد على هذا الطلب بالفعل.",
+      "pending": "في انتظار رد العميل",
+      "approve": "موافقة",
+      "reject": "رفض",
+      "approveButton": "الموافقة على الطلب",
+      "rejectButton": "رفض الطلب",
+      "reasonLabel": "السبب (مطلوب للرفض)",
+      "requestSummary": "ملخص الطلب",
+      "jobTitle": "عنوان العمل",
+      "car": "المركبة",
+      "type": "نوع الطلب",
+      "status": "الحالة",
+      "responseLabel": "ردك",
+      "description": "وصف الطلب"
     },
     "filters": {
       "title": "المرشحات",
@@ -3425,6 +3485,31 @@
           "description": "السيارات التي يجب أن تأتي قريبًا للصيانة.",
           "example": "أيّ السيارات تحتاج إلى صيانة؟"
         },
+        "get_job": {
+          "name": "عرض تفاصيل عمل صيانة",
+          "description": "تحميل عمل صيانة واحد مع الخطوط الدائمة والموافقات وسجل الأحداث.",
+          "example": "اعرض تفاصيل العمل 00000000-0000-0000-0000-000000000001"
+        },
+        "add_job_part": {
+          "name": "إضافة قطعة أو عمل يدوي",
+          "description": "إضافة سطر دائم (قطعة أو عمل يدوي) إلى عمل صيانة.",
+          "example": "أضف سطر قطعة فرامل للعمل 00000000-0000-0000-0000-000000000001"
+        },
+        "request_job_customer_approval": {
+          "name": "طلب موافقة العميل",
+          "description": "إنشاء طلب موافقة عميل لعمل صيانة مع إعداد خيارات الإرسال إن لزم.",
+          "example": "اطلب موافقة العميل على العمل 00000000-0000-0000-0000-000000000001"
+        },
+        "record_job_customer_acceptance": {
+          "name": "تسجيل موافقة العميل",
+          "description": "تسجيل الطلب كمعتمد من قبل المالك بعد تأكيد العميل.",
+          "example": "سجّل موافقة العميل لطلب 00000000-0000-0000-0000-000000000002 على العمل 00000000-0000-0000-0000-000000000001"
+        },
+        "create_invoice_from_job": {
+          "name": "إنشاء مسودة فاتورة من العمل",
+          "description": "إنشاء فاتورة DRAFT قابلة للتعديل من سطور العمل الدائمة.",
+          "example": "أنشئ مسودة فاتورة للعمل 00000000-0000-0000-0000-000000000001"
+        },
         "list_invoices": {
           "name": "قائمة الفواتير",
           "description": "تصفّح الفواتير في فترة معيّنة.",
@@ -3725,6 +3810,35 @@
         "running": "جارٍ التحقق من السيارات التي تحتاج صيانة…",
         "success": "{{count}} سيارة تحتاج إلى صيانة",
         "failure": "تعذّر التحقق من الصيانة"
+      },
+      "get_job": {
+        "running": "جارٍ تحميل تفاصيل العمل…",
+        "success": "تم تحميل العمل {{jobId}} ({{partCount}} سطر)",
+        "failure": "تعذّر تحميل هذا العمل"
+      },
+      "add_job_part": {
+        "running": "جارٍ إضافة سطر للعمل…",
+        "success": "تمت إضافة سطر {{type}}",
+        "failure": "تعذّر إضافة السطر",
+        "approveVerb": "نعم، أضف السطر"
+      },
+      "request_job_customer_approval": {
+        "running": "جارٍ إنشاء طلب موافقة…",
+        "success": "تم إنشاء طلب {{requestId}}",
+        "failure": "تعذّر إنشاء طلب الموافقة",
+        "approveVerb": "نعم، اطلب الموافقة"
+      },
+      "record_job_customer_acceptance": {
+        "running": "جارٍ تسجيل موافقة المالك…",
+        "success": "تم تسجيل الطلب كـ {{status}}",
+        "failure": "تعذّر تسجيل الموافقة",
+        "approveVerb": "نعم، سجّل الموافقة"
+      },
+      "create_invoice_from_job": {
+        "running": "جارٍ إنشاء فاتورة مسودة من العمل…",
+        "success": "تم إنشاء مسودة الفاتورة {{invoiceNumber}} — {{total}} د.ت",
+        "failure": "تعذّر إنشاء الفاتورة",
+        "approveVerb": "نعم، أنشئ المسودة"
       },
       "list_invoices": {
         "running": "جارٍ تحميل الفواتير…",

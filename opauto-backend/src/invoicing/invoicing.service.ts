@@ -738,17 +738,47 @@ export class InvoicingService {
       (li) => li.partId !== null && li.partId !== undefined,
     );
 
-    if (partsLines.length > 0) {
-      // Aggregate requested qty per partId — multiple lines for the
-      // same part collapse into a single demand check.
-      const demandByPart = new Map<string, number>();
-      for (const li of partsLines) {
-        const qty = Math.round(li.quantity);
-        if (qty <= 0) continue;
-        demandByPart.set(li.partId!, (demandByPart.get(li.partId!) ?? 0) + qty);
+    const toDecrementByPart = new Map<string, number>();
+
+    // Aggregate requested qty per partId — multiple lines for the
+    // same part collapse into a single demand check.
+    const demandByPart = new Map<string, number>();
+    for (const li of partsLines) {
+      const qty = Math.round(li.quantity);
+      if (qty <= 0) continue;
+      demandByPart.set(li.partId!, (demandByPart.get(li.partId!) ?? 0) + qty);
+    }
+
+    if (demandByPart.size > 0) {
+      // If the same maintenance job already produced job-level stock-out
+      // movements, treat those as already-consumed quantity and do not
+      // decrement stock again during invoice issue.
+      const partIds = [...demandByPart.keys()];
+      const alreadyConsumedByPart = new Map<string, number>();
+      if (invoice.maintenanceJobId) {
+        const priorMovements = await this.prisma.stockMovement.groupBy({
+          by: ['partId'],
+          where: {
+            reason: `job:${invoice.maintenanceJobId}`,
+            type: 'out',
+            partId: { in: partIds },
+          },
+          _sum: { quantity: true },
+        });
+        for (const row of priorMovements) {
+          if (!row.partId) continue;
+          alreadyConsumedByPart.set(row.partId, row._sum.quantity ?? 0);
+        }
       }
 
-      const partIds = [...demandByPart.keys()];
+      for (const [partId, requested] of demandByPart.entries()) {
+        const alreadyConsumed = Math.round(alreadyConsumedByPart.get(partId) ?? 0);
+        const remainingQty = Math.max(0, requested - alreadyConsumed);
+        if (remainingQty > 0) {
+          toDecrementByPart.set(partId, remainingQty);
+        }
+      }
+
       const parts = await this.prisma.part.findMany({
         where: { id: { in: partIds }, garageId },
         select: { id: true, name: true, quantity: true },
@@ -761,7 +791,7 @@ export class InvoicingService {
         requested: number;
         available: number;
       }> = [];
-      for (const [partId, requested] of demandByPart.entries()) {
+      for (const [partId, requested] of toDecrementByPart.entries()) {
         const part = byId.get(partId);
         if (!part) {
           // Part vanished or belongs to another garage — treat as 0
@@ -824,12 +854,10 @@ export class InvoicingService {
         },
       });
 
-      for (const li of partsLines) {
-        const qty = Math.round(li.quantity);
-        if (qty <= 0) continue;
+      for (const [partId, qty] of toDecrementByPart) {
         await tx.stockMovement.create({
           data: {
-            partId: li.partId!,
+            partId,
             type: 'out',
             quantity: qty,
             reason: `invoice:${fiscalNumber}`,
@@ -837,7 +865,7 @@ export class InvoicingService {
           },
         });
         await tx.part.update({
-          where: { id: li.partId! },
+          where: { id: partId },
           data: { quantity: { decrement: qty } },
         });
       }

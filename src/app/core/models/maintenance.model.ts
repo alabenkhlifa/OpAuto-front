@@ -21,9 +21,35 @@ export interface MaintenanceJob {
   startDate?: Date;
   completionDate?: Date;
   approvalRequests: ApprovalRequest[];
+  parts: MaintenancePart[];
+  timelineEvents: MaintenanceTimelineEvent[];
   notes: string;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface MaintenancePart {
+  id: string;
+  name: string;
+  partNumber?: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice?: number;
+  supplier?: string;
+  notes?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface MaintenanceTimelineEvent {
+  id: string;
+  type: string;
+  label?: string;
+  description?: string;
+  actorName?: string;
+  actorId?: string;
+  occurredAt: Date;
+  metadata?: Record<string, string | number | boolean | null>;
 }
 
 export interface MaintenanceTask {
@@ -50,7 +76,7 @@ export interface MaintenancePhoto {
 
 export interface ApprovalRequest {
   id: string;
-  type: 'part-purchase' | 'additional-work' | 'cost-estimate';
+  type: 'part-purchase' | 'additional-work' | 'cost-estimate' | 'price-change' | 'parts-request';
   description: string;
   partName?: string;
   estimatedPrice: number;
@@ -61,7 +87,49 @@ export interface ApprovalRequest {
   approvedBy?: string;
   approvedAt?: Date;
   rejectionReason?: string;
+  customerResponse?: 'approved' | 'rejected';
+  customerRespondedAt?: Date;
+  respondedVia?: 'call' | 'sms' | 'email';
+  sentVia?: ApprovalChannel[];
+  sentTo?: string;
+  token?: string;
   comments?: string;
+}
+
+export type ApprovalChannel = 'call' | 'sms' | 'email';
+
+export interface JobApprovalCreatePayload {
+  type: ApprovalRequest['type'];
+  description: string;
+  partName?: string;
+  estimatedPrice: number;
+  urgency: ApprovalRequest['urgency'];
+  requestedBy?: string;
+  sentVia?: ApprovalChannel[];
+  comments?: string;
+}
+
+export interface JobApprovalResponsePayload {
+  decision: 'approved' | 'rejected';
+  channel?: ApprovalChannel;
+  reason?: string;
+  reviewer?: string;
+}
+
+export interface PublicJobApprovalSummary {
+  token: string;
+  jobId: string;
+  jobTitle: string;
+  customerName: string;
+  carDetails: string;
+  licensePlate: string;
+  status: 'pending' | 'approved' | 'rejected';
+  request: ApprovalRequest;
+  alreadyResponded: boolean;
+  respondedAt?: Date;
+  respondedBy?: string;
+  respondedVia?: ApprovalChannel;
+  timeline?: MaintenanceTimelineEvent[];
 }
 
 export type MaintenanceStatus =

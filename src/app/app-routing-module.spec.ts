@@ -104,4 +104,11 @@ describe('app-routing — S-SEC-007 invoicing module gate', () => {
     expect(adminRouteIndex).toBeLessThan(wildcardIndex);
     expect(typoRouteIndex).toBeLessThan(wildcardIndex);
   });
+
+  it('adds the public approval route for unauthenticated customer response', () => {
+    const publicRoute = routes.find((r) => r.path === 'public/job-approvals/:token');
+    expect(publicRoute).toBeTruthy();
+    expect(publicRoute?.canActivate).toBeFalsy();
+    expect(publicRoute?.loadComponent).toBeDefined();
+  });
 });

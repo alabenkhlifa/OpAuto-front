@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 
-export type PublicTokenKind = 'invoice' | 'quote' | 'creditNote';
+export type PublicTokenKind = 'invoice' | 'quote' | 'creditNote' | 'jobApproval';
 
 export interface InvoiceTokenPayload {
   /** Document UUID — invoiceId / quoteId / creditNoteId. */

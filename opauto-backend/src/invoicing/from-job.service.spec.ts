@@ -67,6 +67,7 @@ describe('FromJobService (unit)', () => {
         model: '208',
         licensePlate: '123 TUN 4567',
       },
+      parts: [],
       ...overrides,
     };
   }
@@ -197,6 +198,92 @@ describe('FromJobService (unit)', () => {
       data: { maintenanceJobId: JOB_ID },
     });
     expect(result).toEqual({ id: 'inv-new', status: 'DRAFT' });
+  });
+
+  it('prefers durable maintenance job lines and preserves metadata on part/labor rows', async () => {
+    prisma.maintenanceJob.findUnique.mockResolvedValue(
+      jobFixture({
+        parts: [
+          {
+            id: 'line-part',
+            maintenanceJobId: JOB_ID,
+            type: 'part',
+            description: 'Brake disc',
+            quantity: 2,
+            unitPrice: 60,
+            partId: 'part-1',
+            part: { id: 'part-1', name: 'Brake disc', unitPrice: 60 },
+            serviceCode: 'LAB-1',
+            mechanicId: 'mech-1',
+            laborHours: 2,
+            tvaRate: 13,
+            discountPct: 5,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+          {
+            id: 'line-labor',
+            maintenanceJobId: JOB_ID,
+            type: 'labor',
+            description: 'Brake adjustment',
+            quantity: 1.5,
+            unitPrice: 75,
+            serviceCode: 'LAB-1',
+            mechanicId: 'mech-2',
+            laborHours: 1.5,
+            tvaRate: 19,
+            discountPct: 2,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ] as any,
+      }),
+    );
+    prisma.invoice.findFirst.mockResolvedValue(null);
+    prisma.stockMovement.findMany.mockResolvedValue([]);
+    invoicing.create.mockResolvedValue({
+      id: 'inv-new',
+      lineItems: [
+        { id: 'li-1', type: 'part' },
+        { id: 'li-2', type: 'labor' },
+      ],
+    });
+    prisma.invoice.update.mockResolvedValue({});
+    invoicing.findOne.mockResolvedValue({ id: 'inv-new', status: 'DRAFT' });
+
+    await service.createFromJob(JOB_ID, GARAGE_ID);
+
+    expect(prisma.stockMovement.findMany).not.toHaveBeenCalled();
+    expect(invoicing.create).toHaveBeenCalledWith(
+      GARAGE_ID,
+      expect.objectContaining({
+        lineItems: expect.arrayContaining([
+          expect.objectContaining({
+            type: 'part',
+            partId: 'part-1',
+            description: 'Brake disc',
+            quantity: 2,
+            unitPrice: 60,
+            serviceCode: 'LAB-1',
+            laborHours: 2,
+            tvaRate: 13,
+            discountPct: 5,
+            mechanicId: 'mech-1',
+          }),
+          expect.objectContaining({
+            type: 'labor',
+            description: 'Brake adjustment',
+            quantity: 1.5,
+            unitPrice: 75,
+            serviceCode: 'LAB-1',
+            laborHours: 1.5,
+            tvaRate: 19,
+            discountPct: 2,
+            mechanicId: 'mech-2',
+          }),
+        ]),
+      }),
+    );
   });
 
   // ── 6. Missing hourlyRate — labor line at 0 (TODO comment) ─

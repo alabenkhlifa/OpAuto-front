@@ -66,14 +66,14 @@ describe('AssistantHelpModalComponent', () => {
     expect(items.length).toBe(0);
   });
 
-  it('renders all 30 tool items once the Tools section is expanded', () => {
+  it('renders all 35 tool items once the Tools section is expanded', () => {
     setOpen(true);
     component.toggleSection('tools');
     fixture.detectChanges();
     const items = fixture.debugElement.queryAll(
       By.css('.assistant-help-modal__item'),
     );
-    expect(items.length).toBe(30);
+    expect(items.length).toBe(35);
   });
 
   it('toggleSection("tools") opens then collapses the Tools section', () => {
@@ -180,6 +180,6 @@ describe('AssistantHelpModalComponent', () => {
     const prefixes = fixture.debugElement.queryAll(
       By.css('.assistant-help-modal__item-example-prefix'),
     );
-    expect(prefixes.length).toBe(30);
+    expect(prefixes.length).toBe(35);
   });
 });
