@@ -338,7 +338,11 @@ export class MaintenanceService {
       actualDuration: b.actualDuration,
       startDate: b.startDate ? new Date(b.startDate) : undefined,
       completionDate: b.completionDate ? new Date(b.completionDate) : undefined,
-      approvalRequests: (b.approvals || b.approvalRequests || []).map((a: any) => this.mapApprovalFromBackend(a)),
+      approvalRequests: (
+        Array.isArray(b.approvalRequests) && b.approvalRequests.length
+          ? b.approvalRequests
+          : b.approvals || []
+      ).map((a: any) => this.mapApprovalFromBackend(a)),
       parts: (b.parts || b.jobParts || []).map((p: any) => this.mapPartFromBackend(p)),
       timelineEvents: (b.timelineEvents || b.timeline || []).map((e: any) => this.mapTimelineFromBackend(e)),
       notes: b.notes || '',
