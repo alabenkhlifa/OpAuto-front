@@ -863,6 +863,7 @@ describe('OrchestratorService', () => {
           toolName: 'send_sms',
           argsJson: { to: '+216...' },
           status: AssistantToolCallStatus.APPROVED,
+          blastTier: AssistantBlastTier.CONFIRM_WRITE,
           conversation: { garageId: 'garage-1', userId: 'user-1' },
         }),
         update: jest.fn().mockResolvedValue(undefined),
@@ -899,6 +900,66 @@ describe('OrchestratorService', () => {
       (c: any[]) => c[0].role === AssistantMessageRole.USER,
     );
     expect(userMsgs).toHaveLength(0);
+  });
+
+  it('does not surface a duplicate approval when a write tool is re-emitted after an approved resume', async () => {
+    const tools = makeTools(['request_job_customer_approval']);
+    tools.get.mockImplementation((name: string) =>
+      name === 'request_job_customer_approval'
+        ? {
+            name,
+            description: 'desc',
+            parameters: { type: 'object', properties: {} },
+            blastTier: AssistantBlastTier.CONFIRM_WRITE,
+            handler: async () => ({}),
+          }
+        : undefined,
+    );
+    const approvals = makeApprovals();
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: 'The customer approval request has been recorded.',
+        toolCalls: [
+          {
+            id: 'duplicate-approval',
+            name: 'request_job_customer_approval',
+            argsJson: '{"jobId":"job-1"}',
+          },
+        ],
+      },
+    ]);
+    const prisma = {
+      assistantToolCall: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'tc-approval',
+          conversationId: 'conv-1',
+          toolName: 'request_job_customer_approval',
+          argsJson: { jobId: 'job-1', requestedAmount: 18 },
+          status: AssistantToolCallStatus.APPROVED,
+          blastTier: AssistantBlastTier.CONFIRM_WRITE,
+          conversation: { garageId: 'garage-1', userId: 'user-1' },
+        }),
+        update: jest.fn().mockResolvedValue(undefined),
+      },
+    };
+    const orchestrator = await makeOrchestrator({
+      tools,
+      llm,
+      prisma,
+      approvals,
+    });
+
+    const events = await collectEvents(
+      orchestrator.run(ctx, 'conv-1', '__resume__:tc-approval', undefined),
+    );
+
+    expect(tools.execute).toHaveBeenCalledTimes(1);
+    expect(approvals.createPending).not.toHaveBeenCalled();
+    expect(events.filter((e) => e.type === 'approval_request')).toHaveLength(0);
+    expect(events.find((e) => e.type === 'text')).toMatchObject({
+      delta: 'The customer approval request has been recorded.',
+    });
   });
 
   it('records DENIED resumption without executing the tool, emits deterministic ack, and skips the LLM (UI Bug 3 + behavior finding "DENY does not stick")', async () => {

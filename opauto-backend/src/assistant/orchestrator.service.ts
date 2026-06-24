@@ -14,6 +14,7 @@ import {
   PageContext,
   SseEvent,
   ToolDescriptor,
+  ToolDefinition,
 } from './types';
 import {
   detectToolCallLeak,
@@ -84,6 +85,13 @@ function isEmptyResult(result: unknown): boolean {
 interface RunOptions {
   iterationCap?: number;
   totalTimeoutMs?: number;
+}
+
+interface ResumeExecutionState {
+  toolHasFired: boolean;
+  lastToolTier: AssistantBlastTier | null;
+  lastToolName: string | null;
+  successfulToolResult?: { toolName: string; result: unknown };
 }
 
 /**
@@ -252,16 +260,27 @@ export class OrchestratorService {
         ...history.map((h) => this.toLlmMessage(h)),
       ];
 
+      let toolHasFired = false;
+      let lastToolTier: AssistantBlastTier | null = null;
+      let lastToolName: string | null = null;
+      const successfulToolResults: { toolName: string; result: unknown }[] = [];
+
       // --- If this is a resume turn, materialise the pending tool call as a
       //     synthetic assistant + tool message pair so the LLM has context. -
       if (isResume) {
         const toolCallId = userMessage.slice(RESUME_PREFIX.length).trim();
+        const resumeState: ResumeExecutionState = {
+          toolHasFired: false,
+          lastToolTier: null,
+          lastToolName: null,
+        };
         const handled = await this.handleResume(
           ctx,
           conversationId,
           toolCallId,
           llmMessages,
           subject,
+          resumeState,
         );
         if (handled === 'not_found') {
           subject.next({
@@ -278,6 +297,14 @@ export class OrchestratorService {
           // LLM what to do, which previously led it to retry the same tool).
           return;
         }
+        if (resumeState.toolHasFired) {
+          toolHasFired = true;
+          lastToolTier = resumeState.lastToolTier;
+          lastToolName = resumeState.lastToolName;
+          if (resumeState.successfulToolResult) {
+            successfulToolResults.push(resumeState.successfulToolResult);
+          }
+        }
       }
 
       // --- Iteration loop. -------------------------------------------------
@@ -286,14 +313,11 @@ export class OrchestratorService {
       // tool result on subsequent calls, not pick another tool. This keeps
       // the second LLM round-trip lean (no 2-3k tokens of schemas re-sent)
       // so the whole turn fits inside Groq's free-tier 6000 TPM ceiling.
-      let toolHasFired = false;
       // Track the LAST executed tool's blast tier so we can decide whether
       // the next iteration should still offer tools. After a READ tool we
       // must keep tools available (the model may chain into a write tool —
       // e.g. list_invoices → send_email). After a write tool the action is
       // complete and we can swap to the cheaper compose-only mode.
-      let lastToolTier: AssistantBlastTier | null = null;
-      let lastToolName: string | null = null;
       // Per-turn cap on dispatch_agent (B-23/B-24): without this cap a misbehaving
       // model would re-dispatch the same specialist agent on each iteration,
       // blowing the 90s turn budget and racking up OVH spend before
@@ -314,7 +338,6 @@ export class OrchestratorService {
       const toolCallCounts = new Map<string, number>();
       let forceComposeOnly = false;
       const requiredActionRetriesIssued = new Set<string>();
-      const successfulToolResults: { toolName: string; result: unknown }[] = [];
       let monthlyFinancialReportSkillLoadedThisTurn = false;
       const recordFailedToolAttempt = (
         toolName: string,
@@ -1014,6 +1037,7 @@ export class OrchestratorService {
     toolCallId: string,
     llmMessages: LlmMessage[],
     subject: ReplaySubject<SseEvent>,
+    resumeState?: ResumeExecutionState,
   ): Promise<'continue' | 'finished' | 'not_found'> {
     const row = await this.prisma.assistantToolCall.findUnique({
       where: { id: toolCallId },
@@ -1074,6 +1098,15 @@ export class OrchestratorService {
           args,
         );
         this.appendToolMessage(llmMessages, toolCallId, successExec.result);
+        if (resumeState) {
+          resumeState.toolHasFired = true;
+          resumeState.lastToolTier = this.resumeBlastTier(row, tool, args, ctx);
+          resumeState.lastToolName = row.toolName;
+          resumeState.successfulToolResult = {
+            toolName: row.toolName,
+            result: successExec.result,
+          };
+        }
       } else {
         const failExec = exec as {
           ok: false;
@@ -1152,6 +1185,28 @@ export class OrchestratorService {
       error: `tool_call_${row.status.toLowerCase()}`,
     });
     return 'continue';
+  }
+
+  private resumeBlastTier(
+    row: { blastTier?: AssistantBlastTier | string | null },
+    tool: ToolDefinition,
+    args: unknown,
+    ctx: AssistantUserContext,
+  ): AssistantBlastTier {
+    if (
+      row.blastTier === AssistantBlastTier.READ ||
+      row.blastTier === AssistantBlastTier.AUTO_WRITE ||
+      row.blastTier === AssistantBlastTier.CONFIRM_WRITE ||
+      row.blastTier === AssistantBlastTier.TYPED_CONFIRM_WRITE
+    ) {
+      return row.blastTier;
+    }
+
+    try {
+      return this.tools.resolveBlastTier(tool, args, ctx);
+    } catch {
+      return tool.blastTier;
+    }
   }
 
   // ── Skill/agent pseudo-tool handlers ──────────────────────────────────
