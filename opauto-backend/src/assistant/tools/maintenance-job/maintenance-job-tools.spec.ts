@@ -364,6 +364,62 @@ describe('Maintenance job tools', () => {
       );
     });
 
+    it('does not reuse a pending approval request without the customer email', async () => {
+      const maintenance = maintenanceMock({
+        findOne: jest.fn().mockResolvedValue({
+          id: 'job-1',
+          car: {
+            make: 'TestMake',
+            model: 'WorkflowCar',
+            licensePlate: 'AI-MNT-034633',
+            customer: {
+              firstName: 'AI',
+              lastName: 'Maintenance',
+              email: 'ala.khllifa+Job1@gmail.com',
+            },
+          },
+          parts: [],
+          approvalRequests: [
+            {
+              id: 'apr-legacy',
+              status: 'PENDING',
+              customerEmail: null,
+            },
+          ],
+        }),
+        createApprovalRequest: jest.fn().mockResolvedValue({
+          id: 'apr-new',
+          maintenanceJobId: 'job-1',
+          status: 'PENDING',
+        }),
+      });
+      const email = emailMock();
+      const tokens = { sign: jest.fn().mockReturnValue('new-token') };
+      const tool = buildSendJobCustomerApprovalEmailTool(
+        maintenance as never,
+        email as never,
+        tokens as never,
+        'https://opauto.test/',
+      );
+
+      const out = await tool.handler({ jobId: 'job-1' }, ownerCtx);
+
+      expect(maintenance.createApprovalRequest).toHaveBeenCalledWith(
+        'job-1',
+        'garage-1',
+        'owner-1',
+        expect.objectContaining({
+          customerEmail: 'ala.khllifa+Job1@gmail.com',
+          sendVia: 'email',
+        }),
+      );
+      expect(tokens.sign).toHaveBeenCalledWith('apr-new', 'jobApproval');
+      expect(out.approvalRequestId).toBe('apr-new');
+      expect(out.publicUrl).toBe(
+        'https://opauto.test/public/job-approvals/new-token',
+      );
+    });
+
     it('returns the public approval URL when the email provider rejects delivery', async () => {
       const maintenance = maintenanceMock({
         findOne: jest.fn().mockResolvedValue({

@@ -198,7 +198,7 @@ function findReusableApproval(job: any, email: string): any | null {
         typeof request?.customerEmail === 'string'
           ? request.customerEmail.trim().toLowerCase()
           : '';
-      return !requestEmail || requestEmail === email.toLowerCase();
+      return requestEmail === email.toLowerCase();
     }) ?? null
   );
 }
