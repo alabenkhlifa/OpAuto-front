@@ -12,95 +12,503 @@ import { TranslationService } from '../../core/services/translation.service';
   standalone: true,
   imports: [CommonModule, FormsModule, TranslatePipe],
   template: `
-    <div class="min-h-screen bg-slate-950 text-slate-100 px-4 py-8">
-      <div class="max-w-3xl mx-auto">
-        <div class="glass-card p-6">
-          <h1 class="text-2xl font-bold text-white">{{ 'maintenance.publicApproval.title' | translate }}</h1>
-
-          @if (loading()) {
-            <div class="py-10 flex flex-col items-center text-center gap-3">
-              <svg class="animate-spin h-8 w-8 text-blue-400" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0114.95 0"></path>
-              </svg>
-              <p class="text-slate-300">{{ 'maintenance.publicApproval.loading' | translate }}</p>
+    <div class="approval-page">
+      <main class="approval-card">
+        @if (loading()) {
+          <section class="approval-state" aria-live="polite">
+            <span class="approval-spinner" aria-hidden="true"></span>
+            <p>{{ 'maintenance.publicApproval.loading' | translate }}</p>
+          </section>
+        } @else if (error()) {
+          <section class="approval-alert approval-alert--error">
+            {{ error() }}
+          </section>
+        } @else if (summary()) {
+          <header class="approval-header">
+            <div>
+              <p class="approval-kicker">{{ 'maintenance.publicApproval.title' | translate }}</p>
+              <h1>{{ summary()!.jobTitle }}</h1>
+              <div class="approval-vehicle">
+                @if (summary()!.licensePlate) {
+                  <span>{{ summary()!.licensePlate }}</span>
+                }
+                @if (summary()!.carDetails) {
+                  <span>{{ summary()!.carDetails }}</span>
+                }
+              </div>
             </div>
-          } @else if (error()) {
-            <p class="mt-4 text-rose-300">{{ error() }}</p>
-          } @else if (summary()) {
-            <div class="mt-6 space-y-4">
+            <span class="approval-status" [ngClass]="statusClass(summary()!.status)">
+              {{ getStatusLabel(summary()!.status) }}
+            </span>
+          </header>
+
+          <section class="approval-metrics" aria-label="Approval summary">
+            <div>
+              <span>{{ 'maintenance.details.estimatedPrice' | translate }}</span>
+              <strong>{{ formatCurrency(summary()!.request.estimatedPrice) }}</strong>
+            </div>
+            <div>
+              <span>{{ 'maintenance.publicApproval.type' | translate }}</span>
+              <strong>{{ getRequestTypeLabel(summary()!.request.type) }}</strong>
+            </div>
+            <div>
+              <span>{{ 'maintenance.publicApproval.responseLabel' | translate }}</span>
+              <strong>{{ summary()!.request.customerResponse ? getStatusLabel(summary()!.request.customerResponse!) : '-' }}</strong>
+            </div>
+          </section>
+
+          <section class="approval-section">
+            <div class="section-heading">
+              <h2>{{ 'maintenance.publicApproval.requestSummary' | translate }}</h2>
+            </div>
+            <dl class="approval-details">
               <div>
-                <h2 class="text-lg font-semibold">{{ summary()!.jobTitle }}</h2>
-                <p class="text-sm text-slate-300">{{ summary()!.licensePlate }}</p>
-                <p class="text-sm text-slate-300">{{ summary()!.carDetails }}</p>
+                <dt>{{ 'maintenance.publicApproval.jobTitle' | translate }}</dt>
+                <dd>{{ summary()!.jobTitle }}</dd>
               </div>
-
-              <div class="border border-slate-700 rounded-lg p-4 space-y-2">
-                <p class="text-slate-200">{{ 'maintenance.publicApproval.requestSummary' | translate }}</p>
-                <p class="text-sm text-slate-300">{{ 'maintenance.publicApproval.type' | translate }}: {{ getRequestTypeLabel(summary()!.request.type) }}</p>
-                <p class="text-sm text-slate-300">{{ 'maintenance.publicApproval.status' | translate }}: {{ getStatusLabel(summary()!.status) }}</p>
-                <p class="text-sm text-slate-300">{{ 'maintenance.publicApproval.jobTitle' | translate }}: {{ summary()!.jobTitle }}</p>
-                <p class="text-sm text-slate-300">{{ 'maintenance.publicApproval.description' | translate }}: {{ summary()!.request.description }}</p>
-                <p class="text-sm text-slate-300">{{ 'maintenance.details.estimatedPrice' | translate }}: {{ formatCurrency(summary()!.request.estimatedPrice) }}</p>
-                <p class="text-sm text-slate-300">{{ 'maintenance.details.customerApproved' | translate }}: {{ summary()!.request.customerResponse || '-' }}</p>
+              <div>
+                <dt>{{ 'maintenance.publicApproval.car' | translate }}</dt>
+                <dd>{{ vehicleLabel() }}</dd>
               </div>
+              <div>
+                <dt>{{ 'maintenance.publicApproval.description' | translate }}</dt>
+                <dd>{{ summary()!.request.description }}</dd>
+              </div>
+            </dl>
+          </section>
 
-              @if (isAlreadyResponded()) {
-                <div class="p-4 rounded-lg border border-emerald-700 bg-emerald-950 text-emerald-100">
-                  {{ 'maintenance.publicApproval.alreadyResponded' | translate }}
-                </div>
-              } @else {
-                <div class="flex flex-wrap gap-3">
-                  <button class="btn-success" (click)="submitResponse('approved')" [disabled]="submitting()">
-                    {{ 'maintenance.publicApproval.approveButton' | translate }}
-                  </button>
-                  <button class="btn-danger" (click)="openRejectForm()" [disabled]="submitting()">
+          @if (isAlreadyResponded()) {
+            <section class="approval-alert approval-alert--success">
+              {{ 'maintenance.publicApproval.alreadyResponded' | translate }}
+            </section>
+          } @else {
+            <section class="approval-actions">
+              <button class="approval-button approval-button--approve" type="button" (click)="submitResponse('approved')" [disabled]="submitting()">
+                {{ 'maintenance.publicApproval.approveButton' | translate }}
+              </button>
+              <button class="approval-button approval-button--reject" type="button" (click)="openRejectForm()" [disabled]="submitting()">
+                {{ 'maintenance.publicApproval.rejectButton' | translate }}
+              </button>
+            </section>
+
+            @if (showRejectReasonInput()) {
+              <section class="approval-reject-form">
+                <label for="rejectReason">{{ 'maintenance.publicApproval.reasonLabel' | translate }}</label>
+                <textarea
+                  id="rejectReason"
+                  rows="4"
+                  [(ngModel)]="rejectReason"
+                  [placeholder]="'maintenance.publicApproval.reasonLabel' | translate"
+                ></textarea>
+                <div class="approval-form-actions">
+                  <button class="approval-button approval-button--reject" type="button" (click)="submitResponse('rejected')" [disabled]="!rejectReason.trim() || submitting()">
                     {{ 'maintenance.publicApproval.rejectButton' | translate }}
                   </button>
+                  <button class="approval-button approval-button--secondary" type="button" (click)="cancelReject()">
+                    {{ 'maintenance.details.cancel' | translate }}
+                  </button>
                 </div>
-
-                @if (showRejectReasonInput()) {
-                  <div class="border border-slate-700 rounded-lg p-3 space-y-3">
-                    <label class="form-label text-sm text-slate-300">{{ 'maintenance.publicApproval.reasonLabel' | translate }}</label>
-                    <textarea
-                      class="form-textarea"
-                      rows="3"
-                      [(ngModel)]="rejectReason"
-                      [placeholder]="'maintenance.publicApproval.reasonLabel' | translate"
-                    ></textarea>
-                    <div class="flex gap-3">
-                      <button class="btn-danger" (click)="submitResponse('rejected')" [disabled]="!rejectReason.trim() || submitting()">
-                        {{ 'maintenance.publicApproval.rejectButton' | translate }}
-                      </button>
-                      <button class="btn-secondary" (click)="cancelReject()">{{ 'maintenance.details.cancel' | translate }}</button>
-                    </div>
-                  </div>
-                }
-              }
-
-              @if (actionMessage()) {
-                <p class="text-sm" [class.text-emerald-300]="successMessage" [class.text-rose-300]="!successMessage">{{ actionMessage() }}</p>
-              }
-
-              @if (summary()!.timeline?.length) {
-                <div class="border border-slate-700 rounded-lg p-4">
-                  <p class="font-medium mb-2">{{ 'maintenance.details.timeline' | translate }}</p>
-                  <div class="space-y-3">
-                    @for (event of summary()!.timeline; track event.id) {
-                      <div class="text-sm text-slate-300">
-                        <p>{{ event.label || event.type }}</p>
-                        <p class="text-xs text-slate-400">{{ event.occurredAt | date:'short' }}</p>
-                      </div>
-                    }
-                  </div>
-                </div>
-              }
-            </div>
+              </section>
+            }
           }
-        </div>
-      </div>
+
+          @if (actionMessage()) {
+            <p class="approval-message" [class.approval-message--success]="successMessage" [class.approval-message--error]="!successMessage">
+              {{ actionMessage() }}
+            </p>
+          }
+
+          @if (summary()!.timeline?.length) {
+            <section class="approval-section">
+              <div class="section-heading">
+                <h2>{{ 'maintenance.details.timeline' | translate }}</h2>
+              </div>
+              <ol class="approval-timeline">
+                @for (event of summary()!.timeline; track event.id) {
+                  <li>
+                    <span class="timeline-dot" aria-hidden="true"></span>
+                    <div>
+                      <p>{{ formatTimelineLabel(event.type, event.label) }}</p>
+                      @if (event.description) {
+                        <small>{{ event.description }}</small>
+                      }
+                      <time>{{ event.occurredAt | date:'medium' }}</time>
+                    </div>
+                  </li>
+                }
+              </ol>
+            </section>
+          }
+        }
+      </main>
     </div>
   `,
+  styles: [`
+    :host {
+      display: block;
+      min-height: 100vh;
+      background: #0f172a;
+      color: #111827;
+    }
+
+    .approval-page {
+      min-height: 100vh;
+      padding: 32px 16px;
+      background:
+        linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.9)),
+        #0f172a;
+    }
+
+    .approval-card {
+      width: min(100%, 920px);
+      margin: 0 auto;
+      padding: 32px;
+      background: #ffffff;
+      border: 1px solid #d9e2ef;
+      border-radius: 8px;
+      box-shadow: 0 22px 60px rgba(2, 6, 23, 0.26);
+    }
+
+    .approval-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .approval-kicker {
+      margin: 0 0 8px;
+      color: #f97316;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      color: #0f172a;
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      line-height: 1.1;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .approval-vehicle {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+      color: #475569;
+      font-size: 0.98rem;
+    }
+
+    .approval-vehicle span {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 5px 10px;
+      border: 1px solid #d8dee9;
+      border-radius: 8px;
+      background: #f8fafc;
+    }
+
+    .approval-status {
+      display: inline-flex;
+      align-items: center;
+      min-height: 32px;
+      white-space: nowrap;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 0.84rem;
+      font-weight: 800;
+    }
+
+    .approval-status--pending {
+      color: #92400e;
+      background: #fffbeb;
+      border: 1px solid #facc15;
+    }
+
+    .approval-status--approved {
+      color: #166534;
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+    }
+
+    .approval-status--rejected {
+      color: #991b1b;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+    }
+
+    .approval-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 24px 0;
+    }
+
+    .approval-metrics div {
+      min-width: 0;
+      padding: 16px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background: #f8fafc;
+    }
+
+    .approval-metrics span,
+    .approval-details dt {
+      display: block;
+      color: #64748b;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    .approval-metrics strong {
+      display: block;
+      margin-top: 8px;
+      color: #0f172a;
+      font-size: 1rem;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .approval-section,
+    .approval-reject-form {
+      margin-top: 20px;
+      padding: 20px;
+      border: 1px solid #d8dee9;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    .section-heading {
+      margin-bottom: 16px;
+    }
+
+    .section-heading h2 {
+      margin: 0;
+      color: #111827;
+      font-size: 1.1rem;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .approval-details {
+      display: grid;
+      gap: 16px;
+      margin: 0;
+    }
+
+    .approval-details div {
+      min-width: 0;
+    }
+
+    .approval-details dd {
+      margin: 6px 0 0;
+      color: #1f2937;
+      font-size: 1rem;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+    }
+
+    .approval-actions,
+    .approval-form-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .approval-button {
+      min-height: 48px;
+      padding: 0 20px;
+      border: 0;
+      border-radius: 8px;
+      color: #ffffff;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+    }
+
+    .approval-button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+    }
+
+    .approval-button:disabled {
+      cursor: not-allowed;
+      opacity: 0.58;
+    }
+
+    .approval-button--approve {
+      background: #15803d;
+    }
+
+    .approval-button--reject {
+      background: #b91c1c;
+    }
+
+    .approval-button--secondary {
+      color: #334155;
+      background: #e2e8f0;
+    }
+
+    .approval-reject-form label {
+      display: block;
+      margin-bottom: 8px;
+      color: #334155;
+      font-size: 0.92rem;
+      font-weight: 800;
+    }
+
+    .approval-reject-form textarea {
+      width: 100%;
+      min-height: 112px;
+      padding: 12px;
+      color: #111827;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: #ffffff;
+      resize: vertical;
+    }
+
+    .approval-alert,
+    .approval-message {
+      margin-top: 20px;
+      padding: 14px 16px;
+      border-radius: 8px;
+      font-weight: 700;
+    }
+
+    .approval-alert--success,
+    .approval-message--success {
+      color: #14532d;
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+    }
+
+    .approval-alert--error,
+    .approval-message--error {
+      color: #7f1d1d;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+    }
+
+    .approval-state {
+      display: grid;
+      place-items: center;
+      gap: 14px;
+      min-height: 260px;
+      color: #334155;
+      text-align: center;
+    }
+
+    .approval-spinner {
+      width: 34px;
+      height: 34px;
+      border: 3px solid #dbeafe;
+      border-top-color: #2563eb;
+      border-radius: 50%;
+      animation: approval-spin 800ms linear infinite;
+    }
+
+    .approval-timeline {
+      display: grid;
+      gap: 0;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .approval-timeline li {
+      position: relative;
+      display: grid;
+      grid-template-columns: 18px minmax(0, 1fr);
+      gap: 12px;
+      padding: 0 0 18px;
+    }
+
+    .approval-timeline li:not(:last-child)::before {
+      content: '';
+      position: absolute;
+      top: 18px;
+      bottom: 0;
+      left: 6px;
+      width: 2px;
+      background: #e2e8f0;
+    }
+
+    .timeline-dot {
+      z-index: 1;
+      width: 14px;
+      height: 14px;
+      margin-top: 4px;
+      border: 3px solid #ffffff;
+      border-radius: 50%;
+      background: #f97316;
+      box-shadow: 0 0 0 1px #fdba74;
+    }
+
+    .approval-timeline p {
+      margin: 0;
+      color: #1f2937;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
+    .approval-timeline small,
+    .approval-timeline time {
+      display: block;
+      margin-top: 4px;
+      color: #64748b;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    @keyframes approval-spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @media (max-width: 720px) {
+      .approval-page {
+        padding: 16px 10px;
+      }
+
+      .approval-card {
+        padding: 20px;
+      }
+
+      .approval-header {
+        display: grid;
+      }
+
+      .approval-status {
+        width: fit-content;
+      }
+
+      .approval-metrics {
+        grid-template-columns: 1fr;
+      }
+
+      .approval-actions,
+      .approval-form-actions {
+        display: grid;
+      }
+
+      .approval-button {
+        width: 100%;
+      }
+    }
+  `],
 })
 export class PublicJobApprovalComponent implements OnInit {
   private route = inject(ActivatedRoute);
@@ -197,6 +605,25 @@ export class PublicJobApprovalComponent implements OnInit {
     if (status === 'approved') return this.translationService.instant('maintenance.details.approved');
     if (status === 'rejected') return this.translationService.instant('maintenance.details.rejected');
     return this.translationService.instant('maintenance.publicApproval.pending');
+  }
+
+  statusClass(status: 'pending' | 'approved' | 'rejected'): string {
+    return `approval-status--${status}`;
+  }
+
+  vehicleLabel(): string {
+    const s = this.summary();
+    if (!s) return '-';
+    return [s.licensePlate, s.carDetails].filter(Boolean).join(' - ') || '-';
+  }
+
+  formatTimelineLabel(type: string, label?: string): string {
+    const raw = label || type || 'job-event';
+    return raw
+      .replace(/[_-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .replace(/\b\w/g, (char) => char.toUpperCase());
   }
 
   getRequestTypeLabel(type: PublicJobApprovalSummary['request']['type']): string {
