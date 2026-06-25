@@ -159,6 +159,68 @@ describe('FromJobService (unit)', () => {
     );
   });
 
+  it('uses stored job cost with durable part lines instead of hourly labor fallback', async () => {
+    prisma.maintenanceJob.findUnique.mockResolvedValue(
+      jobFixture({
+        title: 'Demo Brake Repair',
+        estimatedCost: 400,
+        actualHours: null,
+        estimatedHours: 1,
+        parts: [
+          {
+            id: 'line-part',
+            maintenanceJobId: JOB_ID,
+            type: 'part',
+            description: 'Brake Pads',
+            quantity: 4,
+            unitPrice: 100,
+            partId: 'part-1',
+            part: { id: 'part-1', name: 'Brake Pads', unitPrice: 100 },
+            tvaRate: 19,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ] as any,
+      }),
+    );
+    prisma.invoice.findFirst.mockResolvedValue(null);
+    prisma.stockMovement.findMany.mockResolvedValue([]);
+    invoicing.create.mockResolvedValue({
+      id: 'inv-new',
+      lineItems: [
+        { id: 'li-1', type: 'part' },
+        { id: 'li-2', type: 'service' },
+      ],
+    });
+    prisma.invoice.update.mockResolvedValue({});
+    invoicing.findOne.mockResolvedValue({ id: 'inv-new', status: 'DRAFT' });
+
+    await service.createFromJob(JOB_ID, GARAGE_ID);
+
+    const lineItems = invoicing.create.mock.calls[0][1].lineItems;
+    expect(prisma.stockMovement.findMany).not.toHaveBeenCalled();
+    expect(lineItems).toHaveLength(2);
+    expect(lineItems).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          description: 'Brake Pads',
+          quantity: 4,
+          unitPrice: 100,
+          type: 'part',
+        }),
+        expect.objectContaining({
+          description: 'Maintenance — Demo Brake Repair',
+          quantity: 1,
+          unitPrice: 400,
+          type: 'service',
+        }),
+      ]),
+    );
+    expect(lineItems).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'labor' })]),
+    );
+  });
+
   // ── 5. Happy path — parts + labor ──────────────────────────
   it('builds parts + labor lines and calls InvoicingService.create', async () => {
     prisma.maintenanceJob.findUnique.mockResolvedValue(jobFixture());

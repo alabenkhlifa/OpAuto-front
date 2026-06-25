@@ -17,8 +17,10 @@ import { CreateInvoiceDto } from './dto/create-invoice.dto';
  * 2) fallback to legacy job stock-outs (`reason='job:<id>'`) for older
  *    jobs created before durable line persistence landed.
  *
- * Labor is pulled from:
+ * Service/labor is pulled from:
  * - durable labor lines when present, otherwise
+ * - the job-level stored cost (`actualCost` or `estimatedCost`) for durable
+ *   line-item jobs, otherwise
  * - job `actualHours` or `estimatedHours` + assigned employee.
  */
 @Injectable()
@@ -87,6 +89,12 @@ export class FromJobService {
     const lines = (job as any).parts ?? [];
     const durablePartLines = lines.filter((line: any) => line.type === 'part');
     const durableLaborLines = lines.filter((line: any) => line.type === 'labor');
+    const storedJobCost =
+      typeof job.actualCost === 'number' && job.actualCost > 0
+        ? job.actualCost
+        : typeof job.estimatedCost === 'number' && job.estimatedCost > 0
+          ? job.estimatedCost
+          : 0;
 
     // ── 3. Derive part usage from durable lines or stock movements.
     const lineItems = [] as CreateInvoiceDto['lineItems'];
@@ -154,7 +162,7 @@ export class FromJobService {
       }
     }
 
-    // ── 4. Derive labor lines from durable labor lines or fallback.
+    // ── 4. Derive service/labor lines from durable labor, stored job cost, or fallback.
     if (durableLaborLines.length > 0) {
       for (const line of durableLaborLines) {
         const fallbackName = job.employee
@@ -174,6 +182,18 @@ export class FromJobService {
           discountPct: line.discountPct ?? undefined,
         });
       }
+    } else if (
+      storedJobCost > 0 &&
+      (durablePartLines.length > 0 || lineItems.length === 0)
+    ) {
+      lineItems.push({
+        description: job.title
+          ? `Maintenance — ${job.title}`
+          : 'Maintenance service',
+        quantity: 1,
+        unitPrice: storedJobCost,
+        type: 'service',
+      });
     } else {
       const laborHours = job.actualHours ?? job.estimatedHours ?? 0;
       const employee = (job as any).employee;
@@ -185,26 +205,6 @@ export class FromJobService {
           type: 'labor',
           mechanicId: employee?.id,
           laborHours,
-        });
-      }
-    }
-
-    if (lineItems.length === 0) {
-      const storedJobCost =
-        typeof job.actualCost === 'number' && job.actualCost > 0
-          ? job.actualCost
-          : typeof job.estimatedCost === 'number' && job.estimatedCost > 0
-            ? job.estimatedCost
-            : 0;
-
-      if (storedJobCost > 0) {
-        lineItems.push({
-          description: job.title
-            ? `Maintenance — ${job.title}`
-            : 'Maintenance service',
-          quantity: 1,
-          unitPrice: storedJobCost,
-          type: 'service',
         });
       }
     }
