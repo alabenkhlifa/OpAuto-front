@@ -964,6 +964,101 @@ describe('OrchestratorService', () => {
     });
   });
 
+  it('continues from an approved add_job_part resume into a customer approval email request when the original prompt asked for both', async () => {
+    const jobId = '22222222-2222-4222-8222-222222222222';
+    const tools = makeTools([
+      'add_job_part',
+      'send_job_customer_approval_email',
+    ]);
+    tools.get.mockImplementation((name: string) =>
+      name === 'add_job_part' || name === 'send_job_customer_approval_email'
+        ? {
+            name,
+            description: 'desc',
+            parameters: { type: 'object', properties: {} },
+            blastTier: AssistantBlastTier.CONFIRM_WRITE,
+            handler: async () => ({}),
+          }
+        : undefined,
+    );
+    const approvals = makeApprovals();
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-send-customer-email',
+            name: 'send_job_customer_approval_email',
+            argsJson: JSON.stringify({
+              jobId,
+              message:
+                'A new Oil 10w40 part was added. Please review and approve the updated job.',
+            }),
+          },
+        ],
+      },
+    ]);
+    const conversation = makeConversation([
+      {
+        id: 'msg-user',
+        role: AssistantMessageRole.USER,
+        content:
+          'Add an "Oil 10w40" part to the active maintenance job for plate AI-MNT-034633, then send the customer a maintenance approval email for the updated job.',
+        toolCallId: null,
+        createdAt: new Date('2026-06-25T00:00:00.000Z'),
+      },
+    ]);
+    const prisma = {
+      assistantToolCall: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'tc-add-part',
+          conversationId: 'conv-1',
+          toolName: 'add_job_part',
+          argsJson: { jobId, description: 'Oil 10w40', type: 'part' },
+          status: AssistantToolCallStatus.APPROVED,
+          blastTier: AssistantBlastTier.CONFIRM_WRITE,
+          conversation: { garageId: 'garage-1', userId: 'user-1' },
+        }),
+        update: jest.fn().mockResolvedValue(undefined),
+      },
+    };
+    const orchestrator = await makeOrchestrator({
+      tools,
+      llm,
+      prisma,
+      approvals,
+      conversation,
+    });
+
+    const events = await collectEvents(
+      orchestrator.run(ctx, 'conv-1', '__resume__:tc-add-part', undefined),
+    );
+
+    expect(tools.execute).toHaveBeenCalledTimes(1);
+    expect(tools.execute).toHaveBeenCalledWith(
+      'add_job_part',
+      { jobId, description: 'Oil 10w40', type: 'part' },
+      expect.objectContaining({ garageId: 'garage-1' }),
+    );
+    expect((llm.complete as jest.Mock).mock.calls[0][0].tools).toEqual([
+      expect.objectContaining({ name: 'send_job_customer_approval_email' }),
+    ]);
+    expect(approvals.createPending).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conversationId: 'conv-1',
+        toolName: 'send_job_customer_approval_email',
+        blastTier: AssistantBlastTier.CONFIRM_WRITE,
+        args: expect.objectContaining({ jobId }),
+      }),
+    );
+    expect(events.find((e) => e.type === 'approval_request')).toMatchObject({
+      toolName: 'send_job_customer_approval_email',
+      blastTier: AssistantBlastTier.CONFIRM_WRITE,
+      args: expect.objectContaining({ jobId }),
+    });
+  });
+
   it('recovers create_invoice_from_job when the model passes the customer id instead of the recent job id', async () => {
     const customerId = '11111111-1111-4111-8111-111111111111';
     const jobId = '22222222-2222-4222-8222-222222222222';

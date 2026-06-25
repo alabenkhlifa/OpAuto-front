@@ -436,13 +436,34 @@ export class OrchestratorService {
         //     the action is done. Swap to the minimal compose-only prompt
         //     and stop offering tools. This is what keeps follow-up turns
         //     inside Groq's 6000 TPM (and is cheap on every other provider).
+        const taskUserMessage = this.resolveTaskUserMessage(
+          ctx.turnState?.userMessage,
+          llmMessages,
+        );
+        const continueWithCustomerApprovalEmail =
+          this.shouldContinueWithCustomerApprovalEmailAfterPart(
+            taskUserMessage,
+            pageContext,
+            lastToolName,
+            successfulToolResults,
+          );
         const swapToComposeOnly =
-          (toolHasFired && lastToolTier !== AssistantBlastTier.READ) ||
+          (toolHasFired &&
+            lastToolTier !== AssistantBlastTier.READ &&
+            !continueWithCustomerApprovalEmail) ||
           forceComposeOnly;
-        const messagesForCall = swapToComposeOnly
-          ? this.swapSystemPromptForComposeOnly(llmMessages, ctx.locale)
-          : llmMessages;
-        const offeredTools = swapToComposeOnly ? undefined : llmTools;
+        const messagesForCall = continueWithCustomerApprovalEmail
+          ? this.addCustomerApprovalEmailContinuationGuidance(llmMessages)
+          : swapToComposeOnly
+            ? this.swapSystemPromptForComposeOnly(llmMessages, ctx.locale)
+            : llmMessages;
+        const offeredTools = continueWithCustomerApprovalEmail
+          ? llmTools.filter(
+              (tool) => tool.name === 'send_job_customer_approval_email',
+            )
+          : swapToComposeOnly
+            ? undefined
+            : llmTools;
         const completion = await this.llm.complete({
           messages: messagesForCall,
           tools: offeredTools,
@@ -1362,6 +1383,53 @@ export class OrchestratorService {
     }
 
     return null;
+  }
+
+  private resolveTaskUserMessage(
+    currentUserMessage: string | undefined,
+    llmMessages: LlmMessage[],
+  ): string | undefined {
+    if (currentUserMessage && !currentUserMessage.startsWith(RESUME_PREFIX)) {
+      return currentUserMessage;
+    }
+
+    return [...llmMessages]
+      .reverse()
+      .find(
+        (message) =>
+          message.role === 'user' &&
+          typeof message.content === 'string' &&
+          !message.content.startsWith(RESUME_PREFIX),
+      )?.content;
+  }
+
+  private shouldContinueWithCustomerApprovalEmailAfterPart(
+    userMessage: string | undefined,
+    pageContext: PageContext | undefined,
+    lastToolName: string | null,
+    successfulToolResults: { toolName: string; result: unknown }[],
+  ): boolean {
+    if (lastToolName !== 'add_job_part') return false;
+    if (!userMessage) return false;
+    if (!this.userAskedForJobCustomerApprovalEmail(userMessage, pageContext)) {
+      return false;
+    }
+    return !successfulToolResults.some(
+      (entry) => entry.toolName === 'send_job_customer_approval_email',
+    );
+  }
+
+  private addCustomerApprovalEmailContinuationGuidance(
+    messages: LlmMessage[],
+  ): LlmMessage[] {
+    return [
+      ...messages,
+      {
+        role: 'system',
+        content:
+          'The user asked for a compound maintenance workflow: add a job part, then send the customer a maintenance approval email for the updated job. The part was already added. Do not call add_job_part again. Next call send_job_customer_approval_email using the same jobId from the completed add_job_part call.',
+      },
+    ];
   }
 
   private postProcessAssistantText(
