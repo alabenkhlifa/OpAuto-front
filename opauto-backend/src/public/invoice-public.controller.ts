@@ -11,7 +11,12 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
-import { ApprovalStatus, InvoiceStatus } from '@prisma/client';
+import {
+  ApprovalStatus,
+  AssistantMessageRole,
+  AssistantToolCallStatus,
+  InvoiceStatus,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { PdfRendererService } from '../invoicing/pdf-renderer.service';
 import { InvoiceTokenService } from './invoice-token.service';
@@ -220,10 +225,104 @@ export class InvoicePublicController {
       },
     });
 
+    await this.appendAssistantApprovalResponseMessage(
+      request,
+      status,
+      opts.responseNote,
+    );
+
     return this.buildJobApprovalSummary(request.id, token);
   }
 
-  private async buildJobApprovalSummary(requestId: string, token: string): Promise<any> {
+  private async appendAssistantApprovalResponseMessage(
+    request: {
+      id: string;
+      requestedAmount?: number | null;
+    },
+    status: ApprovalStatus,
+    responseNote?: string,
+  ): Promise<void> {
+    try {
+      const toolCall = await this.prisma.assistantToolCall.findFirst({
+        where: {
+          status: AssistantToolCallStatus.EXECUTED,
+          OR: [
+            {
+              toolName: 'send_job_customer_approval_email',
+              resultJson: {
+                path: ['approvalRequestId'],
+                equals: request.id,
+              },
+            },
+            {
+              toolName: 'request_job_customer_approval',
+              resultJson: {
+                path: ['id'],
+                equals: request.id,
+              },
+            },
+          ],
+        },
+        orderBy: { createdAt: 'desc' },
+        select: { id: true, conversationId: true },
+      });
+
+      if (!toolCall) return;
+
+      const content = this.buildAssistantApprovalResponseMessage(
+        request,
+        status,
+        responseNote,
+      );
+      const existing = await this.prisma.assistantMessage.findFirst({
+        where: {
+          conversationId: toolCall.conversationId,
+          role: AssistantMessageRole.ASSISTANT,
+          toolCallId: toolCall.id,
+          content,
+        },
+        select: { id: true },
+      });
+      if (existing) return;
+
+      await this.prisma.assistantMessage.create({
+        data: {
+          conversationId: toolCall.conversationId,
+          role: AssistantMessageRole.ASSISTANT,
+          toolCallId: toolCall.id,
+          content,
+        },
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.warn(
+        `Failed to append assistant approval response message for request ${request.id}: ${message}`,
+      );
+    }
+  }
+
+  private buildAssistantApprovalResponseMessage(
+    request: {
+      requestedAmount?: number | null;
+    },
+    status: ApprovalStatus,
+    responseNote?: string,
+  ): string {
+    const decision =
+      status === ApprovalStatus.APPROVED ? 'approved' : 'rejected';
+    const amount =
+      typeof request.requestedAmount === 'number'
+        ? ` for ${request.requestedAmount.toFixed(2)} TND`
+        : '';
+    const reason = responseNote?.trim();
+    const suffix = reason ? ` Reason: ${reason}` : '';
+    return `Customer approval update: The customer ${decision} the maintenance approval request${amount}.${suffix}`;
+  }
+
+  private async buildJobApprovalSummary(
+    requestId: string,
+    token: string,
+  ): Promise<any> {
     const request = await this.prisma.maintenanceJobApprovalRequest.findUnique({
       where: { id: requestId },
       include: {
@@ -264,8 +363,9 @@ export class InvoicePublicController {
     });
     const job = request.maintenanceJob;
     const customer = job.car?.customer;
-    const customerName = request.customerName
-      || [customer?.firstName, customer?.lastName].filter(Boolean).join(' ');
+    const customerName =
+      request.customerName ||
+      [customer?.firstName, customer?.lastName].filter(Boolean).join(' ');
     const status = this.toPublicStatus(request.status);
 
     return {
@@ -273,7 +373,9 @@ export class InvoicePublicController {
       jobId: job.id,
       jobTitle: job.title,
       customerName,
-      carDetails: [job.car?.year, job.car?.make, job.car?.model].filter(Boolean).join(' '),
+      carDetails: [job.car?.year, job.car?.make, job.car?.model]
+        .filter(Boolean)
+        .join(' '),
       licensePlate: job.car?.licensePlate ?? '',
       status,
       alreadyResponded: status === 'approved' || status === 'rejected',
@@ -289,7 +391,11 @@ export class InvoicePublicController {
         customerResponse: status === 'pending' ? undefined : status,
         customerRespondedAt: request.respondedAt,
         respondedVia: request.responseChannel,
-        sentTo: request.customerEmail ?? request.customerPhone ?? customer?.email ?? customer?.phone,
+        sentTo:
+          request.customerEmail ??
+          request.customerPhone ??
+          customer?.email ??
+          customer?.phone,
       },
       job,
       timeline: timeline.map((event) => ({
@@ -301,17 +407,23 @@ export class InvoicePublicController {
     };
   }
 
-  private normalizeApprovalStatus(status: ApprovalStatus | 'approved' | 'rejected' | undefined): ApprovalStatus {
+  private normalizeApprovalStatus(
+    status: ApprovalStatus | 'approved' | 'rejected' | undefined,
+  ): ApprovalStatus {
     if (status === ApprovalStatus.APPROVED || status === 'approved') {
       return ApprovalStatus.APPROVED;
     }
     if (status === ApprovalStatus.REJECTED || status === 'rejected') {
       return ApprovalStatus.REJECTED;
     }
-    throw new BadRequestException('Approval response must be approved or rejected');
+    throw new BadRequestException(
+      'Approval response must be approved or rejected',
+    );
   }
 
-  private toPublicStatus(status: ApprovalStatus): 'pending' | 'approved' | 'rejected' {
+  private toPublicStatus(
+    status: ApprovalStatus,
+  ): 'pending' | 'approved' | 'rejected' {
     if (status === ApprovalStatus.APPROVED) return 'approved';
     if (status === ApprovalStatus.REJECTED) return 'rejected';
     return 'pending';

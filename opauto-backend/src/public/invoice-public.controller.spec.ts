@@ -36,7 +36,10 @@ describe('InvoiceTokenService', () => {
 
   it('rejects a token signed with a different secret', () => {
     const otherJwt = new JwtService({});
-    const bad = otherJwt.sign({ id: 'x', type: 'invoice' }, { secret: 'wrong' });
+    const bad = otherJwt.sign(
+      { id: 'x', type: 'invoice' },
+      { secret: 'wrong' },
+    );
     expect(() => svc.verify(bad)).toThrow(UnauthorizedException);
   });
 
@@ -71,11 +74,9 @@ describe('InvoiceTokenService', () => {
 
   it('throws TokenExpiredError mapping cleanly', () => {
     // sanity: our verify catches TokenExpiredError correctly
-    const verify = jest
-      .spyOn(jwt, 'verify')
-      .mockImplementationOnce(() => {
-        throw new TokenExpiredError('jwt expired', new Date(0));
-      });
+    const verify = jest.spyOn(jwt, 'verify').mockImplementationOnce(() => {
+      throw new TokenExpiredError('jwt expired', new Date(0));
+    });
     expect(() => svc.verify('whatever')).toThrow(/expired/i);
     verify.mockRestore();
   });
@@ -102,6 +103,13 @@ describe('InvoicePublicController', () => {
       },
       maintenanceJobTimelineEvent: {
         findMany: jest.fn(),
+        create: jest.fn(),
+      },
+      assistantToolCall: {
+        findFirst: jest.fn(),
+      },
+      assistantMessage: {
+        findFirst: jest.fn(),
         create: jest.fn(),
       },
     };
@@ -189,9 +197,9 @@ describe('InvoicePublicController', () => {
       tokens.verify.mockImplementationOnce(() => {
         throw new UnauthorizedException('Invalid token');
       });
-      await expect(
-        controller.getInvoicePdf('bad', res),
-      ).rejects.toThrow(UnauthorizedException);
+      await expect(controller.getInvoicePdf('bad', res)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 
@@ -246,7 +254,10 @@ describe('InvoicePublicController', () => {
 
   describe('job approvals', () => {
     it('returns summary payload including request, job and timeline', async () => {
-      tokens.verify.mockReturnValueOnce({ id: 'approval-1', type: 'jobApproval' });
+      tokens.verify.mockReturnValueOnce({
+        id: 'approval-1',
+        type: 'jobApproval',
+      });
       prisma.maintenanceJobApprovalRequest.findUnique.mockResolvedValueOnce({
         id: 'approval-1',
         status: 'PENDING',
@@ -262,7 +273,12 @@ describe('InvoicePublicController', () => {
             make: 'Renault',
             model: 'Clio',
             licensePlate: 'TN-100-TN',
-            customer: { id: 'cus-1', firstName: 'John', lastName: 'Doe', phone: '+216 99 000 000' },
+            customer: {
+              id: 'cus-1',
+              firstName: 'John',
+              lastName: 'Doe',
+              phone: '+216 99 000 000',
+            },
           },
         },
       });
@@ -278,7 +294,9 @@ describe('InvoicePublicController', () => {
       const res = await controller.getJobApprovalSummary('job-token');
 
       expect(tokens.verify).toHaveBeenCalledWith('job-token', 'jobApproval');
-      expect(prisma.maintenanceJobApprovalRequest.findUnique).toHaveBeenCalledWith({
+      expect(
+        prisma.maintenanceJobApprovalRequest.findUnique,
+      ).toHaveBeenCalledWith({
         where: { id: 'approval-1' },
         include: expect.objectContaining({
           maintenanceJob: expect.any(Object),
@@ -300,12 +318,16 @@ describe('InvoicePublicController', () => {
     });
 
     it('recording approval through public approve endpoint updates status and timeline', async () => {
-      tokens.verify.mockReturnValueOnce({ id: 'approval-2', type: 'jobApproval' });
+      tokens.verify.mockReturnValueOnce({
+        id: 'approval-2',
+        type: 'jobApproval',
+      });
       prisma.maintenanceJobApprovalRequest.findUnique
         .mockResolvedValueOnce({
           id: 'approval-2',
           status: 'PENDING',
           maintenanceJobId: 'job-2',
+          requestedAmount: 120,
         })
         .mockResolvedValueOnce({
           id: 'approval-2',
@@ -330,7 +352,13 @@ describe('InvoicePublicController', () => {
               make: 'Renault',
               model: 'Clio',
               licensePlate: 'TN-200-TN',
-              customer: { id: 'cus-2', firstName: 'Jane', lastName: 'Doe', phone: '+216 22 000 000', email: 'jane@example.com' },
+              customer: {
+                id: 'cus-2',
+                firstName: 'Jane',
+                lastName: 'Doe',
+                phone: '+216 22 000 000',
+                email: 'jane@example.com',
+              },
             },
           },
         });
@@ -338,13 +366,19 @@ describe('InvoicePublicController', () => {
         id: 'approval-2',
         status: 'APPROVED',
       });
-      prisma.maintenanceJobTimelineEvent.create.mockResolvedValueOnce({ id: 'e2' });
+      prisma.maintenanceJobTimelineEvent.create.mockResolvedValueOnce({
+        id: 'e2',
+      });
       prisma.maintenanceJobTimelineEvent.findMany.mockResolvedValueOnce([]);
+      prisma.assistantToolCall.findFirst.mockResolvedValueOnce({
+        id: 'tc-approval-email',
+        conversationId: 'conv-approval-email',
+      });
+      prisma.assistantMessage.findFirst.mockResolvedValueOnce(null);
 
-      const res = await controller.approveJobByPublicLink(
-        'job-token',
-        { responseNote: 'Customer accepts' },
-      );
+      const res = await controller.approveJobByPublicLink('job-token', {
+        responseNote: 'Customer accepts',
+      });
 
       expect(prisma.maintenanceJobApprovalRequest.update).toHaveBeenCalledWith({
         where: { id: 'approval-2' },
@@ -366,18 +400,54 @@ describe('InvoicePublicController', () => {
           },
         },
       });
+      expect(prisma.assistantToolCall.findFirst).toHaveBeenCalledWith({
+        where: {
+          status: 'EXECUTED',
+          OR: [
+            {
+              toolName: 'send_job_customer_approval_email',
+              resultJson: {
+                path: ['approvalRequestId'],
+                equals: 'approval-2',
+              },
+            },
+            {
+              toolName: 'request_job_customer_approval',
+              resultJson: {
+                path: ['id'],
+                equals: 'approval-2',
+              },
+            },
+          ],
+        },
+        orderBy: { createdAt: 'desc' },
+        select: { id: true, conversationId: true },
+      });
+      expect(prisma.assistantMessage.create).toHaveBeenCalledWith({
+        data: {
+          conversationId: 'conv-approval-email',
+          role: 'ASSISTANT',
+          toolCallId: 'tc-approval-email',
+          content:
+            'Customer approval update: The customer approved the maintenance approval request for 120.00 TND. Reason: Customer accepts',
+        },
+      });
       expect(res.status).toBe('approved');
       expect(res.request.description).toBe('Brake pads');
       expect(res.jobTitle).toBe('Brake service');
     });
 
     it('recording rejection through public reject endpoint updates status and timeline', async () => {
-      tokens.verify.mockReturnValueOnce({ id: 'approval-3', type: 'jobApproval' });
+      tokens.verify.mockReturnValueOnce({
+        id: 'approval-3',
+        type: 'jobApproval',
+      });
       prisma.maintenanceJobApprovalRequest.findUnique
         .mockResolvedValueOnce({
           id: 'approval-3',
           status: 'PENDING',
           maintenanceJobId: 'job-3',
+          requestedAmount: 95,
         })
         .mockResolvedValueOnce({
           id: 'approval-3',
@@ -402,7 +472,13 @@ describe('InvoicePublicController', () => {
               make: 'Peugeot',
               model: '208',
               licensePlate: 'TN-300-TN',
-              customer: { id: 'cus-3', firstName: 'Sam', lastName: 'Ray', phone: '+216 33 000 000', email: 'sam@example.com' },
+              customer: {
+                id: 'cus-3',
+                firstName: 'Sam',
+                lastName: 'Ray',
+                phone: '+216 33 000 000',
+                email: 'sam@example.com',
+              },
             },
           },
         });
@@ -410,13 +486,19 @@ describe('InvoicePublicController', () => {
         id: 'approval-3',
         status: 'REJECTED',
       });
-      prisma.maintenanceJobTimelineEvent.create.mockResolvedValueOnce({ id: 'e3' });
+      prisma.maintenanceJobTimelineEvent.create.mockResolvedValueOnce({
+        id: 'e3',
+      });
       prisma.maintenanceJobTimelineEvent.findMany.mockResolvedValueOnce([]);
+      prisma.assistantToolCall.findFirst.mockResolvedValueOnce({
+        id: 'tc-request-approval',
+        conversationId: 'conv-request-approval',
+      });
+      prisma.assistantMessage.findFirst.mockResolvedValueOnce(null);
 
-      const res = await controller.rejectJobByPublicLink(
-        'job-token',
-        { responseNote: 'Customer rejects' },
-      );
+      const res = await controller.rejectJobByPublicLink('job-token', {
+        responseNote: 'Customer rejects',
+      });
 
       expect(prisma.maintenanceJobApprovalRequest.update).toHaveBeenCalledWith({
         where: { id: 'approval-3' },
@@ -427,12 +509,24 @@ describe('InvoicePublicController', () => {
           respondedAt: expect.any(Date),
         },
       });
+      expect(prisma.assistantMessage.create).toHaveBeenCalledWith({
+        data: {
+          conversationId: 'conv-request-approval',
+          role: 'ASSISTANT',
+          toolCallId: 'tc-request-approval',
+          content:
+            'Customer approval update: The customer rejected the maintenance approval request for 95.00 TND. Reason: Customer rejects',
+        },
+      });
       expect(res.status).toBe('rejected');
       expect(res.request.description).toBe('Brake sensor');
     });
 
     it('returns the public summary when public response is already closed', async () => {
-      tokens.verify.mockReturnValueOnce({ id: 'approval-4', type: 'jobApproval' });
+      tokens.verify.mockReturnValueOnce({
+        id: 'approval-4',
+        type: 'jobApproval',
+      });
       prisma.maintenanceJobApprovalRequest.findUnique
         .mockResolvedValueOnce({
           id: 'approval-4',
@@ -462,7 +556,13 @@ describe('InvoicePublicController', () => {
               make: 'Toyota',
               model: 'Yaris',
               licensePlate: 'TN-400-TN',
-              customer: { id: 'cus-4', firstName: 'Ali', lastName: 'Ben', phone: '+216 44 000 000', email: 'ali@example.com' },
+              customer: {
+                id: 'cus-4',
+                firstName: 'Ali',
+                lastName: 'Ben',
+                phone: '+216 44 000 000',
+                email: 'ali@example.com',
+              },
             },
           },
         });
@@ -473,16 +573,24 @@ describe('InvoicePublicController', () => {
       expect(res.status).toBe('approved');
       expect(res.alreadyResponded).toBe(true);
       expect(res.request.description).toBe('Oil filter');
-      expect(prisma.maintenanceJobApprovalRequest.update).not.toHaveBeenCalled();
+      expect(
+        prisma.maintenanceJobApprovalRequest.update,
+      ).not.toHaveBeenCalled();
       expect(prisma.maintenanceJobTimelineEvent.create).not.toHaveBeenCalled();
+      expect(prisma.assistantMessage.create).not.toHaveBeenCalled();
     });
 
     it('throws NotFound when job approval request token maps to nothing', async () => {
-      tokens.verify.mockReturnValueOnce({ id: 'approval-missing', type: 'jobApproval' });
-      prisma.maintenanceJobApprovalRequest.findUnique.mockResolvedValueOnce(null);
-      await expect(controller.getJobApprovalSummary('bad-job-token')).rejects.toThrow(
-        NotFoundException,
+      tokens.verify.mockReturnValueOnce({
+        id: 'approval-missing',
+        type: 'jobApproval',
+      });
+      prisma.maintenanceJobApprovalRequest.findUnique.mockResolvedValueOnce(
+        null,
       );
+      await expect(
+        controller.getJobApprovalSummary('bad-job-token'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });
