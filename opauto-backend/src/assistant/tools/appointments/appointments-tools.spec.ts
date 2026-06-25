@@ -29,30 +29,57 @@ describe('Appointments tools', () => {
           customerId: 'c1',
           carId: 'car1',
           employeeId: 'emp1',
-          customer: { firstName: 'Ali', lastName: 'Ben', phone: '+216' },
+          customer: {
+            firstName: 'Ali',
+            lastName: 'Ben',
+            phone: '+216',
+            email: 'ali@example.com',
+          },
           car: { make: 'Toyota', model: 'Corolla', licensePlate: 'TUN-1' },
           employee: { firstName: 'Khalil', lastName: 'M' },
         },
       ]);
-      const tool = buildListAppointmentsTool({ findAll } as any);
+      const garageFindUnique = jest.fn().mockResolvedValue({
+        businessHours: { timezone: 'Africa/Tunis' },
+      });
+      const tool = buildListAppointmentsTool(
+        { findAll } as any,
+        { garage: { findUnique: garageFindUnique } } as any,
+      );
       const result = await tool.handler(
         { from: '2026-05-01T00:00:00Z', to: '2026-05-02T00:00:00Z' },
         ownerCtx,
       );
+      const expectedStartLocal = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Africa/Tunis',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        timeZoneName: 'short',
+      }).format(new Date('2026-05-01T09:00:00Z'));
 
       expect(findAll).toHaveBeenCalledWith(
         'garage-1',
         '2026-05-01T00:00:00Z',
         '2026-05-02T00:00:00Z',
       );
+      expect(garageFindUnique).toHaveBeenCalledWith({
+        where: { id: 'garage-1' },
+        select: { businessHours: true },
+      });
       expect(result.count).toBe(1);
       expect(result.appointments[0]).toMatchObject({
         id: 'a1',
         customerId: 'c1',
         customerName: 'Ali Ben',
+        customerEmail: 'ali@example.com',
         carLabel: 'Toyota Corolla · TUN-1',
         employeeName: 'Khalil M',
         startTime: '2026-05-01T09:00:00.000Z',
+        startTimeLocal: expectedStartLocal,
+        timeZone: 'Africa/Tunis',
       });
     });
 

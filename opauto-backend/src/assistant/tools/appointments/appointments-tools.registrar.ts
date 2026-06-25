@@ -22,7 +22,7 @@ export class AppointmentsToolsRegistrar implements OnModuleInit {
 
   onModuleInit(): void {
     const tools: ToolDefinition[] = [
-      buildListAppointmentsTool(this.appointmentsService) as ToolDefinition,
+      buildListAppointmentsTool(this.appointmentsService, this.prisma) as ToolDefinition,
       buildFindAvailableSlotTool(this.aiService) as ToolDefinition,
       buildCreateAppointmentTool(this.appointmentsService, this.prisma) as ToolDefinition,
       buildCancelAppointmentTool(this.appointmentsService) as ToolDefinition,

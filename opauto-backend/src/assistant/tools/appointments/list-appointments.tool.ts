@@ -1,5 +1,6 @@
 import { AppointmentStatus, AssistantBlastTier } from '@prisma/client';
 import { AppointmentsService } from '../../../appointments/appointments.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 import { AssistantUserContext, ToolDefinition } from '../../types';
 
 type ListAppointmentsOrder = 'soonest' | 'latest';
@@ -21,10 +22,18 @@ interface ListedAppointment {
   title: string;
   status: string;
   type: string | null;
+  /**
+   * UTC ISO timestamps. Kept for machine chaining and backwards
+   * compatibility; user-facing replies should use the local display fields.
+   */
   startTime: string;
   endTime: string;
+  startTimeLocal: string;
+  endTimeLocal: string;
+  timeZone: string;
   customerId: string;
   customerName: string;
+  customerEmail: string | null;
   carId: string;
   carLabel: string;
   employeeId: string | null;
@@ -34,6 +43,9 @@ interface ListedAppointment {
 const DATE_ONLY_RE = /^\d{4}-\d{2}-\d{2}$/;
 const FAR_FUTURE = '9999-12-31T23:59:59.999Z';
 const FAR_PAST = '1970-01-01T00:00:00.000Z';
+const DEFAULT_TIME_ZONE = 'Africa/Tunis';
+
+type GarageTimeZoneReader = Pick<PrismaService, 'garage'>;
 
 function startOfUtcDate(date: string): string {
   return `${date}T00:00:00.000Z`;
@@ -136,6 +148,80 @@ function appointmentCustomerName(appointment: any): string {
     : '';
 }
 
+function appointmentCustomerEmail(appointment: any): string | null {
+  const email = appointment.customer?.email;
+  return typeof email === 'string' && email.trim().length > 0
+    ? email.trim()
+    : null;
+}
+
+function normaliseTimeZone(value: unknown): string {
+  const zone = typeof value === 'string' ? value.trim() : '';
+  if (!zone) return DEFAULT_TIME_ZONE;
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: zone }).format(new Date(0));
+    return zone;
+  } catch {
+    return DEFAULT_TIME_ZONE;
+  }
+}
+
+function extractBusinessHoursTimeZone(businessHours: unknown): string | null {
+  if (!businessHours) return null;
+  if (typeof businessHours === 'string') {
+    try {
+      return extractBusinessHoursTimeZone(JSON.parse(businessHours));
+    } catch {
+      return null;
+    }
+  }
+  if (typeof businessHours !== 'object' || Array.isArray(businessHours)) {
+    return null;
+  }
+  const timeZone = (businessHours as { timezone?: unknown; timeZone?: unknown })
+    .timezone;
+  if (typeof timeZone === 'string') return timeZone;
+  const camelCaseZone = (
+    businessHours as { timezone?: unknown; timeZone?: unknown }
+  ).timeZone;
+  return typeof camelCaseZone === 'string' ? camelCaseZone : null;
+}
+
+async function resolveGarageTimeZone(
+  prisma: GarageTimeZoneReader | undefined,
+  garageId: string,
+): Promise<string> {
+  if (!prisma) return DEFAULT_TIME_ZONE;
+  const garage = await prisma.garage.findUnique({
+    where: { id: garageId },
+    select: { businessHours: true },
+  });
+  return normaliseTimeZone(extractBusinessHoursTimeZone(garage?.businessHours));
+}
+
+function localeTag(locale: AssistantUserContext['locale']): string {
+  if (locale === 'fr') return 'fr-FR';
+  if (locale === 'ar') return 'ar-TN';
+  return 'en-US';
+}
+
+function formatLocalDateTime(
+  value: unknown,
+  timeZone: string,
+  locale: AssistantUserContext['locale'],
+): string {
+  const date = value instanceof Date ? value : new Date(String(value));
+  return new Intl.DateTimeFormat(localeTag(locale), {
+    timeZone,
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  }).format(date);
+}
+
 const APPOINTMENT_STATUSES: ListAppointmentsStatus[] = [
   'SCHEDULED',
   'CONFIRMED',
@@ -147,6 +233,7 @@ const APPOINTMENT_STATUSES: ListAppointmentsStatus[] = [
 
 export function buildListAppointmentsTool(
   appointmentsService: AppointmentsService,
+  prisma?: GarageTimeZoneReader,
 ): ToolDefinition<
   ListAppointmentsArgs,
   { appointments: ListedAppointment[]; count: number }
@@ -159,6 +246,7 @@ export function buildListAppointmentsTool(
       'For "upcoming", "later", or "future" appointments, use a from date of today or later; never pass a past year for an upcoming question. ' +
       'A date-only from/to such as 2026-07-10 covers the full calendar day. ' +
       'For "today", pass the same YYYY-MM-DD as both from and to; do not pass tomorrow as the upper bound. ' +
+      'Results include UTC ISO fields (`startTime`, `endTime`) and garage-local fields (`startTimeLocal`, `endTimeLocal`, `timeZone`); use the local fields in user-facing answers and emails. ' +
       'IMPORTANT — ORDERING: pass `orderBy: "soonest"` (default) for "next/upcoming/first appointment(s)"; ' +
       '`orderBy: "latest"` for "last/most recent" appointments. Combine with `limit` to answer ' +
       '"first/next/last N appointments" (e.g. "next 3 appointments today" → ' +
@@ -215,6 +303,7 @@ export function buildListAppointmentsTool(
     },
     handler: async (args, ctx: AssistantUserContext) => {
       const { from, to } = normaliseDateRange(args, ctx);
+      const timeZone = await resolveGarageTimeZone(prisma, ctx.garageId);
       const all = await appointmentsService.findAll(ctx.garageId, from, to);
       const requestedCustomerName = args.customerName
         ? normaliseName(args.customerName)
@@ -243,8 +332,12 @@ export function buildListAppointmentsTool(
         type: a.type ?? null,
         startTime: new Date(a.startTime).toISOString(),
         endTime: new Date(a.endTime).toISOString(),
+        startTimeLocal: formatLocalDateTime(a.startTime, timeZone, ctx.locale),
+        endTimeLocal: formatLocalDateTime(a.endTime, timeZone, ctx.locale),
+        timeZone,
         customerId: a.customerId,
         customerName: appointmentCustomerName(a),
+        customerEmail: appointmentCustomerEmail(a),
         carId: a.carId,
         carLabel: a.car
           ? `${a.car.make ?? ''} ${a.car.model ?? ''}${a.car.licensePlate ? ` · ${a.car.licensePlate}` : ''}`.trim()

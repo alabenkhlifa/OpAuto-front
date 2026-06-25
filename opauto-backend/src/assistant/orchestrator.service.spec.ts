@@ -873,6 +873,111 @@ describe('OrchestratorService', () => {
     );
   });
 
+  it('blocks appointment confirmation email approval until appointment data is fetched', async () => {
+    const tools = makeTools(['send_email']);
+    tools.resolveBlastTier.mockReturnValue(AssistantBlastTier.CONFIRM_WRITE);
+    const customerFindFirst = jest.fn().mockResolvedValue({
+      id: 'cust-1',
+      email: 'demo@example.com',
+    });
+    const prisma = {
+      ...makePrisma(),
+      customer: { findFirst: customerFindFirst },
+    };
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-1',
+            name: 'send_email',
+            argsJson: JSON.stringify({
+              customerId: 'cust-1',
+              subject: 'Appointment confirmation',
+              text: 'Your upcoming appointment is confirmed for 1 PM.',
+            }),
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: 'I need to fetch the upcoming appointment first.',
+        toolCalls: [],
+      },
+    ]);
+    const approvals = makeApprovals();
+    const orchestrator = await makeOrchestrator({
+      tools,
+      llm,
+      approvals,
+      prisma,
+    });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-email-appointment-no-read',
+        'Send an email to the customer "Demo Customer" to confirm his date and time of his upcoming appointment.',
+        undefined,
+      ),
+    );
+
+    expect(events.find((e) => e.type === 'tool_result')).toMatchObject({
+      status: 'failed',
+      result: expect.objectContaining({ error: 'no_supporting_reads' }),
+    });
+    expect(events.find((e) => e.type === 'approval_request')).toBeUndefined();
+    expect(approvals.createPending).not.toHaveBeenCalled();
+    expect(tools.execute).not.toHaveBeenCalled();
+  });
+
+  it('blocks send_email approval when the body contains raw UTC timestamps', async () => {
+    const tools = makeTools(['send_email']);
+    tools.resolveBlastTier.mockReturnValue(AssistantBlastTier.CONFIRM_WRITE);
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-1',
+            name: 'send_email',
+            argsJson: JSON.stringify({
+              to: 'Test.Customer@Example.com',
+              subject: 'Appointment confirmation',
+              text: 'Your appointment starts at 2026-06-30T08:00:00.000Z.',
+            }),
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: 'I will use the local appointment time instead.',
+        toolCalls: [],
+      },
+    ]);
+    const approvals = makeApprovals();
+    const orchestrator = await makeOrchestrator({ tools, llm, approvals });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-email-raw-utc',
+        'Send an email to Test.Customer@Example.com confirming the appointment.',
+        undefined,
+      ),
+    );
+
+    expect(events.find((e) => e.type === 'tool_result')).toMatchObject({
+      status: 'failed',
+      result: expect.objectContaining({ error: 'raw_utc_timestamp' }),
+    });
+    expect(events.find((e) => e.type === 'approval_request')).toBeUndefined();
+    expect(approvals.createPending).not.toHaveBeenCalled();
+    expect(tools.execute).not.toHaveBeenCalled();
+  });
+
   it('drafts overdue invoice email text when the model returns empty after fetching data', async () => {
     const tools = makeTools(['list_overdue_invoices'], () => ({
       ok: true,
@@ -4283,6 +4388,37 @@ describe('OrchestratorService', () => {
       const names = toolNamesFromFirstCall(llm);
       expect(names).toEqual(
         expect.arrayContaining(['send_email', 'find_customer', 'get_customer']),
+      );
+    });
+
+    it('adds list_appointments for customer upcoming appointment email confirmations', async () => {
+      const tools = makeTools([
+        'send_email',
+        'find_customer',
+        'get_customer',
+        'list_appointments',
+      ]);
+      const llm = makeLlm([{ provider: 'groq', content: 'ok', toolCalls: [] }]);
+      const classifier = makeClassifier(['send_email']);
+      const orchestrator = await makeOrchestrator({ tools, llm, classifier });
+
+      await collectEvents(
+        orchestrator.run(
+          ctx,
+          'conv-appointment-email-tools',
+          'Send an email to the customer "Demo Customer" to confirm his date and time of his upcoming appointment.',
+          undefined,
+        ),
+      );
+
+      const names = toolNamesFromFirstCall(llm);
+      expect(names).toEqual(
+        expect.arrayContaining([
+          'send_email',
+          'find_customer',
+          'get_customer',
+          'list_appointments',
+        ]),
       );
     });
 

@@ -365,8 +365,9 @@ describe('communications tools', () => {
       expect(email.send).toHaveBeenCalledWith({
         to: 'customer@example.com',
         subject: 'Service reminder',
-        html: '<p>Your car is ready.</p>',
-        text: 'Your car is ready.',
+        html:
+          '<p>Your car is ready.</p>\n<p>Best regards<br>AutoTech Tunisia</p>',
+        text: 'Your car is ready.\n\nBest regards\nAutoTech Tunisia',
         attachments: undefined,
       });
       expect(result).toMatchObject({
@@ -561,6 +562,33 @@ describe('communications tools', () => {
       });
     });
 
+    it('adds a professional garage footer before customer approval previews', async () => {
+      const tool = createSendEmailTool({
+        emailService: makeEmailService(),
+        prisma: makePrisma(
+          jest.fn().mockResolvedValue([]),
+          jest.fn(),
+          jest.fn().mockResolvedValue({ name: 'Ala Garage Services' }),
+        ),
+      });
+
+      const args = await tool.prepareApprovalArgs?.(
+        {
+          to: 'customer@example.com',
+          subject: 'Appointment confirmation',
+          text: 'Dear Demo, your appointment is confirmed for Jun 30, 2026, 2:00 PM GMT+1.',
+        } satisfies SendEmailArgs,
+        ownerCtx,
+      );
+
+      expect(args).toMatchObject({
+        to: 'customer@example.com',
+        text: expect.stringContaining(
+          'Best regards\nAla Garage Services',
+        ),
+      });
+    });
+
     it('refuses unresolved appointment placeholders before sending', async () => {
       const email = makeEmailService();
       const tool = createSendEmailTool({
@@ -582,6 +610,29 @@ describe('communications tools', () => {
       expect(result).toEqual({
         error: 'unresolved_placeholder',
         message: expect.stringMatching(/unresolved placeholder/i),
+      });
+      expect(email.send).not.toHaveBeenCalled();
+    });
+
+    it('refuses raw UTC ISO timestamps before sending', async () => {
+      const email = makeEmailService();
+      const tool = createSendEmailTool({
+        emailService: email,
+        prisma: makePrisma(),
+      });
+
+      const result = await tool.handler(
+        {
+          to: 'customer@example.com',
+          subject: 'Appointment confirmation',
+          text: 'Your appointment starts at 2026-06-30T08:00:00.000Z.',
+        } satisfies SendEmailArgs,
+        ownerCtx,
+      );
+
+      expect(result).toEqual({
+        error: 'raw_utc_timestamp',
+        message: expect.stringMatching(/local date\/time/i),
       });
       expect(email.send).not.toHaveBeenCalled();
     });

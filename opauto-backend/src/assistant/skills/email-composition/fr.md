@@ -13,7 +13,7 @@ Avant de rédiger, vérifie que tu disposes :
 
 - **Destinataire** — nom et adresse e-mail.
 - **Objet** — envoi de facture, rappel de paiement, confirmation de rendez-vous, remerciement, ou autre.
-- **Ton** — formel ou amical. Par défaut formel pour les paiements, amical pour les confirmations et remerciements.
+- **Ton** — formel ou amical. Par défaut formel pour les paiements et les confirmations de rendez-vous client ; utilise l'amical seulement pour les remerciements simples.
 - **Détails de contexte** — numéro de facture, montant dû, date/heure du rendez-vous, plaque du véhicule, etc.
 
 S'il manque un élément, pose UNE question concise listant exactement ce qui manque. Ne devine pas.
@@ -28,7 +28,9 @@ Subject: <objet sur une ligne, sans ponctuation finale>
 <corps>
 ```
 
-Le corps fait 80 à 150 mots. Prose simple, pas de puces sauf pour lister 2 lignes de facture ou plus. Adresse-toi au destinataire par son prénom quand il est connu. Signe avec le nom du garage. N'utilise jamais de placeholder comme « [Votre nom] ».
+Le corps fait 80 à 150 mots. Prose simple, pas de puces sauf pour lister 2 lignes de facture ou plus. Adresse-toi au destinataire par son prénom quand il est connu. Termine par un pied de page professionnel qui inclut le nom du garage. N'utilise jamais de placeholder comme « [Votre nom] ».
+
+Pour les confirmations de rendez-vous, utilise les champs d'affichage local fournis par l'outil, comme `startTimeLocal`, `endTimeLocal` et `timeZone`. N'inclus jamais d'horodatage ISO brut comme `2026-06-30T08:00:00.000Z`.
 
 ## Conventions linguistiques
 

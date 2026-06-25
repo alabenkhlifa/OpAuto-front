@@ -19,7 +19,7 @@ export class AppointmentsService {
       where,
       include: {
         customer: {
-          select: { firstName: true, lastName: true, phone: true },
+          select: { firstName: true, lastName: true, phone: true, email: true },
         },
         car: { select: { make: true, model: true, licensePlate: true } },
         employee: { select: { firstName: true, lastName: true } },

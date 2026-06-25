@@ -51,7 +51,8 @@ export interface SendEmailError {
     | 'leak_in_body'
     | 'dangling_attachment_reference'
     | 'no_supporting_reads'
-    | 'unresolved_placeholder';
+    | 'unresolved_placeholder'
+    | 'raw_utc_timestamp';
   message: string;
 }
 
@@ -92,6 +93,33 @@ function bodyLooksLikeDataSummary(haystack: string): boolean {
   return DATA_SUMMARY_KEYWORDS.some((kw) => lower.includes(kw));
 }
 
+function userMessageRequiresAppointmentRead(message: string | undefined): boolean {
+  if (!message) return false;
+  const asksForAppointment = /\b(?:appointment|appointments|booking|booked|schedule|scheduled|rendez-?vous|rdv)\b/i.test(
+    message,
+  );
+  if (!asksForAppointment) return false;
+
+  const asksForLookup =
+    /\b(?:upcoming|next|coming|future|date\s+and\s+time|date\s*&\s*time|date|time|when|details?|confirm(?:ation)?)\b/i.test(
+      message,
+    );
+  if (!asksForLookup) return false;
+
+  return (
+    /\bemail\s+(?!(?:address|account|settings)\b)\w+/i.test(message) ||
+    /\bsend\s+(?:\w+\s+)*(?:an?\s+)?e-?mails?\b/i.test(message) ||
+    /\b(?:via|by|as\s+an?|to\s+my)\s+(?:personal\s+)?e-?mail\b/i.test(
+      message,
+    ) ||
+    /\benvoie[zr]?[\s-]+(?:moi|nous)?\s*(?:un\s+|le\s+)?(?:e-?mail|courriel)\b/i.test(
+      message,
+    ) ||
+    /\bpar\s+(?:e-?mail|courriel)\b/i.test(message) ||
+    /إيميل|بريد\s*(?:إلكتروني|الكتروني)/.test(message)
+  );
+}
+
 /**
  * Phrases that signal "the email body promises an attachment". Strict patterns
  * — only contexts that uniquely mean a *file is attached to this email*. We
@@ -125,6 +153,13 @@ const UNRESOLVED_PLACEHOLDER_PATTERNS: RegExp[] = [
 
 function bodyContainsUnresolvedPlaceholder(haystack: string): boolean {
   return UNRESOLVED_PLACEHOLDER_PATTERNS.some((re) => re.test(haystack));
+}
+
+const RAW_UTC_TIMESTAMP_RE =
+  /\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?Z\b/;
+
+function bodyContainsRawUtcTimestamp(haystack: string): boolean {
+  return RAW_UTC_TIMESTAMP_RE.test(haystack);
 }
 
 const SENDER_NAME_PLACEHOLDER_PATTERNS: RegExp[] = [
@@ -235,6 +270,46 @@ function normalizeAttachInvoiceIds(ids: string[] | undefined): string[] {
   return Array.from(new Set(normalized));
 }
 
+function stripHtmlTags(value: string): string {
+  return value.replace(/<[^>]*>/g, ' ');
+}
+
+function bodyHasProfessionalFooter(value: string, garageName: string): boolean {
+  const plain = stripHtmlTags(value).toLowerCase();
+  const normalizedGarage = garageName.toLowerCase();
+  return (
+    plain.includes(normalizedGarage) &&
+    (/\b(?:best regards|kind regards|regards|sincerely|cordialement|salutations)\b/i.test(
+      plain,
+    ) ||
+      plain.includes('مع أطيب التحيات'))
+  );
+}
+
+function footerSignoff(locale: AssistantUserContext['locale']): string {
+  if (locale === 'fr') return 'Cordialement';
+  if (locale === 'ar') return 'مع أطيب التحيات،';
+  return 'Best regards';
+}
+
+function appendProfessionalTextFooter(
+  value: string,
+  garageName: string,
+  locale: AssistantUserContext['locale'],
+): string {
+  if (bodyHasProfessionalFooter(value, garageName)) return value;
+  return `${value.trimEnd()}\n\n${footerSignoff(locale)}\n${garageName}`;
+}
+
+function appendProfessionalHtmlFooter(
+  value: string,
+  garageName: string,
+  locale: AssistantUserContext['locale'],
+): string {
+  if (bodyHasProfessionalFooter(value, garageName)) return value;
+  return `${value.trimEnd()}\n<p>${escapeHtml(footerSignoff(locale))}<br>${escapeHtml(garageName)}</p>`;
+}
+
 /** RFC 4180-ish CSV cell escape: wrap in quotes + double inner quotes. */
 function csvCell(value: unknown): string {
   if (value === null || value === undefined) return '""';
@@ -331,6 +406,40 @@ export function createSendEmailTool(deps: {
     };
   };
 
+  const ensureCustomerFooterInArgs = async (
+    args: SendEmailArgs,
+    ctx: AssistantUserContext,
+  ): Promise<SendEmailArgs> => {
+    const to = normalizeRecipient(args.to);
+    const ownerEmail = normalizeRecipient(ctx.email);
+    const isCustomerOrExternal =
+      Boolean(args.customerId?.trim()) ||
+      Boolean(to && !emailsMatch(to, ownerEmail));
+    if (!isCustomerOrExternal) return args;
+
+    const garageName = await resolveGarageName(ctx);
+    if (!garageName) return args;
+
+    return {
+      ...args,
+      html: args.html
+        ? appendProfessionalHtmlFooter(args.html, garageName, ctx.locale)
+        : args.html,
+      text: args.text
+        ? appendProfessionalTextFooter(args.text, garageName, ctx.locale)
+        : args.text,
+    };
+  };
+
+  const prepareEmailArgs = async (
+    args: SendEmailArgs,
+    ctx: AssistantUserContext,
+  ): Promise<SendEmailArgs> =>
+    ensureCustomerFooterInArgs(
+      await replaceSenderPlaceholdersInArgs(args, ctx),
+      ctx,
+    );
+
   return {
     name: 'send_email',
     description:
@@ -343,6 +452,7 @@ export function createSendEmailTool(deps: {
       'Never use placeholders such as [date], [heure], or [time]; use real values ' +
       'from prior tool results or ask for missing details before sending. For sender/signature names, ' +
       'use the garage name; the backend also replaces sender-name placeholders such as [Your Name] with the garage name. ' +
+      'For customer-facing appointment emails, use a professional tone, include the garage name, include a footer/signature, and use local display times such as startTimeLocal/endTimeLocal/timeZone rather than raw UTC ISO timestamps ending in Z. ' +
       'IMPORTANT: do NOT call this tool with empty `text`/`html` and an empty ' +
       '`attachInvoiceIds` array. If the user asked for data attached or summarised, call the ' +
       'relevant read tool (list_invoices, get_revenue_summary, list_at_risk_customers, etc.) ' +
@@ -413,13 +523,12 @@ export function createSendEmailTool(deps: {
       }
       return AssistantBlastTier.AUTO_WRITE;
     },
-    prepareApprovalArgs: async (args: SendEmailArgs, ctx: AssistantUserContext) =>
-      replaceSenderPlaceholdersInArgs(args, ctx),
+    prepareApprovalArgs: prepareEmailArgs,
     handler: async (
       args: SendEmailArgs,
       ctx: AssistantUserContext,
     ): Promise<SendEmailResult | SendEmailError> => {
-      const resolvedArgs = await replaceSenderPlaceholdersInArgs(args, ctx);
+      const resolvedArgs = await prepareEmailArgs(args, ctx);
       const explicitRecipient = normalizeRecipient(resolvedArgs.to);
       const customerId = resolvedArgs.customerId?.trim();
       let recipient = explicitRecipient;
@@ -497,6 +606,14 @@ export function createSendEmailTool(deps: {
         };
       }
 
+      if (bodyContainsRawUtcTimestamp(haystack)) {
+        return {
+          error: 'raw_utc_timestamp',
+          message:
+            'send_email contains a raw UTC ISO timestamp ending in Z. Use a customer-facing local date/time from the appointment result (startTimeLocal/endTimeLocal/timeZone) instead.',
+        };
+      }
+
       // I-016 — defense in depth. If a knownNames supplier is wired in (the
       // production registrar always provides one), refuse to deliver an email
       // whose subject/body contains tool-call-shaped substrings. The LLM
@@ -545,11 +662,14 @@ export function createSendEmailTool(deps: {
         ctx.turnState !== undefined &&
         ctx.turnState.readToolCallsSoFar === 0
       ) {
-        if (bodyLooksLikeDataSummary(haystack)) {
+        if (
+          bodyLooksLikeDataSummary(haystack) ||
+          userMessageRequiresAppointmentRead(ctx.turnState.userMessage)
+        ) {
           return {
             error: 'no_supporting_reads',
             message:
-              'send_email body summarises data (KPIs, revenue, invoices, snapshot, etc.) ' +
+              'send_email body summarises data (KPIs, revenue, invoices, appointments, snapshot, etc.) ' +
               'but no read tool ran this turn. Call the relevant read tool first and ' +
               'inline its result, or remove the data-summary language from the body.',
           };

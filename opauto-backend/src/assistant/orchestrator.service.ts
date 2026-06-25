@@ -1075,6 +1075,7 @@ export class OrchestratorService {
         'send_email was rejected because its body summarised live data but no read tool ran this turn. ' +
         'Retry by calling the relevant READ tool(s) first, then call send_email again with concrete values inlined. ' +
         'For dashboard totals, call get_dashboard_kpis. For overdue invoice status, call list_overdue_invoices. ' +
+        'For appointment confirmations or next/upcoming appointment details, call list_appointments with the customer filter, orderBy:"soonest", and limit:1; use startTimeLocal/endTimeLocal/timeZone in the email. ' +
         'Do not call send_email again with placeholders or guessed values.',
     };
   }
@@ -2688,8 +2689,12 @@ export class OrchestratorService {
       /\bpar\s+(e-?mail|courriel)\b/i,
       /إيميل|بريد\s*(إلكتروني|الكتروني)/,
     ];
-    if (emailPatterns.some((p) => p.test(message))) {
+    const asksForEmailAction = emailPatterns.some((p) => p.test(message));
+    if (asksForEmailAction) {
       out.push('send_email');
+      if (this.userAskedForAppointmentLookup(message)) {
+        out.push('list_appointments');
+      }
     }
     const smsPatterns: RegExp[] = [
       // "sms Ali" / "text Sarah" / "sms reminder" — but NOT "sms history"
@@ -2783,6 +2788,36 @@ export class OrchestratorService {
       selectedType === 'maintenancejob' ||
       selectedType === 'maintenance_job';
     return selectedMaintenanceJob && mentionsCustomer;
+  }
+
+  private userAskedForAppointmentLookup(message: string | undefined): boolean {
+    if (!message) return false;
+    const asksForAppointment =
+      /\b(?:appointment|appointments|booking|booked|schedule|scheduled|rendez-?vous|rdv)\b/i.test(
+        message,
+      );
+    if (!asksForAppointment) return false;
+    return /\b(?:upcoming|next|coming|future|date\s+and\s+time|date\s*&\s*time|date|time|when|details?|confirm(?:ation)?)\b/i.test(
+      message,
+    );
+  }
+
+  private userAskedForAppointmentEmailLookup(
+    message: string | undefined,
+  ): boolean {
+    if (!this.userAskedForAppointmentLookup(message)) return false;
+    return (
+      /\bemail\s+(?!(?:address|account|settings)\b)\w+/i.test(message ?? '') ||
+      /\bsend\s+(?:\w+\s+)*(?:an?\s+)?e-?mails?\b/i.test(message ?? '') ||
+      /\b(?:via|by|as\s+an?|to\s+my)\s+(?:personal\s+)?e-?mail\b/i.test(
+        message ?? '',
+      ) ||
+      /\benvoie[zr]?[\s-]+(?:moi|nous)?\s*(?:un\s+|le\s+)?(?:e-?mail|courriel)\b/i.test(
+        message ?? '',
+      ) ||
+      /\bpar\s+(?:e-?mail|courriel)\b/i.test(message ?? '') ||
+      /إيميل|بريد\s*(?:إلكتروني|الكتروني)/.test(message ?? '')
+    );
   }
 
   private userAskedForCarDetails(message: string): boolean {
@@ -3164,6 +3199,7 @@ export class OrchestratorService {
         `- Present the final answer only. Do NOT narrate hidden reasoning or data-gathering steps as "Step 1", "Step 2", "Analyze the tool output", or similar process notes.\n` +
         `- Currency is Tunisian Dinar. Format amounts as "1,234.56 TND" (English) or "1 234,56 DT" (French). NEVER prefix with a currency symbol — no ₸, no د.ت, no $, no €. Just the number and the code.\n` +
         `- Round currency to 2 decimal places.\n` +
+        `- Never show raw ISO timestamps such as 2026-06-30T08:00:00.000Z to users or in customer emails. For appointment times, use the local display fields returned by list_appointments: startTimeLocal, endTimeLocal, and timeZone.\n` +
         `- Do NOT include internal database IDs (customerId, carId, appointmentId, invoice UUIDs, toolCallId, or raw UUIDs) unless the user explicitly asks for technical IDs. Use names, phone numbers, invoice numbers, license plates, dates, and amounts instead.\n` +
         `- NEVER write tool-call markup in your reply. Do NOT print JSON like \`{"type":"function","name":"...","arguments":...}\`, do NOT use \`<function=name>{...}</function>\` tags, and do NOT narrate "I will call tool X". Either invoke the tool through the structured tool-use channel (the assistant runtime executes it) or describe the result in plain prose. Tool-call JSON in your reply text is treated as a malformed response and discarded.`,
     );
@@ -3175,6 +3211,7 @@ export class OrchestratorService {
         `- For customer SMS actions, resolve the real customer first and pass that real customerId plus their actual phone number to send_sms. Do NOT invent phone numbers or placeholder ids.\n` +
         `- For customer/external email actions that are not maintenance approval links, use send_email with the exact ` +
         `email address the user provided. If the user named a customer instead of typing an address, resolve the real customer first and pass that real customerId plus their actual email in send_email.to. Do NOT fall back to the owner email for customer requests.\n` +
+        `- When the user asks to email a customer about their next/upcoming appointment or appointment date/time, resolve the customer, call list_appointments with customerId or customerName, orderBy:"soonest", and limit:1, then call send_email with the real customerId/email and the appointment's startTimeLocal/endTimeLocal/timeZone. Write a professional email, include the garage name, include a footer/signature, and do NOT use UTC startTime/endTime in customer-facing appointment text.\n` +
         `- NEVER claim "no data is available" / "data could not be retrieved" / "the report is unavailable" without having actually invoked the relevant read tool this turn. If you have not called a read tool yet, call it. If the tool returns empty, report the specific empty result ("0 overdue invoices", "no at-risk customers this period") — do NOT generalise to "no data".\n` +
         `- NEVER reference an attachment ("see attached", "please find the PDF attached", "ci-joint", "pièce jointe") in the email body unless you populate attachInvoiceIds with real invoice ids. The backend rejects emails that promise an attachment without one.\n` +
         `- When the user wants invoices attached to an email, call list_invoices first to get the invoice IDs, then pass them as attachInvoiceIds in send_email — the backend converts them to a CSV attachment automatically.\n` +
@@ -3372,6 +3409,13 @@ export class OrchestratorService {
             'Call the invoice read tool first and pass real invoice ids, or omit attachments.',
         };
       }
+      if (this.containsRawUtcTimestamp([a.subject, html, text])) {
+        return {
+          error: 'raw_utc_timestamp',
+          message:
+            'send_email contains a raw UTC ISO timestamp ending in Z. Use the local appointment display fields (startTimeLocal/endTimeLocal/timeZone) before asking for approval.',
+        };
+      }
       const to = typeof a.to === 'string' ? a.to.trim() : '';
       const customerId =
         typeof a.customerId === 'string' ? a.customerId.trim() : '';
@@ -3438,6 +3482,19 @@ export class OrchestratorService {
           };
         }
         a.to = this.normaliseEmail(to);
+      }
+      if (
+        this.emailNeedsAppointmentRead(
+          ctx.turnState?.userMessage,
+          successfulToolResults,
+        )
+      ) {
+        return {
+          error: 'no_supporting_reads',
+          message:
+            'The user asked to email appointment date/time or an upcoming appointment, but send_email was prepared before list_appointments ran. ' +
+            'Resolve the customer if needed, call list_appointments with customerId or customerName, orderBy:"soonest", and limit:1, then retry send_email using startTimeLocal/endTimeLocal/timeZone and the real customer email.',
+        };
       }
       return null;
     }
@@ -4162,6 +4219,26 @@ export class OrchestratorService {
     const normalizedEmail = this.normaliseEmail(email);
     if (!userMessage || normalizedEmail.length === 0) return false;
     return userMessage.toLowerCase().includes(normalizedEmail);
+  }
+
+  private emailNeedsAppointmentRead(
+    userMessage: string | undefined,
+    successfulToolResults: { toolName: string; result: unknown }[],
+  ): boolean {
+    if (!this.userAskedForAppointmentEmailLookup(userMessage)) return false;
+    return !successfulToolResults.some(
+      (entry) => entry.toolName === 'list_appointments',
+    );
+  }
+
+  private containsRawUtcTimestamp(values: unknown[]): boolean {
+    return values.some(
+      (value) =>
+        typeof value === 'string' &&
+        /\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?Z\b/.test(
+          value,
+        ),
+    );
   }
 
   private findExternalEmailInUserMessage(

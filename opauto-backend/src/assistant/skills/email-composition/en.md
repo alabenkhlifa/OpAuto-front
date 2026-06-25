@@ -13,7 +13,7 @@ Before drafting, confirm you have:
 
 - **Recipient** — name and email address.
 - **Purpose** — invoice delivery, payment reminder, appointment confirmation, thank-you, or other.
-- **Tone** — formal or friendly. Default to formal for payment-related emails, friendly for confirmations and thank-yous.
+- **Tone** — formal or friendly. Default to formal for payment-related emails and customer appointment confirmations; use friendly only for simple thank-yous.
 - **Context details** — invoice number, amount due, appointment date/time, vehicle plate, etc.
 
 If any required field is missing, ask ONE concise question listing exactly what is missing. Do not guess.
@@ -28,7 +28,9 @@ Subject: <one-line subject, no trailing punctuation>
 <body>
 ```
 
-The body is 80-150 words. Plain prose, no markdown bullets unless listing 2+ invoice line items. Address the recipient by first name when known. Sign off with the garage name. Never use placeholders such as `[Your Name]`.
+The body is 80-150 words. Plain prose, no markdown bullets unless listing 2+ invoice line items. Address the recipient by first name when known. Sign off with a professional footer that includes the garage name. Never use placeholders such as `[Your Name]`.
+
+For appointment confirmations, use the local appointment display fields provided by the tool result, such as `startTimeLocal`, `endTimeLocal`, and `timeZone`. Never include raw ISO timestamps such as `2026-06-30T08:00:00.000Z`.
 
 ## Locale conventions
 
