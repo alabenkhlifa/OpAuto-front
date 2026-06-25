@@ -6,6 +6,7 @@ import {
   AssistantUiMessage,
 } from '../../../core/models/assistant.model';
 import { SmsPreviewComponent } from '../components/assistant-action-preview/sms-preview.component';
+import { EmailPreviewComponent } from '../components/assistant-action-preview/email-preview.component';
 import { CreateAppointmentPreviewComponent } from '../components/assistant-action-preview/create-appointment-preview.component';
 import { RecordPaymentPreviewComponent } from '../components/assistant-action-preview/record-payment-preview.component';
 import { CreateInvoicePreviewComponent } from '../components/assistant-action-preview/create-invoice-preview.component';
@@ -196,6 +197,33 @@ describe('AssistantToolPresenterService', () => {
     expect(s.previewComponent).toBe(RecordPaymentPreviewComponent);
     expect(s.previewInputs?.['amount']).toBe(250);
     expect(s.previewInputs?.['invoiceNumber']).toBe('INV-202604-0001');
+  });
+
+  it('uses a readable fallback subject for customer approval emails', () => {
+    const s = svc.approvalSummary(
+      pending('send_job_customer_approval_email', {
+        jobId: 'job-1',
+        message: 'Please approve the added oil part.',
+      }),
+    );
+
+    expect(s.previewComponent).toBe(EmailPreviewComponent);
+    expect(s.previewInputs?.['subject']).toBe('Maintenance approval request');
+    expect(s.previewInputs?.['subtitleKey']).toBe('assistant.preview.email.toCustomer');
+    expect(s.previewInputs?.['text']).toBe('Please approve the added oil part.');
+  });
+
+  it('preserves long explicit subjects for customer approval emails', () => {
+    const subject =
+      'Maintenance approval request for AI-MNT-034633 with newly added Oil 10w40 part and updated estimated maintenance total';
+    const s = svc.approvalSummary(
+      pending('send_job_customer_approval_email', {
+        jobId: 'job-1',
+        subject,
+      }),
+    );
+
+    expect(s.previewInputs?.['subject']).toBe(subject);
   });
 
   it('returns default approve verb when tool is unknown', () => {

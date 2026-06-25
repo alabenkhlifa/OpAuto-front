@@ -72,7 +72,7 @@ import { TranslationService } from '../../core/services/translation.service';
               </div>
               <div>
                 <dt>{{ 'maintenance.publicApproval.description' | translate }}</dt>
-                <dd>{{ summary()!.request.description }}</dd>
+                <dd class="approval-details__description">{{ summary()!.request.description }}</dd>
               </div>
             </dl>
           </section>
@@ -321,6 +321,10 @@ import { TranslationService } from '../../core/services/translation.service';
       font-size: 1rem;
       line-height: 1.6;
       overflow-wrap: anywhere;
+    }
+
+    .approval-details__description {
+      white-space: pre-line;
     }
 
     .approval-actions,

@@ -3684,6 +3684,7 @@
       "email": {
         "title": "Envoyer un e-mail",
         "toMe": "à votre adresse de compte",
+        "toCustomer": "au client de l’intervention",
         "subject": "Objet"
       },
       "createAppointment": {

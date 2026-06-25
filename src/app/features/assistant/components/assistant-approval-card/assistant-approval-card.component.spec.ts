@@ -362,6 +362,31 @@ describe('AssistantApprovalCardComponent', () => {
       expect(body).toContain('124.95');
     });
 
+    it('renders and wraps long approval email subjects', async () => {
+      const subject =
+        'Maintenance approval request for AI-MNT-034633 with newly added Oil 10w40 part and updated estimated maintenance total';
+      await setPending(
+        buildPending({
+          toolName: 'send_job_customer_approval_email',
+          args: {
+            jobId: 'job-1',
+            subject,
+            message: 'Please review the updated job.',
+          },
+        }),
+      );
+
+      const row = fixture.nativeElement.querySelector('.action-preview__row--subject') as HTMLElement | null;
+      const value = fixture.nativeElement.querySelector('.action-preview__row-value--subject') as HTMLElement | null;
+
+      expect(row).not.toBeNull();
+      expect(value).not.toBeNull();
+      expect(value!.textContent).toContain(subject);
+      expect(value!.textContent).not.toContain('—');
+      expect(getComputedStyle(row!).display).toBe('grid');
+      expect(getComputedStyle(value!).whiteSpace).toBe('normal');
+    });
+
     it('falls back to the default approve verb when tool is unknown', async () => {
       await setPending(buildPending({ toolName: 'unknown_tool', args: { foo: 1 } }));
       const s = component.summary();

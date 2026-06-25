@@ -220,6 +220,7 @@ describe('Maintenance job tools', () => {
         findOne: jest.fn().mockResolvedValue({
           id: 'job-1',
           title: 'Approval job',
+          estimatedCost: 55,
           car: {
             make: 'TestMake',
             model: 'WorkflowCar',
@@ -246,6 +247,13 @@ describe('Maintenance job tools', () => {
               tvaRate: 19,
               discountPct: 0,
             },
+            {
+              description: 'Oil 10w40',
+              quantity: 1,
+              unitPrice: 100,
+              tvaRate: 19,
+              discountPct: 0,
+            },
           ],
           approvalRequests: [],
         }),
@@ -264,7 +272,10 @@ describe('Maintenance job tools', () => {
         'https://opauto.test',
       );
 
-      const out = await tool.handler({ jobId: 'job-1' }, ownerCtx);
+      const out = await tool.handler(
+        { jobId: 'job-1', requestedAmount: 122.57, summary: 'stale total' },
+        ownerCtx,
+      );
 
       expect(tool.blastTier).toBe(AssistantBlastTier.CONFIRM_WRITE);
       expect(maintenance.findOne).toHaveBeenCalledWith('job-1', 'garage-1');
@@ -281,7 +292,17 @@ describe('Maintenance job tools', () => {
       );
       const approvalDto = (maintenance.createApprovalRequest as jest.Mock).mock
         .calls[0][3];
-      expect(approvalDto.requestedAmount).toBeCloseTo(122.57);
+      expect(approvalDto.requestedAmount).toBeCloseTo(258);
+      expect(approvalDto.summary).toBe(
+        [
+          'Please review and approve the requested job items:',
+          '- Base maintenance estimate: 55.00 TND',
+          '- Cabin air filter x 1: 18.00 TND',
+          '- Oil x 1: 85.00 TND',
+          '- Oil 10w40 x 1: 100.00 TND',
+          'Estimated total: 258.00 TND.',
+        ].join('\n'),
+      );
       expect(tokens.sign).toHaveBeenCalledWith('apr-1', 'jobApproval');
       expect(email.send).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -299,8 +320,12 @@ describe('Maintenance job tools', () => {
       );
       const sent = (email.send as jest.Mock).mock.calls[0][0];
       expect(sent.html).toContain('Review and approve');
+      expect(sent.html).toContain('Base maintenance estimate');
       expect(sent.html).toContain('Cabin air filter');
       expect(sent.html).toContain('Oil');
+      expect(sent.html).toContain('Oil 10w40');
+      expect(sent.html).toContain('Estimated total:</strong> 258.00 TND');
+      expect(sent.text).toContain('- Oil 10w40 x 1: 100.00 TND HT');
       expect(out).toEqual(
         expect.objectContaining({
           providerMessageId: 'msg-1',
@@ -332,6 +357,9 @@ describe('Maintenance job tools', () => {
               id: 'apr-existing',
               status: 'PENDING',
               customerEmail: 'ala.khllifa+Job1@gmail.com',
+              requestedAmount: 0,
+              summary:
+                'Please review and approve the requested maintenance job work.\nEstimated total: 0.00 TND.',
             },
           ],
         }),
@@ -361,6 +389,71 @@ describe('Maintenance job tools', () => {
       expect(out.approvalRequestId).toBe('apr-existing');
       expect(out.publicUrl).toBe(
         'https://opauto.test/public/job-approvals/existing-token',
+      );
+    });
+
+    it('does not reuse a stale pending approval after job totals changed', async () => {
+      const maintenance = maintenanceMock({
+        findOne: jest.fn().mockResolvedValue({
+          id: 'job-1',
+          estimatedCost: 55,
+          car: {
+            make: 'TestMake',
+            model: 'WorkflowCar',
+            licensePlate: 'AI-MNT-034633',
+            customer: {
+              firstName: 'AI',
+              lastName: 'Maintenance',
+              email: 'ala.khllifa+Job1@gmail.com',
+            },
+          },
+          parts: [
+            { description: 'Cabin air filter', quantity: 1, unitPrice: 18 },
+            { description: 'Oil', quantity: 1, unitPrice: 85 },
+            { description: 'Oil 10w40', quantity: 1, unitPrice: 100 },
+          ],
+          approvalRequests: [
+            {
+              id: 'apr-stale',
+              status: 'PENDING',
+              customerEmail: 'ala.khllifa+Job1@gmail.com',
+              requestedAmount: 122.57,
+              summary:
+                'Please review and approve the requested job items: Cabin air filter x 1, Oil x 1.',
+            },
+          ],
+        }),
+        createApprovalRequest: jest.fn().mockResolvedValue({
+          id: 'apr-fresh',
+          maintenanceJobId: 'job-1',
+          status: 'PENDING',
+        }),
+      });
+      const email = emailMock();
+      const tokens = { sign: jest.fn().mockReturnValue('fresh-token') };
+      const tool = buildSendJobCustomerApprovalEmailTool(
+        maintenance as never,
+        email as never,
+        tokens as never,
+        'https://opauto.test/',
+      );
+
+      const out = await tool.handler({ jobId: 'job-1' }, ownerCtx);
+
+      expect(maintenance.createApprovalRequest).toHaveBeenCalledWith(
+        'job-1',
+        'garage-1',
+        'owner-1',
+        expect.objectContaining({
+          requestedAmount: 258,
+          summary: expect.stringContaining('- Oil 10w40 x 1: 100.00 TND'),
+        }),
+      );
+      expect(tokens.sign).toHaveBeenCalledWith('apr-fresh', 'jobApproval');
+      expect(out.approvalRequestId).toBe('apr-fresh');
+      expect(out.requestedAmount).toBe(258);
+      expect(out.publicUrl).toBe(
+        'https://opauto.test/public/job-approvals/fresh-token',
       );
     });
 

@@ -15,16 +15,18 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
           {{ 'assistant.preview.email.title' | translate }}
         </span>
         <span class="action-preview__subtitle">
-          {{ 'assistant.preview.email.toMe' | translate }}
+          {{ subtitleKey() | translate }}
         </span>
       </div>
 
       <div class="action-preview__panel">
-        <div class="action-preview__row">
+        <div class="action-preview__row action-preview__row--subject">
           <span class="action-preview__row-label">
             {{ 'assistant.preview.email.subject' | translate }}
           </span>
-          <span class="action-preview__row-value">{{ subject() || '—' }}</span>
+          <span class="action-preview__row-value action-preview__row-value--subject" [attr.title]="subjectTitle()">
+            {{ subjectLabel() }}
+          </span>
         </div>
 
         @if (preview(); as p) {
@@ -45,10 +47,21 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 })
 export class EmailPreviewComponent {
   readonly subject = input<string | undefined>();
+  readonly subtitleKey = input<string>('assistant.preview.email.toMe');
   readonly text = input<string | undefined>();
   readonly html = input<string | undefined>();
   readonly attachInvoiceCount = input<number>(0);
   readonly attachInvoiceFormat = input<'csv' | 'pdf' | undefined>();
+
+  readonly subjectLabel = computed(() => {
+    const subject = this.subject()?.trim();
+    return subject && subject.length > 0 ? subject : '—';
+  });
+
+  readonly subjectTitle = computed(() => {
+    const subject = this.subjectLabel();
+    return subject === '—' ? null : subject;
+  });
 
   readonly preview = computed(() => {
     const t = this.text();

@@ -158,4 +158,28 @@ describe('PublicJobApprovalComponent', () => {
     expect(items[3].classList).toContain('timeline--approved');
     expect(getComputedStyle(items[2]).getPropertyValue('--timeline-accent').trim()).toBe('#f97316');
   });
+
+  it('preserves multiline approval request summaries', () => {
+    maintenanceService.getPublicApprovalSummary.and.returnValue(of({
+      ...summary,
+      request: {
+        ...summary.request,
+        description: [
+          'Please review and approve the requested job items:',
+          '- Base maintenance estimate: 55.00 TND',
+          '- Oil 10w40 x 1: 100.00 TND',
+          'Estimated total: 258.00 TND.',
+        ].join('\n'),
+        estimatedPrice: 258,
+      },
+    }));
+
+    fixture.detectChanges();
+
+    const description = fixture.nativeElement.querySelector('.approval-details__description') as HTMLElement | null;
+
+    expect(description).not.toBeNull();
+    expect(description!.textContent).toContain('- Oil 10w40 x 1: 100.00 TND');
+    expect(getComputedStyle(description!).whiteSpace).toBe('pre-line');
+  });
 });

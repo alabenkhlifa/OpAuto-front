@@ -26,20 +26,57 @@ export interface SendJobCustomerApprovalEmailResult {
 }
 
 function toNum(v: unknown): number {
-  return typeof v === 'number' ? v : 0;
+  if (typeof v === 'number') return Number.isFinite(v) ? v : 0;
+  if (v && typeof (v as any).toNumber === 'function') {
+    return (v as any).toNumber();
+  }
+  const parsed = Number(v);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+type ApprovalLine = {
+  description: string;
+  quantity: number | null;
+  unitPrice: number;
+  total: number;
+};
+
+function lineTotalHt(line: any): number {
+  const quantity = toNum(line?.quantity) || 1;
+  const unitPrice = toNum(line?.unitPrice);
+  const discountPct = toNum(line?.discountPct);
+  return quantity * unitPrice * (1 - discountPct / 100);
+}
+
+function approvalLines(job: any): ApprovalLine[] {
+  const lines: ApprovalLine[] = [];
+  const jobEstimate = toNum(job?.actualCost) || toNum(job?.estimatedCost);
+  if (jobEstimate > 0) {
+    lines.push({
+      description: 'Base maintenance estimate',
+      quantity: null,
+      unitPrice: jobEstimate,
+      total: jobEstimate,
+    });
+  }
+
+  const jobLines = Array.isArray(job?.parts) ? job.parts : [];
+  for (const line of jobLines) {
+    const quantity = toNum(line?.quantity) || 1;
+    const unitPrice = toNum(line?.unitPrice);
+    lines.push({
+      description: String(line?.description ?? line?.part?.name ?? 'Work item'),
+      quantity,
+      unitPrice,
+      total: lineTotalHt(line),
+    });
+  }
+
+  return lines;
 }
 
 function estimateTotal(job: any): number {
-  const lines = Array.isArray(job?.parts) ? job.parts : [];
-  return lines.reduce((sum: number, line: any) => {
-    const quantity = toNum(line?.quantity) || 1;
-    const unitPrice = toNum(line?.unitPrice);
-    const tvaRate = toNum(line?.tvaRate);
-    const discountPct = toNum(line?.discountPct);
-    const base = quantity * unitPrice;
-    const discounted = base * (1 - discountPct / 100);
-    return sum + discounted * (1 + tvaRate / 100);
-  }, 0);
+  return approvalLines(job).reduce((sum, line) => sum + line.total, 0);
 }
 
 function formatTnd(value: number): string {
@@ -79,33 +116,25 @@ function carLabel(job: any): string {
     .trim();
 }
 
-function lineItems(
-  job: any,
-): { description: string; quantity: number; unitPrice: number }[] {
-  const lines = Array.isArray(job?.parts) ? job.parts : [];
-  return lines.map((line: any) => ({
-    description: String(line?.description ?? line?.part?.name ?? 'Work item'),
-    quantity: toNum(line?.quantity) || 1,
-    unitPrice: toNum(line?.unitPrice),
-  }));
-}
+function approvalSummary(job: any, amount: number): string {
+  const items = approvalLines(job);
+  if (!items.length) {
+    return `Please review and approve the requested maintenance job work.\nEstimated total: ${formatTnd(amount)}.`;
+  }
 
-function approvalSummary(job: any, amount: number, provided?: string): string {
-  if (provided?.trim()) return provided.trim();
-  const items = lineItems(job)
-    .slice(0, 5)
-    .map((line) => `${line.description} x ${line.quantity}`)
-    .join(', ');
-  const prefix = items
-    ? `Please review and approve the requested job items: ${items}.`
-    : 'Please review and approve the requested maintenance job work.';
-  return `${prefix} Estimated total: ${formatTnd(amount)}.`;
+  const lines = items
+    .map((line) => {
+      const quantity = line.quantity === null ? '' : ` x ${line.quantity}`;
+      return `- ${line.description}${quantity}: ${formatTnd(line.total)}`;
+    })
+    .join('\n');
+  return `Please review and approve the requested job items:\n${lines}\nEstimated total: ${formatTnd(amount)}.`;
 }
 
 function buildHtmlEmail(opts: {
   name: string;
   car: string;
-  lines: { description: string; quantity: number; unitPrice: number }[];
+  lines: ApprovalLine[];
   amount: number;
   publicUrl: string;
   message?: string;
@@ -121,8 +150,8 @@ function buildHtmlEmail(opts: {
         .map(
           (line) =>
             `<tr><td style="padding:8px 0;border-bottom:1px solid #e5e7eb;">${escapeHtml(line.description)}</td>` +
-            `<td style="padding:8px 0;border-bottom:1px solid #e5e7eb;text-align:center;">${line.quantity}</td>` +
-            `<td style="padding:8px 0;border-bottom:1px solid #e5e7eb;text-align:right;">${escapeHtml(formatTnd(line.unitPrice))}</td></tr>`,
+            `<td style="padding:8px 0;border-bottom:1px solid #e5e7eb;text-align:center;">${line.quantity ?? '-'}</td>` +
+            `<td style="padding:8px 0;border-bottom:1px solid #e5e7eb;text-align:right;">${escapeHtml(formatTnd(line.total))}</td></tr>`,
         )
         .join('')
     : `<tr><td colspan="3" style="padding:8px 0;border-bottom:1px solid #e5e7eb;">Maintenance job review</td></tr>`;
@@ -136,7 +165,7 @@ function buildHtmlEmail(opts: {
     '<thead><tr>',
     '<th style="padding:8px 0;border-bottom:2px solid #111827;text-align:left;">Item</th>',
     '<th style="padding:8px 0;border-bottom:2px solid #111827;text-align:center;">Qty</th>',
-    '<th style="padding:8px 0;border-bottom:2px solid #111827;text-align:right;">HT price</th>',
+    '<th style="padding:8px 0;border-bottom:2px solid #111827;text-align:right;">HT total</th>',
     '</tr></thead>',
     `<tbody>${rows}</tbody>`,
     '</table>',
@@ -153,7 +182,7 @@ function buildHtmlEmail(opts: {
 function buildTextEmail(opts: {
   name: string;
   car: string;
-  lines: { description: string; quantity: number; unitPrice: number }[];
+  lines: ApprovalLine[];
   amount: number;
   publicUrl: string;
   message?: string;
@@ -161,8 +190,10 @@ function buildTextEmail(opts: {
   const items = opts.lines.length
     ? opts.lines
         .map(
-          (line) =>
-            `- ${line.description} x ${line.quantity}: ${formatTnd(line.unitPrice)} HT`,
+          (line) => {
+            const quantity = line.quantity === null ? '' : ` x ${line.quantity}`;
+            return `- ${line.description}${quantity}: ${formatTnd(line.total)} HT`;
+          },
         )
         .join('\n')
     : '- Maintenance job review';
@@ -187,7 +218,16 @@ function buildPublicUrl(baseUrl: string, token: string): string {
   return `${base}/public/job-approvals/${token}`;
 }
 
-function findReusableApproval(job: any, email: string): any | null {
+function matchesAmount(actual: unknown, expected: number): boolean {
+  return Math.abs(toNum(actual) - expected) < 0.005;
+}
+
+function findReusableApproval(
+  job: any,
+  email: string,
+  amount: number,
+  summary: string,
+): any | null {
   const requests = Array.isArray(job?.approvalRequests)
     ? job.approvalRequests
     : [];
@@ -198,7 +238,13 @@ function findReusableApproval(job: any, email: string): any | null {
         typeof request?.customerEmail === 'string'
           ? request.customerEmail.trim().toLowerCase()
           : '';
-      return requestEmail === email.toLowerCase();
+      const requestSummary =
+        typeof request?.summary === 'string' ? request.summary.trim() : '';
+      return (
+        requestEmail === email.toLowerCase() &&
+        matchesAmount(request?.requestedAmount, amount) &&
+        requestSummary === summary
+      );
     }) ?? null
   );
 }
@@ -238,7 +284,7 @@ export function buildSendJobCustomerApprovalEmailTool(
           type: 'number',
           minimum: 0,
           description:
-            'Optional total amount in TND. If omitted, the tool calculates the total from job lines including TVA.',
+            'Legacy hint only. The tool calculates the customer-facing amount from the current job estimate plus HT job lines.',
         },
         summary: {
           type: 'string',
@@ -278,9 +324,9 @@ export function buildSendJobCustomerApprovalEmailTool(
 
       const name = customerName(job);
       const car = carLabel(job);
-      const amount = args.requestedAmount ?? estimateTotal(job);
-      const summary = approvalSummary(job, amount, args.summary);
-      const reusable = findReusableApproval(job, to);
+      const amount = estimateTotal(job);
+      const summary = approvalSummary(job, amount);
+      const reusable = findReusableApproval(job, to, amount, summary);
       const approval =
         reusable ??
         (await maintenanceService.createApprovalRequest(
@@ -302,7 +348,7 @@ export function buildSendJobCustomerApprovalEmailTool(
       const subject =
         args.subject?.trim() ||
         `Maintenance approval request${car ? ` for ${car}` : ''}`;
-      const lines = lineItems(job);
+      const lines = approvalLines(job);
       const html = buildHtmlEmail({
         name,
         car,

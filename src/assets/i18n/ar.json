@@ -3722,6 +3722,7 @@
       "email": {
         "title": "إرسال بريد إلكتروني",
         "toMe": "إلى عنوان حسابك",
+        "toCustomer": "إلى عميل أمر الصيانة",
         "subject": "الموضوع"
       },
       "createAppointment": {

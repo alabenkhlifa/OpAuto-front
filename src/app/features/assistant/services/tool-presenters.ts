@@ -18,6 +18,14 @@ const str = (v: unknown, key: string): string | undefined => {
   return typeof x === 'string' ? x : undefined;
 };
 
+const firstStr = (v: unknown, keys: string[]): string | undefined => {
+  for (const key of keys) {
+    const value = str(v, key)?.trim();
+    if (value) return value;
+  }
+  return undefined;
+};
+
 const num = (v: unknown, key: string): number | undefined => {
   const o = obj(v);
   if (!o) return undefined;
@@ -86,6 +94,22 @@ const formatDateTime = (iso?: string): string => {
 
 const k = (toolName: string, suffix: string): string =>
   `assistant.tools.${toolName}.${suffix}`;
+
+const jobApprovalSubject = (v: unknown): string => {
+  const explicit = firstStr(v, ['subject', 'emailSubject', 'title']);
+  if (explicit) return explicit;
+
+  const car = firstStr(v, [
+    'carLabel',
+    'vehicleLabel',
+    'carDetails',
+    'vehicle',
+    'licensePlate',
+  ]);
+  return car
+    ? `Maintenance approval request for ${car}`
+    : 'Maintenance approval request';
+};
 
 const present = <TArgs = unknown, TResult = unknown>(
   toolName: string,
@@ -228,12 +252,13 @@ export const TOOL_PRESENTERS: ToolPresenter[] = [
     approveVerbKey: k('request_job_customer_approval', 'approveVerb'),
   }),
   present('send_job_customer_approval_email', {
-    runningParams: (a) => ({ subject: str(a, 'subject') ?? '' }),
+    runningParams: (a) => ({ subject: jobApprovalSubject(a) }),
     successParams: (_a, r) => ({ to: str(r, 'to') ?? '' }),
     previewComponent: EmailPreviewComponent,
     previewInputs: (a) => ({
-      subject: str(a, 'subject'),
-      text: str(a, 'message'),
+      subject: jobApprovalSubject(a),
+      subtitleKey: 'assistant.preview.email.toCustomer',
+      text: str(a, 'message') ?? str(a, 'summary'),
     }),
     approveVerbKey: k('send_job_customer_approval_email', 'approveVerb'),
   }),

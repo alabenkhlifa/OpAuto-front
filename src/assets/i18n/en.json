@@ -3589,6 +3589,7 @@
       "email": {
         "title": "Send email",
         "toMe": "to your account email",
+        "toCustomer": "to the job customer",
         "subject": "Subject"
       },
       "createAppointment": {

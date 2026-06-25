@@ -107,6 +107,12 @@
   font-size: 0.8125rem;
 }
 
+.action-preview__row--subject {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: start;
+}
+
 .action-preview__row-label {
   color: #6b7280;
   flex-shrink: 0;
@@ -118,6 +124,13 @@
   text-align: end;
   word-break: break-word;
   min-width: 0;
+}
+
+.action-preview__row-value--subject {
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  word-break: normal;
 }
 
 .action-preview__divider {
@@ -173,4 +186,15 @@
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum';
+}
+
+@media (max-width: 360px) {
+  .action-preview__row--subject {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+
+  .action-preview__row-value--subject {
+    text-align: start;
+  }
 }
