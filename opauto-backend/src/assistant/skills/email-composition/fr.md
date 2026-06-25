@@ -28,7 +28,7 @@ Subject: <objet sur une ligne, sans ponctuation finale>
 <corps>
 ```
 
-Le corps fait 80 à 150 mots. Prose simple, pas de puces sauf pour lister 2 lignes de facture ou plus. Adresse-toi au destinataire par son prénom quand il est connu. Signe au nom du propriétaire du garage en utilisant le nom du garage si disponible, sinon un générique « L'équipe ».
+Le corps fait 80 à 150 mots. Prose simple, pas de puces sauf pour lister 2 lignes de facture ou plus. Adresse-toi au destinataire par son prénom quand il est connu. Signe avec le nom du garage. N'utilise jamais de placeholder comme « [Votre nom] ».
 
 ## Conventions linguistiques
 

@@ -118,13 +118,37 @@ function bodyReferencesAttachment(haystack: string): boolean {
 }
 
 const UNRESOLVED_PLACEHOLDER_PATTERNS: RegExp[] = [
-  /\[(?:date|heure|time|hour|votre\s+nom|your\s+name|nom|name)\]/i,
-  /\{\{\s*(?:date|heure|time|hour|votre\s+nom|your\s+name|nom|name)\s*\}\}/i,
-  /<(?:date|heure|time|hour|votre\s+nom|your\s+name|nom|name)>/i,
+  /\[(?:date|heure|time|hour)\]/i,
+  /\{\{\s*(?:date|heure|time|hour)\s*\}\}/i,
+  /<(?:date|heure|time|hour)>/i,
 ];
 
 function bodyContainsUnresolvedPlaceholder(haystack: string): boolean {
   return UNRESOLVED_PLACEHOLDER_PATTERNS.some((re) => re.test(haystack));
+}
+
+const SENDER_NAME_PLACEHOLDER_PATTERNS: RegExp[] = [
+  /\[(?:your\s+name|sender\s+name|garage\s+name|votre\s+nom|nom|nom\s+du\s+garage|name)\]/gi,
+  /\{\{\s*(?:your\s+name|sender\s+name|garage\s+name|votre\s+nom|nom|nom\s+du\s+garage|name)\s*\}\}/gi,
+  /<(?:your\s+name|sender\s+name|garage\s+name|votre\s+nom|nom|nom\s+du\s+garage|name)>/gi,
+];
+
+function bodyContainsSenderNamePlaceholder(haystack: string): boolean {
+  return SENDER_NAME_PLACEHOLDER_PATTERNS.some((re) => {
+    re.lastIndex = 0;
+    return re.test(haystack);
+  });
+}
+
+function replaceSenderNamePlaceholders(
+  value: string | undefined,
+  garageName: string,
+): string | undefined {
+  if (value === undefined) return undefined;
+  return SENDER_NAME_PLACEHOLDER_PATTERNS.reduce((out, re) => {
+    re.lastIndex = 0;
+    return out.replace(re, garageName);
+  }, value);
 }
 
 function normalizeEmailString(value: string | undefined): string | undefined {
@@ -275,6 +299,38 @@ export function createSendEmailTool(deps: {
    */
   getKnownNames?: () => ReadonlySet<string>;
 }): ToolDefinition<SendEmailArgs, SendEmailResult | SendEmailError> {
+  const resolveGarageName = async (
+    ctx: AssistantUserContext,
+  ): Promise<string | undefined> => {
+    const garage = await deps.prisma.garage.findUnique({
+      where: { id: ctx.garageId },
+      select: { name: true },
+    });
+    const name = garage?.name?.trim();
+    return name && name.length > 0 ? name : undefined;
+  };
+
+  const replaceSenderPlaceholdersInArgs = async (
+    args: SendEmailArgs,
+    ctx: AssistantUserContext,
+  ): Promise<SendEmailArgs> => {
+    const haystack = [args.subject, args.html ?? '', args.text ?? '']
+      .filter((s) => s && s.length > 0)
+      .join('\n');
+    if (!bodyContainsSenderNamePlaceholder(haystack)) return args;
+
+    const garageName = await resolveGarageName(ctx);
+    if (!garageName) return args;
+
+    return {
+      ...args,
+      subject:
+        replaceSenderNamePlaceholders(args.subject, garageName) ?? args.subject,
+      html: replaceSenderNamePlaceholders(args.html, garageName),
+      text: replaceSenderNamePlaceholders(args.text, garageName),
+    };
+  };
+
   return {
     name: 'send_email',
     description:
@@ -284,8 +340,9 @@ export function createSendEmailTool(deps: {
       'When emailing a customer resolved through find_customer/get_customer, pass both the ' +
       "customer's real `customerId` and their actual email in `to`. External recipients require " +
       'owner approval before delivery. At least one of `html` or `text` MUST be a non-empty string. ' +
-      'Never use placeholders such as [date], [heure], [time], or [Votre nom]; use real values ' +
-      'from prior tool results or ask for missing details before sending. ' +
+      'Never use placeholders such as [date], [heure], or [time]; use real values ' +
+      'from prior tool results or ask for missing details before sending. For sender/signature names, ' +
+      'use the garage name; the backend also replaces sender-name placeholders such as [Your Name] with the garage name. ' +
       'IMPORTANT: do NOT call this tool with empty `text`/`html` and an empty ' +
       '`attachInvoiceIds` array. If the user asked for data attached or summarised, call the ' +
       'relevant read tool (list_invoices, get_revenue_summary, list_at_risk_customers, etc.) ' +
@@ -356,12 +413,15 @@ export function createSendEmailTool(deps: {
       }
       return AssistantBlastTier.AUTO_WRITE;
     },
+    prepareApprovalArgs: async (args: SendEmailArgs, ctx: AssistantUserContext) =>
+      replaceSenderPlaceholdersInArgs(args, ctx),
     handler: async (
       args: SendEmailArgs,
       ctx: AssistantUserContext,
     ): Promise<SendEmailResult | SendEmailError> => {
-      const explicitRecipient = normalizeRecipient(args.to);
-      const customerId = args.customerId?.trim();
+      const resolvedArgs = await replaceSenderPlaceholdersInArgs(args, ctx);
+      const explicitRecipient = normalizeRecipient(resolvedArgs.to);
+      const customerId = resolvedArgs.customerId?.trim();
       let recipient = explicitRecipient;
 
       if (customerId) {
@@ -411,9 +471,9 @@ export function createSendEmailTool(deps: {
         };
       }
 
-      const subject = normalizeEmailString(args.subject).trim();
-      const text = blankToUndefined(normalizeEmailString(args.text));
-      const providedHtml = blankToUndefined(normalizeEmailString(args.html));
+      const subject = normalizeEmailString(resolvedArgs.subject).trim();
+      const text = blankToUndefined(normalizeEmailString(resolvedArgs.text));
+      const providedHtml = blankToUndefined(normalizeEmailString(resolvedArgs.html));
       const html = providedHtml ?? (text ? textToHtml(text) : undefined);
 
       if (
@@ -461,7 +521,7 @@ export function createSendEmailTool(deps: {
       // whose body promises an attachment ("please find the report attached")
       // while never populating `attachInvoiceIds`. The recipient gets an
       // empty-looking email referring to a phantom file. Reject before send.
-      const attachInvoiceIds = normalizeAttachInvoiceIds(args.attachInvoiceIds);
+      const attachInvoiceIds = normalizeAttachInvoiceIds(resolvedArgs.attachInvoiceIds);
       const hasInvoiceAttachments = attachInvoiceIds.length > 0;
       if (!hasInvoiceAttachments) {
         if (bodyReferencesAttachment(haystack)) {
@@ -496,7 +556,7 @@ export function createSendEmailTool(deps: {
         }
       }
 
-      const format: AttachmentFormat = args.attachInvoiceFormat ?? 'csv';
+      const format: AttachmentFormat = resolvedArgs.attachInvoiceFormat ?? 'csv';
       let attachments:
         | { filename: string; content: string; contentType: string }[]
         | undefined;

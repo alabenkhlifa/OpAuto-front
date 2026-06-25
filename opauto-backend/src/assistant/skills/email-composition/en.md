@@ -28,7 +28,7 @@ Subject: <one-line subject, no trailing punctuation>
 <body>
 ```
 
-The body is 80-150 words. Plain prose, no markdown bullets unless listing 2+ invoice line items. Address the recipient by first name when known. Sign off as the garage owner using the garage's name if provided in context, otherwise a generic "The team".
+The body is 80-150 words. Plain prose, no markdown bullets unless listing 2+ invoice line items. Address the recipient by first name when known. Sign off with the garage name. Never use placeholders such as `[Your Name]`.
 
 ## Locale conventions
 

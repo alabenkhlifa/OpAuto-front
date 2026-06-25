@@ -37,13 +37,16 @@ function makeEmailService(send: jest.Mock = jest.fn()) {
 function makePrisma(
   findMany: jest.Mock = jest.fn().mockResolvedValue([]),
   findCustomer: jest.Mock = jest.fn().mockResolvedValue(null),
+  findGarage: jest.Mock = jest.fn().mockResolvedValue({ name: 'AutoTech Tunisia' }),
 ) {
   return {
     invoice: { findMany },
     customer: { findFirst: findCustomer },
+    garage: { findUnique: findGarage },
   } as unknown as import('../../../prisma/prisma.service').PrismaService & {
     invoice: { findMany: jest.Mock };
     customer: { findFirst: jest.Mock };
+    garage: { findUnique: jest.Mock };
   };
 }
 
@@ -497,6 +500,65 @@ describe('communications tools', () => {
         '<p>Nous vous confirmons que votre booking a été confirmée.</p>',
       );
       expect(sendArg.html).not.toContain('\\n');
+    });
+
+    it('replaces sender-name placeholders with the garage name before sending', async () => {
+      const email = makeEmailService(
+        jest
+          .fn()
+          .mockResolvedValue({ providerMessageId: 'em_garage_name', status: 'queued' }),
+      );
+      const findGarage = jest
+        .fn()
+        .mockResolvedValue({ name: 'Ala Garage Services' });
+      const tool = createSendEmailTool({
+        emailService: email,
+        prisma: makePrisma(jest.fn().mockResolvedValue([]), jest.fn(), findGarage),
+      });
+
+      const result = await tool.handler(
+        {
+          subject: 'Payment reminder',
+          text:
+            'Dear Ali,\n\nPlease settle invoice INV-202601-0037.\n\nBest regards,\n[Your Name]',
+        } satisfies SendEmailArgs,
+        ownerCtx,
+      );
+
+      expect(findGarage).toHaveBeenCalledWith({
+        where: { id: ownerCtx.garageId },
+        select: { name: true },
+      });
+      const sendArg = email.send.mock.calls[0][0];
+      expect(sendArg.text).toContain('Best regards,\nAla Garage Services');
+      expect(sendArg.text).not.toContain('[Your Name]');
+      expect(sendArg.html).toContain('Ala Garage Services');
+      expect(result).toMatchObject({ providerMessageId: 'em_garage_name' });
+    });
+
+    it('replaces sender-name placeholders before showing approval previews', async () => {
+      const tool = createSendEmailTool({
+        emailService: makeEmailService(),
+        prisma: makePrisma(
+          jest.fn().mockResolvedValue([]),
+          jest.fn(),
+          jest.fn().mockResolvedValue({ name: 'Ala Garage Services' }),
+        ),
+      });
+
+      const args = await tool.prepareApprovalArgs?.(
+        {
+          to: 'customer@example.com',
+          subject: 'Payment reminder',
+          text: 'Best regards,\n[Your Name]',
+        } satisfies SendEmailArgs,
+        ownerCtx,
+      );
+
+      expect(args).toMatchObject({
+        to: 'customer@example.com',
+        text: 'Best regards,\nAla Garage Services',
+      });
     });
 
     it('refuses unresolved appointment placeholders before sending', async () => {
