@@ -950,19 +950,23 @@ export class OrchestratorService {
             result: unknown;
             durationMs: number;
           };
+          const structuredError = this.structuredToolError(successExec.result);
           subject.next({
             type: 'tool_result',
             toolCallId: call.id,
             result: successExec.result,
-            status: 'executed',
+            status: structuredError ? 'failed' : 'executed',
           });
           await this.audit.logToolCall({
             conversationId,
             toolName: call.name,
             argsJson: parsedArgs.value,
             resultJson: successExec.result,
-            status: AssistantToolCallStatus.EXECUTED,
+            status: structuredError
+              ? AssistantToolCallStatus.FAILED
+              : AssistantToolCallStatus.EXECUTED,
             blastTier: tier,
+            errorMessage: structuredError ?? undefined,
             durationMs: successExec.durationMs,
           });
           this.appendToolMessage(llmMessages, call.id, successExec.result);
@@ -977,6 +981,11 @@ export class OrchestratorService {
               role: 'system',
               content: retryGuidance.content,
             });
+            continue;
+          }
+
+          if (structuredError) {
+            recordFailedToolAttempt(call.name, structuredError);
             continue;
           }
 
@@ -1092,6 +1101,20 @@ export class OrchestratorService {
     };
   }
 
+  private structuredToolError(result: unknown): string | null {
+    if (
+      typeof result !== 'object' ||
+      result === null ||
+      Array.isArray(result)
+    ) {
+      return null;
+    }
+    const error = (result as { error?: unknown }).error;
+    return typeof error === 'string' && error.trim().length > 0
+      ? error.trim()
+      : null;
+  }
+
   // ── Resume flow ───────────────────────────────────────────────────────
 
   private async handleResume(
@@ -1140,17 +1163,21 @@ export class OrchestratorService {
           result: unknown;
           durationMs: number;
         };
+        const structuredError = this.structuredToolError(successExec.result);
         subject.next({
           type: 'tool_result',
           toolCallId,
           result: successExec.result,
-          status: 'executed',
+          status: structuredError ? 'failed' : 'executed',
         });
         await this.prisma.assistantToolCall.update({
           where: { id: toolCallId },
           data: {
-            status: AssistantToolCallStatus.EXECUTED,
+            status: structuredError
+              ? AssistantToolCallStatus.FAILED
+              : AssistantToolCallStatus.EXECUTED,
             resultJson: this.safeJsonValue(successExec.result),
+            errorMessage: structuredError ?? undefined,
             durationMs: successExec.durationMs,
           },
         });
@@ -1162,13 +1189,17 @@ export class OrchestratorService {
         );
         this.appendToolMessage(llmMessages, toolCallId, successExec.result);
         if (resumeState) {
-          resumeState.toolHasFired = true;
-          resumeState.lastToolTier = this.resumeBlastTier(row, tool, args, ctx);
-          resumeState.lastToolName = row.toolName;
-          resumeState.successfulToolResult = {
-            toolName: row.toolName,
-            result: successExec.result,
-          };
+          if (structuredError) {
+            resumeState.successfulToolResult = undefined;
+          } else {
+            resumeState.toolHasFired = true;
+            resumeState.lastToolTier = this.resumeBlastTier(row, tool, args, ctx);
+            resumeState.lastToolName = row.toolName;
+            resumeState.successfulToolResult = {
+              toolName: row.toolName,
+              result: successExec.result,
+            };
+          }
         }
       } else {
         const failExec = exec as {
@@ -2807,6 +2838,14 @@ export class OrchestratorService {
       if (this.userAskedForAppointmentLookup(message)) {
         out.push('list_appointments');
       }
+      if (this.userAskedForOverdueInvoiceData(message)) {
+        out.push('list_overdue_invoices');
+      } else if (
+        this.userAskedForInvoiceAttachment(message) ||
+        this.userAskedForInvoiceData(message)
+      ) {
+        out.push('list_invoices');
+      }
     }
     const smsPatterns: RegExp[] = [
       // "sms Ali" / "text Sarah" / "sms reminder" — but NOT "sms history"
@@ -3018,6 +3057,38 @@ export class OrchestratorService {
   private userAskedForInvoiceData(message: string): boolean {
     return /\b(?:invoice|invoices|facture|factures|payment|payments|paid|unpaid|overdue|quote|credit note|devis|avoir)\b/i.test(
       message,
+    );
+  }
+
+  private userAskedForOverdueInvoiceData(message: string | undefined): boolean {
+    const msg = message ?? '';
+    return (
+      /\b(?:overdue|unpaid|late|past\s+due|impay[ée]s?)\b[\s\S]{0,80}\b(?:invoice|invoices|payment|payments|facture|factures)\b/i.test(
+        msg,
+      ) ||
+      /\b(?:invoice|invoices|payment|payments|facture|factures)\b[\s\S]{0,80}\b(?:overdue|unpaid|late|past\s+due|impay[ée]s?)\b/i.test(
+        msg,
+      )
+    );
+  }
+
+  private userAskedForInvoiceAttachment(
+    message: string | undefined,
+  ): boolean {
+    const msg = message ?? '';
+    const mentionsInvoice = /\b(?:invoice|invoices|facture|factures)\b/i.test(
+      msg,
+    );
+    if (!mentionsInvoice) return false;
+    return (
+      /\battach(?:ed|ment|ments)?\b/i.test(msg) ||
+      /\b(?:pdf|document|copy|file)\b[\s\S]{0,80}\b(?:invoice|facture)\b/i.test(
+        msg,
+      ) ||
+      /\b(?:invoice|facture)\b[\s\S]{0,80}\b(?:pdf|document|copy|file)\b/i.test(
+        msg,
+      ) ||
+      /\b(?:ci-joint|pi[èe]ce\s+jointe)\b/i.test(msg)
     );
   }
 
@@ -3382,7 +3453,7 @@ export class OrchestratorService {
         `- When the user asks to email a customer about their next/upcoming appointment or appointment date/time, resolve the customer, call list_appointments with customerId or customerName, orderBy:"soonest", and limit:1, then call send_email with the real customerId/email and the appointment's startTimeLocal/endTimeLocal/timeZone. Write a professional email, include the garage name, include a footer/signature, and do NOT use UTC startTime/endTime in customer-facing appointment text.\n` +
         `- NEVER claim "no data is available" / "data could not be retrieved" / "the report is unavailable" without having actually invoked the relevant read tool this turn. If you have not called a read tool yet, call it. If the tool returns empty, report the specific empty result ("0 overdue invoices", "no at-risk customers this period") — do NOT generalise to "no data".\n` +
         `- NEVER reference an attachment ("see attached", "please find the PDF attached", "ci-joint", "pièce jointe") in the email body unless you populate attachInvoiceIds with real invoice ids. The backend rejects emails that promise an attachment without one.\n` +
-        `- When the user wants invoices attached to an email, call list_invoices first to get existing invoice IDs, then pass them as attachInvoiceIds in send_email. If the invoice was just created from create_invoice_from_job, use that returned invoiceId directly. For customer invoice delivery, prefer attachInvoiceFormat:"pdf".\n` +
+        `- When the user wants invoices attached to an email, call list_overdue_invoices for overdue invoice attachments or list_invoices for generic invoice attachments to get existing invoice IDs, then pass them as attachInvoiceIds in send_email. If the invoice was just created from create_invoice_from_job, use that returned invoiceId directly. For customer invoice delivery, prefer attachInvoiceFormat:"pdf".\n` +
         `- Self-sends (recipient == the user's own email) execute immediately without approval. External recipients require approval — pre-fetch all data BEFORE asking the LLM to call send_email so the user only approves once.`,
     );
     if (skillDescriptors.length > 0) {
@@ -3575,6 +3646,17 @@ export class OrchestratorService {
           message:
             `send_email received placeholder attachInvoiceIds value "${placeholderId}". ` +
             'Call the invoice read tool first and pass real invoice ids, or omit attachments.',
+        };
+      }
+      if (
+        ids.length === 0 &&
+        this.userAskedForInvoiceAttachment(ctx.turnState?.userMessage)
+      ) {
+        return {
+          error: 'missing_invoice_attachment_ids',
+          message:
+            'The user asked to attach an invoice, but send_email did not include attachInvoiceIds. ' +
+            'Call list_overdue_invoices for overdue invoice attachments or list_invoices for generic invoice attachments, then retry send_email with real invoice ids and attachInvoiceFormat:"pdf".',
         };
       }
       if (this.containsRawUtcTimestamp([a.subject, html, text])) {

@@ -616,6 +616,60 @@ describe('OrchestratorService', () => {
     });
   });
 
+  it('rejects invoice attachment emails that omit attachInvoiceIds', async () => {
+    const tools = makeTools(['send_email', 'list_overdue_invoices']);
+    tools.get.mockImplementation((name: string) => ({
+      name,
+      description: 'desc',
+      parameters: { type: 'object', properties: {} },
+      blastTier:
+        name === 'send_email'
+          ? AssistantBlastTier.AUTO_WRITE
+          : AssistantBlastTier.READ,
+      handler: async () => ({}),
+    }));
+    tools.resolveBlastTier.mockImplementation((tool: any) => tool.blastTier);
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-1',
+            name: 'send_email',
+            argsJson: JSON.stringify({
+              subject: 'Overdue invoice payment request',
+              text: 'Please settle your overdue invoice at your earliest convenience.',
+            }),
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: 'I need to fetch the overdue invoice before sending it.',
+        toolCalls: [],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({ tools, llm });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-missing-attachment',
+        'Can you send an email to this customer and ask him politely to pay his overdue invoice and attach the overdue invoice to the email?',
+        undefined,
+      ),
+    );
+
+    expect(tools.execute).not.toHaveBeenCalled();
+    expect(events.find((e) => e.type === 'tool_result')).toMatchObject({
+      status: 'failed',
+      result: expect.objectContaining({
+        error: 'missing_invoice_attachment_ids',
+      }),
+    });
+  });
+
   it('blocks send_email when the user asked for a draft only', async () => {
     const tools = makeTools(['send_email']);
     tools.get.mockImplementation((name: string) => ({
@@ -4626,6 +4680,39 @@ describe('OrchestratorService', () => {
       );
     });
 
+    it('adds overdue invoice reads for customer overdue invoice attachment emails', async () => {
+      const tools = makeTools([
+        'send_email',
+        'find_customer',
+        'get_customer',
+        'list_overdue_invoices',
+        'list_invoices',
+      ]);
+      const llm = makeLlm([{ provider: 'groq', content: 'ok', toolCalls: [] }]);
+      const classifier = makeClassifier(['send_email']);
+      const orchestrator = await makeOrchestrator({ tools, llm, classifier });
+
+      await collectEvents(
+        orchestrator.run(
+          ctx,
+          'conv-overdue-attachment-email-tools',
+          'Can you send an email to this customer and ask him politely to pay his overdue invoice and attach the overdue invoice to the email?',
+          undefined,
+        ),
+      );
+
+      const names = toolNamesFromFirstCall(llm);
+      expect(names).toEqual(
+        expect.arrayContaining([
+          'send_email',
+          'find_customer',
+          'get_customer',
+          'list_overdue_invoices',
+        ]),
+      );
+      expect(names).not.toContain('list_invoices');
+    });
+
     it('adds list_appointments for customer upcoming appointment email confirmations', async () => {
       const tools = makeTools([
         'send_email',
@@ -5213,6 +5300,16 @@ describe('OrchestratorService', () => {
         {},
         expect.objectContaining({ garageId: 'garage-1' }),
       );
+      expect(
+        events.find(
+          (e) =>
+            e.type === 'tool_result' &&
+            e.toolCallId === 'tc-email-1',
+        ),
+      ).toMatchObject({
+        status: 'failed',
+        result: expect.objectContaining({ error: 'no_supporting_reads' }),
+      });
       expect(events.find((e) => e.type === 'text')).toMatchObject({
         delta: 'Now I have the data.',
       });
