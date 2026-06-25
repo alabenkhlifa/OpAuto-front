@@ -6,6 +6,7 @@ export type ListInvoicesOrder = 'newest' | 'oldest';
 
 export interface ListInvoicesArgs {
   status?: InvoiceStatus;
+  customerId?: string;
   from?: string;
   to?: string;
   orderBy?: ListInvoicesOrder;
@@ -48,9 +49,10 @@ export function buildListInvoicesTool(
   return {
     name: 'list_invoices',
     description:
-      "Lists invoices for the owner's garage. Optionally filter by status " +
-      '(DRAFT, SENT, PAID, PARTIALLY_PAID, OVERDUE, CANCELLED) and by ' +
-      'createdAt date range (from/to ISO 8601). Returns a projected list ' +
+      "Lists invoices for the owner's garage. Optionally filter by customerId, " +
+      'status (DRAFT, SENT, PAID, PARTIALLY_PAID, OVERDUE, CANCELLED), and by ' +
+      'createdAt date range (from/to ISO 8601). For customer-specific questions ' +
+      'like "this customer", "Ali invoices", or customer detail pages, pass customerId. Returns a projected list ' +
       'with id, invoiceNumber, customerId, status, total, dueDate, paidAt, ' +
       'createdAt. Use when the user asks "show invoices", "what invoices ' +
       'are unpaid", "invoices this month", etc. ' +
@@ -68,6 +70,12 @@ export function buildListInvoicesTool(
           type: 'string',
           enum: INVOICE_STATUSES,
           description: 'Filter by invoice status.',
+        },
+        customerId: {
+          type: 'string',
+          minLength: 1,
+          description:
+            'Filter invoices to one customer. Use for customer-specific requests.',
         },
         from: {
           type: 'string',
@@ -107,6 +115,9 @@ export function buildListInvoicesTool(
       const where: Record<string, unknown> = { garageId: ctx.garageId };
       if (args.status) {
         where.status = args.status;
+      }
+      if (args.customerId) {
+        where.customerId = args.customerId;
       }
       if (args.from || args.to) {
         const created: Record<string, Date> = {};

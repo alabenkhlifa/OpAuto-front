@@ -76,6 +76,25 @@ describe('Invoicing + Inventory Tools', () => {
       expect(where.createdAt.gte).toEqual(new Date('2026-03-01T00:00:00Z'));
     });
 
+    it('filters by customerId for customer-specific invoice requests', async () => {
+      const findMany = jest.fn().mockResolvedValue([]);
+      const prisma = makePrismaMock({ invoice: { findMany } });
+      const tool = buildListInvoicesTool(prisma as never);
+
+      await tool.handler(
+        { customerId: 'cust-ali', status: 'OVERDUE', orderBy: 'newest' },
+        ownerCtx,
+      );
+
+      const call = findMany.mock.calls[0][0];
+      expect(call.where).toMatchObject({
+        garageId: 'garage-1',
+        customerId: 'cust-ali',
+        status: 'OVERDUE',
+      });
+      expect(call.orderBy).toEqual({ createdAt: 'desc' });
+    });
+
     it('rejects an invalid status enum at schema level', () => {
       const tool = buildListInvoicesTool(makePrismaMock() as never);
       const registry = new ToolRegistryService();
@@ -139,6 +158,9 @@ describe('Invoicing + Inventory Tools', () => {
       expect(registry.validateArgs('list_invoices', { limit: 0 }).valid).toBe(false);
       expect(registry.validateArgs('list_invoices', { limit: 101 }).valid).toBe(false);
       expect(registry.validateArgs('list_invoices', { limit: 50 }).valid).toBe(true);
+      expect(
+        registry.validateArgs('list_invoices', { customerId: 'cust-ali' }).valid,
+      ).toBe(true);
     });
   });
 
@@ -232,6 +254,22 @@ describe('Invoicing + Inventory Tools', () => {
       expect(where.garageId).toBe('garage-1');
       expect(where.status).toEqual({ notIn: ['PAID', 'CANCELLED'] });
       expect(where.dueDate.lt).toBeInstanceOf(Date);
+    });
+
+    it('filters overdue invoices by customerId when provided', async () => {
+      const findMany = jest.fn().mockResolvedValue([]);
+      const prisma = makePrismaMock({ invoice: { findMany } });
+      const tool = buildListOverdueInvoicesTool(prisma as never);
+
+      await tool.handler({ customerId: 'cust-ali', orderBy: 'least_overdue' }, ownerCtx);
+
+      const call = findMany.mock.calls[0][0];
+      expect(call.where).toMatchObject({
+        garageId: 'garage-1',
+        customerId: 'cust-ali',
+        status: { notIn: ['PAID', 'CANCELLED'] },
+      });
+      expect(call.orderBy).toEqual({ dueDate: 'desc' });
     });
 
     it('defaults to dueDate ascending (most_overdue) without limit', async () => {

@@ -1529,6 +1529,137 @@ describe('OrchestratorService', () => {
     expect(offered).not.toContain('list_top_customers');
   });
 
+  it('injects selected customerId into list_invoices on customer detail pages', async () => {
+    const customerId = 'fc09e08d-3f43-4adc-8d85-b295934eb6fe';
+    const tools = makeTools(['list_invoices']);
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-1',
+            name: 'list_invoices',
+            argsJson: '{"status":"OVERDUE","orderBy":"newest","limit":1}',
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: 'Ali has one overdue invoice.',
+        toolCalls: [],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({ tools, llm });
+
+    await collectEvents(
+      orchestrator.run(ctx, 'conv-customer-invoices', 'latest overdue invoice?', {
+        route: `/customers/${customerId}`,
+        params: { id: customerId },
+        selectedEntity: {
+          type: 'customer',
+          id: customerId,
+          displayName: 'Ali Ben Salah',
+        },
+      }),
+    );
+
+    expect(tools.execute).toHaveBeenCalledWith(
+      'list_invoices',
+      expect.objectContaining({
+        customerId,
+        status: 'OVERDUE',
+        orderBy: 'newest',
+        limit: 1,
+      }),
+      expect.objectContaining({ garageId: ctx.garageId }),
+    );
+  });
+
+  it('allows list_overdue_invoices on customer pages only after scoping it to selected customerId', async () => {
+    const customerId = 'fc09e08d-3f43-4adc-8d85-b295934eb6fe';
+    const tools = makeTools(['list_overdue_invoices']);
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-1',
+            name: 'list_overdue_invoices',
+            argsJson: '{"orderBy":"least_overdue","limit":1}',
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: 'Ali has one overdue invoice.',
+        toolCalls: [],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({ tools, llm });
+
+    await collectEvents(
+      orchestrator.run(ctx, 'conv-customer-overdue', 'latest overdue invoice?', {
+        route: `/customers/${customerId}`,
+        params: { id: customerId },
+      }),
+    );
+
+    expect(tools.execute).toHaveBeenCalledWith(
+      'list_overdue_invoices',
+      expect.objectContaining({
+        customerId,
+        orderBy: 'least_overdue',
+        limit: 1,
+      }),
+      expect.objectContaining({ garageId: ctx.garageId }),
+    );
+  });
+
+  it('rejects invoice queries that use a different customerId than the selected customer page', async () => {
+    const selectedCustomerId = 'fc09e08d-3f43-4adc-8d85-b295934eb6fe';
+    const wrongCustomerId = 'e4b82ee3-fbe5-42ed-8851-c0acc6316d0e';
+    const tools = makeTools(['list_invoices']);
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-1',
+            name: 'list_invoices',
+            argsJson: JSON.stringify({
+              customerId: wrongCustomerId,
+              status: 'OVERDUE',
+            }),
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: 'I need to use the selected customer.',
+        toolCalls: [],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({ tools, llm });
+
+    const events = await collectEvents(
+      orchestrator.run(ctx, 'conv-customer-mismatch', 'latest overdue invoice?', {
+        route: `/customers/${selectedCustomerId}`,
+        params: { id: selectedCustomerId },
+      }),
+    );
+
+    expect(events.find((e) => e.type === 'tool_result')).toMatchObject({
+      status: 'failed',
+      result: expect.objectContaining({
+        error: 'selected_customer_mismatch',
+      }),
+    });
+    expect(tools.execute).not.toHaveBeenCalled();
+  });
+
   it('caps any tool at MAX_CALLS_PER_TOOL_PER_TURN regardless of result emptiness (I-016 broadened, B-06)', async () => {
     // find_car returns the SAME non-empty match each time but the LLM keeps
     // re-calling. Cap is 3. The 4th call must not execute — instead, the

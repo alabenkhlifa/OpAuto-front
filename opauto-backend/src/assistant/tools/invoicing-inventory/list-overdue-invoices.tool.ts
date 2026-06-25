@@ -35,6 +35,7 @@ export type ListOverdueInvoicesOrder =
   | 'highest_amount';
 
 export interface ListOverdueInvoicesArgs {
+  customerId?: string;
   orderBy?: ListOverdueInvoicesOrder;
   limit?: number;
 }
@@ -52,7 +53,8 @@ export function buildListOverdueInvoicesTool(
       "Lists the owner's invoices that are past due — dueDate before now() " +
       'AND status not PAID or CANCELLED. Each entry includes daysOverdue ' +
       '(integer days since dueDate). Use when the user asks "what invoices ' +
-      'are overdue", "who owes me money", "late payments", etc. ' +
+      'are overdue", "who owes me money", "late payments", etc. Pass customerId ' +
+      'for customer-specific requests like "this customer overdue invoices". ' +
       'IMPORTANT — ORDERING: pass `orderBy: "most_overdue"` (default) for ' +
       '"most overdue / oldest unpaid"; `"least_overdue"` for "recently overdue"; ' +
       '`"highest_amount"` for "biggest debts first". Combine with `limit` for ' +
@@ -60,6 +62,12 @@ export function buildListOverdueInvoicesTool(
     parameters: {
       type: 'object',
       properties: {
+        customerId: {
+          type: 'string',
+          minLength: 1,
+          description:
+            'Filter overdue invoices to one customer. Use for customer-specific requests.',
+        },
         orderBy: {
           type: 'string',
           enum: ['most_overdue', 'least_overdue', 'highest_amount'],
@@ -94,6 +102,7 @@ export function buildListOverdueInvoicesTool(
       const rows = await prisma.invoice.findMany({
         where: {
           garageId: ctx.garageId,
+          ...(args.customerId ? { customerId: args.customerId } : {}),
           dueDate: { lt: now },
           status: { notIn: ['PAID', 'CANCELLED'] },
         },

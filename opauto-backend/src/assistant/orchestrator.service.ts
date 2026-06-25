@@ -722,7 +722,8 @@ export class OrchestratorService {
         // are still legitimate and useful in scope.
         if (
           this.isBroadScanTool(call.name) &&
-          this.hasSelectedEntity(pageContext)
+          this.hasSelectedEntity(pageContext) &&
+          !this.canScopeBroadScanToSelectedEntity(call.name, pageContext)
         ) {
           subject.next({
             type: 'tool_result',
@@ -824,6 +825,23 @@ export class OrchestratorService {
             });
           }
           recordFailedToolAttempt(call.name, 'invalid arguments');
+          continue;
+        }
+
+        const scopeError = this.applySelectedEntityScopeToArgs(
+          call.name,
+          parsedArgs.value,
+          pageContext,
+        );
+        if (scopeError) {
+          subject.next({
+            type: 'tool_result',
+            toolCallId: call.id,
+            result: scopeError,
+            status: 'failed',
+          });
+          this.appendToolMessage(llmMessages, call.id, scopeError);
+          recordFailedToolAttempt(call.name, scopeError.error);
           continue;
         }
 
@@ -3004,6 +3022,56 @@ export class OrchestratorService {
     );
   }
 
+  private selectedCustomerIdFromPageContext(
+    pageContext: PageContext | undefined,
+  ): string | null {
+    const selected =
+      pageContext?.selectedEntity ??
+      deriveSelectedEntityFromRoute(pageContext?.route, pageContext?.params);
+    if (!selected || selected.type.toLowerCase() !== 'customer') return null;
+    const id = selected.id?.trim();
+    return id && id.length > 0 ? id : null;
+  }
+
+  private canScopeBroadScanToSelectedEntity(
+    toolName: string,
+    pageContext: PageContext | undefined,
+  ): boolean {
+    if (!this.selectedCustomerIdFromPageContext(pageContext)) return false;
+    return toolName === 'list_overdue_invoices';
+  }
+
+  private applySelectedEntityScopeToArgs(
+    toolName: string,
+    args: unknown,
+    pageContext: PageContext | undefined,
+  ): { error: string; message: string } | null {
+    const customerId = this.selectedCustomerIdFromPageContext(pageContext);
+    if (!customerId) return null;
+    if (toolName !== 'list_invoices' && toolName !== 'list_overdue_invoices') {
+      return null;
+    }
+    if (typeof args !== 'object' || args === null || Array.isArray(args)) {
+      return null;
+    }
+
+    const a = args as Record<string, unknown>;
+    const existing =
+      typeof a.customerId === 'string' ? a.customerId.trim() : '';
+    if (existing && existing !== customerId) {
+      return {
+        error: 'selected_customer_mismatch',
+        message:
+          `${toolName} tried to query customerId="${existing}" while this ` +
+          `conversation is scoped to customerId="${customerId}". Retry with ` +
+          'the selected customer id from page context.',
+      };
+    }
+
+    a.customerId = customerId;
+    return null;
+  }
+
   private scopeToolsForPageContext(
     tools: ToolDescriptor[],
     pageContext: PageContext | undefined,
@@ -3011,7 +3079,10 @@ export class OrchestratorService {
     if (!this.hasSelectedEntity(pageContext)) return tools;
     const dropped: string[] = [];
     const filtered = tools.filter((t) => {
-      if (this.isBroadScanTool(t.name)) {
+      if (
+        this.isBroadScanTool(t.name) &&
+        !this.canScopeBroadScanToSelectedEntity(t.name, pageContext)
+      ) {
         dropped.push(t.name);
         return false;
       }
@@ -3171,15 +3242,17 @@ export class OrchestratorService {
             `field above. Pass that exact id to tools like get_customer / ` +
             `get_car / get_invoice — do NOT call find_* with the id as a query ` +
             `string, and do NOT ask the user for an id you already have.\n` +
+            `For selected customer invoice questions, pass the selected customer id ` +
+            `as customerId to list_invoices or list_overdue_invoices. Never answer ` +
+            `"this customer" invoice questions from a garage-wide invoice list.\n` +
             // UI Bug 7 — when pageContext narrows the question to one entity,
             // resist the urge to chain in unrelated lookups (e.g. calling
             // list_at_risk_customers from within "tell me about this customer").
             // Stay scoped to the selected entity.
             `Stay strictly scoped to the selected entity: do NOT call ` +
-            `list_at_risk_customers, list_top_customers, list_overdue_invoices, ` +
-            `or other broad scans unless the user has explicitly asked for ` +
-            `that broader view in the same turn. The selected entity is the ` +
-            `focus; everything else is noise here.`,
+            `list_at_risk_customers, list_top_customers, or other broad scans ` +
+            `unless the user has explicitly asked for that broader view in the ` +
+            `same turn. The selected entity is the focus; everything else is noise here.`,
         );
       }
     }
