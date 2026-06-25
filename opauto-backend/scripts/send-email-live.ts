@@ -109,14 +109,21 @@ function buildEmailProvider(config: ConfigService) {
 
 function providerLabel(): string {
   const driver = (process.env.EMAIL_PROVIDER || 'mailtrap').toLowerCase();
+  const mailtrapSandbox = ['1', 'true', 'yes', 'on'].includes(
+    (process.env.MAILTRAP_USE_SANDBOX || '').trim().toLowerCase(),
+  );
   const mailtrapReady =
-    !!process.env.MAILTRAP_API_KEY && !!process.env.MAILTRAP_FROM;
+    !!process.env.MAILTRAP_API_KEY &&
+    !!process.env.MAILTRAP_FROM &&
+    (!mailtrapSandbox || !!process.env.MAILTRAP_INBOX_ID);
   const resendReady = !!process.env.RESEND_API_KEY && !!process.env.RESEND_FROM;
   if (driver === 'mailtrap' && mailtrapReady && resendReady) {
-    return 'mailtrap -> resend';
+    return mailtrapSandbox
+      ? 'mailtrap sandbox -> resend'
+      : 'mailtrap -> resend';
   }
   if (driver === 'mailtrap' && !mailtrapReady && resendReady) {
     return 'resend (Mailtrap not configured)';
   }
-  return driver;
+  return mailtrapSandbox ? 'mailtrap sandbox' : driver;
 }

@@ -24,6 +24,19 @@ describe('createEmailProvider', () => {
     expect(provider).toBeInstanceOf(MailtrapEmailDriver);
   });
 
+  it('uses Mailtrap when sandbox mode and inbox id are configured', () => {
+    const provider = createEmailProvider(
+      config({
+        MAILTRAP_API_KEY: 'mailtrap-key',
+        MAILTRAP_FROM: 'sandbox@example.com',
+        MAILTRAP_USE_SANDBOX: 'true',
+        MAILTRAP_INBOX_ID: '123456',
+      }),
+    );
+
+    expect(provider).toBeInstanceOf(MailtrapEmailDriver);
+  });
+
   it('wraps Mailtrap with Resend fallback when both are configured', () => {
     const provider = createEmailProvider(
       config({
@@ -58,6 +71,35 @@ describe('createEmailProvider', () => {
   it('uses Resend fallback when Mailtrap is missing and Resend is configured', () => {
     const provider = createEmailProvider(
       config({
+        RESEND_API_KEY: 'resend-key',
+        RESEND_FROM: 'no-reply@example.com',
+      }),
+    );
+
+    expect(provider).toBeInstanceOf(ResendEmailDriver);
+  });
+
+  it('uses Resend fallback when Mailtrap sandbox inbox id is missing', () => {
+    const provider = createEmailProvider(
+      config({
+        MAILTRAP_API_KEY: 'mailtrap-key',
+        MAILTRAP_FROM: 'sandbox@example.com',
+        MAILTRAP_USE_SANDBOX: 'true',
+        RESEND_API_KEY: 'resend-key',
+        RESEND_FROM: 'no-reply@example.com',
+      }),
+    );
+
+    expect(provider).toBeInstanceOf(ResendEmailDriver);
+  });
+
+  it('uses Resend fallback when Mailtrap sandbox inbox id is invalid', () => {
+    const provider = createEmailProvider(
+      config({
+        MAILTRAP_API_KEY: 'mailtrap-key',
+        MAILTRAP_FROM: 'sandbox@example.com',
+        MAILTRAP_USE_SANDBOX: 'true',
+        MAILTRAP_INBOX_ID: 'not-a-number',
         RESEND_API_KEY: 'resend-key',
         RESEND_FROM: 'no-reply@example.com',
       }),

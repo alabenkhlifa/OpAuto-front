@@ -36,7 +36,7 @@ export function createEmailProvider(config: ConfigService) {
     );
   }
 
-  const mailtrapReady = hasConfig(config, 'MAILTRAP_API_KEY', 'MAILTRAP_FROM');
+  const mailtrapReady = isMailtrapConfigured(config);
   const resendReady = hasConfig(config, 'RESEND_API_KEY', 'RESEND_FROM');
 
   if (mailtrapReady) {
@@ -71,6 +71,25 @@ export function createEmailProvider(config: ConfigService) {
 
 function hasConfig(config: ConfigService, ...keys: string[]): boolean {
   return keys.every((key) => !!config.get<string>(key)?.trim());
+}
+
+function isMailtrapConfigured(config: ConfigService): boolean {
+  if (!hasConfig(config, 'MAILTRAP_API_KEY', 'MAILTRAP_FROM')) {
+    return false;
+  }
+  const useSandbox = ['1', 'true', 'yes', 'on'].includes(
+    (config.get<string>('MAILTRAP_USE_SANDBOX') ?? '').trim().toLowerCase(),
+  );
+  return (
+    !useSandbox || hasValidInboxId(config.get<string>('MAILTRAP_INBOX_ID'))
+  );
+}
+
+function hasValidInboxId(value: string | undefined): boolean {
+  const normalized = value?.trim();
+  if (!normalized || !/^\d+$/.test(normalized)) return false;
+  const parsed = Number.parseInt(normalized, 10);
+  return Number.isFinite(parsed) && parsed > 0;
 }
 
 @Module({

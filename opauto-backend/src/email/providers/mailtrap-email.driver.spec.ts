@@ -97,6 +97,59 @@ describe('MailtrapEmailDriver', () => {
     ).toThrow(InternalServerErrorException);
   });
 
+  it('fails fast when sandbox mode is enabled without an inbox id', () => {
+    expect(
+      () =>
+        new MailtrapEmailDriver(
+          config({
+            MAILTRAP_API_KEY: 'mailtrap-key',
+            MAILTRAP_FROM: 'sandbox@example.com',
+            MAILTRAP_USE_SANDBOX: 'true',
+          }),
+          undefined,
+        ),
+    ).toThrow('Mailtrap sandbox is not configured');
+  });
+
+  it('fails fast when sandbox inbox id is invalid', () => {
+    expect(
+      () =>
+        new MailtrapEmailDriver(
+          config({
+            MAILTRAP_API_KEY: 'mailtrap-key',
+            MAILTRAP_FROM: 'sandbox@example.com',
+            MAILTRAP_USE_SANDBOX: 'true',
+            MAILTRAP_INBOX_ID: 'not-a-number',
+          }),
+          undefined,
+        ),
+    ).toThrow('Mailtrap sandbox is not configured');
+  });
+
+  it('accepts sandbox mode when an inbox id is configured', async () => {
+    const send = jest.fn().mockResolvedValue({
+      success: true,
+      message_ids: ['sandbox-1'],
+    });
+    const driver = new MailtrapEmailDriver(
+      config({
+        MAILTRAP_API_KEY: 'mailtrap-key',
+        MAILTRAP_FROM: 'sandbox@example.com',
+        MAILTRAP_USE_SANDBOX: 'true',
+        MAILTRAP_INBOX_ID: '123456',
+      }),
+      { send } as never,
+    );
+
+    await expect(
+      driver.send({
+        to: 'anyone@example.com',
+        subject: 'Hello',
+        text: 'Hello',
+      }),
+    ).resolves.toEqual({ providerMessageId: 'sandbox-1', status: 'queued' });
+  });
+
   it('throws when Mailtrap returns an unsuccessful response', async () => {
     const driver = new MailtrapEmailDriver(
       config({

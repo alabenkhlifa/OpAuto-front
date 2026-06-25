@@ -137,6 +137,10 @@ EMAIL_PROVIDER=mailtrap
 MAILTRAP_API_KEY=
 MAILTRAP_FROM=
 MAILTRAP_FROM_NAME=OpAuto
+# Optional Mailtrap Email Sandbox mode. Captures emails in Mailtrap instead
+# of delivering to real recipients.
+MAILTRAP_USE_SANDBOX=false
+MAILTRAP_INBOX_ID=
 RESEND_API_KEY=
 RESEND_FROM=
 CORS_ORIGIN=*

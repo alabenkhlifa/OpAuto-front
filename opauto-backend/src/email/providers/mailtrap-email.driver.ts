@@ -27,6 +27,10 @@ export class MailtrapEmailDriver implements EmailProvider {
     const apiKey = this.config.get<string>('MAILTRAP_API_KEY')?.trim();
     const fromAddress = this.config.get<string>('MAILTRAP_FROM')?.trim();
     const fromName = this.config.get<string>('MAILTRAP_FROM_NAME')?.trim();
+    const useSandbox = isEnabled(
+      this.config.get<string>('MAILTRAP_USE_SANDBOX'),
+    );
+    const inboxId = parseInboxId(this.config.get<string>('MAILTRAP_INBOX_ID'));
 
     if (!apiKey || !fromAddress) {
       throw new InternalServerErrorException(
@@ -34,8 +38,19 @@ export class MailtrapEmailDriver implements EmailProvider {
       );
     }
 
+    if (useSandbox && !inboxId) {
+      throw new InternalServerErrorException(
+        'Mailtrap sandbox is not configured. Set MAILTRAP_INBOX_ID or set MAILTRAP_USE_SANDBOX=false.',
+      );
+    }
+
     this.client =
-      client ?? new MailtrapClient({ token: apiKey, sandbox: false });
+      client ??
+      new MailtrapClient({
+        token: apiKey,
+        sandbox: useSandbox,
+        testInboxId: inboxId,
+      });
     this.from = fromName
       ? { email: fromAddress, name: fromName }
       : { email: fromAddress };
@@ -99,4 +114,17 @@ export class MailtrapEmailDriver implements EmailProvider {
       disposition: 'attachment',
     };
   }
+}
+
+export function isEnabled(value: string | undefined): boolean {
+  return ['1', 'true', 'yes', 'on'].includes(
+    (value ?? '').trim().toLowerCase(),
+  );
+}
+
+function parseInboxId(value: string | undefined): number | undefined {
+  const normalized = value?.trim();
+  if (!normalized || !/^\d+$/.test(normalized)) return undefined;
+  const parsed = Number.parseInt(normalized, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
 }

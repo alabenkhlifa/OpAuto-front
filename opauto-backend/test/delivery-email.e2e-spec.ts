@@ -10,12 +10,13 @@ import { DeliveryService } from '../src/invoicing/delivery.service';
 /**
  * Live email integration — Phase 4.2.
  *
- * Skipped unless a real email provider is configured. With Mailtrap, use a
- * verified sending domain. With Resend sandbox, `ala.khliifa@gmail.com`
- * (double-i) is the only known valid recipient for a smoke check.
+ * Skipped unless a real email provider is configured. With Mailtrap sandbox,
+ * set MAILTRAP_USE_SANDBOX=true and MAILTRAP_INBOX_ID; messages are captured
+ * in Mailtrap instead of reaching the recipient. With Resend sandbox,
+ * `ala.khliifa@gmail.com` (double-i) is the only known valid recipient.
  *
  * To run locally:
- *   MAILTRAP_API_KEY=… MAILTRAP_FROM=no-reply@example.com EMAIL_PROVIDER=mailtrap \
+ *   MAILTRAP_API_KEY=… MAILTRAP_FROM=sandbox@example.com MAILTRAP_USE_SANDBOX=true MAILTRAP_INBOX_ID=… EMAIL_PROVIDER=mailtrap \
  *     npm run test:e2e -- --testPathPattern=delivery-email
  */
 const TEST_DATABASE_URL =
