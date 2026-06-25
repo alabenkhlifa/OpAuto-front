@@ -3819,7 +3819,7 @@
       },
       "get_job": {
         "running": "جارٍ تحميل تفاصيل العمل…",
-        "success": "تم تحميل العمل {{jobId}} ({{partCount}} سطر)",
+        "success": "تم تحميل تفاصيل العمل ({{partCount}} سطر)",
         "failure": "تعذّر تحميل هذا العمل"
       },
       "add_job_part": {

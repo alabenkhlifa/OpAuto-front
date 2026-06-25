@@ -3781,7 +3781,7 @@
       },
       "get_job": {
         "running": "Je charge les détails du travail…",
-        "success": "Travail chargé : {{jobId}} ({{partCount}} lignes)",
+        "success": "Détails du travail chargés ({{partCount}} lignes)",
         "failure": "Impossible de charger ce travail"
       },
       "add_job_part": {

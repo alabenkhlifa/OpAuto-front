@@ -232,7 +232,6 @@ export const TOOL_PRESENTERS: ToolPresenter[] = [
 
   // ── Maintenance / Jobs ────────────────────────────────────────────────
   present('get_job', {
-    runningParams: (a) => ({ jobId: str(a, 'jobId') ?? '' }),
     successParams: (_a, r) => ({
       status: str(r, 'status') ?? '',
       partCount: deepNum(r, ['counts', 'partCount']),

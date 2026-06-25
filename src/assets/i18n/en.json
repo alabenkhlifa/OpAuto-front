@@ -3686,7 +3686,7 @@
       },
       "get_job": {
         "running": "Loading maintenance job details…",
-        "success": "Loaded job {{jobId}} ({{partCount}} part lines)",
+        "success": "Loaded job details ({{partCount}} part lines)",
         "failure": "Couldn't load that job"
       },
       "add_job_part": {
