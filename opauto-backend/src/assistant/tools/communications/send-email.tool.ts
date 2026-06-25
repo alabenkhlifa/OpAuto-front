@@ -102,7 +102,7 @@ function bodyNeedsSupportingReadForDataSummary(
   if (hasInvoiceAttachments) {
     const lower = haystack.toLowerCase();
     const nonInvoiceDataKeywords = DATA_SUMMARY_KEYWORDS.filter(
-      (kw) => kw !== 'invoice' && kw !== 'invoices',
+      (kw) => kw !== 'invoice' && kw !== 'invoices' && kw !== 'overdue',
     );
     return nonInvoiceDataKeywords.some((kw) => lower.includes(kw));
   }
@@ -183,6 +183,7 @@ const SENDER_NAME_PLACEHOLDER_PATTERNS: RegExp[] = [
   /\[(?:your\s+name|sender\s+name|garage\s+name|votre\s+nom|nom|nom\s+du\s+garage|name)\]/gi,
   /\{\{\s*(?:your\s+name|sender\s+name|garage\s+name|votre\s+nom|nom|nom\s+du\s+garage|name)\s*\}\}/gi,
   /<(?:your\s+name|sender\s+name|garage\s+name|votre\s+nom|nom|nom\s+du\s+garage|name)>/gi,
+  /\byour\s+garage\s+name\b/gi,
 ];
 
 function bodyContainsSenderNamePlaceholder(haystack: string): boolean {

@@ -3765,7 +3765,7 @@
       "send_email": {
         "running": "Sending the email…",
         "success": "Email sent: {{subject}}",
-        "failure": "Couldn't send the email",
+        "failure": "Email not sent",
         "approveVerb": "Yes, send email"
       },
       "propose_retention_action": {

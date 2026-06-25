@@ -3898,7 +3898,7 @@
       "send_email": {
         "running": "جارٍ إرسال البريد…",
         "success": "تم إرسال البريد: {{subject}}",
-        "failure": "تعذّر إرسال البريد",
+        "failure": "لم يتم إرسال البريد",
         "approveVerb": "نعم، أرسل البريد"
       },
       "propose_retention_action": {

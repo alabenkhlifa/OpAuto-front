@@ -1202,9 +1202,9 @@ describe('communications tools', () => {
         const result = await tool.handler(
           {
             to: 'demo.customer@example.com',
-            subject: 'Your vehicle is ready',
+            subject: 'Overdue invoice payment request',
             text:
-              'Your vehicle is ready for pickup. Please find the invoice attached.',
+              'Your invoice INV-001 is overdue. Please find the invoice attached and settle the outstanding balance at your earliest convenience.',
             attachInvoiceIds: ['inv-1'],
             attachInvoiceFormat: 'pdf',
           },

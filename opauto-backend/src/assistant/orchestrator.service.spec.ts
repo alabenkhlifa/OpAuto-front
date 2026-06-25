@@ -670,6 +670,91 @@ describe('OrchestratorService', () => {
     });
   });
 
+  it('normalizes JSON-stringified attachInvoiceIds before email approval', async () => {
+    const customerId = 'fc09e08d-3f43-4adc-8d85-b295934eb6fe';
+    const invoiceId = 'e0d2192b-5a15-49e4-a244-89d210fb7f48';
+    const tools = makeTools(['list_overdue_invoices', 'send_email']);
+    tools.get.mockImplementation((name: string) => ({
+      name,
+      description: 'desc',
+      parameters: { type: 'object', properties: {} },
+      blastTier:
+        name === 'send_email'
+          ? AssistantBlastTier.CONFIRM_WRITE
+          : AssistantBlastTier.READ,
+      handler: async () => ({}),
+    }));
+    tools.resolveBlastTier.mockImplementation((tool: any) => tool.blastTier);
+    const prisma = makePrisma();
+    prisma.customer.findFirst.mockResolvedValue({
+      id: customerId,
+      email: 'ali.bensalah@gmail.com',
+    });
+    const approvals = makeApprovals();
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-overdue',
+            name: 'list_overdue_invoices',
+            argsJson: JSON.stringify({ customerId }),
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-email',
+            name: 'send_email',
+            argsJson: JSON.stringify({
+              to: 'ali.bensalah@gmail.com',
+              customerId,
+              subject: 'Overdue Invoice Payment Request',
+              text: 'Please settle overdue invoice INV-202601-0037.',
+              attachInvoiceIds: [JSON.stringify([invoiceId])],
+              attachInvoiceFormat: 'pdf',
+            }),
+          },
+        ],
+      },
+    ]);
+    const orchestrator = await makeOrchestrator({
+      tools,
+      prisma,
+      approvals,
+      llm,
+    });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-normalize-email-attachments',
+        'Can you send an email to this customer and ask him politely to pay his overdue invoice and attach the overdue invoice to the email?',
+        undefined,
+      ),
+    );
+
+    expect(events.find((e) => e.type === 'approval_request')).toMatchObject({
+      toolName: 'send_email',
+      args: expect.objectContaining({
+        attachInvoiceIds: [invoiceId],
+      }),
+    });
+    expect(approvals.createPending).toHaveBeenCalledWith(
+      expect.objectContaining({
+        toolName: 'send_email',
+        args: expect.objectContaining({
+          attachInvoiceIds: [invoiceId],
+          attachInvoiceFormat: 'pdf',
+        }),
+      }),
+    );
+  });
+
   it('blocks send_email when the user asked for a draft only', async () => {
     const tools = makeTools(['send_email']);
     tools.get.mockImplementation((name: string) => ({

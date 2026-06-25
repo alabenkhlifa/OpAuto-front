@@ -3860,7 +3860,7 @@
       "send_email": {
         "running": "J'envoie l'e-mail…",
         "success": "E-mail envoyé : {{subject}}",
-        "failure": "Impossible d'envoyer l'e-mail",
+        "failure": "E-mail non envoyé",
         "approveVerb": "Oui, envoyer l'e-mail"
       },
       "propose_retention_action": {

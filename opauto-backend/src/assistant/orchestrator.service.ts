@@ -784,6 +784,10 @@ export class OrchestratorService {
           parsedArgs.value,
           ctx.turnState?.userMessage,
         );
+        parsedArgs.value = this.normaliseSendEmailAttachmentArgs(
+          call.name,
+          parsedArgs.value,
+        );
         let validation = this.tools.validateArgs(call.name, parsedArgs.value);
         if (!validation.valid) {
           let recoveredArgs = this.recoverCreateInvoiceArgsFromContext(
@@ -3090,6 +3094,59 @@ export class OrchestratorService {
       ) ||
       /\b(?:ci-joint|pi[èe]ce\s+jointe)\b/i.test(msg)
     );
+  }
+
+  private normaliseSendEmailAttachmentArgs(
+    toolName: string,
+    args: unknown,
+  ): unknown {
+    if (
+      toolName !== 'send_email' ||
+      typeof args !== 'object' ||
+      args === null ||
+      Array.isArray(args)
+    ) {
+      return args;
+    }
+
+    const a = args as Record<string, unknown>;
+    if (!('attachInvoiceIds' in a)) return args;
+    const ids = this.normaliseInvoiceIdList(a.attachInvoiceIds);
+    if (ids.length > 0) {
+      a.attachInvoiceIds = ids;
+    }
+    return args;
+  }
+
+  private normaliseInvoiceIdList(value: unknown): string[] {
+    const rawItems = Array.isArray(value) ? value : [value];
+    const out: string[] = [];
+
+    for (const raw of rawItems) {
+      if (typeof raw !== 'string') continue;
+      const trimmed = raw.trim();
+      if (!trimmed) continue;
+
+      if (trimmed.startsWith('[')) {
+        try {
+          const parsed: unknown = JSON.parse(trimmed);
+          if (Array.isArray(parsed)) {
+            for (const item of parsed) {
+              if (typeof item === 'string' && item.trim().length > 0) {
+                out.push(item.trim());
+              }
+            }
+            continue;
+          }
+        } catch {
+          // Keep the original string below so downstream guards fail safely.
+        }
+      }
+
+      out.push(trimmed);
+    }
+
+    return Array.from(new Set(out));
   }
 
   /**
