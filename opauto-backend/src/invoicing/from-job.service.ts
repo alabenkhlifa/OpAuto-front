@@ -190,6 +190,26 @@ export class FromJobService {
     }
 
     if (lineItems.length === 0) {
+      const storedJobCost =
+        typeof job.actualCost === 'number' && job.actualCost > 0
+          ? job.actualCost
+          : typeof job.estimatedCost === 'number' && job.estimatedCost > 0
+            ? job.estimatedCost
+            : 0;
+
+      if (storedJobCost > 0) {
+        lineItems.push({
+          description: job.title
+            ? `Maintenance — ${job.title}`
+            : 'Maintenance service',
+          quantity: 1,
+          unitPrice: storedJobCost,
+          type: 'service',
+        });
+      }
+    }
+
+    if (lineItems.length === 0) {
       throw new BadRequestException(
         'Maintenance job has no billable items — log parts used or labor hours first',
       );

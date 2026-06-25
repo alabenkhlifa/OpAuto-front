@@ -93,6 +93,23 @@ function bodyLooksLikeDataSummary(haystack: string): boolean {
   return DATA_SUMMARY_KEYWORDS.some((kw) => lower.includes(kw));
 }
 
+function bodyNeedsSupportingReadForDataSummary(
+  haystack: string,
+  hasInvoiceAttachments: boolean,
+): boolean {
+  if (!bodyLooksLikeDataSummary(haystack)) return false;
+
+  if (hasInvoiceAttachments) {
+    const lower = haystack.toLowerCase();
+    const nonInvoiceDataKeywords = DATA_SUMMARY_KEYWORDS.filter(
+      (kw) => kw !== 'invoice' && kw !== 'invoices',
+    );
+    return nonInvoiceDataKeywords.some((kw) => lower.includes(kw));
+  }
+
+  return true;
+}
+
 function userMessageRequiresAppointmentRead(message: string | undefined): boolean {
   if (!message) return false;
   const asksForAppointment = /\b(?:appointment|appointments|booking|booked|schedule|scheduled|rendez-?vous|rdv)\b/i.test(
@@ -663,7 +680,10 @@ export function createSendEmailTool(deps: {
         ctx.turnState.readToolCallsSoFar === 0
       ) {
         if (
-          bodyLooksLikeDataSummary(haystack) ||
+          bodyNeedsSupportingReadForDataSummary(
+            haystack,
+            hasInvoiceAttachments,
+          ) ||
           userMessageRequiresAppointmentRead(ctx.turnState.userMessage)
         ) {
           return {

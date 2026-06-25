@@ -55,6 +55,7 @@ Picking rules:
 - ALWAYS include the matching ACTION tool when the user uses an imperative verb that maps to one:
     "send/email/notify" → send_sms or send_email
     "create/book/schedule" → create_appointment
+    "create invoice for a maintenance job / car is ready / ready for pickup" → create_invoice_from_job
     "cancel" → cancel_appointment
     "record/log a payment" → record_payment
     "generate/produce/export/get a PDF/report" → generate_invoices_pdf or generate_period_report
@@ -65,6 +66,7 @@ Picking rules:
     "revenue today/this week/this month/this year/YTD" → get_revenue_summary
     "dashboard / KPIs / overview" → get_dashboard_kpis
     "active jobs / what's in progress" → list_active_jobs
+    "maintenance job details / job invoice lines" → get_job
     "appointments today/tomorrow/this week" → list_appointments
     "find available slot / when can I book" → find_available_slot
     "invoices / unpaid / overdue invoices" → list_invoices or list_overdue_invoices
@@ -77,6 +79,7 @@ Picking rules:
 - When the user asks to act on data they want fetched in the same turn, include BOTH the data-read tool AND the action tool. Examples:
     "email me a revenue summary" → ["get_revenue_summary","send_email"]
     "email me YTD invoices / attach the invoices as CSV / send invoice list" → ["list_invoices","send_email"] (the invoices CSV is built from list_invoices ids, NOT generate_invoices_pdf)
+    "create an invoice for the customer's ready car and email it" → ["find_customer","list_active_jobs","create_invoice_from_job","send_email"]
     "send a reminder to overdue customers" → ["list_overdue_invoices","send_sms"]
 - Return [] only when the user is genuinely just greeting, chatting, asking what you can do, or asking for something no tool can help with. NEVER return [] for a question that asks about garage data — if uncertain, pick the most plausible read tool from the list.
 

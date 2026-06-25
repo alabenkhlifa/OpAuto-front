@@ -447,13 +447,23 @@ export class OrchestratorService {
             lastToolName,
             successfulToolResults,
           );
+        const continueWithJobInvoiceEmail =
+          this.shouldContinueWithJobInvoiceEmailAfterInvoice(
+            taskUserMessage,
+            lastToolName,
+            successfulToolResults,
+          );
+        const continueWithPostWriteAction =
+          continueWithCustomerApprovalEmail || continueWithJobInvoiceEmail;
         const swapToComposeOnly =
           (toolHasFired &&
             lastToolTier !== AssistantBlastTier.READ &&
-            !continueWithCustomerApprovalEmail) ||
+            !continueWithPostWriteAction) ||
           forceComposeOnly;
         const messagesForCall = continueWithCustomerApprovalEmail
           ? this.addCustomerApprovalEmailContinuationGuidance(llmMessages)
+          : continueWithJobInvoiceEmail
+            ? this.addJobInvoiceEmailContinuationGuidance(llmMessages)
           : swapToComposeOnly
             ? this.swapSystemPromptForComposeOnly(llmMessages, ctx.locale)
             : llmMessages;
@@ -461,6 +471,8 @@ export class OrchestratorService {
           ? llmTools.filter(
               (tool) => tool.name === 'send_job_customer_approval_email',
             )
+          : continueWithJobInvoiceEmail
+            ? llmTools.filter((tool) => tool.name === 'send_email')
           : swapToComposeOnly
             ? undefined
             : llmTools;
@@ -1366,6 +1378,31 @@ export class OrchestratorService {
     userMessage: string | undefined,
     successfulToolResults: { toolName: string; result: unknown }[],
   ): { key: string; content: string } | null {
+    if (this.userAskedForJobInvoiceWorkflow(userMessage, undefined)) {
+      const hasJobInvoice = successfulToolResults.some(
+        (entry) => entry.toolName === 'create_invoice_from_job',
+      );
+      if (!hasJobInvoice) {
+        const hasCustomer = successfulToolResults.some(
+          (entry) =>
+            entry.toolName === 'find_customer' ||
+            entry.toolName === 'get_customer',
+        );
+        const hasJobContext = successfulToolResults.some(
+          (entry) =>
+            entry.toolName === 'list_active_jobs' ||
+            entry.toolName === 'get_job' ||
+            entry.toolName === 'get_car',
+        );
+        return {
+          key: `job-invoice:${hasCustomer}:${hasJobContext}`,
+          content:
+            `The user asked to create an invoice from an existing maintenance job or ready car. Do not stop after finding the customer, and do not call generic create_invoice with placeholder line items. ` +
+            `Resolve the customer and job using find_customer/get_customer plus list_active_jobs, get_car, or get_job as needed. Then call create_invoice_from_job with the real maintenance job id. If you only have a customerId or carId, pass it as jobId so the orchestrator can resolve that entity to the latest maintenance job in this garage. The approval request will ask the user to confirm before anything is created.`,
+        };
+      }
+    }
+
     if (!this.userAskedForAppointmentCreation(userMessage)) return null;
 
     const hasSlot = successfulToolResults.some(
@@ -1438,6 +1475,35 @@ export class OrchestratorService {
     );
   }
 
+  private shouldContinueWithJobInvoiceEmailAfterInvoice(
+    userMessage: string | undefined,
+    lastToolName: string | null,
+    successfulToolResults: { toolName: string; result: unknown }[],
+  ): boolean {
+    if (lastToolName !== 'create_invoice_from_job') return false;
+    if (!this.userAskedToEmailCreatedInvoice(userMessage)) return false;
+    const createdInvoice = [...successfulToolResults]
+      .reverse()
+      .find((entry) => entry.toolName === 'create_invoice_from_job')?.result;
+    if (!this.hasCreatedInvoiceForEmail(createdInvoice)) return false;
+    return !successfulToolResults.some(
+      (entry) => entry.toolName === 'send_email',
+    );
+  }
+
+  private hasCreatedInvoiceForEmail(value: unknown): boolean {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return false;
+    }
+    const record = value as Record<string, unknown>;
+    return (
+      typeof record.invoiceId === 'string' &&
+      UUID_PATTERN.test(record.invoiceId) &&
+      typeof record.customerId === 'string' &&
+      UUID_PATTERN.test(record.customerId)
+    );
+  }
+
   private addCustomerApprovalEmailContinuationGuidance(
     messages: LlmMessage[],
   ): LlmMessage[] {
@@ -1447,6 +1513,19 @@ export class OrchestratorService {
         role: 'system',
         content:
           'The user asked for a compound maintenance workflow: add a job part, then send the customer a maintenance approval email for the updated job. The part was already added. Do not call add_job_part again. Next call send_job_customer_approval_email using the same jobId from the completed add_job_part call.',
+      },
+    ];
+  }
+
+  private addJobInvoiceEmailContinuationGuidance(
+    messages: LlmMessage[],
+  ): LlmMessage[] {
+    return [
+      ...messages,
+      {
+        role: 'system',
+        content:
+          'The user asked for a compound workflow: create an invoice from the maintenance job, then email the customer that the car is ready with the invoice attached. The invoice was already created from the job. Do not call create_invoice or create_invoice_from_job again. Next call send_email exactly once using the customerId and invoiceId from the create_invoice_from_job result. Set attachInvoiceIds to an array containing that invoiceId and attachInvoiceFormat to "pdf". Use a professional subject and body, tell the customer their car is ready, mention the invoice is attached, and let the email tool add the garage footer/signature.',
       },
     ];
   }
@@ -2467,6 +2546,21 @@ export class OrchestratorService {
     ) {
       return text;
     }
+    if (this.userAskedForJobInvoiceWorkflow(userMessage, undefined)) {
+      if (
+        !/\binvoice\b/i.test(text) ||
+        !/(unable|failed|line items?|correct format|schema|validation|create|prepare)/i.test(
+          text,
+        )
+      ) {
+        return text;
+      }
+      return (
+        `I did not create the invoice. ` +
+        `I need the specific maintenance job or vehicle to use the job's existing parts and labor costs. ` +
+        `Once the job is identified, I can prepare the invoice for approval.`
+      );
+    }
     if (!this.userMessageLacksInvoicePrices(userMessage)) return text;
     if (
       !/\binvoice\b/i.test(text) ||
@@ -2630,6 +2724,10 @@ export class OrchestratorService {
     for (const name of this.actionAugmentation(userMessage)) {
       augmented.add(name);
     }
+    const useJobInvoiceWorkflow = this.userAskedForJobInvoiceWorkflow(
+      userMessage,
+      pageContext,
+    );
     if (this.userAskedForJobCustomerApprovalEmail(userMessage, pageContext)) {
       augmented.add('send_job_customer_approval_email');
       augmented.add('get_job');
@@ -2654,6 +2752,19 @@ export class OrchestratorService {
       for (const name of this.keywordFallback(userMessage)) {
         augmented.add(name);
       }
+    }
+    if (useJobInvoiceWorkflow) {
+      augmented.add('create_invoice_from_job');
+      augmented.add('get_job');
+      augmented.add('list_active_jobs');
+      augmented.add('find_customer');
+      augmented.add('get_customer');
+      augmented.add('find_car');
+      augmented.add('get_car');
+      augmented.delete('create_invoice');
+      augmented.delete('list_invoices');
+      augmented.delete('list_overdue_invoices');
+      augmented.delete('send_email');
     }
 
     if (augmented.size === 0) return [];
@@ -2682,6 +2793,7 @@ export class OrchestratorService {
       // "email me" / "email Sarah" / "email customer" — but NOT "email address"
       new RegExp(`\\bemail\\s+(?!(?:${emailNounStopwords})\\b)\\w+`, 'i'),
       /\bsend\s+(?:\w+\s+)*(an?\s+)?e-?mails?\b/i, // "send me an email", "send Ali an email"
+      /\b(?:notify|inform|tell)\b[\s\S]{0,100}\b(?:by|via|in)\s+(?:an?\s+)?e-?mail\b/i,
       /\bmail\s+(me|it|this|him|her)\b/i,
       /\bforward\s+(me|it|this)\b/i,
       /\b(via|by|as\s+an?|to\s+my)\s+(personal\s+)?e-?mail\b/i,
@@ -2788,6 +2900,61 @@ export class OrchestratorService {
       selectedType === 'maintenancejob' ||
       selectedType === 'maintenance_job';
     return selectedMaintenanceJob && mentionsCustomer;
+  }
+
+  private userAskedForJobInvoiceWorkflow(
+    message: string | undefined,
+    pageContext: PageContext | undefined,
+  ): boolean {
+    if (!this.userAskedForInvoiceCreation(message)) return false;
+
+    const msg = message ?? '';
+    const mentionsJobCostSource =
+      /\b(?:maintenance|repair|service)\s+(?:job|work|record)\b/i.test(msg) ||
+      /\b(?:job|work\s*order)\b/i.test(msg) ||
+      /\b(?:car|vehicle|auto|voiture|v[ée]hicule)\s+(?:is\s+)?ready\b/i.test(
+        msg,
+      ) ||
+      /\bready\s+(?:for\s+pickup|to\s+pick\s+up|for\s+collection)\b/i.test(
+        msg,
+      );
+
+    if (mentionsJobCostSource) return true;
+
+    const selected =
+      pageContext?.selectedEntity ??
+      deriveSelectedEntityFromRoute(pageContext?.route, pageContext?.params);
+    const selectedType = selected?.type.toLowerCase();
+    return (
+      selectedType === 'maintenance' ||
+      selectedType === 'maintenancejob' ||
+      selectedType === 'maintenance_job'
+    );
+  }
+
+  private userAskedToEmailCreatedInvoice(
+    message: string | undefined,
+  ): boolean {
+    const msg = message ?? '';
+    if (!/\b(?:invoice|facture)\b/i.test(msg)) return false;
+
+    const asksForEmail =
+      /\bemail\s+(?!(?:address|account|settings)\b)\w+/i.test(msg) ||
+      /\bsend\s+(?:\w+\s+)*(?:an?\s+)?e-?mails?\b/i.test(msg) ||
+      /\b(?:notify|inform|tell)\b[\s\S]{0,100}\b(?:by|via|in)\s+(?:an?\s+)?e-?mail\b/i.test(
+        msg,
+      ) ||
+      /\b(?:via|by|as\s+an?)\s+(?:personal\s+)?e-?mail\b/i.test(msg);
+    if (!asksForEmail) return false;
+
+    return (
+      /\b(?:attach|attached|attachment|pi[èe]ce\s+jointe|ci-joint|pdf)\b/i.test(
+        msg,
+      ) ||
+      /\b(?:email|send|notify|forward)\b[\s\S]{0,120}\b(?:invoice|facture)\b/i.test(
+        msg,
+      )
+    );
   }
 
   private userAskedForAppointmentLookup(message: string | undefined): boolean {
@@ -3207,14 +3374,15 @@ export class OrchestratorService {
       `Action chaining rules:\n` +
         `- When the user asks you to email/send a report or summary, FIRST call the relevant read tool to fetch real data (e.g. list_invoices, get_revenue_summary, list_at_risk_customers), THEN call send_email with a body that includes those concrete numbers. Do NOT write placeholder bodies like "please find the data below" without the data inline.\n` +
         `- When the user asks to email a maintenance-job customer, send a parts/labor approval, or send an approval link for "this job", use send_job_customer_approval_email. That tool resolves the customer from the job, creates or reuses the public approval link, and sends to the customer's stored email. Do NOT use send_email for maintenance approval links.\n` +
-        `- When the user asks to create, make, issue, generate, or prepare an invoice, resolve the real customer (and car if mentioned), then verify you have complete line-item data before calling create_invoice. Each line item must be an object with description, quantity, and HT unitPrice. If the user only gives service names like "oil change and filter" without prices, ask for the missing prices instead of guessing or calling create_invoice with placeholders. Do NOT call send_email unless the user explicitly asks to email an already-created invoice or report.\n` +
+        `- When the user asks to create, make, issue, generate, or prepare an invoice from an existing maintenance job, work order, ready car, or ready-for-pickup car, use create_invoice_from_job. Resolve the customer/car/job first with find_customer/get_customer, list_active_jobs, get_car, or get_job as needed. Do NOT ask for line-item prices that already exist on the job, and do NOT call generic create_invoice for those job invoices.\n` +
+        `- When the user asks to create, make, issue, generate, or prepare a generic invoice not tied to a maintenance job, resolve the real customer (and car if mentioned), then verify you have complete line-item data before calling create_invoice. Each line item must be an object with description, quantity, and HT unitPrice. If the user only gives service names like "oil change and filter" without prices, ask for the missing prices instead of guessing or calling create_invoice with placeholders. Do NOT call send_email unless the user explicitly asks to email an already-created invoice or report.\n` +
         `- For customer SMS actions, resolve the real customer first and pass that real customerId plus their actual phone number to send_sms. Do NOT invent phone numbers or placeholder ids.\n` +
         `- For customer/external email actions that are not maintenance approval links, use send_email with the exact ` +
         `email address the user provided. If the user named a customer instead of typing an address, resolve the real customer first and pass that real customerId plus their actual email in send_email.to. Do NOT fall back to the owner email for customer requests.\n` +
         `- When the user asks to email a customer about their next/upcoming appointment or appointment date/time, resolve the customer, call list_appointments with customerId or customerName, orderBy:"soonest", and limit:1, then call send_email with the real customerId/email and the appointment's startTimeLocal/endTimeLocal/timeZone. Write a professional email, include the garage name, include a footer/signature, and do NOT use UTC startTime/endTime in customer-facing appointment text.\n` +
         `- NEVER claim "no data is available" / "data could not be retrieved" / "the report is unavailable" without having actually invoked the relevant read tool this turn. If you have not called a read tool yet, call it. If the tool returns empty, report the specific empty result ("0 overdue invoices", "no at-risk customers this period") — do NOT generalise to "no data".\n` +
         `- NEVER reference an attachment ("see attached", "please find the PDF attached", "ci-joint", "pièce jointe") in the email body unless you populate attachInvoiceIds with real invoice ids. The backend rejects emails that promise an attachment without one.\n` +
-        `- When the user wants invoices attached to an email, call list_invoices first to get the invoice IDs, then pass them as attachInvoiceIds in send_email — the backend converts them to a CSV attachment automatically.\n` +
+        `- When the user wants invoices attached to an email, call list_invoices first to get existing invoice IDs, then pass them as attachInvoiceIds in send_email. If the invoice was just created from create_invoice_from_job, use that returned invoiceId directly. For customer invoice delivery, prefer attachInvoiceFormat:"pdf".\n` +
         `- Self-sends (recipient == the user's own email) execute immediately without approval. External recipients require approval — pre-fetch all data BEFORE asking the LLM to call send_email so the user only approves once.`,
     );
     if (skillDescriptors.length > 0) {
@@ -3948,6 +4116,19 @@ export class OrchestratorService {
     errors: string[],
     userMessage: string | undefined,
   ): { content: string; forceComposeOnly: boolean } | null {
+    if (
+      toolName === 'create_invoice' &&
+      this.userAskedForJobInvoiceWorkflow(userMessage, undefined)
+    ) {
+      return {
+        forceComposeOnly: false,
+        content:
+          `The user asked for an invoice from an existing maintenance job or ready car, so do not use generic create_invoice and do not ask for line-item prices that should already be on the job. ` +
+          `Retry by resolving the customer and maintenance job with find_customer/get_customer plus list_active_jobs, get_car, or get_job as needed, then call create_invoice_from_job with the real maintenance job id. ` +
+          `Do not call send_email until create_invoice_from_job has been approved/executed and returned an invoiceId.`,
+      };
+    }
+
     if (
       toolName === 'create_invoice' &&
       this.userMessageLacksInvoicePrices(userMessage)

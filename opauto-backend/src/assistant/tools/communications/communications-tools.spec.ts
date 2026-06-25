@@ -1143,6 +1143,88 @@ describe('communications tools', () => {
         expect(email.send).not.toHaveBeenCalled();
       });
 
+      it('allows invoice attachment delivery when attachInvoiceIds anchors the invoice body', async () => {
+        const email = makeEmailService(
+          jest.fn().mockResolvedValue({
+            providerMessageId: 'em_invoice_ready',
+            status: 'queued',
+          }),
+        );
+        const prisma = makePrisma(
+          jest.fn().mockResolvedValue([
+            {
+              id: 'inv-1',
+              invoiceNumber: 'INV-001',
+              status: 'SENT',
+              subtotal: 100,
+              discount: 0,
+              taxAmount: 19,
+              total: 119,
+              dueDate: new Date('2026-07-05T00:00:00Z'),
+              paidAt: null,
+              createdAt: new Date('2026-06-25T00:00:00Z'),
+              customer: {
+                firstName: 'Demo',
+                lastName: 'Customer',
+                phone: '+216 22 111 222',
+                email: 'demo.customer@example.com',
+                address: 'Tunis',
+              },
+              car: {
+                make: 'Renault',
+                model: 'Clio',
+                year: 2020,
+                licensePlate: '123 TUN 456',
+              },
+              payments: [],
+              lineItems: [
+                {
+                  description: 'Base maintenance labor',
+                  quantity: 1,
+                  unitPrice: 100,
+                  total: 100,
+                },
+              ],
+              garage: {
+                name: 'AutoTech Tunisia',
+                address: 'Tunis',
+                phone: '+216 71 234 567',
+                email: 'contact@autotech.tn',
+              },
+            },
+          ]),
+        );
+        const tool = createSendEmailTool({
+          emailService: email,
+          prisma,
+        });
+
+        const result = await tool.handler(
+          {
+            to: 'demo.customer@example.com',
+            subject: 'Your vehicle is ready',
+            text:
+              'Your vehicle is ready for pickup. Please find the invoice attached.',
+            attachInvoiceIds: ['inv-1'],
+            attachInvoiceFormat: 'pdf',
+          },
+          { ...ownerCtx, turnState: { readToolCallsSoFar: 0 } },
+        );
+
+        expect(email.send).toHaveBeenCalled();
+        expect(email.send.mock.calls[0][0].attachments).toEqual([
+          expect.objectContaining({
+            filename: 'invoices.pdf',
+            contentType: 'application/pdf',
+          }),
+        ]);
+        expect(result).toMatchObject({
+          providerMessageId: 'em_invoice_ready',
+          attachedInvoiceCount: 1,
+          attachmentFormat: 'pdf',
+        });
+      });
+
       it('allows data-summary body when at least one read tool ran this turn', async () => {
         const email = makeEmailService(
           jest.fn().mockResolvedValue({

@@ -121,6 +121,44 @@ describe('FromJobService (unit)', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
+  it('uses stored job cost as a fallback service line when no detailed lines can be derived', async () => {
+    prisma.maintenanceJob.findUnique.mockResolvedValue(
+      jobFixture({
+        title: 'Base maintenance',
+        actualHours: 0,
+        estimatedHours: 0,
+        actualCost: 180,
+        estimatedCost: 220,
+        employee: null,
+        employeeId: null,
+      }),
+    );
+    prisma.invoice.findFirst.mockResolvedValue(null);
+    prisma.stockMovement.findMany.mockResolvedValue([]);
+    invoicing.create.mockResolvedValue({
+      id: 'inv-new',
+      lineItems: [{ id: 'li-1', type: 'service' }],
+    });
+    prisma.invoice.update.mockResolvedValue({});
+    invoicing.findOne.mockResolvedValue({ id: 'inv-new', status: 'DRAFT' });
+
+    await service.createFromJob(JOB_ID, GARAGE_ID);
+
+    expect(invoicing.create).toHaveBeenCalledWith(
+      GARAGE_ID,
+      expect.objectContaining({
+        lineItems: [
+          expect.objectContaining({
+            description: 'Maintenance — Base maintenance',
+            quantity: 1,
+            unitPrice: 180,
+            type: 'service',
+          }),
+        ],
+      }),
+    );
+  });
+
   // ── 5. Happy path — parts + labor ──────────────────────────
   it('builds parts + labor lines and calls InvoicingService.create', async () => {
     prisma.maintenanceJob.findUnique.mockResolvedValue(jobFixture());

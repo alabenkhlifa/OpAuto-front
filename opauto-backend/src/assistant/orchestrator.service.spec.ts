@@ -1370,6 +1370,138 @@ describe('OrchestratorService', () => {
     });
   });
 
+  it('continues from an approved job invoice into a customer email approval with the invoice attached', async () => {
+    const customerId = '11111111-1111-4111-8111-111111111111';
+    const jobId = '22222222-2222-4222-8222-222222222222';
+    const invoiceId = '33333333-3333-4333-8333-333333333333';
+    const tools = makeTools(
+      ['create_invoice_from_job', 'send_email'],
+      (name) => {
+        if (name === 'create_invoice_from_job') {
+          return {
+            ok: true,
+            result: {
+              invoiceId,
+              invoiceNumber: 'INV-202606-0007',
+              status: 'DRAFT',
+              total: 240,
+              currency: 'TND',
+              customerId,
+              carId: '44444444-4444-4444-8444-444444444444',
+              dueDate: '2026-07-05',
+            },
+            durationMs: 1,
+          };
+        }
+        return { ok: true, result: {}, durationMs: 1 };
+      },
+    );
+    tools.get.mockImplementation((name: string) =>
+      name === 'create_invoice_from_job' || name === 'send_email'
+        ? {
+            name,
+            description: 'desc',
+            parameters: { type: 'object', properties: {} },
+            blastTier: AssistantBlastTier.CONFIRM_WRITE,
+            handler: async () => ({}),
+          }
+        : undefined,
+    );
+    tools.resolveBlastTier.mockImplementation(() => AssistantBlastTier.CONFIRM_WRITE);
+    const approvals = makeApprovals();
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-send-invoice-email',
+            name: 'send_email',
+            argsJson: JSON.stringify({
+              customerId,
+              subject: 'Your vehicle is ready for pickup',
+              text:
+                'Hello, your vehicle is ready for pickup. Please find the invoice attached.',
+              attachInvoiceIds: [invoiceId],
+              attachInvoiceFormat: 'pdf',
+            }),
+          },
+        ],
+      },
+    ]);
+    const conversation = makeConversation([
+      {
+        id: 'msg-user',
+        role: AssistantMessageRole.USER,
+        content:
+          'Can you create an invoice for Demo Customer and notify him that his car is ready in an email and attach the invoice in the same email?',
+        toolCallId: null,
+        createdAt: new Date('2026-06-25T00:00:00.000Z'),
+      },
+    ]);
+    const prisma = {
+      assistantToolCall: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'tc-create-job-invoice',
+          conversationId: 'conv-1',
+          toolName: 'create_invoice_from_job',
+          argsJson: { jobId },
+          status: AssistantToolCallStatus.APPROVED,
+          blastTier: AssistantBlastTier.CONFIRM_WRITE,
+          conversation: { garageId: 'garage-1', userId: 'user-1' },
+        }),
+        update: jest.fn().mockResolvedValue(undefined),
+      },
+      customer: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: customerId,
+          email: 'demo.customer@example.com',
+        }),
+      },
+    };
+    const orchestrator = await makeOrchestrator({
+      tools,
+      llm,
+      prisma,
+      approvals,
+      conversation,
+    });
+
+    const events = await collectEvents(
+      orchestrator.run(ctx, 'conv-1', '__resume__:tc-create-job-invoice', undefined),
+    );
+
+    expect(tools.execute).toHaveBeenCalledWith(
+      'create_invoice_from_job',
+      { jobId },
+      expect.objectContaining({ garageId: 'garage-1' }),
+    );
+    expect((llm.complete as jest.Mock).mock.calls[0][0].tools).toEqual([
+      expect.objectContaining({ name: 'send_email' }),
+    ]);
+    expect(approvals.createPending).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conversationId: 'conv-1',
+        toolName: 'send_email',
+        blastTier: AssistantBlastTier.CONFIRM_WRITE,
+        args: expect.objectContaining({
+          customerId,
+          to: 'demo.customer@example.com',
+          attachInvoiceIds: [invoiceId],
+          attachInvoiceFormat: 'pdf',
+        }),
+      }),
+    );
+    expect(events.find((e) => e.type === 'approval_request')).toMatchObject({
+      toolName: 'send_email',
+      args: expect.objectContaining({
+        customerId,
+        attachInvoiceIds: [invoiceId],
+        attachInvoiceFormat: 'pdf',
+      }),
+    });
+  });
+
   it('recovers create_invoice_from_job when the model passes the customer id instead of the recent job id', async () => {
     const customerId = '11111111-1111-4111-8111-111111111111';
     const jobId = '22222222-2222-4222-8222-222222222222';
@@ -1444,6 +1576,109 @@ describe('OrchestratorService', () => {
       args: { jobId },
     });
     expect(events.find((e) => e.type === 'tool_result')).toBeUndefined();
+  });
+
+  it('uses the customer latest maintenance job for ready-car invoice creation', async () => {
+    const customerId = '11111111-1111-4111-8111-111111111111';
+    const jobId = '22222222-2222-4222-8222-222222222222';
+    const tools = makeTools(
+      ['find_customer', 'create_invoice_from_job'],
+      (name) => {
+        if (name === 'find_customer') {
+          return {
+            ok: true,
+            result: [{ id: customerId, displayName: 'Demo Customer' }],
+            durationMs: 1,
+          };
+        }
+        return { ok: true, result: {}, durationMs: 1 };
+      },
+    );
+    tools.get.mockImplementation((name: string) =>
+      name === 'create_invoice_from_job'
+        ? {
+            name,
+            description: 'desc',
+            parameters: { type: 'object', properties: {} },
+            blastTier: AssistantBlastTier.CONFIRM_WRITE,
+            handler: async () => ({}),
+          }
+        : {
+            name,
+            description: 'desc',
+            parameters: { type: 'object', properties: {} },
+            blastTier: AssistantBlastTier.READ,
+            handler: async () => ({}),
+          },
+    );
+    const approvals = makeApprovals();
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-find-demo',
+            name: 'find_customer',
+            argsJson: '{"query":"Demo Customer"}',
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-job-invoice',
+            name: 'create_invoice_from_job',
+            argsJson: JSON.stringify({ jobId: customerId }),
+          },
+        ],
+      },
+    ]);
+    const prisma = {
+      assistantToolCall: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      maintenanceJob: {
+        findFirst: jest
+          .fn()
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce({ id: jobId }),
+      },
+    };
+    const orchestrator = await makeOrchestrator({
+      tools,
+      llm,
+      prisma,
+      approvals,
+    });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-ready-car-invoice',
+        'Can you create an invoice for Demo Customer and notify him that his car is ready in an email and attach the invoice in the same email?',
+        undefined,
+      ),
+    );
+
+    expect(tools.execute).toHaveBeenCalledWith(
+      'find_customer',
+      { query: 'Demo Customer' },
+      expect.objectContaining({ garageId: 'garage-1' }),
+    );
+    expect(approvals.createPending).toHaveBeenCalledWith(
+      expect.objectContaining({
+        toolName: 'create_invoice_from_job',
+        blastTier: AssistantBlastTier.CONFIRM_WRITE,
+        args: { jobId },
+      }),
+    );
+    expect(events.find((e) => e.type === 'approval_request')).toMatchObject({
+      toolName: 'create_invoice_from_job',
+      args: { jobId },
+    });
   });
 
   it('records DENIED resumption without executing the tool, emits deterministic ack, and skips the LLM (UI Bug 3 + behavior finding "DENY does not stick")', async () => {
@@ -4550,6 +4785,50 @@ describe('OrchestratorService', () => {
       expect(firstCall.messages[0].content).toContain(
         'If the user only gives service names like "oil change and filter" without prices, ask for the missing prices',
       );
+    });
+
+    it('routes ready-car invoice emails through maintenance job invoice tools', async () => {
+      const tools = makeTools([
+        'list_invoices',
+        'list_overdue_invoices',
+        'create_invoice',
+        'create_invoice_from_job',
+        'list_active_jobs',
+        'get_job',
+        'find_customer',
+        'get_customer',
+        'find_car',
+        'get_car',
+        'send_email',
+      ]);
+      const llm = makeLlm([{ provider: 'groq', content: 'ok', toolCalls: [] }]);
+      const classifier = makeClassifier(['create_invoice', 'send_email']);
+      const orchestrator = await makeOrchestrator({ tools, llm, classifier });
+
+      await collectEvents(
+        orchestrator.run(
+          ctx,
+          'conv-job-invoice-routing',
+          'Can you create an invoice for Demo Customer and notify him that his car is ready in an email and attach the invoice in the same email?',
+          undefined,
+        ),
+      );
+
+      const names = toolNamesFromFirstCall(llm);
+      expect(names).toEqual(
+        expect.arrayContaining([
+          'create_invoice_from_job',
+          'list_active_jobs',
+          'get_job',
+          'find_customer',
+          'get_customer',
+          'find_car',
+          'get_car',
+        ]),
+      );
+      expect(names).not.toContain('create_invoice');
+      expect(names).not.toContain('send_email');
+      expect(names).not.toContain('list_invoices');
     });
 
     it('adds generate_period_report and skips create_invoice for invoice report exports', async () => {
