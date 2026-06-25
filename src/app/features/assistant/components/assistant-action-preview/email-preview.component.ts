@@ -15,7 +15,7 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
           {{ 'assistant.preview.email.title' | translate }}
         </span>
         <span class="action-preview__subtitle">
-          {{ subtitleKey() | translate }}
+          {{ subtitle() || (subtitleKey() | translate) }}
         </span>
       </div>
 
@@ -47,6 +47,7 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 })
 export class EmailPreviewComponent {
   readonly subject = input<string | undefined>();
+  readonly subtitle = input<string | undefined>();
   readonly subtitleKey = input<string>('assistant.preview.email.toMe');
   readonly text = input<string | undefined>();
   readonly html = input<string | undefined>();

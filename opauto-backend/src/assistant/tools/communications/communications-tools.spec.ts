@@ -34,11 +34,16 @@ function makeEmailService(send: jest.Mock = jest.fn()) {
   };
 }
 
-function makePrisma(findMany: jest.Mock = jest.fn().mockResolvedValue([])) {
+function makePrisma(
+  findMany: jest.Mock = jest.fn().mockResolvedValue([]),
+  findCustomer: jest.Mock = jest.fn().mockResolvedValue(null),
+) {
   return {
     invoice: { findMany },
+    customer: { findFirst: findCustomer },
   } as unknown as import('../../../prisma/prisma.service').PrismaService & {
     invoice: { findMany: jest.Mock };
+    customer: { findFirst: jest.Mock };
   };
 }
 
@@ -271,16 +276,37 @@ describe('communications tools', () => {
   });
 
   describe('send_email', () => {
-    it('always advertises AUTO_WRITE blast tier (no per-call resolver)', () => {
+    it('keeps owner self-sends automatic and requires approval for external recipients', () => {
       const tool = createSendEmailTool({
         emailService: makeEmailService(),
         prisma: makePrisma(),
       });
       expect(tool.blastTier).toBe(AssistantBlastTier.AUTO_WRITE);
-      expect(tool.resolveBlastTier).toBeUndefined();
+      expect(tool.resolveBlastTier).toBeDefined();
+      expect(
+        tool.resolveBlastTier?.({ subject: 'Hi', text: 'Body' }, ownerCtx),
+      ).toBe(AssistantBlastTier.AUTO_WRITE);
+      expect(
+        tool.resolveBlastTier?.(
+          { to: 'owner@example.com', subject: 'Hi', text: 'Body' },
+          ownerCtx,
+        ),
+      ).toBe(AssistantBlastTier.AUTO_WRITE);
+      expect(
+        tool.resolveBlastTier?.(
+          { to: 'customer@example.com', subject: 'Hi', text: 'Body' },
+          ownerCtx,
+        ),
+      ).toBe(AssistantBlastTier.CONFIRM_WRITE);
+      expect(
+        tool.resolveBlastTier?.(
+          { customerId: 'cust-1', subject: 'Hi', text: 'Body' },
+          ownerCtx,
+        ),
+      ).toBe(AssistantBlastTier.CONFIRM_WRITE);
     });
 
-    it('always sends to the authenticated user (recipient is server-resolved, not LLM-supplied)', async () => {
+    it('defaults to the authenticated user when no recipient is supplied', async () => {
       const email = makeEmailService(
         jest
           .fn()
@@ -311,6 +337,97 @@ describe('communications tools', () => {
         status: 'queued',
         to: 'owner@example.com',
       });
+    });
+
+    it('sends to an explicit external recipient instead of falling back to the owner', async () => {
+      const email = makeEmailService(
+        jest
+          .fn()
+          .mockResolvedValue({ providerMessageId: 'em_customer', status: 'queued' }),
+      );
+      const tool = createSendEmailTool({
+        emailService: email,
+        prisma: makePrisma(),
+      });
+
+      const result = await tool.handler(
+        {
+          to: 'customer@example.com',
+          subject: 'Service reminder',
+          text: 'Your car is ready.',
+        } satisfies SendEmailArgs,
+        ownerCtx,
+      );
+
+      expect(email.send).toHaveBeenCalledWith({
+        to: 'customer@example.com',
+        subject: 'Service reminder',
+        html: '<p>Your car is ready.</p>',
+        text: 'Your car is ready.',
+        attachments: undefined,
+      });
+      expect(result).toMatchObject({
+        providerMessageId: 'em_customer',
+        status: 'queued',
+        to: 'customer@example.com',
+      });
+    });
+
+    it('resolves a customerId recipient and sends to the stored customer email', async () => {
+      const email = makeEmailService(
+        jest
+          .fn()
+          .mockResolvedValue({ providerMessageId: 'em_customer_id', status: 'queued' }),
+      );
+      const findCustomer = jest
+        .fn()
+        .mockResolvedValue({ id: 'cust-1', email: 'customer@example.com' });
+      const prisma = makePrisma(jest.fn().mockResolvedValue([]), findCustomer);
+      const tool = createSendEmailTool({ emailService: email, prisma });
+
+      const result = await tool.handler(
+        {
+          customerId: 'cust-1',
+          to: 'customer@example.com',
+          subject: 'Service reminder',
+          text: 'Your car is ready.',
+        } satisfies SendEmailArgs,
+        ownerCtx,
+      );
+
+      expect(findCustomer).toHaveBeenCalledWith({
+        where: { id: 'cust-1', garageId: ownerCtx.garageId },
+        select: { id: true, email: true },
+      });
+      expect(email.send).toHaveBeenCalledWith(
+        expect.objectContaining({ to: 'customer@example.com' }),
+      );
+      expect(result).toMatchObject({ to: 'customer@example.com' });
+    });
+
+    it('rejects a customerId when the provided recipient does not match the stored customer email', async () => {
+      const email = makeEmailService();
+      const prisma = makePrisma(
+        jest.fn().mockResolvedValue([]),
+        jest.fn().mockResolvedValue({ id: 'cust-1', email: 'customer@example.com' }),
+      );
+      const tool = createSendEmailTool({ emailService: email, prisma });
+
+      const result = await tool.handler(
+        {
+          customerId: 'cust-1',
+          to: 'other@example.com',
+          subject: 'Service reminder',
+          text: 'Your car is ready.',
+        } satisfies SendEmailArgs,
+        ownerCtx,
+      );
+
+      expect(result).toEqual({
+        error: 'recipient_mismatch',
+        message: expect.stringMatching(/does not match/i),
+      });
+      expect(email.send).not.toHaveBeenCalled();
     });
 
     it('returns missing_recipient error when ctx.email is null', async () => {
@@ -631,7 +748,7 @@ describe('communications tools', () => {
       });
     });
 
-    it('I-011: validates schema, strips stray `to` so recipient stays the owner', () => {
+    it('I-011: validates schema and accepts explicit external recipients', () => {
       const registry = new ToolRegistryService();
       registry.register(
         createSendEmailTool({
@@ -643,22 +760,20 @@ describe('communications tools', () => {
       // Missing subject — required field, still rejected.
       expect(registry.validateArgs('send_email', {}).valid).toBe(false);
 
-      // Stray `to`: pre-I-011 this was rejected (additionalProperties: false).
-      // Post-I-011 AJV strips it; the call validates AND the recipient
-      // override is gone, so the handler will fall back to ctx.email (the
-      // owner). This is strictly safer — we drop attempts to send mail to
-      // arbitrary addresses instead of rejecting the entire tool call and
-      // burning the LLM's iteration budget on retries.
-      const argsWithStrayTo: Record<string, unknown> = {
+      // `to` is now a first-class argument for explicit customer/external
+      // emails. Unknown keys are still stripped by the registry.
+      const argsWithRecipient: Record<string, unknown> = {
         to: 'a@b.com',
         subject: 'x',
         text: 'y',
+        unexpected: 'drop me',
       };
-      expect(registry.validateArgs('send_email', argsWithStrayTo).valid).toBe(
+      expect(registry.validateArgs('send_email', argsWithRecipient).valid).toBe(
         true,
       );
-      expect(argsWithStrayTo.to).toBeUndefined();
-      expect(argsWithStrayTo.subject).toBe('x');
+      expect(argsWithRecipient.to).toBe('a@b.com');
+      expect(argsWithRecipient.unexpected).toBeUndefined();
+      expect(argsWithRecipient.subject).toBe('x');
 
       // Subject + text alone is valid — recipient is implicit.
       expect(

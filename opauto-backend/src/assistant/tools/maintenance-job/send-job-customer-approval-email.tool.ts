@@ -265,7 +265,7 @@ export function buildSendJobCustomerApprovalEmailTool(
       'Use this for "email/send the customer approval link for this job", "send that customer the parts approval", ' +
       'or "email the customer about this maintenance job". This tool resolves the recipient from the job, ' +
       'creates or reuses a public approval request, includes the approval URL in the email, and sends to the customer. ' +
-      'Do not use send_email for customer job approval emails because send_email only sends to the authenticated owner.',
+      'Do not use send_email for customer job approval emails because this tool is the only one that creates and includes the secure maintenance approval URL.',
     blastTier: AssistantBlastTier.CONFIRM_WRITE,
     requiredRole: 'OWNER',
     requiredModule: 'maintenance',

@@ -226,6 +226,20 @@ describe('AssistantToolPresenterService', () => {
     expect(s.previewInputs?.['subject']).toBe(subject);
   });
 
+  it('shows explicit send_email recipients in the email approval preview', () => {
+    const s = svc.approvalSummary(
+      pending('send_email', {
+        to: 'customer@example.com',
+        subject: 'Service reminder',
+        text: 'Your car is ready.',
+      }),
+    );
+
+    expect(s.previewComponent).toBe(EmailPreviewComponent);
+    expect(s.previewInputs?.['subtitle']).toBe('customer@example.com');
+    expect(s.previewInputs?.['subject']).toBe('Service reminder');
+  });
+
   it('returns default approve verb when tool is unknown', () => {
     const s = svc.approvalSummary(pending('unknown_tool', { foo: 1 }));
     expect(s.previewComponent).toBeUndefined();

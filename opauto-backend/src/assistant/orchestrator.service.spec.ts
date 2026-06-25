@@ -119,6 +119,9 @@ const makePrisma = () => ({
     findUnique: jest.fn(),
     update: jest.fn(),
   },
+  customer: {
+    findFirst: jest.fn().mockResolvedValue(null),
+  },
 });
 
 const INVOICE_APPROVAL_PREVIEW_FIELDS = [
@@ -665,6 +668,209 @@ describe('OrchestratorService', () => {
     expect(events.find((e) => e.type === 'text')).toMatchObject({
       delta: 'No email was sent. Draft: Here is the overdue invoice list.',
     });
+  });
+
+  it('surfaces approval for send_email when the user explicitly provided the external email address', async () => {
+    const tools = makeTools(['send_email']);
+    tools.resolveBlastTier.mockReturnValue(AssistantBlastTier.CONFIRM_WRITE);
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-1',
+            name: 'send_email',
+            argsJson: JSON.stringify({
+              to: 'Test.Customer@Example.com',
+              subject: 'Service reminder',
+              text: 'Your car is ready.',
+            }),
+          },
+        ],
+      },
+    ]);
+    const approvals = makeApprovals();
+    const orchestrator = await makeOrchestrator({ tools, llm, approvals });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-email-explicit',
+        'Send an email to Test.Customer@Example.com saying the car is ready.',
+        undefined,
+      ),
+    );
+
+    expect(events.find((e) => e.type === 'approval_request')).toMatchObject({
+      toolName: 'send_email',
+      args: expect.objectContaining({
+        to: 'test.customer@example.com',
+        subject: 'Service reminder',
+      }),
+    });
+    expect(approvals.createPending).toHaveBeenCalledWith(
+      expect.objectContaining({
+        toolName: 'send_email',
+        args: expect.objectContaining({ to: 'test.customer@example.com' }),
+      }),
+    );
+    expect(tools.execute).not.toHaveBeenCalled();
+  });
+
+  it('blocks send_email owner fallback when the user provided an external email but the model omitted to', async () => {
+    const tools = makeTools(['send_email']);
+    tools.resolveBlastTier.mockReturnValue(AssistantBlastTier.AUTO_WRITE);
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-1',
+            name: 'send_email',
+            argsJson: JSON.stringify({
+              subject: 'Service reminder',
+              text: 'Your car is ready.',
+            }),
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: 'I need to include the recipient email.',
+        toolCalls: [],
+      },
+    ]);
+    const approvals = makeApprovals();
+    const orchestrator = await makeOrchestrator({ tools, llm, approvals });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-email-missing-to',
+        'Send an email to Test.Customer@Example.com saying the car is ready.',
+        undefined,
+      ),
+    );
+
+    expect(events.find((e) => e.type === 'tool_result')).toMatchObject({
+      status: 'failed',
+      result: expect.objectContaining({ error: 'missing_recipient' }),
+    });
+    expect(events.find((e) => e.type === 'approval_request')).toBeUndefined();
+    expect(approvals.createPending).not.toHaveBeenCalled();
+    expect(tools.execute).not.toHaveBeenCalled();
+  });
+
+  it('rejects send_email when the model invents an external email without a customerId binding', async () => {
+    const tools = makeTools(['send_email']);
+    tools.resolveBlastTier.mockReturnValue(AssistantBlastTier.CONFIRM_WRITE);
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-1',
+            name: 'send_email',
+            argsJson: JSON.stringify({
+              to: 'customer@example.com',
+              subject: 'Service reminder',
+              text: 'Your car is ready.',
+            }),
+          },
+        ],
+      },
+      {
+        provider: 'groq',
+        content: 'I need to resolve the customer email first.',
+        toolCalls: [],
+      },
+    ]);
+    const approvals = makeApprovals();
+    const orchestrator = await makeOrchestrator({ tools, llm, approvals });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-email-unbound',
+        'Email Sarah a service reminder.',
+        undefined,
+      ),
+    );
+
+    expect(events.find((e) => e.type === 'tool_result')).toMatchObject({
+      status: 'failed',
+      result: expect.objectContaining({ error: 'unresolved_recipient' }),
+    });
+    expect(events.find((e) => e.type === 'approval_request')).toBeUndefined();
+    expect(approvals.createPending).not.toHaveBeenCalled();
+    expect(tools.execute).not.toHaveBeenCalled();
+  });
+
+  it('normalizes customer-bound send_email recipients before approval', async () => {
+    const tools = makeTools(['send_email']);
+    tools.resolveBlastTier.mockReturnValue(AssistantBlastTier.CONFIRM_WRITE);
+    const customerFindFirst = jest.fn().mockResolvedValue({
+      id: 'cust-1',
+      email: 'Customer@Example.com',
+    });
+    const prisma = {
+      ...makePrisma(),
+      customer: { findFirst: customerFindFirst },
+    };
+    const llm = makeLlm([
+      {
+        provider: 'groq',
+        content: null,
+        toolCalls: [
+          {
+            id: 'tc-1',
+            name: 'send_email',
+            argsJson: JSON.stringify({
+              customerId: 'cust-1',
+              subject: 'Service reminder',
+              text: 'Your car is ready.',
+            }),
+          },
+        ],
+      },
+    ]);
+    const approvals = makeApprovals();
+    const orchestrator = await makeOrchestrator({
+      tools,
+      llm,
+      approvals,
+      prisma,
+    });
+
+    const events = await collectEvents(
+      orchestrator.run(
+        ctx,
+        'conv-email-customer',
+        'Email Sarah a service reminder.',
+        undefined,
+      ),
+    );
+
+    expect(customerFindFirst).toHaveBeenCalledWith({
+      where: { id: 'cust-1', garageId: ctx.garageId },
+      select: { id: true, email: true },
+    });
+    expect(events.find((e) => e.type === 'approval_request')).toMatchObject({
+      toolName: 'send_email',
+      args: expect.objectContaining({
+        customerId: 'cust-1',
+        to: 'customer@example.com',
+      }),
+    });
+    expect(approvals.createPending).toHaveBeenCalledWith(
+      expect.objectContaining({
+        toolName: 'send_email',
+        args: expect.objectContaining({ to: 'customer@example.com' }),
+      }),
+    );
   });
 
   it('drafts overdue invoice email text when the model returns empty after fetching data', async () => {

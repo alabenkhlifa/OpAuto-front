@@ -3099,9 +3099,11 @@ export class OrchestratorService {
     parts.push(
       `Action chaining rules:\n` +
         `- When the user asks you to email/send a report or summary, FIRST call the relevant read tool to fetch real data (e.g. list_invoices, get_revenue_summary, list_at_risk_customers), THEN call send_email with a body that includes those concrete numbers. Do NOT write placeholder bodies like "please find the data below" without the data inline.\n` +
-        `- When the user asks to email a maintenance-job customer, send a parts/labor approval, or send an approval link for "this job", use send_job_customer_approval_email. That tool resolves the customer from the job, creates or reuses the public approval link, and sends to the customer's stored email. Do NOT use send_email for customer job emails; send_email is only for emailing the authenticated owner.\n` +
+        `- When the user asks to email a maintenance-job customer, send a parts/labor approval, or send an approval link for "this job", use send_job_customer_approval_email. That tool resolves the customer from the job, creates or reuses the public approval link, and sends to the customer's stored email. Do NOT use send_email for maintenance approval links.\n` +
         `- When the user asks to create, make, issue, generate, or prepare an invoice, resolve the real customer (and car if mentioned), then verify you have complete line-item data before calling create_invoice. Each line item must be an object with description, quantity, and HT unitPrice. If the user only gives service names like "oil change and filter" without prices, ask for the missing prices instead of guessing or calling create_invoice with placeholders. Do NOT call send_email unless the user explicitly asks to email an already-created invoice or report.\n` +
         `- For customer SMS actions, resolve the real customer first and pass that real customerId plus their actual phone number to send_sms. Do NOT invent phone numbers or placeholder ids.\n` +
+        `- For customer/external email actions that are not maintenance approval links, use send_email with the exact ` +
+        `email address the user provided. If the user named a customer instead of typing an address, resolve the real customer first and pass that real customerId plus their actual email in send_email.to. Do NOT fall back to the owner email for customer requests.\n` +
         `- NEVER claim "no data is available" / "data could not be retrieved" / "the report is unavailable" without having actually invoked the relevant read tool this turn. If you have not called a read tool yet, call it. If the tool returns empty, report the specific empty result ("0 overdue invoices", "no at-risk customers this period") — do NOT generalise to "no data".\n` +
         `- NEVER reference an attachment ("see attached", "please find the PDF attached", "ci-joint", "pièce jointe") in the email body unless you populate attachInvoiceIds with real invoice ids. The backend rejects emails that promise an attachment without one.\n` +
         `- When the user wants invoices attached to an email, call list_invoices first to get the invoice IDs, then pass them as attachInvoiceIds in send_email — the backend converts them to a CSV attachment automatically.\n` +
@@ -3296,6 +3298,73 @@ export class OrchestratorService {
             `send_email received placeholder attachInvoiceIds value "${placeholderId}". ` +
             'Call the invoice read tool first and pass real invoice ids, or omit attachments.',
         };
+      }
+      const to = typeof a.to === 'string' ? a.to.trim() : '';
+      const customerId =
+        typeof a.customerId === 'string' ? a.customerId.trim() : '';
+      if (!to && !customerId) {
+        const explicitExternalEmail = this.findExternalEmailInUserMessage(
+          ctx.turnState?.userMessage,
+          ctx.email,
+        );
+        if (explicitExternalEmail) {
+          return {
+            error: 'missing_recipient',
+            message:
+              `The user provided recipient email "${explicitExternalEmail}", but send_email omitted ` +
+              '`to`. Retry send_email with `to` set to that exact email address.',
+          };
+        }
+        if (this.userAskedForCustomerEmailRecipient(ctx.turnState?.userMessage)) {
+          return {
+            error: 'unresolved_recipient',
+            message:
+              'send_email was called without a recipient even though the user asked to email a customer/client. ' +
+              'Resolve the recipient with find_customer/get_customer, then retry with customerId and to.',
+          };
+        }
+      }
+      if (customerId) {
+        const customer = await this.prisma.customer.findFirst({
+          where: { id: customerId, garageId: ctx.garageId },
+          select: { id: true, email: true },
+        });
+        if (!customer) {
+          return {
+            error: 'customer_not_found',
+            message:
+              `send_email received customerId="${customerId}", but no customer ` +
+              'with that id exists in this garage. Use find_customer or ' +
+              'get_customer to resolve the real recipient before asking for approval.',
+          };
+        }
+        const customerEmail = this.normaliseEmail(customer.email);
+        if (!customerEmail) {
+          return {
+            error: 'missing_recipient',
+            message:
+              'send_email resolved a customer with no email address. Ask the user for an email address or update the customer record first.',
+          };
+        }
+        if (to && !this.emailsMatch(customerEmail, to)) {
+          return {
+            error: 'email_mismatch',
+            message:
+              'send_email recipient email does not match the resolved customer. ' +
+              'Use the email from get_customer/find_customer before asking for approval.',
+          };
+        }
+        a.to = customerEmail;
+      } else if (to && !this.emailsMatch(to, ctx.email)) {
+        if (!this.userMessageContainsEmail(ctx.turnState?.userMessage, to)) {
+          return {
+            error: 'unresolved_recipient',
+            message:
+              'send_email was called with an external email address that the user did not provide and no customerId binding. ' +
+              'Resolve the recipient with find_customer/get_customer first, then retry with the real customerId and email.',
+          };
+        }
+        a.to = this.normaliseEmail(to);
       }
       return null;
     }
@@ -3976,6 +4045,19 @@ export class OrchestratorService {
     return (value ?? '').replace(/[\s\-()]/g, '');
   }
 
+  private normaliseEmail(value: string | null | undefined): string {
+    return (value ?? '').trim().toLowerCase();
+  }
+
+  private emailsMatch(
+    left: string | null | undefined,
+    right: string | null | undefined,
+  ): boolean {
+    const leftEmail = this.normaliseEmail(left);
+    const rightEmail = this.normaliseEmail(right);
+    return leftEmail.length > 0 && leftEmail === rightEmail;
+  }
+
   private phoneNumbersMatch(
     left: string | null | undefined,
     right: string | null | undefined,
@@ -3998,6 +4080,54 @@ export class OrchestratorService {
     const normalizedPhone = this.normalisePhone(phone);
     if (!userMessage || normalizedPhone.length === 0) return false;
     return this.normalisePhone(userMessage).includes(normalizedPhone);
+  }
+
+  private userMessageContainsEmail(
+    userMessage: string | undefined,
+    email: string,
+  ): boolean {
+    const normalizedEmail = this.normaliseEmail(email);
+    if (!userMessage || normalizedEmail.length === 0) return false;
+    return userMessage.toLowerCase().includes(normalizedEmail);
+  }
+
+  private findExternalEmailInUserMessage(
+    userMessage: string | undefined,
+    ownerEmail: string | null | undefined,
+  ): string | null {
+    const msg = userMessage ?? '';
+    const matches = msg.match(
+      /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,
+    );
+    if (!matches) return null;
+    const external = matches.find((email) => !this.emailsMatch(email, ownerEmail));
+    return external ? this.normaliseEmail(external) : null;
+  }
+
+  private userAskedForCustomerEmailRecipient(
+    userMessage: string | undefined,
+  ): boolean {
+    const msg = userMessage ?? '';
+    const hasEmailAction =
+      /\b(?:email|e-mail|mail)\b/i.test(msg) ||
+      /\bsend\b[\s\S]{0,40}\b(?:email|e-mail|mail)\b/i.test(msg);
+    if (!hasEmailAction || this.userAskedForEmailSelfSend(msg)) return false;
+    return (
+      /\b(?:customer|client|recipient)\b/i.test(msg) ||
+      /\b(?:email|e-mail|mail)\s+(?!me\b|myself\b|the\s+owner\b|garage\s+owner\b)[A-Z][A-Za-z'’-]+/i.test(
+        msg,
+      )
+    );
+  }
+
+  private userAskedForEmailSelfSend(userMessage: string | undefined): boolean {
+    const msg = userMessage ?? '';
+    return (
+      /\b(?:email|e-mail|mail|send)\s+(?:me|myself)\b/i.test(msg) ||
+      /\b(?:to\s+me|my\s+email|current\s+user|garage\s+owner|the\s+owner)\b/i.test(
+        msg,
+      )
+    );
   }
 
   private userAskedForDraftOnly(userMessage: string | undefined): boolean {

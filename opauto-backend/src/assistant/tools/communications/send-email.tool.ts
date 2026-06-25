@@ -8,6 +8,12 @@ import { detectToolCallLeak } from '../../leak-detector';
 export type AttachmentFormat = 'csv' | 'pdf';
 
 export interface SendEmailArgs {
+  /**
+   * Optional recipient email. Omit for "email me" / owner self-send. For
+   * customer emails, pass the customer's actual email and customerId together.
+   */
+  to?: string;
+  customerId?: string;
   subject: string;
   html?: string;
   text?: string;
@@ -35,9 +41,12 @@ export interface SendEmailResult {
 
 export interface SendEmailError {
   error:
+    | 'customer_not_found'
+    | 'invalid_recipient'
     | 'missing_body'
     | 'missing_recipient'
     | 'missing_attachments'
+    | 'recipient_mismatch'
     | 'send_failed'
     | 'leak_in_body'
     | 'dangling_attachment_reference'
@@ -129,6 +138,24 @@ function normalizeEmailString(value: string | undefined): string | undefined {
 function blankToUndefined(value: string | undefined): string | undefined {
   if (value === undefined) return undefined;
   return value.trim().length > 0 ? value : undefined;
+}
+
+function normalizeRecipient(value: string | null | undefined): string | undefined {
+  const email = value?.trim();
+  return email && email.length > 0 ? email : undefined;
+}
+
+function emailsMatch(
+  left: string | null | undefined,
+  right: string | null | undefined,
+): boolean {
+  const a = normalizeRecipient(left)?.toLowerCase();
+  const b = normalizeRecipient(right)?.toLowerCase();
+  return !!a && !!b && a === b;
+}
+
+function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
 function escapeHtml(value: string): string {
@@ -251,10 +278,12 @@ export function createSendEmailTool(deps: {
   return {
     name: 'send_email',
     description:
-      'Send a transactional email to the authenticated user (the garage owner). The recipient ' +
-      'is always resolved server-side from the session — the LLM never specifies it. Use this ' +
-      'for "email me the daily report", "send me the at-risk customer list", etc. At least one ' +
-      'of `html` or `text` MUST be a non-empty string. ' +
+      'Send a transactional email. Omit `to` for "email me", "send me", or owner self-sends; ' +
+      'that recipient is resolved server-side from the authenticated session and executes ' +
+      'without approval. When the user provides an external email address, pass it in `to`. ' +
+      'When emailing a customer resolved through find_customer/get_customer, pass both the ' +
+      "customer's real `customerId` and their actual email in `to`. External recipients require " +
+      'owner approval before delivery. At least one of `html` or `text` MUST be a non-empty string. ' +
       'Never use placeholders such as [date], [heure], [time], or [Votre nom]; use real values ' +
       'from prior tool results or ask for missing details before sending. ' +
       'IMPORTANT: do NOT call this tool with empty `text`/`html` and an empty ' +
@@ -272,6 +301,18 @@ export function createSendEmailTool(deps: {
     parameters: {
       type: 'object',
       properties: {
+        to: {
+          type: 'string',
+          minLength: 3,
+          maxLength: 254,
+          description:
+            'Recipient email for an explicit external/customer recipient. Omit for owner self-send.',
+        },
+        customerId: {
+          type: 'string',
+          description:
+            'Customer UUID when the recipient was resolved from find_customer/get_customer. Must match the email in `to`.',
+        },
         subject: {
           type: 'string',
           minLength: 1,
@@ -306,16 +347,67 @@ export function createSendEmailTool(deps: {
       additionalProperties: false,
     },
     blastTier: AssistantBlastTier.AUTO_WRITE,
+    resolveBlastTier: (args: SendEmailArgs, ctx: AssistantUserContext) => {
+      const to = normalizeRecipient(args.to);
+      const ownerEmail = normalizeRecipient(ctx.email);
+      if (args.customerId?.trim()) return AssistantBlastTier.CONFIRM_WRITE;
+      if (to && !emailsMatch(to, ownerEmail)) {
+        return AssistantBlastTier.CONFIRM_WRITE;
+      }
+      return AssistantBlastTier.AUTO_WRITE;
+    },
     handler: async (
       args: SendEmailArgs,
       ctx: AssistantUserContext,
     ): Promise<SendEmailResult | SendEmailError> => {
-      const recipient = ctx.email?.trim();
+      const explicitRecipient = normalizeRecipient(args.to);
+      const customerId = args.customerId?.trim();
+      let recipient = explicitRecipient;
+
+      if (customerId) {
+        const customer = await deps.prisma.customer.findFirst({
+          where: { id: customerId, garageId: ctx.garageId },
+          select: { id: true, email: true },
+        });
+        if (!customer) {
+          return {
+            error: 'customer_not_found',
+            message:
+              `send_email received customerId="${customerId}", but no customer ` +
+              'with that id exists in this garage. Resolve the recipient with find_customer/get_customer first.',
+          };
+        }
+
+        const customerEmail = normalizeRecipient(customer.email);
+        if (!customerEmail) {
+          return {
+            error: 'missing_recipient',
+            message:
+              'Cannot send email: the resolved customer has no email address on file.',
+          };
+        }
+        if (explicitRecipient && !emailsMatch(explicitRecipient, customerEmail)) {
+          return {
+            error: 'recipient_mismatch',
+            message:
+              'send_email recipient email does not match the resolved customer. Use the email returned by find_customer/get_customer.',
+          };
+        }
+        recipient = customerEmail;
+      }
+
+      recipient = recipient ?? normalizeRecipient(ctx.email);
       if (!recipient) {
         return {
           error: 'missing_recipient',
           message:
             'Cannot send email: the authenticated session has no email address on record. Ask the owner to set their account email under Settings → Profile.',
+        };
+      }
+      if (!isValidEmail(recipient)) {
+        return {
+          error: 'invalid_recipient',
+          message: 'Cannot send email: recipient email address is invalid.',
         };
       }
 

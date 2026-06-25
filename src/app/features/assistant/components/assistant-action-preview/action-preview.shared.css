@@ -53,9 +53,8 @@
 .action-preview__subtitle {
   font-size: 0.8125rem;
   color: #6b7280;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
 .action-preview__bubble,

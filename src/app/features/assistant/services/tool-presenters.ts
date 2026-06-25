@@ -292,6 +292,7 @@ export const TOOL_PRESENTERS: ToolPresenter[] = [
     successParams: (a) => ({ subject: str(a, 'subject') ?? '' }),
     previewComponent: EmailPreviewComponent,
     previewInputs: (a) => ({
+      subtitle: str(a, 'to'),
       subject: str(a, 'subject'),
       text: str(a, 'text'),
       html: str(a, 'html'),
