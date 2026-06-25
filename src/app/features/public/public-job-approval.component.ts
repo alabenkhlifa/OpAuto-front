@@ -123,19 +123,22 @@ import { TranslationService } from '../../core/services/translation.service';
               <div class="section-heading">
                 <h2>{{ 'maintenance.details.timeline' | translate }}</h2>
               </div>
-              <ol class="approval-timeline">
+              <ol class="maintenance-timeline">
                 @for (event of summary()!.timeline; track event.id) {
-                  <li [ngClass]="timelineItemClass(event)">
-                    <span class="timeline-dot" aria-hidden="true"></span>
-                    <div>
-                      <div class="timeline-title-row">
-                        <p>{{ formatTimelineLabel(event) }}</p>
-                        <span class="timeline-badge">{{ timelineBadgeLabel(event) }}</span>
+                  <li class="maintenance-timeline__item" [ngClass]="timelineItemClass(event)">
+                    <span class="maintenance-timeline__marker" aria-hidden="true"></span>
+                    <div class="maintenance-timeline__body">
+                      <div class="maintenance-timeline__header">
+                        <p class="maintenance-timeline__title">{{ formatTimelineLabel(event) }}</p>
+                        <span class="maintenance-timeline__badge">{{ timelineBadgeLabel(event) }}</span>
                       </div>
-                      @if (event.description) {
-                        <small>{{ event.description }}</small>
+                      @if (event.actorName) {
+                        <p class="maintenance-timeline__actor">{{ event.actorName }}</p>
                       }
-                      <time>{{ event.occurredAt | date:'medium' }}</time>
+                      @if (event.description) {
+                        <p class="maintenance-timeline__description">{{ event.description }}</p>
+                      }
+                      <p class="maintenance-timeline__time">{{ event.occurredAt | date:'short' }}</p>
                     </div>
                   </li>
                 }
@@ -422,15 +425,15 @@ import { TranslationService } from '../../core/services/translation.service';
       animation: approval-spin 800ms linear infinite;
     }
 
-    .approval-timeline {
+    .maintenance-timeline {
       display: grid;
       gap: 0;
       margin: 0;
-      padding: 0;
+      padding: 2px 0 0;
       list-style: none;
     }
 
-    .approval-timeline li {
+    .maintenance-timeline__item {
       --timeline-accent: #64748b;
       --timeline-border: #cbd5e1;
       --timeline-bg: #f8fafc;
@@ -439,75 +442,81 @@ import { TranslationService } from '../../core/services/translation.service';
       display: grid;
       grid-template-columns: 24px minmax(0, 1fr);
       gap: 12px;
-      padding: 0 0 18px;
+      padding: 0 0 14px;
     }
 
-    .approval-timeline li:not(:last-child)::before {
+    .maintenance-timeline__item:not(:last-child)::before {
       content: '';
       position: absolute;
-      top: 30px;
+      top: 28px;
       bottom: 0;
       left: 11px;
       width: 2px;
       border-radius: 999px;
       background: linear-gradient(180deg, var(--timeline-accent), #e2e8f0);
-      opacity: 0.58;
+      opacity: 0.55;
     }
 
-    .timeline-dot {
+    .maintenance-timeline__marker {
       z-index: 1;
       width: 20px;
       height: 20px;
       margin-top: 12px;
       border: 4px solid #ffffff;
-      border-radius: 50%;
+      border-radius: 999px;
       background: var(--timeline-accent);
-      box-shadow: 0 0 0 2px var(--timeline-border), 0 8px 18px rgba(15, 23, 42, 0.14);
+      box-shadow: 0 0 0 2px var(--timeline-border), 0 8px 18px rgba(15, 23, 42, 0.12);
     }
 
-    .approval-timeline li > div {
+    .maintenance-timeline__body {
       min-width: 0;
       border: 1px solid var(--timeline-border);
       border-radius: 8px;
-      padding: 14px;
+      padding: 12px;
       background: linear-gradient(135deg, var(--timeline-bg), #ffffff);
     }
 
-    .timeline-title-row {
+    .maintenance-timeline__header {
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
-      gap: 12px;
+      gap: 10px;
     }
 
-    .approval-timeline p {
+    .maintenance-timeline__title {
       margin: 0;
-      color: #1f2937;
+      color: #111827;
+      font-size: 0.95rem;
       font-weight: 800;
-      line-height: 1.35;
+      line-height: 1.3;
     }
 
-    .timeline-badge {
+    .maintenance-timeline__badge {
       flex: 0 0 auto;
-      max-width: 130px;
+      max-width: 120px;
       border: 1px solid var(--timeline-border);
       border-radius: 999px;
-      padding: 4px 10px;
+      padding: 3px 9px;
       background: #ffffff;
       color: var(--timeline-text);
-      font-size: 0.76rem;
+      font-size: 0.72rem;
       font-weight: 800;
       line-height: 1.2;
       text-align: center;
+      white-space: normal;
     }
 
-    .approval-timeline small,
-    .approval-timeline time {
-      display: block;
-      margin-top: 4px;
+    .maintenance-timeline__actor,
+    .maintenance-timeline__description,
+    .maintenance-timeline__time {
+      margin: 5px 0 0;
       color: #64748b;
-      font-size: 0.9rem;
-      line-height: 1.4;
+      font-size: 0.8rem;
+      line-height: 1.35;
+    }
+
+    .maintenance-timeline__description {
+      color: #475569;
     }
 
     .timeline--approved {

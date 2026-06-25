@@ -114,4 +114,48 @@ describe('PublicJobApprovalComponent', () => {
       reason: 'Price is too high',
     });
   });
+
+  it('renders public timeline events with maintenance timeline styling', () => {
+    maintenanceService.getPublicApprovalSummary.and.returnValue(of({
+      ...summary,
+      timeline: [
+        {
+          id: 'event-created',
+          type: 'job-created',
+          occurredAt: new Date('2026-06-24T04:46:00Z'),
+        },
+        {
+          id: 'event-part',
+          type: 'part-added',
+          description: 'Oil 10w40',
+          occurredAt: new Date('2026-06-24T04:47:00Z'),
+        },
+        {
+          id: 'event-requested',
+          type: 'approval-requested',
+          occurredAt: new Date('2026-06-24T04:48:00Z'),
+        },
+        {
+          id: 'event-approved',
+          type: 'approval-responded',
+          occurredAt: new Date('2026-06-24T04:49:00Z'),
+          metadata: { status: 'approved' },
+        },
+      ],
+    }));
+
+    fixture.detectChanges();
+
+    const timeline = fixture.nativeElement.querySelector('.maintenance-timeline') as HTMLElement | null;
+    const items = Array.from(fixture.nativeElement.querySelectorAll('.maintenance-timeline__item')) as HTMLElement[];
+
+    expect(timeline).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.approval-timeline')).toBeNull();
+    expect(items.length).toBe(4);
+    expect(items[0].classList).toContain('timeline--created');
+    expect(items[1].classList).toContain('timeline--part');
+    expect(items[2].classList).toContain('timeline--requested');
+    expect(items[3].classList).toContain('timeline--approved');
+    expect(getComputedStyle(items[2]).getPropertyValue('--timeline-accent').trim()).toBe('#f97316');
+  });
 });
